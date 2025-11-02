@@ -3,5 +3,4 @@
 ;; 
 
 ;;; Code:
-(in-package :c)
 (include <tree_sitter/api.h>)

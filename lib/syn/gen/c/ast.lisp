@@ -46,9 +46,24 @@
 
 (defnode c-type () (type) (:ast (self) (list (slot-value self 'type))))
 
+(defun c-type-coerce-name (str)
+  (cond
+    ((eql t str) "void")
+    (t (string-downcase str))))
+
+(defmethod val ((self c-type))
+  (typecase (slot-value self 'type)
+    (prefix-expression 
+     (let ((v (c-type-coerce-name (val (slot-value (slot-value self 'type) 'object)))))
+       (setf (val (slot-value (slot-value self 'type) 'object)) v)
+       (concatenate 'string (string-downcase v) (format nil "~A" (slot-value (slot-value self 'type) 'op)))))
+    (t (let ((v (c-type-coerce-name (val (slot-value self 'type)))))
+         (setf (val (slot-value self 'type)) v)))))
+
 (defnode float-type () (number))
 
 (defnode specifier () (specifier) (:ast (self) (list (slot-value self 'specifier))))
+(defmethod val ((self specifier)) (string-downcase (val (slot-value self 'specifier))))
 
 (defnode function-pointer () (identifier parameters))
 
@@ -63,12 +78,13 @@
   (slot-value self 'members))
 ;; - + -- ++ ! * &
 (defexpr prefix-expression () (op object))
-(defmethod val ((self prefix-expression)) 
+(defmethod val ((self prefix-expression))
   (intern
    (concatenate 
     'string 
-    (string (val (slot-value self 'syn/gen/c::object)))
-    (string (slot-value self 'syn/gen/c::op)))))
+    (string (slot-value self 'syn/gen/c::op))
+    (string (val (slot-value self 'syn/gen/c::object))))))
+     
 ;; - + -- ++ *
 (defexpr postfix-expression () (op object))
 (defaccessor val ((self postfix-expression)) (slot-value self 'syn/gen/c::object))
@@ -307,20 +323,25 @@
 
 (defun decompose-declaration (item)
   "Decompose declaration item into its SPECIFIERS, TYPE, NAME and INITIALIZER"
-  (if (< 2 (length item))
-      ;; decompose arg list with init
-      (let ((specifier (butlast item 3))
-            (type+id+val (last item 3)))
-        (let ((type (second type+id+val))
-              (id   (first type+id+val))
-              (init (third type+id+val)))
+  (typecase item
+    (atom (values nil '(* t) item))
+    (t
+     (ecase (length item)
+       (4
+        ;; decompose arg list with init
+        (let ((specifier (first item))
+              (id   (second item))
+              (type (third item))
+              (init (fourth item)))
           (values specifier type id init)))
-      ;; decompose arg list without init
-      (let ((specifier (butlast item 2))
-            (type+id (last item 2)))
-        (let ((type (second type+id))
-              (id   (first type+id)))
-          (values specifier type id nil)))))
+       (3
+        ;; decompose arg list without init
+        (let ((specifier (first item))
+              (type (third item))
+              (id (second item)))
+          (values specifier type id nil)))
+       (2 (values nil (second item) (first item) nil))
+       (1 (values nil '(* t) (first item)))))))
 
 (defmacro make-declaration-node (item)
   "Decompose declaration item and instantiate nodes"
@@ -332,7 +353,7 @@
          :specifier
          ,(when specifier
             `(make-instance 'specifier
-               :specifier (make-nodes ,specifier)))
+               :specifier (make-node ,specifier)))
          :type (make-instance 'c-type :type (make-node ,type))
          :identifier (make-node ,id)
          :value ,(if init 

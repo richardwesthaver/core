@@ -161,6 +161,9 @@
       (traverse pp tree 0))))
 
 (defmacro define-code-printer (qual node &body body)
+  "Define a method of TRAVERSE which specializes on CODE-PRINTER and NODE. QUAL
+is required and may be :SELF to indicate a regular DEFMETHOD form. SELF, NODE,
+and LEVEL are all bound for the duration of BODY."
   (if (eql :self qual)
       `(defmethod traverse ((self code-printer)
                             (node ,node)
@@ -184,6 +187,7 @@
                                   ,(find-class t))))))
 
 (defmacro with-code-printer (&body body)
+  "Setup local bindings for DEFINE-CODE-PRINTER forms."
   `(symbol-macrolet ((stream (slot-value self 'stream))
                      (indent (format nil "~{~A~}"
                                      (loop for i
@@ -234,6 +238,7 @@
 ;; TODO 2024-10-20: gen-file-header
 ;; (defclass gen-file-header (file-header)
 ;;   ())
+
 ;;; Backend
 (defstruct gen-backend
   name

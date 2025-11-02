@@ -65,17 +65,12 @@
   (define-code-printer :self function-definition
     (with-slots (parameter item body) node
       (format stream "~A ~A"
-              (val
-               (slot-value
-                (slot-value item 'type)
-                'type))
+              (val (slot-value item 'type))
               (val (slot-value item 'identifier)))
       (format stream "(~{~A~^, ~})"
-              (mapcar (lambda (x) (format nil "~A ~A" 
-                                          (val
-                                           (slot-value
-                                            (slot-value x 'type)
-                                            'type))
+              (mapcar (lambda (x) (format nil "~@[~A ~]~A ~A" 
+                                          (val (slot-value x 'specifier))
+                                          (val (slot-value x 'type))
                                           (val (slot-value x 'identifier))))
                       (ast parameter)))
       (traverse %self body %level)))
@@ -239,8 +234,11 @@
   (define-code-printer :before jump-statement
     (format stream "~&~A" indent)
     (push-info 'jump-statement))
+  (define-code-printer :self jump-statement
+    (format stream "~A " (string-downcase (val (node-slot kind))))
+    (traverse %self (node-slot members) %level))
   (define-code-printer :after jump-statement
-    (format stream ";")
+    ;; (format stream ";")
     (pop-info))
   ;; label
   (define-code-printer :before label-statement
@@ -277,10 +275,12 @@
   (define-code-printer :before prefix-expression
     (when (eql (top-info) 'aref)
       (format stream "("))
-    (push-info 'prefix)
-    (format stream "~A" (node-slot op)))
-  (define-code-printer :after postfix-expression
-    (format stream "~A" (node-slot op)))
+    (push-info 'prefix))
+  (define-code-printer :self prefix-expression
+    (pop-info)
+    (format stream "~A" (val node)))
+  (define-code-printer :self postfix-expression
+    (format stream "~A" (val node)))
   (define-code-printer :before not-expression
     (push-info 'not)
     (format stream "(not "))

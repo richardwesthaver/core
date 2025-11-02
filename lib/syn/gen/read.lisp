@@ -6,37 +6,43 @@
 (in-package :syn/gen)
 
 (defmacro define-code-reader (&key file-reader string-reader macro-character)
+  (with-gensyms (pkg)
   `(progn
      (defun ,file-reader (file)
-       ,(format nil "Read ~X source code file and return AST." (package-name *package*))
-       (let ((ast)
-             (*readtable* (copy-readtable nil)))
-         (setf (readtable-case *readtable*) :invert)
-         ,@macro-character
-         (with-open-file (f file)
-           (loop for form = (read f nil nil nil)
-                 while form
-                 do
-                 (let* ((form (eval form))
-                        (evaled (if (consp form)
-                                    form
-                                    (list form))))
-                   (when (typep (car evaled) 'node)
-                     (setf ast (append ast evaled))))))
-         (make-instance 'ast :ast ast)))
+       (let ((,pkg *package*))
+         ,(format nil "Read ~X source code file and return AST." (package-name *package*))
+         (let ((ast)
+               (*readtable* (copy-readtable nil)))
+           (setf (readtable-case *readtable*) :invert)
+           ,@macro-character
+           (with-open-file (f file)
+             (loop for form = (read f nil nil nil)
+                   while form
+                   do
+                      (let* ((form (eval form))
+                             (evaled (if (consp form)
+                                         form
+                                         (list form))))
+                        (when (typep (car evaled) 'node)
+                          (setf ast (append ast evaled))))))
+           (prog1 (make-instance 'ast :ast ast)
+             (eval-always (setq *package* ,pkg))))))
      (defun ,string-reader (str)
        "Read syn/gen source code string and return AST."
-       (let ((ast)
-             (*readtable* (copy-readtable nil)))
-         (setf (readtable-case *readtable*) :invert)
-         ,@macro-character
-         (let* ((form (eval (read-from-string str)))
-                (evaled (if (consp form)
-                            form
-                            (list form))))
-           (when (typep (car evaled) 'node)
-             (setf ast evaled)))
-         (make-instance 'ast :ast ast)))))
+       (let ((,pkg *package*))
+         (let ((ast)
+               (*readtable* (copy-readtable nil)))
+           (setf (readtable-case *readtable*) :invert)
+           ,@macro-character
+           (let* ((form (eval (read-from-string str)))
+                  (evaled (if (consp form)
+                              form
+                              (list form))))
+             (when (typep (car evaled) 'node)
+               (setf ast evaled)))
+           (prog1 (make-instance 'ast :ast ast)
+             (eval-always (setq *package* ,pkg)))))))))
+               
 
 (defmacro define-code-processor (name &key file-reader string-reader traverse)
   (let ((extras (loop for i in traverse collect

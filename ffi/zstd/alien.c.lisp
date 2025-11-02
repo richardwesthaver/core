@@ -1,14 +1,13 @@
-;; TODO 2025-08-10: 
-(in-package :c)
 (include <zdict.h>)
 (fn ZDICT_finalizeDictionaryWithParams size_t
-    ((dstDictBuffer (* void))
+    ((dstDictBuffer (* t))
      (maxDictSize size_t)
-     (dictContent const (* void))
+     (const dictContent (* t))
      (dictContentSize size_t)
-     (samplesBuffer const (* void))
-     (samplesSizes const (* size_t))
+     (const samplesBuffer (* t))
+     (const samplesSizes (* size_t))
      (nbSamples unsigned)
-     (parameters (* ZDICT_params_t)))
-  (ZDICT_finalizeDictionary
-   dstDictBuffer maxDictSize dictContent dictContentSize samplesBuffer samplesSizes nbSamples *parameters))
+     (params (* ZDICT_params_t)))
+  (return
+   (ZDICT_finalizeDictionary
+    dstDictBuffer maxDictSize dictContent dictContentSize samplesBuffer samplesSizes nbSamples (deref params))))

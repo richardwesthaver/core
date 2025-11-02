@@ -8,4 +8,3 @@
 
 ;;; Code:
 (in-package :syn/gen/js)
-
