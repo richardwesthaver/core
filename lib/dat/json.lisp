@@ -85,7 +85,7 @@ such a key was present, else NIL."
   "Encodes a Lisp value into a stream."
   (json-write value stream))
 
-(defmethod serialize (obj (format (eql :json)) &key stream path if-exists if-does-not-exist)
+(defmethod serialize (obj (format (eql :json)) &key stream path if-exists (if-does-not-exist :create))
   (declare (ignore format))
   (if stream
       (json-encode obj stream)

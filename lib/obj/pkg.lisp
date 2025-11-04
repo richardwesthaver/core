@@ -134,7 +134,6 @@
    :get-store-schemas
    :get-class-indexing
    :get-cache-style
-   :has-class-schema-p
    :find-slot-defs-by-type
    :migrate-class-index-p
    :class-indexing-enabled-p
@@ -605,7 +604,7 @@
   (:nicknames :project)
   (:use :cl :std :id :schema :config :ast)
   (:export :project :project-config :make-project
-   :*default-project-class* :simple-project))
+   :*default-project-class* :simple-project :project-metadata))
 
 (defpkg :obj/db
   (:nicknames :db)
@@ -868,9 +867,6 @@
    #:*store*
    #:spec
    #:stored-object-schema
-   #:temp-spec
-   #:delete-spec
-   #:copy-spec
    #:optimize-layout
    #:oid->schema-id
    #:default-class-id

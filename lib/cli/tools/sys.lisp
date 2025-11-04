@@ -36,8 +36,18 @@
    :json))
 
 ;; (systemctl-json "--user")
-(defstruct systemd-unit type name load active sub description)
+(defclass! systemd-unit (ini-document)
+  ((name :accessor name)
+   type))
 
+(defmethod deserialize ((from pathname) (format (eql :systemd-unit)) &rest args)
+  (let ((typ (pathname-type from))
+        (name (pathname-name from))
+        (ret (change-class (apply 'deserialize from :ini args) 'systemd-unit)))
+    (setf (slot-value ret 'type) typ
+          (name ret) name)
+    ret))
+             
 (defun parse-json-unit (json)
   (let ((ast (ast:ast json)))
     (assert (string-equal "unit" (caar ast)))
@@ -45,13 +55,12 @@
            (type (pathname-type name)))
       (setf name (pathname-name name))
       (flet ((.assoc (x) (when-let ((y (assoc x ast :test 'string-equal))) (cadr y))))
-        (make-systemd-unit 
-         :type type
-         :name name 
-         :load (.assoc "load") 
-         :active (.assoc "active") 
-         :sub (.assoc "sub") 
-         :description (.assoc "description"))))))
+        `(:type ,type
+          :name ,name 
+          :load ,(.assoc "load") 
+          :active ,(.assoc "active") 
+          :sub ,(.assoc "sub") 
+          :description ,(.assoc "description"))))))
 
 (defun systemd-units (&optional user)
   (mapcar 'parse-json-unit (apply 'systemctl-json (when user (list "--user")))))

@@ -288,7 +288,7 @@ non-unique ID prefix.")
     `(typecase ,obj
        ,@cases)))
 
-(defun get-core-type-id (obj)
+(defun get-type-id (obj)
   (declare (optimize (safety 0) (speed 3)))
   (or (gethash (type-of obj) *core-type-table*)
       (let ((id (simple-type-id obj)))
@@ -299,8 +299,8 @@ non-unique ID prefix.")
   "Return the name of the primitive type of OBJ."
   (sb-vm::primitive-type-name (sb-vm::primitive-type-of obj)))
 
-(defun core-type-id (obj)
-  "Return the 'core-type-id' of OBJ which is a 16-bit integer containing type
+(defun type-id (obj)
+  "Return the 'type-id' of OBJ which is a 16-bit integer containing type
 information. The first 8 bits are the associated object widetag followed by an
 8-bit tag corresponding to an index of the *CORE-OBJECTS* vector, which may be
 extended by the user using the REGISTER-TYPE-ID function. "
@@ -308,17 +308,17 @@ extended by the user using the REGISTER-TYPE-ID function. "
   (let ((id 0))
     (declare ((unsigned-byte 16) id) (dynamic-extent id))
     (setf (ldb (byte 8 0) id) (widetag-of obj)) ;; 8 bits
-    (setf (ldb (byte 4 8) id) (get-core-type-id obj))
+    (setf (ldb (byte 4 8) id) (get-type-id obj))
     id))
 
 (defun type-id<= (obj1 obj2)
-  (<= (core-type-id obj1) (core-type-id obj2)))
+  (<= (type-id obj1) (type-id obj2)))
 
 (defun type-id< (obj1 obj2)
-  (< (core-type-id obj1) (core-type-id obj2)))
+  (< (type-id obj1) (type-id obj2)))
 
 (defun type-id= (obj1 obj2)
-  (= (core-type-id obj1) (core-type-id obj2)))
+  (= (type-id obj1) (type-id obj2)))
 
 (defun array-type= (t1 t2)
   (and (subtypep t1 t2) (subtypep t2 t1)))

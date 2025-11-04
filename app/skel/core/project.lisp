@@ -6,7 +6,7 @@
 (in-package :skel/core/obj)
 
 ;;; Project
-(defclass sk-project (skel ast sk-meta)
+(defclass sk-project (skel sk-meta simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
    (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 

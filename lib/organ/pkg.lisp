@@ -143,19 +143,24 @@
    :org-file-headings))
 
 (defpackage :organ/graph
-  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :b3 :uri :url :equiv :val)
+  (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :uri :url :equiv :val)
   (:import-from :graph :in :out)
-  (:export :init-org-graph :org-graph :org-id 
-   :org-graph-schema :*org-graph-schema* :*org-graph-db-directory* :init-org-graph-db 
-   :org-graph-node :org-graph-edge :org-graph-extract-files :close-org-graph-db
-   :open-org-graph-db :og-get :org-graph-values
+  (:export :init-org-graph :org-graph
+   :org-graph-schema :*org-graph-schema* :*org-graph-db-directory*
+   :org-graph-node :org-graph-edge :org-graph-extract-files
    :org-graph-stats :org-graph-db :*org-graph-file* :*org-graph*
    :*org-graph-edges*
    :*org-graph-nodes*
    :*org-graph-headings*
    :*org-graph-files*
    :org-graph-index
-   :org-graph-json))
+   :org-graph-json
+   :org-graph-minisearch-json
+   :org-graph-tinysearch-json))
+
+(defpackage :organ/db
+  (:use :cl :std :organ :organ/graph :db :rdb :id :uuid :q :schema :uri :url :equiv :val :graph :ast)
+  (:export :org-graph-db))
 
 (defpackage :organ/cli
   (:use :cl :std :organ :cli :clap)

@@ -10,13 +10,13 @@
 |-------------+------------------------------------|
 | name        | core                               |
 | version     | 0.1.0                              |
-| description | The Compiler Company Core          |
+| description | NIL                                |
 | skel-id     | 4611004031065916102                |
 | root        | ~/comp/core/                       |
 | tags        | (core lisp emacs c)                |
-| updated     | Sat Nov 01 23:33:47 2025 -0400     |
+| updated     | Sat Nov 01 23:41:49 2025 -0400     |
 | langs       | c elisp lisp org text              |
-| lines       | 153143 :λ 121440 :# 13976 :_ 17727 |
+| lines       | 153186 :λ 121473 :# 13984 :_ 17729 |
 |-------------+------------------------------------|
 
 #+END:

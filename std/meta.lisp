@@ -247,9 +247,9 @@ non-nil, also include indirect (parent) methods."
     (labels ((rec (super)
                (if (null super)
                    nil
-                   (aif (find-direct-slot-def-by-name super (sb-mop:slot-definition-name def))
-                        (class-name super)
-                        (rec (pop list))))))
+                   (if (find-direct-slot-def-by-name super (sb-mop:slot-definition-name def))
+                       (class-name super)
+                       (rec (pop list))))))
       (rec class))))
 
 (defun find-direct-slot-def-by-name (class slot-name)

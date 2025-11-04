@@ -9,12 +9,9 @@
 ;; A STORE plays a similar role to ORMs in blub languages, but better since we
 ;; have CLOS and MOP for ultimate control. The purpose of a STORE is to
 ;; orchestrate the persistence of objects of a specific metaclass called
-;; STORED. The metaclass adds an additional allocation target for slot-objects
-;; which indicates that any access to them from Lisp will be delegated to the
-;; associated STORE.
-
-;; The STORE itself is defined in this file and implements the 'controller'
-;; side of the underlying protocol.
+;; STORED. The metaclass adds an additional allocation target :DATABASE for
+;; slot-objects which indicates that any access to them from Lisp will be
+;; delegated to the associated STORE.
 
 ;;; Code:
 (in-package :obj/store)
@@ -79,7 +76,6 @@ equal comparison"))
 
 (defsclass default-pset (pset)
   ((btree :accessor pset-btree :initarg :btree)))
-
 
 (defmethod drop-instance ((pset pset))
   (drop-pset pset)
@@ -173,11 +169,9 @@ equal comparison"))
     (remove-association-end class instance slot-def nil)
     (call-next-method))) ;; remove storage
 
-
 ;; =========================
 ;; Handling reads
 ;; =========================
-
 (defun type-check-association (instance slot-def other-instance)
   (when (null other-instance)
     (return-from type-check-association t))
@@ -208,11 +202,9 @@ equal comparison"))
       (declare (dynamic-extent (function map-obj)))
       (map-btree #'map-obj index :value (oid instance) :collect t))))
 
-
 ;; ==========================
 ;;  Handling updates
 ;; ==========================
-
 (defun update-association-end (class instance slot-def target)
   "Get the association index and add the target object as a key that
    refers back to this instance so we can get the set of referrers to target"
@@ -338,6 +330,10 @@ equal comparison"))
 ;;; Schema
 (defclass stored-object-schema (object-schema upgradable-schema) ())
 
+(defmethod has-class-schema-p ((class stored-class))
+  (when-let ((s (get-class-schema class)))
+    (typep s 'stored-object-schema)))
+
 (defmethod print-object ((schema stored-object-schema) stream)
   (print-unreadable-object (schema stream :type t)
     (format stream "~A ~A (s: ~A p: ~A)"
@@ -452,8 +448,8 @@ equal comparison"))
 
 (defmethod change-db-instance ((current stored-object) previous
                                new-schema old-schema)
-  "Change a database instance from one schema & class to another
-   These are different objects with the same oid"
+  "Change a database instance from one schema & class to another. These are
+different objects with the same oid."
   (let ((sc (get-store current))
         (oid (oid current))
         (diff (schema-diff new-schema old-schema)))
@@ -514,10 +510,6 @@ equal comparison"))
   "Not needed, new slots are initialized above"
   (declare (ignore sc current previous recs))
   nil)
-
-(defgeneric temp-spec (type spec))
-(defgeneric delete-spec (type spec))
-(defgeneric copy-spec (type src dst))
 
 ;;; Classes
 (defgeneric recreate-instance (instance &rest initargs &key &allow-other-keys)

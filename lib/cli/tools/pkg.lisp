@@ -192,7 +192,7 @@
            :notmuch-show))
 
 (defpkg :cli/tools/sys
-  (:use :cl :std :cli/tools/proto :cli/env)
+  (:use :cl :std :cli/tools/proto :cli/env :ini)
   (:export :*systemctl* :run-systemd :run-systemctl
    :systemd-error :systemctl-stop
    :systemctl-start :systemctl-restart

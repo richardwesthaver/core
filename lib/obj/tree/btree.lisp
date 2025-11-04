@@ -440,15 +440,13 @@ map. This is safe as we don't revisit values during maps")
   (cursor-delete *current-cursor*))
 
 ;; The primary mapping function
-
 (defgeneric map-btree (fn btree &rest args &key start end value from-end collect &allow-other-keys)
-  (:documentation  "Map btree maps over a btree from the value start to the value of end. If
-values are not provided, then it maps over all values. BTrees do not have
-duplicates, but map-btree can also be used with indices in the case where you
-don't want access to the primary key so we require a value argument as well
-for mapping duplicate value sets. The collect keyword will accumulate the
-results from each call of fn in a fresh list and return that list in the same
-order the calls were made (first to last)."))
+  (:documentation  "Map over a btree from START to END. If values are not provided, then it maps
+over all values. BTrees do not have duplicates, but map-btree can also be used
+with indices in the case where you don't want access to the primary key so we
+require a value argument as well for mapping duplicate value sets. The collect
+keyword will accumulate the results from each call of fn in a fresh list and
+return that list in the same order the calls were made (first to last)."))
 
 (defun validate-map-call (start end)
   (unless (or (null start) (null end) (compare<= start end))
@@ -511,9 +509,9 @@ a set of cursor operation values or nil"
          (format t "Deserialization error in map: returning nil for element~%")
          nil))))
 
-;; NOTE: the use of nil for the last element in a btree only works because the C comparison
-;; function orders by type tag and nil is the highest valued type tag so nils are the last
-;; possible element in a btree ordered by value.
+;; NOTE: the use of nil for the last element in a btree only works because the
+;; C comparison function orders by type tag and nil is the highest valued type
+;; tag so nils are the last possible element in a btree ordered by value.
 (defmethod map-btree (fn (btree btree) &rest args &key start end (value nil value-set-p) 
                       from-end collect &allow-other-keys)
   (declare (ignorable args))
@@ -551,21 +549,17 @@ a set of cursor operation values or nil"
      :continue (or (null start) (compare>= key start))
      :step (cursor-prev cur))))
 
-
 ;; Special support for mapping indexes of a secondary btree
-
 (defgeneric map-index (fn index &rest args &key start end value from-end collect &allow-other-keys)
-  (:documentation "Map-index is like map-btree but for secondary indices, it
-   takes a function of three arguments: key, value and primary
-   key.  As with map-btree the keyword arguments start and end
-   determine the starting element and ending element, inclusive.
-   Also, start = nil implies the first element, end = nil implies
-   the last element in the index.  If you want to traverse only a
-   set of identical key values, for example all nil values, then
-   use the value keyword which will override any values of start
-   and end.  The collect keyword will accumulate the results from
-   each call of fn in a fresh list and return that list in the 
-   same order the calls were made (first to last)"))
+  (:documentation "Like map-btree but for secondary indices - takes a function of three
+arguments: key, value and primary key. As with map-btree the keyword arguments
+start and end determine the starting element and ending element,
+inclusive. Also, start = nil implies the first element, end = nil implies the
+last element in the index. If you want to traverse only a set of identical key
+values, for example all nil values, then use the value keyword which will
+override any values of start and end. The collect keyword will accumulate the
+results from each call of fn in a fresh list and return that list in the same
+order the calls were made (first to last)"))
 
 (defmacro with-map-index-collector ((fn collect-p) &body body)
   "Binds free var results to the collected results of function in

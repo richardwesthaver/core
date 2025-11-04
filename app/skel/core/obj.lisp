@@ -41,7 +41,7 @@
 ;; sxhash as a nonce for UUID
 ;; note that the sk-meta class does not inherit from skel or ast.
 ;;; Meta
-(defclass sk-meta ()
+(defclass sk-meta (project-metadata)
   ((name :initarg :name :initform nil :type (or null string) :accessor name)
    (path :initarg :path :initform nil :type (or null pathname) :accessor path)
    (author :initarg :author :accessor sk-author)

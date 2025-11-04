@@ -187,9 +187,9 @@ These tests are copied directly from the Alexandria test suite."
   (istype 'vector (std/comp::%asm '())))
 
 (deftest serde ()
-  (is= (core-type-id t) 3117)
+  (is= (type-id t) 3117)
   (is= (simple-type-id t) 12)
   (is= (simple-type-id #\c)
-       (ldb (byte 8 8) (core-type-id #\c)))
-  (isnt (= (core-type-id (make-array 42 :element-type 'character))
-           (core-type-id (make-array 0 :element-type 'base-char)))))
+       (ldb (byte 8 8) (type-id #\c)))
+  (isnt (= (type-id (make-array 42 :element-type 'character))
+           (type-id (make-array 0 :element-type 'base-char)))))

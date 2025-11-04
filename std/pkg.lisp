@@ -356,7 +356,7 @@
    :*simple-type-table* :*core-types*
    :*core-type-table* :register-type-id
    :reset-core-types :prim-type 
-   :core-type-id :simple-type-id))
+   :type-id :simple-type-id))
 
 (defpkg :std/string
   (:use :cl)

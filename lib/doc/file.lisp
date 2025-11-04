@@ -4,6 +4,9 @@
 
 ;;; Commentary:
 
+;; NOTE 2024-04-05: sb-impl::read-comment takes an 'ignore' second
+;; arg, but the return value is always ignored anyways?
+
 ;; As of [2024-04-04] we aren't considering any other files besides
 ;; Lisp source-code. We'll eventually open the door to other langs via
 ;; SYN, and finally integrate with other types of
@@ -51,24 +54,32 @@
 ;; are 'named' sections. 'Code:' is the only required named section,
 ;; so in the example above, we may exclude the 'Commentary:' section.
 
-;;;;; Headings
+;;;; Headings
 
-;; We define headings according to the Emacs notion of the term, as
-;; used in outline-mode and org-mode. As mentioned, headings in source
-;; files begin with a minimum of 3 comment characters. For each
-;; additional comment character, the nested 'level' of the heading is
-;; increased and any non-header elements or header elements with a
-;; level greater than the top-level are nested inside that heading.
+;; We define headings according to the Emacs notion of the term, as used in
+;; outline-mode, allout-mode, and org-mode. As mentioned, headings in source
+;; files begin with a minimum of 3 comment characters. 
+
+;; For each additional comment character in outline-mode, the nested 'level'
+;; of the heading is increased and any non-header elements or header elements
+;; with a level greater than the top-level are nested inside that heading.
+
+;; For allout-mode, All headings begin with 3 comment characters followed by
+;; an underscore. The level is indicated by how many spaces follow the
+;; underscore. A special heading bullet character designates the specific type
+;; of header. Se allout-mode's docs for details.
 
 ;; 3 comment headings represent a level of 0. Any heading with a level
 ;; > 0 is a Subheading. For example, we are in a subheading named
 ;; 'Headings' of level 2, inside a subheading of level 1, inside a
 ;; heading named 'Commentary'.
 
-;;; Notes:
+;;;; Ulang Comments
 
-;; NOTE 2024-04-05: sb-impl::read-comment takes an 'ignore' second
-;; arg, but the return value is always ignored anyways?
+;; Some comment blocks starts with a keyword followed by a timestamp and colon
+;; - these are known as 'ulang comments' which are similar to Org-mode inline
+;; tasks. The keyword is equivalent to a todo-state, the timestamp the CREATED
+;; property, and the remainder of the first line after the colon the title.
 
 ;;; Code:
 (in-package :doc)
@@ -79,7 +90,8 @@
 (defclass file-heading ()
   ((name :initarg :name :type string)
    (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))
-   (contents :initarg :contents :type string)))
+   (contents :initarg :contents :type string))
+  (:documentation "A heading according to Emacs outline-mode."))
 
 (defun heading-line-p (string)
   (uiop:string-prefix-p #.(make-string +min-file-heading-level+ :initial-element #\;) string))
@@ -102,6 +114,10 @@ stripped. Note that this level is NOT the same as the heading level."
     (make-instance 'file-heading :name name :level level :contents "")))
 
 (defun decomment (s) (string-left-trim "; " s))
+
+(defclass allout-heading (file-heading)
+  ((type :initarg :type :initform nil))
+  (:documentation "A heading according to Emacs allout-mode."))
 
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)

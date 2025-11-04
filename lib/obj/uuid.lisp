@@ -51,28 +51,44 @@ can be set to INTERNAL-TIME-UNITS-PER-SECOND")
 			   :initform 0))
   (:documentation "Represents an uuid"))
 
-(defun make-uuid-from-string (string)
-  "Creates an uuid from the string represenation of an uuid. (example input string 6ba7b810-9dad-11d1-80b4-00c04fd430c8)"
-  (unless (= (length string) 36)
-    (error "~@<Could not parse ~S as UUID: string representation ~
-has invalid length (~D). A valid UUID string representation has 36 ~
-characters.~@:>" string (length string)))
-  (unless (and (eq (aref string  8) #\-)
-	       (eq (aref string 13) #\-)
-	       (eq (aref string 18) #\-)
-	       (eq (aref string 23) #\-))
-    (error "~@<Could not parse ~S as UUID: positions 8, ~
-13, 18, 21 and 23 have to contain ~C (~A) characters.~@:>"
-	   string #\- (char-name #\-)))
-  (labels ((parse-block (string start end)
-	       (parse-integer string :start start :end end :radix 16)))
+(labels ((parse-block (string start end)
+           (parse-integer string :start start :end end :radix 16)))
+  (defun uuid-from-string (str)
+    "Parse a UUID without hyphen characters (32 chars in length)."
     (make-instance 'uuid
-		   :time-low      (parse-block string  0 8)
-		   :time-mid      (parse-block string  9 13)
-		   :time-high     (parse-block string 14 18)
-		   :clock-seq-var (parse-block string 19 21)
-		   :clock-seq-low (parse-block string 21 23)
-		   :node          (parse-block string 24 36))))
+      :time-low (parse-block str 0 8)
+      :time-mid (parse-block str 8 12)
+      :time-high (parse-block str 12 16)
+      :clock-seq-var (parse-block str 16 18)
+      :clock-seq-low (parse-block str 18 20)
+      :node (parse-block str 20 32)))
+  (defun make-uuid-from-string (string)
+    "Creates an uuid from the string representation of an uuid. (example input
+string 6ba7b810-9dad-11d1-80b4-00c04fd430c8).
+
+This function also accepts strings of length 32 where the hyphen separators
+are skipped."
+    (if (not (= (length string) 36))
+        (if (not (= (length string) 32))
+            (error "~@<Could not parse ~S as UUID: string representation ~
+has invalid length (~D). A valid UUID string representation has 36 ~
+characters.~@:>" string (length string))
+            (return-from make-uuid-from-string (uuid-from-string string)))
+        (progn
+          (unless (and (eq (aref string  8) #\-)
+	               (eq (aref string 13) #\-)
+	               (eq (aref string 18) #\-)
+	               (eq (aref string 23) #\-))
+            (error "~@<Could not parse ~S as UUID: positions 8, ~
+13, 18, 21 and 23 have to contain ~C (~A) characters.~@:>"
+	           string #\- (char-name #\-)))
+          (make-instance 'uuid
+            :time-low      (parse-block string  0 8)
+            :time-mid      (parse-block string  9 13)
+            :time-high     (parse-block string 14 18)
+            :clock-seq-var (parse-block string 19 21)
+            :clock-seq-low (parse-block string 21 23)
+            :node          (parse-block string 24 36))))))
 
 (defparameter +namespace-dns+ (make-uuid-from-string "6ba7b810-9dad-11d1-80b4-00c04fd430c8")
   "The DNS Namespace. Can be used for the generation of uuids version 3 and 5")

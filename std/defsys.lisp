@@ -672,8 +672,8 @@ calling any component ops."
     (if asdf 
         (asdf:load-system (name self) :verbose verbose :force force)
         (with-system-session (self)
-          (case (system-plan self)
-            (:sequential (mapc 'load-component (components self)))
+          (case (plan self)
+            ((or :serial nil) (mapc 'load-component (components self)))
             (t (nyi! "Unrecognized PLAN keyword"))))))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))

@@ -60,6 +60,7 @@
 ;;; Code:
 (in-package :obj/equiv)
 
+;; EQUALS < EQUIV < EQV
 (defgeneric equiv (a b)
   (:method ((a character) (b string))
     (and (= 1 (length b)) (char= (aref b 0) a)))

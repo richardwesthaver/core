@@ -1,6 +1,9 @@
-;;; default.el --- default config -*- lexical-binding: t -*-
+;;; default.el --- default config -*- lexical-binding: t; allout-layout: (0) -*-
+
+;; Core Emacs Defaults
+
 ;;; Code:
-;;; Settings
+;;;_ Settings
 (require 'util)
 (put 'upcase-region 'disabled nil)
 (put 'list-threads 'disabled nil)
@@ -11,7 +14,7 @@
  ;; tabs = bad (unless in makefile..)
  indent-tabs-mode nil
  make-backup-files nil
- auto-save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
+ save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
  tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
  dired-free-space nil
  mml-attach-file-at-the-end t
@@ -59,6 +62,7 @@
  consult
  embark-consult
  embark
+ auctex
  ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
  nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion
  nerd-icons-ibuffer
@@ -67,7 +71,7 @@
 (package-refresh-contents)
 (package-install-selected-packages t)
 
-;;; Treesitter
+;;;_ Treesitter
 
 ;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
 
@@ -83,7 +87,7 @@
 ;;              (directory-files "/usr/local/share/tree-sitter")))
 ;;            treesit-extra-load-path))))
 
-;;; Variables
+;;;_ Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
@@ -115,7 +119,7 @@
   (require 'skel)
   (require 'c2))
 
-;;; Env
+;;;_ Env
 (require 'exec-path-from-shell)
 (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
                                       "SSH_AUTH_SOCK"
@@ -140,7 +144,7 @@
 (add-to-list 'exec-path "/usr/local/bin/")
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
-;;; Util
+;;;_ Util
 ;;;###autoload
 (defun edit-emacs-config (&optional src)
   (interactive (list current-prefix-arg))
@@ -149,7 +153,7 @@
 		user-custom-file)))
     (find-file file)))
 
-;;; Completions
+;;;_ Completions
 (use-package marginalia :ensure t
   :config (marginalia-mode))
 ;; avoid obsolete warnings about if-let -> if-let* etc
@@ -205,25 +209,25 @@
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
 
-;;; Desktop
+;;;_ Desktop
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
 
-;;; Multisession
+;;;_ Multisession
 (setq multisession-storage 'sqlite)
 
-;;; Kill Ring
+;;;_ Kill Ring
 (kill-ring-deindent-mode)
 
-;;; VC
+;;;_ VC
 ;; use rhg, fallback to hg. see hgrc
 (if (file-exists-p "~/.local/bin/rhg")
     (setq hg-binary "~/.local/bin/rhg"))
 
-;;; Dired
+;;;_ Dired
 (setq dired-dwim-target t
       dired-free-space 'separate)
 
-;;; Speedbar
+;;;_ Speedbar
 (require 'speedbar)
 (setq speedbar-sort-tags t
       speedbar-prefer-window t
@@ -231,7 +235,7 @@
 
 (add-hook 'speedbar-after-create-hook 'turn-on-hide-mode-line-mode)
 
-;;; Projects
+;;;_ Projects
 (setopt  project-list-file (expand-file-name "projects" user-emacs-directory)
          project-mode-line t
          project-file-history-behavior 'relativize)
@@ -249,10 +253,10 @@
   (interactive)
   (project-remember-projects-under company-source-directory t))
 
-;;; Tabs
+;;;_ Tabs
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
-;;; Lisp
+;;;_ Lisp
 (use-package company :ensure t)
 (require 'slime "slime")
 (defvar core-lisp-program "/usr/local/bin/core")
@@ -435,7 +439,7 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 (add-hook 'lisp-mode-hook 'slime-cape-enable)
 (add-hook 'slime-repl-mode-hook 'slime-cape-enable)
 
-;;; Eglot
+;;;_ Eglot
 ;; (with-eval-after-load 'eglot
 ;;   (unless (package-installed-p 'eglot-x)
 ;;     (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x")))
@@ -446,36 +450,36 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 ;;                    ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
 ;;     (eglot-x-setup)))
 
-;;; Asm
+;;;_ Asm
 (require 'x86-lookup "x86-lookup")
 (setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf")
 (use-package nasm-mode :ensure t)
 (add-hook 'asm-mode-hook 'nasm-mode)
 
-;;; Rust
+;;;_ Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)
 
 (setq rust-rustfmt-switches nil
       rust-indent-offset 2)
 
-;;; Python
+;;;_ Python
 (setq python-indent-offset 2)
 (add-hook 'python-mode-hook 'eglot-ensure)
 
-;;; Javascript
+;;;_ Javascript
 (setq js-indent-level 2
       css-indent-offset 2)
 
-;;; Bash
+;;;_ Bash
 (setq sh-basic-offset 2)
 
-;;; Graphviz
+;;;_ Graphviz
 ;; (use-package graphviz-dot-mode
 ;;   :ensure t
 ;;   :config
 ;;   (setq graphviz-dot-indent-width 2))
 
-;;; Comments
+;;;_ Comments
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
@@ -594,7 +598,7 @@ specified by `prog-comment-timestamp-format-verbose'."
 (setq hexl-bits 8)
 (setq tab-width 4)
 
-;;; Keyboard Macros
+;;;_ Keyboard Macros
 (defun toggle-macro-recording ()
   (interactive)
   (if defining-kbd-macro
@@ -607,7 +611,7 @@ specified by `prog-comment-timestamp-format-verbose'."
       (end-kbd-macro)
     (call-last-kbd-macro)))
 
-;;; Registers
+;;;_ Registers
 ;; - additional register vtypes: buffer
 (defun decrement-register (number register)
   "Subtract NUMBER from the contents of register REGISTER.
@@ -646,7 +650,7 @@ Interactively, NUMBER is the prefix arg."
 ;;   (cond
 ;;    (t (cl-call-next-method val delete))))
 
-;;; Outlines
+;;;_ Outlines
 (defun outline-hook (&optional rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
   (when rx (setq-local outline-regexp rx))
@@ -676,7 +680,12 @@ Interactively, NUMBER is the prefix arg."
                (html-mode)
                (skel-mode))
 
-;;; Scratch
+;; Activate allout in prog buffers
+(require 'allout)
+(setq allout-auto-activation t
+      allout-widgets-auto-activation t)
+
+;;;_ Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
   "Default major mode for new scratch buffers"
   :group 'default
@@ -759,7 +768,7 @@ buffer."
     (insert initial-scratch-message)
     (lisp-interaction-mode)))
 
-;;; Shell
+;;;_ Shell
 (defun set-no-process-query-on-exit ()
   (let ((proc (get-buffer-process (current-buffer))))
     (when (processp proc)
@@ -768,7 +777,7 @@ buffer."
 (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
 (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
 
-;;; Eshell
+;;;_ Eshell
 (defun eshell-new()
   "Open a new instance of eshell."
   (interactive)
@@ -828,7 +837,7 @@ buffer."
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
 
-;;; Eww
+;;;_ Eww
 (setopt
  browse-url-browser-function 'eww
  eww-auto-rename-buffer 'title
@@ -891,17 +900,15 @@ Add this function to appropriate major mode hooks such as
 (add-hook 'eww-mode-hook 'shr-heading-setup-imenu)
 (add-hook 'eww-mode-hook (lambda () (define-key eww-mode-map "i" shr-heading-map)))
 
-;;; ERC
-
-;;; Tramp
+;;;_ Tramp
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
         tramp-default-host "localhost")
 
-;;; Imenu
+;;;_ Imenu
 ;; (use-package imenu-list :ensure t)
 
-;;; Org
+;;;_ Org
 (require 'org)
 (require 'org-agenda)
 (require 'org-id)
@@ -1012,6 +1019,9 @@ Add this function to appropriate major mode hooks such as
                            (format "%s" ts-minute-start))
                          "+"
                          effort)) )))
+
+(with-eval-after-load "preview"
+    '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
 (setopt org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
         org-latex-image-default-width "8cm"
@@ -1597,16 +1607,16 @@ EXT is a list of the extensions of files to be included."
      files)
     files))
 
-;;; Dictionary
+;;;_ Dictionary
 (setq dictionary-server "compiler.company"
       switch-to-buffer-obey-display-actions t)
 
-;;; Ispell
+;;;_ Ispell
 ;; requires aspell and a hunspell dictionary (hunspell-en_us)
 (setq-default ispell-program-name "hunspell")
 (add-hook 'mail-send-hook  #'ispell-message)
 
-;;; Skel
+;;;_ Skel
 (require 'skel)
 (require 'skt)
 

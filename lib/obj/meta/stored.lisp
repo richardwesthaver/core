@@ -19,7 +19,7 @@
 
 (defvar *default-store* nil)
 
-(deftype oid () 'word)
+(deftype oid () '(unsigned-byte 64))
 (deftype cid () '(unsigned-byte 32))
 
 ;;; MOP
@@ -89,7 +89,7 @@ STORE is reserved for a special method which operates on stored objects.")
    (%store-schemas :accessor %store-schemas :initarg :store-schemas :initform nil)
    (%class-indexing :accessor %class-indexing :initarg :index :initform t)
    (%cache-style :accessor %cache-style :initarg :cache-style :initform nil))
-  (:documentation "Superclass for all stored objects."))
+  (:documentation "Superclass for all stored classes."))
 
 (defmethod get-class-schema (self) (slot-value self '%class-schema))
 (defmethod set-class-schema (self value)
@@ -115,11 +115,6 @@ STORE is reserved for a special method which operates on stored objects.")
 
 (defun migrate-class-index-p (class)
   (get-class-indexing class))
-
-(defmethod has-class-schema-p ((class stored-class))
-  (and (get-class-schema class)
-       (eq (class-name (class-of (get-class-schema class)))
-           'stored-schema)))
 
 (defmethod find-slot-defs-by-type ((class stored-class) type &optional (by-subtype t))
   (let ((slot-defs (class-slots class)))
@@ -467,7 +462,7 @@ STORE is reserved for a special method which operates on stored objects.")
            (error "Can only specify initargs for association slots storing single instances of another class"))
           (derived-p
            (find-class 'derived-index-direct-slot-definition))
-          (indexed-p 
+          (indexed-p
            (find-class 'indexed-direct-slot-definition))
           (set-valued-p
            (find-class 'set-valued-direct-slot-definition))

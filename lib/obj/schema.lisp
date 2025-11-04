@@ -460,15 +460,6 @@ gets updated when the class changes."))
            (funcall fn instance)))))
 
 ;;; Macros
-(defun list-to-fields (fields)
-  "FIELDS is assumed to be a list of lists where each element is of the form:
-(name type &keys)"
-  (make-array (length fields)
-              :element-type 'field
-              :initial-contents
-              (loop for f in fields
-                    collect (make-field :name (string-downcase (pop f)) :type (pop f)))))
-
 (eval-always
   (defun class-default-fields (c)
     (let ((class (find-class c)))
@@ -477,7 +468,15 @@ gets updated when the class changes."))
           (funcall fn)
           (when-let ((form (cadr def)))
             (compile-and-eval form)))
-        (fields (make-instance c))))))
+        (fields (make-instance c)))))
+  (defun list-to-fields (fields)
+    "FIELDS is assumed to be a list of lists where each element is of the form:
+(name type &keys)"
+    (make-array (length fields)
+                :element-type 'field
+                :initial-contents
+                (loop for f in fields
+                      collect (make-field :name (string-downcase (pop f)) :type (pop f))))))
   
 (defmacro defschema (name super fields &rest options)
   "Define a new schema. DIRECT-SUPERCLASSES is the base SCHEMA class to inherit

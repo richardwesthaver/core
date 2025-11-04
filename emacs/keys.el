@@ -137,7 +137,7 @@
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 
-;;; MPC
+;;;_. MPC
 (defun mpc-mark ()
   "Mark mpc song at point and move to next line."
   (interactive)
@@ -156,7 +156,7 @@
   (keymap-set mpc-mode-map "m" 'mpc-mark)
   (keymap-set mpc-mode-map "1" 'mpc-playlist))
 
-;;; Modes
+;;;_. Modes
 (add-hook
  'conf-toml-mode-hook
  (lambda ()
@@ -167,19 +167,20 @@
 (keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
 
-;;; C-x
+(keymap-set allout-mode-map "C-c SPC m" #'allout-mark-topic)
+
+;;;_. C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)
 
-;;; C-x r
+;;;_ . C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)
 (keymap-set ctl-x-r-map "C-l" #'list-registers)
 (keymap-set ctl-x-r-map "C-b" #'buffer-to-register)
 (keymap-set ctl-x-r-map "C-f" #'file-query-to-register)
 (keymap-set ctl-x-r-map "C-r" #'copy-register)
+;;;_ . C-x x
 
-;;; C-x x
-
-;;; Global
+;;;_. Global
 (keymap-global-set "C-c c" user-map)
 (keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
 (keymap-global-set "<XF86Paste>" parens-map)

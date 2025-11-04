@@ -73,7 +73,7 @@
 (defpackage :skel/core/obj
   (:use :cl :std :obj
         :skel/core/proto :skel/core/int
-        :skel/core/header :vc :log :config :id :ast)
+        :skel/core/header :vc :log :config :id :ast :project)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
   (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user :sk-version
    :sk-store :sk-push :sk-pull :sk-include

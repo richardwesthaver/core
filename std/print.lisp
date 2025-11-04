@@ -50,7 +50,7 @@ be produced by `sxhash'."
       (lambda (x) (format nil "~{~(~2,'0x~)~}" x))
       (group r 2)))))
 
-;;; Trees
+;;;_. Trees
 
 ;; from https://gist.github.com/WetHat/9682b8f70f0241c37cd5d732784d1577
 
@@ -180,7 +180,7 @@ be produced by `sxhash'."
                      (float (/ number (ash 1 size)))
                      unit))))
 
-;;; MOP
+;;;_. MOP
 (defvar *print-slot-indent* 0)
 
 (defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
@@ -235,7 +235,7 @@ be produced by `sxhash'."
       (describe-slot (string k) v 30 stream))
     (force-output stream)))
 
-;;; Drawing
+;;;_. Drawing
 
 ;; These bits of lovely code are sourced from here:
 ;; https://github.com/whalliburton/academy/blob/87a1a13ffbcd60d8553e42e647c59486c761e8cf/drawing.lisp
@@ -332,7 +332,7 @@ be produced by `sxhash'."
                    (aref bitmap y (1- width)) t)))
   (values))
 
-;;; Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
+;;;_ , Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
 (defun draw-circle (x-center y-center radius &optional (bitmap *bitmap*))
   (labels ((pixel (x y) (set-pixel (+ x-center x) (+ y-center y) bitmap))
            (draw-points (x y)
@@ -419,10 +419,6 @@ be produced by `sxhash'."
     (let ((mid (floor size 2)))
       (draw-filled-circle mid mid (1- mid))
       (draw))))
-
-;;; Attention Hackers! Exercises are good for the soul.
-;;;
-;;;    Someone with the desire could expand PEACE to draw peace symbols of any size.
 
 (defun peace ()
   "Peace on Earth."
@@ -541,7 +537,7 @@ be produced by `sxhash'."
       (princ "└") (print-times columns "─") (princ "┘")
       (fresh-line))))
 
-;;; Box
+;;;_. Box
 ;; TODO 2025-04-04: 
 ;; APL Box Formatting (Dyalog)
 (sb-int:defconstant-eqx +lead-axis-markers+ "⌽↓⍒" #'string=)
@@ -597,7 +593,7 @@ STYLE indicates the level of decoration to apply to the output:
     #  object
     +  t")
 
-;;; Mumble
+;;;_. Mumble
 (defvar *mumble-timestamp* t)
 
 (deffmt fmt-time "~D:~2,'0D:~2,'0D.~3,'0D")
@@ -623,7 +619,7 @@ STYLE indicates the level of decoration to apply to the output:
     (force-output stream)
     (values)))
 
-;;; Print Tables
+;;;_. Print Tables
 
 ;; Common Lisp provides the ability to bind and modify the
 ;; *PRINT-PPRINT-DISPATCH* variable to achieve dynamic pretty printing based
