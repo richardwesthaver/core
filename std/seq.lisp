@@ -824,7 +824,7 @@ associated priority vector."
                   (aref prio-vector 0) old-prio))
           (heapify-downwards data-vector prio-vector (priority-queue-size queue))))))
 
-(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t) initial-element extend)
+(defun make-priority-queue (capacity &key initial-contents prioritize (element-type t) initial-element (extend t))
   "Make a new PRIORITY-QUEUE with specified CAPACITY."
   (let ((queue (%make-priority-queue
                 :data (make-array capacity :element-type element-type :initial-element initial-element)
@@ -937,12 +937,17 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
   "Queue type spec."
   '(or cons-queue vector-queue raw-queue basic-queue priority-queue spin-queue))
 
-(defun make-queue (&key capacity initial-contents prioritize initial-element (element-type t))
+(defun make-queue (&key capacity initial-contents prioritize initial-element (element-type t) extend)
   "Make a new queue."
   (cond 
     ((and capacity (not prioritize)) (make-vector-queue capacity :initial-contents initial-contents :initial-element initial-element))
     ((not prioritize) (make-cons-queue :initial-contents initial-contents))
-    (prioritize (make-priority-queue (or capacity *default-priority-queue-size*) :initial-contents initial-contents :prioritize prioritize :initial-element initial-element :element-type element-type))))
+    (prioritize (make-priority-queue (or capacity *default-priority-queue-size*) 
+                                     :initial-contents initial-contents 
+                                     :prioritize prioritize 
+                                     :initial-element initial-element 
+                                     :element-type element-type
+                                     :extend (or extend capacity)))))
 
 (defun call-with-cons-queue-lock (fn queue)
   "Call FN with a lock on QUEUE."

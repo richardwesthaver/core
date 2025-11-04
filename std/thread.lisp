@@ -494,11 +494,15 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
   `(let ((*default-special-bindings* ,bindings))
      ,@body))
 
-;; TODO 2024-10-03: pause/resume
+;; TODO 2024-10-03: pause/resume 
+
 (declaim (inline kill-worker join-worker start-worker run-worker))
 (defun start-worker (worker &rest args)
   (with-default-special-bindings (worker-bind worker)
     (sb-thread::start-thread (worker-thread worker) (kernel worker) args)))
+
+;; TODO 2025-11-03: should we abuse the initialization protocol more? want a
+;; queue of 'next worker ids' to submit work to in a reverse-priority fashion.
 
 (defun run-worker (worker &key bind wait)
   (when bind
@@ -534,7 +538,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
     (remove th *worker-threads* :test 'thread=)
     (join-thread th)))
 
-;; from pool
+;; called from pool
 (defun send-worker-start (worker)
   (assert (sb-concurrency:open-gate (slot-value worker '%rx)) nil "Failed to start worker ~A" worker))
 
@@ -544,7 +548,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
     (:exit :exit)
     (:error (error 'kernel-init-error))))
 
-;; from worker
+;; called from worker
 (defun receive-worker-start (worker)
   ;; (print-top-level (format nil "worker ~A starting...~%" (worker-index worker)))
   (let ((gate (slot-value worker '%rx)))
@@ -600,8 +604,8 @@ WORKER threads."))
     :initarg :low-priority-work))
   (:documentation "A biased scheduler with an additional spin-queue for 'low priority' work."))
 
-(defun make-scheduler (workers spin-count)
-  (make-instance *scheduler-class* :workers workers :spin-count spin-count))
+(defun make-scheduler (workers spin-count &optional (class *scheduler-class*))
+  (make-instance class :workers workers :spin-count spin-count))
 
 (defmacro with-pop-success (sym queue &body body)
   (with-gensyms (presentp)
@@ -616,7 +620,7 @@ WORKER threads."))
   (values))
 
 (defmacro with-mutex-p ((mutex predicate &key (wait-p t) timeout) &body body)
-  ;; intentially eval PREDICATE twice
+  ;; eval PREDICATE twice!
   `(when ,predicate
      (with-mutex (,mutex :wait-p ,wait-p :timeout ,timeout)
        (when ,predicate
@@ -918,7 +922,8 @@ and execution of concurrent work using a pool of 'worker' threads."))
 					   (kernel *pool-kernel*)
                                            enlist
                                            (class 'thread-pool)
-                                           (worker-class *worker-class*))
+                                           (worker-class *worker-class*)
+                                           (scheduler-class *scheduler-class*))
   "Create a THREAD-POOL with WORKER-COUNT number of available worker threads.
 
 NAME is an EQL-unique identifier associated with the thread-pool in
@@ -951,7 +956,7 @@ worker threads in certain situations."
 	           :kernel *pool-kernel*
                    :alive alive
                    :workers workers
-	           :scheduler (make-scheduler workers spin-count)
+	           :scheduler (make-scheduler workers spin-count scheduler-class)
 	           :limiter-count (initial-limiter-count count)
 	           :limiter-lock (make-mutex :name "limiter"))))
       (fill-workers workers pool)

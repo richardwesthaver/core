@@ -132,7 +132,11 @@ Tasks are _currently_ funcallable kernels.."))
   (run-job worker self))
 
 ;;; Task Scheduler
-(defclass task-scheduler (biased-scheduler) ())
+(defclass task-scheduler (biased-scheduler) ()
+  (:documentation "Similar to the BIASED-SCHEDULER this class inherits from, instances of this
+class contain a primary queue and secondary queue. Instead of the abstract
+term 'work' the elements of our queue which are passed between workers are
+TASKs."))
 
 ;;; Task Pool
 (defclass task-pool (thread-pool) ())
