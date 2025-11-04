@@ -1,4 +1,4 @@
-;;; std/os.lisp --- OS interop
+;;; std/os.lisp --- OS interop -*- allout-layout: (0) -*-
 
 ;; OS-specific bits.
 
@@ -211,6 +211,25 @@ arrange for FVAR to be closed after BODY."
     (unless (null args)
       (std/list:doplist (k v) args
         (setf (xdg-dir k) v)))))
+
+(defun xdg-config-directory (name)
+  (when-let ((p (merge-pathnames name (xdg-dir :config-home))))
+    (directory-path p)))
+
+(defun xdg-config-file (name)
+  "Attempt to find an xdg config file for NAME for searching for a match in this order: 
+- ~/.config/NAMErc 
+- ~/.config/NAME.*
+- ~/.config/NAME/NAMErc
+- ~/.config/NAME/NAME.*"
+  (let ((xdg-files (std/path:directory-files (xdg-dir :config-home)))
+        (our-files (std/path:directory-files (xdg-config-directory name)))
+        (rc-name (concatenate 'string name "rc")))
+    (flet ((.find (x y) (find x y :key 'pathname-name :test 'string-equal)))
+      (or (.find rc-name xdg-files)
+          (.find name xdg-files)
+          (.find rc-name our-files)
+          (.find name our-files)))))
 
 ;;;_ user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))

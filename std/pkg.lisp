@@ -1340,6 +1340,8 @@
    :*xdg-dir-table*
    :xdg-dir
    :init-xdg-dirs
+   :xdg-config-file
+   :xdg-config-directory
    :termios
    :winsize
    :isatty

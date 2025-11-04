@@ -1,4 +1,4 @@
-;;; default.el --- default config -*- lexical-binding: t; allout-layout: (0) -*-
+;;; default.el --- default config -*- lexical-binding:t -*-
 
 ;; Core Emacs Defaults
 
@@ -684,6 +684,7 @@ Interactively, NUMBER is the prefix arg."
 (require 'allout)
 (setq allout-auto-activation t
       allout-widgets-auto-activation t)
+(add-hook 'prog-mode-hook 'allout-mode)
 
 ;;;_ Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode

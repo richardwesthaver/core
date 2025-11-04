@@ -168,6 +168,7 @@
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
 
 (keymap-set allout-mode-map "C-c SPC m" #'allout-mark-topic)
+(keymap-set allout-mode-map "C-c SPC s" #'allout-show-current-subtree)
 
 ;;;_. C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)
