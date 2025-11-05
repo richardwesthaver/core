@@ -1,4 +1,4 @@
-;;; keys.el --- emacs keys -*- lexical-binding: t -*-
+;;; keys.el --- emacs keys -*- lexical-binding: t; -*-
 
 ;; default keybinds
 

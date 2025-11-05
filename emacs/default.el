@@ -682,9 +682,9 @@ Interactively, NUMBER is the prefix arg."
 
 ;; Activate allout in prog buffers
 (require 'allout)
-(setq allout-auto-activation t
-      allout-widgets-auto-activation t)
-(add-hook 'prog-mode-hook 'allout-mode)
+(setopt allout-auto-activation t
+	allout-default-layout '(0)
+	allout-widgets-auto-activation t)
 
 ;;;_ Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode

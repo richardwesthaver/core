@@ -221,6 +221,12 @@
 units should be either :px (the default) or :%."
   (split-directive :transform (format nil "translate(~a~a, ~a~a)" x units y units)))
 
+(defun blur (x &optional (units :px))
+  "Takes an x value and returns CSS3 blur element.
+
+UNITS should be either :px (the default) or :%."
+  (format nil "blur(~a~(~a~))" x units))
+
 (defun matrix (&rest 6-numbers)
   "Takes six numbers and uses them to build a CSS3 transformation matrix directive"
   (split-directive :transform (format nil "matrix(~{~a~^,~})" 6-numbers)))
@@ -278,7 +284,11 @@ units should be either :px (the default) or :%."
 
 ;;; format
 (defun format-selector (s)
-  (if (stringp s) s (string-downcase s)))
+  (typecase s
+    (string s)
+    (vector (format nil "~{~(~A~)~^, ~}" (coerce s 'list)))
+    (cons (format nil "~{~(~A~)~^ ~}" s))
+    (t (string-downcase s))))
 
 (defun format-declaration-value (v)
   (typecase v
@@ -304,7 +314,8 @@ units should be either :px (the default) or :%."
          (format nil "~(~A~): ~A;" 
                  k 
                  (format-declaration-value (apply (car v) (cdr v))))
-         (concatenate 'string (string-downcase k) " { " (format-declarations-list v) "}")))))
+
+         (concatenate 'string (format nil "~{~(~A~)~^ ~}:" k) " { " (format-declarations-list v) "}")))))
 
 (defun format-declarations-list (list-of-declarations)
   (apply #'concatenate 
@@ -332,8 +343,11 @@ units should be either :px (the default) or :%."
 
 (defun compile-css (file-path directives)
   (ensure-directories-exist file-path)
-  (with-open-file (stream file-path :direction :output :if-exists :supersede :if-does-not-exist :create) 
+  (with-open-file (stream file-path :direction :output :if-exists :supersede)
     (format stream (css directives))))
 
 (definline compile-css-file (input output)
-  (dat/css:compile-css output (read-lisp-file input)))
+  (dat/css:compile-css 
+   output 
+   (with-safe-io-syntax (:dat/css)
+     (read-lisp-file input))))

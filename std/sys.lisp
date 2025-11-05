@@ -4,30 +4,41 @@
 
 ;;; Code:
 (in-package :std/sys)
-
+(std-int:in-readtable :std)
 ;;; System Paths
 ;; These paths may be rebound based on application context.
 (defvar *stash* (merge-pathnames ".stash/" (user-homedir-pathname)))
 (defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
+
+(defun find-stash-directory (&optional (path *default-pathname-defaults*))
+  "Find the closest STASH directory - first check local, then user, then
+global."
+  (or (probe-file (make-pathname :name ".stash/" :defaults path))
+      (probe-file #l"USER:STASH;")
+      (probe-file #l"STASH:")))
+
+(definline stash-pathname (path)
+  (let ((stash (find-stash-directory (or (pathname-directory path) *default-pathname-defaults*))))
+    (make-pathname :name (pathname-name path) :type (pathname-type path) :defaults stash)))
+
+(defun find-store-directory (&optional (path *default-pathname-defaults*))
+  "Find the closest STORE directory - first check local, then local stash, then
+user, then
+global."
+  (or (probe-file (make-pathname :name ".store/" :defaults path))
+      (probe-file (make-pathname :name ".stash/store/" :defaults path))
+      (probe-file #l"USER:STORE;")
+      (probe-file #l"STORE:")))
+
+(definline store-pathname (path)
+  (let ((store (find-stash-directory (or (pathname-directory path) *default-pathname-defaults*))))
+    (make-pathname :name (pathname-name path) :type (pathname-type path) :defaults store)))
 
 (definline primitive-type-name-of (obj)
   (primitive-type-name (primitive-type-of obj)))
 
 (defun backend-primitive-type (name)
   (gethash name *backend-primitive-type-names*))
-
-;;; Introspection
-;; (reexport-from :sb-introspect
-;; 	       :include '(:function-lambda-list :lambda-list-keywords :lambda-parameters-limit
-;; 			  :method-combination-lambda-list :deftype-lambda-list
-;; 			  :primitive-object-size :allocation-information
-;; 			  :function-type
-;; 			  :who-specializes-directly :who-specializes-generally
-;; 			  :find-function-callees :find-function-callers))
-
-;; sys
-;; sb-sys:*linkage-info* *machine-version* *runtime-dlhandle* *periodic-polling-function*
-;; *periodic-polling-period* io-timeout nlx-protect serve-event os-deinit os-exit with-deadline dlopen-or-lose deallocate-system-memory
 
 (defvar *interactive* t
   "When non-nil (the default) specifies that this is an interactive REPL session

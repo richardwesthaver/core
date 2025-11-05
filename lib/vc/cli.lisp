@@ -15,7 +15,9 @@
   (vc-pull *repo* (car *args*)))
 
 (defcmd vc-push-cmd ()
-  (vc-push *repo* (car *args*)))
+  (if *args*
+      (apply 'vc-push *repo* :remote (car *args*))
+      (vc-push *repo*)))
 
 (defcmd vc-addremove-cmd ()
   (apply 'vc-addremove *repo* *args*))

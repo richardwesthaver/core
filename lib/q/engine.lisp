@@ -9,8 +9,7 @@
 
 ;;; Code:
 (in-package :q/proto)
-
-;;; Vars
+;;;_* Variables
 (defvar *query-engine*)
 (deftype query-dialect-designator () `(member :sql :dql :simple))
 (declaim (query-dialect-designator *query-dialect*))
@@ -33,3 +32,10 @@
   (exec
    (make-physical-plan
     (optimize-query self plan))))
+
+;;;_. Config
+(defconfig query-config () 
+  (dialect workers init))
+
+(defmethod make-config ((self (eql :query)) &rest args)
+  (apply 'make-instance 'query-config args))

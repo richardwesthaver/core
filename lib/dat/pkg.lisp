@@ -168,6 +168,7 @@
    :parse-css-fragment
    :px :em :% :ch
    :vw :vh
+   :blur
    :inline-css
    :css
    :compile-css

@@ -169,10 +169,16 @@ default values unless overwritten at runtime:
 :ACCESSOR
 
 The following additional options are supported:
-:METHOD - define methods with default bindings
-:SER - serializer
-:DE - deserializer
-:KERNEL"
+:METHOD - specify methods with default bindings
+:SER - serializer slot specification
+:DE - deserializer slot specification
+:SERIALIZE - define a serizlier
+:DESERIALIZE - define a deserializer
+:HOOK - hook slot specification
+:COPY - COPY-OBJECT method definition
+:KERNEL - make this a kernel (funcallable) class
+:VERB - define verb methods
+:TYPE-ID - register a type-id for instances of this class"
   `(defclass ,name ,direct-superclasses 
      ,(mapcar 
        (lambda (x) 
@@ -248,9 +254,11 @@ definitions."
 ;; I don't use this much, but it is quite handy.
 ;; ref: https://fare.livejournal.com/189741.html
 
-;; in this case we just pull the version from UIOP
+;; in this case we just pull the version from UIOP.
+
+;; Thanks to mbaringer
 (defmacro nest (&rest things)
-  "Macro to keep code nesting and indentation under control." ;; Thanks to mbaringer
+  "Macro to keep code nesting and indentation under control." 
   (reduce #'(lambda (outer inner) `(,@outer ,inner))
           things :from-end t))
 

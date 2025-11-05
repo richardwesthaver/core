@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :q/proto
   ;; (:nicknames :query)
-  (:use :cl :std :ast :schema :id :srv)
+  (:use :cl :std :ast :schema :id :srv :config :val)
   (:export 
    :query
    :query-engine

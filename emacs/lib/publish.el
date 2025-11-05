@@ -370,7 +370,7 @@ If given a prefix (C-u), set all args to t"
   (org-publish-project "index" force t)
   (org-publish-project "meta" force t)
   (update-sitemap)
-  (dolist (p '("plan" "blog" "docs" "graph"))
+  (dolist (p '("plan" "blog" "docs" "graph" "notes"))
     (org-publish-project p force t))
   (org-export-stack))
 
@@ -388,6 +388,14 @@ If given a prefix (C-u), set all args to t"
   (funcall (plist-get info :html-format-drawer-function)
 	   (org-element-property :drawer-name drawer)
 	   contents))
+
+(defun org-format-buffer ()
+  (interactive)
+  (org-archive-all-done)
+  (org-align-all-tables)
+  (org-align-tags t)
+  (org-remove-redundant-tags)
+  (org-id-add-to-headlines-in-file))
 
 (provide 'publish)
 ;;; publish.el ends here

@@ -81,9 +81,8 @@
         ("2" "current-task-checkbox" checkitem (clock) "%i%?")
         ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
         ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
-        ("l" "log" item (file+headline "log.org" "log") "%U %?" :prepend t)
-        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)
-        ("N" "note-item" plain (file+function "notes.org" org-ask-location) "%?")))
+        ("l" "log" item (org-ask-location) "%U %?" :empty-lines 1)
+        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)))
 
 (add-hook 'org-after-todo-state-change-hook #'org-id-get-create)
 (add-hook 'org-after-todo-state-change-hook #'org-expiry-insert-created)
@@ -122,6 +121,7 @@
 (defun org-sort-todo-priority ()
   "Sorting function used by `org-sort' to sort by todo order
     followed by priority. Returns a pair of numbers (TODO . PRIO)."
+  (interactive)
   (let* ((elt (cadr (org-element-at-point)))
          (todo (when-let* ((kw (plist-get elt :todo-keyword)))
                  (when (stringp kw)
@@ -208,6 +208,7 @@
       (org-inbox-show-config-buffer (current-buffer) beginning parameters))))
 
 ;;; ui
+;; org-inbox-dashboard?
 (defun org-inbox-show-config (&optional buffer position parameters)
   (interactive)
   (switch-to-buffer org-inbox-config-buffer-name)

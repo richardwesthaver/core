@@ -51,8 +51,9 @@
    #:*skel-store*
    #:*skel-cache*
    #:*skel-path*
-   #:*user-skelrc*
    #:*system-skelrc*
+   #:*user-skelrc*
+   #:user-skelrc
    #:*skel-data*
    #:*default-skel-bindings*
    #:*skel-project-functions*

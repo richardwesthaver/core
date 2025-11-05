@@ -1,14 +1,14 @@
 ;;; Utils
 (in-package :skel/core/util)
 ;;; Configs
-
+(defun user-skelrc () (std:xdg-config-file :skel))
 ;; init-*,load-*
-(defun load-skelrc (&optional (usr-path *user-skelrc*) (sys-path *system-skelrc*))
+(defun load-skelrc (&optional (usr-path (user-skelrc)) (sys-path *system-skelrc*))
   (values
    (load-system-skelrc sys-path)
    (load-user-skelrc usr-path)))
 
-(defun init-user-skelrc (&optional (file *user-skelrc*))
+(defun init-user-skelrc (&optional (file (user-skelrc)))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
   (sk-write-file (make-instance 'sk-user-config)
@@ -22,8 +22,9 @@
                  :path file
                  :pretty t))
 
-(defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
-  "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
+(defun load-user-skelrc (&optional (file (user-skelrc)) (init t))
+  "Load a user-skelrc configuration from FILE. Defaults to the result of
+USER-SKELRC.
 
 If FILE does not exists, it is created with a default configuration."
   (flet ((%load () 
@@ -113,7 +114,7 @@ skelfile if found."
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."
-  (ed *user-skelrc*))
+  (ed (user-skelrc)))
 
 (defun edit-system-skelrc ()
   "Open the current system configuration using ED."
@@ -183,7 +184,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-LOGGER*
 ASDF:*USER-CACHE*"
     (init :xdg)
-    (setq *user-skelrc* (merge-pathnames "skelrc" (std:xdg-dir :config-home)))
+    (setq *user-skelrc* (user-skelrc))
     (%init setq))
   (defun setf-skel-vars () (%init setf)))
 

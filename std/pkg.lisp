@@ -792,7 +792,11 @@
    :lisp-object-info
    ;; system paths
    :*stash*
-   :*store*))
+   :*store*
+   :find-stash-directory
+   :stash-pathname
+   :find-store-directory
+   :store-pathname))
 
 (defpkg :std/bit
   (:use :cl)

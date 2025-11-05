@@ -345,9 +345,41 @@
    #:col-stride
    #:tensor-square-matrixp))
 
+(defpkg :obj/ast
+  (:nicknames :ast)
+  (:use :cl :std :std/seq)
+  (:export :ast 
+   :build-ast :load-ast 
+   :load-ast* :*ast*
+   :wrap :unwrap
+   :unwrap-or :form
+   :formp :unwrap-object
+   :wrap-object :expr
+   :literal-expr :unary-expr
+   :binary-expr :lhs
+   :rhs :physical-expr
+   :logical-expr :node
+   :defnode :defstmt
+   :stmt :defexpr
+   :traverse :op
+   :*ast-dispatch-table* :write-ast
+   :read-ast
+   :with-ast :call-with-ast
+   :debug-traverser :copy-traverser
+   :*keep-ast* :syntax-error
+   :syntax-warning :syntax-condition
+   :invalid-ast))
+
+(defpkg :obj/config
+  (:nicknames :config)
+  (:use :cl :std :ast)
+  (:export :config :make-config :find-config
+   :config-find :config-get :defconfig
+   :load-config))
+
 (defpkg :obj/color
   (:nicknames :color)
-  (:use :cl :std)
+  (:use :cl :std :config)
   (:export
    #:color #:alpha
    #:rgb #:red #:green #:blue #:gray
@@ -484,38 +516,6 @@
   (:nicknames :build)
   (:use :cl :std)
   (:export :build :build-from))
-
-(defpkg :obj/ast
-  (:nicknames :ast)
-  (:use :cl :std :std/seq)
-  (:export :ast 
-   :build-ast :load-ast 
-   :load-ast* :*ast*
-   :wrap :unwrap
-   :unwrap-or :form
-   :formp :unwrap-object
-   :wrap-object :expr
-   :literal-expr :unary-expr
-   :binary-expr :lhs
-   :rhs :physical-expr
-   :logical-expr :node
-   :defnode :defstmt
-   :stmt :defexpr
-   :traverse :op
-   :*ast-dispatch-table* :write-ast
-   :read-ast
-   :with-ast :call-with-ast
-   :debug-traverser :copy-traverser
-   :*keep-ast* :syntax-error
-   :syntax-warning :syntax-condition
-   :invalid-ast))
-
-(defpkg :obj/config
-  (:nicknames :config)
-  (:use :cl :std :ast)
-  (:export :config :make-config :find-config
-   :config-find :config-get :defconfig
-   :load-config))
 
 (defpkg :obj/schema
   (:nicknames :schema)

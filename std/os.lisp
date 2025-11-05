@@ -222,6 +222,7 @@ arrange for FVAR to be closed after BODY."
 - ~/.config/NAME.*
 - ~/.config/NAME/NAMErc
 - ~/.config/NAME/NAME.*"
+  (unless (stringp name) (setf name (string-downcase name)))
   (let ((xdg-files (std/path:directory-files (xdg-dir :config-home)))
         (our-files (std/path:directory-files (xdg-config-directory name)))
         (rc-name (concatenate 'string name "rc")))

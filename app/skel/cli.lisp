@@ -99,7 +99,7 @@
 (defcmd skc-id ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
-(defopt skc-config (load-user-skelrc (or *arg* *user-skelrc*) nil))
+(defopt skc-config (load-user-skelrc (or *arg* (user-skelrc)) nil))
 
 (defcmd skc-edit ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))

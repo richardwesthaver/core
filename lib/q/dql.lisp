@@ -85,7 +85,7 @@
 (defvar *leash-output* (make-synonym-stream '*trace-output*))
 
 ;; from GAMBOL
-(defvar *interactive* t
+(defvar *interactive-query* t
   "non-nil iff interacting with user")
 (defvar *auto-backtrack* nil
   "return all solutions if non-nil")
@@ -301,7 +301,7 @@ of the predicate. On success returns the arity or T for varargs."
 (defmacro ?- (&body goals)
   "Enter the interactive DQL execution context, attempting to solve for
 GOALS."
-  `(let ((*interactive* t)
+  `(let ((*interactive-query* t)
          (*auto-backtrack* nil))
      (dql-solve ,goals)))
 

@@ -109,6 +109,17 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :version skel-version
   (keymap-local-set skel-map-prefix skel-map))
 
+(defun project-try-skel (dir)
+  (when (or (file-exists-p (join-paths dir "skelfile"))
+	    (directory-files dir nil "^.*[.]sk"))
+    (let ((res (project-try-vc--search dir)))
+      (when res 
+	(vc-file-setprop dir 'project-vc res)
+	(setf (car res) 'skel))
+      (append res (list dir)))))
+
+(add-hook 'project-find-functions 'project-try-skel)
+
 (defun skel-indent-region (start end)
   "Indent region as a SKEL S-expression."
   (save-excursion
@@ -145,23 +156,6 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   "Check the current environment and determine if `skel-minor-mode' should
 be enabled. This function is added as a hook to
 `lisp-data-mode-hook'.")
-
-(defvar skel-table (make-hash-table :test #'equal)
-  "Internal table of available skeletons.")
-
-(defcustom skel-state 'passive
-  "State toggle for the `skel' system. Base states are passive and
-active."
-  :type 'symbol
-  :group 'skel)
-
-(defvar skel-active-map nil
-  "List of cons cells of the form (SYM . BODY...) where SYM is a member of
-`skel-triggers'.")
-
-(defvar skel-passive-map nil
-  "list of cons cells of the form (SYM . BODY...) where SYM is a member of
-`skel-triggers'.")
 
 (defmacro make-id (&optional pre)
   `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
@@ -201,11 +195,18 @@ DOC, and NAME."
 (add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
 (add-to-list 'auto-mode-alist '("\\.sk" . skel-mode))
 (add-to-list 'auto-mode-alist '("\\.sys" . skel-mode))
+(add-to-list 'auto-mode-alist '("\\.sxp" . skel-mode))
+(add-to-list 'auto-mode-alist '("skelrc" . skel-mode))
+(add-to-list 'auto-mode-alist '("\\.skelrc" . skel-mode))
 
-(defun project-skelfile-path (&optional project)
+(cl-defmethod project-root ((project (head skel)))
+  (caddr project))
+
+(defun project-skelfile (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current
 directory and returns name of skelfile. When PROJECT is T uses
 `project-current'."
+  (interactive)
   (let* ((dir (unless (eql t project) (expand-file-name (or project default-directory))))
          (project-root (project-root (project-current nil dir))))
     (or
@@ -226,7 +227,7 @@ directory and returns name of skelfile. When PROJECT is T uses
 
 (defun read-skelfile-bind (&optional project)
   "Open PROJECT's skelfile and return the :bind form."
-  (let ((buffer (find-file-noselect (project-skelfile-path project))))
+  (let ((buffer (find-file-noselect (project-skelfile project))))
     (with-current-buffer buffer
       (goto-char (point-min))
       (goto-char (search-forward-regexp (rx bol ":bind" (* space))))

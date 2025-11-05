@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;; loosely based on Anathema by contrapunctus, a CL theme library for CLIM
-;; applications
+;; applications.
 
 ;; Styles loosely correspond to Emacs 'faces', will perhaps serve as a basis
 ;; for a 'presentation' class.

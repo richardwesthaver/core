@@ -78,17 +78,17 @@ and MAKE-CLI :CMD respectively."
                                                          :cmds ,(make-cmds cmds)))
        ,@(when package `((load-package-cli ,%name :package ,package))))))
 
+;; (defmacro defcli ())?
+
 (defmacro defmain (name (&key (exit t) (debug t)) &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
     `(let ((*no-exit* ,(not exit))
            (*no-debug* ,(not debug)))
        (defun ,name ()
-         ,(or docs "Run the top-level function and print to *STDOUT*.")
+         ,(or docs (format nil "Run the top-level function in package ~A." (package-name *package*)))
          ,@decls
-         (with-cli-handlers
-           (progn
-             ,@body))))))
+         (with-cli-handlers ,@body)))))
 
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
@@ -151,7 +151,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 (deftype cli-hook-designator () '(or boolean :after))
 
 ;; TODO 2025-06-13: call-with-cli
-
+;; (defwith
 (defmacro with-cli ((cli &key slots (args *args*) (install t) run exit)  &body body)
   "Like with-slots with some extra bindings.
 

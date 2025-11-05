@@ -608,8 +608,6 @@
       (:kw (string-case ((sql-token-text tok))
              ("FROM"
               (setf table (parse-expression self))
-              ;; TODO 2024-06-29: 
-              ;; parse optional WHERE
               (let ((next (car (sql-tokens self))))
                 (when next
                   (when (string-equal "WHERE" (sql-token-text next))

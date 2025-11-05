@@ -97,6 +97,9 @@
       (setf input (open file :direction :input :element-type 'octet)
             (slot-value obj 'file) file))))
 
+(defgeneric filter (self data selection)
+  (:documentation "Early definition, used by the QUERY protocol."))
+
 (defclass filter (element) ()
   (:documentation "Superclass of filter elements."))
 (defmethod print-object ((obj filter) stream)
