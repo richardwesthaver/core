@@ -25,10 +25,14 @@
           (lambda (x)
             (funcall test item x)))
         (typecase item
-          ((or number character)
+          (integer
            (lambda (x)
-             (declare (optimize (speed 3) (safety 0)))
-             (eql item x)))
+             (declare (optimize (speed 3) (safety 0)) (integer x) (integer item))
+             (= item x)))
+          (character
+           (lambda (x)
+             (declare (optimize (speed 3) (safety 0)) (character x) (character item))
+             (char= item x)))
           (otherwise
            (lambda (x)
              (declare (optimize (speed 3) (safety 0)))
