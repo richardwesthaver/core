@@ -463,6 +463,7 @@ work is done by sb-vm:hexdump in the interesting cases."
   (list 
    :type (type-of obj)
    :type-class (std/type:type-class-name-of obj)
+   :type-id (std/type:type-id obj)
    :prim-type (primitive-type-name-of obj)
    :alloc (sb-ext:heap-allocated-p obj)))
 

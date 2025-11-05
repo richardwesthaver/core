@@ -18,6 +18,9 @@
 (in-package :obj/meta/stored)
 
 (defvar *default-store* nil)
+(defvar *store* nil)
+;; support for swapping out multiple stores? compatibility matrix?
+(defvar *stores* nil)
 
 (deftype oid () '(unsigned-byte 64))
 (deftype cid () '(unsigned-byte 32))
@@ -60,7 +63,7 @@ not."
   (:documentation "Get the store associated with SELF. We prefix this accessor with GET- because
 STORE is reserved for a special method which operates on stored objects.")
   (:method ((self t))
-    *default-store*))
+    *store*))
 
 (defgeneric stored-slot-reader (sc instance name &optional oids-only)
   (:documentation 

@@ -123,6 +123,29 @@ the primary."
 lookup, updating ALL other secondary indices."
   (delete-key (get-primary-key key bt) (primary bt)))
 
+(defun make-btree (&optional (st *store*))
+  "Constructs a new BTree instance for use by the user.  Each backend
+   returns its own internal type as appropriate and ensures that the 
+   btree is associated with the store that created it."
+  (build-btree st))
+
+(defun make-indexed-btree (&optional (sc *store*))
+  "Constructs a new indexed BTree instance for use by the user.
+   Each backend returns its own internal type as appropriate and
+   ensures that the btree is associated with the store
+   that created it."
+  (build-indexed-btree sc))
+
+;;; Dup Btrees
+(defclass dup-btree (btree) ())
+
+(defgeneric build-dup-btree (store)
+  (:documentation 
+   "Construct a btree of the appropriate type corresponding to this store."))
+
+(defun make-dup-btree (&optional (store *store*))
+  (build-dup-btree store))
+
 ;;; Cursor
 (defclass cursor ()
   ((oid :accessor cursor-oid :type fixnum :initarg :oid)

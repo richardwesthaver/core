@@ -389,6 +389,8 @@ function: '(ql:quickload :clouseau)'."
   (plet (as let))
   (defwarning (as define-condition))
   (make-db (as make-instance))
+  (make-schema (as make-instance))
+  (make-simple-schema (as make-instance))
   (make-palette (as defpackage))
   (define-package (as defpackage))
   (walk-directory 1)

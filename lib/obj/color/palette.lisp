@@ -51,8 +51,14 @@
     (setf (gethash name *color-palettes*) *palette*)
     *palette*))
 
+(defun remove-palette (name)
+  "Remove a palette by NAME from *COLOR-PALETTES*."
+  (remhash name *color-palettes*))
+
 (definline find-palette (name)
   (gethash name *color-palettes*))
+
+(defwith palette (name) (*palette* (find-palette name)))
 
 (defun parse-x11-palette (&key
                           (input #.(asdf:system-relative-pathname :core ".stash/rgb.txt"))

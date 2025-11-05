@@ -180,7 +180,7 @@ SCHEMA."
   (build-ast self))
 
 (defun make-schema (&rest fields)
-  (make-instance 'schema :fields (coerce fields 'vector)))
+  (make-instance 'schema :fields (coerce fields 'field-vector)))
 
 (defun make-fields (&rest fields)
   "Coerce a plist of the form :NAME TYPE into a FIELD-VECTOR."

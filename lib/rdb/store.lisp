@@ -19,11 +19,11 @@
     :columns (make-array 0 :element-type 'rdb-column-family
                            :adjustable t
                            :fill-pointer t)
-    ;; :instance-table (make-instance 'rdb-column-family :type '(oid . cid))
-    ;; :instance-class-index (make-instance 'rdb-column-family :type '(cid . oid))
+    :instance-table (make-instance 'rdb-column-family :type '(oid . cid))
+    :instance-class-index (make-instance 'rdb-column-family :type '(cid . oid))
     ;; :root
-    ;; :schema-table (make-hash-table :size 100 :weakness :value)
-    ;; :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
+    :schema-table (make-hash-table :size 100 :weakness :value)
+    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
     ;; :index-table
     ;; :instance-table
     ;; :instance-class-index
@@ -34,7 +34,7 @@ serialized object schemas."))
 (defmethod build-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
 
-;; (build-btree (make-instance 'rdb-store))
+;; (build-btree (make-instance 'rdb-store :name "/tmp/foo"))
 
 (defun rdb-store-spec-p (spec)
   (and (eq (first spec) :rdb)

@@ -59,6 +59,16 @@
                            (print-hex-rgb rgb :destination t))))
     (is (rgb= rgb (parse-hex-rgb "foo#123456zzz" :start 3 :end 10) 0.001))))
 
+(deftest palette ()
+  (istype 'hash-table (make-palette :foo))
+  (istype 'hash-table (find-palette :foo))
+  (remove-palette :foo)
+  (isnt (find-palette :foo))
+  (with-palette :modus-operandi
+    (is (obj/color::rgb= (rgb 0 0 0) (get-color :fg-main)))))
+
+(deftest theme (:todo t))
+
 ;;; Id
 (deftest ids ()
   (is (= (reset-id t) (reset-id '(1 2 3))))
@@ -80,7 +90,7 @@
 
 (deftest btree (:skip t)
   ;; FIX 2025-02-27: 
-  (is (make-instance 'btree:btree :store (make-instance 'store))
+  (is (make-instance 'btree:btree :store (default-store))))
 
 ;;; Graphs
 (deftest basic-graph ()
@@ -161,6 +171,9 @@
 (deftest url ()
   (is (equal (url-encode "/fooあ") (url-encode (url-decode "%2Ffoo%E3%81%82")))))
 
+(deftest project ()
+  (istype 'simple-project (make-project (gensym))))
+
 ;;; Store
 (defclass test-store (store) ())
 (deftest store ())
@@ -170,3 +183,11 @@
 
 ;;; Cache
 (deftest simple-cache ())
+
+;;; Schema
+(deftest simple-schema ()
+  (let ((s (schema:make-simple-schema "foobar"
+             (make-field :name :foo :type 'string)
+             (make-field :name :bar :type 'octet-vector))))
+    (istype 'simple-schema s)
+    (is= 2 (length (fields s)))))

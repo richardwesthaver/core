@@ -168,11 +168,34 @@ Delete and return the old edges of NODE in GRAPH."))
     :initarg :edges))
   (:documentation "generic graph object."))
 
+(defmethod equiv ((a graph) (b graph))
+  (and (= (length (nodes a)) (length (nodes b)))
+       (= (length (edges a)) (length (edges b)))
+       (loop for n1 in (nodes a)
+             for n2 in (nodes b)
+             if (not (equiv n1 n2))
+             return nil
+             finally (return t))))
+
 (defclass simple-graph (graph) ()
   (:default-initargs 
    :nodes (make-hash-table :test 'equal)
    :edges (make-hash-table :test 'edge-equalp)))
-  
+
+(defmethod equiv ((a simple-graph) (b simple-graph))
+  (and (= (hash-table-count (nodes a)) (hash-table-count (nodes b)))
+       (= (hash-table-count (edges a)) (hash-table-count (edges b)))
+       (loop for n1 in (hash-table-values (nodes a))
+             for n2 in (hash-table-values (nodes b))
+             if (not (equal n1 n2))
+             return nil
+             finally (return t))
+       (loop for e1 in (hash-table-values (edges a))
+             for e2 in (hash-table-values (edges b))
+             if (not (edge-equalp e1 e2))
+             return nil
+             finally (return t))))
+       
 (defmethod copy-object ((graph graph))
   (make-instance (type-of graph) :nodes (copy-object (nodes graph)) :edges (copy-object (edges graph))))
 

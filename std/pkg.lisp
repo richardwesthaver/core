@@ -657,7 +657,7 @@
   (:import-from :sb-sys :int-sap :find-foreign-symbol-address)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header 
-   :*show-fops-p*)
+   :*show-fops-p* :load-as-fasl)
   (:use-reexport :sb-cltl2)
   (:recycle :sb-assem)
   (:recycle :sb-ext)
@@ -690,6 +690,7 @@
    :open-fasl-output :close-fasl-output
    :check-fasl-header
    :check-fasl-file-header
+   :load-as-fasl
    :featurep
    :*show-fops-p*
    :make-unbound-marker

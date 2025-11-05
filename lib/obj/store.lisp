@@ -16,36 +16,6 @@
 ;;; Code:
 (in-package :obj/store)
 
-(defparameter *store* obj/meta/stored::*default-store*)
-
-;; support for swapping out multiple stores? compatibility matrix?
-(defvar *stores* nil)
-
-;; TODO 2024-12-05: eradicate direct usage of BTrees. otherwise why do we need
-;; RocksDB eh?
-(defun make-btree (&optional (st *store*))
-  "Constructs a new BTree instance for use by the user.  Each backend
-   returns its own internal type as appropriate and ensures that the 
-   btree is associated with the store that created it."
-  (build-btree st))
-
-(defun make-indexed-btree (&optional (sc *store*))
-  "Constructs a new indexed BTree instance for use by the user.
-   Each backend returns its own internal type as appropriate and
-   ensures that the btree is associated with the store
-   that created it."
-  (build-indexed-btree sc))
-
-;;; Dup Btrees
-(defclass dup-btree (btree) ())
-
-(defgeneric build-dup-btree (store)
-  (:documentation 
-   "Construct a btree of the appropriate type corresponding to this store."))
-
-(defun make-dup-btree (&optional (store *store*))
-  (build-dup-btree store))
-
 ;;; Stored Set
 ;; default implementation of simple sets using btrees
 (defclass pset (stored-collection) ()
@@ -624,7 +594,12 @@ should not override the default behavior.")
 stored btree instance with a unique OID that persists between sessions. No
 cache is needed because we cache in the class slots.")
    (serializer :accessor serializer :initform nil)
-   (deserializer :accessor deserializer :initform nil)))
+   (deserializer :accessor deserializer :initform nil))
+  (:documentation "Base class for all STOREs. The role of a STORE is similar to an ORM in the
+sense that it supports querying and modification of persistent CLOS objects
+via database access. A STORE maintains a collection of tables and a btree. It
+supports the STORED metaprotocol implemented by STORED-OBJECT instances. See
+DEFSCLASS for the available class-specific options in the generic interface."))
 
 (defmethod print-object ((self store) stream)
   (print-unreadable-object (self stream :type t)
@@ -662,13 +637,25 @@ cache is needed because we cache in the class slots.")
     (delete-key oid table)
     (setf (get-value oid table) cid)))
 
+(define-condition missing-stored-instance (simple-condition)
+   ((oid :initarg :oid :accessor error-oid)
+    (spec :initarg :spec :accessor error-spec)))
+
+(defun missing-stored-instance (oid spec)
+  (cerror "Return a proxy object"
+          'missing-stored-instance
+          :format-control "Instance with OID ~A is not stored in ~A"
+          :format-arguments (list oid spec)
+          :oid oid
+          :spec spec))
+
 (defmethod get-instance-class ((st store) oid &optional classname)
   "Get the class object using the oid or using the provided classname"
   (when classname
     (return-from get-instance-class (find-class classname)))
   (let ((cid (oid->schema-id oid st)))
     (unless cid
-      (signal-missing-instance oid (spec st))
+      (missing-stored-instance oid (spec st))
       (return-from get-instance-class (find-class 'stored-object)))
     (get-schema-id-class st cid)))
 
@@ -678,18 +665,6 @@ cache is needed because we cache in the class slots.")
        (find-class it)
        (let ((schema (get-store-schema st cid)))
          (values (find-class (schema-class-name schema)) schema))))
-
-(define-condition missing-stored-instance (simple-condition)
-   ((oid :initarg :oid :accessor error-oid)
-    (spec :initarg :spec :accessor error-spec)))
-
-(defun signal-missing-instance (oid spec)
-  (cerror "Return a proxy object"
-          'missing-stored-instance
-          :format-control "Instance with OID ~A is not stored in ~A"
-          :format-arguments (list oid spec)
-          :oid oid
-          :spec spec))
 
 (defmethod store-recreate-instance ((st store) oid &optional classname)
   "Called by the deserializer to return an instance"

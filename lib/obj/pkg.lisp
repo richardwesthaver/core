@@ -394,7 +394,8 @@
    #:parse-hex-rgb #:print-hex-rgb
    :*palette* :palette :base-color-key :find-palette
    :*color-palettes* :base-color-palette-p :get-color :style 
-   :make-palette :theme))
+   :make-palette :theme :with-palette :call-with-palette
+   :remove-palette))
 
 (defpkg :obj/time
   (:nicknames :time)
@@ -750,6 +751,7 @@
    #:btree
    #:drop-btree
    #:make-indexed-btree
+   #:make-btree
    #:build-indexed-btree
    #:indexed-btree
    #:build-btree
