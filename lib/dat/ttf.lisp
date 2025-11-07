@@ -237,8 +237,8 @@ element in the vector."
 
 (defclass table-info ()
   ((name :initarg :name :reader name)
-   (offset :initarg :offset :reader io::offset)
-   (size :initarg :size :reader io::size)))
+   (offset :initarg :offset :reader offset)
+   (size :initarg :size :reader size)))
 
 (defmethod print-object ((object table-info) stream)
   (print-unreadable-object (object stream :type t)
@@ -2546,9 +2546,9 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
   (string-equal "ttf" (pathname-type pathname)))
 
 (defvar *font-dirs* 
-  (list "/usr/share/fonts/" 
+  (list "/usr/share/fonts/"
         (namestring (merge-pathnames ".fonts/" (user-homedir-pathname))))
-    "List of directories, which contain TrueType fonts.")
+    "List of directories which contain TrueType fonts.")
 
 (defparameter *font-cache* (make-hash-table :test 'equal)
   "Hashmap for caching font families, subfamilies and files.")
@@ -2566,7 +2566,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
           (unless exists-p
             (setf (gethash (family-name font) *font-cache*)
                   hash-table))))
-    (condition () (return-from cache-font-file))))
+    (condition (c) (return-from cache-font-file (warn c)))))
 
 (defun cache-fonts ()
   "Caches fonts from *font-dirs* directories."
@@ -2577,6 +2577,9 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
                       (dolist (f (directory-files x))
                         (when (ttf-pathname-p f)
                           (cache-font-file f)))))))
+
+(defmethod init ((self (eql :ttf)) &key)
+  (cache-fonts))
 
 (defun get-font-families ()
   "Returns cached font families."

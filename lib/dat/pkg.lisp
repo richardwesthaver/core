@@ -328,7 +328,7 @@
 
 (defpkg :dat/ttf
   (:nicknames :ttf)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :dat/proto :io)
   (:export
    ;; font-cache
    :*font-cache*
