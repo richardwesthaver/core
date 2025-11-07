@@ -3,12 +3,12 @@
 ;;; Configs
 (defun user-skelrc () (std:xdg-config-file :skel))
 ;; init-*,load-*
-(defun load-skelrc (&optional (usr-path (user-skelrc)) (sys-path *system-skelrc*))
+(defun load-skelrc (&optional (usr-path *user-skelrc*) (sys-path *system-skelrc*))
   (values
    (load-system-skelrc sys-path)
    (load-user-skelrc usr-path)))
 
-(defun init-user-skelrc (&optional (file (user-skelrc)))
+(defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
 *SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
   (sk-write-file (make-instance 'sk-user-config)
@@ -22,9 +22,8 @@
                  :path file
                  :pretty t))
 
-(defun load-user-skelrc (&optional (file (user-skelrc)) (init t))
-  "Load a user-skelrc configuration from FILE. Defaults to the result of
-USER-SKELRC.
+(defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
+  "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
 
 If FILE does not exists, it is created with a default configuration."
   (flet ((%load () 
@@ -190,8 +189,6 @@ ASDF:*USER-CACHE*"
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
 (defmethod init ((self (eql :skel)) &key) (init-skel))
-
-(defun list-all-projects ())
 
 (defun project-root (&optional (project *skel-project*))
   (or (when project (sk-src project)) *default-pathname-defaults*))

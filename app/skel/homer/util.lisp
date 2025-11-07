@@ -5,9 +5,9 @@
 ;;; Code:
 (in-package :skel/homer/core)
 
-(defun homer-user-init ()
-  (setq *user-homerc* (merge-homedir-pathnames ".homerc")
-        *log-level* :info))
+(defmethod init ((self (eql :homer)) &key)
+  (init* :skel :krypt)
+  (setq *user-homerc* (xdg-config-file "homerc")))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))
 (defun ctime (path) (sb-posix:stat-ctime (sb-posix:stat path)))
@@ -31,9 +31,9 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
   (let ((form (compare-home-file file)))
     (case (car form)
       ;; confirm with user
-      (:new (println (format nil ":NEW ~A" (cdr form))))
-      (:pull (println (format nil ":PULL ~A" (cadr form))))
-      (:push (println (format nil ":PUSH ~A" (cddr form))))
+      (:new (println (format nil "~&:NEW ~A" (cdr form))))
+      (:pull (println (format nil "~&:PULL ~A" (cadr form))))
+      (:push (println (format nil "~&:PUSH ~A" (cddr form))))
       (t nil))))
 
 (defun homer-copy (input output)

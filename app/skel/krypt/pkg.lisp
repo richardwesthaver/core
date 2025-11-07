@@ -20,8 +20,8 @@
 ;;; Code:
 
 (defpackage :skel/krypt
-  (:use :cl :std :cry :cry/b3 :id :ast :config :secret :cli :clap :cry/ssh :cry/gpg)
-  (:export :krypt-error :*default-user-kryptrc* :krypt-config 
+  (:use :cl :std :cry :cry/crc64 :id :ast :config :secret :cli :clap :cry/ssh :cry/gpg)
+  (:export :krypt-error :*user-kryptrc* :krypt-config 
    :load-kryptrc :*krypt-directory*
    :krypt-error :simple-krypt-error
    :init-krypt :krypt-condition

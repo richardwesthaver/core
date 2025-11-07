@@ -41,10 +41,12 @@ uninitialized with non-nil :ast slots.")
 (defun skel-config-directory () (merge-pathnames "skel/" (std:xdg-dir :config-home)))
   
 (declaim (pathname *skel-stash* *skel-store*
-               *skel-cache* *system-skelrc*))
+                   *skel-cache* *system-skelrc* 
+                   *user-skelrc*))
 (defvar *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
 (defvar *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
 (defvar *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
 (defvar *skel-data* (merge-homedir-pathnames ".stash/skel/data/"))
 (defvar *skel-path* *default-pathname-defaults*)
 (defvar *system-skelrc* (pathname "/etc/skelrc"))
+(defvar *user-skelrc*)

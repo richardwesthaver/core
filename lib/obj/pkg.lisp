@@ -13,10 +13,10 @@
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=)))
 
 ;;; Internals
-(defpkg :obj/val                 
-  (:nicknames :val)              
-  (:use :cl :std)                
-  (:export :get-val :get-value)) 
+(defpkg :obj/val
+  (:nicknames :val)
+  (:use :cl :std)
+  (:export :get-val :rem-val :get-value))
 
 ;;; Meta Packages
 (defpkg :obj/meta/stealth
@@ -364,18 +364,18 @@
    :traverse :op
    :*ast-dispatch-table* :write-ast
    :read-ast
-   :with-ast :call-with-ast
-   :debug-traverser :copy-traverser
-   :*keep-ast* :syntax-error
-   :syntax-warning :syntax-condition
-   :invalid-ast))
+           :with-ast :call-with-ast
+           :debug-traverser :copy-traverser
+           :*keep-ast* :syntax-error
+           :syntax-warning :syntax-condition
+           :invalid-ast))
 
 (defpkg :obj/config
   (:nicknames :config)
   (:use :cl :std :ast)
   (:export :config :make-config :find-config
    :config-find :config-get :defconfig
-   :load-config))
+           :load-config))
 
 (defpkg :obj/color
   (:nicknames :color)

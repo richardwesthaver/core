@@ -6,7 +6,7 @@
 (in-package :skel/krypt)
 
 ;;; Vars
-(defparameter *kryptrc* (merge-pathnames ".kryptrc" (user-homedir-pathname)))
+(defvar *user-kryptrc*)
 (defvar *krypt-directory* (merge-pathnames ".stash/krypt/" (user-homedir-pathname)))
 (defvar *krypt-key-directory* (merge-pathnames "key/" *krypt-directory*))
 (defvar *krypt-token-directory* (merge-pathnames "token/" *krypt-directory*))
@@ -56,24 +56,33 @@
 
 (defmethod build-ast ((self krypt-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
-         (unwrap-object self
-                        :slots t
-                        :methods nil
-                        :nullp nullp
-                        :exclude exclude)))
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude)))
 
-(defun load-kryptrc (&optional (file *kryptrc*))
-  "Load a krypt configuration from FILE. Defaults to ~/.kryptrc."
+(defun load-kryptrc (&optional (file *user-kryptrc*))
+  "Load a krypt configuration from FILE. Defaults to *USER-KRYPTRC*."
   (unless (not (probe-file file))
     (let ((form (file-read-forms file)))
       (load-ast (make-instance 'krypt-config :ast form :path file :id (sxhash form))))))
 
+(defmethod make-config ((self (eql :krypt)) &rest args)
+  (apply 'make-instance 'krypt-config args))
+  
 (defun init-krypt ()
   "Initialize the global KRYPT environment:
 
 *KRYPT-USER-CONFIG*"
-  (mapc 'ensure-directories-exist 
+  (setq *user-kryptrc* (xdg-config-file "kryptrc"))
+  (mapc 'ensure-directories-exist
         (list *krypt-directory* *krypt-net-directory*
               *krypt-token-directory* *krypt-password-directory*))
   (setq *krypt-user-config* (load-kryptrc))
   (values))
+
+(defmethod init ((self (eql :krypt)) &key)
+  (init :xdg)
+  (init-crc64 +improved-polynomial+)
+  (init-krypt))

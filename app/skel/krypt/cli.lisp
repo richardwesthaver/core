@@ -5,12 +5,12 @@
 ;;; Code:
 (in-package :skel/krypt)
 
-(defcmd b3-cmd ()
-  "Call B3SUM on a file or B3HASH-STRING on a string."
+(defcmd hash-cmd ()
+  "Return the CRC64 value of a file or string."
   (let ((in (car *args*)))
     (if (probe-file in)
-        (println (b3sum in))
-        (println (b3hash-string in)))))
+        (println (crc64-file in))
+        (println (crc64-sequence in)))))
 
 (defcmd krypt-show ()
   (init-krypt)

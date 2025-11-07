@@ -28,7 +28,7 @@
    (pods :initform nil :initarg :pod :type list)
    (services :initform nil :initarg :services :type list :accessor services)))
 
-(defmethod make-config ((self (eql :home)) &rest args)
+(defmethod make-config ((self (eql :homer)) &rest args)
   (apply 'make-instance 'home-config args))
 
 (defmethod print-object ((self home-config) stream)

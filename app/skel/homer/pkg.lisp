@@ -20,7 +20,6 @@
    #:homer-maybe-push
    #:homer-maybe-pull
    #:homer-maybe-install
-   :homer-user-init
    #:homer-task
    #:*homer-logger*
    #:home-config

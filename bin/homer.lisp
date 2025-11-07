@@ -10,7 +10,7 @@
 
 (defun run ()
   (in-package :skel/homer)
-  (homer-user-init)
+  (init* :xdg :homer)
   (load-homerc)
   (with-cli (*homer-cli* :args (args))
     (do-cmd *cli*)

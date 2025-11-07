@@ -14,6 +14,36 @@
   (:auto t)
   (:default-initargs :reason "GET-VAL does not handle this type of object. Specialize your own method."))
 
+(defgeneric rem-val (object element &key)
+  (:documentation "Remove the value ELEMENT from OBJECT returning T if it was present and NIL otherwise.")
+  (:method (object element &rest args &key data-type test &allow-other-keys)
+    (macrolet ((.check (&body body)
+                 (with-gensyms (l) 
+                   `(let ((,l (length object))) 
+                      ,@body
+                      (= (length object) ,l)))))
+      (when object
+        (typecase object
+          (hash-table (remhash element object))
+          (array
+           (.check (setf object (apply 'remove element object args))))
+           (standard-object (slot-makunbound object element))
+           (t
+            (if data-type
+                (progn
+                  (remf args :data-type)
+                  (cond 
+                    ((equal 'alist data-type)
+                     (.check (setf object 
+                                   (apply 'remove (assoc element object :test (or test #'equal)) object args))))
+                    ((equal 'plist data-type)
+                     (remf object element))
+                    (t
+                     (value-error object))))
+                (if (listp object)
+                    (.check (setf object (apply 'remove element object args)))
+                    (value-error object)))))))))
+
 (defgeneric get-val (object element &key)
   (:documentation "Returns the value in a object based on the supplied element name and possible
 type hints.")
