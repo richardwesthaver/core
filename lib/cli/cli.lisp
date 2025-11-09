@@ -22,8 +22,16 @@
    :defcmd :defopt
    :*argc* :*args* :*optc* :*opts* 
    :args :arg0
-   :getopt :find-opt
-   :*cli* :define-cli)
+   :getopt :setopt
+   :find-opt
+   :*cli* :define-cli
+   :defmain :with-cli
+   :do-cmd :do-opt
+   :load-package-cli
+   :defcmd :defopt
+   :defopts :argp
+   :cmds :opts
+   :help-opt :version-opt :level-opt :keep-ast-opt)
   (:use-reexport . #.cli-int:*cli-clap-packages*))
 
 (defpkg :cli-user 

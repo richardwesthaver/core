@@ -1,12 +1,12 @@
 ;;; uring.asd-*- mode: lisp; -*-
-(require 'sb-grovel)
+;; (require 'sb-grovel)
 (defpackage :uring.sys
   (:use :cl :asdf :sb-grovel :sb-alien))
 
 (in-package :uring.sys)
 
 (defsystem :uring
-  :depends-on (:sb-grovel :std :obj)
+  :depends-on (:std :obj)
   :serial t
   :components ((:file "pkg")
                (grovel-constants-file "constants"

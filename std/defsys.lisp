@@ -42,7 +42,7 @@
 (defvar *defining-system* nil
   "When non-nil, indicates the name of the system currently being defined.")
 
-(defvar *asdf-compatibility* nil
+(defvar *asdf-compatibility* t
   "When non-nil, enable compatibility between STD/DEFSYS and SYSTTEM - component
 operations will use ASDF and DEFSYS will first pass all argument to
 ASDF:DEFSYSTEM.")
@@ -646,10 +646,11 @@ calling any component ops."
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
-  (:method ((self t) &key (default :error))
+  (:method ((self t) &key default (asdf t))
     (multiple-value-bind (val found) (gethash (keywordicate (string-upcase self)) *system-table*)
       (cond
         (found (values val found))
+        (asdf (asdf:find-system self (eql default :error)))
         ((eql default :error) (simple-system-error "System ~A not found." self))
         ((functionp default) (funcall default))
         (t default)))))
@@ -675,9 +676,11 @@ calling any component ops."
           (case (plan self)
             ((or :serial nil) (mapc 'load-component (components self)))
             (t (nyi! "Unrecognized PLAN keyword"))))))
-  (:method ((self symbol) &rest args)
-    (let ((sys (find-system self :default :error)))
-      (apply 'load-system sys args))))
+  (:method (self &rest args)
+    (let ((sys (find-system self :default (remf args :default))))
+      (apply 'load-system sys args)))
+  (:method ((self asdf:system) &rest args)
+    (apply 'asdf:load-system self args)))
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")

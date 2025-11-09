@@ -53,7 +53,7 @@
     (with-cli ((package-cli :bin/skel) :args (args))
       (do-opts *cli*)
       ;; (rocksdb:load-rocksdb)
-      (init-skel)
+      (init :skel)
       (unwind-protect 
            (progn
              ;; (setq *db* (make-db :skel))

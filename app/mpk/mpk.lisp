@@ -12,4 +12,6 @@
   (setf *thread-pool* (make-thread-pool (num-cpus) :name :mpk)))
 
 (defmethod init ((self (eql :mpk)) &key db)
+  (init :skel)
+  (setq *user-mpkrc* (xdg-config-file :mpk))
   (init-mpk :db db))

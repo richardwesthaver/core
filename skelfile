@@ -12,7 +12,7 @@
      (gh (:git "ssh://git@github.com/richardwesthaver/core")))
 :bind 
 ((stash ".stash")
- ;; (cc :env "clang")
+ (cc :env "gcc")
  (emacs-locals
   :dir-locals
   (nil . ((indent-tabs-mode . nil)))
@@ -22,9 +22,10 @@
 :components 
 ((:org "readme")
  (:asd "core")
- (:sys "core")
- (:mod "std" (:asd "std") (:sys "std"))
+ ; (:sys "core")
+ (:mod "std" (:asd "std"))
  (:mod "ffi" (:asd "ffi"))
+ (:mod "lib")
  (:mod "bin" (:asd "bin"))
  (:mod "app"
   (:mod "mpk" (:asd "mpk"))

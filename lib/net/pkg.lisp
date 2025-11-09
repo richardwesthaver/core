@@ -505,11 +505,3 @@
   (:export :caddy-service :nginx-service))
 
 (setq *defpkg-hook* nil)
-
-(eval-always
-  (when (featurep :swank)
-    (asdf:load-systems :swank-client)
-    (load (asdf:system-relative-pathname :net "proto/swank.lisp"))
-    (load (asdf:system-relative-pathname :net "proto/crew.lisp"))
-    (use-package :net/proto/swank)
-    (use-package :net/proto/crew)))

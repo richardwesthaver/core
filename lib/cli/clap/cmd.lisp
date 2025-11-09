@@ -11,7 +11,7 @@
 ;; ast is installed into the CLI object at which point it can be executed with
 ;; DO-CMD.
 
-;; DO-OPTS is called for each active (CLI-LOCK-P) CLI-OPT attached to a
+;; DO-OPTS is called for each active (LOCK) CLI-OPT attached to a
 ;; CLI-CMD followed by a DO-CMD call in turn on each active CLI-CMD.
 
 ;;; Code:
@@ -19,13 +19,13 @@
 
 (defclass cli-cmd ()
   ;; name slot is required and must be a string
-  ((name :initarg :name :initform (required-argument :name) :accessor cli-name :type string)
+  ((name :initarg :name :initform (required-argument :name) :accessor name :type string)
    (opts :initarg :opts :initform (make-array 0 :element-type 'cli-opt :adjustable t)
          :accessor opts :type (vector cli-opt))
    (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
          :accessor cmds :type (vector cli-cmd))
    (thunk :initform 'default-cmd-thunk :initarg :thunk :accessor cli-thunk :type symbol)
-   (lock :initform nil :initarg :lock :accessor cli-lock-p :type boolean)
+   (lock :initform nil :initarg :lock :accessor lock :type boolean)
    (description :initarg :description :accessor cli-description :type string)
    (args :initform nil :initarg :args :accessor cli-args))
   (:documentation "CLI command class inherited by both the 'main' command which is executed when
@@ -47,8 +47,8 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod print-object ((self cli-cmd) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A :active ~a :opts ~A :cmds ~A :args ~A"
-            (cli-name self)
-            (cli-lock-p self)
+            (name self)
+            (lock self)
             (length (opts self))
             (length (cmds self))
             (length (cli-args self)))))
@@ -56,7 +56,7 @@ a CLI is called without arguments, and all subcommands."))
 (defmethod print-usage ((self cli-cmd) &optional stream)
   (with-slots (opts cmds) self
     (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]~&"
-            (cli-name self)
+            (name self)
             (when *cli*
               (equal (string (cli-thunk *cli*)) (string (cli-thunk self))))
             (and (slot-boundp self 'description) (cli-description self))
@@ -112,10 +112,10 @@ a CLI is called without arguments, and all subcommands."))
                  t))))))
 
 (defmethod find-cmd (name (self cli-cmd) &key active default)
-  (if-let ((c (find name (cmds self) :test 'equal :key 'cli-name)))
+  (if-let ((c (find name (cmds self) :test 'equal :key 'name)))
     (if active 
         ;; maybe issue warning here? report to user
-        (when (cli-lock-p c)
+        (when (lock c)
           c)
         c)
     (if (eql default :error)
@@ -128,10 +128,10 @@ a CLI is called without arguments, and all subcommands."))
     (substitute new match (cmds self) :test 'equiv)))
 
 (defmethod active-cmds ((self cli-cmd))
-  (remove-if-not #'cli-lock-p (cmds self)))
+  (remove-if-not #'lock (cmds self)))
 
 (defmethod activate-cmd ((self cli-cmd))
-  (setf (cli-lock-p self) t)
+  (setf (lock self) t)
   self)
 
 (defmethod find-opts ((name string) (self cli-cmd) &key active recurse)
@@ -144,7 +144,7 @@ a CLI is called without arguments, and all subcommands."))
               do (%find name c)))
       (%find name self)
       (when active
-        (setf ret (remove-if-not #'cli-lock-p ret)))
+        (setf ret (remove-if-not #'lock ret)))
       ret)))
 
 (defmethod find-opt ((name string) (self cli-cmd) &key active default)
@@ -157,7 +157,7 @@ a CLI is called without arguments, and all subcommands."))
         default)))
 
 (defun cli-name= (a b)
-  (equal (cli-name a) (cli-name b)))
+  (equal (name a) (name b)))
 
 (defmethod (setf find-opt) ((new cli-opt) (name string) (self cli-cmd))
   (let ((match (find-opt name self)))
@@ -297,9 +297,9 @@ an object."
                (case type
                  ;; opts
                  (opt
-                  (setf (find-opt (cli-name form) self) form))
+                  (setf (find-opt (name form) self) form))
                  (cmd
-                  (setf (find-cmd (cli-name form) self) form))
+                  (setf (find-cmd (name form) self) form))
                  (arg (push-arg form self)))))
   (setf (cli-args self) (nreverse (cli-args self)))
   self)
@@ -347,5 +347,5 @@ evaluated with DO-OPTS along the way."
       (loop for c across (active-cmds self)
             do (do-opts c)
             do (call-cmd c (cli-args c) (active-opts c))
-            do (setf (cli-lock-p c) nil)))
-  (setf (cli-lock-p self) nil))
+            do (setf (lock c) nil)))
+  (setf (lock self) nil))

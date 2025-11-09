@@ -18,7 +18,7 @@
 
 (defsystem "blake3"
   :description "BLAKE3/C FFI"
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :in-order-to ((test-op (test-op "blake3/tests")))
   :components ((:file "pkg")
                (grovel-constants-file "constants"

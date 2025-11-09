@@ -9,7 +9,7 @@
 (in-package :tree-sitter.sys)
 
 (defsystem :tree-sitter
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (:file "ffi")
                (:file "lang")

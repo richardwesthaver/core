@@ -33,4 +33,4 @@
 
 (defvar *mpk-user-config* nil)
 
-(defvar *user-mpkrc* (merge-homedir-pathnames ".mpkrc"))
+(defvar *user-mpkrc*)

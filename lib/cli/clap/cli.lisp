@@ -116,21 +116,22 @@ and MAKE-CLI :CMD respectively."
 
 (defclass cli (cli-cmd)
   ;; name slot defaults to *package*, must be string
-  ((name :initarg :name :initform (string-downcase (package-name *package*)) :accessor cli-name :type string)
-   (version :initarg :version :initform "0.1.0" :accessor cli-version :type string)
+  ((name :initarg :name :initform (string-downcase (package-name *package*)) :accessor name :type string)
+   (version :initarg :version :initform "0.1.0" :accessor version :type string)
    ;; TODO 2023-10-11: look into pushd popd - cd-stack?
    (cd :initarg :cd :initform (sb-posix:getcwd) :type string :accessor cli-cd
-       :documentation "working directory of the top-level CLI."))
+       :documentation "working directory of the top-level CLI.")
+   (hook :initarg :hook :type hook :accessor hook))
   (:documentation "CLI"))
 
 (defmethod print-usage ((self cli) &optional stream)
-  (iprintln (format nil "usage: ~A [opts] <command> [<arg>]~%" (cli-name self)) 2 stream))
+  (iprintln (format nil "usage: ~A [opts] <command> [<arg>]~%" (name self)) 2 stream))
 
 (defmethod print-version ((self cli) &optional stream)
-  (println (cli-version self) stream))
+  (println (version self) stream))
 
 (defmethod print-help :before ((self cli) &optional (stream t))
-  (println (format nil "~A v~A --- ~A~%" (cli-name self) (cli-version self) (cli-description self)) stream))
+  (println (format nil "~A v~A --- ~A~%" (name self) (version self) (cli-description self)) stream))
 
 (defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.

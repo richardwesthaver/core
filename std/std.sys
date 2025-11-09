@@ -13,7 +13,7 @@
  :version "0.1.0"
  :description "CC Standard Library"
  :serial t
- :require (:cl-ppcre :std)
+ :require (:cl-ppcre)
  :components 
  ("named-readtables" "defpkg" 
   (:dir "num")
@@ -59,7 +59,7 @@
   (:file "defsys"))
  :provide
  (:std :defsys :defpkg :named-readtables ; features
-  (:readtable :std)
+  ;; (:readtable :std)
   (:proto :serde)
   (:proto :pipe)
   (:proto :kernel)

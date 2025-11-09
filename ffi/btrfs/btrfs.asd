@@ -9,7 +9,7 @@
 (in-package :btrfs.sys)
 
 (defsystem "btrfs"
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :btrfs)

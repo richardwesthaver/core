@@ -6,7 +6,8 @@
 ;;; Usage: (in-readtable :std)
 
 ;;; Code:
-(in-package :std/readtable)
+(IN-PACKAGE :STD/READTABLE)
+(STD/NAMED-READTABLES:IN-READTABLE :STANDARD)
 
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun |#`-reader| (stream sub-char numarg)
@@ -69,17 +70,18 @@ sharps."
                                      (setq state 'normal)))))))))
       (coerce (nreverse chars) 'string))))
 
-(defun segment-reader (stream ch n)
-  "Recursively read a CH delimited sequence of strings from STREAM. N is a
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun segment-reader (stream ch n)
+    "Recursively read a CH delimited sequence of strings from STREAM. N is a
 recursion count. Used internally by the CL-PPCRE reader (#~)."
-  (if (> n 0)
-      (let ((chars))
-        (do ((curr (read-char stream)
-                   (read-char stream)))
-            ((char= ch curr))
-          (push curr chars))
-        (cons (coerce (nreverse chars) 'string)
-              (segment-reader stream ch (- n 1))))))
+    (if (> n 0)
+        (let ((chars))
+          (do ((curr (read-char stream)
+                     (read-char stream)))
+              ((char= ch curr))
+            (push curr chars))
+          (cons (coerce (nreverse chars) 'string)
+                (segment-reader stream ch (- n 1)))))))
 
 (defmacro! scan-mode-ppcre-lambda-form (o!args)
   ``(lambda (,',g!str)
@@ -200,7 +202,7 @@ indicates a recursive call (RCURRY instead of CURRY).
   "The standard readtable, available for use internally in core source code or
 externally by users. Don't modify this readtable directly - create your own
 copy if necessary."
-  (:merge :modern)
+  (:merge :standard)
   ;; curry
   (:macro-char #\{ #'|{-reader|)
   (:macro-char #\} (get-macro-character #\) ))

@@ -13,7 +13,7 @@
 (in-package :evdev.sys)
 
 (defsystem :evdev
-  :depends-on (:std :sb-grovel)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants" :package :evdev)
                (:file "input")

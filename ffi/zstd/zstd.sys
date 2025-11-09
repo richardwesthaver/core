@@ -1,6 +1,6 @@
 ;;; ffi/zstd/zstd.sys --- Zstd Sytem
 (defsys :zstd
- :depends-on (:sb-grovel :std)
+ :depends-on (:std)
  :components ((:pkg "pkg")
               (:grovel "constants")
               (:file "simple")

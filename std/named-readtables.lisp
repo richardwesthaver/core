@@ -970,7 +970,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 (defun check-reader-macro-conflict (from to char &optional subchar)
   (flet ((conflictp (from-fn to-fn)
            (assert from-fn ()
-                   "Bug in readtable iterators or concurrent access?")
+           "Bug in readtable iterators or concurrent access?")
            (and to-fn (not (function= to-fn from-fn)))))
     (when (if subchar
               (conflictp (%get-dispatch-macro-character char subchar from)

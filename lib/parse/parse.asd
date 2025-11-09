@@ -1,7 +1,8 @@
+(require :sb-cltl2)
 (defsystem :parse
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
-  :depends-on (:cl-ppcre :std :sb-cltl2)
+  :depends-on (:cl-ppcre :std)
   :components ((:file "pkg")
                (:file "bytes")
                (:file "lex")

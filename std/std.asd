@@ -14,11 +14,13 @@ that ASDF can find, or have quicklisp installed.")))
 (require 'sb-concurrency)
 (require 'sb-sprof)
 (require 'sb-introspect)
+(require 'sb-rotate-byte)
+;; (require 'sb-grovel)
 
 (defsystem :std
   :version "0.1.0"
   :description "CC Standard Library"
-  :depends-on (:cl-ppcre :sb-grovel)
+  :depends-on (:cl-ppcre)
   :serial t
   :components 
   ((:file "named-readtables")

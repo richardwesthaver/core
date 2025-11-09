@@ -12,7 +12,7 @@
 
 (defsystem "sndfile"
   :description "SNDFILE C FFI"
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :in-order-to ((test-op (test-op "sndfile/tests")))
   :components ((:file "pkg")
                (grovel-constants-file "constants"

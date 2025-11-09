@@ -39,10 +39,11 @@ main FUNCTION.
 When you save an executable lisp image with this function you should
 arrange for symlinks for each handled value of (ARG0) to be generated
 ."
-  `(defun ,name ()
-     (case (keywordicate (string-upcase (pathname-name (cli/clap/util:arg0))))
-       ,@mains
-       (t ,default))))
+  `(progn
+     (defun ,name ()
+       (case (keywordicate (string-upcase (pathname-name (cli/clap/util:arg0))))
+         ,@mains
+         (t ,default)))))
 
 (defun make-symlinks (src &optional directory &rest names)
   "Make a set of symlinks from SRC to NAMES.

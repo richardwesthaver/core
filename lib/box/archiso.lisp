@@ -223,15 +223,14 @@ profile/
 (defvar *default-archiso-profile* :releng)
 
 ;;;_. Config
-(in-readtable :std)
 (defconfig archiso-config (box-config)
   ((arch :initform "x86_64" :type string)
    (hostname :initform "box" :type string)
    (iso-name :initform "archlinux")
-   (iso-label :initform #"ARCH_$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y%m)"#)
+   (iso-label :initform "ARCH_$(date --date=\"@${SOURCE_DATE_EPOCH:-$(date +%s)}\" +%Y%m)")
    (iso-publisher :initform "Arch Linux <https://archlinux.org>")
    (iso-application :initform "Arch Linux Live/Rescue DVD")
-   (iso-version :initform #"$(date --date="@${SOURCE_DATE_EPOCH:-$(date +%s)}" +%Y.%m.%d)"#)
+   (iso-version :initform "$(date --date=\"@${SOURCE_DATE_EPOCH:-$(date +%s)}\" +%Y.%m.%d)")
    (install-dir :initform "arch")
    (buildmodes :initform '(:iso))
    (bootmodes :initform '(:bios.syslinux :uefi.systemd-boot))

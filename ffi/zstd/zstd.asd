@@ -5,7 +5,7 @@
 (in-package :zstd.sys)
 
 (defsystem :zstd
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :zstd)

@@ -1,7 +1,7 @@
 ;;; std.asd --- standard library
-(require :sb-cover)
+(require 'sb-sprof)
 (defsystem :rt
-  :depends-on (:std :log :dat :sb-sprof)
+  :depends-on (:std :log :dat)
   :components ((:file "pkg")
                (:file "var" :depends-on ("pkg"))
                (:file "condition" :depends-on ("pkg"))

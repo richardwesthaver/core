@@ -13,8 +13,8 @@
     (in-package :user)
     (if (and args (car args) (probe-file (car args)))
         (load (car args))
-        (make-toplevel-init 
-         :package :user 
+        (make-toplevel-init
+         :package :user
          :userinit (lambda () (merge-homedir-pathnames ".corerc"))
          :default t)))
   (:skel (bin/skel::start-skel))

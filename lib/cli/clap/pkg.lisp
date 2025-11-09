@@ -27,7 +27,7 @@
 
 (defpkg :cli/clap/macs
   (:use :cl :std :log :sb-ext :cli/clap/util :cli/clap/vars)
-  (:export :defopt :defcmd
+  (:export :defopt :defcmd :defopts
    :make-opt-parser :with-cli-handlers :make-shorty
    :argp
    :parse-cli-lambda-list))
@@ -60,7 +60,7 @@
   (:import-from :equiv :equiv)
   (:import-from :obj/ast :ast :form :*ast*)
   (:export :make-cli :define-cli :defmain
-   :make-opts :make-cmds :parse-bool-opt :parse-string-opt
+   :make-opts :make-cmds :parse-boolean-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
    :pasre-num-op :parse-file-op :parse-dir-op :cli
    :cli-cd :with-cli :debug-opts
@@ -68,11 +68,8 @@
    :active-cmds
    :%compose-keyword-opt
    :cli-cmd-args
-   :cli-lock-p
-   :cli-name
    :getopt
    :setopt
-   :set-package-cli
    :add-package-cmd
    :add-package-opt
    :package-cli

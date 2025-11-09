@@ -13,7 +13,7 @@
 (in-package :ssh2.sys)
 
 (defsystem :ssh2
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :ssh2)

@@ -15,7 +15,7 @@
   (sb-posix::getenv "USER"))
 
 (definline get-host-name () (sb-unix:unix-gethostname))
-  
+
 (defun sudo-p ()
   "Return T if effective user is root."
   (zerop (parse-integer (with-output-to-string (str) (sb-ext:process-output (sb-ext:run-program "id" (list "-u") :search t :output str)) 0))))
@@ -56,10 +56,10 @@ numerical user ID, as an assoc-list."
 (defun list-all-groups ()
   "List all groups. (gid name mem)"
   (let ((r nil))
-  (sb-posix:do-groups (g r) (push (list (sb-posix:group-gid g)
-                                        (sb-posix:group-name g)
-                                        (sb-posix:group-mem g))
-                                  r))))
+    (sb-posix:do-groups (g r) (push (list (sb-posix:group-gid g)
+                                          (sb-posix:group-name g)
+                                          (sb-posix:group-mem g))
+                                    r))))
 
 ;; cat /sys/kernel/cpu_byteorder?
 
@@ -88,13 +88,13 @@ arrange for FVAR to be closed after BODY."
 
 ;; https://man7.org/linux/man-pages/man3/getmntent.3.html
 (define-alien-type mntent 
-  (struct mntent
-          (fsname c-string)
-          (dir c-string)
-          (type c-string)
-          (opts c-string)
-          (freq int)
-          (passno int)))
+    (struct mntent
+      (fsname c-string)
+      (dir c-string)
+      (type c-string)
+      (opts c-string)
+      (freq int)
+      (passno int)))
 
 (defar setmntent (* t) (filename c-string) (type c-string))
 
@@ -216,12 +216,24 @@ arrange for FVAR to be closed after BODY."
   (when-let ((p (merge-pathnames name (xdg-dir :config-home))))
     (directory-path p)))
 
+(defun xdg-config-dir (name &optional path)
+  "Attempt o find an xdg-config directory for NAME and optional PATH searching for a match in this order:
+- ~/.config/NAME/PATH
+- ~/.NAME.d/PATH (with warning)"
+  (unless (stringp name) (setf name (string-downcase name)))
+  (let ((dir (or (probe-directory (xdg-config-directory name))
+                 (probe-directory (merge-homedir-pathnames (concatenate 'string "." name ".d"))))))
+    (if (and dir path) 
+        (merge-pathnames path dir)
+        dir)))
+
 (defun xdg-config-file (name)
   "Attempt to find an xdg config file for NAME for searching for a match in this order: 
 - ~/.config/NAMErc 
 - ~/.config/NAME.*
 - ~/.config/NAME/NAMErc
-- ~/.config/NAME/NAME.*"
+- ~/.config/NAME/NAME.*
+- ~/.NAMErc (with warning)"
   (unless (stringp name) (setf name (string-downcase name)))
   (let ((xdg-files (std/path:directory-files (xdg-dir :config-home)))
         (our-files (std/path:directory-files (xdg-config-directory name)))
@@ -230,7 +242,10 @@ arrange for FVAR to be closed after BODY."
       (or (.find rc-name xdg-files)
           (.find name xdg-files)
           (.find rc-name our-files)
-          (.find name our-files)))))
+          (.find name our-files)
+          (when-let ((p
+                      (.find (concatenate 'string "." rc-name) (std/path:directory-files (user-homedir-pathname)))))
+            (warn 'simple-warning :format-control "config file in $HOME: ~A" :format-arguments p))))))
 
 ;;;_. user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
@@ -249,7 +264,7 @@ arrange for FVAR to be closed after BODY."
                    ,@(when defaults '("-D")))
          :output output)
         (error "unable to find USERADD program (/bin/useradd)"))))
-                            
+
 ;;;_. group-add
 (defun group-add (name &key force id users (output t))
   (let ((groupadd (probe-file "/bin/groupadd")))
@@ -428,9 +443,9 @@ new one."
   (sb-alien:with-alien ((prg sb-alien:c-string program)
                         (argv (array sb-alien:c-string 256)))
     (loop
-       for i in arguments
-       for j below 255
-       do (setf (sb-alien:deref argv j) i))
+      for i in arguments
+      for j below 255
+      do (setf (sb-alien:deref argv j) i))
     (setf (sb-alien:deref argv (length arguments)) nil)
     (sb-alien:alien-funcall (sb-alien:extern-alien "execv" (function sb-alien:int sb-alien:c-string (* sb-alien:c-string)))
                             prg (sb-alien:cast argv (* sb-alien:c-string)))))
@@ -456,7 +471,7 @@ stream, and the second value is the output stream."
 (defmacro set-signal-handler (signo &body body)
   `(sb-alien:alien-funcall
     (sb-alien:extern-alien "signal" (function sb-alien:void
-                                              sb-alien:int sb-alien:system-area-pointer))
+                                        sb-alien:int sb-alien:system-area-pointer))
     ,signo
     ;; callback function
     (sb-alien:alien-sap

@@ -154,7 +154,9 @@
     (cli/linedit:install-repl :wrap-current t :history "/tmp/skel.history" :killring "/tmp/skel.killring")
     (cli/repl:make-toplevel-init
      :package :sk-user
-     :userinit (lambda () (merge-homedir-pathnames ".corerc"))
+     :userinit (lambda () (or (xdg-config-file :core) 
+                              (merge-homedir-pathnames ".config/corerc") 
+                              (merge-homedir-pathnames ".corerc")))
      :default t)))
 
 (defcmd skc-shell () (sk-shell))

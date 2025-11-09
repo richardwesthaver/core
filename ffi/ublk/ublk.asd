@@ -8,7 +8,7 @@
 
 (defsystem "ublk"
   :description "UBLK/C FFI"
-  :depends-on (:sb-grovel :std :uring)
+  :depends-on (:std :uring)
   :in-order-to ((test-op (test-op "ublk/tests")))
   :components ((:file "pkg")
                (grovel-constants-file "constants"

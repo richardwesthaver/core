@@ -10,7 +10,7 @@
 
 ;;; Code:
 (in-package :net/srv/http)
-
+(require 'sb-md5)
 (defvar *headers-sent* nil
   "Used internally to check whether the response headers have
 already been sent for this request.")

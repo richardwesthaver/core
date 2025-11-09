@@ -33,4 +33,3 @@
 (defmain start-packy ()
   (with-cli (*packy-cli* :args (args))
     (do-cmd *packy-cli*)))
-

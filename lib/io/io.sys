@@ -1,7 +1,7 @@
 ;;; ~/comp/core/lib/io/io.sys --- Io Sytem Definitions
 (defsys :io
   :description "Lisp IO Interface"
-  :depends-on (:std
+  :require (:std
                :ironclad
                :uring
                :xkb

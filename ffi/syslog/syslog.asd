@@ -13,7 +13,7 @@
 (in-package :syslog.sys)
 
 (defsystem :syslog
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :syslog)

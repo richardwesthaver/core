@@ -101,8 +101,8 @@
   (setf (test-results self) (make-array 0 :element-type 'test-result))
   (call-next-method))
 
-(defmethod initialize-instance :after ((self test) &key cover)
-  (when cover (push '(optimize sb-cover:store-coverage-data) (test-declare self))))
+;; (defmethod initialize-instance :after ((self test) &key cover)
+;;  (when cover (push '(optimize sb-cover:store-coverage-data) (test-declare self))))
 
 (defmethod print-object ((self test) stream)
   (print-unreadable-object (self stream :type t)

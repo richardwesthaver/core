@@ -13,7 +13,7 @@
 (in-package :keyutils.sys)
 
 (defsystem :keyutils
-  :depends-on (:sb-grovel :std)
+  :depends-on (:std)
   :components ((:file "pkg")
                (grovel-constants-file "constants"
                                       :package :keyutils)

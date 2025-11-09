@@ -38,7 +38,7 @@
 (defmethod init ((self (eql :log)) &rest args)
   "Initialize the global logger."
   (init-log-timestamp)
-  (setq *logger* 
+  (setq *logger*
         (build (if (null args)
                    (default-logger-config)
                    (apply 'make-config :logger args)))))

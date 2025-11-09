@@ -51,7 +51,7 @@
 (defvar *default-spin-count* 1000
   "Default value of the 'spin-count' argument to MAKE-THREAD-POOL.")
 
-(defvar *debug-threads-p* t
+(defvar *debug-threads-p* nil
   "When non-nil the debugger is invoked when an error goes unhandled in a
 threaded context.")
 
@@ -562,8 +562,8 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 
 (defun notify-exit (worker)
   ;; (print-top-level (format nil "worker ~A exiting...~%" (worker-index worker)))
-  (sb-concurrency:close-gate (slot-value worker '%rx))
-  (send-worker-status worker :exit))
+  (send-worker-status worker :exit)
+  (sb-concurrency:close-gate (slot-value worker '%rx)))
 
 (defun wait-for-worker (worker)
   ;; (std/print:mumble "waiting on worker ~A...~%" (worker-index worker))

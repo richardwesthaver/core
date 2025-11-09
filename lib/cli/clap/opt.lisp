@@ -42,13 +42,11 @@
   (lock nil :type boolean))
 
 (defaccessor cli-thunk ((self cli-opt)) (cli-opt-thunk self))
-(defaccessor cli-name ((self cli-opt)) (cli-opt-name self))
+(defaccessor name ((self cli-opt)) (cli-opt-name self))
+(defaccessor lock ((self cli-opt)) (cli-opt-lock self))
 
 (defmethod activate-opt ((self cli-opt))
   (setf (cli-opt-lock self) t))
-
-(defmethod cli-lock-p ((self cli-opt))
-  (cli-opt-lock self))
 
 (defun %compose-flag-opt (o)
   (activate-opt o)
@@ -131,14 +129,14 @@
   (((name string) (self list) &key active default)
    (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
      (if active
-         (when (cli-lock-p found)
+         (when (lock found)
            found)
          found)
      default))
   (((name string) (self vector) &key active default)
    (if-let ((found (find name self :key 'cli-opt-name :test 'equal)))
      (if active
-         (when (cli-lock-p found)
+         (when (lock found)
            found)
          found)
      default)))
