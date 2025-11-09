@@ -18,13 +18,24 @@
   (run-pacman "-Sy" "archlinux-keyring")
   (run-pacman "-Su"))
 
-(defconfig pacman-config (ini-document) ())
+(defconfig pacman-config (ini:ini-document) 
+  (options core extra))
+
+(defmethod load-ast ((self pacman-config))
+  (with-slots (options core extra ast) self
+    (loop for x = (pop ast)
+          until (null x)
+          do (string-case ((name x) :default (return (error "Unrecognized pacman config section")))
+               ("options" (setf options (cdr (ast x))))
+               ("core" (setf core (cdr (ast x))))
+               ("extra" (setf extra (cdr (ast x))))))
+    self))
 
 (defmethod deserialize (self (format (eql :pacman-config)) &key)
   (change-class (deserialize self :ini) 'pacman-config))
 
 (defun load-pacman-config (&optional (path #p"/etc/pacman.conf"))
-  (deserialize path :pacman-config))
+  (load-ast (deserialize path :pacman-config)))
 
 (defmethod find-config ((self (eql :pacman)) &key (path #p"/etc/pacman.conf"))
   (load-pacman-config path))

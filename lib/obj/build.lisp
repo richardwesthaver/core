@@ -15,5 +15,6 @@
 
 (defclass builder () ())
 
-(defgeneric build (self &key &allow-other-keys))
+(defverb build (self &key &allow-other-keys))
+
 (defgeneric build-from (self from &key &allow-other-keys))

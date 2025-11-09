@@ -2566,7 +2566,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
           (unless exists-p
             (setf (gethash (family-name font) *font-cache*)
                   hash-table))))
-    (condition (c) (return-from cache-font-file (warn c)))))
+    (condition () (return-from cache-font-file))))
 
 (defun cache-fonts ()
   "Caches fonts from *font-dirs* directories."

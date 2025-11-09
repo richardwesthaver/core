@@ -18,7 +18,7 @@
 
 (defpackage :box/archiso
   (:nicknames :archiso)
-  (:use :cl :std :cli/shell :dat/json :obj/config :box :ast)
+  (:use :cl :std :shell :json :config :box :ast :build)
   (:export :*archiso-config* :*archiso-creds* :archiso-config
            :mkarchiso
            :run-archiso))

@@ -38,7 +38,12 @@
   :type 'directory
   :group 'graph)
 
-(defcustom org-graph-locations (list (join-paths company-org-directory "graph/"))
+(defcustom org-graph-root (join-paths company-org-directory "graph/")
+  "Location of the root graph directory."
+  :type 'directory
+  :group 'graph)
+
+(defcustom org-graph-locations (list org-graph-root)
   "List of directories to check for nodes."
   :type '(list directory)
   :group 'graph)
@@ -94,8 +99,16 @@
   :type 'org-graph-db-handle
   :group 'graph)
 
-;; TODO 2025-01-17: 
-(defun org-graph-from-file (file))
+(defcustom org-graph-ui-file (join-paths org-graph-root "ui.lisp")
+  "Relative path to the optional UI file in org-graph-directory."
+  :type 'file
+  :group 'graph)
+
+(defun org-graph-from-files (&optional files)
+  (interactive)
+  (let ((files (or files (org-graph-files t))))
+    (cl-loop for c in files
+	     do (org-graph-buffer-update c))))
 
 (defun org-graph-file-p (v)
   (when v
@@ -111,7 +124,7 @@ non-nil visit each node and collect all edges found."
   (save-excursion
     (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
            (graph (make-org-graph :nodes node-ids)))
-      (maphash 
+      (maphash
        (lambda (k v) 
 	 (unless (org-graph-file-p v)
 	   (remhash k node-ids)))
@@ -126,10 +139,10 @@ non-nil visit each node and collect all edges found."
            (let ((pos (cdr (org-id-find-id-in-file k v))))
              (if pos
 		 (progn
-                   (org-with-file-buffer v
+                   (org-with-file-buffer v   
                      (goto-char pos)
                      (org-graph-node-at-point graph)
-                     (when edges (org-graph-edges-at-point graph))))
+                     (org-graph-edges-at-point graph)))
                (warn "couldn't find node %s %s" k v))))
 	 (org-graph-nodes graph))
 	(progress-reporter-done prog))
@@ -236,12 +249,17 @@ currently active org-graph."
 
 (defun org-graph-map-edges (function)
   "Eval FUNCTION once for each edge in node at point with point at start of the edge."
-  (with-org-graph-edge-drawer (end)
-    (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
-    (goto-char (1+ (match-end 0)))
-    (cl-loop while (> (point-max) end (point))
-             collect (funcall function)
-             do (next-line))))
+  (save-excursion
+    (with-org-graph-edge-drawer (end)
+      (unless (eobp)
+	(org-fold-reveal))
+      (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
+      (goto-char (1+ (match-end 0)))
+      (cl-loop while (> (point-max) end (point))
+               for x = (funcall function)
+	       unless (not x) 
+	       collect x
+               do (next-line)))))
 
 ;; TODO 2024-09-23: 
 (defun org-link-info (link)
@@ -275,10 +293,10 @@ or when 't' use the currently active org-graph."
   (let ((edges (org-graph-map-edges 'org-graph-collect-edge)))
     (when update
       (mapc (lambda (e)
-              (puthash 
-               (org-graph-edge-in e)
-               e
-               (org-graph-edges (if (eql t update) org-graph update))))
+	      (puthash 
+	       (org-graph-edge-in e)
+	       e
+	       (org-graph-edges (if (eql t update) org-graph update))))
             edges))
     edges))
 
@@ -306,13 +324,16 @@ currently active org-graph."
 (defun org-graph-buffer-update (&optional buffer)
   "Map over an org buffer adding all nodes to the active org-graph."
   (interactive)
-  (save-excursion
-    (with-current-buffer (or buffer (current-buffer))
-      ;; capture file node
-      (goto-char (point-min))
-      (org-graph-node-at-point t)
-      (when (derived-mode-p 'org-mode)
-        (org-map-entries (lambda () (org-graph-node-at-point t)))))))
+  (org-with-file-buffer (or buffer (buffer-file-name))
+    
+    ;; capture file node
+    (goto-char (point-min))
+    (org-graph-node-at-point t)
+    (when (derived-mode-p 'org-mode)
+      (org-map-entries 
+       (lambda ()
+	 (org-graph-node-at-point t)
+	 (org-graph-edges-at-point t))))))
 
 ;;; Edges
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
@@ -411,7 +432,7 @@ associated EDGE-TYPE.")
     (let ((node (org-graph-get-node 
 		 (elt ids (cl-position (completing-read "refile node to: " names) names :test 'string=)))))
       (set-marker (make-marker) (org-graph-node-point node) (find-file-noselect (org-graph-node-file node))))))
-	   
+
 (defun org-graph-refile-get-location ()
   "`org-graph-edge-search-function' that reuses the `org-refile' machinery."
   (car (cdddr (org-refile-get-location "Node"))))
@@ -710,7 +731,7 @@ either side, and deletes both sides of a link."
   (interactive)
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-link-marker target nil no-backlink)))
-                                       
+
 
 ;;;###autoload
 (defun org-graph-node (&optional arg invisible-ok level)
@@ -739,6 +760,7 @@ either side, and deletes both sides of a link."
 			 (or
 			  (string= (file-name-base x) "readme")
 			  (string= (file-name-base x) "index")
+			  (string= x org-graph-ui-file)
 			  (not (string= (file-name-extension x) "org"))))
 		      files)
       files)))
@@ -769,12 +791,35 @@ either side, and deletes both sides of a link."
   (interactive)
   (org-graph-kill-all no-readme)
   (org-id-update-id-locations (org-graph-files))
-  (org-graph-from-id-locations t))
+  (org-graph-from-files))
 
 ;;;###autoload
 (defun org-graph-load ()
   "Load the org-graph from the org-graph-db."
   (interactive))
+
+(defun org-graph-node-edges (node)
+  "Return the edges associated with NODE."
+   (gethash (org-graph-node-id node) (org-graph-edges org-graph)))
+
+(defun org-graph-tablist ()
+  (mapcar 
+   (lambda (x)
+     (with-slots (id name file properties) x
+       (list id 
+	     `[,(if name (substring-no-properties name) "")
+	       ,(if file (string-trim file org-graph-root) "")
+	       ,(if #1=(plist-get properties :tags)
+		  (if (stringp #1#) 
+		      #1#
+		    (apply 'concat (intersperse ":" #1#)))
+		  "")
+	       ,(format "%s" (let ((edges (org-graph-node-edges x)))
+			       (mapcar (lambda (x)   
+					 (with-slots (type out timestamp properties) x
+					   (list (org-graph-edge-arrow type) out timestamp properties)))
+				       (if (listp edges) edges (list edges)))))])))
+   (org-graph-node-list)))
 
 (defun org-graph-plist ()
   (list :nodes (mapcar 'unwrap (org-graph-node-list))
@@ -797,14 +842,14 @@ either side, and deletes both sides of a link."
   (interactive)
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-link-marker target t)))
-                                       
+
 
 (defun org-graph-edge-child (&optional no-parent)
   "Insert a child edge from the target to the current heading."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-child-marker target no-parent)))
-                                        
+
 
 (defun org-graph-edge-parent (&optional no-child)
   "Insert a parent edge to the current heading from the target."
@@ -904,6 +949,11 @@ either side, and deletes both sides of a link."
   :type 'natnum
   :group 'graph)
 
+(defcustom node-file-column-width 32
+  "Column width for the Node properties in the graph menu."
+  :type 'natnum
+  :group 'graph)
+
 (defcustom node-properties-column-width 12
   "Column width for the Node properties in the graph menu."
   :type 'natnum
@@ -914,34 +964,45 @@ either side, and deletes both sides of a link."
   :type 'boolean
   :group 'graph)
 
-(defun graph-menu--title-predicate (a b))
+(defun graph-menu--title-predicate (a b)
+  (string< (aref (cadr a) 0) (aref (cadr b) 0)))
+
+(defun graph-menu--file-predicate (a b)
+  (string< (aref (cadr a) 1) (aref (cadr b) 1)))
+
 (defun graph-menu--edges-predicate (a b))
 (defun graph-menu--tags-predicate (a b))
 (defun graph-menu--properties-predicate (a b))
-  
+
 ;; TODO 2025-10-31: 
 (defun graph-menu--populate ())
-  
-(defun graph-menu--refresh (&optional _arg _no-confirm))
+
+;; (defun graph-menu--refresh (&optional _arg _no-confirm))
 
 (define-derived-mode graph-menu-mode tabulated-list-mode "Graph Menu"
   "Major mode for browsing a list of graph nodes."
   :interactive nil
   (setq tabulated-list-format
 	`[("Title" ,node-title-column-width graph-menu--title-predicate)
-	  ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
+
+	  ("File"  ,node-file-column-width  graph-menu--file-predicate)
 	  ("Tags"  ,node-tags-column-width  graph-menu--tags-predicate)
-	  ("Properties" ,node-properties-column-width graph-menu--properties-predicate)])
-  (setq tabulated-list-padding 2)
-  (setq tabulated-list-sort-key (cons "Title" nil))
-  (setq revert-buffer-function 'graph-menu--refresh)
-  (tabulated-list-init-header))
-  
+	  ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
+	  ;; ("Properties" ,node-properties-column-width graph-menu--properties-predicate)
+	  ])
+  (setq-local tabulated-list-padding 2
+	      ;; tabulated-list-sort-key (cons "Title" nil)
+	      tabulated-list-entries (org-graph-tablist)
+	      ;; revert-buffer-function 'graph-menu--refresh
+	      )
+  (tabulated-list-init-header)
+  (tabulated-list-print))
+
 (defun graph-list ()
   (interactive)
   (let ((buf (get-buffer-create "*Graph*")))
     (with-current-buffer buf
-      (setq buffer-file-coding-system 'utf-8)
+      ;; (setq buffer-file-coding-system 'utf-8)
       (graph-menu-mode))
     (pop-to-buffer-same-window buf)))
 

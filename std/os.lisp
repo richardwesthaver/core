@@ -1,4 +1,4 @@
-;;; std/os.lisp --- OS interop -*- allout-layout: (0) -*-
+;;; std/os.lisp --- OS interop
 
 ;; OS-specific bits.
 
@@ -80,7 +80,7 @@ arrange for FVAR to be closed after BODY."
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
 
-;;;_ Linux
+;;;_. Linux
 ;; https://man7.org/linux/man-pages/man3/statvfs.3.html
 (defar statvfs int
   (path c-string)
@@ -128,7 +128,7 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;;_ IOCTLs
+;;;_. IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV
 ;; TODO 2025-04-27: 
 (defun ioctl (fd cmd)
@@ -154,7 +154,7 @@ arrange for FVAR to be closed after BODY."
 
 ;; (defmacro define-ioctl (name fd cmd))
 
-;;;_ XDG
+;;;_. XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
 (defvar *xdg-dir-table*
@@ -232,7 +232,7 @@ arrange for FVAR to be closed after BODY."
           (.find rc-name our-files)
           (.find name our-files)))))
 
-;;;_ user-add
+;;;_. user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
   (let ((useradd (probe-file "/bin/useradd")))
     (if useradd
@@ -250,7 +250,7 @@ arrange for FVAR to be closed after BODY."
          :output output)
         (error "unable to find USERADD program (/bin/useradd)"))))
                             
-;;;_ group-add
+;;;_. group-add
 (defun group-add (name &key force id users (output t))
   (let ((groupadd (probe-file "/bin/groupadd")))
     (if groupadd
@@ -262,7 +262,7 @@ arrange for FVAR to be closed after BODY."
          :output output)
         (error "unable to find GROUPADD program (/bin/groupadd)"))))
 
-;;;_ with-directory-iterator
+;;;_. with-directory-iterator
 (defun %get-file-kind (namestring follow-p)
   (handler-case
       (let ((mode (sb-posix:stat-mode
@@ -419,7 +419,7 @@ Signals an error if PATHSPEC is wild."
     (merge-pathnames path (namestring (directory-path %default)))
     path))
 
-;;;_ StumpWM exec utils
+;;;_. Exec Utils
 ;; from stumpwm/wrappers.lisp
 (defun execv (program &rest arguments)
   "Call the system execv() function, replacing the current process image with a
