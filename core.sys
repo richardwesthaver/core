@@ -1,5 +1,6 @@
 ;;; core.sys --- Core System Definitions
 (defsys :core
+ "Core Systems"
  :version "0.1.0"
  :depends-on 
  (:std :cli :log :obj

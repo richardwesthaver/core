@@ -10,8 +10,8 @@
 
 ;;; Code:
 (defsys :std
+ "CC Standard Library"
  :version "0.1.0"
- :description "CC Standard Library"
  :serial t
  :require (:cl-ppcre)
  :components 

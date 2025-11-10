@@ -174,7 +174,8 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
   after evaluating BODY.
 
 CLI is updated based on the current environment and dynamically bound to
-*CLI*. ARGS is a list of CLI args, defaults to *ARGS* at runtime if nil. *AST* is bound to the parsed result of"
+*CLI*. ARGS is a list of CLI args, defaults to *ARGS* at runtime if nil. *AST*
+is bound to the parsed result of PROC-ARGS."
   `(progn
      (let ((*cli* ,cli))
        (setf (cli-cd *cli*) *default-pathname-defaults*)
@@ -189,6 +190,7 @@ CLI is updated based on the current environment and dynamically bound to
            ,@(when exit '((sb-ext:exit))))))))
 
 (defmacro with-cli-args (args &body body)
+  "Bind *ARGS* and *ARGC* from ARGS around BODY."
   `(let ((*args* ,args)
          (*argc* ,(length args)))
      ,@body))

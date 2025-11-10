@@ -955,6 +955,7 @@
    :verbp :init
    :reset :state
    :init*
+   :install :uninstall
    :class-equalp
    :*standard-metaobjects*
    :find-slot-def-by-name

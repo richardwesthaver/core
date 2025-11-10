@@ -7,17 +7,17 @@
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+-----------------------------------------|
-| name        | core                                    |
-| version     | 0.1.0                                   |
-| description | NIL                                     |
-| skel-id     | 4611004031065916102                     |
-| root        | ~/comp/core/                            |
-| tags        | (core lisp emacs c)                     |
-| updated     | Sat Nov 08 20:19:33 2025 -0500          |
-| langs       | c elisp lisp org text                   |
-| lines       | 153541 :λ 121800 :# 13983 :_ 17758 |
-|-------------+-----------------------------------------|
+|-------------+------------------------------------|
+| name        | core                               |
+| version     | 0.1.0                              |
+| description | NIL                                |
+| skel-id     | 4611004031065916102                |
+| root        | ~/comp/core/                       |
+| tags        | (core lisp emacs c)                |
+| updated     | Sun Nov 09 17:19:19 2025 -0500     |
+| langs       | c elisp lisp org text              |
+| lines       | 153551 :λ 121807 :# 13985 :_ 17759 |
+|-------------+------------------------------------|
 
 #+END:
 

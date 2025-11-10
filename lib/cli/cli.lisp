@@ -27,7 +27,8 @@
    :*cli* :define-cli
    :defmain :with-cli
    :do-cmd :do-opt
-   :load-package-cli
+   :load-package-cli :package-cli
+   :package-cmds :package-opts
    :defcmd :defopt
    :defopts :argp
    :cmds :opts

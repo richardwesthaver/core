@@ -519,14 +519,14 @@ system jobs to be executed in an async context."
                :path (make-pathname :name n :type ty))))
           (:mod
            (let* ((path (directory-path n))
-                  (*default-pathname-defaults* path))
+                  (*default-pathname-defaults* (truename path)))
              (make-instance kind
                :name n 
                :path path
                :components (mapcar '%parse-component-form (getf props :components)))))
           (:dir
            (let* ((path (directory-path n))
-                  (*default-pathname-defaults* path)
+                  (*default-pathname-defaults* (truename path))
                   (inc (or (getf props :include) *wildcard-regexp*))
                   (exc (getf props :exclude))
                   (c (make-instance kind
@@ -551,7 +551,14 @@ system jobs to be executed in an async context."
   `(progn
      (if *asdf-compatibility*
          (change-class (defsystem ,name . ,args) ,class)
+         ;; args are ignored if *ASDF-COMPATIBILITY* is nil. Make sure to fill
+         ;; in the slots of the return value.
          (make-instance ,class :name ,name :version nil))))
+
+(defun %sys-get (n body)
+  (when-let ((v (getf body n)))  
+    (remf body n)
+    v))
 
 (defmacro defsys (name &body body)
   "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
@@ -560,35 +567,32 @@ SYSTEM objects register their own ASDF:SYSTEM objects as needed and provide
 the following extensions:
 - :PROVIDE    system-provided features, modules, readtables
 - :HOOK       hook-spec to load with this system
-- :METHODS    custom method definitions to apply to this system
 - :REQUIRE    system-required modules and features"
-  (flet ((%sys-get (n) 
-           (when-let ((v (getf body n)))
-             (remf body n)
-             v)))
-    (let ((prov (%sys-get :provide)) (hooks (%sys-get :hook))
-          (meth (%sys-get :methods)) (req (%sys-get :require))
-          (plan (or (%sys-get :plan) :serial))
-          (class (or (%sys-get :class) ''system))
-          (comp (%sys-get :components))
+  (multiple-value-bind (.body dec doc) (std-int:parse-body body :documentation t)
+    (declare (ignore dec))
+    (let ((prov (%sys-get :provide .body)) (hooks (%sys-get :hook .body))
+          (req (%sys-get :require .body))
+          (plan (or (%sys-get :plan .body) :serial))
+          (class (or (%sys-get :class .body) ''system))
+          (comp (%sys-get :components .body))
           (*defining-system* name))
-      (declare (ignore meth))
       (std/sym:with-gensyms (sys)
-        `(let ((,sys (%make-sys ,name ,class ,@body)))
+        `(let ((,sys (%make-sys ,name ,class ,@.body)))
            (setf (path ,sys) (or *compile-file-truename* *load-truename*)
                  (slot-value ,sys 'plan) ,plan
+                 (slot-value ,sys 'description) ,doc
                  (slot-value ,sys 'components) (%parse-components-form ',comp)
                  (slot-value ,sys 'provide) ',(%parse-provide-form prov)
                  (slot-value ,sys 'require) ',(%parse-require-form req))
            (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
            (register-system ,name ,sys)
-           (values))))))
+           ,sys)))))
 
-(defun compile-sys (path)
-  "Compile a SYS file at PATH. Default extension is FSYS."
+(defun compile-sys (path &optional output-file)
+  "Compile a system's defsys file by PATH. Default extension is FSYS."
   (unless (pathnamep path) (setf path (path (find-system path))))
   (checked-compile-file path
-                :output-file (make-pathname :name (pathname-name path) :type "fsys")
+                :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
                 :entry-points '(load-sys)))
 
 (defun load-sys (path &optional name)
@@ -607,7 +611,7 @@ internally. On success the path is added to the *SYSDEFS* list."
               (load p)))
         (setf (gethash path (system-session-file-cache *system-session*))
               (sb-ext:get-time-of-day))
-        (pushnew (namestring (truename path)) *sysdefs* :test 'equal)
+        (pushnew (namestring path) *sysdefs* :test 'equal)
         (if name 
             (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
             t)))))

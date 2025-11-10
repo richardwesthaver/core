@@ -115,6 +115,10 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
 (defverb call (self &rest args)
   (:documentation "Call SELF with ARGS."))
+(defverb install (self &key)
+  (:documentation "Install object SELF."))
+(defverb uninstall (self &key)
+  (:documentation "Uninstall object SELF."))
 
 (definline init* (&rest keys)
   "Call the default initializer on each arg."

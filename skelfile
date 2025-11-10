@@ -23,7 +23,7 @@
 ((:org "readme")
  (:asd "core")
  ; (:sys "core")
- (:mod "std" (:asd "std"))
+ (:mod "std" (:asd "std") #+nil (:sys "std"))
  (:mod "ffi" (:asd "ffi"))
  (:mod "lib")
  (:mod "bin" (:asd "bin"))
