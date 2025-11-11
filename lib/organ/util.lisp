@@ -24,7 +24,7 @@
 (deftype org-id () `(octet-vector 16))
 
 (define-condition org-id-locations-out-of-sync (simple-error) ())
-(defvar *org-id-locations-file* (merge-pathnames ".emacs.d/.org-id-locations" (user-homedir-pathname)))
+(defvar *org-id-locations-file* (merge-pathnames ".config/emacs/.org-id-locations" (user-homedir-pathname)))
 (defun make-org-id-locations (&optional (file *org-id-locations-file*))
   (let ((tbl (make-hash-table :test 'equal)))
     (with-open-file (file file)

@@ -93,22 +93,7 @@
                        reason)))))
 
 ;;; utils
-(defvar *default-connect-timeout* 10)
-(defvar *default-read-timeout* 10)
-(defvar *default-proxy* (or #-windows (uiop:getenv "HTTPS_PROXY")
-                            #-windows (uiop:getenv "HTTP_PROXY"))
-  "If specified will be used as the default value of PROXY in calls to dexador.  Defaults to
- the value of the environment variable HTTPS_PROXY or HTTP_PROXY if not on Windows.")
-
 (define-constant +crlf+ (string-to-octets (format nil "~C~C" #\Return #\Newline)) :test 'equalp)
-
-(eval-always
-  (defparameter *default-user-agent*
-    (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
-            (lisp-implementation-type)
-            (lisp-implementation-version)
-            (software-type)
-            (software-version))))
 
 (defparameter *header-buffer* nil)
 

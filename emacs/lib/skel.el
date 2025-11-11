@@ -200,7 +200,11 @@ DOC, and NAME."
 (add-to-list 'auto-mode-alist '("\\.skelrc" . skel-mode))
 
 (cl-defmethod project-root ((project (head skel)))
-  (caddr project))
+  (when (and project (>= (length project) 4))
+    (caddr project)))
+
+(cl-defmethod project-root ((project list))
+  (when project (car project)))
 
 (defun project-skelfile (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current

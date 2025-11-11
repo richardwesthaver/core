@@ -1379,6 +1379,7 @@
   (:shadowing-import-from :std/meta :version)
   (:export 
    :*sysdefs*
+   :*defining-system*
    :sysdefs
    :sysdef
    :defsys

@@ -42,7 +42,11 @@
    :with-client-server :*localhost*
    :with-open-socket :find-port
    :*wildcard-host* :*wildcard-port*
-   :*default-mtu*))
+   :*default-mtu*
+   :*default-connect-timeout*
+   :*default-read-timeout*
+   :*default-proxy*
+   :*default-user-agent*))
 
 (defpkg :net/udp
   (:nicknames :udp)
@@ -347,9 +351,6 @@
    :delete
    :fetch
    :http-client
-   :*default-connect-timeout*
-   :*default-read-timeout*
-   :*default-proxy*
    :*verbose*
    :+socks5-version+
    :*connection-pool*

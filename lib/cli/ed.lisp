@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :cli/ed)
 
-(defvar *user-emacs-directory* (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+(defvar *user-emacs-directory* (std:xdg-config-dir :emacs))
 
 (defmacro with-emacs-printer (&body body)
   "Eval BODY with Emacs Lisp printer settings."

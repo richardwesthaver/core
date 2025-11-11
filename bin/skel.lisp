@@ -1,3 +1,7 @@
+;;; skel.lisp --- Skel Daemon
+
+;; The Skel Daemon CLI
+
 ;;; Code:
 
 ;;  TODO 2024-05-09: add shell configurables to rules - maybe at sk-command
@@ -15,18 +19,18 @@
 (in-readtable :shell)
 
 ;;; Nested Commands
-(defcmd skc-vc* ()
+(defcmd skel-vc* ()
   (with-cli (*vc-cli* :args (cdr (args)))
     (with-current-vc-root (*repo* *default-pathname-defaults*)
       ;; (do-opts *vc-cli*)
       (do-cmd *vc-cli*))))
 
-(defcmd skc-pk* ()
+(defcmd skel-pk* ()
   (with-cli (*packy-cli* :args (cdr (args)))
     ;; (do-opts *packy-cli*)
     (do-cmd *packy-cli*)))
 
-(defcmd skc-kr* ()
+(defcmd skel-kr* ()
   (with-cli (*krypt-cli* :args (cdr (args)))
     ;; (do-opts *krypt-cli*)
     (blake3::load-blake3)
@@ -38,13 +42,13 @@
  :cmds
  ((:name vc
    :description "version control"
-   :thunk skc-vc*)
+   :thunk skel-vc*)
   (:name pk
    :description "packages"
-   :thunk skc-pk*)
+   :thunk skel-pk*)
   (:name kr
    :description "cryptography"
-   :thunk skc-kr*)))
+   :thunk skel-kr*)))
 
 (defmain start-skel (:debug nil)
   (in-package :sk-user)

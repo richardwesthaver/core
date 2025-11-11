@@ -7,7 +7,7 @@
 
 (load-database-backend :rdb)
 
-(defvar *org-graph-file* (merge-pathnames ".emacs.d/graph.sxp" (user-homedir-pathname)))
+(defvar *org-graph-file* (merge-pathnames ".config/emacs/graph.sxp" (user-homedir-pathname)))
 
 ;;; Org Graph
 (defvar *org-graph* nil)

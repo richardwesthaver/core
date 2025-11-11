@@ -5,9 +5,20 @@
 ;;; Code:
 (in-package :net/core)
 
+;;;_* Variables
 (defvar *localhost* #(127 0 0 1))
 (defvar *wildcard-host* #(0 0 0 0))
 (defvar *wildcard-port* 0)
+(defparameter *default-user-agent*
+  (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
+          (lisp-implementation-type)
+          (lisp-implementation-version)
+          (software-type)
+          (software-version)))
+(defvar *default-connect-timeout* 10)
+(defvar *default-read-timeout* 10)
+(defvar *default-proxy* nil
+  "If specified will be used as the default value of PROXY in calls to REQ.")
 (defvar *default-mtu* 65507
   "Theoretical maximum bytes in a UDP datagram.
 
@@ -23,6 +34,7 @@ sizeof(struct udphdr) = 8,  /* netinet/udp.h */
 (But for UDP broadcast, the maximum message size is limited by the MTU size of
 the underlying link).")
 
+;;;_. Socket Utils
 (definline %socket-operation-in-progress-p (condition)
   (typep condition 'sb-bsd-sockets:operation-in-progress)) ;; errno 36 
 
@@ -101,7 +113,7 @@ the underlying link).")
 ;; (find-port)
 ;; (get-address-by-name "localhost")
 
-;;; Macros
+;;;_* Macros
 (defmacro with-open-socket ((var socket) &body body)
   "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
   (once-only (socket)

@@ -217,7 +217,7 @@ arrange for FVAR to be closed after BODY."
     (directory-path p)))
 
 (defun xdg-config-dir (name &optional path)
-  "Attempt o find an xdg-config directory for NAME and optional PATH searching for a match in this order:
+  "Attempt to find xdg-config directory for NAME and optional PATH searching for a match in this order:
 - ~/.config/NAME/PATH
 - ~/.NAME.d/PATH (with warning)"
   (unless (stringp name) (setf name (string-downcase name)))

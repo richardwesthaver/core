@@ -42,7 +42,7 @@
 (defvar *defining-system* nil
   "When non-nil, indicates the name of the system currently being defined.")
 
-(defvar *asdf-compatibility* t
+(defvar *asdf-compatibility* nil
   "When non-nil, enable compatibility between STD/DEFSYS and SYSTTEM - component
 operations will use ASDF and DEFSYS will first pass all argument to
 ASDF:DEFSYSTEM.")

@@ -1026,7 +1026,7 @@ Add this function to appropriate major mode hooks such as
 (with-eval-after-load "preview"
     '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
-(setopt org-preview-latex-image-directory "~/.emacs.d/.cache/ltximg"
+(setopt org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
         org-latex-image-default-width "8cm"
         org-refile-use-cache t
         org-refile-allow-creating-parent-nodes 'confirm

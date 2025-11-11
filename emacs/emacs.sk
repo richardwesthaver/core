@@ -1,7 +1,7 @@
 :name "core/emacs"
 :version "0.1.0"
 :bind 
-((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
  (config (directory "emacs/*.el"))
  (lib (directory "emacs/lib/*.el")))
 :rules 
@@ -13,7 +13,7 @@
             ((in in :direction :input)
              (out out :direction :output :if-exists :supersede))
             (std:copy-stream in out :finish-output t)))))
-   (let ((dotemacs (merge-pathnames ".emacs.d/" (user-homedir-pathname)))
+   (let ((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
          (config (directory "*.el"))
          (lib (directory "lib/*.el")))
     (mapcar
@@ -28,5 +28,5 @@
          (merge-pathnames "lib/" dotemacs)))))
      lib))))
  (purge () 
-  #$rm -rf ~/.emacs.d/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
+  #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
 

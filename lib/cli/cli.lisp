@@ -66,4 +66,9 @@ only."
 (std/defsys::defprovider :cli (name &key package)
   `(clap:load-package-cli ,name . ,(when package '(:package package))))
 
+(defprovider :bin (&rest args)
+  (if-let ((sys *defining-system*))
+    `((cons ,sys (:bin ,@args)))
+    args))
+
 ;; (defprovider :keymap (name &key package))

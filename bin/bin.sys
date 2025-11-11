@@ -1,0 +1,20 @@
+;;; ~/comp/core/bin/bin.sys --- Executable Program Definitions
+(defsys :bin
+ :require (:std :log :cli)
+ :provide
+ ((:bin :bin/homer :toplevel "bin/homer::start-homer"
+   :name "homer"
+   :require (:homer)
+   :components ((:file "homer")))
+  (:bin :bin/skel :toplevel "bin/skel::start-skel"
+   :name "skel"
+   :require (:skel)
+   :components ((:file "skel")))
+  (:bin :bin/core :toplevel "bin/core::dispatch-core"
+   :name "core"
+   :require (:core :bin/homer :bin/skel)
+   :components ((:file "core")))
+  (:bin :bin/mpk :toplevel "bin/mpk::start-mpk"
+   :name "mpk"
+   :require (:mpk)
+   :components ((:file "mpk")))))
