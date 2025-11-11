@@ -4,6 +4,7 @@
 (defpackage :vc/proto
   (:use :cl :std :log :parse/lex :obj :config)
   (:export 
+   :vc
    :vc-repo
    :vc-run
    :vc-path

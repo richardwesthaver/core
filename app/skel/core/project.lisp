@@ -10,29 +10,29 @@
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
    (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 
-       :type vc-repo :accessor sk-vc)
-   (src :initarg :src :type pathname :accessor sk-src)
-   (stash :initarg :stash :accessor sk-stash :initform ".stash/")
-   (store :initarg :store :accessor sk-store :initform ".stash/store/")
-   (cache :initarg :store :accessor sk-cache :initform ".stash/cache/")
-   (components :initform #() :initarg :components :accessor sk-components :type (vector sk-component)
+       :type vc-repo :accessor vc)
+   (src :initarg :src :type pathname :accessor src)
+   (stash :initarg :stash :accessor stash :initform ".stash/")
+   (store :initarg :store :accessor store :initform ".stash/store/")
+   (cache :initarg :store :accessor cache :initform ".stash/cache/")
+   (components :initform #() :initarg :components :accessor components :type (vector sk-component)
                :documentation "A vector of child components belonging to this project.")
-   (bind :initarg :bind :initform *default-skel-bindings* :accessor sk-bind :type list
+   (bind :initarg :bind :initform *default-skel-bindings* :accessor bind :type list
          :documentation "A list of dynamic bindings which are applied to rule definitions.")
    (phases :initarg :phases
 	   :initform (make-hash-table)
-	   :accessor sk-phases
+	   :accessor phases
 	   :type hash-table
            :documentation "A hash-table containing PHASE-NAME : RULE-MEMBER-LIST pairs.")
    (rules :initarg :rules
 	  :initform (make-array 0 :element-type 'sk-rule :adjustable t)
-	  :accessor sk-rules
+	  :accessor rules
 	  :type (vector sk-rule)
           :documentation "A vector of rule objects containing individual units of work. Each rule is
 implicitly linked to a phase in the PHASES hash-table slot.")
    (include :initarg :include
 	    :initform (make-array 0 :element-type 'pathname :adjustable t)
-	    :accessor sk-include
+	    :accessor include
 	    :type (vector pathname)
             :documentation "A list of skelfiles to include in the current project. Files in this list may
 define their own subprojects or extend the current one."))
@@ -44,8 +44,8 @@ directory."))
     (format stream "~A ~A :components ~A :rules ~A"
 	    (sk-class-name self t)
 	    (name self)
-	    (length (sk-components self))
-	    (length (sk-rules self)))))
+	    (length (components self))
+	    (length (rules self)))))
 
 (defmethod sk-new ((self (eql :project)) &rest args)
   (declare (ignore self))
@@ -117,24 +117,24 @@ directory."))
 	  (setf (slot-value self s) v))) ;; needs to be correct package
 	  ;;; SRC
       (if (bound-string-p self 'src)
-	  (setf (sk-src self) (or (probe-file (sk-src self))
-				  (probe-file (merge-pathnames (sk-src self) *skel-path*))
+	  (setf (src self) (or (probe-file (src self))
+				  (probe-file (merge-pathnames (src self) *skel-path*))
 				  (error 'invalid-argument :reason "project source not found"
-							   :item (sk-src self))))
-	  (setf (sk-src self) (sk-dir self)))
-      (setq *skel-path* (or (sk-src self) *default-pathname-defaults*))
+							   :item (src self))))
+	  (setf (src self) (sk-dir self)))
+      (setq *skel-path* (or (src self) *default-pathname-defaults*))
       (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
 	(when (bound-string-p self 'stash) 
-          (setf (sk-stash self) (ensure-directory-truename (the simple-string (sk-stash self)))))
+          (setf (stash self) (ensure-directory-truename (the simple-string (stash self)))))
         (when (bound-string-p self 'store) 
-          (setf (sk-store self) (ensure-directory-truename (the simple-string (sk-store self)))))
+          (setf (store self) (ensure-directory-truename (the simple-string (store self)))))
         (when (bound-string-p self 'cache)
-          (setf (sk-cache self) (ensure-directory-truename (the simple-string (sk-cache self)))))
+          (setf (cache self) (ensure-directory-truename (the simple-string (cache self)))))
 	;; VC
-	(when-let ((vc (sk-vc self)))
+	(when-let ((vc (vc self)))
 	  (etypecase vc
 	    ((or vc-repo null) nil)
-	    (vc-designator (setf (sk-vc self) (vc-init vc)))
+	    (vc-designator (setf (vc self) (vc-init vc)))
 	    (list
 	     (flet ((%vc-scan (lst)
 		      (let* ((%type (if (typep (car lst) 'vc-designator)
@@ -161,10 +161,10 @@ directory."))
                                 (vc/hg::vc-requires repo) (vc/hg:find-hg-requires (path repo))
                                 (vc-submodules repo) (vc/hg::find-hg-submodules (path repo))))
 			repo)))
-	       (setf (sk-vc self) (%vc-scan vc))))))
+	       (setf (vc self) (%vc-scan vc))))))
 	;; INCLUDE
-	(when-let ((include (sk-include self)))
-	  (setf (sk-include self) 
+	(when-let ((include (include self)))
+	  (setf (include self) 
                 (map 'vector
 		     ;; recursively load included projects
 		     (lambda (i) 
@@ -175,7 +175,7 @@ directory."))
 		     include)))
 	;; COMPONENTS
 	(when (slot-boundp self 'components)
-	  (setf (sk-components self) (map 'vector
+	  (setf (components self) (map 'vector
 					  (lambda (c)
 					    (sk-load-component
 					     (pop c)
@@ -183,11 +183,11 @@ directory."))
                                                  (pathname (car c))
                                                  c)
 					     *default-pathname-defaults*))
-					  (sk-components self)))))
+					  (components self)))))
       ;; BIND contains a list of forms which are bound dynamically based
       ;; on the contents of the cdr
-      (when-let ((bind (sk-bind self)))
-	(setf (sk-bind self)
+      (when-let ((bind (bind self)))
+	(setf (bind self)
 	      (let ((ret))
 		;; TODO 2024-09-21: 
 		(dolist (b bind ret)
@@ -213,8 +213,8 @@ directory."))
 			    (t
 			     (push b ret))))))))))
       ;; RULES
-      (when-let ((rules (sk-rules self)))
-	(setf (sk-rules self)
+      (when-let ((rules (rules self)))
+	(setf (rules self)
 	      (coerce
 	       (flatten
 		(mapcar
@@ -227,15 +227,15 @@ directory."))
 			   (lambda (y)
 			     (destructuring-bind (phase source &rest recipe) y
 			       (let ((%target (keywordicate phase '- (string-upcase target))))
-				 (let ((ph (gethash phase (sk-phases self))))
-				   (setf (gethash phase (sk-phases self))
+				 (let ((ph (gethash phase (phases self))))
+				   (setf (gethash phase (phases self))
 					 (push (make-sk-rule %target source recipe) ph))))))
 			   recipe))
 			 (make-sk-rule target source recipe))))
 		 (coerce rules 'list)))
 	       '(vector sk-rule))))          
       (unless *keep-ast* (setf (ast self) nil))
-      (setf (id self) (sxhash (cons (name self) (sk-version self))))
+      (setf (id self) (sxhash (cons (name self) (version self))))
       self)))
 
 ;; obj -> ast
@@ -272,7 +272,7 @@ directory."))
 		        (name self)
 		        :cchar #\;
 		        :timestamp t
-		        :description (sk-description self)
+		        :description (description self)
 		        :opts '("mode:skel;"))
 		       out))
 	(write-ast self out :pretty pretty))
@@ -280,21 +280,21 @@ directory."))
 
 (defmethod sk-install-user-config ((self sk-project) (config sk-user-config))
   (with-slots (vc store stash license author) (debug! config) ;; log-level, custom, fmt
-    (setf (sk-vc self) vc)
-    (setf (sk-stash self) stash)
-    (setf (sk-store self) store)
-    (setf (sk-license self) license)
-    (setf (sk-author self) author)))
+    (setf (vc self) vc)
+    (setf (stash self) stash)
+    (setf (store self) store)
+    (setf (license self) license)
+    (setf (author self) author)))
 
 (defmethod sk-find ((item sk-rule) (self skel) &key)
   (find (string-upcase (sk-rule-target item))
-	(sk-rules self) :test 'string-equal :key 'sk-rule-target))
+	(rules self) :test 'string-equal :key 'sk-rule-target))
 
 (defmethod sk-find ((item t) (self skel) &key)
-  (find (string-upcase item) (sk-rules self) :test 'string-equal :key #'sk-rule-target))
+  (find (string-upcase item) (rules self) :test 'string-equal :key #'sk-rule-target))
 
 (defmethod sk-find ((name string) (self sk-config) &key)
-  (find name (sk-scripts self) :test 'equal :key #'name))
+  (find name (scripts self) :test 'equal :key #'name))
 
 (defmethod sk-call ((self sk-project) (arg sk-rule))
   (sk-make self arg))
@@ -303,25 +303,25 @@ directory."))
   (sk-make self (sk-find arg self)))
 
 (defmethod sk-call ((self sk-project) (arg (eql :compile)))
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-compile self)))
 
 (defmethod sk-call ((self sk-project) (arg (eql :build)))
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-build self)))
 
 (defmethod sk-call ((self sk-project) (arg (eql :load)))
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-load self)))
 
 (defmethod sk-build ((self sk-project) &key)
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-build c)))
 
 (defmethod sk-compile ((self sk-project) &key)
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-compile c)))
 
 (defmethod sk-load ((self sk-project) &key)
-  (loop for c across (sk-components self)
+  (loop for c across (components self)
 	collect (sk-load c)))

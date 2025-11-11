@@ -165,8 +165,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-stash* (ensure-directory-truename stash)))
           (when-let ((project (find-skelfile *default-pathname-defaults*)))
             (,set *skel-project* (load-skelfile project)
-                  *skel-path* (sk-src *skel-project*)
-                  *skel-cache* (sk-cache *skel-project*)))
+                  *skel-path* (skel/core/obj::src *skel-project*)
+                  *skel-cache* (skel/core/obj::cache *skel-project*)))
           (when-let ((hook *skel-hook*))
             (funcall hook))
           (values))))
@@ -191,4 +191,4 @@ ASDF:*USER-CACHE*"
 (defmethod init ((self (eql :skel)) &key) (init-skel))
 
 (defun project-root (&optional (project *skel-project*))
-  (or (when project (sk-src project)) *default-pathname-defaults*))
+  (or (when project (skel/core/obj::src project)) *default-pathname-defaults*))

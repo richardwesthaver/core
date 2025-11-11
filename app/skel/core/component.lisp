@@ -16,7 +16,7 @@
 (in-package :skel/core/obj)
 
 (defclass sk-component (skel component ast)
-  ((parent :initarg :parent :accessor sk-parent)))
+  ((parent :initarg :parent :accessor parent)))
 
 (defmethod print-object ((self sk-component) stream)
   (print-unreadable-object (self stream)
@@ -30,7 +30,7 @@
 ;; sub-components themselves.
 
 (defclass sk-mod (sk-component sk-meta)
-  ((components :initarg :components :accessor sk-components)))
+  ((components :initarg :components :accessor components)))
 
 (defun make-sk-mod (form)
   "Make a new SK-MOD."
@@ -54,11 +54,11 @@
   (sk-new kind :form form :path path))
 
 (defmethod sk-compile ((self sk-mod) &key)
-  (dolist (c (sk-components self))
+  (dolist (c (components self))
     (sk-compile c)))
 
 (defmethod sk-build ((self sk-mod) &key)
-  (dolist (c (sk-components self))
+  (dolist (c (components self))
     (sk-build c)))
 
 ;;; Script

@@ -115,10 +115,10 @@
                     (sk-make sk rule)
                     ;;  TODO 2024-08-23: restart condition here
                     (skel-simple-error "rule not found: ~A" a))))
-        (sk-make sk (aref (sk-rules sk) 0)))))
+        (sk-make sk (aref (skel/core/obj::rules sk) 0)))))
 
 (defcmd skc-status ()
-  (vc:vc-status (sk-vc *skel-project*)))
+  (vc:vc-status (vc:vc *skel-project*)))
 
 (defcmd skc-run ()
   (sb-ext:enable-debugger)

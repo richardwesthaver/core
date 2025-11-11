@@ -51,7 +51,7 @@ which is executed in order to fulfill the rule."
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
-  (with-sk-rule-env (sk-bind *skel-project*)
+  (with-sk-rule-env (bind *skel-project*)
     (compile-and-eval* 
      (sk-rule-recipe self))))
 
@@ -68,8 +68,8 @@ which is executed in order to fulfill the rule."
 	 (when-let ((rule (sk-find r obj)))
 	   (sk-run-with-sources obj rule)))
        rules)
-      (unless (sequence:emptyp (sk-rules obj))
-	(let ((rule (aref (sk-rules obj) 0)))
+      (unless (sequence:emptyp (rules obj))
+	(let ((rule (aref (rules obj) 0)))
 	  (if (sk-rule-source rule)
 	      (sk-make obj rule)
 	      (sk-run rule))))))

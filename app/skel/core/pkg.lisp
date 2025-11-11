@@ -76,20 +76,19 @@
         :skel/core/proto :skel/core/int
         :skel/core/header :vc :log :config :id :ast :project)
   (:import-from :uiop :ensure-absolute-pathname :read-file-forms)
-  (:export :sk-license :sk-author :sk-stash :sk-cache :sk-data :sk-user :sk-version
-   :sk-store :sk-push :sk-pull :sk-include
-   :sk-tags :edit-skelrc :sk-target :skel
+  (:export :sk-stash :sk-data :user
+   :sk-push :sk-pull
+   :edit-skelrc :sk-target :skel
    :sk-meta :def-sk-class :sk-project :sk-source
-   :sk-vc :sk-bind :sk-env :make-sk-rule
+   :sk-env :make-sk-rule
    :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
-   :sk-make :sk-description :sk-kind :sk-rules
-   :sk-command :sk-scripts :sk-script :sk-config
-   :sk-snippets :sk-snippet :sk-abbrevs :sk-abbrev
+   :sk-make :sk-kind
+   :sk-command :scripts :sk-script :sk-config
+   :sk-snippet :sk-abbrev
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
-   :sk-src :sk-component :sk-components :sk-mod
-   :sk-parent :sk-phases :skel-store :with-skel-ast
-   :sk-pack))
+   :sk-component :sk-mod
+   :sk-parent :skel-store :with-skel-ast :sk-pack))
 
 (defpackage :skel/core/schema
   (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :schema :rdb)

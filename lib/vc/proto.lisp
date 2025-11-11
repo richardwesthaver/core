@@ -71,6 +71,9 @@ are missing."))
 
 (defgeneric vc-export (self output &key &allow-other-keys))
 
+(defgeneric vc (self))
+(defgeneric (setf vc) (new self))
+
 ;;; Accessors
 (defgeneric vc-head (self))
 (defgeneric vc-tags (self))

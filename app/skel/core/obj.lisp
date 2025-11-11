@@ -41,21 +41,14 @@
 ;; sxhash as a nonce for UUID
 ;; note that the sk-meta class does not inherit from skel or ast.
 ;;; Meta
-(defclass sk-meta (project-metadata)
-  ((name :initarg :name :initform nil :type (or null string) :accessor name)
-   (path :initarg :path :initform nil :type (or null pathname) :accessor path)
-   (author :initarg :author :accessor sk-author)
-   (version :initform nil :initarg :version :accessor sk-version)
-   (tags :initform nil :initarg :tags :accessor sk-tags)
-   (description :initarg :description :initform nil :type (or null string) :accessor sk-description)
-   (license :initform nil :initarg :license :accessor sk-license))
+(defclass sk-meta (project-metadata) ()
   (:documentation "Skel Meta class."))
 
 (defmethod print-object ((self sk-meta) stream)
   (print-unreadable-object (self stream)
     (format stream "~A ~A :path ~A" (sk-class-name self t) (name self) (path self))
     (unless (sequence:emptyp (sk-version self))
-      (format stream " :version ~A" (sk-version self)))
+      (format stream " :version ~A" (version self)))
     (format stream " :id ~A" (format-sxhash (id self)))))
 
 (defun sk-init (class &rest initargs)
@@ -75,14 +68,14 @@
 
 ;;; Config
 (defconfig sk-config (skel ast) 
-  ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor sk-vc)
-   (store :initform *skel-store* :initarg :store :type pathname :accessor sk-store)
-   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor sk-stash)
-   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor sk-cache)
-   (data :initform *skel-data* :initarg :data :type pathname :accessor sk-data)
-   (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor sk-scripts)
-   (license :initarg :license :accessor sk-license)
-   (log-level :initform *log-level* :initarg :log-level :type log-level-designator)
+  ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor vc)
+   (store :initform *skel-store* :initarg :store :type pathname :accessor store)
+   (stash :initform *skel-stash* :initarg :stash :type pathname :accessor stash)
+   (cache :initform *skel-cache* :initarg :cache :type pathname :accessor cache)
+   (data :initform *skel-data* :initarg :data :type pathname :accessor data)
+   (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor scripts)
+   (license :initarg :license :accessor license)
+   (level :initform *log-level* :initarg :level :type log-level-designator :accessor level)
    (fmt :initform :pretty :initarg :fmt :type symbol)
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
@@ -118,18 +111,18 @@
     (sb-int:doplist (k v) ast
       (when-let ((s (find-sk-symbol k)))
         (setf (slot-value self s) v))) ;; needs to be the correct package
-    (when (bound-string-p self 'stash) (setf (sk-stash self) (merge-pathnames (sk-stash self) (sk-dir self))))
-    (when (bound-string-p self 'store) (setf (sk-store self) (merge-pathnames (sk-store self) (sk-dir self))))
-    (when (bound-string-p self 'cache) (setf (sk-cache self) (merge-pathnames (sk-cache self) (sk-dir self))))
-    (when (bound-string-p self 'data) (setf (sk-data self) (sk-data self)))
+    (when (bound-string-p self 'stash) (setf (stash self) (merge-pathnames (stash self) (sk-dir self))))
+    (when (bound-string-p self 'store) (setf (store self) (merge-pathnames (store self) (sk-dir self))))
+    (when (bound-string-p self 'cache) (setf (cache self) (merge-pathnames (cache self) (sk-dir self))))
+    (when (bound-string-p self 'data) (setf (data self) (data self)))
     ;; SCRIPTS
     (if (bound-string-p self 'scripts)
-        (if-let* ((path (probe-file (pathname (the simple-string (sk-scripts self))))))
-                 (setf (sk-scripts self)
+        (if-let* ((path (probe-file (pathname (the simple-string (scripts self))))))
+                 (setf (scripts self)
                        (if (directory-path-p path)
                            (find-files path)
                            (list path)))
-                 (warn! (format nil "ignoring missing scripts directory: ~A" (sk-scripts self)))))
+                 (warn! (format nil "ignoring missing scripts directory: ~A" (scripts self)))))
     (unless *keep-ast* (setf (ast self) nil))
     self))
 
@@ -158,7 +151,7 @@
                        (name self)
                        :cchar #\;
                        :timestamp t
-                       :description (sk-description self)
+                       :description (description self)
                        :opts '("mode:skel;"))
                       out))
         (write-ast self out :pretty pretty))
@@ -187,9 +180,9 @@
   (make-instance 'sk-system-config))
 
 (defclass sk-user-config (sk-config sk-meta)
-  ((user :initarg :user :type string :accessor sk-user :initform (current-user))
+  ((user :initarg :user :type string :accessor user :initform (current-user))
    (name :initarg :name :type string :accessor name)
-   (email :initarg :email :type string :accessor sk-email))
+   (email :initarg :email :type string :accessor email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
 
 (defun default-sk-user-config () (make-instance 'sk-user-config))

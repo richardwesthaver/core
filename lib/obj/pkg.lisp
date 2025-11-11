@@ -605,7 +605,8 @@
   (:nicknames :project)
   (:use :cl :std :id :schema :config :ast)
   (:export :project :project-config :make-project
-   :*default-project-class* :simple-project :project-metadata))
+   :*default-project-class* :simple-project :project-metadata :author
+   :version :tags :description :license))
 
 (defpkg :obj/db
   (:nicknames :db)
