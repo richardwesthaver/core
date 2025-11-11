@@ -1,3 +1,5 @@
+(defsystem :bin)
+
 (defsystem :bin/homer
   :build-operation program-op
   :build-pathname "homer"
@@ -32,6 +34,6 @@
   :entry-point "bin/core::dispatch-core"
   :components ((:file "core"))
   :depends-on 
-  (:core :bin/skel :bin/homer :bin/rdb :bin/vc :bin/pod :bin/mpk))
+  (:core :bin/skel :bin/homer :bin/mpk))
          
          

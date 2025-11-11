@@ -650,7 +650,7 @@ calling any component ops."
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
-  (:method ((self t) &key default (asdf t))
+  (:method ((self t) &key default (asdf *asdf-compatibility*))
     (multiple-value-bind (val found) (gethash (keywordicate (string-upcase self)) *system-table*)
       (cond
         (found (values val found))
@@ -688,7 +688,7 @@ calling any component ops."
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key (asdf *asdf-compatibility* verbose))
+  (:method ((self system) &key (asdf *asdf-compatibility*) verbose)
     (mumble "Compiling system ~A" (name self))
     (if asdf
         (asdf:compile-system (name self) :verbose verbose)
