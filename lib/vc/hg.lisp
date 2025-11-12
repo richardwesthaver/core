@@ -299,7 +299,8 @@ first value and 'stuff' as the second."
               (error 'hg-error
                      :message "hg command failed: id")))))))
 
-(defvar *fast-export-directory* (merge-pathnames ".stash/fast-export/" (user-homedir-pathname)))
+;; TODO 2025-11-11: 
+(defvar *fast-export-directory* (merge-pathnames ".data/skel/ext/hg-fast-export/" (user-homedir-pathname)))
 (defvar *hg-fast-export-script* (merge-pathnames "hg-fast-export.sh" *fast-export-directory*))
 
 (defun hg-fast-export (repo &optional output filter-regexp)

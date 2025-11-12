@@ -75,7 +75,7 @@
    (data :initform *skel-data* :initarg :data :type pathname :accessor data)
    (scripts :initform nil :initarg :scripts :type (or pathname list (vector pathname)) :accessor scripts)
    (license :initarg :license :accessor license)
-   (level :initform *log-level* :initarg :level :type log-level-designator :accessor level)
+   (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config) :accessor logger)
    (fmt :initform :pretty :initarg :fmt :type symbol)
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))

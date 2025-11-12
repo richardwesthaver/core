@@ -41,6 +41,7 @@
    :program-list :find-exe :ld-library-path-list :concat-env-table
    :make-env-var
    :load-env
+   :get-env
    :*env-table*))
 
 (defpkg :cli/ansi
@@ -157,6 +158,6 @@
 
 (defpkg :cli/tui
   (:use :cl :std :ansi :linedit :progress :spark :terminfo :env)
-  (:export :completing-read :defprompt))
+  (:export :completing-read :completing-read-form :defprompt))
 
 (setq *defpkg-hook* nil)

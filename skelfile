@@ -44,7 +44,7 @@
  (upstream () 
   (let ((tmp "/tmp/core/"))
    (probe-delete-directory tmp)
-   (vc-export (sk-vc *skel-project*) tmp :filter-regexp "^std$") ;; yuck
+   (vc-export (vc *skel-project*) tmp :filter-regexp "^std$") ;; yuck
    (with-repo (r :path tmp :type :git)
     (vc-remote r :add :name "cb" :url "ssh://git@codeberg.org/c-c/core")
     (vc-remote r :add :name "gh" :url "ssh://git@github.com/richardwesthaver/core")
@@ -276,7 +276,7 @@
     #$tar -I 'zstd' -cf ./core.tar.zst core/$#))
   (move-file ".stash/tmp/core.tar.zst" ".stash/core.tar.zst"))
  (dist-repo ()
-  (vc-bundle (sk-vc *skel-project*) "/opt/store/packy/vc/core.hg"))
+  (vc-bundle (vc *skel-project*) "/opt/store/packy/vc/core.hg"))
  (dist-source ()
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))

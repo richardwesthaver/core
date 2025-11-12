@@ -10,13 +10,23 @@
 (defvar *default-local-env-var-names* 
   '("PREFIX" "STASHDIR" "STOREDIR" "BINDIR" "LIBDIR" "DATADIR" "CARGO_TARGET_DIR"))
 
-(defvar *env-table* (make-hash-table :test 'equal))
+(defglobal *env-table* (make-hash-table :test 'equal)
+  "Global environment variables available in this image.")
 
-(defun load-env (&optional (scope (append *default-local-env-var-names* 
-                                          *default-global-env-var-names*)))
+(defun get-env (name &optional default)
+  (gethash name *env-table* default))
+
+(defun (setf get-env) (new name)
+  (setf (gethash name *env-table*) new))
+
+(defun load-env (scope)
   "Load the environment variables specified by SCOPE."
   (dolist (e scope)
     (setf (gethash e *env-table*) (sb-posix:getenv e))))
+
+(defmethod init ((self (eql :env)) &key (scope (append *default-local-env-var-names* 
+                                                       *default-global-env-var-names*)))
+  (load-env scope))
 
 (declaim (inline exec-path-list))
 (defun exec-path-list ()
