@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :cry)
+(in-package :cry-int)
 
 (define-condition crypto-condition () ())
 (define-condition crypto-error (crypto-condition std-error) ())

@@ -1,8 +1,8 @@
 (cl:defpackage :cry/tests
   (:use :rt :std :cl 
-   :cry :cry/hotp :cry/totp :cry/crc64 
+   :cry-int :cry/hotp :cry/totp :cry/crc64 
    :cry/jwt :cry/b3 :cry/keyring :cry/authinfo 
-   :cry/password :cry/drm :cry/ssl :config)
+   :cry/password :cry/drm :cry/tls :config)
   (:shadowing-import-from :rt :random-bytes))
 
 (in-package :cry/tests)

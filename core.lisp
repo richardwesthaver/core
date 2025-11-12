@@ -4,9 +4,9 @@
 
 ;;; Code:
 (pkg:defpkg :core 
-  (:use-reexport :std-lisp :log :io :obj :net :cry :parse :dat :sb-ext :sb-debug :math)
-  (:export
-   #:core-app-config))
+  (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math)
+  (:export #:app-config))
+
 
 (in-package :core)
 
@@ -18,7 +18,7 @@
 (eval-when (:load-toplevel)
   (pushnew :core *features*))
 
-(defconfig core-app-config (service-config)
+(defconfig app-config (service-config)
   ((logger :initarg :logger :type logger-config)
    (db :initarg :db :type db-config)
    (thread-pool :initarg :thread-pool :type thread-pool)

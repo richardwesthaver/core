@@ -11,8 +11,8 @@
 (cry/b3:b3sum "/tmp/picard01t0fjkc.jpg" :hex nil)
 |#
 
-(defpackage :cry
-  (:nicknames :cryptography)
+(defpackage :cry-int
+  ;; (:nicknames :cry)
   (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
   (:use :cl :std :sb-thread :ironclad :obj/db :obj/id)
   (:export :crypto-error :crypto-token-expired :crypto-token-invalid
@@ -23,7 +23,7 @@
 
 (defpackage :cry/hotp
   (:nicknames :hotp)
-  (:use :cl :std :cry)
+  (:use :cl :std :cry-int)
   (:export *digits*
            *hmac-sha-mode*
            hotp))
@@ -48,19 +48,19 @@
            :b3hash-string))
 
 (defpackage :cry/jwt
-  (:use :cl :std :dat/json :dat/base64 :cry)
+  (:use :cl :std :dat/json :dat/base64 :cry-int)
   (:export
    #:hs256-digest
    #:compare-hs256-digest
    #:jwt-decode))
 
 (defpackage :cry/authinfo
-  (:use :cl :std :cry)
+  (:use :cl :std :cry-int)
   (:export
    #:authinfo))
 
 (defpackage :cry/keyring
-  (:use :cl :std :cry :keyutils :id :db :sb-alien)
+  (:use :cl :std :cry-int :keyutils :id :db :sb-alien)
   (:export
    :get-key
    :keyring
@@ -91,7 +91,7 @@
   (:use :cl :std)
   (:export))
 
-(in-package :cry)
+(in-package :cry-int)
 
 (defclass token (id) ())
 

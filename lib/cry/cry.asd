@@ -7,13 +7,12 @@
    :sb-posix :sb-bsd-sockets 
    :std :log :obj :dat
    :blake3 :keyutils
-   :rustls :cl+ssl)
+   :cl+ssl :openssl)
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
                (:module "tls"
                 :components ((:file "pkg")
-                             (:file "rls")
                              (:file "stream")))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))
