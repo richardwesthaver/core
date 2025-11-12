@@ -24,4 +24,4 @@
   :thunk krypt-show
   :opts ((:name "level" :description "set log level" :thunk level-opt)
          (:name "version" :description "print version" :thunk version-opt))
-  :cmds ((:name b3 :thunk b3-cmd :description "return a B3 hash or checksum")))
+  :cmds ((:name hash :thunk hash-cmd)))
