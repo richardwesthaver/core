@@ -7,7 +7,7 @@
 ;; IDL for definiting data structures - joint standard between ITU-T and ISO
 ;; used to define a large number of protocols.
 
-;; For example see the CRY/SSL/X509 package.
+;; For example see the CRY/TLS/X509 package.
 
 #| refs
  - https://github.com/digitalbazaar/forge/blob/909e312878838f46ba6d70e90264650b05eb8bde/js/asn1.js

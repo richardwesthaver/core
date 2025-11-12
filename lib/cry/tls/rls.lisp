@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :ssl)
+(in-package :tls)
 
 ;;; Conditions
 (define-condition rls-condition (ssl-condition) ())

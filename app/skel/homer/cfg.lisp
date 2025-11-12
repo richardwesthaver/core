@@ -21,7 +21,6 @@
    (tasks :initarg :tasks :type list :accessor tasks)
    (jobs :initarg :jobs :type list :accessor jobs)
    (editor :initarg :editor :type (or pathname editor-config))
-   (wm :initarg :wm :type (or pathname wm-config))
    (browser :initarg :browser :type (or pathname browser-config))
    (keyboard :initarg :keyboard :type (or pathname keyboard-config))
    (boxes :initarg :box :type list)

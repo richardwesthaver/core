@@ -16,14 +16,14 @@
 ;; rfc5280
 
 ;;; Code:
-(defpackage :ssl/x509
+(defpackage :tls/x509
   (:nicknames :x509)
   (:use :cl :std :openssl :dat/asn1 :sb-alien)
   (:export
    #:decode-der-octet-vector
    #:decode-certificate-from-file))
 
-(in-package :ssl/x509)
+(in-package :tls/x509)
 
 (defun decode-der-octet-vector (bytes)
   (with-vector-sap (buffer bytes)

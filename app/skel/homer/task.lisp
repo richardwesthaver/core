@@ -40,7 +40,6 @@ timestamp for a oneshot task, else it is a list."
     (setf (id self) (pop ast))
     (setf (task-schedule self) (pop ast))
     ;; remainder of ast is evaulated when the task is executed
-    (log:debug! "loaded task: ~A" (id self))
     self))
 
 (defmethod build-ast ((self homer-task) &key)

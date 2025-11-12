@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :ssl)
+(in-package :tls)
 
 (defclass ssl-stream (wrapped-stream 
                       fundamental-binary-input-stream

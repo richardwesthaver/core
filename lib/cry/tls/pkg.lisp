@@ -3,13 +3,13 @@
 ;; 
 
 ;;; Code:
-(pkg:defpkg :cry/ssl
-  (:nicknames :ssl)
+(pkg:defpkg :cry/tls
+  (:nicknames :tls :ssl)
   (:use :cl :std :sb-gray :io :config :build :sb-alien :rustls :cry)
   (:shadowing-import-from :std/rand :random-bytes)
   (:use-reexport :cl+ssl)
   (:export :*ssl-cipher-list* :*ssl-buffer-size* :*ca-bundle* :*no-ssl*))
-(in-package :ssl)
+(in-package :tls)
 (defvar *ssl-cipher-list* nil)
 (defvar *ssl-buffer-size* 2048)
 (defvar *no-ssl* nil)

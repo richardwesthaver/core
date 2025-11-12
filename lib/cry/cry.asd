@@ -11,7 +11,7 @@
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
-               (:module "ssl"
+               (:module "tls"
                 :components ((:file "pkg")
                              (:file "rls")
                              (:file "stream")))

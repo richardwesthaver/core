@@ -22,8 +22,12 @@
         nil
         (simple-browser-error "browser command failed: ~A ~A" args))))
 
-(defun browse-url (url)
-  (run-browser (if (uri-p url) (render-uri url) url)))
+(defun browse-url (&optional url)
+  (etypecase url 
+    (string (run-browser url))
+    (uri (run-browser (render-uri url)))
+    (pathname (run-browser (format nil "file://~A" (or (probe-file url) url))))
+    (null (run-browser *default-pathname-defaults*))))
 
 (defconfig browser-config (ast) ())
 

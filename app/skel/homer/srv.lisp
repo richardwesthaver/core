@@ -66,7 +66,6 @@ obj/srv:engine
       (when (eql (slot-value self 'engine) :systemd) 
         (setf (slot-value self 'config)
               (load-systemd-unit-file (id self))))
-      (log:debug! "loaded service: ~A" (id self))
       self)))
 
 (defmethod build-ast ((self homer-service) &key)

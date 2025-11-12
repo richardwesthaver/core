@@ -48,7 +48,8 @@
  register-use-preview nil
  shr-use-xwidgets-for-media t
  which-key-mode t
- view-read-only t)
+ view-read-only t
+ org-publish-timestamp-directory (join-paths user-emacs-directory ".org-timestamps/"))
 
 (cl-pushnew (cons "melpa" "https://melpa.org/packages/") package-archives :test 'cl-equalp)
 
