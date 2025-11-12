@@ -12,8 +12,8 @@
 | description | The Compiler Company Core          |
 | skel-id     | 4611004031065916102                |
 | root        | ~/comp/core/                       |
-| tags        | (core lisp emacs c)                |
-| updated     | Tue Nov 11 17:54:59 2025 -0500     |
+| tags        | (CORE LISP EMACS C)                |
+| updated     | Tue Nov 11 19:42:21 2025 -0500     |
 | langs       | c elisp lisp org text              |
 | lines       | 153514 :λ 121783 :# 13979 :_ 17752 |
 |-------------+------------------------------------|
