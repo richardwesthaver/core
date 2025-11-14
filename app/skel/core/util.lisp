@@ -192,3 +192,13 @@ ASDF:*USER-CACHE*"
 
 (defun project-root (&optional (project *skel-project*))
   (or (when project (skel/core/obj::src project)) *default-pathname-defaults*))
+
+(defun merge-project-pathnames (path &optional (project *skel-project*))
+  (merge-pathnames path (project-root project)))
+
+(defun sk-project-clean (&optional (project *skel-project*))
+  "Default function called to clean a SK-PROJECT."
+  (with-directory (project-root project)
+    (delete-directory ".stash/" :recursive t)))
+
+(setq *default-clean-function* 'sk-project-clean)

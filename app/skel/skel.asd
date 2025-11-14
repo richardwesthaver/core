@@ -30,7 +30,6 @@
      (:file "lisp")
      (:file "asd")
      (:file "cargo")
-     (:file "pod")
      (:file "box")
      (:file "container")
      (:file "org")

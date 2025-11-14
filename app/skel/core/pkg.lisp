@@ -58,7 +58,8 @@
    #:*default-skel-bindings*
    #:*skel-project-functions*
    #:*skel-project-symbol-macros*
-   #:*skel-project-macros*))
+   #:*skel-project-macros*
+   #:*default-clean-function*))
 
 (defpackage :skel/core/header
   (:use :cl :std :skel/core/int :doc)
@@ -138,7 +139,8 @@
    :setf-skel-vars
    :list-all-projects
    :sk-search-project
-   :project-root))
+   :project-root
+   :merge-project-pathnames))
 
 
 (defpackage :skel/core/print

@@ -50,3 +50,6 @@ uninitialized with non-nil :ast slots.")
 (defvar *skel-path* *default-pathname-defaults*)
 (defvar *system-skelrc* (pathname "/etc/skelrc"))
 (defvar *user-skelrc*)
+
+(std:defvar-unbound *default-clean-function*
+  "The default function used to clean a SK-PROJECT.")

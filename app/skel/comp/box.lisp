@@ -14,11 +14,14 @@
 
 (defmethod sk-load-component ((kind (eql :box)) form &optional (path (project-root)))
   (declare (ignore kind))
-  (sk-convert 
-   (config:load-config :archiso 
-     (make-pathname :name (namestring form) :type "box" :directory (namestring path)))))
+  (let* ((n (pathname-name form))
+         (p (make-pathname :name n :type "box" :directory (namestring path)))
+         (ret (sk-convert (config:load-config :archiso p))))
+    (setf (name ret) n
+          (path ret) p)
+    ret))
 
-(defmethod sk-build ((self sk-box-file) &key path)
+(defmethod sk-build ((self sk-box-file) &key (path (stash-pathname (name self))))
   (build:build self :path path))
                      
 (defmethod sk-write-file ((self sk-box-file) &key path)

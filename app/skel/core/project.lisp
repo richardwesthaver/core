@@ -314,6 +314,11 @@ directory."))
   (loop for c across (components self)
 	collect (sk-load self)))
 
+(defmethod sk-call ((self sk-project) (arg (eql :clean)))
+  (if-let ((x (sk-find arg self)))
+    (sk-make self x)
+    (funcall skel/core/util::*default-clean-function* self)))
+
 (defmethod sk-build ((self sk-project) &key)
   (loop for c across (components self)
 	collect (sk-build c)))

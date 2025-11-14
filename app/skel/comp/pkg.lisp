@@ -53,10 +53,6 @@
   (:use :cl :std :skel/core/obj :skel/core/proto :organ :obj/id :skel/core/int :skel/core/util)
   (:export :sk-org-file))
 
-(defpackage :skel/comp/pod
-  (:use :cl :std :skel/core/obj :skel/core/proto :pod :obj/id :skel/core/int :skel/core/util)
-  (:export :sk-pod-file))
-
 (defpackage :skel/comp/box
   (:use :cl :std :skel/core/obj :skel/core/proto :box :obj/id :skel/core/int :skel/core/util)
   (:export :sk-box-file))
