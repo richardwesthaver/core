@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :box/tests
-  (:use :cl :rt :box :box/archiso :sb-bsd-sockets)
+  (:use :cl :rt :box :sb-bsd-sockets)
   (:import-from :std :in-readtable)
   (:export
    #:*archiso-json*))

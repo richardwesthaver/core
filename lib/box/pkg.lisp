@@ -12,25 +12,15 @@
 
 ;;; Code:
 (defpackage :box
-  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config :obj)
+  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config :obj :build :ast)
   (:export
-   :box-config))
+   :box-config
+   :archiso-config
+   :mkarchiso
+   :run-archiso
+   :qemu-image-config
+   :qemu-system-config))
 
-(defpackage :box/archiso
-  (:nicknames :archiso)
-  (:use :cl :std :shell :json :config :box :ast :build)
-  (:export :*archiso-config* :*archiso-creds* :archiso-config
-           :mkarchiso
-           :run-archiso))
-
-(defpackage :box/qemu
-  (:nicknames :qemu)
-  (:use :cl :std :cli/shell :dat/json :config :box :ast)
-  (:export :*qemu-config* :*qemu-creds*))
-
-(defpackage :box/qmp
-  (:nicknames :qmp)
-  (:use :cl :std :dat/json :net/srv :box/qemu))
 
 ;;; DEFSYS Providers
 ;; (defprovider :box (name))

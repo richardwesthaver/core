@@ -1,22 +1,33 @@
 ;;; box.lisp --- Box Components
 
-;; Box files are currently always archiso configs.
+;;
 
 ;;; Code:
 (in-package :skel/comp/box)
 
-(defclass sk-box-file (sk-component box/archiso:archiso-config) ())
+(defclass sk-box-file (sk-component box-config) ())
+(defclass sk-archiso-file (sk-box-file archiso-config) ())
+(defclass sk-qemu-image-file (sk-box-file qemu-image-config) ())
 
-(defmethod sk-convert ((self box-config))
-  (let ((ret (change-class self 'sk-box-file)))
-    (update-id ret)
-    ret))
+(defmethods sk-convert 
+  (((self box-config))
+   (let ((ret (change-class self 'sk-box-file)))
+     (update-id ret)
+     ret))
+  (((self archiso-config))
+   (let ((ret (change-class self 'sk-archiso-file)))
+     (update-id ret)
+     ret))
+  (((self qemu-image-config))
+   (let ((ret (change-class self 'sk-archiso-file)))
+     (update-id ret)
+     ret)))
 
 (defmethod sk-load-component ((kind (eql :box)) form &optional (path (project-root)))
   (declare (ignore kind))
   (let* ((n (pathname-name form))
          (p (make-pathname :name n :type "box" :directory (namestring path)))
-         (ret (sk-convert (config:load-config :archiso p))))
+         (ret (sk-convert (config:load-config :box p))))
     (setf (name ret) n
           (path ret) p)
     ret))

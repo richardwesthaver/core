@@ -21,4 +21,4 @@
 ;; surface-area that we deem suitable to support our applications.
 
 ;;; Code:
-(in-package :box/qmp)
+(in-package :box)

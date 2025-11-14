@@ -197,7 +197,14 @@
    :systemd-error :systemctl-stop
    :systemctl-start :systemctl-restart
    :systemctl-status :systemctl-json
-   :systemd-units))
+   :systemd-units
+   :*machinectl* :run-machinectl
+   :*homectl* :run-homectl
+   :*userdbctl* :run-userdbctl
+   :*loginctl* :run-loginctl
+   :*networkctl* :run-networkctl
+   :*resolvectl* :run-resolvectl
+   :*journalctl* :run-journalctl))
 
 (defpkg :cli/tools/rust
   (:nicknames :tools/rust)

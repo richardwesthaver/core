@@ -94,3 +94,8 @@
   (let ((proc (sb-ext:run-program *userdbctl* args :wait t :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (resolvectl-error "Userdbctl command failed: ~A ~A" *userdbctl* (or args "")))))
+
+(define-cli-tool :machinectl (&rest args)                                              
+  (let ((proc (sb-ext:run-program *machinectl* args :wait t :output t)))               
+    (unless (eq 0 (sb-ext:process-exit-code proc))                                    
+      (machinectl-error "Machinectl command failed: ~A ~A" *machinectl* (or args "")))))

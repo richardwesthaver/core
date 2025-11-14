@@ -7,17 +7,17 @@
 ;; For now we merely want to be able to configure, build and launch images.
 
 ;;; Code:
-(in-package :box/qemu)
+(in-package :box)
 
-(defconfig qemu-img-config (box-config) 
+(defconfig qemu-image-config (box-config) 
   ((base)
    (format)
    (filename)
    (compression)
    (size)))
 
-(defmethod make-config ((fmt (eql :qemu-img)) &rest args &key ast &allow-other-keys)
-  (let ((cfg (apply 'make-instance 'qemu-img-config args)))
+(defmethod make-config ((fmt (eql :qemu-image)) &rest args &key ast &allow-other-keys)
+  (let ((cfg (apply 'make-instance 'qemu-image-config args)))
     (when ast (load-ast cfg))
     cfg))
 
