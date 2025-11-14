@@ -28,8 +28,8 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (buildah-error "BUILDAH command failed: ~A ~A" *buildah* args))))
 
-(define-cli-tool :mkarchiso (&rest args)
-  (let ((proc (sb-ext:run-program *mkarchiso* (or args nil) :output t)))
+(define-cli-tool :mkarchiso (args &key (output t) error)
+  (let ((proc (sb-ext:run-program *mkarchiso* (or args nil) :output output :error error)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (mkarchiso-error "MKARCHISO command failed: ~A ~A" *mkarchiso* (or args "")))))
 

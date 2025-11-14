@@ -34,7 +34,6 @@
    :containerfile-args :containerfile-steps :containerfile-base
    :with-libpod-client :*default-containerfile*
    :podman-config
-   :pod-config
    :*podman-config-directory*
    :load-podman-config
    :default-podman-config

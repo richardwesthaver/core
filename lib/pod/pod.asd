@@ -2,7 +2,7 @@
   :depends-on (:std :cli :obj :dat :net :io)
   :components ((:file "pkg")
                (:file "condition")
-               (:module "obj"
+               (:module "api"
                 :components 
                 ((:file "system")
                  (:file "secret")

@@ -92,18 +92,18 @@ output. If TAG is t, use the class-name symbol."
            (type list exclude))
   (unless (or slots methods)
     (error "Required one missing key arg: SLOTS or METHODS"))
-  (let* ((class (class-of obj))
-         (res (when tag (list (if (eq t tag) (class-name class) tag)))))
-    (block unwrap
-      (when-let ((slots (when slots
-                          (list-class-slots class slots exclude))))
-        (let ((slot-vals (list-slot-values-using-class class obj (remove-if #'null slots) nullp unboundp)))
-          (if methods
-              (push slot-vals res)
-              (return-from unwrap (push slot-vals res)))))
-      (when-let ((methods (when methods (list-class-methods class methods indirect))))
-        (push methods res)))
-    (flatten res)))
+  (let ((class (class-of obj)))
+    (when-let ((slots (when slots (list-class-slots class slots exclude))))
+      (loop for s in (list-slot-values-using-class 
+                      class obj (remove-if #'null slots) nullp unboundp)
+            with ret
+            do (progn (push (car s) ret)
+                      (push (second s) ret))
+            finally 
+               (nreversef ret)
+               (return
+                 (values (if tag `(,(class-name class) ,@ret) ret)
+                         (when methods (list-class-methods class methods indirect))))))))
 
 ;; TODO 2024-03-22: 
 (defun wrap-object (class form)
@@ -240,9 +240,11 @@ slot.")
   (:method ((self ast) stream)
     (setf (ast self) (read-lisp-until-end stream)))
   (:method ((self ast) (stream pathname))
-    (read-ast self (open stream)))
+    (with-open-file (f stream)
+      (read-ast self f)))
   (:method ((self ast) (stream string))
-    (read-ast self (open stream))))
+    (with-input-from-string (s stream)
+      (read-ast self s))))
 
 (defgeneric write-ast (self stream &key)
   (:method ((self ast) stream &key (pretty *print-pretty*) (case *print-case*))
@@ -259,11 +261,11 @@ slot.")
                      (write-char #\newline stream))
             (.write (ast self)))))
   (:method ((self ast) (stream pathname) &rest args)
-    (apply 'write-ast self (open stream :direction :output) args))
+    (with-open-file (f stream :direction :output)
+      (apply 'write-ast self f args)))
   (:method ((self ast) (stream string) &rest args)
-    (apply 'write-ast self (open stream :direction :output) args)))
-
-(defun read-ast-string (self str) (with-input-from-string (s str) (read-ast self s)))
+    (with-open-file (f stream :direction :output)
+      (apply 'write-ast self f args))))
 
 (defun write-ast-string (self) 
   (let ((ast (ast:ast self)))

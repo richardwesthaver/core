@@ -363,12 +363,10 @@
    :stmt :defexpr
    :traverse :op
    :*ast-dispatch-table* :write-ast
-   :read-ast
-           :with-ast :call-with-ast
-           :debug-traverser :copy-traverser
-           :*keep-ast* :syntax-error
-           :syntax-warning :syntax-condition
-           :invalid-ast))
+   :read-ast :with-ast :call-with-ast :invalid-ast
+   :debug-traverser :copy-traverser
+   :*keep-ast* :syntax-error
+   :syntax-warning :syntax-condition))
 
 (defpkg :obj/config
   (:nicknames :config)

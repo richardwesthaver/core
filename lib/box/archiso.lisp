@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :box/archiso)
-
+(in-readtable :std)
 #| default config
 {
     "__separator__": null,
@@ -225,7 +225,7 @@ profile/
 ;;;_. Config
 (defconfig archiso-config (box-config)
   ((arch :initform "x86_64" :type string)
-   (hostname :initform "box" :type string)
+   (hostname :initform "box" :type string :accessor name)
    (iso-name :initform "archlinux")
    (iso-label :initform "ARCH_$(date --date=\"@${SOURCE_DATE_EPOCH:-$(date +%s)}\" +%Y%m)")
    (iso-publisher :initform "Arch Linux <https://archlinux.org>")
@@ -246,13 +246,29 @@ profile/
 
 (defmethod make-config ((fmt (eql :archiso)) &rest args &key ast &allow-other-keys)
   (let ((cfg (apply 'make-instance 'archiso-config args)))
-    (when ast (load-ast cfg))
+    (when ast 
+      (load-ast cfg)
+      (setf (ast cfg) nil))
     cfg))
+
+(defmethod load-config ((fmt (eql :archiso)) (from pathname) &key)
+  (let ((c (make-config :archiso)))
+    (with-safe-io-syntax (:box/archiso)
+      (read-ast c from)
+      (load-ast c)
+      c)))
+
+(defmethod load-ast :after ((self archiso-config))
+  (with-slots (packages bootstrap-packages) self
+    (setf packages (mapcar #'string-downcase packages)
+          bootstrap-packages (mapcar #'string-downcase bootstrap-packages)
+          (ast self) nil)
+    self))
 
 (defun format-archiso-file-permissions (lst)
   (mapcar (lambda (x) (format nil "[~S]=~S" (car x) (cdr x))) lst))
 
-(defmethod build ((self archiso-config) &key path)
+(defmethod build ((self archiso-config) &key (path (merge-pathnames (name self) #l"stash:tmp;archiso;")))
   "Build an Archiso profile directory at PATH given the configuration SELF."
   (with-directory (ensure-directories-exist (directory-path path))
     (let ((airootfs (ensure-directories-exist "airootfs/"))
@@ -295,7 +311,7 @@ profile/
       (uiop:copy-file (slot-value self 'pacman-conf) "pacman.conf")
       (with-open-file (profiledef "profiledef.sh" :direction :output :if-exists :supersede)
         (write-line "#!/usr/bin/env bash" profiledef)
-        (write-line "# shellcheck disable=SC2634" profiledef)
+        ;; (write-line "# shellcheck disable=SC2634" profiledef)
         (with-slots (iso-name iso-label iso-publisher iso-application
                      iso-version install-dir buildmodes bootmodes
                      pacman-conf airootfs-image-type airootfs-image-tool-options bootstrap-tarball-compression
@@ -319,8 +335,7 @@ profile/
                   &key config install-dir out-dir work-dir
                        name label publisher cert gpg mbox modes packages
                        delete verbose (output t))
-  (sb-ext:run-program 
-   (cli:find-exe "mkarchiso") 
+  (cli/tools/virt::run-mkarchiso
    `(,@(when config `("-C" ,config))
      ,@(when install-dir `("-D" ,install-dir))
      ,@(when out-dir `("-o" ,out-dir))

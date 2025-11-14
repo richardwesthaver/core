@@ -395,6 +395,7 @@ function: '(ql:quickload :clouseau)'."
   (make-palette (as defpackage))
   (define-package (as defpackage))
   (walk-directory 1)
+  (load-config 1)
   (with-db 1)
   (incf 1)
   (decf 1)
