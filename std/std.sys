@@ -15,7 +15,7 @@
  :serial t
  :require (:cl-ppcre)
  :components 
- ("named-readtables" "defpkg" 
+ ((:file "named-readtables") (:file "defpkg")
   (:dir "num")
   (:pkg "pkg")
   (:file "condition")

@@ -67,7 +67,7 @@ ASDF:DEFSYSTEM.")
 ;;; Sysdef Utils
 ;; system definitions are files ending with +SYS-EXTENSION+ containing lisp
 ;; code.
-(defun sysdefs (&optional (dir *default-pathname-defaults*) recurse)
+(defun sysdefs (&optional (dir *default-pathname-defaults*) (recurse t))
   "Return a list of system definition pathnames found in DIR."
   (collecting
     (walk-directory dir 
@@ -84,6 +84,9 @@ ASDF:DEFSYSTEM.")
     (if (= 1 (length defs))
         (car defs)
         (find (last (pathname-directory dir)) defs :test 'string-equal :key 'pathname-name))))
+
+(defun list-all-systems (&optional (table *system-table*))
+  (std/hash:hash-table-values table))
 
 ;;; Components
 (defclass component () 
@@ -162,6 +165,10 @@ directory recursively.")
   "Load a component."
   (etypecase comp
     (mod-component (mapcar 'load-component (components comp)))
+    ;; TODO
+    (grovel-component (if-let ((pkg (find-package (slot-value comp 'package))))
+                        (setf (slot-value comp 'package) pkg)
+                        (std-error "Missing package (~A) for grovel component ~A" (slot-value comp 'package) comp)))
     (component (apply 'load (path comp) args))
     (pathname (apply 'load comp args))))
 
@@ -508,37 +515,54 @@ system jobs to be executed in an async context."
 
 (defvar *wildcard-regexp* (cl-ppcre:create-scanner ".*"))
 
+(defun %mod-component-walk (c &optional inc exc)
+  (walk-directory (path c)
+    (constantly t) (constantly t)
+    (lambda (x)
+      (dolist (f (directory-files x))
+        (let ((f (namestring f))) ; set name only
+          (when (and inc (cl-ppcre:scan inc f) (or (not exc) (not (cl-ppcre:scan exc f))))
+            (push (%parse-component-form f) (components c)))))))
+  ;; fill in the path
+  (mapc (lambda (x) 
+          (setf (path x) 
+                (probe-file (make-pathname 
+                             :name (name x) 
+                             :type (string-downcase (component-type x) )
+                             :directory (namestring (path c))))))
+        (components c))
+  c)
+
+  
 (defun %parse-component-form (form)
-  (if (atom form)
+  (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
       (if (directory-path-p form)
           (make-instance 'dir-component 
             :include ".*" 
-            :name (last (pathname-directory form))
-            :path form)
+            :name (last (pathname-directory form)))
           (make-instance 'file-component 
             :type (or (pathname-type form) "lisp")
-            :name (pathname-name form)
-            :path (make-pathname :name form :type (or (pathname-type form) "lisp"))))
+            :name (pathname-name form)))
       (let ((n (cadr form))
             (kind (gethash (car form) *component-class-table*))
             (props (cddr form)))
         (ecase (car form)
           ((or :file :pkg :grovel)
            (let ((ty (or (pathname-type n) "lisp")))
-             (make-instance kind
-               :type (keywordicate (string-upcase ty))
-               :name n
-               :path (make-pathname :name n :type ty))))
+             (apply 'make-instance kind
+                    :type (keywordicate (string-upcase ty))
+                    :name n
+                    :path (probe-file (make-pathname :name n :type ty :defaults *default-pathname-defaults*))
+                    props)))
           (:mod
-           (let* ((path (directory-path n))
-                  (*default-pathname-defaults* (truename path)))
-             (make-instance kind
-               :name n 
-               :path path
-               :components (mapcar '%parse-component-form (getf props :components)))))
+           (let* ((path (probe-file (directory-path n)))
+                  (c (make-instance kind
+                       :name n 
+                       :path path
+                       :components (mapcar '%parse-component-form (getf props :components)))))
+             (%mod-component-walk c)))
           (:dir
-           (let* ((path (directory-path n))
-                  (*default-pathname-defaults* (truename path))
+           (let* ((path (probe-file (directory-path n)))
                   (inc (or (getf props :include) *wildcard-regexp*))
                   (exc (getf props :exclude))
                   (c (make-instance kind
@@ -547,14 +571,7 @@ system jobs to be executed in an async context."
                        :include inc
                        :exclude exc
                        :components (mapcar '%parse-component-form (getf props :components)))))
-             (walk-directory (path c)
-               (constantly t) (constantly t)
-               (lambda (x)
-                 (dolist (f (directory-files x))
-                   (let ((f (namestring f)))
-                     (when (and (cl-ppcre:scan inc f) (or (not exc) (not (cl-ppcre:scan exc f))))
-                       (push (%parse-component-form f) (components c)))))))
-             c))))))
+             (%mod-component-walk c inc exc)))))))
 
 (defun %parse-components-form (form)
   (mapcar '%parse-component-form form))
@@ -629,29 +646,28 @@ internally. On success the path is added to the *SYSDEFS* list."
               (load p)))
         (setf (gethash path (system-session-file-cache *system-session*))
               (sb-ext:get-time-of-day))
-        (pushnew (namestring path) *sysdefs* :test 'equal)
+        (pushnew path *sysdefs* :test 'equal)
         (if name 
             (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
             t)))))
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key sysdefs (preload t))
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
+  (when sysdefs (setq *sysdefs* sysdefs))
   (setq *system-table* (make-hash-table)
-        *system-session* nil
-        *sysdefs* sysdefs
+        *system-session* nil        
         *module* nil
         *module-stack* nil
         *module-table* (make-hash-table :test 'equal))
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
-(defmethod init ((self system) &key )
+(defmethod init ((self system) &key)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
   (with-system-session (self)
-    (expand-component-paths self)
     (mapc 'require (slot-value self 'require))
     (setf (slot-value self 'provide) 
           (mapcar (lambda (x)
@@ -669,8 +685,8 @@ REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
 
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
-absolute pathnames. Calling this function on a system is required before
-calling any component ops."
+absolute pathnames. Shouldn't be needed if all system components exist when
+LOAD-SYS is called."
   (labels ((.expand (comp)
              (when (probe-file (path comp)) (setf (path comp) (probe-file (path comp))))
              (when (and (mod-component-p comp) (components comp))
@@ -684,7 +700,7 @@ calling any component ops."
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
   (:method (name (self system))
     (with-system-session (self)
-      (expand-component-paths self)
+      ;; (expand-component-paths self)
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
@@ -708,7 +724,8 @@ calling any component ops."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force (verbose t) (asdf *asdf-compatibility*))
+  (:method ((self system) &key force (verbose t) (asdf *asdf-compatibility*) (init t))
+    (when init (init self))
     (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self)))
     ;; TODO 2025-08-31:
     ;; - build-plan
@@ -718,22 +735,25 @@ calling any component ops."
           (case (plan self)
             ((or :serial nil) (mapc 'load-component (components self)))
             (t (nyi! "Unrecognized PLAN keyword"))))))
-  (:method (self &rest args)
-    (let ((sys (find-system self :default (remf args :default))))
+  (:method (self &rest args &key (default :error))
+    (remf args :default)
+    (let ((sys (find-system self :default default)))
       (apply 'load-system sys args)))
   (:method ((self asdf:system) &rest args)
     (apply 'asdf:load-system self args)))
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key (asdf *asdf-compatibility*) verbose)
+  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose t) (init t))
+    (when init (init self))
     (mumble "Compiling system ~A" (name self))
     (if asdf
         (asdf:compile-system (name self) :verbose verbose)
         (with-system-session (self)
           (mapc 'compile-component (components self)))))
-  (:method ((self symbol) &rest args)
-    (apply 'compile-system (find-system self :default :error) args)))
+  (:method ((self symbol) &rest args &key (default :error))
+    (remf args :default)
+    (apply 'compile-system (find-system self :default default) args)))
 
 (defgeneric save-system (self &key &allow-other-keys)
   (:documentation "Save the system SELF."))

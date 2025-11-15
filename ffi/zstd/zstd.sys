@@ -2,7 +2,7 @@
 (defsys :zstd
  :depends-on (:std)
  :components ((:pkg "pkg")
-              (:grovel "constants")
+              (:grovel "constants" :package :zstd)
               (:file "simple")
               (:file "stream")
               (:file "dict")

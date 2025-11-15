@@ -1383,6 +1383,7 @@
    :sysdefs
    :sysdef
    :defsys
+   :list-all-systems
    :defprovider
    :defcomponent
    :load-sys

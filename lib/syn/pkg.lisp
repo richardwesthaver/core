@@ -6,6 +6,7 @@
 
 ;;; Code:
 (defpackage :syn/ts
+  (:nicknames :ts)
   (:use :cl :std :tree-sitter)
   (:export 
    :parse-file

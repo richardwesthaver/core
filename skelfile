@@ -106,6 +106,7 @@
   	   (ret))
      (setf lapack.h str)
      (loop with dx = 0
+      ;; loop through all declarations
       for di = (position :declaration tree :start dx)
       if (null di) 
       do (return ret)
