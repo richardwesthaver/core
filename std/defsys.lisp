@@ -492,10 +492,8 @@ system jobs to be executed in an async context."
 (defun %parse-provide-form (form)
   (mapcar
    (lambda (x)
-     (if (atom x) ; assumed to be a *FEATURE* keyword
-         (progn 
-           (pushnew x *features*) 
-           x)
+     (if (atom x) ; return as is
+         x ; else call provider on the form
          (call-provider (car x) (cdr x))))
    form))
 
@@ -617,8 +615,9 @@ internally. On success the path is added to the *SYSDEFS* list."
   (let ((path (etypecase path
                 ((or string pathname) (truename path))
                 (t (find path *sysdefs* :key 'pathname-name :test 'string-equal)))))
-    (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
-      (setf path compiled))
+    (unless (string-equal (pathname-type path) "fsys")
+      (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
+        (setf path compiled)))
     (mumble "loading systems from ~A" path)
     (with-system-session ((pathname (directory-namestring path)))
       (when 
