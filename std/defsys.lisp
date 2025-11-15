@@ -648,16 +648,18 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
 (defmethod init ((self system) &key )
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
-  (mapc 'require (slot-value self 'require))
-  (setf (slot-value self 'provide) 
-        (mapcar (lambda (x)
-                  (typecase x
-                    (symbol (provide x) x)
-                    ;; WARNING: use of eval
-                    (list (eval x))
-                    (t x)))
-                (slot-value self 'provide)))
-  self)
+  (with-system-session (self)
+    (expand-component-paths self)
+    (mapc 'require (slot-value self 'require))
+    (setf (slot-value self 'provide) 
+          (mapcar (lambda (x)
+                    (typecase x
+                      (symbol (provide x) x)
+                      ;; WARNING: use of eval
+                      (list (eval x))
+                      (t x)))
+                  (slot-value self 'provide)))
+    self))
 
 (declaim (sb-ext:maybe-inline expand-component-paths))
 

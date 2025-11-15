@@ -48,6 +48,7 @@
 (defmethod open-stream-p ((self ssl-stream))
   (sap self))
 
+#+nil
 (defmethod stream-listen ((self ssl-stream))
   (or (peeked self)
       (setf (peeked self)

@@ -51,7 +51,6 @@
     (string (make-string-xsubseq data start end))
     (t (make-xsubseq data start end))))
 
-#+(or sbcl openmcl cmu allegro)
 (define-compiler-macro xsubseq (&whole form &environment env data start &optional end)
   (let ((type (cond
                 ((constantp data) (type-of data))
@@ -137,7 +136,6 @@
     (concatenated-xsubseqs (concatenated-xsubseqs-to-sequence seq))
     (xsubseq (xsubseq-to-sequence seq))))
 
-#+(or sbcl openmcl cmu allegro)
 (define-compiler-macro coerce-to-sequence (&whole form &environment env seq)
   (let ((type (cond
                 ((constantp seq) (type-of seq))
@@ -163,7 +161,6 @@
     (octet-xsubseq (octet-xsubseq-to-string seq))
     (string-xsubseq (xsubseq-to-sequence seq))))
 
-#+(or sbcl openmcl cmu allegro)
 (define-compiler-macro coerce-to-string (&whole form &environment env seq)
   (let ((type (cond
                 ((constantp seq) (type-of seq))
