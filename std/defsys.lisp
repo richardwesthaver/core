@@ -606,7 +606,7 @@ the following extensions:
 
 (defun compile-sys (path &optional output-file)
   "Compile a system's defsys file by PATH. Default extension is FSYS."
-  (unless (pathnamep path) (setf path (path (find-system path))))
+  (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) (pathname path))))
   (checked-compile-file path
                 :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
                 :entry-points '(load-sys)))
@@ -617,6 +617,9 @@ internally. On success the path is added to the *SYSDEFS* list."
   (let ((path (etypecase path
                 ((or string pathname) (truename path))
                 (t (find path *sysdefs* :key 'pathname-name :test 'string-equal)))))
+    (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
+      (setf path compiled))
+    (mumble "loading systems from ~A" path)
     (with-system-session ((pathname (directory-namestring path)))
       (when 
           (restart-case (load path)
@@ -654,9 +657,11 @@ REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
     (setf (slot-value self 'provide) 
           (mapcar (lambda (x)
                     (typecase x
-                      (symbol (provide x) x)
+                      ;; symbols and strings use PROVIDE
+                      ((or symbol simple-string) (provide x) x)
                       ;; WARNING: use of eval
-                      (list (eval x))
+                      (list (with-safe-io-syntax (:std/defsys) (eval x)))
+                      ;; otherwise return as-is
                       (t x)))
                   (slot-value self 'provide)))
     self))
