@@ -196,6 +196,8 @@
    "A stream that makes the first N elements available both via normal read
 functions and via PEEKED."))
 
+(defgeneric (setf peeked) (new self))
+
 (defmethod initialize-instance :after ((self peeking-input-stream)
                                        &key stream (count 4)
                                             (element-type 'octet)

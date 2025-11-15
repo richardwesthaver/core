@@ -199,10 +199,10 @@ ending with the target component name."
     (apply x form)))
 
 (defprovider :tests (name &rest args)
-  `(defsys ,name ,@args :class 'test-system))
+  `(defsys ,name ,@args :class 'test-system :path ,(or *compile-file-truename* *load-truename*)))
 
 (defprovider :bench (name &rest args)
-  `(defsys ,name ,@args :class 'bench-system))
+  `(defsys ,name ,@args :class 'bench-system :path ,(or *compile-file-truename* *load-truename*)))
 
 (defprovider :alien (name &rest args)
   `(std/alien:define-alien-loader ,name ,@args))
@@ -231,18 +231,31 @@ ending with the target component name."
 (defprovider :module (name &rest args)
   `(defmodule ,name ,@args))
 
+(defprovider :sys (name &rest args)
+  `(defsys ,name ,@args :path ,(or *compile-file-truename* *load-truename*)))
+
 ;;; Module
 ;; Unlike MOD-COMPONENT/DIR-COMPONENT, based on ASDF:MODULE which is merely a
-;; container for other COMPONENTs, Lisp Modules in the Core support the ANSI
+;; container for other COMPONENTs, Lisp MODULEs in the Core support the ANSI
 ;; CL notion of Modules and are further extended.
 
 ;; Modules in the core are essentially a 1:N mapping from an arbitrary name
 ;; (string or symbol) to tagged lisp objects we call providers. Providers are
-;; designated by a keyword (the tag) and are responsible for calling a
-;; function which provisions the associated lisp object.
+;; designated by a keyword (the tag) and are responsible for returning a form
+;; which will be evaluated on a call to INIT.
 
 ;; The REQUIRE slot is a list of provider forms which indicate the
-;; dependencies of the module.
+;; dependencies of the module. A call to INIT will parse each element
+;; individually and attempt to load any dependencies indicated into the
+;; current image.
+
+;; Note that calling INIT on a SYSTEM or MODULE is not the same as loading it
+;; - the idea is that INIT prepares the current image so that operations don't
+;; need to concern themselves with checking for external dependencies. Note
+;; that internal dependencies still need to be coordinated between operations
+;; - that's what the system plan is for.
+
+;; Both of these slots
 (defvar *load-module* nil "The name of the module being loaded or NIL.")
 (defvar *compile-module* nil "The name of the module being compiled or NIL.")
 (defvar *module-stack* nil "A list of the most recently visited modules.")
@@ -253,8 +266,8 @@ ending with the target component name."
 (defclass module ()
   ((name :initarg :name :accessor name)
    (hook :initarg :hook :type hook :accessor hook)
-   provide
-   require)
+   (provide :initarg :provide)
+   (require :initarg :require))
   (:documentation "All Lisp Modules contain at least a NAME, HOOK, PROVIDE and REQUIRE slot."))
 
 (defun load-module (name)
@@ -298,7 +311,7 @@ USE should be called in order to load and activate a module."
 
 ;;; System
 (defcomponent system (mod-component module)
-  ((version :accessor version)
+  ((version :accessor version :initform nil)
    description
    (plan 
     :documentation "The default plan associated with this object which specifies the ordering of
@@ -306,7 +319,8 @@ system jobs to be executed in an async context."
     :initform :serial
     :accessor plan))
   (:keyword :sys)
-  (:default-initargs :hook (make-instance 'key-hook)))
+  (:default-initargs :hook (make-instance 'key-hook))
+  (:documentation "Base class for system definitions found throughout the core (*.sys)."))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."
@@ -571,6 +585,7 @@ the following extensions:
   (multiple-value-bind (.body dec doc) (std-int:parse-body body :documentation t)
     (declare (ignore dec))
     (let ((prov (%sys-get :provide .body)) (hooks (%sys-get :hook .body))
+          (path (%sys-get :path .body))
           (req (%sys-get :require .body))
           (plan (or (%sys-get :plan .body) :serial))
           (class (or (%sys-get :class .body) ''system))
@@ -578,7 +593,8 @@ the following extensions:
           (*defining-system* name))
       (std/sym:with-gensyms (sys)
         `(let ((,sys (%make-sys ,name ,class ,@.body)))
-           (setf (path ,sys) (or *compile-file-truename* *load-truename*)
+           (setf *defining-system* ,sys)
+           (setf (path ,sys) (or ,path *compile-file-truename* *load-truename*)
                  (slot-value ,sys 'plan) ,plan
                  (slot-value ,sys 'description) ,doc
                  (slot-value ,sys 'components) (%parse-components-form ',comp)
@@ -618,6 +634,8 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key sysdefs (preload t))
+  "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
+optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (setq *system-table* (make-hash-table)
         *system-session* nil
         *sysdefs* sysdefs
@@ -627,10 +645,24 @@ internally. On success the path is added to the *SYSDEFS* list."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
+(defmethod init ((self system) &key )
+  "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
+REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
+  (mapc 'require (slot-value self 'require))
+  (setf (slot-value self 'provide) 
+        (mapcar (lambda (x)
+                  (typecase x
+                    (symbol (provide x) x)
+                    ;; WARNING: use of eval
+                    (list (eval x))
+                    (t x)))
+                (slot-value self 'provide)))
+  self)
+
 (declaim (sb-ext:maybe-inline expand-component-paths))
 
 (defun expand-component-paths (c)
-  "Walk the components of component C, expanding PATH slots along the way to
+  "Walk the components of C, expanding PATH slots along the way to
 absolute pathnames. Calling this function on a system is required before
 calling any component ops."
   (labels ((.expand (comp)

@@ -58,8 +58,8 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- (:std :defsys :defpkg :named-readtables ; features
-  ;; (:readtable :std)
+ (:std :defsys :defpkg :named-readtables ; *modules*
+  (:readtable :std)
   (:proto :serde)
   (:proto :pipe)
   (:proto :kernel)
@@ -86,9 +86,9 @@
    :current-user :sudo-p
    :forkable-p :user-info
    :list-all-users :list-all-groups
-   :with-umask :with-fd :ioctl :xdg-user-dir
-   :init-xdg-user-dirs :init-xdg-base-dirs
-   :xdg-base-dir :user-add :group-add :file-kind
+   :with-umask :with-fd :ioctl :xdg-dir
+   :xdg-config-dir :xdg-config-directory
+   :xdg-config-file :user-add :group-add :file-kind
    :unmerge-pathnames :current-directory
    :with-directory-iterator :merge-env-pathnames
    :open-pipe :pathname-executable-p

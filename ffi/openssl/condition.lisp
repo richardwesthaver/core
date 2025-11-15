@@ -1,4 +1,4 @@
-;;; condition.lisp --- AWS-LC Conditions
+;;; condition.lisp --- OPENSSL Conditions
 
 ;; 
 
@@ -53,12 +53,12 @@
   :internal-error (logior 4 64)
   :overflow (logior 5 64))
 
-(define-condition aws-lc-condition () ())
+(define-condition openssl-condition () ())
 
-(define-condition aws-lc-error (aws-lc-condition error) 
+(define-condition openssl-error (openssl-condition error) 
   ((queue :initform nil :initarg :queue :reader error-queue)))
 
-(define-condition aws-lc-error-call (aws-lc-error std:std-error)
+(define-condition openssl-error-call (openssl-error std:std-error)
   ()
   (:documentation
    "A failure in the SSL library occurred..")
@@ -67,7 +67,7 @@
                      (std:error-message condition))
              (format-error-queue stream condition))))
 
-(defun read-aws-lc-error-queue ()
+(defun read-openssl-error-queue ()
   (loop for error-code = (err-get-error)
         until (zerop error-code)
         collect error-code))
@@ -78,7 +78,7 @@ QUEUE-DESIGNATOR is either a list of error codes (as returned
 by READ-SSL-ERROR-QUEUE) or an SSL-ERROR condition."
   (flet ((body (stream)
            (let ((queue (etypecase queue-designator
-                          (aws-lc-error (error-queue queue-designator))
+                          (openssl-error (error-queue queue-designator))
                           (list queue-designator))))
              (format stream "SSL error queue")
              (if queue

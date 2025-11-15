@@ -2,7 +2,7 @@
 (defsys :core
  "Core Systems"
  :version "0.1.0"
- :depends-on 
+ :require
  (:std :cli :log :obj
   :net :nlp :dat :doc
   :q :dsp :math :parse 

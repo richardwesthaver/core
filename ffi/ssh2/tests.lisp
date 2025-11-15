@@ -19,4 +19,5 @@
   (with-alien ((arr (* c-string)))
     (let ((sesh (libssh2-session-init-ex nil nil nil nil)))
       (libssh2-session-supported-algs sesh 0 (addr arr))
-      (is (find "curve25519-sha256" (c-strings-to-string-list (print arr)) :test 'string=)))))
+      (is (find "curve25519-sha256" (c-strings-to-string-list arr) :test 'string=))
+      (free-alien sesh))))

@@ -36,11 +36,11 @@
    :aws-lc-error-call
    :pem-write
    :pem-read
+   :ssl-free
    :openssl-add-all-algorithms
    :openssl-config))
 
 (in-package :openssl)
 
-(define-alien-loader ssl "/usr/local/lib/")
-(define-alien-loader crypto "/usr/local/lib/")
-
+(define-alien-loader ssl "/usr/lib/")
+(define-alien-loader crypto "/usr/lib/")
