@@ -1303,8 +1303,9 @@
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)
-  (:import-from :std/macs :with-gensyms :if-let :when-let)
+  (:import-from :std/macs :with-gensyms :if-let :when-let :eval-always)
   (:import-from :std/prim :definline)
+  (:import-from :std/sys :define-logical-pathname)
   (:import-from :std/file :probe-directory)
   (:import-from :std/path :directory-path :merge-homedir-pathnames)
   (:import-from :std/hash :hash-table-keys)
@@ -1400,6 +1401,8 @@
    :*module*
    :*core-module-table*
    :module
+   :use :using
+   :refuse :refusing
    :load-module
    :unload-module
    :with-module

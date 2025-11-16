@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :std-user)
+(in-package :sk-user)
 (defpkg :bin/sk
   (:use :cl :std :cli :skel/net/client :clap)
   (:nicknames :sk))
@@ -21,5 +21,3 @@
 
 (defmain start-sk ()
   (with-cli (*sk-cli* :run t :exit t) (describe *cli*)))
-
-(start-sk)

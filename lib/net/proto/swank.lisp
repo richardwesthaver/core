@@ -177,10 +177,12 @@ Returns a SWANK-CONNECTION when the connection attempt is successful.
 Otherwise, returns NIL.  May signal SLIME-NETWORK-ERROR if the user has a Slime
 secret file and there are network problems sending its contents to the remote
 Swank server."
-  (let ((sock (handler-case (socket-connect (get-host-by-name host-name) port)
-                   (socket-error ()
-                     (return-from slime-net-connect nil)))))
-    (socket-keep-alive (socket sock))
+  (let ((sock (make-instance 'tcp-socket)))
+    (handler-case (socket-connect sock (host-ent-address (get-host-by-name host-name)) port)
+      (socket-error (c)
+        (error c)
+        (return-from slime-net-connect nil)))
+    (socket-keep-alive sock)
     (let ((connection
             (make-instance 'swank-connection :host-name host-name :port port :socket sock))
           (secret (slime-secret)))
@@ -468,6 +470,10 @@ closed."
                        (slime-dispatch-events connection connection-closed-hook))
                      :name name)))
     connection))
+
+(defun slime-connect-file (path &optional connection-closed-hook)
+  (with-open-file (f path)
+    (slime-connect "localhost" (read f) connection-closed-hook)))
 
 (defun slime-close (connection)
   "Closes CONNECTION to a Swank server."

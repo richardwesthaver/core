@@ -197,12 +197,15 @@ ending with the target component name."
   (defun register-provider (name function)
     (setf (gethash name *provider-table*) function)))
 
+(defun find-provider (key)
+  (gethash key *provider-table*))
+
 (defmacro defprovider (key args &body body)
   "Define a provider function which processes forms where the car is (eql KEY)."
   `(register-provider ,key (lambda ,args ,@body)))
 
 (defun call-provider (name form)
-  (when-let ((x (the function (gethash name *provider-table*))))
+  (when-let ((x (the function (find-provider name))))
     (apply x form)))
 
 (defprovider :tests (name &rest args)
@@ -277,6 +280,9 @@ ending with the target component name."
    (require :initarg :require))
   (:documentation "All Lisp Modules contain at least a NAME, HOOK, PROVIDE and REQUIRE slot."))
 
+(defun find-module (name)
+  (gethash name *module-table*))
+
 (defun load-module (name)
   (when-let ((*load-module* (gethash name *module-table*)))
     (with-slots (hook) *load-module*
@@ -290,7 +296,14 @@ ending with the target component name."
   (declare (ignore args))
   (load-module name))
 
-(defun unload-module () (setf *module* nil))
+(defun unload-module (name)
+  (when (eql *module* name)
+    (setf *module* nil))
+  (nyi!))
+
+(defun partial-unload-module (name &rest args)
+  (declare (ignore args))
+  (unload-module name))
 
 (defun module-provide-system (name)
   "Provide a SYSTEM, adding valid entries to the *MODULES* variable. The function
@@ -308,11 +321,28 @@ USE should be called in order to load and activate a module."
 
 ;; TODO 2025-09-28: 
 (defmacro use (name &body body)
-  "Load and activate module NAME with the provider forms in BODY."
-  `(with-module ,name ,@body))
+  "Load and activate a package or module by NAME with the provider forms in BODY."
+  (if body
+      `(partial-load-module ,name ,@body)
+      (if (find-package name)
+          `(use-package ,name)
+          `(load-module ,name))))
 
-;; HACK 2025-09-28: 
-;; refuse?
+(defmacro using (&rest args)
+  `(progn
+     ,@(mapcar (lambda (x) (if (atom x) `(use ,x) `(use ,@x))) args)))
+
+(defmacro refuse (name &body body)
+  "Unload and deactivate a package or module by NAME modulo BODY."
+  (if body
+      `(partial-unload-module ,name ,@body)
+      (if (find-package name)
+          `(unuse-package ,name)
+          `(unload-module ,name))))
+
+(defmacro refusing (&rest args)
+  `(progn
+     ,@(mapcar (lambda (x) (if (atom x) `(refuse ,x) `(refuse ,@x))) args)))
 
 ;; (with-eval-after-load (module &body body))
 
@@ -661,6 +691,8 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *module* nil
         *module-stack* nil
         *module-table* (make-hash-table :test 'equal))
+  (ensure-directories-exist *system-data-directory*)
+  (ensure-directories-exist *system-cache-directory*)
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 

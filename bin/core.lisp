@@ -8,13 +8,14 @@
 
 (in-package :bin/core)
 
+(add-hook '*init-hooks* 'init-xdg-dirs)
+
+;; (add-hook '*init-hooks* 'std/os::init-xdg-logical-pathnames :append t)
+
 (define-multi-main dispatch-core
-    (progn
-      (in-package :user)
-      (make-toplevel-init
-       :package :user
-       :userinit (lambda () (merge-homedir-pathnames ".corerc"))
-       :default t))
+    (make-toplevel-init
+     :package :user
+     :userinit (constantly (xdg-config-file "corerc")))
   (:skel (bin/skel::start-skel))
   (:homer (bin/homer::start-homer))
   (:mpk (bin/mpk:start-mpk)))

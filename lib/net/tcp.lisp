@@ -52,9 +52,12 @@
 
 (defmethod sb-bsd-sockets::size-of-sockaddr ((socket tcp-socket))
   (case (sb-bsd-sockets::socket-family socket)
-    (sockint::af-inet sockint::size-of-sockaddr-in)
-    (sockint::af-inet6 sockint::size-of-sockaddr-in6)
+    (#.sockint::af-inet sockint::size-of-sockaddr-in)
+    (#.sockint::af-inet6 sockint::size-of-sockaddr-in6)
     (t (error "unknown sockaddr size"))))
+
+(defmethod sb-bsd-sockets::free-sockaddr-for ((socket tcp-socket) sockaddr)
+  (sb-alien:free-alien sockaddr))
 
 (defclass tcp-client (tcp-socket client) ())
 (defclass tcp-server (tcp-socket server) ())

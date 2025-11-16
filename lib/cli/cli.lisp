@@ -18,14 +18,16 @@
 
 (defpkg :cli/clap
   (:nicknames :clap)
+  (:use-reexport :cli/main)
   (:prelude :clap*
    :defcmd :defopt
    :*argc* :*args* :*optc* :*opts* 
    :args :arg0
    :getopt :setopt
+   :defmain
    :find-opt
    :*cli* :define-cli
-   :defmain :with-cli
+   :with-cli
    :do-cmd :do-opt
    :load-package-cli :package-cli
    :package-cmds :package-opts

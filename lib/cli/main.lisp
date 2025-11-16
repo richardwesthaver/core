@@ -1,8 +1,10 @@
-;;; multi.lisp --- Multi-entry Lisp Cores
+;;; main.lisp --- Main Entrypoints Macros
 
-;; Busybox-style Lisp binaries
+;; DEFMAIN/DEFINE-MULTI-MAIN
 
 ;;; Commentary:
+
+;;;; Multi-entry Lisp Cores (Busybox-style Lisp binaries)
 
 ;; We have quite a few Lisp 'binaries' at this point, each of which
 ;; are quite bloated Lisp core images with tons of duplication.
@@ -25,8 +27,20 @@
 ;; This package currently exposes an API for the latter.
 
 ;;; Code:
-(in-package :cli/multi)
+(in-package :cli/main)
 
+;;;_. Main
+(defmacro defmain (name (&key (exit t) (debug t)) &body body)
+  "Define a CLI main function in the current package."
+  (multiple-value-bind (body decls docs) (parse-body body :documentation t)
+    `(let ((*no-exit* ,(not exit))
+           (*no-debug* ,(not debug)))
+       (defun ,name ()
+         ,(or docs (format nil "Run the top-level function in package ~A." (package-name *package*)))
+         ,@decls
+         (with-cli-handlers ,@body)))))
+
+;;;_. Multi-main
 (defmacro define-multi-main (name default &rest mains)
   "Define a MAIN function for the current package which dispatches
   based on the value of '(ARG0)' at runtime to one of the pairs in

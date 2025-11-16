@@ -6,7 +6,7 @@
 (in-package :std/sys)
 (std-int:in-readtable :std)
 
-;;; System Paths
+;;;_. System Paths
 ;; These paths may be rebound based on application context.
 (defvar *stash* (merge-pathnames ".stash/" (user-homedir-pathname)))
 (defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
@@ -350,7 +350,7 @@ long as ASDF is non-nil)."
   #+quicklisp (pushnew path ql:*local-project-directories*)
   (when asdf (pushnew path asdf:*central-registry*)))
 
-;;; Time
+;;;_. Time
 (definline get-real-time-seconds ()
   "Call GET-INTERNAL-REAL-TIME and convert the result to seconds."
   (/ (get-internal-real-time) internal-time-units-per-second))
@@ -367,7 +367,7 @@ long as ASDF is non-nil)."
          (declare (inline time-remaining))
          ,@body))))
 
-;;; Logical Pathnames
+;;;_. Logical Pathnames
 (defun logical-host-names ()
   "Return a list of currently available logical hosts."
   (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
@@ -419,16 +419,17 @@ accessible."
 (define-logical-pathname "SCRATCH" "/opt/scratch/"
   ("**;*.*.*" "/opt/scratch/**/*.*"))
 
+
 ;; redefine the sys table
 (define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
   ("SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
   ("CONTRIB;**;*.*.*"
    #P"/usr/local/src/sbcl/contrib/**/*.*")
   ("OUTPUT;**;*.*.*"
-   (translate-logical-pathname "STASH:DATA;sbcl;**;*.*.*"))
+   (translate-logical-pathname "STASH:CACHE;lisp;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))
 
-;;; Hexdump
+;;;_. Hexdump
 ;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565
 (defun hexdump-object (obj)
   "Try to hexdump an object, including immediate objects. All the
@@ -468,7 +469,7 @@ work is done by sb-vm:hexdump in the interesting cases."
    :prim-type (primitive-type-name-of obj)
    :alloc (sb-ext:heap-allocated-p obj)))
 
-;;; FASLs
+;;;_. FASLs
 (definline check-fasl-file-header (path)
   "Return the fasl-header of file at PATH."
   (with-open-file (f path :element-type 'unsigned-byte) (sb-fasl::check-fasl-header f)))
@@ -477,7 +478,7 @@ work is done by sb-vm:hexdump in the interesting cases."
   "Return T if A and B are paths to fasl files with equivalent headers."
   (equal (check-fasl-file-header a) (check-fasl-file-header b)))
 
-;;; Tags
+;;;_. Tags
 (eval-always
   (defun %sbcl-tagp (sfx)
     (lambda (x) 

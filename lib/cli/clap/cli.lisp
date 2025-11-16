@@ -80,16 +80,6 @@ and MAKE-CLI :CMD respectively."
 
 ;; (defmacro defcli ())?
 
-(defmacro defmain (name (&key (exit t) (debug t)) &body body)
-  "Define a CLI main function in the current package."
-  (multiple-value-bind (body decls docs) (parse-body body :documentation t)
-    `(let ((*no-exit* ,(not exit))
-           (*no-debug* ,(not debug)))
-       (defun ,name ()
-         ,(or docs (format nil "Run the top-level function in package ~A." (package-name *package*)))
-         ,@decls
-         (with-cli-handlers ,@body)))))
-
 ;; RESEARCH 2023-09-12: closed over hash-table with short/long flags
 ;; to avoid conflicts. if not, need something like a flag-function
 ;; slot at class allocation.

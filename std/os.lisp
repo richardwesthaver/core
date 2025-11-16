@@ -157,37 +157,47 @@ arrange for FVAR to be closed after BODY."
 ;;;_. XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
-(defvar *xdg-dir-table*
-  (let ((tbl (make-hash-table)))
-    (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
-          '((:desktop . "Desktop")
-            (:download . "Downloads")
-            (:templates . "Templates")
-            (:publicshare . "Public")
-            (:documents . "Documents")
-            (:music . "Music")
-            (:pictures . "Pictures")
-            (:videos . "Videos")
-            (:data-home . ".data")
-            (:config-home . ".config")
-            (:state-home . ".local/state")
-            (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
-            (:config-dirs . (#P"/etc/xdg/"))
-            (:cache-home . ".cache")
-            (:runtime-dir)))
-    tbl))
+(eval-always
+  (defvar *xdg-dir-table*
+    (let ((tbl (make-hash-table)))
+      (mapc (lambda (x) (setf (gethash (car x) tbl) (cdr x)))
+            '((:desktop . "Desktop")
+              (:download . "Downloads")
+              (:templates . "Templates")
+              (:publicshare . "Public")
+              (:documents . "Documents")
+              (:music . "Music")
+              (:pictures . "Pictures")
+              (:videos . "Videos")
+              (:data-home . ".data")
+              (:config-home . ".config")
+              (:state-home . ".local/state")
+              (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
+              (:config-dirs . (#P"/etc/xdg/"))
+              (:cache-home . ".cache")
+              (:runtime-dir)))
+      tbl))
 
-(defun xdg-path-split (str)
-  "Split a colon-separated list of paths."
-  (mapcar (lambda (x) (pathname (directory-path x))) (ssplit ":" str :omit-nulls t)))
+  (defun xdg-dir (key)
+    "Like GETHASH, but second value only returns T when the value is a pathname or non-nil list."
+    (multiple-value-bind (v p) (gethash key *xdg-dir-table*)
+      (values v (and p (or (pathnamep v) (consp v))))))
 
-(defun xdg-dir (key)
-  "Like GETHASH, but second value only returns T when the value is a pathname or non-nil list."
-  (multiple-value-bind (v p) (gethash key *xdg-dir-table*)
-    (values v (and p (or (pathnamep v) (consp v))))))
+  (defun xdg-path-split (str)
+    "Split a colon-separated list of paths."
+    (mapcar (lambda (x) (pathname (directory-path x))) (ssplit ":" str :omit-nulls t)))
 
-(defun (setf xdg-dir) (v k)
-  (setf (gethash k *xdg-dir-table*) v))
+  (defun (setf xdg-dir) (v k)
+    (setf (gethash k *xdg-dir-table*) v)))
+
+(defun init-xdg-logical-pathnames ()
+  ;; only the XDG_*_HOME paths we care about for user apps
+  (define-logical-pathname "XDG" (user-homedir-pathname)
+    ("CONFIG;" (xdg-dir :config-home))
+    ("DATA;" (xdg-dir :data-home))
+    ("STATE;" (xdg-dir :state-home))
+    ("CACHE;" (xdg-dir :cache-home))
+    ("RUNTIME;" (xdg-dir :runtime-dir))))
 
 (defun init-xdg-dirs ()
   "Init *XDG-USER-DIRS* from environment."

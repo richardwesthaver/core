@@ -302,7 +302,8 @@
    #:slime-migrate-evals
    #:slime-network-error
    #:slime-pending-evals-p
-   #:with-slime-connection))
+   #:with-slime-connection
+   :slime-connect-file))
 
 (defpkg :net/proto/crew
   (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)

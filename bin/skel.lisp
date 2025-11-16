@@ -57,7 +57,7 @@
       (do-opts *cli*)
       ;; (rocksdb:load-rocksdb)
       (init :skel)
-      (unwind-protect 
+      (unwind-protect
            (progn
              ;; (setq *db* (make-db :skel))
              (do-cmd *cli*)

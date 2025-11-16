@@ -144,20 +144,18 @@
 
 (defun sk-shell ()
   (trace! "starting skel shell")
+  ;; TODO 2025-11-16: consolidate usage of *no-exit* vs *interactive* etc
   (setq *no-exit* t)
   (progn
     (in-package :sk-user)
-    (use-package :cl-user)
-    (use-package :sb-ext)
-    (use-package :std-user)
+    (using :cl-user :sb-ext :std-user)
     (println "Welcome to SKEL")
     (cli/linedit:install-repl :wrap-current t :history "/tmp/skel.history" :killring "/tmp/skel.killring")
     (cli/repl:make-toplevel-init
      :package :sk-user
      :userinit (lambda () (or (xdg-config-file :core) 
                               (merge-homedir-pathnames ".config/corerc") 
-                              (merge-homedir-pathnames ".corerc")))
-     :default t)))
+                              (merge-homedir-pathnames ".corerc"))))))
 
 (defcmd skc-shell () (sk-shell))
 

@@ -139,7 +139,12 @@ function which we can't check the name of.")
             (setf (gethash name (hook-value hook)) new))
           (setf (gethash name (hook-value hook)) (list function)))))
   (:method ((hook key-hook) (function list) &key)
-    (setf (gethash (car function) (hook-value hook)) (cdr function))))
+    (setf (gethash (car function) (hook-value hook)) (cdr function)))
+  (:method ((hook symbol) function &key append)
+    (if append
+        (unless (memq function (symbol-value hook))
+          (appendf (symbol-value hook) (list function)))
+        (pushnew function (symbol-value hook) :test #'eql))))
 
 (defgeneric remove-hook (hook function)
   (:documentation "Remove a FUNCTION from HOOK. This will only work on function symbols, not
@@ -147,7 +152,9 @@ functions themselves.")
   (:method ((hook value-hook) item)
     (removef (hook-value hook) item))
   (:method ((hook key-hook) item)
-    (remhash item (hook-value hook))))
+    (remhash item (hook-value hook)))
+  (:method ((hook symbol) item)
+    (removef (symbol-value hook) item)))
 
 (defmacro defhook (name forms &key (class ''key-hook) documentation)
   "Define a new hook with NAME bound to a hook specified by CLASS and FORMS
