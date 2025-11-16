@@ -1260,6 +1260,7 @@
    :*task*
    :*result*
    :task :job 
+   :dependencies :dependents
    :async-task
    :scheduled-task
    :make-task

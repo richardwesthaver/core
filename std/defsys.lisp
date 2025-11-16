@@ -76,7 +76,7 @@ ASDF:DEFSYSTEM.")
       (lambda (x) 
         (mapc
          #'collect
-        (directory-files x #.(format nil "*.~A" +sys-extension+)))))))
+         (directory-files x #.(format nil "*.~A" +sys-extension+)))))))
 
 (defun sysdef (&optional (dir *default-pathname-defaults*))
   "Return the 'default' system definition path of the current directory, if it exists."
@@ -276,8 +276,8 @@ ending with the target component name."
 (defclass module ()
   ((name :initarg :name :accessor name)
    (hook :initarg :hook :type hook :accessor hook)
-   (provide :initarg :provide)
-   (require :initarg :require))
+   (provide :initarg :provide :accessor module-provide)
+   (require :initarg :require :accessor module-require))
   (:documentation "All Lisp Modules contain at least a NAME, HOOK, PROVIDE and REQUIRE slot."))
 
 (defun find-module (name)
@@ -319,7 +319,6 @@ USE should be called in order to load and activate a module."
   `(let ((*module* (or (require ,name) ,name)))
      ,@body))
 
-;; TODO 2025-09-28: 
 (defmacro use (name &body body)
   "Load and activate a package or module by NAME with the provider forms in BODY."
   (if body
@@ -358,6 +357,11 @@ system jobs to be executed in an async context."
   (:keyword :sys)
   (:default-initargs :hook (make-instance 'key-hook))
   (:documentation "Base class for system definitions found throughout the core (*.sys)."))
+
+(defun system-provide (sys)
+  (module-provide sys))
+(defun system-require (sys)
+  (module-require sys))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."
@@ -472,6 +476,7 @@ system jobs to be executed in an async context."
     :description (asdf::component-description instance)
     :components (mapcar 'change-component-class (asdf:component-children instance))))
 
+;;;; Bench System
 (defcomponent bench-system (system) ()
   (:keyword :bench))
 
@@ -488,6 +493,9 @@ system jobs to be executed in an async context."
 
 (definline %bench-system-name (name)
   (concatenate 'simple-base-string (string-upcase name) "/BENCH"))
+
+;; preloaded
+;; immutable
 
 ;;; Session
 (eval-always
@@ -513,7 +521,7 @@ system jobs to be executed in an async context."
   (stop (system-session-pool self)))
 
 (sb-ext:defglobal *system-session* nil
-  "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
+    "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
 (defmacro with-system-session ((&optional sys) &body body)
   "Bind *SYSTEM-SESSION* to a fresh value around BODY."
@@ -563,7 +571,7 @@ system jobs to be executed in an async context."
         (components c))
   c)
 
-  
+
 (defun %parse-component-form (form)
   (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
       (if (directory-path-p form)
@@ -653,8 +661,8 @@ the following extensions:
   "Compile a system's defsys file by PATH. Default extension is FSYS."
   (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) (pathname path))))
   (checked-compile-file path
-                :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
-                :entry-points '(load-sys)))
+                        :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
+                        :entry-points '(load-sys)))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD

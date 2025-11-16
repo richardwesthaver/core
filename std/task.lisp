@@ -131,6 +131,12 @@ Tasks are _currently_ funcallable kernels.."))
 (defmethod run-object ((self job) &key worker)
   (run-job worker self))
 
+(defgeneric dependencies (self)
+  (:method ((self t)) nil))
+
+(defgeneric dependents (self)
+  (:method ((self t)) nil))
+
 ;;; Task Scheduler
 (defclass task-scheduler (biased-scheduler) ()
   (:documentation "Similar to the BIASED-SCHEDULER this class inherits from, instances of this
@@ -151,7 +157,18 @@ are scheduled and executed with the current *THREAD-POOL*."))
   (:documentation "Simple Tasks support sync/async variants of task objects."))
 
 ;;; Plan
-(defclass plan () ())
+;; One thing to note about ASDF:OPERATIONs is that ASDF does NOT distinguish
+;; between multiple operations of the same class. All slots of all operations
+;; must have :allocation :class. 
+(defclass plan () ()
+  (:documentation "Base class for plan objects."))
+
+(defclass simple-plan (plan)
+  ((tasks :initform nil :accessor tasks))
+  (:documentation "A simple plan is a list of tasks executed sequentially."))
+
+;; record-dependency
+;; needed-in-image-p
 
 ;;;; conditions
 
@@ -169,8 +186,15 @@ are scheduled and executed with the current *THREAD-POOL*."))
   (done boolean)
   (need boolean))
 
-;;;; plan
-(defclass plan (scheduler) ())
-
 ;;;; planner
-(defclass planner () ())
+(defclass planner (scheduler) ())
+
+;;;; planned tasks
+;; propagators 
+(defkernel planned-task (task) ())
+(defkernel descending-task (planned-task) ())
+(defkernel ascending-task (planned-task) ())
+(defkernel sibling-task (planned-task) ())
+(defkernel child-task (planned-task) ())
+;; non-propagating
+(defkernel solo-task (planned-task) ())
