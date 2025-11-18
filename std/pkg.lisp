@@ -69,6 +69,7 @@
    :group
    :firstn
    :zip-list :zip-tree
+   :ziptree
    :zipsym
    :ziprm
    :pairs
@@ -86,7 +87,8 @@
    :dcons :dpush
    :dpop :dlist :drdc :dcdr :dcar :dappendf
    :topological-sort :match-lambda-lists
-   :toposort))
+   :toposort
+   :reconsify :deconsify))
 
 (defpkg :std/prim
   (:use :cl :std/list)
@@ -626,7 +628,9 @@
    :lety*
    :defunits :unit-of-distance 
    :distance-designator
-   :defwith))
+   :defwith
+   :with-memoization
+   :memoizing))
 
 (defpkg :std/sys
   (:use :cl :sb-int)

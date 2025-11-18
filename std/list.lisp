@@ -154,6 +154,27 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
       (if (every #'atom args) args
           (apply #'mapcar #'zip-tree args))))
 
+(defun ziptree (tree &rest more-trees)
+  (if (atom tree)
+      (cons tree more-trees)
+      (apply #'mapcar (list* #'ziptree tree more-trees))))
+
+(defun zip (&rest args)
+  "Zips the elements of @arg{args}.
+  Example:
+  (zip '(2 3 4) '(a b c) '(j h c s))
+  => ((2 A J) (3 B H) (4 C C))"
+  (apply #'map 'list #'list args))
+
+(defun unzip (list)
+  "UnZips the elements of @arg{args}.
+  Example:
+  (unzip ((2 A J) (3 B H) (4 C C)))
+  => ((2 3 4) (a b c) (j h c))"
+  (mapcar #'(lambda (n) (mapcar #'(lambda (x) (elt x n)) list))
+          (loop for i from 0 below (length (first list)) 
+                collect i)))
+
 (defun zipsym (lst)
   "Zips a unique gensym with each element of LST.
 
@@ -202,26 +223,26 @@ Example:
   (endp x))
 
 (macrolet ((def (name lambda-list doc step declare ret1 ret2)                      
-             (assert (member 'list lambda-list))                                   
-             `(defun ,name ,lambda-list                                            
-                ,doc                                                               
-                (unless (listp list)                                               
-                  (error 'type-error :datum list :expected-type 'list))            
-                (do ((last list fast)                                              
-                     (fast list (cddr fast))                                       
-                     (slow (cons (car list) (cdr list)) (cdr slow))                
-                     ,@(when step (list step)))                                    
-                    (nil)                                                          
-                  (declare (dynamic-extent slow) ,@(when declare (list declare))   
-                           (ignorable last))                                       
-                  (when (safe-endp fast)                                           
-                    (return ,ret1))                                                
-                  (when (safe-endp (cdr fast))                                     
-                    (return ,ret2))                                                
-                  (when (eq fast slow)                                             
-                    (circular-list-error list))))))                                
+               (assert (member 'list lambda-list))                                   
+               `(defun ,name ,lambda-list                                            
+                  ,doc                                                               
+                  (unless (listp list)                                               
+                    (error 'type-error :datum list :expected-type 'list))            
+                  (do ((last list fast)                                              
+                       (fast list (cddr fast))                                       
+                       (slow (cons (car list) (cdr list)) (cdr slow))                
+                       ,@(when step (list step)))                                    
+                      (nil)                                                          
+                    (declare (dynamic-extent slow) ,@(when declare (list declare))   
+                             (ignorable last))                                       
+                    (when (safe-endp fast)                                           
+                      (return ,ret1))                                                
+                    (when (safe-endp (cdr fast))                                     
+                      (return ,ret2))                                                
+                    (when (eq fast slow)                                             
+                      (circular-list-error list))))))                                
   (def proper-list-length (list)                                                   
-    "Returns length of LIST, signalling an error if it is not a proper list."      
+      "Returns length of LIST, signalling an error if it is not a proper list."      
     (n 1 (+ n 2))                                                                  
     ;; KLUDGE: Most implementations don't actually support lists with bignum       
     ;; elements -- and this is WAY faster on most implementations then declaring   
@@ -229,7 +250,7 @@ Example:
     (fixnum n)                                                                     
     (1- n)                                                                         
     n)                                                                             
-                                                                                   
+  
   (def lastcar (list)                                                              
       "Returns the last element of LIST. Signals a type-error if LIST is not a     
 proper list."                                                                      
@@ -237,7 +258,7 @@ proper list."
     nil                                                                            
     (cadr last)                                                                    
     (car fast))                                                                    
-                                                                                   
+  
   (def (setf lastcar) (object list)                                                
       "Sets the last element of LIST. Signals a type-error if LIST is not a proper 
 list."                                                                             
@@ -280,27 +301,32 @@ Example:
 (mapcart '+ '(1 2 3) '(4 5)) ;; (5 6 7 6 7 8)"
   (mapcar (lambda (args) (apply function args)) (apply #'cart list more-lists)))
 
-(defmacro cart-case ((&rest vars) &body cases)
-  (let ((decl (zipsym vars)))
-    `(let (,@decl)
-       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and eql) ,(mapcar #'car decl) ,(first clause)) ,@(cdr clause))) cases)))))
+(flet ((cart-case-macrofunction (vars cases append)
+         (let ((decl (zipsym vars)))
+           `(let (,@decl)
+              (cond ,@(mapcar #'(lambda (clause) `((and ,@(mapcar #'(lambda (x)
+                                                                      (if (consp (second x))
+                                                                          `(or ,@(mapcar #'(lambda (u) `(eql ,(first x) (quote ,u))) (second x)))
+                                                                          `(eql ,(first x) (quote ,(second x)))))
+                                                                  (remove t (zip (mapcar #'car decl) (first clause)) :key #'second))) ,@(cdr clause))) cases)
+                    ,@append)))))
+  (defmacro cart-case ((&rest vars) &body cases)
+    (cart-case-macrofunction vars cases nil))
+  (defmacro cart-ecase ((&rest vars) &body cases)
+    (cart-case-macrofunction vars cases `((t (error "cart-ecase: Case failure."))))))
 
-(defmacro cart-ecase ((&rest vars) &body cases)
-  (let ((decl (zipsym vars)))
-    `(let (,@decl)
-       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and eql) ,(mapcar #'car decl) ,(first clause)) ,@(cdr clause))) cases)
-             (t (error "cart-ecase: Case failure."))))))
-
-(defmacro cart-typecase (vars &body cases)
-  (let* ((decl (zipsym vars)))
-    `(let (,@decl)
-       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause))) ,@(cdr clause))) cases)))))
-
-(defmacro cart-etypecase (vars &body cases)
-  (let* ((decl (zipsym vars)))
-    `(let (,@decl)
-       (cond ,@(mapcar #'(lambda (clause) `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause))) ,@(cdr clause))) cases)
-             (t (error "cart-etypecase: Case failure."))))))
+(flet ((cart-typecase-fn (vars cases append)
+         (let* ((decl (zipsym vars)))
+           `(let (,@decl)
+              (cond ,@(mapcar #'(lambda (clause)
+                                  `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause)))
+                                    (locally (declare ,@(mapcar #'(lambda (x y) `(type ,x ,y)) (first clause) (mapcar #'car decl))) ,@(cdr clause))))
+                              cases)
+                    ,@append)))))
+  (defmacro cart-typecase (vars &body cases)
+    (cart-typecase-fn vars cases nil))
+  (defmacro cart-etypecase (vars &body cases)
+    (cart-typecase-fn vars cases `((t (error "cart-etypecase: Case failure."))))))
 
 (declaim (inline pairs))
 (defun pairs (list)
@@ -339,8 +365,12 @@ Example:
 	t-tree)))
 
 (defun maptree (keys transformer tree)
-  (maptree-if #'(lambda (x) (and (consp x) (member (car x) keys)))
-	      transformer tree))
+  (maptree-if (if (eql keys t)
+                  #'(lambda (x) (declare (ignore x)) t)
+                  #'(lambda (x) (and (consp x) (member (car x) keys))))
+              (if (or (eql keys t) (functionp transformer)) transformer
+                  (let ((alist (mapcar #'(lambda (x y) (cons x y)) keys transformer)))
+                    #'(lambda (x) (values (cons (cdr (assoc (car x) alist)) (cdr x)) #'mapcar))))  tree))
 
 (defmacro nconsc (var &rest args)
   "Macro to do setf and nconc for destructive list updates. 
@@ -456,7 +486,7 @@ every element of LIST2 matches some element of LIST1. Otherwise returns false."
             (let ((entry (,get-entry key alist :test test)))
               (values (,get-value-from-entry entry) entry)))
           (define-setf-expander ,name (place key &key (test ''eql)
-                                       &environment env)
+                                                 &environment env)
             (multiple-value-bind
                   (temporary-variables initforms newvals setter getter)
                 (get-setf-expansion place env)
@@ -484,11 +514,11 @@ every element of LIST2 matches some element of LIST1. Otherwise returns false."
                        ,setter
                        ,new-value)))
                  `(,',get-value-from-entry ,entry))))))))
- (define-alist-get assoc-value assoc cdr acons
-"ASSOC-VALUE is an alist accessor very much like ASSOC, but it can
+  (define-alist-get assoc-value assoc cdr acons
+    "ASSOC-VALUE is an alist accessor very much like ASSOC, but it can
 be used with SETF.")
- (define-alist-get rassoc-value rassoc car racons
-"RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
+  (define-alist-get rassoc-value rassoc car racons
+    "RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
 be used with SETF."))
 
 ;;; DLIST
@@ -549,7 +579,7 @@ be used with SETF."))
   (let* ((rev (reverse objs))
 	 (ret (dcons (car rev))))
     (loop :for ele :in (cdr rev)
-       :do (dpush ele ret))
+          :do (dpush ele ret))
     ret))
 
 (declaim (inline drdc dcdr dcar))
@@ -560,44 +590,44 @@ be used with SETF."))
 (defun dappendf (&rest dlsts)
   (let ((dlsts (remove-if #'null dlsts)))
     (loop for se in (cdr dlsts)
-       with ft = (car dlsts)
-       do (progn
-	     (rotatef (first ft) (first se))
-	     (rotatef (second (first ft)) (second (first se))))
-       finally (return ft))))
+          with ft = (car dlsts)
+          do (progn
+	       (rotatef (first ft) (first se))
+	       (rotatef (second (first ft)) (second (first se))))
+          finally (return ft))))
 
 ;;; Template utils
 ;; Topological sort (matlisp)
 (defun toposort (lst func &optional (test #'eql))
   (multiple-value-bind (nlst len) (loop :for ele :in lst
-				     :for i := 0 :then (1+ i)
-				     :collect (cons i ele) :into ret
-				     :finally (return (values ret (1+ i))))
+				        :for i := 0 :then (1+ i)
+				        :collect (cons i ele) :into ret
+				        :finally (return (values ret (1+ i))))
     (let* ((s nil)
 	   (graph (let ((ret (make-array len)))
 		    (loop :for (i . ele) :in nlst
-		       :do (let ((children (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func (cdr x) ele))) nlst)))
-				 (parents (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func ele (cdr x)))) nlst))))
-			     (when (null parents)
-			       (push i s))
-			     (setf (aref ret i) (list ele children parents))))
+		          :do (let ((children (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func (cdr x) ele))) nlst)))
+				    (parents (mapcar #'car (remove-if-not #'(lambda (x) (and (not (funcall test (cdr x) ele)) (funcall func ele (cdr x)))) nlst))))
+			        (when (null parents)
+			          (push i s))
+			        (setf (aref ret i) (list ele children parents))))
 		    ret))
 	   (ordering nil))
-    (let ((last-s (last s)))
-      (do ((slst s (cdr slst)))
-	  ((null slst))
-	(let* ((i (car slst))
-	       (children (second (aref graph i))))
-	  (mapcar #'(lambda (x)
-		      (let ((par (third (aref graph x))))
-			(let ((par (remove i par)))
-			  (setf (third (aref graph x)) par)
-			  (when (null par)
-			    (setf (cdr last-s) (cons x nil)
-				  last-s (cdr last-s))))))
-		  children)
-	  (push i ordering))))
-    (mapcar #'(lambda (x) (car (aref graph x))) ordering))))
+      (let ((last-s (last s)))
+        (do ((slst s (cdr slst)))
+	    ((null slst))
+	  (let* ((i (car slst))
+	         (children (second (aref graph i))))
+	    (mapcar #'(lambda (x)
+		        (let ((par (third (aref graph x))))
+			  (let ((par (remove i par)))
+			    (setf (third (aref graph x)) par)
+			    (when (null par)
+			      (setf (cdr last-s) (cons x nil)
+				    last-s (cdr last-s))))))
+		    children)
+	    (push i ordering))))
+      (mapcar #'(lambda (x) (car (aref graph x))) ordering))))
 
 (defun match-lambda-lists (lsta lstb)
   (let ((optional? nil))
@@ -627,3 +657,29 @@ be used with SETF."))
   (loop for (options value) on plist by #'cddr
         append (unless (member options props)
                  (list options value))))
+
+;;; Consify
+(defun deconsify (x sym)
+  (if (atom x) x
+      (loop for ll on x
+            collect (deconsify (car ll) sym) into ret
+            when (and (cdr ll) (not (consp (cdr ll))))
+            collect sym into ret
+            and
+            collect (deconsify (cdr ll) x) into ret
+            finally (return ret))))
+
+(defun reconsify (x sym)
+  (if (atom x) x
+      (loop for ll on x 
+            with right = nil
+            if (eql (car ll) sym)
+            do (progn (assert (not (caddr ll)) nil "Misformed x")
+                      (setf right (cadr ll))
+                      (loop-finish))
+            else
+            collect (reconsify (car ll) sym) into left
+            finally 
+               (progn
+                 (if right (setf (cdr (last left)) right)) 
+                 (return left)))))
