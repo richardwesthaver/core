@@ -721,8 +721,6 @@ REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
                   (slot-value self 'provide)))
     self))
 
-(declaim (sb-ext:maybe-inline expand-component-paths))
-
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
 absolute pathnames. Shouldn't be needed if all system components exist when
@@ -735,6 +733,8 @@ LOAD-SYS is called."
     (declare (dynamic-extent (function .expand))
              (optimize (speed 3) (safety 0)))
     (mapc (the (function (component) (values)) #'.expand) (components c))))
+
+(defgeneric component-dependencies (task component))
 
 (defgeneric register-system (name self)
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
