@@ -1386,10 +1386,17 @@
   (:export 
    :*sysdefs*
    :*defining-system*
+   :*system-table*
+   :*module-table*
+   :*provider-table*
    :sysdefs
    :sysdef
    :defsys
    :list-all-systems
+   :list-all-providers
+   :list-all-modules
+   :module-provide
+   :module-require
    :defprovider
    :defcomponent
    :load-sys

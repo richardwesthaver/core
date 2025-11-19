@@ -164,7 +164,8 @@
                 (nid (neighbour-id tensor) :type index-store-vector)
                 (lb (aref nst col) :type index-type)
                 (ub (aref nst (1+ col)) :type index-type))
-               (declare (type index-type row col))
+          ;; FIXME - error?
+          ;; (declare (type index-type row col))
                (if (or (= lb ub) (< row (aref nid lb)) (> row (aref nid (1- ub)))) (values -1 row col)
                    (values
                     (loop :with j := (ash (+ lb ub) -1)

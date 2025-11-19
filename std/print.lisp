@@ -561,6 +561,7 @@ array to display when wrapping the middle elements.")
 
 (deftype box-style () '(member :min :mid :max))
 
+#+nil
 (defun fmt-box (stream seq &key (style :mid))
   "Print sequence SEQ to STREAM with borders indicating shape, type and
 structure.

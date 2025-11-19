@@ -67,6 +67,8 @@
   (:proto :kernel)
   (:proto :verb)
   (:io :alien)
+  (:pool :default)
+  (:pool :sys)
   (:tests :std/tests
    :require (:std :rt)
    :description "CC Standard Library Tests"

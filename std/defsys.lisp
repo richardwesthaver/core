@@ -85,8 +85,14 @@ ASDF:DEFSYSTEM.")
         (car defs)
         (find (last (pathname-directory dir)) defs :test 'string-equal :key 'pathname-name))))
 
-(defun list-all-systems (&optional (table *system-table*))
-  (std/hash:hash-table-values table))
+(defun list-all-systems ()
+  (std/hash:hash-table-values *system-table*))
+
+(defun list-all-modules ()
+  (std/hash:hash-table-alist *module-table*))
+
+(defun list-all-providers ()
+  (std/hash:hash-table-alist *provider-table*))
 
 ;;; Components
 (defclass component () 
@@ -208,41 +214,54 @@ ending with the target component name."
   (when-let ((x (the function (find-provider name))))
     (apply x form)))
 
-(defprovider :tests (name &rest args)
-  `(defsys ,name ,@args :class 'test-system :path ,(or *compile-file-truename* *load-truename*)))
-
-(defprovider :bench (name &rest args)
-  `(defsys ,name ,@args :class 'bench-system :path ,(or *compile-file-truename* *load-truename*)))
+(defun register-module (name form &rest props)
+  (unless (consp form) (setf form (list form)))
+  (multiple-value-bind (v f) (gethash name *module-table*)
+    (if f
+        (setf (gethash name *module-table*) ; v is a plist
+              (let ((w (apply 'std/list:remove-from-plist v props)))
+                (nconc w form)))
+        (setf (gethash name *module-table*) form))))
 
 (defprovider :alien (name &rest args)
-  `(std/alien:define-alien-loader ,name ,@args))
+  (register-module name (list :alien `(std/alien:define-alien-loader ,name ,@args)) :alien))
 
 (defprovider :readtable (name)
-  `(or (std/named-readtables:find-readtable ,name) ,name))
+  (register-module name (list :readtable `(std/named-readtables:find-readtable ,name)) :readtable))
 
 (defprovider :prelude (name &rest args)
-  (if-let ((sys *defining-system*))
-    `(pkg::%defpkg* ,sys (list ,name ,@args))
-    name))
+  (register-module 
+   name
+   (list :prelude
+         (if-let ((sys *defining-system*))
+           `(pkg::%defpkg* ,sys (list ,name ,@args))
+           name))
+   :prelude))
 
-(defprovider :io (name)
-  name)
+(defprovider :io (name &rest args)
+  (register-module name (list* :io args) :io)
+  `(:io ,name ,@args))
 
-(defprovider :proto (name)
-  name)
+(defprovider :proto (name &rest args)
+  (register-module name (list* :proto args) :proto)
+  `(:proto ,name ,@args))
 
 (defprovider :pool (name)
-  `(find-thread-pool ,name))
-
-(defprovider :pun (name)
-  name)
+  (register-module name (list :pool `(find-thread-pool ,name)) :pool)
+  `(:pool ,name))
 
 ;; TODO 2025-09-28: 
 (defprovider :module (name &rest args)
   `(defmodule ,name ,@args))
 
 (defprovider :sys (name &rest args)
-  `(defsys ,name ,@args :path ,(or *compile-file-truename* *load-truename*)))
+  (register-module name (list :sys `(defsys ,name ,@args :path ,(or *compile-file-truename* *load-truename*))) :sys))
+
+(defprovider :tests (name &rest args)
+  (register-module name (list :tests `(defsys ,name ,@args :class 'test-system :path ,(or *compile-file-truename* *load-truename*))) :tests))
+
+(defprovider :bench (name &rest args)
+  (register-module name (list :bench `(defsys ,name ,@args :class 'bench-system :path ,(or *compile-file-truename* *load-truename*))) :bench))
 
 ;;; Module
 ;; Unlike MOD-COMPONENT/DIR-COMPONENT, based on ASDF:MODULE which is merely a
@@ -268,7 +287,7 @@ ending with the target component name."
 ;; Both of these slots
 (defvar *load-module* nil "The name of the module being loaded or NIL.")
 (defvar *compile-module* nil "The name of the module being compiled or NIL.")
-(defvar *module-stack* nil "A list of the most recently visited modules.")
+(defvar *module-stack* nil "A list of modules to be visited.")
 (defvar *module* nil "The name of the current module or NIL.")
 (defparameter *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
@@ -281,10 +300,12 @@ ending with the target component name."
   (:documentation "All Lisp Modules contain at least a NAME, HOOK, PROVIDE and REQUIRE slot."))
 
 (defun find-module (name)
-  (gethash name *module-table*))
+  (or (gethash name *module-table*)
+      (gethash name *system-table*)))
 
+;; TODO 2025-11-18: memoizing might be useful here..
 (defun load-module (name)
-  (when-let ((*load-module* (gethash name *module-table*)))
+  (when-let ((*load-module* (find-module name)))
     (with-slots (hook) *load-module*
       (when hook
         (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
@@ -293,8 +314,9 @@ ending with the target component name."
 
 ;; TODO 2025-09-20: 
 (defun partial-load-module (name &rest args)
-  (declare (ignore args))
-  (load-module name))
+  (if args 
+      (nyi!)
+      (load-module name)))
 
 (defun unload-module (name)
   (when (eql *module* name)
@@ -311,8 +333,6 @@ USE should be called in order to load and activate a module."
   (when-let ((sys (find-system name)))
     (load-system sys)
     t))
-
-(pushnew 'module-provide-system sb-ext:*module-provider-functions*)
 
 (defmacro with-module (name &body body)
   "Load the module named NAME, binding it to *MODULE* and eval BODY."
@@ -357,11 +377,6 @@ system jobs to be executed in an async context."
   (:keyword :sys)
   (:default-initargs :hook (make-instance 'key-hook))
   (:documentation "Base class for system definitions found throughout the core (*.sys)."))
-
-(defun system-provide (sys)
-  (module-provide sys))
-(defun system-require (sys)
-  (module-require sys))
 
 (defun system-equal (a b)
   "Return T if systems A and B refer to the same SYSTEM."
@@ -534,6 +549,7 @@ system jobs to be executed in an async context."
             `(,@body))))
 
 ;;; Defsys
+#+nil
 (defun %parse-provide-form (form)
   (mapcar
    (lambda (x)
@@ -542,11 +558,12 @@ system jobs to be executed in an async context."
          (call-provider (car x) (cdr x))))
    form))
 
+#+nil
 (defun %parse-require-form (form)
   (mapcar
    (lambda (x)
-     (if (atom x) ; default case, require the module
-         (load-module x)
+     (if (atom x)
+         (load-system x :asdf t) ; default case, assumed to be a system
          (apply 'partial-load-module x))
      x)
    form))
@@ -575,7 +592,7 @@ system jobs to be executed in an async context."
 (defun %parse-component-form (form)
   (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
       (if (directory-path-p form)
-          (make-instance 'dir-component 
+          (make-instance 'dir-component
             :include ".*" 
             :name (last (pathname-directory form)))
           (make-instance 'file-component 
@@ -600,7 +617,7 @@ system jobs to be executed in an async context."
                        :components (mapcar '%parse-component-form (getf props :components)))))
              (%mod-component-walk c)))
           (:dir
-           (let* ((path (probe-file (directory-path n)))
+           (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
                   (inc (or (getf props :include) *wildcard-regexp*))
                   (exc (getf props :exclude))
                   (c (make-instance kind
@@ -640,19 +657,23 @@ the following extensions:
     (let ((prov (%sys-get :provide .body)) (hooks (%sys-get :hook .body))
           (path (%sys-get :path .body))
           (req (%sys-get :require .body))
+          (ver (%sys-get :version .body))
           (plan (or (%sys-get :plan .body) :serial))
           (class (or (%sys-get :class .body) ''system))
           (comp (%sys-get :components .body))
           (*defining-system* name))
       (std/sym:with-gensyms (sys)
         `(let ((,sys (%make-sys ,name ,class ,@.body)))
+           (when-let ((fpath (or *compile-file-truename* *load-truename*)))
+             (setf *default-pathname-defaults* (make-pathname :directory (pathname-directory fpath))))
            (setf *defining-system* ,sys)
            (setf (path ,sys) (or ,path *compile-file-truename* *load-truename*)
                  (slot-value ,sys 'plan) ,plan
                  (slot-value ,sys 'description) ,doc
+                 (slot-value ,sys 'version) ,ver
                  (slot-value ,sys 'components) (%parse-components-form ',comp)
-                 (slot-value ,sys 'provide) ',(%parse-provide-form prov)
-                 (slot-value ,sys 'require) ',(%parse-require-form req))
+                 (slot-value ,sys 'provide) ',prov #+nil (%parse-provide-form prov)
+                 (slot-value ,sys 'require) ',req #+nil (%parse-require-form ,req))
            (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
            (register-system ,name ,sys)
            ,sys)))))
@@ -701,6 +722,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *module-table* (make-hash-table :test 'equal))
   (ensure-directories-exist *system-data-directory*)
   (ensure-directories-exist *system-cache-directory*)
+  (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
@@ -708,18 +730,25 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and PROVIDE forms to be loaded."
   (with-system-session (self)
-    (mapc 'require (slot-value self 'require))
-    (setf (slot-value self 'provide) 
-          (mapcar (lambda (x)
-                    (typecase x
-                      ;; symbols and strings use PROVIDE
-                      ((or symbol simple-string) (provide x) x)
-                      ;; WARNING: use of eval
-                      (list (with-safe-io-syntax (:std/defsys) (eval x)))
-                      ;; otherwise return as-is
-                      (t x)))
-                  (slot-value self 'provide)))
-    self))
+  (mapc
+   (lambda (x)
+     (if (atom x)
+         (load-system x :asdf t) ; default case, assumed to be a system
+         (apply 'partial-load-module x)))
+   (slot-value self 'require))
+  (loop for x in (slot-value self 'provide)
+        do (etypecase x
+             ((or symbol simple-string) (provide x))
+             (list (call-provider (car x) (cdr x))))
+        finally (return t))))
+  ;; (typecase x
+  ;;   ;; symbols and strings use PROVIDE
+  ;;   ((or symbol simple-string) (provide x) x)
+  ;;   ;; WARNING: use of eval
+  ;;   (list (with-safe-io-syntax (:std/defsys) (eval (cdr x))))
+  ;;   ;; otherwise return as-is
+  ;;   (t x)))
+  ;; (slot-value self 'provide)))
 
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
@@ -775,9 +804,9 @@ LOAD-SYS is called."
           (case (plan self)
             ((or :serial nil) (mapc 'load-component (components self)))
             (t (nyi! "Unrecognized PLAN keyword"))))))
-  (:method (self &rest args &key (default :error))
+  (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
     (remf args :default)
-    (let ((sys (find-system self :default default)))
+    (let ((sys (find-system self :default default :asdf asdf)))
       (apply 'load-system sys args)))
   (:method ((self asdf:system) &rest args)
     (apply 'asdf:load-system self args)))
