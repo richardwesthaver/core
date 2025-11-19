@@ -145,6 +145,7 @@ ASDF:DEFSYSTEM.")
 directory recursively.")
   (:keyword :dir))
 
+;; TODO 2025-11-18: full compatibility with SB-GROVEL interface to ASDF
 (defcomponent grovel-component (file-component) 
   (package)
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")

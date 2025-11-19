@@ -1,4 +1,4 @@
-;;; aws-lc.lisp --- AWS-LC Alien Routines
+;;; openssl.lisp --- OpenSSL Alien Routines
 
 ;;
 

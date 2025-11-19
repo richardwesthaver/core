@@ -19,23 +19,28 @@
    :crypto-key :token :crypto-token
    :*default-password-db* :*default-password-hasher* :*default-password-store* :*default-password-pepper*
    :password-db
-   :crypto-condition))
+   :crypto-condition
+   :*cry-packages*))
 
-(defpackage :cry/hotp
+(in-package :cry-int)
+(defparameter *cry-packages* nil)
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cry-packages* :test 'string=)))
+
+(defpkg :cry/hotp
   (:nicknames :hotp)
   (:use :cl :std :cry-int)
   (:export *digits*
            *hmac-sha-mode*
            hotp))
 
-(defpackage :cry/totp
+(defpkg :cry/totp
   (:nicknames :totp)
   (:use :cl :std :cry/hotp)
   (:export *time-zero*
            *time-step-in-seconds* 
            totp))
 
-(defpackage :cry/crc64
+(defpkg :cry/crc64
   (:use :cl)
   (:export :+polynomial+ :+improved-polynomial+
            :init-crc64 :crc64-stream
@@ -47,19 +52,19 @@
   (:export :b3hash :b3sum
            :b3hash-string))
 
-(defpackage :cry/jwt
+(defpkg :cry/jwt
   (:use :cl :std :dat/json :dat/base64 :cry-int)
   (:export
    #:hs256-digest
    #:compare-hs256-digest
    #:jwt-decode))
 
-(defpackage :cry/authinfo
+(defpkg :cry/authinfo
   (:use :cl :std :cry-int)
   (:export
    #:authinfo))
 
-(defpackage :cry/keyring
+(defpkg :cry/keyring
   (:use :cl :std :cry-int :keyutils :id :db :sb-alien)
   (:export
    :get-key
@@ -67,27 +72,27 @@
    :make-keyring
    :clear-keys))
 
-(defpackage :cry/password
+(defpkg :cry/password
   (:use :cl :std :obj/secret)
   (:export :password :password-hash :password-salt :make-password-hash :auth))
 
-(defpackage :cry/drm
+(defpkg :cry/drm
   (:use :cl :std))
 
-(defpackage :cry/gpg
+(defpkg :cry/gpg
   (:use :cl :std :config :ast)
   (:export :*user-gpg-directory* :user-gpg-config-file :user-gpg-agent-config-file :gpg-config :gpg-agent-config))
 
-(defpackage :cry/ssh
+(defpkg :cry/ssh
   (:use :cl :std :config :ast)
   (:export :*user-ssh-directory* :user-ssh-config-file :system-ssh-config-file 
    :ssh-config :sshd-config :system-sshd-config-file))
   
-(defpackage :cry/sign
+(defpkg :cry/sign
   (:use :cl :std :config :ast :secret)
   (:export))
 
-(defpackage :cry/auth
+(defpkg :cry/auth
   (:use :cl :std)
   (:export))
 

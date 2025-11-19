@@ -25,7 +25,8 @@
                (:file "gpg" :depends-on ("condition"))
                (:file "ssh" :depends-on ("condition"))
                (:file "sign" :depends-on ("condition"))
-               (:file "auth" :depends-on ("password" "gpg" "jwt" "authinfo" "keyring" "hotp" "totp")))
+               (:file "auth" :depends-on ("password" "gpg" "jwt" "authinfo" "keyring" "hotp" "totp"))
+               (:file "cry" :depends-on ("pkg")))
   :in-order-to ((test-op (test-op :cry/tests))))
 
 (defsystem :cry/tests

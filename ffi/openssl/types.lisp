@@ -1,4 +1,4 @@
-;;; rustls/types.lisp --- Rustls FFI Types
+;;; types.lisp --- OpenSSL Foreign Types
 
 ;;
 

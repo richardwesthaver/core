@@ -4,10 +4,6 @@
 
 ;;; Commentary:
 
-;; ref: https://ffi.rustls.dev/
-
-;; ref: https://docs.rs/rustls/latest/rustls/
-
 ;; ref: https://certifi.io/
 
 ;; ref: https://www.ccadb.org/resources
