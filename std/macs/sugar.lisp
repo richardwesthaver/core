@@ -320,7 +320,7 @@ Examples:
 	    `((locally ,@body)))))))
 
 (flet ((let-typed-expansion (letsym bindings body)
-         (destructuring-bind (body decl) (parse-body body)
+         (multiple-value-bind (body decl) (parse-body body)
            `(,letsym (,@(mapcar #'(lambda (x) (subseq x 0 2)) bindings))
                      ,@(let ((types (remove nil (mapcar #'(lambda (x) (destructuring-bind (s e &key (type t)) x
                                                                         (declare (ignore e))
