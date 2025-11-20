@@ -111,13 +111,13 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
   (declare (fixnum n))
   (when (zerop n) (error "zero length"))
   (labels ((rec (source acc)
-             (let ((rest (nthcdr n source)))
-               (if (consp rest)
-                   (rec rest (cons
-                              (subseq source 0 n)
-                              acc))
-                   (nreverse
-                    (cons source acc))))))
+               (let ((rest (nthcdr n source)))
+                 (if (consp rest)
+                     (rec rest (cons
+                                (subseq source 0 n)
+                                acc))
+                     (nreverse
+                      (cons source acc))))))
     (if source (rec source nil) nil)))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -125,23 +125,23 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
     "Flatten list X, removing nil elements."
     (let (list)
       (labels ((rec (tree)
-                 (when tree
-                   (if (consp tree)
-                       (progn 
-                         (rec (car tree))
-                         (rec (cdr tree)))
-                       (push tree list)))))
+                   (when tree
+                     (if (consp tree)
+                         (progn 
+                           (rec (car tree))
+                           (rec (cdr tree)))
+                         (push tree list)))))
         (rec x)
         (nreverse list))))
 
   (defun flatten* (x)
     (labels ((rec (x acc)
-               (cond ((null x) acc)
-                     ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
-                     ((atom x) (cons x acc))
-                     (t (rec
-                         (car x)
-                         (rec (cdr x) acc))))))
+                 (cond ((null x) acc)
+                       ((typep x 'sb-impl::comma) (rec (sb-impl::comma-expr x) acc))
+                       ((atom x) (cons x acc))
+                       (t (rec
+                              (car x)
+                              (rec (cdr x) acc))))))
       (rec x nil))))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -201,16 +201,6 @@ Example:
                   (if (typep (car y) 'symbol) y (car y))
                   (append x (and y (if (typep (car y) 'symbol) `(,y) y)))))
           lsts :from-end t))
-
-(defmacro ziprm (r m &rest args)
-  "Reduce-Map on ARGS.
-
-Example:
-
-(macroexpand-1
-  `(ziprm (and =) (a b c) (1 2 3)))
-;; (AND (= A 1) (= B 2) (= C 3))"
-  `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) (mapcar #'ensure-list args))))
 
 (defun circular-list-error (list)
   (error 'type-error
@@ -315,18 +305,34 @@ Example:
   (defmacro cart-ecase ((&rest vars) &body cases)
     (cart-case-macrofunction vars cases `((t (error "cart-ecase: Case failure."))))))
 
-(flet ((cart-typecase-fn (vars cases append)
-         (let* ((decl (zipsym vars)))
-           `(let (,@decl)
-              (cond ,@(mapcar #'(lambda (clause)
-                                  `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause)))
-                                    (locally (declare ,@(mapcar #'(lambda (x y) `(type ,x ,y)) (first clause) (mapcar #'car decl))) ,@(cdr clause))))
-                              cases)
-                    ,@append)))))
-  (defmacro cart-typecase (vars &body cases)
-    (cart-typecase-fn vars cases nil))
-  (defmacro cart-etypecase (vars &body cases)
-    (cart-typecase-fn vars cases `((t (error "cart-etypecase: Case failure."))))))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defmacro ziprm (r m &rest args)
+    "Reduce-Map on ARGS.
+
+Example:
+
+(macroexpand-1
+  `(ziprm (and =) (a b c) (1 2 3)))
+;; (AND (= A 1) (= B 2) (= C 3))"
+    `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) (mapcar #'ensure-list args))))
+
+  (flet ((cart-typecase-fn (vars cases append)
+           (let* ((decl (zipsym vars)))
+             `(let (,@decl)
+                (cond ,@(mapcar #'(lambda (clause)
+                                    `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause)))
+                                      (locally (declare ,@(mapcar #'(lambda (x y) `(type ,x ,y)) (first clause) (mapcar #'car decl))) ,@(cdr clause))))
+                                cases)
+                      ,@append)))))
+    (defmacro cart-typecase (vars &body cases)
+      (cart-typecase-fn vars cases nil))
+    (defmacro cart-etypecase (vars &body cases)
+      (cart-typecase-fn vars cases `((t (error "cart-etypecase: Case failure.")))))))
+
+(declaim (inline pair))
+(defun pair (list &optional (n 2))
+  (loop for x on list by #'(lambda (x) (nthcdr n x))
+        collect (let ((xth x)) (loop repeat n collect (pop xth)))))
 
 (declaim (inline pairs))
 (defun pairs (list)

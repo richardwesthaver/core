@@ -68,11 +68,12 @@
    :flatten
    :group
    :firstn
+   :zip :unzip
    :zip-list :zip-tree
    :ziptree
    :zipsym
    :ziprm
-   :pairs
+   :pairs :pair
    :nconsc
    :cart :mapcart
    :cart-case :cart-ecase
@@ -517,7 +518,8 @@
    :multiple-value-compose
    :curry
    :rcurry
-   :map-product))
+   :map-product
+   :rec))
 
 (defpkg :std/readtable
   (:use :cl)

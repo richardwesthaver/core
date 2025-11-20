@@ -166,3 +166,9 @@ with and ARGUMENTS to FUNCTION."
                               (%map-product (curry f x) more))  
                             one)))))                            
     (%map-product (ensure-function fn) (cons list more-lists))))
+
+;; from matlisp
+(defmacro rec (name args &body body)
+  (let ((keypos (or (position-if #'(lambda (x) (member x cl:lambda-list-keywords)) args) (length args))))
+    `(labels ((,name (,@(mapcar #'first (subseq args 0 keypos)) ,@(subseq args keypos)) ,@body))
+       (,name ,@(mapcar #'second (subseq args 0 keypos))))))
