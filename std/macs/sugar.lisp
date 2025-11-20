@@ -121,6 +121,10 @@ documentation string."
   "Eval BODY in all contexts (:compile-toplevel :load-toplevel :execute)."
   `(eval-when (:compile-toplevel :load-toplevel :execute) ,@body))
 
+(defmacro eval-every (&body forms)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     ,@forms))
+
 (defun compile-and-eval (form)
   "Compile and eval a FORM."
   (funcall (compile nil `(lambda () ,form))))

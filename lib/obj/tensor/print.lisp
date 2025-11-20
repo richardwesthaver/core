@@ -72,7 +72,7 @@
         (t
          (rec-print tensor (1- (rank tensor)) nil))))))
 
-(defmethod print-object ((tensor standard-tensor) stream)
+(defmethod print-object ((tensor tensor) stream)
   (print-unreadable-object (tensor stream :type t)
     (let ((dims (dimensions tensor)))
       ;; (if ;; (and (slot-value tensor 'parent-tensor) dims)
@@ -84,7 +84,7 @@
         (format stream "~%")
         (print-tensor stream tensor)))))
 
-(defmethod print-object ((tensor sparse-tensor) stream)
+(defmethod print-object ((tensor dense-tensor) stream)
   (declare (optimize (safety 0) (debug 1)))
   (print-unreadable-object (tensor stream :type t)
     (format stream

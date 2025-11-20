@@ -462,7 +462,7 @@ subclass of SUPER."
     (funcall (if (single-argp name) #'funcall #'mapcar)
              #'macroexpand-1 args)))
 ;;
-(defmacro deft/generic ((name predicate &optional sorter (sort-function 'topological-sort)) disp args)
+(defmacro deft/generic ((name predicate &optional sorter (sort-function 'toposort)) disp args)
   (when (consp disp)
     (assert (null (remove-if-not #'(lambda (x) (member x cl:lambda-list-keywords)) disp)) nil "dispatch list contains keywords."))
   (with-gensyms (warg-sym disp-sym meth-sym pred-sym)
@@ -517,7 +517,7 @@ subclass of SUPER."
                    (meth (getf data :methods)))
     (if (eql filter '*)
         (setf (getf data :methods) (remove spls meth :test #'(lambda (a b) (equal a (first b)))))
-        (std/macs:when-let ((lst (find spls meth :test #'(lambda (a b) (equal a (first b))))))
+        (when-let ((lst (find spls meth :test #'(lambda (a b) (equal a (first b))))))
           (rplacd lst (remove filter (cdr lst) :test #'(lambda (a b) (eql a (cdr b)))))))
     nil))
 

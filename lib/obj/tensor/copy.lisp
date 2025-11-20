@@ -23,14 +23,14 @@
     to))
 
 ;;
-(defmethod copy :before ((x array) (y standard-tensor))
+(defmethod copy :before ((x array) (y tensor))
   (assert (tree-equal (array-dimensions x) (vector-to-list (dimensions y)))
           nil 'dimension-mismatch))
-(defmethod copy :before ((x standard-tensor) (y array))
+(defmethod copy :before ((x tensor) (y array))
   (assert (tree-equal (array-dimensions y) (vector-to-list (dimensions x)))
           nil 'dimension-mismatch))
 
-(defmethod copy ((x array) (y standard-tensor))
+(defmethod copy ((x array) (y tensor))
   (let ((clname (class-name (class-of y))))
     ;; (assert (member clname *tensor-type-leaves*) nil 'tensor-abstract-class :tensor-class clname)
     (compile-and-eval
@@ -44,7 +44,7 @@
         y))
     (copy x y)))
 
-(defmethod copy ((x standard-tensor) (y array))
+(defmethod copy ((x tensor) (y array))
   (let ((clname (class-name (class-of x))))
     (compile-and-eval
      `(defmethod copy ((x ,clname) (y array))
@@ -57,7 +57,7 @@
         y))
     (copy x y)))
 
-(defmethod copy ((x cons) (y standard-tensor))
+(defmethod copy ((x cons) (y tensor))
   ;;You seriously weren't expecting efficiency were you :) ?
   (let ((arr (make-array (list-dimensions x) :initial-contents x)))
     (copy arr y)))

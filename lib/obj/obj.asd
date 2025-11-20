@@ -31,12 +31,18 @@
    (:module "tensor"
     :components 
     ((:file "proto")
+     (:file "meta")
      (:file "base")
      (:file "loop")
-     (:file "print")
+     (:file "num")
+     (:file "template")
      (:file "copy")
-     (:file "util")
-     (:file "class")
+     ;; ref
+     (:file "print")
+     ;; stride, graph, coordinate
+     ;; permutation, blas, einstein
+     (:file "slice")
+     ;; foreign, boolean
      (:file "readtable")))
    (:module "tree"
     :components ((:file "node")

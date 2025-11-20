@@ -584,6 +584,7 @@
    :def!
    :defonce
    :eval-always
+   :eval-every
    :compile-and-eval
    :compile-and-eval*
    :compile-and-load
@@ -937,9 +938,10 @@
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
+  (:import-from :std/list :toposort)
   (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
   (:import-from :sb-ext :without-package-locks)
-  (:import-from :std/macs :eval-always)
+  (:import-from :std/macs :eval-always :if-let :when-let)
   (:import-from :std/prim :definline)
   (:shadow :reset)
   (:export :list-slot-values-using-class
@@ -970,7 +972,9 @@
    :find-slot-def-names-by-type
    :struct-slots-and-values
    :slots-and-values
-   :struct-constructor))
+   :struct-constructor
+   :remt/method :deft/method
+   :deft/generic))
 
 (defpkg :std/seq
   (:use :cl)

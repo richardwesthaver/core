@@ -305,29 +305,28 @@ Example:
   (defmacro cart-ecase ((&rest vars) &body cases)
     (cart-case-macrofunction vars cases `((t (error "cart-ecase: Case failure."))))))
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defmacro ziprm (r m &rest args)
-    "Reduce-Map on ARGS.
+(defmacro ziprm ((r m) &rest args)
+  "Reduce-Map on ARGS.
 
 Example:
 
 (macroexpand-1
   `(ziprm (and =) (a b c) (1 2 3)))
 ;; (AND (= A 1) (= B 2) (= C 3))"
-    `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) (mapcar #'ensure-list args))))
+  `(,r ,@(apply #'mapcar #'(lambda (&rest atoms) (cons m atoms)) args)))
 
-  (flet ((cart-typecase-fn (vars cases append)
-           (let* ((decl (zipsym vars)))
-             `(let (,@decl)
-                (cond ,@(mapcar #'(lambda (clause)
-                                    `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause)))
-                                      (locally (declare ,@(mapcar #'(lambda (x y) `(type ,x ,y)) (first clause) (mapcar #'car decl))) ,@(cdr clause))))
-                                cases)
-                      ,@append)))))
-    (defmacro cart-typecase (vars &body cases)
-      (cart-typecase-fn vars cases nil))
-    (defmacro cart-etypecase (vars &body cases)
-      (cart-typecase-fn vars cases `((t (error "cart-etypecase: Case failure.")))))))
+(flet ((cart-typecase-fn (vars cases append)
+         (let* ((decl (zipsym vars)))
+           `(let (,@decl)
+              (cond ,@(mapcar #'(lambda (clause)
+                                  `((ziprm (and typep) ,(mapcar #'car decl) ,(mapcar #'(lambda (x) `(quote ,x)) (first clause)))
+                                    (locally (declare ,@(mapcar #'(lambda (x y) `(type ,x ,y)) (first clause) (mapcar #'car decl))) ,@(cdr clause))))
+                              cases)
+                    ,@append)))))
+  (defmacro cart-typecase (vars &body cases)
+    (cart-typecase-fn vars cases nil))
+  (defmacro cart-etypecase (vars &body cases)
+    (cart-typecase-fn vars cases `((t (error "cart-etypecase: Case failure."))))))
 
 (declaim (inline pair))
 (defun pair (list &optional (n 2))
