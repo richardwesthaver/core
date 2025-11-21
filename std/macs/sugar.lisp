@@ -147,7 +147,6 @@ documentation string."
                            ,@body))))
 
 ;;; Definitions
-;; TODO 2025-08-12: 
 ;; inspired by LFARM
 (defmacro defwith (name args &rest bind)
   "Define a call-with-NAME function and with-NAME macro which accept ARGS.
@@ -173,15 +172,16 @@ default values unless overwritten at runtime:
 :ACCESSOR
 
 The following additional options are supported:
-:METHOD - specify methods with default bindings
+
+<2025-11-20 Thu> NYI:
+:METHODS - specify methods with default bindings
 :SER - serializer slot specification
 :DE - deserializer slot specification
 :SERIALIZE - define a serizlier
 :DESERIALIZE - define a deserializer
 :HOOK - hook slot specification
-:COPY - COPY-OBJECT method definition
 :KERNEL - make this a kernel (funcallable) class
-:VERB - define verb methods
+:VERBS - define verb methods
 :TYPE-ID - register a type-id for instances of this class"
   `(defclass ,name ,direct-superclasses 
      ,(mapcar 
@@ -286,42 +286,42 @@ Examples:
 ;;                (TYPE T C))
 ;;       (LOCALLY T))))"
   (with-gensyms (consy)
-  (labels ((typedecl (syms alist)
-	     (let ((decls (remove-if #'null (mapcar 
-                                                    #'(lambda (s)
-							(let ((ts (assoc s alist)))
-                                                          (when ts
-							    (if (second ts)
-							        `(type ,(second ts) ,s)
-							        `(ignore ,s)))))
-						    syms))))
-	       (when decls `((declare ,@decls))))))
-    (apply #'recursive-append
-	   (append
-	    (mapcan #'(lambda (x)
-			(destructuring-bind (bind expr type) (let ((tpos (position :type x)) (len (length x)))
-							       (list (std/list:deconsify (subseq x 0 (1- (or tpos len))) consy) (nth (1- (or tpos len)) x) (when tpos (std/list:deconsify (nthcdr (1+ tpos) x) consy))))
-			  (let* ((typa (std/list:maptree t #'(lambda (x) (if (atom (car x))
-                                                                            (unless (or (eql (car x) consy) (member (car x) cl:lambda-list-keywords)) (list x))
-                                                                            (values x #'(lambda (mf x) (apply #'append (mapcar mf x))))))
-                                                         (std/list:ziptree bind type)))
-			         (vsyms (mapcar #'(lambda (x) (if (listp x)
-								  (let ((g (gensym)))
-								    (list g
-									  `(destructuring-bind ,(std/list:reconsify x consy)
-                                                                               ,g
-									     ,@(typedecl (flatten x) typa))))
-								  (list x)))
-						bind)))
-			    (list*
-			     (recursive-append
-			      (if (> (length bind) 1)
-				  `(multiple-value-bind (,@(mapcar #'car vsyms)) ,expr)
-				  `(let ((,@(mapcar #'car vsyms) ,expr))))
-			      (car (typedecl (mapcar #'car vsyms) typa)))
-			     (remove-if #'null (mapcar #'cadr vsyms))))))
-		    bindings)
-	    `((locally ,@body)))))))
+    (labels ((typedecl (syms alist)
+	       (let ((decls (remove-if #'null (mapcar 
+                                               #'(lambda (s)
+						   (let ((ts (assoc s alist)))
+                                                     (when ts
+						       (if (second ts)
+							   `(type ,(second ts) ,s)
+							   `(ignore ,s)))))
+					       syms))))
+	         (when decls `((declare ,@decls))))))
+      (apply #'recursive-append
+	     (append
+	      (mapcan #'(lambda (x)
+			  (destructuring-bind (bind expr type) (let ((tpos (position :type x)) (len (length x)))
+							         (list (std/list:deconsify (subseq x 0 (1- (or tpos len))) consy) (nth (1- (or tpos len)) x) (when tpos (std/list:deconsify (nthcdr (1+ tpos) x) consy))))
+			    (let* ((typa (std/list:maptree t #'(lambda (x) (if (atom (car x))
+                                                                               (unless (or (eql (car x) consy) (member (car x) cl:lambda-list-keywords)) (list x))
+                                                                               (values x #'(lambda (mf x) (apply #'append (mapcar mf x))))))
+                                                           (std/list:ziptree bind type)))
+			           (vsyms (mapcar #'(lambda (x) (if (listp x)
+								    (let ((g (gensym)))
+								      (list g
+									    `(destructuring-bind ,(std/list:reconsify x consy)
+                                                                                 ,g
+									       ,@(typedecl (flatten x) typa))))
+								    (list x)))
+						  bind)))
+			      (list*
+			       (recursive-append
+			        (if (> (length bind) 1)
+				    `(multiple-value-bind (,@(mapcar #'car vsyms)) ,expr)
+				    `(let ((,@(mapcar #'car vsyms) ,expr))))
+			        (car (typedecl (mapcar #'car vsyms) typa)))
+			       (remove-if #'null (mapcar #'cadr vsyms))))))
+		      bindings)
+	      `((locally ,@body)))))))
 
 (flet ((let-typed-expansion (letsym bindings body)
          (multiple-value-bind (body decl) (parse-body body)

@@ -56,7 +56,7 @@
                (memoizing lb :type index-type :bind lb)
                (memoizing (- (aref (memoizing (fence x) :type index-store-vector) (1- (length (memoizing (fence x))))) lb) :type index-type :bind r-len)
                (if (< (aref (memoizing (fence x)) (1- (length (memoizing (fence x))))) (length (memoizing (δ-i x) :type index-store-vector)))
-                   (very-quickly
+                   (locally (declare (optimize (speed 3) (safety 0)))
                      (lvec-copy r-len (memoizing (δ-i x)) lb (memoizing (δ-i x)) (+ lb 1) :key #'aref :lock #'(setf aref))
                      (lvec-copy r-len (memoizing (t.store ,(cl :x) x) :type ,(store-type (cl :x))) lb (memoizing (t.store ,(cl :x) x)) (+ lb 1)
                                 :key #'(lambda (a_ i_) (declare (index-type i_)) (t.store-ref ,(cl :x) a_ i_))
@@ -64,7 +64,7 @@
                    (let*-typed ((ss (+ (store-size x) *default-sparse-store-increment*))
                                 (δ-new (t.store-allocator index-store-vector ss) :type index-store-vector)
                                 (sto-new (t.store-allocator ,(cl :x) ss) :type ,(store-type (cl :x))))
-                     (very-quickly
+                     (locally (declare (optimize (speed 3) (safety 0)))
                        (lvec-copy lb (memoizing (δ-i x)) 0 δ-new 0 :key #'aref :lock #'(setf aref))
                        (lvec-copy r-len (memoizing (δ-i x)) lb δ-new (+ lb 1) :key #'aref :lock #'(setf aref))
                        (lvec-copy lb (memoizing (t.store ,(cl :x) x)) 0 sto-new 0
@@ -81,7 +81,6 @@
                 nil))
              (error "missing entry in the sparse matrix ~a" sub/v)))))
 
-#+nil
 (define-tensor-method (setf ref) (value (x graph-accessor :x) &rest subscripts)
   `(letv* (((r c) subscripts :type (index-type index-type))
            (idx lb (graph-indexing subscripts x)))
@@ -91,7 +90,7 @@
                (sto (t.store ,(cl :x) x) :type ,(store-type (cl :x))))
          (declare (type index-type lb))
          ,@(flet ((code (sfr sto δfr δto)
-                        `(very-quickly
+                        `(locally (declare (optimize (speed 3) (safety 0)))
                            ,@(unless (and (eql δfr δto) (eql sto sfr))
                                      `((loop :for i :of-type index-type :from 0 :below lb
                                           :do (setf (aref ,δto i) (aref ,δfr i)

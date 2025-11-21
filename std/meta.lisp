@@ -433,8 +433,19 @@ subclass of SUPER."
       (push super classes)))
 
 ;;; Templates
-(defvar *template-table* (make-hash-table))
+(defvar *template-table* (make-hash-table)
+  "Global hash-table containing a mapping of template-function names to 'specs' (plists).")
+
+#+nil
+(defun template-function-p (name)
+  "Return Non-nil if NAME is a template-function, else return NIL. Value is
+either T indicating a template-function without any template-methods or a
+plist containing the template-function spec (plist)."
+  (multiple-value-bind (val found) (gethash name *template-table*)
+    (when found (or val t))))
+
 (defgeneric compute-t/dispatch (name args)
+  (:documentation "compute the dispatch return value of the template function NAME given lambda-list ARGS.")
   (:method ((name symbol) args)
     (let* ((data (or (gethash name *template-table*)
                      (error "undefined template : ~a~%" name)))
@@ -450,19 +461,23 @@ subclass of SUPER."
             (ffilter #'(lambda (a m) (and (not (equal a m)) (funcall pred a m))))
             (error "could not find a \"~a\" template for : ~a~%" name args))))))
 
-;;
-(defun single-argp (name)
+(defun single-arg-template-function-p (name)
+  "Return T if NAME designates a template function which takes a single argument.
+
+Also returns a second value of the lambda-list itself."
   (let* ((data (or (gethash name *template-table*)
                    (error "Undefined template : ~a~%" name)))
          (ll (getf data :lambda-list)))
     (values (not (consp (first ll))) ll)))
 
 (defgeneric preprocess-t/dispatch (name args)
+  (:documentation "Preprocess the template-function NAME by calling it with ARGS, which are macroexpanded.")
   (:method ((name symbol) args)
-    (funcall (if (single-argp name) #'funcall #'mapcar)
+    (funcall (if (single-arg-template-function-p name) #'funcall #'mapcar)
              #'macroexpand-1 args)))
 ;;
 (defmacro deft/generic ((name predicate &optional sorter (sort-function 'toposort)) disp args)
+  "Define a template generic function stored in *TEMPLATE-TABLE*."
   (when (consp disp)
     (assert (null (remove-if-not #'(lambda (x) (member x cl:lambda-list-keywords)) disp)) nil "dispatch list contains keywords."))
   (with-gensyms (warg-sym disp-sym meth-sym pred-sym)
@@ -479,6 +494,7 @@ subclass of SUPER."
              (apply ,meth-sym (cons ,pred-sym (cddr ,warg-sym)))))))))
 
 (defmacro deft/method (name disp args &rest body)
+  "Define a template method for one of the pre-defined templates in *TEMPLATE-TABLE*."
   (with-gensyms (data-sym meth-sym afun-sym disp-sym sort-sym)
     (std/macs:letv* (((name &optional filter) (std/list:ensure-list name))
             (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
@@ -512,6 +528,7 @@ subclass of SUPER."
          ,afun-sym)))))
 
 (defun remt/method (name spls)
+  "Remove a template method for a gf stored in *TEMPLATE-TABLE*, given the name and specializer."
   (std/macs:letv* (((name &optional (filter '*)) (std/list:ensure-list name))
                    (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
                    (meth (getf data :methods)))

@@ -38,13 +38,8 @@
    :parse-body))
 
 (in-package :std/named-readtables)
-(pushnew :named-readtables *features*)
-
-(defmacro without-package-lock ((&rest package-names) &body body)
-  `(sb-ext:with-unlocked-packages (,@package-names) ,@body))
 
 ;;; Taken from SWANK (which is Public Domain.)
-
 (defmacro destructure-case (value &body patterns)
   "Dispatch VALUE to one of PATTERNS.
 A cross between `case' and `destructuring-bind'.
@@ -338,11 +333,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 ;;;; Specialized DOCUMENTATION for named readtables.
 
-;;; Lispworks, at least, forbids defining methods on DOCUMENTATION.
-;;; Wrapping these forms with WITHOUT-PACKAGE-LOCK (as for PRINT-OBJECT,
-;;; see below) allows this to compile on Lispworks.
-
-(without-package-lock (:common-lisp #+lispworks :implementation)
+(sb-ext:with-unlocked-packages (:common-lisp)
 
   (defmethod documentation ((name symbol) (doc-type (eql 'readtable)))
     (let ((readtable (find-readtable name)))
@@ -436,18 +427,21 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 ;;;; Readtables Iterators
 
 (defmacro with-readtable-iterator ((name readtable) &body body)
+  "Bind an iterator over the char-macros of READTABLE to NAME over BODY."
   (let ((it (gensym)))
     `(let ((,it (%make-readtable-iterator ,readtable)))
        (macrolet ((,name () `(funcall ,',it)))
          ,@body))))
 
 (defun funcall-or (package-and-name-list &rest args)
+  "Attempt to apply the function symbol designated by the list starting with a package designator to ARGS."
   (loop for (package name) in package-and-name-list
         do (let ((symbol (find-symbol (string name) package)))
              (when symbol
                (return-from funcall-or (apply symbol args))))))
 
 (defun %make-readtable-iterator (readtable)
+  "Return an iterator function over the macro-chars of READTABLE."
   (let ((char-macro-array (funcall-or '((sb-impl base-char-macro-array)
                                         (sb-impl character-macro-array))
                                       readtable))
@@ -550,7 +544,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 ;;; likely to work (modulo package-locks) on most implementations,
 ;;; though.
 
-(without-package-lock (:common-lisp)
+(sb-ext:with-unlocked-packages (:common-lisp)
   (defmethod print-object :around ((rt readtable) stream)
     (let ((name (readtable-name rt)))
       (if name
@@ -1025,6 +1019,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 ;;; readtable for :CURRENT anyway.
 
 (defun find-reserved-readtable (reserved-name)
+  "Find the reserved readtabled designated by RESERVED-NAME."
   (cond ((eq reserved-name nil)          *standard-readtable*)
 	((eq reserved-name :standard)    *standard-readtable*)
         ((eq reserved-name :common-lisp) *standard-readtable*)
@@ -1106,5 +1101,3 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
               (in-readtable ,rt)
               ,@body)
          (in-readtable ,(readtable-name current)))))
-
-(provide :readtables)

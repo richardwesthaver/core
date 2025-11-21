@@ -626,7 +626,7 @@
   (:import-from :std/prim :definline)
   (:import-from :std/list :maptree-eki :zip)
   (:import-from :sb-kernel :with-array-data :array-rank-limit)
-  (:import-from :std/macs :eval-every)
+  (:import-from :std/macs :eval-every :lety*)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position
    :vectorify :make-array-allocator
@@ -635,7 +635,8 @@
    :vector-max :vector-min
    :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
-   :modproj :simplify-array :array-rank-limit))
+   :modproj :simplify-array :array-rank-limit
+   :sort-index :binary-search))
 
 (defpkg :std/sys
   (:use :cl :sb-int)

@@ -6,10 +6,23 @@
 (in-package :obj/tensor)
 
 (defmethod subtensor :before ((tensor base-tensor) (subscripts list))
-  (assert (or (null subscripts) (= (length subscripts) (rank tensor))) nil 'tensor-index-rank-mismatch))
+  (assert (or (null subscripts) (= (length subscripts) (order tensor))) nil 'tensor-index-rank-mismatch))
 
-(defun (setf subtensor) (value tensor subscripts)
-  (copy! value (subtensor tensor subscripts)))
+(defmethod (setf subtensor) (value (tensor dense-tensor) (subscripts list))
+  (letv* ((hd dims stds (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))))
+    (cond
+      ((not hd) nil #+nil(error "no place found inside ~a." subscripts))
+      ((not dims) (if subscripts
+                      (setf (store-ref tensor hd) value)
+                      (copy! value (without-tensor-safety (subtensor tensor nil)))))
+      (t (copy! value
+                (without-tensor-safety
+                    (make-instance (class-of tensor)
+                      :head (+ hd (head tensor))
+                      :dimensions (coerce dims 'index-store-vector)
+                      :strides (coerce stds 'index-store-vector)
+                      :store (slot-value tensor 'store)
+                      :parent tensor)))))))
 
 (definline parse-slice (subs dimensions)
   (declare (type index-store-vector dimensions))
@@ -57,24 +70,33 @@
                  (push (* inc s) stds)))
           finally (return (values hd (nreverse dims) (nreverse stds))))))
 
-(definline slice (x axis &optional (idx 0) (preserve-rank-p (when (= (rank x) 1) t)))
-  (let* ((axis (modproj axis (rank x) nil 0))
-         (subs (loop for i from 0 below (rank x) 
+(definline slice (x axis &optional (idx 0) (preserve-rank-p (when (= (order x) 1) t)))
+  (let* ((axis (modproj axis (order x) nil 0))
+         (subs (loop for i from 0 below (order x)
                      collect (cond ((/= i axis) '(nil nil))
                                    (preserve-rank-p (list idx (1+ idx)))
                                    (t idx)))))
     (subtensor x subs)))
 
-(definline row-slice (x idx)
-  (slice x 0 idx))
+(defgeneric suptensor (tensor ord &optional start)
+  (:method :before ((tensor base-tensor) ord &optional (start 0))
+    (declare (type index-type start))
+    (assert (<= 0 start (- ord (order tensor))) nil 'invalid-arguments)))
 
-(definline col-slice (x idx)
-  (slice x 1 idx))
-
-(defmethod suptensor :before ((tensor base-tensor) ord &optional (start 0))
-  (declare (type index-type start))
-  (let ((tord (rank tensor)))
-    (assert (and (< -1 start) (<= tord (rank tensor)) (<= 0 start (- ord tord))) nil 'invalid-arguments)))
+(defmethod suptensor ((ten dense-tensor) ord &optional (start 0))
+  (declare (type index-type ord start))
+  (if (= (order ten) ord) ten
+      (without-tensor-safety
+          (make-instance (class-of ten)
+            :dimensions (coerce (nconc (make-list start :initial-element 1)
+                                       (vector-to-list (dimensions ten))
+                                       (make-list (- ord (order ten) start) :initial-element 1))
+                                'index-store-vector)
+            :strides (coerce (nconc (make-list start :initial-element (total-size ten))
+                                    (vector-to-list (strides ten))
+                                    (make-list (- ord (order ten) start) :initial-element (total-size ten)))
+                             'index-store-vector)
+            :head (head ten) :store (slot-value ten 'store) :parent ten))))
 
 (definline matrixify (vec &optional (col-vectorp t))
   (if (tensor-matrixp vec) vec (suptensor vec 2 (if col-vectorp 0 1))))
@@ -89,7 +111,7 @@
                                       strd))
     ten))
 
-(defun reshape~ (x dims) (reshape! (subtensor~ x nil) dims))
+(defun reshape (x dims) (reshape! (subtensor x nil) dims))
 
 (defun join (axis tensor &rest more-tensors)
   (if (null tensor)
