@@ -37,3 +37,5 @@ that the input is passed to READ-FROM-STRING."
       (t default))))
 
 ;; (defmacro defprompt (name ))
+
+;; (defun 

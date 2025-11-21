@@ -9,7 +9,7 @@
   (assert (or (null subscripts) (= (length subscripts) (rank tensor))) nil 'tensor-index-rank-mismatch))
 
 (defun (setf subtensor) (value tensor subscripts)
-  (copy value (subtensor tensor subscripts)))
+  (copy! value (subtensor tensor subscripts)))
 
 (definline parse-slice (subs dimensions)
   (declare (type index-store-vector dimensions))
@@ -103,7 +103,7 @@
                 do (progn
                      (setf (slot-value view 'head) head
                            (aref (dimensions view) axis) (aref (dimensions ele) axis))
-                     (copy ele view)
+                     (copy! ele view)
                      (incf head (* (aref (strides ret) axis) (aref (dimensions ele) axis)))))
           ret))))
 ;;

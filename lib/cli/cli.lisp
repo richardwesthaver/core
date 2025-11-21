@@ -9,7 +9,7 @@
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
   (:use-reexport . #.cli-int:*cli-packages*)
-  (:export :sudop :call-with-sudo :with-sudo :pretty-log-message :*sudo-output* :ensure-sudo))
+  (:export :sudop :call-with-sudo :with-sudo :*sudo-output* :ensure-sudo))
 
 (defpkg :cli/tools
   (:nicknames :tools)

@@ -6,6 +6,7 @@
                (:file "var")
                (:file "proto")
                (:file "prim")
+               (:file "util")
                (:file "sfc")
                (:file "auto")
                (:file "readtable"))

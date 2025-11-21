@@ -2,6 +2,13 @@
 
 ;; 
 
+;;; Commentary:
+
+;; Note that this file is out of sync with MATLISP - it was pulled from a
+;; different branch which doesn't rely on ITER.
+
+;; We should implement this correctly using SBCL loop internals.
+
 ;;; Code:
 (in-package :obj/tensor)
 

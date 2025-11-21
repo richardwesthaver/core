@@ -160,18 +160,24 @@
    :set-tty-mode))
 
 (defpkg :cli/term
-  (:nicknames :ti :terminfo)
+  (:nicknames :ti :terminfo :term)
   (:use :cl :config)
   (:shadow :columns)
   (:import-from :std :winsize :+tiocgwinsz+)
   (:export
    :*terminfo-directories* :*terminfo*
    :capability :tparm :tputs :decode-padding
-   :set-terminal :capabilities))
+   :set-terminal :capabilities
+   :cursor-left :cursor-right
+   :cursor-up :cursor-down
+   :column-address :auto-right-margin
+   :clr-eos :enter-am-mode
+   :set-a-foreground :enter-bold-mode
+   :exit-attribute-mode))
 
 (defpkg :cli/linedit
   (:nicknames :linedit)
-  (:use :cl :std)
+  (:use :cl :std :cli/term)
   (:shadowing-import-from :sb-posix :ioctl)
   (:import-from :sb-posix :getenv :tcgetattr :tcsetattr :termios)
   (:import-from :terminfo :tputs :set-terminal :tparm)
@@ -189,6 +195,10 @@
    #:*highlight-color*
    #:install-repl
    #:uninstall-repl
+   #:make-editor
+   #:editor
+   #:*editor*
+   #:buffer
    #:*announce*))
 
 (defpkg :cli/progress
@@ -215,7 +225,7 @@
    :vspark :*vticks*))
 
 (defpkg :cli/repl
-  (:use :cl :std :cli/progress :cli/spark :config :ast :color)
+  (:use :cl :std :cli/progress :cli/spark :config :ast :color :cli/term)
   (:export :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/ed

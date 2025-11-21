@@ -30,19 +30,24 @@
    (:file "url")
    (:module "tensor"
     :components 
-    ((:file "proto")
+    ((:file "var")
      (:file "meta")
      (:file "base")
      (:file "loop")
      (:file "num")
-     (:file "template")
+     (:file "tensor")
      (:file "copy")
-     ;; ref
+     (:file "ref")
      (:file "print")
-     ;; stride, graph, coordinate
-     ;; permutation, blas, einstein
+     (:file "stride")
+     (:file "graph")
+     (:file "coord")
+     (:file "perm")
+     ;; blas
+     (:file "einstein")
      (:file "slice")
-     ;; foreign, boolean
+     (:file "foreign")
+     (:file "bool")
      (:file "readtable")))
    (:module "tree"
     :components ((:file "node")

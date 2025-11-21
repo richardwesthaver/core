@@ -214,6 +214,9 @@ types are not equivalent."
   "Primitive objects are defined by SBCL and will not change. Convenient as a
 non-unique ID prefix.")
 
+;;;_. Type IDs
+;; would CART-TYPECASE be useful here?
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *simple-type-table* (make-hash-table :test 'equal)
     "A hash-table mapping simple type names to integers.")

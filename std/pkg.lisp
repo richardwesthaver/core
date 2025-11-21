@@ -80,7 +80,7 @@
    :cart-typecase :cart-etypecase
    :recursive-append :list-dimensions
    :maptree :maptree-if
-   :let-binding-transform
+   :maptree-eki :let-binding-transform
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
    :sort!
@@ -453,21 +453,6 @@
    :prefix-of
    :with-input-from-file :with-output-to-file))
 
-(defpkg :std/array
-  (:use :cl)
-  (:import-from :sb-ext :maybe-inline)
-  (:import-from :std/prim :definline)
-  (:import-from :sb-kernel :with-array-data :array-rank-limit)
-  (:export :copy-array :signed-array-length :array-shift 
-   :vector-push-extend-position :vector-pop-position
-   :vectorify :make-array-allocator
-   :vector-foldl :vector-foldr
-   :vector-map-foldl :vector-map-foldr
-   :vector-max :vector-min
-   :vector-eq :with-array-data
-   :vector-to-list :copy-vector-to-list
-   :modproj :simplify-array :array-rank-limit))
-
 (defpkg :std/hash
   (:use :cl)
   (:nicknames :std/ht)
@@ -634,6 +619,23 @@
    :defwith
    :with-memoization
    :memoizing))
+
+(defpkg :std/array
+  (:use :cl)
+  (:import-from :sb-ext :maybe-inline)
+  (:import-from :std/prim :definline)
+  (:import-from :std/list :maptree-eki :zip)
+  (:import-from :sb-kernel :with-array-data :array-rank-limit)
+  (:import-from :std/macs :eval-every)
+  (:export :copy-array :signed-array-length :array-shift 
+   :vector-push-extend-position :vector-pop-position
+   :vectorify :make-array-allocator
+   :vector-foldl :vector-foldr
+   :vector-map-foldl :vector-map-foldr
+   :vector-max :vector-min
+   :vector-eq :with-array-data
+   :vector-to-list :copy-vector-to-list
+   :modproj :simplify-array :array-rank-limit))
 
 (defpkg :std/sys
   (:use :cl :sb-int)
@@ -1310,7 +1312,7 @@
    :draw-filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
    :smile :draw-one-in-chance :draw-chance :mumble
-   :*mumble-timestamp*))
+   :*mumble-timestamp* :deffmt))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)

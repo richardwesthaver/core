@@ -11,6 +11,7 @@
 (in-package :obj/tensor)
 
 ;;; Vars
+(defparameter *sparse-tensor-realloc-on-setf* nil)
 (defparameter *default-sparse-store-increment* 100
   "Determines the increment by which the store of a compressed sparse matrix is
 increased, when it runs out of store.")
@@ -32,7 +33,7 @@ of non-zero is not specified.")
    (make-real-tensor 10 10))
 ;; returns a 10x10 matrix in Column major order."))
 
-(defparameter *default-tensor-type* 'real-tensor)
+(defparameter *default-tensor-type* '(double-float))
 
 (defparameter *tensor-safety-p* t
   "If non-nil, then check for invalid values in the field of the class in the
@@ -40,6 +41,13 @@ of non-zero is not specified.")
 carful when doing, much of Matlisp's code is written on the assumption that
 the fields of a tensor don't take invalid values; failing which case, may lead
 to memory error. Use at your own risk.")
+
+(defmacro without-tensor-safety (&rest body)
+  `(let ((*tensor-safety-p* nil)) ,@body))
+
+(defparameter *rcond-scale* 10
+  "Factor by which the float-epsilon is to be scaled, so as to obtain a condition
+number threshold, to be used for determining the rank of a matrix (used in gelsy).")
 
 (defparameter *print-tensor-max-len* t
   "Maximum number of elements in any particular argument to print.
@@ -52,6 +60,10 @@ Set this to T to print all the arguments.")
 (defparameter *print-tensor-indent* 2
   "Determines how many spaces will be printed before each row
 of a matrix (default 2)")
+
+(defparameter *default-uplo* :l
+  "For routines which take symmetric (hermitian) matrices as arguments, this sets
+the default argument for UPLO.")
 
 ;;; Conditions
 (define-condition tensor-invalid-dimension-value (error)

@@ -6,17 +6,17 @@
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+------------------------------------|
-| name        | core                               |
-| version     | 0.1.0                              |
-| description | The Compiler Company Core          |
-| skel-id     | 4611004031065916102                |
-| root        | ~/comp/core/                       |
-| tags        | (CORE LISP EMACS C)                |
-| updated     | Wed Nov 19 21:09:36 2025 -0500     |
-| langs       | c elisp lisp org text              |
-| lines       | 153194 :λ 121850 :# 13721 :_ 17623 |
-|-------------+------------------------------------|
+|-------------+-----------------------------------------|
+| name        | core                                    |
+| version     | 0.1.0                                   |
+| description | The Compiler Company Core               |
+| skel-id     | 4611004031065916102                     |
+| root        | ~/comp/core/                            |
+| tags        | (CORE LISP EMACS C)                     |
+| updated     | Thu Nov 20 17:48:59 2025 -0500          |
+| langs       | c elisp lisp org text                   |
+| lines       | 153857 :λ 122358 :# 13787 :_ 17712 |
+|-------------+-----------------------------------------|
 
 #+END:
 

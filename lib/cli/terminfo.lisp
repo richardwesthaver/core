@@ -1114,9 +1114,8 @@ Keyword arguments are passed on to the executing function, and include:
  (terminfo *terminfo*)
  (stream *terminal-io*)
  baud-rate
- (affected-lines 1))
-"
-    ;; There's got to be a better way...
+ (affected-lines 1))"
+  ;; There's got to be a better way...
   (let ((args (subseq args 0 (position-if #'keywordp args)))
         (keywords (member-if #'keywordp args)))
     `(%tputs ,(if args `(tparm ,string ,@args)

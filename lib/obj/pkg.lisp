@@ -293,7 +293,7 @@
 (defpkg :obj/tensor
   (:nicknames :tensor)
   (:use :cl :std)
-  (:export))
+  (:export :tensor))
 
 (defpkg :obj/ast
   (:nicknames :ast)

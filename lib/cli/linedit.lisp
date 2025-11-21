@@ -453,24 +453,22 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
    (old-markup :initform 0 :accessor old-markup)))
 
 (defun set-column-address (n current)
-  ;; (if nil
-  ;;     (ti:tputs ti:column-address n)
   (cond ((< n current)
 	 (loop repeat (- current n) 
-	       do (tputs ti:cursor-left)))
+	       do (tputs cursor-left)))
 	((> n current)
 	 (loop repeat (- n current) 
-	       do (tputs ti:cursor-right)))))
+	       do (tputs cursor-right)))))
 
 (defun smart-terminal-p ()
-  (and ti:cursor-up ti:cursor-down ti:clr-eos
-       (or ti:column-address (and ti:cursor-left ti:cursor-right))
-       (or ti:auto-right-margin ti:enter-am-mode)))
+  (and cursor-up cursor-down clr-eos
+       (or column-address (and cursor-left cursor-right))
+       (or auto-right-margin enter-am-mode)))
 
 (defmethod backend-init ((backend smart-terminal))
   (call-next-method)
-  (when ti:enter-am-mode
-    (ti:tputs ti:enter-am-mode)))
+  (when enter-am-mode
+    (tputs enter-am-mode)))
 
 (defun find-row (n columns)
   ;; 1+ includes point in row calculations
@@ -482,31 +480,31 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defun move-in-column (&key col vertical clear-to-eos current-col)
   (set-column-address col current-col)
   (if (plusp vertical)
-      (loop repeat vertical do (ti:tputs ti:cursor-up))
-      (loop repeat (abs vertical) do (ti:tputs ti:cursor-down)))
+      (loop repeat vertical do (tputs cursor-up))
+      (loop repeat (abs vertical) do (tputs cursor-down)))
   (when clear-to-eos
-    (ti:tputs ti:clr-eos)))
+    (tputs clr-eos)))
 
 (defun fix-wraparound (start end columns)
   ;; If final character ended in the last column the point
   ;; will wrap around to the first column on the same line:
   ;; hence move down if so.
   (when (and (< start end) (zerop (find-col end columns)))
-    (ti:tputs ti:cursor-down)))
+    (tputs cursor-down)))
 
 (defun place-point (&key up col)
-  (loop repeat up do (ti:tputs ti:cursor-up))
-  (tputs ti:column-address col))
+  (loop repeat up do (tputs cursor-up))
+  (tputs column-address col))
 
 (definline paren-style ()
   (concatenate
    'simple-string
    (when *highlight-color*
      (tparm
-      ti:set-a-foreground
+      set-a-foreground
       (or (position *highlight-color* '(:black :red :green :yellow :blue :magenta :cyan :white))
           (error "Unknown color: ~S" *highlight-color*))))
-   ti:enter-bold-mode))
+   enter-bold-mode))
 
 (defmethod display ((backend smart-terminal) &key prompt line point markup)
   (let* (;; SBCL and CMUCL traditionally point *terminal-io* to /dev/tty,
@@ -531,7 +529,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	(if markup
 	    (dwim-mark-parens line point
 			      :pre (paren-style)
-			      :post ti:exit-attribute-mode)
+			      :post exit-attribute-mode)
 	    (values line point))
       (let* ((full (concatenate 'simple-string prompt marked-line))
 	     (point (+ point (length prompt)))
@@ -635,25 +633,25 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 ;;; BUFFER offers a simple browsable from of storage. It is used to
 ;;; implement both the kill-ring and history.
 (defclass buffer ()
-  ((prev :initarg :prev :accessor %buffer-prev :initform nil)
-   (next :initarg :next :accessor %buffer-next :initform nil)
-   (list :initarg :list :accessor %buffer-list :initform nil)
+  ((prev :initarg :prev :accessor prev :initform nil)
+   (next :initarg :next :accessor next :initform nil)
+   (data :initarg :data :accessor data :initform nil)
    ;; For file-backed buffers.
-   (pathname :initarg :pathname :initform nil :accessor %buffer-pathname)))
+   (path :initarg :path :initform nil :accessor path)))
 
 (defun copy-buffer (buffer)
   (make-instance 'buffer
-    :prev (%buffer-prev buffer)
-    :next (%buffer-next buffer)
-    :list (%buffer-list buffer)
-    :pathname (%buffer-pathname buffer)))
+    :prev (prev buffer)
+    :next (next buffer)
+    :data (data buffer)
+    :path (path buffer)))
 
 (defun ensure-buffer (datum)
   "DATUM may be a buffer, a list, or a pathname designator."
   (etypecase datum
     (buffer datum)
     ((or pathname string null)
-     (let ((buffer (make-instance 'buffer :pathname datum)))
+     (let ((buffer (make-instance 'buffer :path datum)))
        (when datum
          (with-open-file (f datum
                             :direction :input
@@ -662,17 +660,17 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
            (when f
              (loop for line = (read-line f nil)
                    while line
-                   do (push line (%buffer-list buffer)))
-             (setf (%buffer-prev buffer) (%buffer-list buffer)))))
+                   do (push line (data buffer)))
+             (setf (prev buffer) (list buffer)))))
        buffer))
-    (list (let ((buffer (make-instance 'buffer :list datum)))
-            (setf (%buffer-prev buffer) (%buffer-list buffer))
+    (list (let ((buffer (make-instance 'buffer :data datum)))
+            (setf (prev buffer) (data buffer))
             buffer))))
 
 (defun buffer-push (string buffer)
-  (unless (equal string (car (%buffer-list buffer)))
-    (push string (%buffer-list buffer))
-    (let ((pathname (%buffer-pathname buffer)))
+  (unless (equal string (car (data buffer)))
+    (push string (data buffer))
+    (let ((pathname (path buffer)))
       (when pathname
         (with-open-file (f pathname
                            :direction :output
@@ -680,43 +678,43 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
                            :if-exists :append
                            :external-format :utf-8)
           (write-line string f))))
-    (setf (%buffer-next buffer) nil
-          (%buffer-prev buffer) (%buffer-list buffer))))
+    (setf (next buffer) nil
+          (prev buffer) (data buffer))))
 
 (defun buffer-find-previous-if (test buffer)
-  (std:awhen (position-if test (%buffer-prev buffer))
+  (std:awhen (position-if test (prev buffer))
     (loop repeat (1+ std:it)
-          do (push (pop (%buffer-prev buffer))
-                   (%buffer-next buffer)))
-    (car (%buffer-next buffer))))
+          do (push (pop (prev buffer))
+                   (next buffer)))
+    (car (next buffer))))
 
 (defun buffer-previous (string buffer)
-  (when (%buffer-prev buffer)
-    (push string (%buffer-next buffer))
-    (pop (%buffer-prev buffer))))
+  (when (prev buffer)
+    (push string (next buffer))
+    (pop (prev buffer))))
 
 (defun buffer-peek (buffer)
-  (std:aif (%buffer-prev buffer)
+  (std:aif (prev buffer)
            (car std:it)))
 
 (defun buffer-find-next-if (test buffer)
-  (std:awhen (position-if test (%buffer-next buffer))
+  (std:awhen (position-if test (next buffer))
     (loop repeat (1+ std:it)
-          do (push (pop (%buffer-next buffer)) (%buffer-prev buffer)))
-    (car (%buffer-prev buffer))))
+          do (push (pop (next buffer)) (prev buffer)))
+    (car (prev buffer))))
 
 (defun buffer-next (string buffer)
-  (when (%buffer-next buffer)
-    (push string (%buffer-prev buffer))
-    (pop (%buffer-next buffer))))
+  (when (next buffer)
+    (push string (prev buffer))
+    (pop (next buffer))))
 
 (defun buffer-cycle (buffer)
   (flet ((wrap-buffer ()
-	   (unless (%buffer-prev buffer)
-	     (setf (%buffer-prev buffer) (reverse (%buffer-next buffer))
-		   (%buffer-next buffer) nil))))
+	   (unless (prev buffer)
+	     (setf (prev buffer) (reverse (next buffer))
+		   (next buffer) nil))))
     (wrap-buffer)
-    (push (pop (%buffer-prev buffer)) (%buffer-next buffer))
+    (push (pop (prev buffer)) (next buffer))
     (wrap-buffer)
     t))
 
@@ -1279,7 +1277,7 @@ completion."
           (with-backend *editor*
             (edit))))))
 
-(defvar *level* 0)
+(defvar *line-level* 0)
 
 (defun formedit (&rest args &key (prompt1 "") (prompt2 "") history killring completions
 		 &allow-other-keys)
@@ -1322,11 +1320,11 @@ completion."
 			       (string #\newline)
 			       (apply #'linedit :prompt prompt2 args))))
 	    ((let ((form (handler-case (let ((*readtable* table)
-                                             (*level* (1+ *level*))
+                                             (*line-level* (1+ *line-level*))
 					     (*package* (make-package
                                                          ;; If we manage to get into a nested read,
                                                          ;; make sure we don't try to use the same package.
-                                                         (format nil "LINEDIT-SCRATCH#~A" *level*))))
+                                                         (format nil "LINEDIT-SCRATCH#~A" *line-level*))))
 					 (unwind-protect (read-from-string str)
 					   (delete-package *package*)))
 			   (end-of-file ()

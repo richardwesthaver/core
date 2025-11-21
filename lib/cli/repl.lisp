@@ -19,12 +19,17 @@
   (when default (funcall default)))
 
 ;;;_* Init
-(defmethod init ((self (eql :repl)) 
+(defmethod init ((self (eql :term)) &key name) (set-terminal name))
+(defmethod init ((self (eql :editor)) &rest args) 
+  ;; performs :TERM init internally (set-terminal)
+  (setq cli/linedit::*editor* (apply 'cli/linedit::make-editor args)))
+  
+(defmethod init ((self (eql :repl))
                  &key wrap (eof :quit)
                       history killring)
   (cli/linedit:install-repl :wrap-current wrap :eof-quits eof :history history :killring killring))
 
-(defmethod init ((self (eql :main)) 
+(defmethod init ((self (eql :main))
                  &key (package *package*)
                       (userinit #'sb-impl::userinit-pathname)
                       (sysinit #'sb-impl::sysinit-pathname)

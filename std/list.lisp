@@ -377,6 +377,12 @@ Example:
                   (let ((alist (mapcar #'(lambda (x y) (cons x y)) keys transformer)))
                     #'(lambda (x) (values (cons (cdr (assoc (car x) alist)) (cdr x)) #'mapcar))))  tree))
 
+(defun maptree-eki (transformer tree)
+  (multiple-value-bind (t-tree control) (funcall transformer tree)
+    (if (and (consp t-tree) control)
+        (funcall (if (eql control t) #'mapcar control) (lambda (x) (maptree-eki transformer x)) t-tree)
+        t-tree)))
+
 (defmacro nconsc (var &rest args)
   "Macro to do setf and nconc for destructive list updates. 
 

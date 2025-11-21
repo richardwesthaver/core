@@ -3,20 +3,33 @@
 ;;
 
 ;;; Code:
-(defpackage :math/proto
+(defpackage :math-int
+  (:use :cl :std)
+  (:export :*math-packages*))
+(in-package :math-int)
+(defparameter *math-packages* nil)
+(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *math-packages* :test 'string=)))
+
+(defpkg :math/proto
   (:use :cl :std)
   (:export :math-error :math-warning))
 
-(defpackage :math/sfc
+(defpkg :math/util
+  (:use :cl :std :math/proto :tensor)
+  (:export :blasfunc))
+
+(defpkg :math/sfc
   (:use :std-lisp :math/proto)
   (:export
    #:hilbert-list
    #:hilbert-curve))
 
-(defpackage :math/auto
+(defpkg :math/auto
   (:use :std-lisp :math/proto)
   (:export :life :cellular-automata :*rule-patterns*))
 
-(pkg:defpkg :math
+(defpkg :math
   (:use :std-lisp)
   (:use-reexport :math/proto :math/sfc :math/auto))
+
+(setq *defpkg-hook* nil)

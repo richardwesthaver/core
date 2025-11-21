@@ -32,8 +32,8 @@ guaranteed to be simple."
       (let ((copy (make-array (array-dimensions array)
                               :element-type (array-element-type array))))
         (loop for index below (array-total-size array) do
-          (setf (row-major-aref copy index)
-                (row-major-aref array index)))
+                 (setf (row-major-aref copy index)
+                       (row-major-aref array index)))
         copy)))
 
 (deftype signed-array-length ()
@@ -206,3 +206,144 @@ element-type TYPE and default value INIT."
     (t (assert (if openp (<= (- (1+ d)) i d) (< (- (1+ d)) i d)) nil 'std/condition:invalid-argument 
                :reason "invalid index" :item i)
        (if (< i 0) (if (and openp (= i (- (1+ d)))) -1 (mod i d)) i))))
+
+;;; Binary Search
+;; WIP
+#+nil
+(eval-every
+  (let ((code `(lambda (val lb ub vec &key (order #'<) (test #'=))
+                 (declare (type fixnum lb ub)
+                          (type vector vec))
+                 (cond
+                   ((or (= lb ub) (funcall order val (aref vec lb))) (values nil lb))
+                   ((funcall order (aref vec (1- ub)) val) (values nil ub))
+                   (t (loop :for j :of-type fixnum := (floor (+ lb ub) 2)
+                            :repeat #.(ceiling (log array-dimension-limit 2))
+                            :do (cond ((funcall test (aref vec j) val) (return j))
+                                      ((>= lb (1- ub)) (return (values nil (if (funcall order (aref vec lb) val) (1+ lb) lb))))
+                                      (t (if (funcall order val (aref vec j))
+                                             (setf ub j)
+                                             (setf lb (1+ j)))))))))))
+    (setf (symbol-function 'binary-search) (compile nil code))
+    (define-compiler-macro binary-search (&whole form val lb ub vec &key (order '(function <)) (test '(function =)))
+      (let ((t-code (maptree-eki #'(lambda (x)
+                                     ;; TODO <2025-11-20 Thu>
+                                     (cond
+                                       ((and (listp x) (= (length x) 3))
+                                        (destructuring-bind (type vector vec) x
+                                          (declare (ignore vector))
+                                          (cond 
+                                            ((and (listp vec) (eql (car vec) 'the))
+                                             `(type ,type vec)) 
+                                            (t x))))
+                                       ((and (listp x) (eql (car x) 'funcall))
+                                        (destructuring-bind (fname &rest argvs) x
+                                          (let ((y (ecase fname (order order) (test test))))
+                                            (cond
+                                              ((and (listp y) (or (eql (car y) 'quote) (eql (car y) 'function)) (typep (second y) 'symbol)) `(,(second y) ,@argvs))
+                                              ((listp y)
+                                               (cond 
+                                                 ((and (eql (car y) 'function) (listp (second y))
+                                                       (eql (cadr y) 'lambda)
+                                                       (listp (cdadr y)))
+                                                  (let ((args (cadadr y))
+                                                        (body (cdr (cdadr y))))
+                                                    `(let (,@(zip args argvs)) ,@body)))
+                                                 ((and (eql (car y) 'lambda)
+                                                       (listp (second y)))
+                                                  (let ((args (second y))
+                                                        (body (cddr y)))
+                                                    `(let (,@(zip args argvs)) ,@body)))
+                                                 (t x)))
+                                              (t x)))))
+                                       (t (values x t))))
+                                 (cddr code))))
+        `(let (,@(zip (subseq (second code) 0 4) (cdr form))
+               (order ,order)
+               (test ,test))
+           (declare (ignorable order test))
+           ,@t-code))))
+
+  (let ((code `(lambda (seq predicate &key key)
+                 (declare (type vector seq))
+                 (lety* ((key (or key #'identity))
+                              (len (length seq) :type fixnum)
+                              (perm (make-array len :element-type 'fixnum) :type (simple-array fixnum))
+                              (jobs (make-array len :adjustable t :fill-pointer 0)))
+                             (declare (ignorable key))
+                             (loop :for i :of-type fixnum :from 0 :below (length perm) :do (setf (aref perm i) i))
+                             (loop
+                               :for bounds := (cons 0 len) :then (unless (zerop (length jobs)) (vector-pop jobs))
+                               :until (null bounds)
+                               :do (lety* ((below-idx (car bounds) :type fixnum)
+                                                (above-idx (cdr bounds) :type fixnum)
+                                                (piv (+ below-idx (floor (- above-idx below-idx) 2)) :type fixnum))
+                                               (loop
+                                                 :with ele := (funcall key (aref seq piv))
+                                                 :with lbound :of-type fixnum := below-idx
+                                                 :with ubound :of-type fixnum := (1- above-idx)
+                                                 :until (progn
+                                                          (loop :for i :of-type fixnum :from lbound :to piv
+                                                                :until (or (= i piv) (funcall predicate ele (funcall key (aref seq i))))
+                                                                :finally (setq lbound i))
+                                                          (loop :for i :of-type fixnum :downfrom ubound :to piv
+                                                                :until (or (= i piv) (funcall predicate (funcall key (aref seq i)) ele))
+                                                                :finally (setq ubound i))
+                                                          (cond
+                                                            ((= ubound lbound piv)
+                                                             (when (> (- piv below-idx) 1)
+                                                               (vector-push-extend (cons below-idx piv) jobs))
+                                                             (when (> (- above-idx (1+ piv)) 1)
+                                                               (vector-push-extend (cons (1+ piv) above-idx) jobs))
+                                                             t)
+                                                            ((< lbound piv ubound)
+                                                             (rotatef (aref seq lbound) (aref seq ubound))
+                                                             (rotatef (aref perm lbound) (aref perm ubound))
+                                                             (incf lbound) (decf ubound)
+                                                             nil)
+                                                            ((= lbound piv)
+                                                             (rotatef (aref seq piv) (aref seq (1+ piv)))
+                                                             (rotatef (aref perm piv) (aref perm (1+ piv)))
+                                                             (unless (= ubound (1+ piv))
+                                                               (rotatef (aref seq piv) (aref seq ubound))
+                                                               (rotatef (aref perm piv) (aref perm ubound)))
+                                                             (incf piv) (incf lbound)
+                                                             nil)
+                                                            ((= ubound piv)
+                                                             (rotatef (aref seq (1- piv)) (aref seq piv))
+                                                             (rotatef (aref perm (1- piv)) (aref perm piv))
+                                                             (unless (= lbound (1- piv))
+                                                               (rotatef (aref seq lbound) (aref seq piv))
+                                                               (rotatef (aref perm lbound) (aref perm piv)))
+                                                             (decf piv) (decf ubound)
+                                                             nil)))))
+                               :finally (return (values seq perm)))))))
+    (setf (symbol-function 'sort-index) (compile nil code)
+          (documentation 'sort-index 'function)
+          "
+  Sorts a lisp-vector in-place, by using the function @arg{predicate} as the
+  order. Also computes the permutation action which would sort the original
+  sequence @arg{seq} when applied.")
+    (define-compiler-macro sort-index (&whole form seq predicate &key key)
+      (let ((t-code (maptree-eki #'(lambda (x)
+                                     (match x
+                                       ('(type vector seq) (match seq ((list 'the type _) `(type ,type seq)) (_ x)))
+                                       ((list* 'funcall 'predicate argvs)
+                                        (match predicate
+                                          ((list (or 'function 'quote) (and f (type symbol))) `(,f ,@argvs))
+                                          ((or (list 'function (list* 'lambda (and args (list _ _)) body)) (list* 'lambda (and args (list _ _)) body))
+                                           `(let (,@(zip args argvs)) ,@body))
+                                          (_ x)))
+                                       ((list* 'funcall 'key argvs)
+                                        (match (or key '(lambda (x) x))
+                                          ((list (or 'function 'quote) (and f (type symbol))) `(,f ,@argvs))
+                                          ((or (list 'function (list* 'lambda (and args (list _)) body)) (list* 'lambda (and args (list _)) body))
+                                           `(let (,@(zip args argvs)) ,@body))
+                                          (_ x)))
+                                       (_ (values x t))))
+                                 (cddr code))))
+        `(let ((seq ,seq)
+               (predicate ,predicate)
+               (key ,key))
+           (declare (ignorable predicate key))
+           ,@t-code)))))
