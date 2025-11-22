@@ -436,7 +436,6 @@ subclass of SUPER."
 (defvar *template-table* (make-hash-table)
   "Global hash-table containing a mapping of template-function names to 'specs' (plists).")
 
-#+nil
 (defun template-function-p (name)
   "Return Non-nil if NAME is a template-function, else return NIL. Value is
 either T indicating a template-function without any template-methods or a

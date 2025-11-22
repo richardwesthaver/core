@@ -626,7 +626,7 @@
   (:import-from :std/prim :definline)
   (:import-from :std/list :maptree-eki :zip)
   (:import-from :sb-kernel :with-array-data :array-rank-limit)
-  (:import-from :std/macs :eval-every :lety*)
+  (:import-from :std/macs :eval-every :lety* :destructuring-case)
   (:export :copy-array :signed-array-length :array-shift 
    :vector-push-extend-position :vector-pop-position
    :vectorify :make-array-allocator
@@ -977,7 +977,9 @@
    :slots-and-values
    :struct-constructor
    :remt/method :deft/method
-   :deft/generic))
+   :deft/generic
+   :*template-table*
+   :template-function-p))
 
 (defpkg :std/seq
   (:use :cl)

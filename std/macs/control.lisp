@@ -78,3 +78,7 @@ value."
   "If pred is non-null, return the value, otherwise return the alternate value"
   (once-only (pred)
     `(if ,pred ,pred (progn ,@alt))))
+
+;; Inspired by TRIVIA
+(defmacro match (x &body body))
+(defmacro ematch (x &body body))

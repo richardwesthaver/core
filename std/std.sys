@@ -39,7 +39,6 @@
     (:file "control")
     (:file "unit")
     (:file "sugar")
-    (:file "match")
     (:file "memo")))
   (:file "pipe")
   (:file "sys")

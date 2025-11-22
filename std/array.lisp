@@ -198,8 +198,6 @@ element-type TYPE and default value INIT."
     do (setf (car lst) ele))
   la)
 
-;; TODO 2025-11-20: match -> cond
-#+nil
 (let ((code `(lambda (n in of/in out of/out &key key lock)
                (declare (type fixnum n of/in of/out)
                         (type simple-array in)
@@ -217,24 +215,39 @@ element-type TYPE and default value INIT."
            (key ,key) (lock ,lock))
        (declare (ignorable key lock))
        ,@(maptree-eki #'(lambda (x)
-                          (match x
-                            ((list 'type _ (and v-name (or 'in 'out))) (match (ecase v-name (in in) (out out)) ((list 'the type _) `(type ,type ,v-name)) (_ x)))
-                            ((list* 'funcall 'key argvs)
-                             (match key
-                               ((list (or 'function 'quote) (and f (type symbol))) `(,f ,@argvs))
-                               ((or (list 'function (list* 'lambda (and args (list _ _)) body)) (list* 'lambda (and args (list _ _)) body))
-                                `(let (,@(zip args argvs)) ,@body))
-                               (_ x)))
-                            ((list* 'funcall 'lock argvs)
-                             (match lock
-                               ((list (or 'function 'quote) (and f (type symbol))) `(,f ,@argvs))
-                               ((list (or 'function 'quote) (list 'setf (and f (type symbol)))) (values `(setf (,f ,@(cdr argvs)) ,(car argvs)) t))
-                               ((or (list 'function (list* 'lambda (and args (list _ _ _)) body)) (list* 'lambda (and args (list _ _ _)) body))
-                                (values `(let (,@(zip args argvs)) ,@body) t))
-                               (_ x)))
-                            (_ (values x t))))
+                          (destructuring-case x
+                            ((type _ v-name) 
+                             (declare (ignore _))
+                             (destructuring-case (ecase v-name (in in) (out out))
+                               ((the type _) (declare (ignore _)) `(type ,type ,v-name))
+                               ((t &rest _) (declare (ignore _)) x)))
+                            ((funcall k &rest argvs)
+                             (case k
+                               (key
+                                (destructuring-case key
+                                  (((function quote) f) 
+                                   (if (listp f)
+                                       (destructuring-bind (l args &rest body) f
+                                         (when (eql l 'lambda) `(let (,@(zip args argvs)) ,@body)))
+                                       `(,f ,@argvs)))
+                                  ((lambda args &rest body)
+                                   `(let (,@(zip args argvs)) ,@body))
+                                  ((t &rest _) (declare (ignore _)) x)))
+                               (lock
+                                (destructuring-case lock
+                                  (((function quote) f)
+                                   (if (listp f)
+                                       (destructuring-bind (l %f &rest body) f
+                                         (cond 
+                                           ((eql l 'lambda) (values `(let (,@(zip %f argvs)) ,@body) t))
+                                           ((eql l 'setf) (values `(setf (,%f ,@(cdr argvs)) ,(car argvs)) t))
+                                           (t x)))
+                                       `(,f ,@argvs)))
+                                  ((lambda args &rest body)
+                                   (values `(let (,@(zip args argvs)) ,@body) t))
+                                  ((t &rest _) (declare (ignore _)) x)))))
+                            ((t &rest _) (declare (ignore _)) (values x t))))
                       (cddr code)))))
-)
 
 ;; array indexing utils
 (definline modproj (i d &optional openp def)

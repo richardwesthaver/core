@@ -210,22 +210,6 @@ Example:
        ,@(when types `((declare ,@types)))
        ,@code)))
 
-(defun defunits-chaining (u units prev)
-  (if (member u prev)
-      (error "~{ ~a~^ depends on~}"
-             (cons u prev)))
-  (let ((spec (find u units :key #'car)))
-    (if (null spec)
-        (error "Unknown unit ~a" u)
-        (let ((chain (cadr spec)))
-          (if (listp chain)
-              (* (car chain)
-                 (defunits-chaining
-                     (cadr chain)
-                   units
-                   (cons u prev)))
-              chain)))))
-
 ;;; Gensyms
 (defmacro using-gensyms ((decl (&rest syms) &optional gensyms) &rest body)
   `(let ((,decl (zip-list ',(mapcar #'(lambda (x) (gensym (symbol-name x))) syms) (list ,@syms))))

@@ -13,10 +13,10 @@
     (null (the index-store-vector (slot-value x 'strides)))
     (index-type (the index-type (aref (the index-store-vector (slot-value x 'strides)) (modproj (or idx 0) (order x) nil 0))))
     (t (vector-to-list (the index-store-vector (slot-value x 'strides))))))
-(definline head (x)
-  (declare (type stride-accessor x))
+
+(defmethod head ((x stride-accessor))
   (slot-value x 'head))
-;;
+
 (definline subscripts-check (subs dimensions)
   (declare (type index-store-vector dimensions))
   (macrolet ((check (vectorp)
