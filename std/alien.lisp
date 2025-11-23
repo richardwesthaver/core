@@ -74,6 +74,8 @@
                           aty
                           `(* ,aty))))))))))
 
+;; (alien-type-class (sb-alien::make-alien-c-string-type :external-format :utf-8 :element-type 'character))
+
 (defun alien-to-element-type (ty)
   (cond
     ((symbolp ty)
@@ -390,6 +392,7 @@ alien (* size-t) with same size as the first value."
            form))))
 
 ;; TODO
+
 (defun sap-ref (sap type &optional (offset 0))
   "Return the value of TYPE at OFFSET bytes from SAP. If TYPE is aggregate we
 return a pointer instead of its value."
@@ -767,6 +770,46 @@ Each var can be of the form:
            (optimize speed))
   (free-alien (sap-alien sap (* (unsigned 8)))))
 
+(defmacro with-foreign-pointer ((var size &optional size-var) &body body)
+  "Bind VAR to SIZE bytes of foreign memory during BODY.  The
+pointer in VAR is invalid beyond the dynamic extent of BODY, and
+may be stack-allocated if supported by the implementation.  If
+SIZE-VAR is supplied, it will be bound to SIZE during BODY."
+  (unless size-var
+    (setf size-var (gensym "SIZE")))
+  ;; If the size is constant we can stack-allocate.
+  (if (constantp size)
+      (let ((alien-var (gensym "ALIEN")))
+        `(with-alien ((,alien-var (array (unsigned 8) ,(eval size))))
+           (let ((,size-var ,(eval size))
+                 (,var (alien-sap ,alien-var)))
+             (declare (ignorable ,size-var))
+             ,@body)))
+      `(let* ((,size-var ,size)
+              (,var (%foreign-alloc ,size-var)))
+         (unwind-protect
+              (progn ,@body)
+           (foreign-free ,var)))))
+
+(defmacro with-foreign-object ((var type &optional (count 1)) &body body)
+  "Bind VAR to a pointer to COUNT objects of TYPE during BODY.
+The buffer has dynamic extent and may be stack allocated."
+  `(with-foreign-pointer
+       (,var ,(if (constantp type)
+                  ;; with-foreign-pointer may benefit from constant folding:
+                  (if (constantp count)
+                      (* (eval count) (foreign-type-size (eval type)))
+                      `(* ,count ,(foreign-type-size (eval type))))
+                  `(* ,count (foreign-type-size ,type))))
+     ,@body))
+
+(defmacro with-foreign-objects (bindings &body body)
+  (if bindings
+      `(with-foreign-object ,(car bindings)
+         (with-foreign-objects ,(cdr bindings)
+           ,@body))
+      `(progn ,@body)))
+
 (defun foreign-alloc (type &key (initial-element nil initial-element-p)
                       (initial-contents nil initial-contents-p)
                       (count 1 count-p) null-terminated-p)
@@ -816,6 +859,10 @@ newly allocated memory."
         (t form))
       form))
 
+;;;_. Macro Accessors
+;; TODO
+;; (defmacro @ (obj index))
+;; (defmacro & (obj))
 ;;;_. Alien Stack/Heap
 ;; (defmacro with-alien-stack (decl &rest body))
 ;; (defmacro with-alien-heap (decl &rest body))
@@ -916,6 +963,7 @@ handle stored in another slot of the same object."))
 ;;
 (defparameter *fvref-range-check* t)
   
+#+nil
 (defun fvref (x i)
   (declare (type foreign-vector x))
   (let ((n (slot-value (the foreign-vector x) 'length)))
@@ -925,6 +973,7 @@ handle stored in another slot of the same object."))
      (sap-alien (sap+ (alien-sap x) i) (* t))
      (element-type-to-alien (element-type (class-of x))))))
 
+#+nil
 (define-compiler-macro fvref (&whole form x i)
   (if (listp x)
   (destructuring-case x
@@ -939,6 +988,7 @@ handle stored in another slot of the same object."))
             (sap-ref (slot-value (the ,fv ,obj-v) 'sap) ,alien-type (the fixnum (* (the fixnum ,i-v) (the fixnum ,(foreign-type-size alien-type))))))))))
     form))
 
+#+nil
 (defun (setf fvref) (value x i)  
   (declare (type foreign-vector x))
   (let ((n (slot-value (the foreign-vector x) 'length)))

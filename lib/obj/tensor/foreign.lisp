@@ -7,7 +7,6 @@
 
 (defclass foreign-vector-store-mixin () ())
 
-;;
 (deft/method t.store-type (type foreign-vector-store-mixin) (&optional (size '*))
   (foreign-vector (or (real-subtypep (field-type type)) (field-type type))))
 (deft/method t.compute-store-size (cl foreign-vector-store-mixin) (size)
@@ -52,21 +51,21 @@
                                                           (index-store-vector (lvec-foldr #'* (the index-store-vector ,sitm)))
                                                           (cons (reduce #'* ,sitm))))))
                     ,@(when initial-element `((,init ,initial-element :type ,(field-type type))))
-                    (,vec (let* ((,sap (cffi:foreign-alloc ,(alien-to-element-type element-type) :count ,len))
+                    (,vec (let* ((,sap (foreign-alloc ,(alien-to-element-type element-type) :count ,len))
                                  (,vec (make-instance (foreign-vector ',element-type) :ptr ,sap :length ,len)))
-                            (tg:finalize ,vec #'(lambda () (foreign-free ,sap)))
+                            (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
                             ,vec)))
          ,@(when initial-element
                  `((very-quickly (loop :for ,idx :from 0 :below (t.store-size ,type ,vec)
                                     :do (setf (t.store-ref ,type (the ,(foreign-vector element-type) ,vec) ,idx) (the ,(field-type type) ,init))))))
          ,vec))))
-;;
+
 (deft/method with-field-element (cl foreign-vector-store-mixin) (decl &rest body)
   (destructuring-bind (var init &optional (count 1)) decl
     (with-gensyms (idx size point init_)
       (let ((type (element-type (store-type cl))))
         `(let ((,size (t.compute-store-size ,cl ,count)))
-           (cffi:with-foreign-object (,point ,type ,size)
+           (with-foreign-object (,point ,type ,size)
              (let ((,var (make-instance ',(store-type cl) :ptr ,point :length ,size)))
                ,@(when init
                        `((let-typed ((,init_ ,init :type ,(field-type cl)))
@@ -74,7 +73,7 @@
                               :do (t.store-set ,cl ,init_ ,var ,idx)))))
                (locally
                    ,@body))))))))
-;;
+
 (defclass foreign-dense-tensor (dense-tensor foreign-vector-store-mixin)
   ((parent :initform nil :initarg :parent :type (or null tensor) :documentation "This slot is bound if the tensor is the view of another."))
   (:metaclass tensor-class)
@@ -91,7 +90,7 @@
 
 (deft/method t.total-size (sym foreign-dense-tensor) (ele)
   `(lvec-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))
-;;
+
 (definline make-foreign-dense-tensor (dimensions sap &optional (type 'double-float)
                                                  &aux (dimensions (copy-seq (coerce (ensure-list dimensions) 'index-store-vector))))
   (letv* ((str nz (make-stride dimensions)))
@@ -100,4 +99,3 @@
                    :store (etypecase sap
                             (foreign-vector sap)
                             (system-area-pointer (make-instance (foreign-vector type) :ptr sap :length nz))))))
-;;

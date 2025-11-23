@@ -628,7 +628,9 @@
   (:import-from :std/list :maptree-eki :zip)
   (:import-from :sb-kernel :with-array-data :array-rank-limit)
   (:import-from :std/macs :eval-every :lety* :destructuring-case)
+  (:import-from :sb-c :check-bound)
   (:export :copy-array :signed-array-length :array-shift 
+   :check-bound
    :vector-push-extend-position :vector-pop-position
    :vectorify :make-array-allocator
    :vector-foldl :vector-foldr
@@ -909,6 +911,9 @@
    :clone-integer-list
    :clone-octet-vector-list*
    :octets-to-alien-array
+   :with-foreign-pointer
+   :with-foreign-object
+   :with-foreign-objects
    :with-alien-slots
    :clone-octets-to-alien
    :octets-to-alien
