@@ -122,7 +122,7 @@ Checking for a matrix with 2 columns:
   (destructuring-bind (cls &optional subscripts) (ensure-list subs)
     (and (typep tensor cls)
          (if subscripts
-             (lety ((rank (rank tensor) :type index-type)
+             (lety ((rank (order tensor) :type index-type)
                     (dims (dimensions tensor) :type index-store-vector))
                    (loop for val in subscripts
                          for i of-type index-type = 0 then (1+ i)
@@ -182,7 +182,9 @@ Checking for a matrix with 2 columns:
     cl-name))
 
 (defmethod tensor-generator (field (tensor symbol))
-  (assert (member tensor '(simple-graph-tensor hash-tensor simple-coordinate-tensor)) nil 'invalid-arguments)
+  (assert (member tensor #1='(simple-graph-tensor hash-tensor simple-coordinate-tensor)) (tensor) 'std:invalid-argument
+          :reason (format nil "TENSOR must be one of: ~A" #1#)
+          :item tensor)
   (let* ((super-classes (list tensor #+nil (case order (1 'vector-mixin) (2 'matrix-mixin))))
          (cl-name (intern (format nil "<~{~a~^ ~}: ~a>" super-classes field) (find-package "OBJ/TENSOR"))))
     (compile-and-eval

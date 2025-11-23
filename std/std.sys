@@ -27,7 +27,6 @@
   (:file "string")
   (:file "stream")
   (:file "curry")
-  (:file "array")
   (:file "hash")
   (:file "readtable")
   (:mod "macs"
@@ -40,6 +39,7 @@
     (:file "sugar")
     (:file "unit")
     (:file "memo")))
+   (:file "array")
   (:file "pipe")
   (:file "sys")
   (:file "serde")

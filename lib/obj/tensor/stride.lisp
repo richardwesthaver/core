@@ -5,14 +5,13 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(declaim (ftype (function ((or stride-accessor coordinate-accessor) &optional index-type) (or index-type index-store-vector)) strides)
-         (ftype (function (stride-accessor) index-type) head))
+(declaim (ftype (function ((or stride-accessor coordinate-accessor) &optional index-type) (or index-type index-store-vector)) strides))
+
 (definline strides (x &optional idx)
   (declare (type (or stride-accessor coordinate-accessor) x))
   (typecase idx
-    (null (the index-store-vector (slot-value x 'strides)))
     (index-type (the index-type (aref (the index-store-vector (slot-value x 'strides)) (modproj (or idx 0) (order x) nil 0))))
-    (t (vector-to-list (the index-store-vector (slot-value x 'strides))))))
+    (null (the index-store-vector (slot-value x 'strides)))))
 
 (defmethod head ((x stride-accessor))
   (slot-value x 'head))
@@ -117,17 +116,20 @@
                     :finally (when linearp
                                (assert (>= (the index-type (store-size tensor)) (the index-type (+ (the index-type (head tensor)) lidx)) 0) nil 'tensor-insufficient-store :store-size (store-size tensor) :max-idx (the index-type (+ (head tensor) lidx)) :tensor tensor)))))))))
 
-;; FIX 2025-11-20: match -> cond
 (define-tensor-method ref ((x stride-accessor :x) &rest subscripts)
-  `(lety ((off (+ (head x) (stride-hash (match subscripts
-                                          ((list* (and subs/v (type index-store-vector)) _) (subscripts-check (the index-store-vector subs/v) (dimensions x)))
-                                          (_ (subscripts-check (the list subscripts) (dimensions x))))
-                                        (strides x))) :type index-type))
+  `(lety ((off (+ (head x) (stride-hash 
+                            (if (and (listp subscripts) (typep (car subscripts 'index-store-vector)) (= (length subscripts) 2))
+                                (subscripts-check (the index-store-vector (car subscripts)) (dimensions x))
+                                (subscripts-check (the list subscripts) (dimensions x)))
+                            (strides x))) 
+               :type index-type))
      (t.store-ref ,(cl :x) (t.store ,(cl :x) x) off)))
 
 (define-tensor-method (setf ref) (value (x stride-accessor :x) &rest subscripts)
-  `(lety ((off (+ (head x) (stride-hash (match subscripts
-                                          ((list* (and subs/v (type index-store-vector)) _) (subscripts-check (the index-store-vector subs/v) (dimensions x)))
-                                          (_ (subscripts-check (the list subscripts) (dimensions x))))
-                                        (strides x))) :type index-type))
+  `(lety ((off (+ (head x) (stride-hash 
+                            (if (and (listp subscripts) (typep (car subscripts 'index-store-vector)) (= (length subscripts) 2))
+                                (subscripts-check (the index-store-vector (car subscripts)) (dimensions x))
+                                (subscripts-check (the list subscripts) (dimensions x)))
+                            (strides x))) 
+               :type index-type))
      (t.store-set ,(cl :x) (t.coerce ,(field-type (cl :x)) value) (t.store ,(cl :x) x) off)))

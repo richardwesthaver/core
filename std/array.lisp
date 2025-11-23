@@ -23,6 +23,12 @@
                    (row-major-aref array i)))
     new-array))
 
+;; meta
+(defgeneric element-type (self)
+  (:documentation "Return the element-type of SELF.")
+  (:method ((self symbol)) (element-type (find-class self)))
+  (:method ((self array)) (array-element-type self)))
+
 ;; from petalisp
 (defun simplify-array (array)
   "Returns an array with the same shape and elements as ARRAY, but that is

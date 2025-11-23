@@ -41,8 +41,8 @@
   (defclass tensor-class (standard-class) 
     ((field-type :reader field-type)))
 
-  (defmethod validate-superclass ((class tensor-class) (superclass standard-class))  t)
-  (defmethod validate-superclass ((class tensor-class) (superclass kernel-class)) t)
+  (defmethod sb-mop:validate-superclass ((class tensor-class) (superclass standard-class))  t)
+  (defmethod sb-mop:validate-superclass ((class tensor-class) (superclass kernel-class)) t)
   (defmethod field-type ((class symbol)) (field-type (find-class class)))
 
   (defmacro deftensor (name supers slots &rest options)
@@ -50,7 +50,6 @@
 
   (defclass tensor-method-generator (standard-generic-function) ()
     (:metaclass funcallable-standard-class))
-
   (defclass classp-specializer (specializer)
     ((object-class :initform nil :initarg :object-class)
      (direct-methods :initform nil :reader specializer-direct-methods))

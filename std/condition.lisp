@@ -177,6 +177,16 @@ use as an initialization form for structure and class-slots, and
 a default value for required keyword arguments."
   (error "Required argument ~@[~S ~]missing." name))
 
+(deferror out-of-bounds-error (error)
+  ((requested :reader requested :initarg :requested)
+   (bound :reader bound :initarg :bound))
+  (:documentation "General out-of-bounds error"))
+
+(defmethod print-object ((c out-of-bounds-error) stream)
+  (when (slots-boundp c 'requested 'bound)
+    (format stream "Out-of-bounds error, requested index : ~a, bound : ~a.~%" (requested c) (bound c)))
+  (call-next-method))
+
 ;;;; Simple
 (define-condition simple-style-warning (simple-warning style-warning)
   ()

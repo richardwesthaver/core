@@ -713,8 +713,6 @@ Can parse all but specialized lambda lists.
            generic-function
            anonymized-lambda-list)))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Computing the Effective Method Lambda List
 
 (defun merge-required-infos (g-required m-requireds)
@@ -824,10 +822,7 @@ Can parse all but specialized lambda lists.
        (merge-allow-other-keys allow-other-keys (mapcar #'fifth method-parses))
        '()))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; Effective Method Lookup
-
 (declaim (ftype (function (t t) function) lookup-full-effective-method))
 (declaim (ftype (function (t t) function) lookup-flat-effective-method))
 

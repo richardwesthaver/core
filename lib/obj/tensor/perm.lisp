@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :obj/tensor)
+
 (definline idxv (&rest contents)
   (make-array (length contents) :element-type 'index-type :initial-contents contents))
 
@@ -25,7 +26,8 @@
                 (setf (aref perm i) sd)
                 (setf ret (merge 'list (list sd) ret #'<))))
     (values ret perm)))
-#+nil(sort seq #'> :key #'(lambda (x) (declare (ignore x)) (random 1.0)))
+
+#+nil (sort seq #'> :key #'(lambda (x) (declare (ignore x)) (random 1.0)))
 
 (defun shuffle! (seq)
   "Randomize the elements of a sequence. Destructive on SEQ."
@@ -65,7 +67,7 @@
 
 (defmethod initialize-instance :after ((per permutation-cycle) &rest initargs)
   (declare (ignore initargs))
-  (when *check-after-initializing?*
+  (when *tensor-safety-p*
     (if (null (store per))
         (setf (slot-value per 'permutation-size) 0)
         (loop
@@ -85,7 +87,7 @@
 
 (defmethod initialize-instance :after ((per permutation-pivot-flip) &rest initargs)
   (declare (ignore initargs))
-  (when *check-after-initializing?*
+  (when *tensor-safety-p*
     (lety* ((repr (store per) :type index-store-vector)
                  (len (length repr) :type index-type))
                 (locally (declare (optimize (speed 3) (safety 0)))

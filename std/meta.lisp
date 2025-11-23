@@ -5,7 +5,10 @@
 ;;; Code:
 (in-package :std/meta)
 
-;;; Defverb
+;;; Verbs
+
+;; Verbs are special generic-functions which we want to be able to perform
+;; interesting operations on via OBJ/META/SEALED, OBJ/META/FAST, and more.
 (sb-ext:defglobal *verbs* nil)
 
 (defun register-verb (v) 
@@ -135,6 +138,12 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Write object SELF to STREAM.")
   (:method ((self t) (stream t) &key)
     (write self :stream stream)))
+
+(defun slots-boundp (obj &rest slots)
+  "Return T if all SLOTS are bound in OBJ."
+  (dolist (slot slots t)
+    (unless (slot-boundp obj slot)
+      (return nil))))
 
 (defun slot-boundp* (self slot)
   "Return T if SLOT is bound in object SELF, otherwise return NIL."
@@ -536,4 +545,3 @@ Also returns a second value of the lambda-list itself."
         (when-let ((lst (find spls meth :test #'(lambda (a b) (equal a (first b))))))
           (rplacd lst (remove filter (cdr lst) :test #'(lambda (a b) (eql a (cdr b)))))))
     nil))
-

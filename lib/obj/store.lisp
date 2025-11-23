@@ -1138,9 +1138,9 @@ stored slots) and specific btrees."))
 
 ;; start stop
 
-(defun close-all-stores ()
-  (loop for pair in *stores*
-       do (close-store (cdr pair))))
+;; (defun close-all-stores ()
+;;  (loop for pair in *stores*
+;;       do (close-store (cdr pair))))
 
 ;; (pushnew 'close-all-stores sb-ext:*exit-hooks*)
 

@@ -36,6 +36,7 @@
      (:file "loop")
      (:file "num")
      (:file "tensor")
+     (:file "zeros")
      (:file "copy")
      (:file "ref")
      (:file "print")

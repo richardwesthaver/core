@@ -154,6 +154,7 @@
    :car-eql
    :nyi!
    :required-argument
+   :out-of-bounds-error
    :ignore-some-conditions
    :simple-style-warning
    :simple-reader-error
@@ -636,7 +637,8 @@
    :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
    :modproj :simplify-array :array-rank-limit
-   :sort-index :binary-search))
+   :sort-index :binary-search
+   :element-type))
 
 (defpkg :std/sys
   (:use :cl :sb-int)
@@ -866,14 +868,29 @@
 
 (defpkg :std/alien
   (:use :cl :sb-alien)
-  (:import-from :std/sym :symbolicate :with-gensyms)
+  (:import-from :std/sym :symbolicate :keywordicate :with-gensyms)
+  (:import-from :std/array :element-type)
   (:import-from :std/sys :little-endian-p :32-bit-p)
+  (:import-from :std/condition :out-of-bounds-error)
   (:import-from :std/bit :make-octets)
-  (:import-from :std/type :octet-vector :octet)
+  (:import-from :std/macs :with-memoization :memoizing :destructuring-case :once-only :compile-and-eval)
+  (:import-from :std/type :octet-vector :octet :array-index)
+  (:import-from :sb-int :with-float-traps-masked)
   (:import-from :std/serde :define-io)
   (:import-from :sb-posix :lisp-for-c-symbol)
-  (:import-from :sb-alien :sap+ :*linkage-info* :*shared-objects* :*alien-type-classes*)
+  (:import-from :sb-alien 
+   :sap+ :*linkage-info* 
+   :*shared-objects* :*alien-type-classes* 
+   :unparse-alien-type :parse-alien-type :pick-lisp-and-alien-names :alien-type-bits
+   :alien-type-class :alien-value-type
+   :alien-type-p :alien-value-p :alien-callback-p :alien-void-type-p
+   :alien-typep
+   :alien-pointer-type-p :int-sap :alien-value)
+  (:import-from :sb-sys :system-area-pointer :vector-sap :with-pinned-objects)
+  (:import-from :sb-ext :array-storage-vector)
   (:export
+   :system-area-pointer
+   :unparse-alien-type
    :lisp-for-c-symbol
    :*alien-load-table*
    :load-alien
@@ -935,7 +952,13 @@
    :push-sap*
    :pull-sap
    :pull-sap*
-   :defar))
+   :defar
+   :alien-to-element-type
+   :element-type-to-alien
+   :sap-ref
+   :sap-set
+   :sap-svref
+   :foreign-vector))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
@@ -968,6 +991,7 @@
    :init*
    :install :uninstall
    :class-equalp
+   :slots-boundp
    :*standard-metaobjects*
    :find-slot-def-by-name
    :find-direct-slot-def-by-name
