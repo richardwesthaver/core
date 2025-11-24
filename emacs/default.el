@@ -690,6 +690,8 @@ Interactively, NUMBER is the prefix arg."
 	allout-default-layout '(0)
 	allout-widgets-auto-activation t)
 
+(add-hook 'outline-minor-mode-hook 'allout-minor-mode)
+
 ;;;_ Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
   "Default major mode for new scratch buffers"

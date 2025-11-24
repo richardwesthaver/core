@@ -101,7 +101,8 @@ control (or not)."
       (setf options (remove (car fun) options))
       (setf fun (cadar fun)))
     `(prog1
-         (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+         (eval-when (:compile-toplevel :load-toplevel :execute)
+           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
        (when ',fun
          (cond 
            ((or
@@ -116,15 +117,16 @@ control (or not)."
            (t (define-error-reporter ,name)))))))
 
 (defmacro define-error-reporter (err &optional (message *error-message*))
-    `(defun ,err (&rest args)
-       ,(format nil "Signal an error of type ~A with ARGS." err)
-       (cerror
-        "Ignore and continue"
-        ',err
-        :message (format nil "~A: ~A" ,message args))))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defun ,err (&rest args)
+         ,(format nil "Signal an error of type ~A with ARGS." err)
+         (cerror
+          "Ignore and continue"
+          ',err
+          :message (format nil "~A: ~A" ,message args)))))
 
 (defmacro def-simple-error-reporter (name)
-  `(progn
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
      (defun ,name (fmt &rest args)
        ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
        (cerror
@@ -134,13 +136,14 @@ control (or not)."
         :format-arguments args))))
 
 (defmacro def-invalid-item-reporter (name)
-  `(defun ,name (item &optional reason)
-     ,(format nil "Signal an error of type ~A." name)
-     (apply 'cerror
-            "Ignore and continue"
-            ',name
-            :item item
-            (when reason (list :reason reason)))))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (defun ,name (item &optional reason)
+       ,(format nil "Signal an error of type ~A." name)
+       (apply 'cerror
+              "Ignore and continue"
+              ',name
+              :item item
+              (when reason (list :reason reason))))))
 
 ;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
@@ -148,7 +151,8 @@ control (or not)."
   (let ((fun (member :auto options :test #'car-eql)))
     (when fun (setq options (remove (car fun) options)))
     `(prog1
-         (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options)
+         (eval-when (:compile-toplevel :load-toplevel :execute)
+           (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
        (when ',fun
          (if (or (find 'simple-warning ',parent-types)
                  (find 'simple-condition ',parent-types))
@@ -156,19 +160,21 @@ control (or not)."
              (def-warning-reporter ,name))))))
 
 (defmacro def-warning-reporter (name)
-  `(defun ,name (&optional message)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (defun ,name (&optional message)
        ,(format nil "Signal a warning of type ~A with optional MESSAGE." name)
        (warn
         ',name
-        :message message)))
+        :message message))))
 
 (defmacro def-simple-warning-reporter (name)
-  `(defun ,name (fmt &rest args)
-     ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
-     (warn
-      ',name
-      :format-control fmt
-      :format-arguments args)))
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (defun ,name (fmt &rest args)
+       ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+       (warn
+        ',name
+        :format-control fmt
+        :format-arguments args))))
 
 ;;; Conditions
 (defun required-argument (&optional name)
@@ -177,13 +183,13 @@ use as an initialization form for structure and class-slots, and
 a default value for required keyword arguments."
   (error "Required argument ~@[~S ~]missing." name))
 
-(deferror out-of-bounds-error (error)
+(define-condition out-of-bounds-error (error)
   ((requested :reader requested :initarg :requested)
    (bound :reader bound :initarg :bound))
   (:documentation "General out-of-bounds error"))
 
 (defmethod print-object ((c out-of-bounds-error) stream)
-  (when (slots-boundp c 'requested 'bound)
+  (when (or (slot-boundp c 'requested) (slot-boundp c 'bound))
     (format stream "Out-of-bounds error, requested index : ~a, bound : ~a.~%" (requested c) (bound c)))
   (call-next-method))
 

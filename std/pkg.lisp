@@ -886,21 +886,48 @@
    :unparse-alien-type :parse-alien-type :pick-lisp-and-alien-names :alien-type-bits
    :alien-type-class :alien-value-type
    :alien-type-p :alien-value-p :alien-callback-p :alien-void-type-p
-   :alien-typep
-   :alien-pointer-type-p :int-sap :alien-value)
+   :alien-typep :alien-size
+   :alien-pointer-type-p :int-sap :alien-value
+   ;; alien types
+   :c-string :int :enum :short
+   :long :slot :void :cast :char :addr
+   :alien :deref :double :union
+   :signed :unsigned :long :long-long
+   :sap-alien :alien-sap :make-alien :free-alien
+   :make-alien-string :naturalize :deport :deport-alloc
+   :%alien-value :alien-funcall :define-alien-variable :alien-value
+   :extern-alien :with-alien :compute-lisp-rep-type :compute-alien-rep-type)
   (:import-from :sb-sys :system-area-pointer :vector-sap :with-pinned-objects)
   (:import-from :sb-ext :array-storage-vector)
   (:export
+   :alien-array
+   :c-string :int 
+   :enum :long :slot :void
+   :cast :char :addr :short
+   :alien :deref
+   :double :union
+   :signed :unsigned
+   :long :long-long
    :system-area-pointer
+   :parse-alien-type
    :unparse-alien-type
+   :naturalize :deport :deport-alloc :%alien-value
+   :compute-lisp-rep-type :compute-alien-rep-type
+   :alien-value
    :lisp-for-c-symbol
    :*alien-load-table*
    :load-alien
+   :define-alien-variable
+   :alien-size
    :alien-size*
    :*alien-type-classes*
    :*linkage-info*
    :*shared-objects*
    :with-vector-sap
+   :sap-alien :alien-sap
+   :make-alien :free-alien
+   :alien-funcall
+   :make-alien-string
    :setfa
    :double-array-pointer
    :float-array-pointer
@@ -915,6 +942,8 @@
    :with-foreign-object
    :with-foreign-objects
    :with-alien-slots
+   :with-alien
+   :extern-alien
    :clone-octets-to-alien
    :octets-to-alien
    :clone-octets-from-alien
@@ -922,6 +951,7 @@
    :foreign-int-to-bool
    :bool-to-foreign-int
    :define-alien-enum
+   :define-alien-routine
    :define-opaque
    :shared-object-name
    :define-alien-loader

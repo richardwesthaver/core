@@ -38,6 +38,8 @@
                                    (alien (* unsigned-char))
                                    (alien (array unsigned-char))))
 
+(deftype alien-array (element-type &rest dimensions) `(alien (sb-alien:array ,element-type ,@dimensions)))
+
 (defun element-type-to-alien (ty)
   "Convert the given SB-ALIEN element-type spec to one understood by Lisp."
   (cond

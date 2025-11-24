@@ -37,6 +37,35 @@
       (values (array unsigned-char 256))
       (sent boolean)))
 
+(define-alien-enum (j-color-space int)
+  :unknown 0
+  :grayscale 1
+  :rgb 2
+  :ycbcr 3
+  :cmyk 4
+  :ycck 5
+  :ext-rgb 6
+  :ext-rgbx 7
+  :ext-bgr 8
+  :ext-bgrx 9
+  :ext-xbgr 10
+  :ext-xrgb 11
+  :ext-rgba 12
+  :ext-bgra 13
+  :ext-abgr 14
+  :ext-argb 15
+  :rgb565 16)
+
+(define-alien-enum (j-dct-method int)
+  :islow 0
+  :ifast 1
+  :float 2)
+
+(define-alien-enum (j-dither-mode int)
+  :none 0
+  :ordered 1
+  :fs 2)
+
 (define-alien-type jpeg-component-info
     (struct jpeg-component-info
       (component-id int)
@@ -311,37 +340,6 @@
       (self-destruct (* t))
       (max-memory-to-use long)
       (max-alloc-chunk long)))
-
-(define-alien-enum (j-color-space int)
-  :unknown 0
-  :grayscale 1
-  :rgb 2
-  :ycbcr 3
-  :cmyk 4
-  :ycck 5
-  :ext-rgb 6
-  :ext-rgbx 7
-  :ext-bgr 8
-  :ext-bgrx 9
-  :ext-xbgr 10
-  :ext-xrgb 11
-  :ext-rgba 12
-  :ext-bgra 13
-  :ext-abgr 14
-  :ext-argb 15
-  :rgb565 16)
-
-(define-alien-enum (j-dct-method int)
-  :islow 0
-  :ifast 1
-  :float 2)
-
-(define-alien-enum (j-dither-mode int)
-  :none 0
-  :ordered 1
-  :fs 2)
-
-(define-alien-type jpeg-error-mgr (* t))
 
 (define-alien-type j-common-ptr (* (struct jpeg-common-struct)))
 (define-alien-type j-compress-ptr (* (struct jpeg-compress-struct)))
