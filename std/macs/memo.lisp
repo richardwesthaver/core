@@ -27,10 +27,11 @@ evaluation cached in HASH-TABLE."
                            `(let (,@bindings)
                               ,@declares
                               (letv* ((,args (list ',id ,@(mapcar #'car bindings)))
-                                  (,value ,exists-p (gethash ,args ,table)))
-                            (values-list
-                             (if ,exists-p ,value
-                                 (setf (gethash ,args ,table) (multiple-value-list (progn ,@body))))))))))
+                                      (,value ,exists-p (gethash ,args ,table)))
+                                (values-list
+                                 (if ,exists-p 
+                                     ,value
+                                     (setf (gethash ,args ,table) (multiple-value-list (progn ,@body))))))))))
                       ((and (listp body) (or (eql (car body) 'cl:defun) (eql (car body) 'cl:defmethod)))
                        (let ((def (car body))
                              (name (cadr body))
@@ -60,10 +61,10 @@ evaluation cached in HASH-TABLE."
                          (if-let ((cv (rassoc code cache :key #'first :test #'equal)))
                            (first cv)
                            (values (list* bind code (if type `(:type ,type)))
-                                 #'(lambda (f decl)
-                                     (push (list* (first decl) (funcall f (second decl)) (cddr decl)) cache)
-                                     (first decl))))))))))))
+                                   #'(lambda (f decl)
+                                       (push (list* (first decl) (funcall f (second decl)) (cddr decl)) cache)
+                                       (first decl))))))))))))
       (let ((transformed-body (std/list:maptree '(memoizing with-memoization quote) #'transformer body)))
         `(lety* (,@(if need-hashtablep `((,table ,hash-table)))
-                      ,@(reverse cache))
-                     ,@transformed-body)))))
+                 ,@(reverse cache))
+           ,@transformed-body)))))

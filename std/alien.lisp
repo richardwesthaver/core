@@ -534,6 +534,7 @@ to open-code (SETF SAP-REF) forms."
        (define-alien-routine ,(list alien-name lisp-name) ,result-type ,@args))))
 
 ;;; DEFINE-ALIEN-ENUM
+;; TODO: use SB-ALIEN:ENUM
 (defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &body forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
 SB-ALIEN, groveller, typedef enums, etc.
@@ -575,6 +576,10 @@ variant associated with this value." type name)
 ;;; C Char pointer readers and writers
 
 ;; inspired by ELEPHANT
+
+;; FIXME: this is probably inefficient after recent discoveries in
+;; SB-ALIEN-INTERNALS - can be reworked to use direct SAP accessors when
+;; SAP-REF is finished.
 
 ;; all operations are performed on (* unsigned-char)
 (define-io alien

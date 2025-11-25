@@ -21,11 +21,11 @@
 :components 
 ((:org "readme")
  (:asd "core")
- #+nil (:sys "core")
- (:mod "std" (:asd "std") #+nil (:sys "std"))
+ (:sys "core")
+ (:mod "std" (:sys "std"))
  (:mod "ffi" (:asd "ffi"))
  (:mod "lib")
- (:mod "bin" (:asd "bin"))
+ (:mod "bin" (:sys "bin"))
  (:mod "app"
   (:mod "mpk" (:asd "mpk"))
   (:mod "skel" (:asd "skel")))
