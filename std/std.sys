@@ -12,7 +12,6 @@
 (defsys :std
  "CC Standard Library"
  :version "0.1.0"
- :serial t
  :require (:cl-ppcre)
  :components 
  ((:file "named-readtables") (:file "defpkg")
@@ -39,7 +38,7 @@
     (:file "sugar")
     (:file "unit")
     (:file "memo")))
-   (:file "array")
+  (:file "array")
   (:file "pipe")
   (:file "sys")
   (:file "serde")
@@ -68,10 +67,9 @@
   (:io :alien)
   (:pool :default)
   (:pool :sys)
-  (:tests :std/tests
+  (:tests :std
    :require (:std :rt)
    :description "CC Standard Library Tests"
-   :serial t
    :components 
    ((:mod "tests"
      :components

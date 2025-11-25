@@ -1,6 +1,6 @@
 ;;; ~/comp/core/bin/bin.sys --- Executable Program Definitions
 (defsys :bin
- :require (:std :log :cli)
+ :require (:log)
  :provide
  ((:bin :bin/homer :toplevel "bin/homer::start-homer"
    :name "homer"

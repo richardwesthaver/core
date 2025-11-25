@@ -1480,6 +1480,7 @@
    :grovel-component
    :component-type
    :find-system
+   :find-module
    :*module*
    :*core-module-table*
    :module
