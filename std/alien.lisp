@@ -144,6 +144,9 @@
      (int                int)
      (unsigned-int       unsigned-int)
      (long               long)
+     #+nil
+     (word               word
+                         sb-sys:sap-ref-word)
      (unsigned-long      unsigned-long)
      (long-long          long-long)
      (unsigned-long-long unsigned-long-long)
@@ -155,7 +158,7 @@
                           sb-sys:sap-ref-sap)
      (void               void)))
 
-;; TODO: canonicalize-alien alien-aggreegatep translate-into-alien-memory translate-to-alien
+;; TODO: translate-into-alien-memory translate-to-alien
 ;; expand-into-alien-memory expand-to-alien bare-alien-struct-p expand-from-alien
 
 ;;;_* Utils
@@ -394,23 +397,22 @@ alien (* size-t) with same size as the first value."
            form))))
 
 ;; TODO
+(defun aggregatep (type)
+  "Return T if the given ALIEN-TYPE is 'aggregate'."
+  ;; always arrays and structs, never 'built-in'
+  (or (sb-alien::alien-array-type-p type)
+      (sb-alien::alien-record-type-p type)))
 
 (defun sap-ref (sap type &optional (offset 0))
   "Return the value of TYPE at OFFSET bytes from SAP. If TYPE is aggregate we
 return a pointer instead of its value."
-  (let* ((ptyp (parse-alien-type type nil))
-         (ctyp))
-    (if (aggregatep ptyp)
-        (if (bare-struct-type-p ptyp)
-            (sap+ sap offset)
-            (translate-from-foreign (sap+ sap offset) ptyp))
-        (%sap-ref sap ptyp offset))))
+  (naturalize (sap+ sap offset) (parse-alien-type type nil)))
 
 (define-compiler-macro sap-ref (&whole form ptr type &optional (offset 0))
   "Open-code SAP-REF when TYPE is constant."
   (if (constantp type)
       (let* ((parsed-type (parse-alien-type (eval type) nil))
-             (ctype (canonicalize parsed-type)))
+             (ctype (compute-alien-rep-type parsed-type)))
         (if (aggregatep parsed-type)
             (if (bare-struct-type-p parsed-type)
                 `(sap+ ,ptr ,offset)
@@ -421,7 +423,7 @@ return a pointer instead of its value."
 (defun sap-set (value sap type &optional (offset 0))
   "Set the value of TYPE at OFFSET bytes from SAP to VALUE."
   (let* ((ptype (parse-alien-type type nil))
-         (ctype (canonicalize ptype)))
+         (ctype (compute-alien-rep-type ptype)))
     (if (aggregatep ptype) ; XXX: backwards incompatible?
         (translate-into-foreign-memory value ptype (sap+ sap offset))
         (%sap-set (translate-to-foreign value ptype) sap ctype offset))))
@@ -458,7 +460,7 @@ to open-code (SETF SAP-REF) forms."
   "Compiler macro to open-code (SETF SAP-REF) when type is constant."
   (if (constantp type)
       (let* ((parsed-type (parse-alien-type (eval type) nil))
-             (ctype (canonicalize parsed-type)))
+             (ctype (compute-alien-rep-type parsed-type)))
         (if (aggregatep parsed-type)
             (expand-into-foreign-memory
              value parsed-type `(sap+ ,sap ,offset))
