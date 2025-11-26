@@ -167,7 +167,7 @@
                       #+nil(if (t.f= ,fty ,value (t.fid+ ,fty))
                                (progn (remhash ,idx (the hash-table ,store)) (t.fid+ ,fty))
                                )))))
-;;
+
 (deft/generic (with-field-element #'subtypep) sym (decl &rest body))
 (defmacro with-field-elements (sym decls &rest body)
   (if (null decls) `(progn ,@body)
@@ -178,7 +178,7 @@
   (destructuring-bind (var init &optional (count 1)) decl
     `(let-typed ((,var (t.store-allocator ,sym ,count :initial-element ,init) :type ,(store-type sym)))
                 (locally ,@body))))
-;;
+
 ;;Blas
 (deft/generic (t.blas-lb #'subtypep) sym (i))
 (deft/method t.blas-lb (sym blas-mixin) (i)
@@ -214,11 +214,12 @@
 ;;	    (t/blas-axpy! ,(cl x) alpha x (first strd) y (second strd))))
 ;;        `(t/axpy! ,(cl x) alpha x y))))
 
-;; (defgeneric store-ref (tensor idx)
-;;   (:documentation  "Generic serial read access to the store.")
-;;   (:generic-function-class tensor-method-generator))
-;; (defgeneric (setf store-ref) (value tensor idx)
-;;   (:generic-function-class tensor-method-generator))
+(eval-when (:load-toplevel :execute)
+  (defgeneric store-ref (tensor idx)
+    (:documentation  "Generic serial read access to the store.")
+    (:generic-function-class tensor-method-generator))
+  (defgeneric (setf store-ref) (value tensor idx)
+    (:generic-function-class tensor-method-generator)))
 (define-tensor-method store-ref ((tensor tensor :x) idx)
   `(t.store-ref ,(cl :x) (t.store ,(cl :x) tensor) idx))
 (define-tensor-method (setf store-ref) (value (tensor tensor :x) idx)
@@ -235,6 +236,7 @@
   Return the element corresponding to subscripts.
 ")
   (:generic-function-class tensor-method-generator))
+
 (defgeneric (setf ref) (value tensor &rest subscripts)
   (:generic-function-class tensor-method-generator))
 ;;
@@ -244,6 +246,7 @@
   Returns the number of elements the store of the obj can hold. This is not
   necessarily equal to that returned by total-size.")
   (:generic-function-class tensor-method-generator))
+
 (define-tensor-method store-size ((tensor tensor :x))
   `(t.store-size ,(cl :x) (slot-value tensor 'store)))
 

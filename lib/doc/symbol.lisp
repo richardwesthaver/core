@@ -123,9 +123,12 @@ boundp fboundp generic-function class macro special-operator package"
 
 (defmethod describe-object ((self symbol-documentation) stream)
   (with-slots (symbol id definitions specs alloc) self
-    (print-standard-describe-header self stream)
+    ;; (print-standard-describe-header self stream)
     (describe symbol stream)
+    (format stream "~%Id: ~S" id)
     (format stream "~%Alloc Info: ~S" alloc)
-    (format stream "~%Definitions: ~%")
+    (format stream "~%Definitions: ~S~%" definitions)
+    (format stream "~%Specs: ~%")
     (loop for s in specs
-          do (format stream "  ~S ~S~%" s (definition-source-pathname (pop definitions))))))
+          do (format stream "  ~S ~S~%" (definition-source-pathname s)
+                     (sb-introspect::definition-source-description s)))))

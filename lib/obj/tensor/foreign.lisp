@@ -52,7 +52,7 @@
                                                           (cons (reduce #'* ,sitm))))))
                     ,@(when initial-element `((,init ,initial-element :type ,(field-type type))))
                     (,vec (let* ((,sap (foreign-alloc ,(alien-to-element-type element-type) :count ,len))
-                                 (,vec (make-instance (foreign-vector ',element-type) :ptr ,sap :length ,len)))
+                                 (,vec (make-instance (foreign-vector ',element-type) :sap ,sap :length ,len)))
                             (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
                             ,vec)))
          ,@(when initial-element
@@ -66,7 +66,7 @@
       (let ((type (element-type (store-type cl))))
         `(let ((,size (t.compute-store-size ,cl ,count)))
            (with-foreign-object (,point ,type ,size)
-             (let ((,var (make-instance ',(store-type cl) :ptr ,point :length ,size)))
+             (let ((,var (make-instance ',(store-type cl) :sap ,point :length ,size)))
                ,@(when init
                        `((let-typed ((,init_ ,init :type ,(field-type cl)))
                            (loop :for ,idx :from 0 :below (t.store-size ,cl ,var)
@@ -98,4 +98,4 @@
                    :dimensions dimensions :strides str :head 0
                    :store (etypecase sap
                             (foreign-vector sap)
-                            (system-area-pointer (make-instance (foreign-vector type) :ptr sap :length nz))))))
+                            (system-area-pointer (make-instance (foreign-vector type) :sap sap :length nz))))))

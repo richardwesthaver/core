@@ -49,6 +49,8 @@
 
 (defclass tensor-method-generator (standard-generic-function) ()
   (:metaclass funcallable-standard-class))
+(defmethod sb-mop:validate-superclass ((class tensor-method-generator) (superclass standard-generic-function)) t)
+
 (defclass classp-specializer (specializer)
   ((object-class :initform nil :initarg :object-class)
    (direct-methods :initform nil :reader specializer-direct-methods))
@@ -265,7 +267,6 @@ GROUP-NAME, the classes of the respective argument are the same."))
                  (let (,@(loop for (tg g) in sym collect `(,tg (type-of ,(first (find-if #'(lambda (x) (eql (third x) g)) generate-args)))))
                        (,xx (or (assoc ',dispatch-key (cdr (gethash ',name *template-generated-methods*)) :test #'equal)
                                 (error "Method table missing from *template-generated-methods*!"))))
-                   ;;(format t "Compiling ~a method for dispatch ~s." ',name ,coerce-types)
                    (push
                     (macrolet ((cl (,xx) (ecase ,xx ,@(mapcar #'(lambda (x) `(,(second x) (quote ,(first x))))  sym))))
                       (compile-and-eval
