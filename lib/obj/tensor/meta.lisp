@@ -209,7 +209,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
          (generate-groups (loop for ele in generate-args with ret = nil 
                                 do (setf ret (union ret (list (third ele))))
                                 finally (return ret))))
-    (print generate-groups)
+    generate-groups
     (with-gensyms (xx value existsp type-methods func)
       `(eval-every
          ;;clear methods

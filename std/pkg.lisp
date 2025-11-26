@@ -138,7 +138,9 @@
   (:use :cl)
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)
+  (:import-from :sb-impl :define-error-wrapper)
   (:export
+   :define-error-wrapper
    :interact
    :interact*
    :interact-line
