@@ -897,7 +897,7 @@
    :make-alien-string :naturalize :deport :deport-alloc
    :%alien-value :alien-funcall :define-alien-variable :alien-value
    :extern-alien :with-alien :compute-lisp-rep-type :compute-alien-rep-type)
-  (:import-from :sb-sys :system-area-pointer :vector-sap :with-pinned-objects)
+  (:import-from :sb-sys :system-area-pointer :vector-sap :with-pinned-objects :sap-int)
   (:import-from :sb-ext :array-storage-vector)
   (:export
    :alien-array
@@ -982,6 +982,7 @@
    :timeval
    :timespec
    :sap
+   :sap-int
    :free
    :push-sap
    :push-sap*

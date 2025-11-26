@@ -33,7 +33,7 @@
     (istype 'spin-queue q)
     (dotimes (i 100)
       (push-spin-queue i q)
-      (is= i (spin-queue-count q))
+      (is= 1 (spin-queue-count q))
       (is= i (pop-spin-queue q)))
     (is (spin-queue-empty-p q))))
 

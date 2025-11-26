@@ -22,6 +22,7 @@
 
 ;;; Code:
 (in-package :std/alien)
+(declaim (optimize (speed 3) (safety 0)))
 ;; (shadowing-import
 ;;  '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
 ;;    sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
@@ -396,7 +397,6 @@ alien (* size-t) with same size as the first value."
                                                  ,value)))))
            form))))
 
-;; TODO
 (defun aggregatep (type)
   "Return T if the given ALIEN-TYPE is 'aggregate'."
   ;; always arrays and structs, never 'built-in'
@@ -406,66 +406,18 @@ alien (* size-t) with same size as the first value."
 (defun sap-ref (sap type &optional (offset 0))
   "Return the value of TYPE at OFFSET bytes from SAP. If TYPE is aggregate we
 return a pointer instead of its value."
-  (naturalize (sap+ sap offset) (parse-alien-type type nil)))
+  (let* ((ptyp (parse-alien-type type nil))
+         (extract (sb-alien::compute-extract-lambda ptyp)))
+    (funcall extract sap (* sb-vm:n-byte-bits offset) nil)))
 
 (define-compiler-macro sap-ref (&whole form ptr type &optional (offset 0))
   "Open-code SAP-REF when TYPE is constant."
-  (if (constantp type)
-      (let* ((parsed-type (parse-alien-type (eval type) nil))
-             (ctype (compute-alien-rep-type parsed-type)))
-        (if (aggregatep parsed-type)
-            (if (bare-struct-type-p parsed-type)
-                `(sap+ ,ptr ,offset)
-                (expand-from-foreign `(sap+ ,ptr ,offset) parsed-type))
-            (expand-from-foreign `(%sap-ref ,ptr ,ctype ,offset) parsed-type)))
-      form))
-
-(defun sap-set (value sap type &optional (offset 0))
-  "Set the value of TYPE at OFFSET bytes from SAP to VALUE."
-  (let* ((ptype (parse-alien-type type nil))
-         (ctype (compute-alien-rep-type ptype)))
-    (if (aggregatep ptype) ; XXX: backwards incompatible?
-        (translate-into-foreign-memory value ptype (sap+ sap offset))
-        (%sap-set (translate-to-foreign value ptype) sap ctype offset))))
-
-(define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
-  "SETF expander for SAP-REF that doesn't rebind TYPE.
-This is necessary for the compiler macro on SAP-SET to be able
-to open-code (SETF SAP-REF) forms."
-  (multiple-value-bind (dummies vals newval setter getter)
-      (get-setf-expansion sap env)
-    (declare (ignore setter newval))
-    ;; if either TYPE or OFFSET are constant, we avoid rebinding them
-    ;; so that the compiler macros on SAP-SET and %SAP-SET work.
-    (with-gensyms (store type-tmp offset-tmp)
-      (values
-       (append (unless (constantp type)   (list type-tmp))
-               (unless (constantp offset) (list offset-tmp))
-               dummies)
-       (append (unless (constantp type)   (list type))
-               (unless (constantp offset) (list offset))
-               vals)
-       (list store)
-       `(progn
-          (sap-set ,store ,getter
-                   ,@(if (constantp type)   (list type)   (list type-tmp))
-                   ,@(if (constantp offset) (list offset) (list offset-tmp)))
-          ,store)
-       `(sap-ref ,getter
-                 ,@(if (constantp type)   (list type)   (list type-tmp))
-                 ,@(if (constantp offset) (list offset) (list offset-tmp)))))))
-
-(define-compiler-macro sap-set
-    (&whole form value sap type &optional (offset 0))
-  "Compiler macro to open-code (SETF SAP-REF) when type is constant."
-  (if (constantp type)
-      (let* ((parsed-type (parse-alien-type (eval type) nil))
-             (ctype (compute-alien-rep-type parsed-type)))
-        (if (aggregatep parsed-type)
-            (expand-into-foreign-memory
-             value parsed-type `(sap+ ,sap ,offset))
-            `(%sap-set ,(expand-to-foreign value parsed-type)
-                       ,sap ,ctype ,offset)))
+  (if (or (constantp type) (and (consp type) (eql (car type) 'quote)))
+      (let ((ptyp (parse-alien-type (eval type) nil)))
+        (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
+          ;; todo: memoize
+          `(funcall ,extract ,ptr ,(* sb-vm:n-byte-bits offset) nil)
+          (naturalize `(%sap-ref ,ptr ,type ,offset) ptyp)))
       form))
 
 ;;;; SAP-SVREF
@@ -474,8 +426,8 @@ to open-code (SETF SAP-REF) forms."
   (sap-ref sap type (* index (foreign-type-size type))))
 
 (define-compiler-macro sap-svref (&whole form sap type &optional (index 0))
-  "Open-code SAP-SVREF when TYPE (and eventually INDEX)."
-  (if (constantp type)
+  "Open-code SAP-SVREF when TYPE (and eventually INDEX) are constant."
+  (if (or (constantp type) (and (consp type) (eql (car type) 'quote)))
       (if (constantp index)
           `(sap-ref ,sap ,type
                     ,(* (eval index) (foreign-type-size (eval type))))
@@ -523,9 +475,53 @@ to open-code (SETF SAP-REF) forms."
                         (list index)
                         (list index-tmp)))))))
 
-;; (defun sap-svref (sap type &optional (index 0))
-;;  "Like SAP-REF expect for accessing simple (1d) arrays.")
-;; (define-setf-expander sap-svref (sap type &optional (index 0))
+;;;; SAP-SET (SETF SAP-REF) (SETF SAP-SVREF)
+(defun sap-set (value sap type &optional (offset 0))
+  "Set the value of TYPE at OFFSET bytes from SAP to VALUE."
+  (let* ((ptype (parse-alien-type type nil))
+         (ctype (compute-alien-rep-type ptype)))
+    (if (aggregatep ptype) ; XXX: backwards incompatible?
+        (setf (sap-svref (sap+ sap offset) ctype) value)
+        (%sap-set (deport value ptype) sap ctype offset))))
+
+(define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
+  "SETF expander for SAP-REF that doesn't rebind TYPE.
+This is necessary for the compiler macro on SAP-SET to be able
+to open-code (SETF SAP-REF) forms."
+  (multiple-value-bind (dummies vals newval setter getter)
+      (get-setf-expansion sap env)
+    (declare (ignore setter newval))
+    ;; if either TYPE or OFFSET are constant, we avoid rebinding them
+    ;; so that the compiler macros on SAP-SET and %SAP-SET work.
+    (with-gensyms (store type-tmp offset-tmp)
+      (values
+       (append (unless (constantp type)   (list type-tmp))
+               (unless (constantp offset) (list offset-tmp))
+               dummies)
+       (append (unless (constantp type)   (list type))
+               (unless (constantp offset) (list offset))
+               vals)
+       (list store)
+       `(progn
+          (sap-set ,store ,getter
+                   ,@(if (constantp type)   (list type)   (list type-tmp))
+                   ,@(if (constantp offset) (list offset) (list offset-tmp)))
+          ,store)
+       `(sap-ref ,getter
+                 ,@(if (constantp type)   (list type)   (list type-tmp))
+                 ,@(if (constantp offset) (list offset) (list offset-tmp)))))))
+
+(define-compiler-macro sap-set
+    (&whole form value sap type &optional (offset 0))
+  "Compiler macro to open-code (SETF SAP-REF) when type is constant."
+  (if (constantp type)
+      (let* ((parsed-type (parse-alien-type #1=(eval type) nil))
+             (ctype (compute-alien-rep-type parsed-type)))
+        (if (aggregatep parsed-type)
+            `(setf (sap-svref sap (unparse-alien-type #1#) (sap+ ,sap ,offset)) value)
+            `(%sap-set ,(deport value parsed-type)
+                       ,sap ,ctype ,offset)))
+      form))
 
 ;;; DEFAR
 (defmacro defar (name result-type &rest args)
@@ -972,53 +968,53 @@ handle stored in another slot of the same object."))
 ;;
 (defparameter *fvref-range-check* t)
   
-#+nil
 (defun fvref (x i)
   (declare (type foreign-vector x))
   (let ((n (slot-value (the foreign-vector x) 'length)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
+    (sap-svref (slot-value x 'sap) (element-type-to-alien (element-type (class-of x))) i)))
 
-    (cast
-     (sap-alien (sap+ (alien-sap x) i) (* t))
-     (element-type-to-alien (element-type (class-of x))))))
-
-#+nil
 (define-compiler-macro fvref (&whole form x i)
   (if (listp x)
-  (destructuring-case x
-    ((the fv obj)
-     (let ((alien-type (element-type-to-alien (element-type fv))))
-       (with-gensyms (obj-v i-v n-v)
-         `(lety ((,obj-v ,obj :type ,fv)
-                      (,i-v ,i :type fixnum))
-            ,@(if *fvref-range-check*
-                  `((let ((,n-v (slot-value ,obj-v 'length)))
-                      (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
-            (sap-ref (slot-value (the ,fv ,obj-v) 'sap) ,alien-type (the fixnum (* (the fixnum ,i-v) (the fixnum ,(foreign-type-size alien-type))))))))))
-    form))
+      (destructuring-case x
+        ((the fv obj)
+         (let ((alien-type (element-type-to-alien (element-type fv))))
+           (with-gensyms (obj-v i-v n-v)
+             `(lety ((,obj-v ,obj :type ,fv)
+                     (,i-v ,i :type fixnum))
+                ,@(if *fvref-range-check*
+                      `((let ((,n-v (slot-value ,obj-v 'length)))
+                          (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
+                (sap-ref (slot-value (the ,fv ,obj-v) 'sap) ,alien-type (the fixnum (* (the fixnum ,i-v) (the fixnum ,(foreign-type-size alien-type)))))))))
+        ((t) form))
+      form))
 
-#+nil
 (defun (setf fvref) (value x i)  
   (declare (type foreign-vector x))
   (let ((n (slot-value (the foreign-vector x) 'length)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
     (setf (sap-svref (slot-value x 'sap) (element-type-to-alien (element-type (class-of x))) i) value)))
 
-#+nil
 (define-compiler-macro (setf fvref) (&whole form value x i)
-  (multiple-value-match (values x value)
-    (((list 'the (and (type symbol) (guard fv (subtypep fv 'foreign-vector))) obj)
-      (list 'the (and (type symbol) (guard lt (eql lt (element-type fv)))) val))
-     (let ((alien-type (lisp->mffi (element-type fv))))
-       (with-gensyms (obj-v i-v n-v)
-         `(lety ((,obj-v ,obj :type ,fv)
-                      (,i-v ,i :type fixnum))
-            ,@(if *fvref-range-check*
-                  `((let ((,n-v (slot-value ,obj-v 'length)))
-                      (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
-            (setf (sap-ref (slot-value (the ,fv ,obj-v) 'sap) 
-                                ,alien-type
-                                (the fixnum (* (the fixnum ,i-v) 
-                                               (the fixnum ,(foreign-type-size alien-type)))))
-                  (the ,lt ,val))))))
-    (_ form)))
+  (if (and (listp x) (listp value) 
+           (eql 'the (car x)) 
+           (eql 'the (car value)) 
+           (subtypep #1=(second x) 'foreign-vector)
+           (eql (second value) (element-type #1#)))
+      (let ((fv (second x))
+            (lt (second value))
+            (obj (third x))
+            (val (third value)))
+        (let ((alien-type (element-type-to-alien (element-type fv))))
+          (with-gensyms (obj-v i-v n-v)
+            `(lety ((,obj-v ,obj :type ,fv)
+                    (,i-v ,i :type fixnum))
+               ,@(if *fvref-range-check*
+                     `((let ((,n-v (slot-value ,obj-v 'length)))
+                         (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
+               (setf (sap-ref (slot-value (the ,fv ,obj-v) 'sap) 
+                              ,alien-type
+                              (the fixnum (* (the fixnum ,i-v) 
+                                             (the fixnum ,(foreign-type-size alien-type)))))
+                     (the ,lt ,val))))))
+      form))

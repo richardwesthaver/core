@@ -78,7 +78,7 @@
   (with-temp-pool (100 :alive t)
     (istype '(array worker) (workers*))
     (istype 'biased-scheduler (scheduler*))
-    (is= 4 (length (workers*)))
+    (is= 100 (length (workers*)))
     (istype 'thread-pool *thread-pool*)
     (is= 100 (reduce '+ (broadcast-work (lambda () 1))))
     (let ((ch (make-channel)))

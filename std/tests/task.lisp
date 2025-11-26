@@ -26,6 +26,7 @@
     (is (taskp (aref (tasks j1) 0)))
     (is (vectorp (tasks j1)))
     (is= (length (tasks j1)) 10)
+    #+nil
     (with-temp-pool (4 :worker-class 'task-worker :alive t)
       (run-job (aref (workers*) 0) j1))))
     

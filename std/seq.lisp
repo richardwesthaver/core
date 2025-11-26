@@ -358,6 +358,9 @@ TEST."
   (head (error "no head") :type list)
   (tail (error "no tail") :type list))
 
+(defmethod data ((self basic-queue))
+  (head self))
+
 (defun make-basic-queue ()
   "Make a BASIC-QUEUE with nil head and tail."
   (%make-basic-queue nil nil))
@@ -594,7 +597,7 @@ push."
   (cvar nil))
 
 (defmethod data ((self cons-queue))
-  (cons-queue-impl self))
+  (data (cons-queue-impl self)))
 
 (defmethod next ((self cons-queue))
   (head (data self)))
@@ -1180,7 +1183,8 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
 around the body of WITH-ITER.")
 
 (defmacro with-iter ((sym iter) &body body)
-  `(let ((,sym ,iter))
+  `(let ((,sym ,iter)
+         (*idx* 0))
      (setf *iter* ,sym)
      (symbol-macrolet ,*iterator-functions*
        ;; (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))

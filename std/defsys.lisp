@@ -909,7 +909,7 @@ an image.")
     (mumble "Testing system ~A" (name self))
     (if asdf
         (asdf:test-system self args)
-        (progn (load-system (%test-system-name (name self)))
+        (progn (load-module (name self) :tests)
                (apply 'pkg:symbol-call *test-system* :do-suite (name self) args))))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
