@@ -113,7 +113,7 @@
             'permutation-permute-error :seq-len (dimensions ten arg) :permutation-size (permutation-size perm))))
 
 (definline permute (thing perm &optional (arg 0))
-  (permute! (.copy thing) perm arg))
+  (permute! (tensor-copy thing) perm arg))
 
 ;;Action
 (definline apply-action! (seq perm)
@@ -140,7 +140,7 @@
   (apply-action! seq (the index-store-vector (store perm))))
 
 (defmethod permute! ((ten tensor) (perm permutation-action) &optional (arg 0))
-  (permute! ten (.copy perm 'permutation-pivot-flip) arg))
+  (permute! ten (tensor-copy perm 'permutation-pivot-flip) arg))
 ;;Cycle
 (definline apply-cycle! (seq pcyc)
   (declare (type index-store-vector pcyc)
@@ -173,7 +173,7 @@
   seq)
 
 (defmethod permute! ((A tensor) (perm permutation-cycle) &optional (arg 0))
-  (permute! A (.copy perm 'permutation-pivot-flip) arg))
+  (permute! A (tensor-copy perm 'permutation-pivot-flip) arg))
 
                                         ;Pivot idx
 (definline apply-flips! (seq pflip)
@@ -218,7 +218,7 @@
 (defmethod copy! ((from permutation) (to permutation))
   (if (typep to (type-of from))
       (copy! (store from) (store to))
-      (copy! (store (.copy from (type-of to))) (store to))))
+      (copy! (store (tensor-copy from (type-of to))) (store to))))
 
 (defmethod copy! ((act permutation-action) (type (eql 'permutation-cycle)))
   (lety ((arr (store act) :type index-store-vector)
@@ -278,7 +278,7 @@
              (without-tensor-safety (make-instance 'permutation-action :store act-repr :size (length act-repr)))))
 
 (defmethod copy! ((cyc permutation-cycle) (type (eql 'permutation-pivot-flip)))
-  (.copy (.copy cyc 'permutation-action) 'permutation-pivot-flip))
+  (tensor-copy (tensor-copy cyc 'permutation-action) 'permutation-pivot-flip))
 
 (defmethod copy! ((cyc permutation-cycle) (type (eql 'permutation-cycle)))
   (without-tensor-safety (make-instance 'permutation-cycle :store (mapcar #'copy-seq (store cyc)) :size (permutation-size cyc))))
@@ -290,7 +290,7 @@
               (without-tensor-safety (make-instance 'permutation-action :store (locally (declare (optimize (speed 3) (safety 0))) (apply-flips! ret idiv)) :size len))))
 
 (defmethod copy! ((pflip permutation-pivot-flip) (type (eql 'permutation-cycle)))
-  (.copy (.copy pflip 'permutation-action) 'permutation-cycle))
+  (tensor-copy (tensor-copy pflip 'permutation-action) 'permutation-cycle))
 
 (defmethod copy! ((pflip permutation-pivot-flip) (type (eql 'permutation-pivot-flip)))
   (without-tensor-safety (make-instance 'permutation-pivot-flip :store (copy-seq (store pflip)) :size (permutation-size pflip))))
@@ -310,7 +310,7 @@
            (make-instance 'permutation-cycle
              :store (loop :for cyc :of-type index-store-vector :in sto :collect (reverse cyc))
              :size (permutation-size a)))))
-    (permutation-pivot-flip (.copy (permutation/ (.copy a 'permutation-action)) 'permutation-pivot-flip))))
+    (permutation-pivot-flip (tensor-copy (permutation/ (tensor-copy a 'permutation-action)) 'permutation-pivot-flip))))
 
 (defun permutation* (a b)
   (declare (type permutation a b))

@@ -22,7 +22,7 @@
      (assert (= (length x) (length y)) nil 'dimension-mismatch))
   (:generic-function-class tensor-method-generator))
 
-(definline .copy (obj &optional type)
+(definline tensor-copy (obj &optional type)
   (copy! obj (etypecase type (symbol type) (standard-class (class-name type)))))
 
 (defmethod copy! ((num number) (type symbol))
@@ -57,7 +57,7 @@
     (maptree-eki #'(lambda (x) (if (atom x) from (values x #'mapcar!))) to)))
 
 (defmethod copy! ((x cons) (y tensor))
-  (copy! (.copy x 'array) y))
+  (copy! (tensor-copy x 'array) y))
 
 (defmethod copy! ((from array) (to array))
   ;; TODO
@@ -67,8 +67,9 @@
 
 (defmethod copy! ((from t) (to array))
   ;; TODO
-  ;; (iter (for-mod idx from 0 below (array-dimensions to) with-iterator ((:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) 'index-store-vector)))))))
-  ;; (setf (row-major-aref to of-x) from))
+  (iter (for-mod idx from 0 below (array-dimensions to) 
+                 with-iterator ((:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) 'index-store-vector)))))))
+        (setf (row-major-aref to of-x) from))
   to)
 
 (defmethod copy! ((arr array) (type symbol))

@@ -93,7 +93,7 @@
                ,@(when initial-element `((,init ,initial-element :type ,(field-type sym))))
                (,arr (make-array ,size-sym :element-type ',type :initial-element ,(if (subtypep type 'number) `(t.fid+ ,type) nil)) :type ,(store-type sym)))
            ,@(when initial-element
-               `((very-quickly (loop :for ,idx :from 0 :below ,size-sym :do (t.store-set ,sym ,init ,arr ,idx)))))
+               `((with-optimization (:speed 3 :safety 0) (loop :for ,idx :from 0 :below ,size-sym :do (t.store-set ,sym ,init ,arr ,idx)))))
            ,arr)))))
 
 (deft/method (t.store-allocator #'hash-table-storep) (sym stride-accessor) (size &rest initargs)

@@ -210,16 +210,15 @@ element-type TYPE and default value INIT."
                         (type simple-array out))
                (let ((key (or key #'row-major-aref))
                      (lock (or lock #'(setf row-major-aref))))
-                 (declare (ignorable key lock))
                  (loop :for i :of-type fixnum :from 0 :below n
                     :do (funcall lock (funcall key in (the fixnum (+ of/in i))) out (the fixnum (+ of/out i))))
                  out))))
   (setf (symbol-function 'vector-copy) (compile nil code)
         (documentation 'vector-copy 'function) "")
   (define-compiler-macro vector-copy (&whole form n in of/in out of/out &key (key '(function row-major-aref)) (lock '(function (setf row-major-aref))))
+    (declare (ignorable n of/in of/out))
     `(let (,@(zip (subseq (second code) 0 5) (cdr form))
            (key ,key) (lock ,lock))
-       (declare (ignorable key lock))
        ,@(maptree-eki #'(lambda (x)
                           (destructuring-case x
                             ((type _ v-name) 

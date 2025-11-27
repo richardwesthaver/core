@@ -540,7 +540,7 @@
   (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
   (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:export
-   :*loops-ansi-universe*
+   :*loop-ansi-universe*
    :loop-standard-expansion
    :loop-kernel
    :this :self
@@ -638,6 +638,7 @@
    :vector-foldl :vector-foldr
    :vector-map-foldl :vector-map-foldr
    :vector-max :vector-min
+   :vector-copy
    :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
    :modproj :simplify-array :array-rank-limit

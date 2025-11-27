@@ -212,6 +212,9 @@ Example:
 
 ;;; Gensyms
 (defmacro using-gensyms ((decl (&rest syms) &optional gensyms) &rest body)
+  "Bind DECL to a list of let-bindings where a fresh gensym is bound to the
+corresponding value in SYMS based on its symbol-name. GENSYMS is an optional
+list of additional unbound gensyms."
   `(let ((,decl (zip-list ',(mapcar #'(lambda (x) (gensym (symbol-name x))) syms) (list ,@syms))))
      (destructuring-bind (,@syms) (mapcar #'car ,decl)
        ,(append
@@ -220,6 +223,8 @@ Example:
          body))))
 
 (defmacro binding-gensyms ((mname &optional (fname (gensym))) &rest body)
+  "Bind MNAME to a macro and FNAME to a function which dynamically inserts gensyms based on
+the argument given, which should be a symbol."
   (with-gensyms (htbl)
     `(let ((,htbl (make-hash-table)))
        (labels ((,fname (x) (or (gethash x ,htbl) (setf (gethash x ,htbl) (gensym (symbol-name x))))))
@@ -236,6 +241,7 @@ It must never be modified, though only good implementations will even enforce th
   `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body))))
 
 (defun call-with-safe-io-syntax (thunk &key (package :std-user))
+  "Call THUNK with safe CL reader options."
   (with-standard-io-syntax
     (let ((*package* (find-package package))
           (*read-default-float-format* 'double-float)
@@ -263,5 +269,6 @@ It must never be modified, though only good implementations will even enforce th
           collect c)))
 
 (defun read-lisp-file (file &key if-does-not-exist (external-format :default))
+  "Read all forms in a lisp FILE."
   (with-open-file (f file :if-does-not-exist if-does-not-exist :external-format external-format)
     (read-lisp-until-end f)))

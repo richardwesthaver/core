@@ -22,7 +22,7 @@
           `(let (,@decl)
              (declare (type ,(store-type class) ,store)
                       (type index-type ,idx))
-             (let-typed ((,2idx (* 2 ,idx) :type index-type))
+             (lety ((,2idx (* 2 ,idx) :type index-type))
                (values (complex (fvref (the ,(store-type class) ,store) ,2idx) (fvref (the ,(store-type class) ,store) (1+ ,2idx))) t))))
         `(values (fvref (the ,(store-type class) ,store) (the index-type ,idx)) t))))
 
@@ -35,7 +35,7 @@
              (declare (type ,(store-type class) ,store)
                       (type ,(field-type class) ,value)
                       (type index-type ,idx))
-             (let-typed ((,2idx (* 2 ,idx) :type index-type))
+             (lety ((,2idx (* 2 ,idx) :type index-type))
                (funcall #'(setf fvref) (the ,real-type (cl:realpart ,value)) (the ,(store-type class) ,store) ,2idx)
                (funcall #'(setf fvref) (the ,real-type (cl:imagpart ,value)) (the ,(store-type class) ,store) (1+ ,2idx)))
              ,value))
@@ -56,8 +56,9 @@
                             (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
                             ,vec)))
          ,@(when initial-element
-                 `((very-quickly (loop :for ,idx :from 0 :below (t.store-size ,type ,vec)
-                                    :do (setf (t.store-ref ,type (the ,(foreign-vector element-type) ,vec) ,idx) (the ,(field-type type) ,init))))))
+             `((with-optimization (:speed 3 :safety 0)
+                 (loop :for ,idx :from 0 :below (t.store-size ,type ,vec)
+                       :do (setf (t.store-ref ,type (the ,(foreign-vector element-type) ,vec) ,idx) (the ,(field-type type) ,init))))))
          ,vec))))
 
 (deft/method with-field-element (cl foreign-vector-store-mixin) (decl &rest body)
@@ -68,7 +69,7 @@
            (with-foreign-object (,point ,type ,size)
              (let ((,var (make-instance ',(store-type cl) :sap ,point :length ,size)))
                ,@(when init
-                       `((let-typed ((,init_ ,init :type ,(field-type cl)))
+                       `((lety ((,init_ ,init :type ,(field-type cl)))
                            (loop :for ,idx :from 0 :below (t.store-size ,cl ,var)
                               :do (t.store-set ,cl ,init_ ,var ,idx)))))
                (locally

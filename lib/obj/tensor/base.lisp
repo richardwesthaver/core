@@ -12,7 +12,7 @@
 (deftype index-store-matrix (&optional (m '*) (n '*)) `(simple-array index-type (,m ,n)))
 
 ;;; Base Accessor
-(defkernel base-accessor ()
+(defclass base-accessor ()
   ((dimensions :initarg :dimensions :type index-store-vector :documentation "Dimensions of the vector spaces in which the tensor's arguments reside.")))
 
 (declaim (ftype (function (base-accessor &optional (or boolean index-type)) (or index-store-vector index-type list)) dimensions))
@@ -34,17 +34,17 @@
   (declare (type base-accessor x))
   (length (the index-store-vector (slot-value x 'dimensions))))
 ;;
-(defkernel stride-accessor (base-accessor)
+(defclass stride-accessor (base-accessor)
   ((strides :initarg :strides :type index-store-vector :documentation "Strides for accesing elements of the tensor.")
    (head :initarg :head :initform 0 :type index-type :documentation "Head for the store's accessor."))
   (:documentation "Vanilla stride accessor."))
-(defkernel coordinate-accessor (base-accessor)
+(defclass coordinate-accessor (base-accessor)
   ((indices :initarg :indices :type index-store-matrix :documentation "Non-zero indices in the tensor.")
    (strides :initarg :strides :type index-store-vector :documentation "Strides for accesing elements of the tensor.")
    (stride-hash :initarg :stride-hash :type index-store-vector :documentation "Strides in Column major order")
    (tail :initform 0 :initarg :boundary :type index-type :documentation "Row bound for indices"))
   (:documentation "Bi-partite graph/Hypergraph/Factor/Co-ordinate store"))
-(defkernel graph-accessor (base-accessor)
+(defclass graph-accessor (base-accessor)
   ((fence :initarg :fence :type index-store-vector :documentation "Start index for neighbourhood.")
    (neighbours :initarg :neighbours :type index-store-vector :documentation "Neighbour ids.")
    (transposep :initarg :transposep :initform nil :type boolean :documentation "Choose between row-column compressed forms."))
@@ -54,17 +54,8 @@
 (defclass hash-table-store-mixin () ())
 
 ;;; Base Tensor
-(deftensor base-tensor ()
-  ((dimensions :initarg :dimensions :type index-store-vector
-               :documentation "Dimensions of the vector spaces in which the tensor's arguments reside.")
-   ;; (parent-tensor :reader parent-tensor :initform nil :initarg :parent-tensor :type (or null base-tensor)
-   ;;                :documentation "If the tensor is a view of another tensor, then this slot is bound.")
-   (store :initarg :store :reader store
-          :documentation "The actual storage for the tensor.")
-   ;; (attributes :initarg :attributes :initform nil
-   ;;             :documentation "Place for computable attributes of an object instance.")
-   )
-  (:documentation "Basic tensor class."))
+(defclass base-tensor () ()
+  (:documentation "Base tensor instance class."))
 
 (defmethod make-load-form ((tensor base-tensor) &optional env)
   (make-load-form-saving-slots tensor :environment env))
@@ -173,7 +164,13 @@ Checking for a matrix with 2 columns:
          (tensor-generator field tensor)))))
 
 (defmethod tensor-generator (field (tensor (eql 'simple-dense-tensor)))
-  (let* ((super-classes (remove nil (list (if (member field '(single-float double-float (complex single-float) (complex double-float)) :test #'equal) 'blas-mixin) tensor #+nil (case order (1 'vector-mixin) (2 'matrix-mixin)))))
+  (let* ((super-classes 
+           (remove nil (list (if (member field 
+                                         '(single-float double-float (complex single-float) (complex double-float))
+                                         :test #'equal)
+                                 'blas-mixin)
+                             tensor
+                             #+nil (case order (1 'vector-mixin) (2 'matrix-mixin)))))
          (cl-name (intern (format nil "<~{~a~^ ~}: ~a>" super-classes field) (find-package "OBJ/TENSOR"))))
     (compile-and-eval
      `(progn

@@ -4,11 +4,6 @@
 
 ;;; Commentary:
 
-;; Note that this file is out of sync with MATLISP - it was pulled from a
-;; different branch which doesn't rely on ITER.
-
-;; We should implement this correctly using SBCL loop internals.
-
 ;;; Code:
 (in-package :obj/tensor)
 
@@ -41,7 +36,32 @@
                         (incf (aref ,idx ,count))
                         (return t))))))))
 
-;;; FOR-MOD
+;;; FOR X BEING THE MOD OF Y
+;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
+(defun loop-mod-iteration-path (variable data-type prep-phrases &key (index 0) dimensions uplo stride minor)
+  (cond ((or (cdr prep-phrases) (not (member (caar prep-phrases) '(:in :of :across))))
+         (sb-loop::loop-error "Invalid prepositions!"))
+        ((null prep-phrases)
+         (sb-loop::loop-error "missing OF, ACROSS, or IN in ~S iteration path")))
+  (let ((idx-var (gensym "IDX"))
+        (dim-var (gensym "DIM"))
+        (variable (or variable (gensym "VAR")))
+        (ini-var (gensym "INIT")))
+    (push `(let ((,ini-var ,(print (cadar prep-phrases))))) (sb-loop::wrappers sb-loop::*loop*))
+    `(((,variable nil ,data-type) (,idx-var ,index) (,dim-var ,dimensions))
+      ()
+      ()
+      ()
+      t
+      #+nil
+      (not (multiple-value-setq (,(sb-loop::loop-when-it-var)
+                                 ,variable)
+             (,next-fn)))
+      ())))
+
+(sb-loop::add-loop-path '(index idx) 'loop-mod-iteration-path *loop-ansi-universe*
+                        :preposition-groups '((:of :in :across))
+                        :inclusive-permitted nil)
 
 #+nil
 (defgeneric for-mod-iterator (clause-name init dims args))
@@ -62,7 +82,7 @@
          ,@(mapcan #'first iterables)
          (after-each
           (unless
-              (very-quickly (mod-update (,idx ,(gm init) ,(gm dims) :order ,order :uplo ,ul) ,@(mapcan #'cdr iterables)))
+              (with-optimization (:speed 3 :safety 0) (mod-update (,idx ,(gm init) ,(gm dims) :order ,order :uplo ,ul) ,@(mapcan #'cdr iterables)))
             (finish)))))))
 
 #+nil
@@ -148,8 +168,13 @@
                                        (:uo `(append (make-list (1- (length ,dims)) :initial-element 0) (list 1)))
                                        (:lo `(append (list 1) (make-list (1- (length ,dims)) :initial-element 0)))
                                        (t 0))
-                          below ,dims with-iterator ((:stride (,@(remove-if #'null (mapcar #'(lambda (of ten typ) (when typ `(,of (strides ,(car ten)) (head ,(car ten)))))
-                                                                                           osyms tsyms types)))))
+                          below ,dims 
+                          with-iterator ((:stride (,@(remove-if #'null 
+                                                                (mapcar 
+                                                                 #'(lambda (of ten typ) 
+                                                                     (when typ `(,of (strides ,(car ten)) 
+                                                                                     (head ,(car ten)))))
+                                                                 osyms tsyms types)))))
                           ,@(when loop-ordering-p `(loop-order ,loop-order)) uplo ,uplo?)
                  (lvec->list! ,idx ,lst)
                  (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) (list ref (if typ
