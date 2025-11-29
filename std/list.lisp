@@ -375,7 +375,8 @@ Example:
                   #'(lambda (x) (and (consp x) (member (car x) keys))))
               (if (or (eql keys t) (functionp transformer)) transformer
                   (let ((alist (mapcar #'(lambda (x y) (cons x y)) keys transformer)))
-                    #'(lambda (x) (values (cons (cdr (assoc (car x) alist)) (cdr x)) #'mapcar))))  tree))
+                    #'(lambda (x) (values (cons (cdr (assoc (car x) alist)) (cdr x)) #'mapcar))))  
+              tree))
 
 (defun maptree-eki (transformer tree)
   (multiple-value-bind (t-tree control) (funcall transformer tree)

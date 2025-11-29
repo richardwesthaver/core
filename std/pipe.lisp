@@ -127,12 +127,21 @@
    (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index))
   (:documentation "Superclass of pipe objects containing a PIPE and INDEX slot."))
 
+;; (defmethod sequence:make-sequence-iterator ((self pipe) &rest args)
+;;   (apply 'sequence:make-sequence-iterator (pipe self) args))
+
 (defgeneric resolve-element (pipe path &key if-does-not-exist)
   (:documentation "Resolve element PATH on PIPE.")
   (:method ((pipe pipe) (path list) &key &allow-other-keys)
     (values path t))
   (:method ((pipe pipe) (path symbol) &key (if-does-not-exist :error))
     (or (gethash path (index pipe))
+        (ecase if-does-not-exist
+          (:error (restart-case (error 'unknown-element-name :name path :pipe pipe)
+                    (use-value (value) value)))
+          ((nil) (values nil nil)))))
+  (:method ((pipe pipe) (path integer) &key (if-does-not-exist :error))
+    (or (svref (pipe pipe) path)
         (ecase if-does-not-exist
           (:error (restart-case (error 'unknown-element-name :name path :pipe pipe)
                     (use-value (value) value)))
@@ -382,24 +391,23 @@ Returns the segment.")
 
 ;;; Macros
 ;; This is from Shinmera's VERBOSE
-(defmacro defpipe ((pipeline &optional place) &body elements)
+(defmacro defpipe ((pipe &optional place) &body elements)
   "Make a new array of ELEMENTS and apply it to the PIPE slot of object
 PIPE. Optional arg PLACE designates the position to insert the elements at
 when the slot is already filled."
-  (with-gensyms (pipe parent c)
+  (with-gensyms (pipeline parent c)
     (let ((index (loop for i from 0
                        for e in elements
                        for id = (getf (rest e) :id)
                        when id collect (list i id))))
-      `(let ((,parent ,pipeline)
-             (,pipe (make-pipe)))
+      `(let ((,parent ,pipe)
+             (,pipeline (make-pipe)))
          ,@(loop for (ty &rest args) in elements
                  collect `(insert-element* (make-instance 
                                                ',ty
                                              ,@(remf args :id))
-                                           ,pipe))
-         
-         (add-element ,parent ,pipe ,place)
+                                           ,pipeline))
+         (add-element ,parent ,pipeline ,place)
          ,(when index
             `(let ((,c (1- (length (pipe ,parent)))))
                ,@(loop for (i id) in index

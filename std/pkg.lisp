@@ -1088,7 +1088,7 @@
    ;; iterator protocol
    :iterator :next
    :key :val
-   :prev :iter
+   :prev
    :seek :seek-to-first
    :seek-to-last :seek-for-prev
    :iter-valid-p :*iter*

@@ -33,7 +33,7 @@
 
 (defvar *component-class-table* (make-hash-table))
 (defvar *test-system* :rt)
-(defvar *system-table* (make-hash-table)
+(defvar *system-table* (make-hash-table :test 'equal)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
 
 (defvar *provider-table* (make-hash-table)
@@ -230,6 +230,14 @@ ending with the target component name."
                         (progn (setf (getf w key) (list val)) w))
                     (nconc w (list key val)))))
         (setf (gethash name *module-table*) (list key val)))))
+
+(defprovider :asdf (root path &optional name)
+  (register-module :asdf root 
+                   (compile nil 
+                            `(lambda () 
+                               (asdf:load-asd 
+                                ,(probe-file (merge-pathnames path (path (find-system root)))))
+                               (asdf:load-system ,(or name root))))))
 
 (defprovider :alien (root name &rest args)
   (register-module :alien root (compile-and-eval `(std/alien:define-alien-loader ,name ,@args))))
@@ -712,6 +720,7 @@ the following extensions:
 - :REQUIRE    system-required modules and features"
   (multiple-value-bind (%body dec doc) (std-int:parse-body body :documentation t)
     (declare (ignore dec))
+    (unless (symbolp name) (setq name (keywordicate (string-upcase name))))
     (let ((prov (%sys-get :provide %body)) (hooks (%sys-get :hook %body))
           (path (%sys-get :path %body))
           (req (%sys-get :require %body))

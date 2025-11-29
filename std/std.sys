@@ -60,6 +60,7 @@
  :provide
  (:std :defsys :defpkg :named-readtables ; *modules*
   (:readtable :std)
+  (:asdf "std.asd")
   (:proto :serde)
   (:proto :pipe)
   (:proto :kernel)

@@ -4,6 +4,12 @@
 
 ;;; Commentary:
 
+;; The MATLISP src is mostly undocumented, but as it turns out the FOR-MOD
+;; clause is not possible in SB-LOOP::LOOP without significant
+;; hackery. Instead, we observe that every FOR-MOD clause depends on a
+;; WITH-ITERATOR value such as :STRIDE or :MINOR - these are what we will
+;; translate into Loop Paths (FOR X BEING THE STRIDE OF Y).
+
 ;;; Code:
 (in-package :obj/tensor)
 
@@ -36,13 +42,15 @@
                         (incf (aref ,idx ,count))
                         (return t))))))))
 
-;;; FOR X BEING THE MOD OF Y
+;;; FOR X BEING THE Y OF Z
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
 (defun loop-mod-iteration-path (variable data-type prep-phrases &key (index 0) dimensions uplo stride minor)
   (cond ((or (cdr prep-phrases) (not (member (caar prep-phrases) '(:in :of :across))))
          (sb-loop::loop-error "Invalid prepositions!"))
         ((null prep-phrases)
          (sb-loop::loop-error "missing OF, ACROSS, or IN in ~S iteration path")))
+  (binding-gensyms (gm gf)
+
   (let ((idx-var (gensym "IDX"))
         (dim-var (gensym "DIM"))
         (variable (or variable (gensym "VAR")))
@@ -63,6 +71,8 @@
                         :preposition-groups '((:of :in :across))
                         :inclusive-permitted nil)
 
+;; (defmethod sequence:make-sequence-iterator ((self tensor)))
+
 #+nil
 (defgeneric for-mod-iterator (clause-name init dims args))
 #+nil
@@ -82,7 +92,8 @@
          ,@(mapcan #'first iterables)
          (after-each
           (unless
-              (with-optimization (:speed 3 :safety 0) (mod-update (,idx ,(gm init) ,(gm dims) :order ,order :uplo ,ul) ,@(mapcan #'cdr iterables)))
+              (with-optimization (:speed 3 :safety 0) (mod-update (,idx ,(gm init) ,(gm dims) :order ,order :uplo ,ul) 
+                                                                  ,@(mapcan #'cdr iterables)))
             (finish)))))))
 
 #+nil
@@ -107,23 +118,7 @@
 #+nil
 (closer-mop:defmethod for-mod-iterator ((clause-name (eql :general)) init dims body)
   body)
-#+nil
-(defmacro offset-ref (decl &rest body)
-  (let ((stack (mapcar #'(lambda (x) (list (gensym "sto") (gensym))) decl)))
-    `(let-typed (,@(mapcar #'(lambda (x s)
-                               (letv* (((ref offset tensor &key type) x))
-                                 `(,(second s) ,tensor ,@(when type `(:type ,type)))))
-                           decl stack))
-       (let-typed (,@(mapcar #'(lambda (x s) (letv* (((ref offset tensor &key type) x))
-                                               `(,(first s) (store ,(second s)) ,@(when type `(:type ,(store-type type))))))
-                             decl stack))
-         (symbol-macrolet (,@(mapcar #'(lambda (x s)
-                                         (letv* (((ref offset tensor &key type) x))
-                                           `(,ref ,(if type
-                                                       `(the ,(field-type type) (t/store-ref ,type ,(first s) ,offset))
-                                                       `(store-ref ,(second s) ,(first s))))))
-                                     decl stack))
-           ,@body)))))
+
 
 ;;; OFFSET-REF
 (defmacro offset-ref (decl &rest body)

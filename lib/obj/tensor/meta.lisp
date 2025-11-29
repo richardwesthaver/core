@@ -105,17 +105,16 @@ GROUP-NAME, the classes of the respective argument are the same."))
   (values `(subtype-specializer ',(slot-value obj 'specializer-type)) nil))
 
 (defparameter *specializer-table* (make-hash-table :test 'equal))
-(eval-always
-  (with-memoization (*specializer-table*)
-    (memoizing
-     (defun classp-specializer (class-name)
-       (make-instance 'classp-specializer :object-class (find-class class-name))))
-    (memoizing
-     (defun group-specializer (class-name group-name)
-       (make-instance 'group-specializer :object-class (find-class class-name) :group-name (the keyword group-name))))
-    (memoizing
-     (defun subtype-specializer (specializer-type)
-       (make-instance 'subtype-specializer :specializer-type specializer-type)))))
+(with-memoization (*specializer-table*)
+  (memoizing
+   (defun classp-specializer (class-name)
+     (make-instance 'classp-specializer :object-class (find-class class-name))))
+  (memoizing
+   (defun group-specializer (class-name group-name)
+     (make-instance 'group-specializer :object-class (find-class class-name) :group-name (the keyword group-name))))
+  (memoizing
+   (defun subtype-specializer (specializer-type)
+     (make-instance 'subtype-specializer :specializer-type specializer-type))))
 
 (defmethod compute-applicable-methods-using-classes ((gf tensor-method-generator) required-classes)
   (loop named mc

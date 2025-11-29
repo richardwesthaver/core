@@ -1090,6 +1090,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 
 ;;; Iterator
 #|
+
 The iterator protocol allows subsequently accessing some or all elements of a
 sequence in forward or reverse direction. Users first call
 make-sequence-iterator to create an iteration state and receive functions to
@@ -1099,6 +1100,7 @@ of a state object, a limit object, a from-end indicator and the following six
 functions to query or mutate this state: step endp element (setf element) index copy
 
 See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-functions
+
 |#
 
 (defclass iterator ()
@@ -1165,7 +1167,6 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
         (setf *idx* i)
         (elt self *idx*)))))
     
-
 (defvar *iter*)
 
 (defvar *iterator-functions*
@@ -1192,10 +1193,12 @@ around the body of WITH-ITER.")
 
 ;;; Util
 (defmacro mod-inc (k n)
+  "(1+k) mod n."
   `(the array-index (mod (the array-index (1+ (the array-index ,k)))
                          (the array-index ,n))))
 
 (defmacro mod-dec (k n)
+  "(1-k) mod n."
   `(the array-index (mod (the fixnum (1- (the array-index ,k)))
                          (the array-index ,n))))
 
@@ -1205,9 +1208,10 @@ around the body of WITH-ITER.")
 (defmacro mod-decf (place n)
   `(the array-index (setf ,place (mod-dec ,place ,n))))
 
-(defmacro repeat (count &body body)
+(defmacro repeat (n &body body)
+  "Repeat BODY N times."
   (with-gensyms (left)
-    `(let ((,left (the fixnum ,count)))
+    `(let ((,left (the fixnum ,n)))
        (declare (type fixnum ,left))
        (loop
          (when (zerop ,left)
@@ -1216,6 +1220,13 @@ around the body of WITH-ITER.")
          ,@body))))
 
 (defmacro do-indexes ((ivar size hindex from-hindex-p) &body body)
+  "Eval BODY once for each positive integer of SIZE with IVAR being a symbol
+bound to the current index. HINDEX is the starting location. When
+FROM-HINDEX-P is NIL, instead of starting at HINDEX we end with it - such that
+the last binding of IVAR = HINDEX.
+
+(do-indexes (i 20 4 nil) (print i)) ; ends at 4
+(do-indexes (i 20 4 t) (print i)) ; starts at 4, ends at 3"
   ;; size is positive
   (with-gensyms (svar hivar)
     `(let ((,ivar (the array-index ,hindex))
