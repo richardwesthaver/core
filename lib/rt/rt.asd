@@ -1,4 +1,4 @@
-;;; std.asd --- standard library
+;;; rt.asd --- standard library
 (require 'sb-sprof)
 (defsystem :rt
   :depends-on (:std :log :dat)

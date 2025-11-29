@@ -65,6 +65,6 @@ evaluation cached in HASH-TABLE."
                                        (push (list* (first decl) (funcall f (second decl)) (cddr decl)) cache)
                                        (first decl))))))))))))
       (let ((transformed-body (std/list:maptree '(memoizing with-memoization quote) #'transformer body)))
-        `(lety* (,@(if need-hashtablep `((,table ,hash-table)))
+        `(lety* (,@(when need-hashtablep `((,table ,hash-table)))
                  ,@(reverse cache))
            ,@transformed-body)))))

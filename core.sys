@@ -12,7 +12,7 @@
  :components ((:file "core"))
  ;; :hook ((:load (lambda () (mumble "loading core"))))
  :provide 
- ((:tests :core/tests
+ ((:tests
    :depends-on
    (:rt :std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests

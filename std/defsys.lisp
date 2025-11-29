@@ -129,6 +129,9 @@ ASDF:DEFSYSTEM.")
   ((components :accessor components))
   (:keyword :mod))
 
+(defmethod component-type ((self mod-component))
+  nil)
+
 (defun mod-component-p (c)
   (typep c 'mod-component))
 
@@ -215,46 +218,50 @@ ending with the target component name."
   (when-let ((x (the function (find-provider name))))
     (apply x form)))
 
-(defun register-module (key name val &optional (replace t))
-  (let ((form (list key val)))
-    (multiple-value-bind (v f) (gethash name *module-table*)
-      (if f
-          (setf (gethash name *module-table*) ; v is a plist
-                (let ((w (or (and replace (apply 'std/list:remove-from-plist v (list key))) v)))
-                  (nconc w form)))
-          (setf (gethash name *module-table*) form)))))
+(defun register-module (key name val &optional append)
+  (multiple-value-bind (v f) (gethash name *module-table*)
+    (if f
+        (setf (gethash name *module-table*) ; v is a plist
+              (let ((w (or (and (not append) (apply 'std/list:remove-from-plist v (list key)))
+                           v)))
+                (if append 
+                    (if (getf w key)
+                        (progn (pushnew val (getf w key) :test 'equalp) w)
+                        (progn (setf (getf w key) (list val)) w))
+                    (nconc w (list key val)))))
+        (setf (gethash name *module-table*) (list key val)))))
 
-(defprovider :alien (name &rest args)
-  (register-module :alien name (compile-and-eval `(std/alien:define-alien-loader ,name ,@args))))
+(defprovider :alien (root name &rest args)
+  (register-module :alien root (compile-and-eval `(std/alien:define-alien-loader ,name ,@args))))
 
-(defprovider :readtable (name)
-  (register-module :readtable name `(std/named-readtables:find-readtable ,name)))
+(defprovider :readtable (root name)
+  (register-module :readtable root (compile-and-eval `(std/named-readtables:find-readtable ,name))))
 
-(defprovider :prelude (name &rest args)
-  (let ((root *current-module-name*))
-    (register-module 
-     :prelude
-     name
-     `(pkg::%defpkg* ,root (list ,name ,@args)))))
+(defprovider :prelude (root name &rest args)
+  (register-module 
+   :prelude
+   root
+   (compile-and-eval `(pkg::%defpkg* ,root (list ,name ,@args)))
+   t))
 
-(defprovider :io (name &rest args)
-  (register-module :io name args))
+(defprovider :io (root name &rest args)
+  (register-module :io root (if args (cons name args) name) t))
 
-(defprovider :proto (name &rest args)
-  (register-module :proto name args))
+(defprovider :proto (root name &rest args)
+  (register-module :proto root (if args (cons name args) name) t))
 
-(defprovider :pool (name)
-  (register-module :pool name `(find-thread-pool ,name)))
+(defprovider :pool (root name)
+  (register-module :pool root (compile-and-eval `(find-thread-pool ,name))))
 
 ;; TODO 2025-09-28: 
 (defprovider :module (name &rest args)
   (compile-and-eval 
    `(defmodule ,name ,@args)))
 
-(defprovider :sys (name &rest args)
-  (register-module 
+(defprovider :sys (root name &rest args)
+  (register-module
    :sys
-   name 
+   root
    (compile-and-eval 
     `(defsys ,name ,@args :path ,(or *compile-file-truename* *load-truename* (path (find-system name)))))))
 
@@ -265,10 +272,10 @@ ending with the target component name."
       (push name req))
     (unless (member *test-system* req :test 'string-equal)
       (push *test-system* req))
-  (register-module 
+  (register-module
    :tests
    name 
-   (compile-and-eval 
+   (compile-and-eval
     `(defsys ,(%test-system-name name) ,@args 
        :require ,req :class 'test-system 
        :path ,(or *compile-file-truename* 
@@ -344,8 +351,6 @@ ending with the target component name."
       (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
       (funcall (funcall hook :load)))))
 
-(defvar *current-module-name* nil)
-;; TODO 2025-11-18: memoizing might be useful here..
 ;; templates?
 (defun %load-module (form &optional kind)
   (case kind
@@ -358,10 +363,10 @@ ending with the target component name."
      (sb-int:doplist (k v) form
        (%load-module v k)))))
 
-(defun load-module (name &optional kind)
+(defun load-module (name &rest args)
   (let ((*current-module-name* name))
-    (when-let ((*load-module* (find-module name kind)))
-      (%load-module *load-module* kind))))
+    (when-let ((*load-module* (apply 'find-module name args)))
+      (apply '%load-module *load-module* args))))
 
 ;; TODO 2025-09-20: 
 (defun partial-load-module (name &rest args)
@@ -604,7 +609,7 @@ system jobs to be executed in an async context."
   (let ((ret))
     (mapc
      (lambda (x)
-       (if (atom x) ; return as is
+       (if (atom x) ; add to *MODULES*
            (pushnew (string-upcase x) *modules* :test 'string-equal)
            (push x ret)))
      form)
@@ -635,11 +640,10 @@ system jobs to be executed in an async context."
           (setf (path x) 
                 (probe-file (make-pathname 
                              :name (name x) 
-                             :type (string-downcase (component-type x) )
+                             :type (when-let ((ctyp (component-type x))) (string-downcase ctyp))
                              :directory (namestring (path c))))))
         (components c))
   c)
-
 
 (defun %parse-component-form (form)
   (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
@@ -666,7 +670,9 @@ system jobs to be executed in an async context."
                   (c (make-instance kind
                        :name n 
                        :path path
-                       :components (mapcar '%parse-component-form (getf props :components)))))
+                       :components 
+                       (let ((*default-pathname-defaults* path))
+                         (mapcar '%parse-component-form (getf props :components))))))
              (%mod-component-walk c)))
           (:dir
            (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
@@ -789,11 +795,11 @@ underlying object SELF remains unmodified."
       (mapc
        (lambda (x)
          (if (atom x)
-             (load-system x :asdf t) ; default case, assumed to be a system
+             (load-system x) ; default case, assumed to be a system
              (apply 'load-module x)))
        (slot-value self 'require))
       ;; then we call providers
-      (mapc (lambda (x) (call-provider (car x) (cdr x)))
+      (mapc (lambda (x) (call-provider (car x) (cons *current-module-name* (cdr x))))
             (slot-value self 'provide))
       t)))
   ;; (typecase x
