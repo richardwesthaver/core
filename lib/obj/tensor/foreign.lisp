@@ -51,7 +51,7 @@
                                                           (index-store-vector (lvec-foldr #'* (the index-store-vector ,sitm)))
                                                           (cons (reduce #'* ,sitm))))))
                     ,@(when initial-element `((,init ,initial-element :type ,(field-type type))))
-                    (,vec (let* ((,sap (foreign-alloc ,(alien-to-element-type element-type) :count ,len))
+                    (,vec (let* ((,sap (foreign-alloc ,(element-type-to-alien element-type) :count ,len))
                                  (,vec (make-instance (foreign-vector ',element-type) :sap ,sap :length ,len)))
                             (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
                             ,vec)))
@@ -75,9 +75,8 @@
                (locally
                    ,@body))))))))
 
-(defclass foreign-dense-tensor (dense-tensor foreign-vector-store-mixin)
+(deftensor foreign-dense-tensor (dense-tensor foreign-vector-store-mixin)
   ((parent :initform nil :initarg :parent :type (or null tensor) :documentation "This slot is bound if the tensor is the view of another."))
-  (:metaclass tensor-class)
   (:documentation "Object which holds all values of its components, with a simple-vector store."))
 
 (defmethod tensor-generator (field (tensor (eql 'foreign-dense-tensor)))

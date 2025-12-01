@@ -8,7 +8,7 @@
 ;; Routines for printing tensors/matrices nicely.
 
 (defparameter *tensor-print-parameters* `(10 5 0)
-"
+  "
 0: Maximum number of elements in any particular argument to print.
 Set this to T to print all the elements.
 
@@ -52,11 +52,10 @@ of a matrix (default 0)
                                                 else 
                                                 do (let ((str (with-output-to-string (str) (format str "..."))))
                                                      (push str cprints)
-                                                     (setf (aref maxw j) (max (aref maxw j) (length str)))
-                                                     (return (nreversef cprints)))
-                                                finally (return (nreversef cprints)))
-                                        into rprints
-                                        else do (return rprints)
+                                                     (setf (aref maxw j) (max (aref maxw j) (length str))))
+                                                finally (return (nreverse cprints)))
+                                  into rprints
+                                  else do (return rprints)
                                   finally (return rprints))))
                  (loop for row in strs
                        do (format stream (format nil "~~~AT" print-indent))
@@ -83,22 +82,22 @@ of a matrix (default 0)
                            (format stream "~A~%" (make-list rank :initial-element '\:))
                            (format stream (format nil "~~~AT..~~%~~~AT::~~%" print-indent print-indent))
                            nil))))))
-        (case rank
-          (1
-           (format stream (format nil "~~~AT" print-indent))
-           (dotimes (i (aref dims 0))
-             (if (or (eq print-max-len t) (< i print-max-len))
-                 (progn
-                   (print-element tensor (ref tensor i) stream)
-                   (format stream "~,4T"))
-                 (progn
-                   (format stream "...")
-                   (return nil))))
-           (format stream "~%"))
-          (2
-           (two-print tensor nil))
-          (t
-           (rec-print tensor (1- (order tensor)) nil))))))
+      (case rank
+        (1
+         (format stream (format nil "~~~AT" print-indent))
+         (dotimes (i (aref dims 0))
+           (if (or (eq print-max-len t) (< i print-max-len))
+               (progn
+                 (print-element tensor (ref tensor i) stream)
+                 (format stream "~,4T"))
+               (progn
+                 (format stream "...")
+                 (return nil))))
+         (format stream "~%"))
+        (2
+         (two-print tensor nil))
+        (t
+         (rec-print tensor (1- (order tensor)) nil))))))
 
 (defmethod print-element ((x tensor) element stream)
   (cond

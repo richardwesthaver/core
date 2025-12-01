@@ -210,8 +210,9 @@ element-type TYPE and default value INIT."
                         (type simple-array out))
                (let ((key (or key #'row-major-aref))
                      (lock (or lock #'(setf row-major-aref))))
+                 (declare (ignorable key lock))
                  (loop :for i :of-type fixnum :from 0 :below n
-                    :do (funcall lock (funcall key in (the fixnum (+ of/in i))) out (the fixnum (+ of/out i))))
+                       :do (funcall lock (funcall key in (the fixnum (+ of/in i))) out (the fixnum (+ of/out i))))
                  out))))
   (setf (symbol-function 'vector-copy) (compile nil code)
         (documentation 'vector-copy 'function) "")
@@ -220,38 +221,45 @@ element-type TYPE and default value INIT."
     `(let (,@(zip (subseq (second code) 0 5) (cdr form))
            (key ,key) (lock ,lock))
        ,@(maptree-eki #'(lambda (x)
-                          (destructuring-case x
-                            ((type _ v-name) 
-                             (declare (ignore _))
-                             (destructuring-case (ecase v-name (in in) (out out))
-                               ((the type _) (declare (ignore _)) `(type ,type ,v-name))
-                               ((t &rest _) (declare (ignore _)) x)))
-                            ((funcall k &rest argvs)
-                             (case k
-                               (key
-                                (destructuring-case key
-                                  (((function quote) f) 
-                                   (if (listp f)
-                                       (destructuring-bind (l args &rest body) f
-                                         (when (eql l 'lambda) `(let (,@(zip args argvs)) ,@body)))
-                                       `(,f ,@argvs)))
-                                  ((lambda args &rest body)
-                                   `(let (,@(zip args argvs)) ,@body))
-                                  ((t &rest _) (declare (ignore _)) x)))
-                               (lock
-                                (destructuring-case lock
-                                  (((function quote) f)
-                                   (if (listp f)
-                                       (destructuring-bind (l %f &rest body) f
-                                         (cond 
-                                           ((eql l 'lambda) (values `(let (,@(zip %f argvs)) ,@body) t))
-                                           ((eql l 'setf) (values `(setf (,%f ,@(cdr argvs)) ,(car argvs)) t))
-                                           (t x)))
-                                       `(,f ,@argvs)))
-                                  ((lambda args &rest body)
-                                   (values `(let (,@(zip args argvs)) ,@body) t))
-                                  ((t &rest _) (declare (ignore _)) x)))))
-                            ((t &rest _) (declare (ignore _)) (values x t))))
+                          (if (atom x) x
+                              (destructuring-case x
+                                ((type _ &rest v-name)
+                                 (declare (ignore _))
+                                 (if (> (length v-name) 1)
+                                     x
+                                     (let ((v-name (car v-name)))
+                                       (let ((v (ecase v-name (in in) (out out))))
+                                         (if (atom v)
+                                             x
+                                             (destructuring-case x
+                                                 ((the type _) (declare (ignore _)) `(type ,type ,v-name))
+                                               ((t &rest _) (declare (ignore _)) x)))))))
+                                ((funcall k &rest argvs)
+                                 (case k
+                                   (key
+                                    (destructuring-case key
+                                      (((function quote) f) 
+                                       (if (listp f)
+                                           (destructuring-bind (l args &rest body) f
+                                             (when (eql l 'lambda) `(let (,@(zip args argvs)) ,@body)))
+                                           `(,f ,@argvs)))
+                                      ((lambda args &rest body)
+                                       `(let (,@(zip args argvs)) ,@body))
+                                      ((t &rest _) (declare (ignore _)) x)))
+                                   (lock
+                                    (destructuring-case lock
+                                      (((function quote) f)
+                                       (if (listp f)
+                                           (destructuring-bind (l %f &rest body) f
+                                             (cond 
+                                               ((eql l 'lambda) (values `(let (,@(zip %f argvs)) ,@body) t))
+                                               ((eql l 'setf) (values `(setf (,%f ,@(cdr argvs)) ,(car argvs)) t))
+                                               (t x)))
+                                           `(,f ,@argvs)))
+                                      ((lambda args &rest body)
+                                       (values `(let (,@(zip args argvs)) ,@body) t))
+                                      ((t &rest _) (declare (ignore _)) x)))))
+                                ((t &rest _) (declare (ignore _)) (values x t)))))
                       (cddr code)))))
 
 ;; array indexing utils
