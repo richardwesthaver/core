@@ -10,8 +10,14 @@
 ;; (macroexpand (with-memoization (*ht*) (memoizing (defun foo (a b) (+ a b)))))
 ;; (foo 2 3) ; => ((#:MEMOIZE* 2 3) 5)
 (defmacro with-memoization ((&optional (hash-table `(make-hash-table :test 'equal))) &body body &aux cache need-hashtablep)
-  "Evaluate BODY with each form beginning with MEMOIZING having its result of
-evaluation cached in HASH-TABLE."
+  "Evaluate forms of BODY with memoization. Forms starting with MEMOIZING are
+handled specially in order to cache their results. If the wrapped form is a
+function definition then calls to that function are cached in HASH-TABLE.
+
+Other possible memoizable forms include: LET, FLET, LABELS
+
+The fall-back mechanism of MEMOIZING supports additional keywords :TYPE and
+:BIND which are assigned defaults if not bound."
   (with-gensyms (table value exists-p args)
     (labels ((transformer (x)
                (cond

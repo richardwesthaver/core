@@ -17,7 +17,7 @@
 (defmacro mod-update ((idx init dims &key order uplo) &rest body)
   (let* ((uplo (or uplo :ul))
          (order (or order (case uplo ((:u :uo) :col-major) ((:l :lo) :row-major)) *default-stride-ordering*)))
-    (assert (null (remove-if #'(lambda (x) (member (first x) '(:update :reset))) body)) nil 'invalid-arguments)
+    (assert (null (remove-if #'(lambda (x) (member (first x) '(:update :reset))) body)) nil)
     (using-gensyms (decl (idx init dims) (count))
       `(let (,@decl)
          (declare (type index-store-vector ,idx ,dims))
@@ -35,46 +35,62 @@
                           (:uo `(or (and (< ,count (1- (length ,idx))) (= (aref ,idx ,count) (1- (aref ,idx (1+ ,count))))))))
                         `(= (1+ (aref ,idx ,count)) (aref ,dims ,count)))
                       (progn
-                        ,@(mapcar #'(lambda (reset) `(let (,@(zip (second reset) (list count idx init dims))) ,@(cddr reset))) (remove-if-not #'(lambda (x) (eql (first x) :reset)) body))
+                        ,@(mapcar 
+                           #'(lambda (reset) `(let (,@(zip (second reset) (list count idx init dims))) ,@(cddr reset)))
+                           (remove-if-not #'(lambda (x) (eql (first x) :reset)) body))
                         (setf (aref ,idx ,count) (aref ,init ,count)))
                       (progn
-                        ,@(mapcar #'(lambda (update) `(let (,@(zip (second update) (list count idx init dims))) ,@(cddr update))) (remove-if-not #'(lambda (x) (eql (first x) :update)) body))
+                        ,@(mapcar 
+                           #'(lambda (update) 
+                               `(let (,@(zip (second update) (list count idx init dims))) ,@(cddr update)))
+                           (remove-if-not #'(lambda (x) (eql (first x) :update)) body))
                         (incf (aref ,idx ,count))
                         (return t))))))))
 
 ;;; FOR X BEING THE Y OF Z
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
-(defun loop-mod-iteration-path (variable data-type prep-phrases &key (index 0) dimensions uplo stride minor)
-  (cond ((or (cdr prep-phrases) (not (member (caar prep-phrases) '(:in :of :across))))
-         (sb-loop::loop-error "Invalid prepositions!"))
-        ((null prep-phrases)
-         (sb-loop::loop-error "missing OF, ACROSS, or IN in ~S iteration path")))
-  (binding-gensyms (gm gf)
+(defun loop-mod-iteration-path (variable data-type prep-phrases)
+  (mumble "variable: ~A" variable)
+  (mumble "data-type: ~A" data-type)
+  (mumble "prep: ~A" prep-phrases)
+  (destructuring-bind (initial dimensions &optional iterator %uplo %order) prep-phrases
+    (binding-gensyms (gm)
+      (let ((iterable (for-mod-iterator (keywordicate (caadr iterator))
+                                        (gm init) 
+                                        (gm dims)
+                                        (cddr iterator)))
+            (variable (or variable (gensym "VAR")))
+            (init (cadr initial))
+            (uplo (cadr %uplo))
+            (order (cadr %order)))
+    (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
+                  (,(gm init) (let ((,(gm idx) ,init))
+                                (if (numberp ,(gm idx))
+                                    (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,(gm idx))
+                                    (coerce ,(gm idx) 'index-store-vector))))
+                  (,variable (copy-seq ,(gm init))))
+             (declare (index-store-vector ,(gm dims) ,variable ,(gm init))))
+          (sb-loop::wrappers sb-loop::*loop*))
+    `(((,variable nil ,data-type))
+      ()
+      ()
+      ()
+      (not (with-optimization (:speed 3 :safety 0) 
+             (mod-update (,variable 
+                          ,(gm init) 
+                          ,(gm dims) 
+                          :order ,order 
+                          :uplo ,uplo)
+                         ,@(cdr iterable))))
+      ())))))
 
-  (let ((idx-var (gensym "IDX"))
-        (dim-var (gensym "DIM"))
-        (variable (or variable (gensym "VAR")))
-        (ini-var (gensym "INIT")))
-    (push `(let ((,ini-var ,(print (cadar prep-phrases))))) (sb-loop::wrappers sb-loop::*loop*))
-    `(((,variable nil ,data-type) (,idx-var ,index) (,dim-var ,dimensions))
-      ()
-      ()
-      ()
-      t
-      #+nil
-      (not (multiple-value-setq (,(sb-loop::loop-when-it-var)
-                                 ,variable)
-             (,next-fn)))
-      ())))
-
-(sb-loop::add-loop-path '(index idx) 'loop-mod-iteration-path *loop-ansi-universe*
-                        :preposition-groups '((:of :in :across))
-                        :inclusive-permitted nil)
+(sb-loop::add-loop-path '(idx index) 'loop-mod-iteration-path *loop-ansi-universe*
+                        :preposition-groups '((:from :below) (:with-iterator :with-iter) (:uplo) (:order)))
 
 ;; (defmethod sequence:make-sequence-iterator ((self tensor)))
 
-#+nil
 (defgeneric for-mod-iterator (clause-name init dims args))
+
 #+nil
 (defmacro-clause (FOR-MOD idx FROM initial BELOW dimensions &optional WITH-ITERATOR updates LOOP-ORDER order UPLO ul)
   (check-type idx symbol)
@@ -96,8 +112,7 @@
                                                                   ,@(mapcan #'cdr iterables)))
             (finish)))))))
 
-#+nil
-(closer-mop:defmethod for-mod-iterator ((clause-name (eql :stride)) init dims strides)
+(defmethod for-mod-iterator ((clause-name (eql :stride)) init dims strides)
   (binding-gensyms (gm gf)
     (list `(,@(mapcan #'(lambda (x)
                           `((with ,(gf (first x)) = ,(second x))
@@ -105,9 +120,9 @@
                                                   (loop :for ,(gm i) :of-type index-type :from 0 :below (length ,init)
                                                      :summing (the index-type (* (aref ,(gf (first x)) ,(gm i)) (aref ,init ,(gm i)))) :of-type index-type)))))
                       strides)
-              (initially (assert (ziprm (= length) (,dims ,@(mapcar #'(lambda (x) (gf (first x))) strides)))))
-              (declare (type index-store-vector ,@(mapcar #'(lambda (x) (gf (first x))) strides))
-                       (type index-type ,@(mapcar #'car strides))))
+            ;; (initially) (assert (ziprm (= length) (,dims ,@(mapcar #'(lambda (x) (gf (first x))) strides))))
+            (declare (type index-store-vector ,@(mapcar #'(lambda (x) (gf (first x))) strides))
+                     (type index-type ,@(mapcar #'car strides))))
           `(:update (,(gm count) ,(gm idx) ,(gm init) ,(gm dims))
                     (declare (ignore ,(gm idx) ,(gm init) ,(gm dims)))
                     ,@(mapcar #'(lambda (x) `(incf ,(first x) (aref ,(gf (first x)) ,(gm count)))) strides))
@@ -115,8 +130,7 @@
                    (declare (ignore ,(gm dims)))
                    ,@(mapcar #'(lambda (x) `(decf ,(first x) (the index-type (* (aref ,(gf (first x)) ,(gm count)) (- (aref ,(gm idx) ,(gm count)) (aref ,(gm init) ,(gm count))))))) strides)))))
 
-#+nil
-(closer-mop:defmethod for-mod-iterator ((clause-name (eql :general)) init dims body)
+(defmethod for-mod-iterator ((clause-name (eql :general)) init dims body)
   body)
 
 
@@ -144,7 +158,7 @@
            ,@body)))))
 
 ;;; DOREFS
-(defmacro dorefs ((idx dims &key (loop-order *default-stride-ordering* loop-ordering-p) (uplo? :ul)) (&rest ref-decls) &rest body)
+(defmacro dorefs ((idx dims &key (loop-order *default-stride-ordering* loop-ordering-p) (uplo :ul)) (&rest ref-decls) &rest body)
   (let* ((tsyms (zipsym (mapcar #'second ref-decls)))
          (rsyms (mapcar #'car ref-decls))
          (types (mapcar #'(lambda (x) (destructuring-bind (ref ten &key type) x
@@ -159,21 +173,29 @@
          (declare (type index-store-vector ,dims))
          (lety ((,lst (make-list (length ,dims) :initial-element 0))
                 ,@(remove-if #'null (mapcar #'(lambda (x y) (when y (append x `(:type ,(store-type y))))) ssyms types)))
-           (iter (for-mod ,idx from ,(case uplo?
-                                       (:uo `(append (make-list (1- (length ,dims)) :initial-element 0) (list 1)))
-                                       (:lo `(append (list 1) (make-list (1- (length ,dims)) :initial-element 0)))
-                                       (t 0))
-                          below ,dims 
-                          with-iterator ((:stride (,@(remove-if #'null 
-                                                                (mapcar 
-                                                                 #'(lambda (of ten typ) 
-                                                                     (when typ `(,of (strides ,(car ten)) 
-                                                                                     (head ,(car ten)))))
-                                                                 osyms tsyms types)))))
-                          ,@(when loop-ordering-p `(loop-order ,loop-order)) uplo ,uplo?)
-                 (lvec->list! ,idx ,lst)
-                 (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) (list ref (if typ
-                                                                                          `(the ,(field-type typ) (t/store-ref ,typ (the ,(store-type typ) ,(car sto)) ,of))
-                                                                                          `(apply #'ref (list* ,(car ten) ,lst)))))
-                                             rsyms ssyms tsyms osyms types))
-                   ,@body)))))))
+           (loop for ,idx being the idx
+                 from ,(case uplo
+                         (:uo `(append (make-list (1- (length ,dims)) :initial-element 0) (list 1)))
+                         (:lo `(append (list 1) (make-list (1- (length ,dims)) :initial-element 0)))
+                         (t 0))
+                 below ,dims 
+                 with-iterator 
+                    (:stride (,@(remove-if #'null 
+                                           (mapcar 
+                                            #'(lambda (of ten typ) 
+                                                (when typ `(,of (strides ,(car ten)) 
+                                                                (head ,(car ten)))))
+                                            osyms tsyms types))))
+                    ,@(when loop-ordering-p `(order ,loop-order)) 
+                 uplo ,uplo)
+           (copy-vector-to-list ,idx ,lst)
+           (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) 
+                                           (list ref 
+                                                 (if typ
+                                                     `(the ,(field-type typ) 
+                                                           (t.store-ref ,typ 
+                                                                        (the ,(store-type typ) ,(car sto)) 
+                                                                        ,of))
+                                                     `(apply #'ref (list* ,(car ten) ,lst)))))
+                                       rsyms ssyms tsyms osyms types))
+             ,@body))))))

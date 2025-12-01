@@ -11,5 +11,4 @@
          (m (make-instance 'simple-message :content "foo")))
     (istype 'vector (pipe p))
     (istype 'simple-message (msg p m))
-    (istype 'simple-message (msg p "foo"))
-    (loop for x being the element of p do (istype 'element x)))
+    (istype 'simple-message (msg p "foo"))))

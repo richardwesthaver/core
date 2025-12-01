@@ -60,16 +60,14 @@
   (copy! (tensor-copy x 'array) y))
 
 (defmethod copy! ((from array) (to array))
-  ;; TODO
-  ;; (iter (for-mod idx from 0 below (array-dimensions to) with-iterator ((:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) '(simple-array index-type (*)))))))))
-  ;; (setf (row-major-aref to of-x) (row-major-aref from of-x)))
+  (loop for idx being the idx from 0 below (array-dimensions to) with-iterator (:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) '(simple-array index-type (*)))))))
+        do (setf (row-major-aref to of-x) (row-major-aref from of-x)))
   to)
 
 (defmethod copy! ((from t) (to array))
-  ;; TODO
-  (iter (for-mod idx from 0 below (array-dimensions to) 
-                 with-iterator ((:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) 'index-store-vector)))))))
-        (setf (row-major-aref to of-x) from))
+  (loop for idx being the idx from 0 below (array-dimensions to)
+        with-iterator (:stride ((of-x (make-stride-rmj (coerce (array-dimensions to) 'index-store-vector)))))
+        do (setf (row-major-aref to of-x) from))
   to)
 
 (defmethod copy! ((arr array) (type symbol))

@@ -13,16 +13,18 @@
 
 (defvar-keymap parens-map
   :doc "parens-minor-mode keymap."
-  :repeat (:enter)
   :prefix 'parens-map
   "u" #'backward-up-list
   "f" #'forward-sexp
   "b" #'backward-sexp
   "d" #'down-list
   "k" #'kill-sexp
-  "\\" #'indent-region
+  "\\" #'indent-sexp
+  "C-\\" #'prog-indent-sexp
   "/" #'undo
   "t" #'transpose-sexps
+  "r" #'raise-sexp
+  "c" #'check-parens
   "x" #'eval-defun)
 
 (defvar-keymap toggle-map
@@ -166,6 +168,9 @@
 
 (keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
+
+(keymap-global-set "C-c (" #'parens-map)
+;; (keymap-global-set "C-c )" #'parens-map)
 
 ;;;_. C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)

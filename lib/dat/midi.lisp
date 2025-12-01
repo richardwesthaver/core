@@ -437,10 +437,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
   (when (slot-boundp object 'channel)
     (format stream " C=~X" (slot-value object 'channel))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; voice messages
-
 (define-midi-message voice-message (channel-message))
 
 (define-midi-message note-off-message (voice-message)
@@ -520,10 +517,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
   :length 2
   :writer (write-bytes (logand value #x7f) (logand (ash value -7) #x7f)))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; mode messages
-
 (define-midi-message mode-message (channel-message)
   :filler next-byte) ; consume data byte
 
@@ -582,10 +576,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
 
 (define-midi-message tempo-map-message (message))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; system common messages
-
 (define-midi-message common-message (system-message))
 
 (define-midi-message timing-code-message (common-message)
@@ -617,10 +608,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
 (define-midi-message tune-request-message (common-message)
   :status-min #xf6 :status-max #xf6)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; system real-time messages
-
 (define-midi-message real-time-message (system-message))
 
 (define-midi-message timing-clock-message (real-time-message)
@@ -641,10 +629,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
 ;; (define-midi-message tune-request-message (real-time-message)
 ;;  :status-min #xf6 :status-max #xf6)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; system exclusive messages
-
 (define-midi-message system-exclusive-message (system-message)
   :status-min #xf0 :status-max #xf0
   :slots ((data))
@@ -671,10 +656,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
   :writer (progn (write-variable-length-quantity (length data))
 		 (loop for elem across data do (write-bytes elem))))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;
 ;;; meta messages
-
 (define-midi-message meta-message (message)
   :status-min #xff :status-max #xff
   :length 2 ; the first data byte and the length byte
