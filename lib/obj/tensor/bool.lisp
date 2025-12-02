@@ -23,7 +23,7 @@
   (defgeneric ge= (a b)
     (:method ((a tensor) (b tensor))
       (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
-    (:generic-function-class tensor-method-generator)))
+    (:generic-function-class tensor-method-generator))
 
 (define-tensor-method ge= (a (b dense-tensor :x))
   `(let ((a (t.coerce ,(field-type (cl :x)) a))
@@ -116,7 +116,7 @@
             do (when (t.store-ref #.(tensor 'boolean) (memoizing (store b) :type #.(store-type (tensor 'boolean))) of-b)
                  (setf ret t)
                  (return))))
-      ret))
+      ret)))
 
 ;; (zeros 2 (tensor 'boolean))
 ;; (go= (ones 2) #d[1, 0])

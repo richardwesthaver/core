@@ -47,8 +47,6 @@ that ASDF can find, or have quicklisp installed.")))
     :components
     ((:file "ana")
      (:file "pan")
-     (:file "collecting")
-     (:file "loop")
      (:file "control")
      (:file "sugar")
      (:file "unit")

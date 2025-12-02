@@ -8,7 +8,7 @@
 ;; clause is not possible in SB-LOOP::LOOP without significant
 ;; hackery. Instead, we observe that every FOR-MOD clause depends on a
 ;; WITH-ITERATOR value such as :STRIDE or :MINOR - these are what we will
-;; translate into Loop Paths (FOR X BEING THE STRIDE OF Y).
+;; translate into Loop Paths (FOR X BEING THE IDX OF Y WITH-ITERATOR ((:STRIDE (())))).
 
 ;;; Code:
 (in-package :obj/tensor)
@@ -48,54 +48,59 @@
                         (return t))))))))
 
 ;;; FOR X BEING THE Y OF Z
+(defgeneric for-index-iterator (clause-name init dims args))
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
-(defun loop-mod-iteration-path (variable data-type prep-phrases)
+(defun loop-index-iteration-path (variable data-type prep-phrases)
   (mumble "variable: ~A" variable)
   (mumble "data-type: ~A" data-type)
   (mumble "prep: ~A" prep-phrases)
   (destructuring-bind (initial dimensions &optional iterator %uplo %order) prep-phrases
     (binding-gensyms (gm)
-      (let ((iterable (for-mod-iterator (keywordicate (caadr iterator))
-                                        (gm init) 
-                                        (gm dims)
-                                        (cddr iterator)))
+      (let ((iterable (when iterator
+                        ;; strides = (cadadr iterator)
+                        (print (for-index-iterator (keywordicate (caadr iterator))
+                                                   (gm init)
+                                                   (gm dims)
+                                                   (cadadr iterator)))))
             (variable (or variable (gensym "VAR")))
             (init (cadr initial))
             (uplo (cadr %uplo))
             (order (cadr %order)))
-    (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
-                  (,(gm init) (let ((,(gm idx) ,init))
-                                (if (numberp ,(gm idx))
-                                    (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,(gm idx))
-                                    (coerce ,(gm idx) 'index-store-vector))))
-                  (,variable (copy-seq ,(gm init))))
-             (declare (index-store-vector ,(gm dims) ,variable ,(gm init))))
-          (sb-loop::wrappers sb-loop::*loop*))
-    `(((,variable nil ,data-type))
-      ()
-      ()
-      ()
-      (not (with-optimization (:speed 3 :safety 0) 
-             (mod-update (,variable 
-                          ,(gm init) 
-                          ,(gm dims) 
-                          :order ,order 
-                          :uplo ,uplo)
-                         ,@(cdr iterable))))
-      ())))))
+        (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
+                      (,(gm init) (let ((,(gm idx) ,init))
+                                    (if (numberp ,(gm idx))
+                                        (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,(gm idx))
+                                        (coerce ,(gm idx) 'index-store-vector))))
+                      (,variable (copy-seq ,(gm init)))
+                      ,@(first iterable))
+                 (declare (type index-store-vector ,(gm dims) ,(gm init))
+                          (type ,(or data-type 'index-store-vector) ,variable))
+                 ,@(second iterable)
+                 (assert (ziprm (= length) (,(gm init) ,(gm dims)))))
+              (sb-loop::wrappers sb-loop::*loop*))
+        `(()
+          () ;prologue
+          () ;pre-test
+          () ;parallel steps
+          (not (with-optimization (:speed 3 :safety 0) ;post-test
+                 (mod-update (,variable 
+                              ,(gm init) 
+                              ,(gm dims) 
+                              :order ,order 
+                              :uplo ,uplo)
+                             ,@(cddr iterable))))
+          ()))))) ;post-steps
 
-(sb-loop::add-loop-path '(idx index) 'loop-mod-iteration-path *loop-ansi-universe*
+(sb-loop::add-loop-path '(idx index) 'loop-index-iteration-path *loop-ansi-universe*
                         :preposition-groups '((:from :below) (:with-iterator :with-iter) (:uplo) (:order)))
 
 ;; (defmethod sequence:make-sequence-iterator ((self tensor)))
-
-(defgeneric for-mod-iterator (clause-name init dims args))
 
 #+nil
 (defmacro-clause (FOR-MOD idx FROM initial BELOW dimensions &optional WITH-ITERATOR updates LOOP-ORDER order UPLO ul)
   (check-type idx symbol)
   (binding-gensyms (gm gf)
-    (let ((iterables (mapcar #'(lambda (x) (for-mod-iterator (first x) (gm init) (gm dims) (second x))) updates)))
+    (let ((iterables (mapcar #'(lambda (x) (for-index-iterator (first x) (gm init) (gm dims) (second x))) updates)))
       `(progn
          (with ,(gm dims) = (coerce ,dimensions 'index-store-vector))
          (with ,(gm init) = (let ((,(gm idx) ,initial))
@@ -112,25 +117,26 @@
                                                                   ,@(mapcan #'cdr iterables)))
             (finish)))))))
 
-(defmethod for-mod-iterator ((clause-name (eql :stride)) init dims strides)
+(defmethod for-index-iterator ((clause-name (eql :stride)) init dims strides)
   (binding-gensyms (gm gf)
-    (list `(,@(mapcan #'(lambda (x)
-                          `((with ,(gf (first x)) = ,(second x))
-                            (with ,(first x) = (+ ,(or (third x) 0)
-                                                  (loop :for ,(gm i) :of-type index-type :from 0 :below (length ,init)
-                                                     :summing (the index-type (* (aref ,(gf (first x)) ,(gm i)) (aref ,init ,(gm i)))) :of-type index-type)))))
-                      strides)
-            ;; (initially) (assert (ziprm (= length) (,dims ,@(mapcar #'(lambda (x) (gf (first x))) strides))))
-            (declare (type index-store-vector ,@(mapcar #'(lambda (x) (gf (first x))) strides))
-                     (type index-type ,@(mapcar #'car strides))))
-          `(:update (,(gm count) ,(gm idx) ,(gm init) ,(gm dims))
-                    (declare (ignore ,(gm idx) ,(gm init) ,(gm dims)))
-                    ,@(mapcar #'(lambda (x) `(incf ,(first x) (aref ,(gf (first x)) ,(gm count)))) strides))
-          `(:reset (,(gm count) ,(gm idx) ,(gm init) ,(gm dims))
-                   (declare (ignore ,(gm dims)))
-                   ,@(mapcar #'(lambda (x) `(decf ,(first x) (the index-type (* (aref ,(gf (first x)) ,(gm count)) (- (aref ,(gm idx) ,(gm count)) (aref ,(gm init) ,(gm count))))))) strides)))))
+    (list 
+     (mapcan #'(lambda (x)
+                 `((,(gf (first x)) ,(second x))
+                   (,(first x) (+ ,(or (third x) 0)
+                                  (loop :for ,(gm i) :of-type index-type :from 0 :below (length ,init)
+                                        :summing (the index-type (* (aref ,(gf (first x)) ,(gm i)) (aref ,init ,(gm i)))) :of-type index-type)))))
+             strides)
+     `((declare (type index-store-vector ,@(mapcar #'(lambda (x) (gf (first x))) strides))
+                (type index-type ,@(mapcar #'car strides)))
+       (assert (ziprm (= length) (,dims ,@(mapcar #'(lambda (x) (gf (first x))) strides)))))
+     `(:update (,(gm count) ,(gm idx) ,(gm init) ,(gm dims))
+               (declare (ignore ,(gm idx) ,(gm init) ,(gm dims)))
+               ,@(mapcar #'(lambda (x) `(incf ,(first x) (aref ,(gf (first x)) ,(gm count)))) strides))
+     `(:reset (,(gm count) ,(gm idx) ,(gm init) ,(gm dims))
+              (declare (ignore ,(gm dims)))
+              ,@(mapcar #'(lambda (x) `(decf ,(first x) (the index-type (* (aref ,(gf (first x)) ,(gm count)) (- (aref ,(gm idx) ,(gm count)) (aref ,(gm init) ,(gm count))))))) strides)))))
 
-(defmethod for-mod-iterator ((clause-name (eql :general)) init dims body)
+(defmethod for-index-iterator ((clause-name (eql :general)) init dims body)
   body)
 
 

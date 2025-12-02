@@ -34,7 +34,7 @@
 (deft/method t.zeros (class graph-accessor) (dims &optional size)
   (with-gensyms (dimsv nnz)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type (index-store-vector 2))
-             (,nnz (cl:max (cl:ceiling (* *default-sparsity* (lvec-foldr #'* ,dimsv))) (or ,size 0))))
+             (,nnz (cl:max (cl:ceiling (* *default-sparsity* (vector-foldr #'* ,dimsv))) (or ,size 0))))
        (make-instance ',class :dimensions ,dimsv
                       :fence (t.store-allocator index-store-vector (1+ (aref ,dimsv 1))) ;;Compressed Columns by default
                       :neighbours (t.store-allocator index-store-vector ,nnz)
@@ -43,7 +43,7 @@
 (deft/method t.zeros (class coordinate-accessor) (dims &optional size)
   (with-gensyms (dimsv nnz)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type index-store-vector)
-             (,nnz (max (ceiling (* *default-sparsity* (lvec-foldr #'* ,dimsv))) (or ,size 0))))
+             (,nnz (max (ceiling (* *default-sparsity* (vector-foldr #'* ,dimsv))) (or ,size 0))))
        (make-instance ',class :dimensions ,dimsv
                       :indices (t.store-allocator index-store-matrix (list ,nnz (length ,dimsv)))
                       :stride-hash (t.store-allocator index-store-vector ,nnz)

@@ -146,7 +146,7 @@
                                     cclause))
                      (let ((plst (get-prop (cadr place)))
                            (valsym (gensym "value")))
-                       `((let-typed ((,valsym (t/f+ ,ftype (t/store-ref ,type ,(car (getf plst :store)) ,(get-offset (cdr place)))
+                       `((lety ((,valsym (t/f+ ,ftype (t/store-ref ,type ,(car (getf plst :store)) ,(get-offset (cdr place)))
                                                     ,cclause ) :type ,ftype))
                                     (t/store-set ,type ,valsym ,(car (getf plst :store)) ,(get-offset (cdr place))))))))
                  ;;
@@ -177,7 +177,7 @@
                             (list
                              (recursive-append
                               (unless (null tdecl)
-                                `(let-typed (,@tdecl)))
+                                `(lety (,@tdecl)))
                               `(loop ,@(let ((repl `(aref ,(car (get-prop (car (cadr clst)) :dimensions)) ,(cadr (cadr clst)))))
                                             (if (member cidx idx-d)
                                                 `(:for ,cidx :of-type index-type :from 0 :below ,repl)
@@ -189,8 +189,8 @@
           ;;
           `(locally
                (declare (type ,type ,@tens))
-             (let-typed (,@(apply #'append (mapcar #'(lambda (ten) (mapcar #'(lambda (prop) (get-prop ten prop)) '(:head :store :strides :dimensions))) tens)))
-                        (let-typed (,@(apply #'append (mapcar #'(lambda (ten) (mapcar #'(lambda (x) (car (second x))) (get-prop ten :offsets))) tens))
+             (lety (,@(apply #'append (mapcar #'(lambda (ten) (mapcar #'(lambda (prop) (get-prop ten prop)) '(:head :store :strides :dimensions))) tens)))
+                        (lety (,@(apply #'append (mapcar #'(lambda (ten) (mapcar #'(lambda (x) (car (second x))) (get-prop ten :offsets))) tens))
                                       ,@(remove-if #'null (apply #'append (mapcar #'(lambda (ten) (apply #'append (mapcar #'third (get-prop ten :offsets)))) tens))))
                                    ,@(when testp (testgen))
                                    (very-quickly

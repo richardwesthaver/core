@@ -41,18 +41,20 @@
 
 (deftype alien-array (element-type &rest dimensions) `(alien (sb-alien:array ,element-type ,@dimensions)))
 
-(defun element-type-to-alien (ty)
-  "Convert the given SB-ALIEN element-type spec to one understood by Lisp."
-  (cond
-    ((symbolp ty)
-     (ecase ty
-       (character 'char)
-       (octet 'unsigned-char)
-       (string 'c-string)
-       (single-float 'float)
-       (double-float 'double)))
-    ((listp ty)
-     (destructuring-bind (%ty elt) ty
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun element-type-to-alien (ty)
+    "Convert the given element-type spec to an ALIEN type."
+    ty
+    (cond
+      ((symbolp ty)
+       (ecase ty
+         (character 'char)
+         (octet 'unsigned-char)
+         (string 'c-string)
+         (single-float 'float)
+         (double-float 'double)))
+      ((listp ty)
+       (destructuring-bind (%ty elt) ty
          (ecase %ty
            (signed-byte
             (ecase elt
@@ -75,14 +77,15 @@
               (values `(:* ,aty)
                       (if (and (listp aty) (eql (car aty) 'complex)) 
                           aty
-                          `(* ,aty))))))))))
+                          `(* ,aty)))))))))))
 
 ;; (alien-type-class (sb-alien::make-alien-c-string-type :external-format :utf-8 :element-type 'character))
 
-(defun alien-to-element-type (ty)
+(defun alien-to-element-type (type)
+  "Convert the given alien TYPE to its Lisp element type."
   (cond
-    ((symbolp ty)
-     (ecase ty
+    ((symbolp type)
+     (ecase type
        (char 'character)
        (unsigned-char 'octet)
        (c-string 'string)
@@ -97,8 +100,8 @@
        (* (values 'system-area-pointer '(* t)))
        (callback (values 'symbol '(* t)))))
     ;; greatly simplifying logic from MATLISP here - not handling :* or :&
-    ((listp ty)
-     (destructuring-bind (%ty elt) ty
+    ((listp type)
+     (destructuring-bind (%ty elt) type
        (ecase %ty
          (complex (values `(simple-array ,(element-type-to-alien elt) (*)) `(* (,elt 2))))
          ((or char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)
@@ -393,9 +396,8 @@ alien (* size-t) with same size as the first value."
            (once-only (value)
              (ecase (eval type)
                ,@(loop for (keyword fn) in pairs
-                       collect `(,keyword `(setf (,',fn ,ptr ,offset)
-                                                 ,value)))))
-           form))))
+                       collect `(,keyword `(setf (,',fn ,ptr ,offset) ,value)))))
+       form))))
 
 (defun aggregatep (type)
   "Return T if the given ALIEN-TYPE is 'aggregate'."
@@ -407,7 +409,7 @@ alien (* size-t) with same size as the first value."
   "Return the value of TYPE at OFFSET bytes from SAP. If TYPE is aggregate we
 return a pointer instead of its value."
   (let* ((ptyp (parse-alien-type type nil))
-         (extract (sb-alien::compute-extract-lambda ptyp)))
+         (extract (compile nil (sb-alien::compute-extract-lambda ptyp))))
     (funcall extract sap (* sb-vm:n-byte-bits offset) nil)))
 
 (define-compiler-macro sap-ref (&whole form ptr type &optional (offset 0))
@@ -416,7 +418,7 @@ return a pointer instead of its value."
       (let ((ptyp (parse-alien-type (eval type) nil)))
         (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
           ;; todo: memoize
-          `(funcall ,extract ,ptr ,(* sb-vm:n-byte-bits offset) nil)
+          `(funcall ,(compile nil extract) ,ptr ,(* sb-vm:n-byte-bits offset) nil)
           (naturalize `(%sap-ref ,ptr ,type ,offset) ptyp)))
       form))
 
@@ -481,8 +483,8 @@ return a pointer instead of its value."
   (let* ((ptype (parse-alien-type type nil))
          (ctype (compute-alien-rep-type ptype)))
     (if (aggregatep ptype) ; XXX: backwards incompatible?
-        (setf (sap-svref (sap+ sap offset) ctype) value)
-        (%sap-set (deport value ptype) sap ctype offset))))
+        (setf (sap-svref (sap+ sap offset) (element-type-to-alien ctype)) value)
+        (%sap-set value sap (element-type-to-alien ctype) offset))))
 
 (define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
   "SETF expander for SAP-REF that doesn't rebind TYPE.
@@ -515,12 +517,12 @@ to open-code (SETF SAP-REF) forms."
     (&whole form value sap type &optional (offset 0))
   "Compiler macro to open-code (SETF SAP-REF) when type is constant."
   (if (constantp type)
-      (let* ((parsed-type (parse-alien-type #1=(eval type) nil))
+      (let* ((parsed-type (parse-alien-type (eval type) nil))
              (ctype (compute-alien-rep-type parsed-type)))
-        (if (aggregatep parsed-type)
-            `(setf (sap-svref sap (unparse-alien-type #1#) (sap+ ,sap ,offset)) value)
-            `(%sap-set ,(deport value parsed-type)
-                       ,sap ,ctype ,offset)))
+          (if (aggregatep parsed-type)
+              `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) value)
+              `(%sap-set ,(deport value parsed-type)
+                         ,sap (element-type-to-alien ',ctype) ,offset)))
       form))
 
 ;;; DEFAR
@@ -836,17 +838,20 @@ newly allocated memory."
           (assert (>= count contents-length))
           (setq count contents-length)))
     ;; Everything looks good.
-    (with-alien ((sap (* t) 
-                      (%foreign-alloc (* (foreign-type-size type)
-                                         (if null-terminated-p (1+ count) count)))))
+    (with-alien ((sap (* t)
+                      (%foreign-alloc 
+                       (* (foreign-type-size type)
+                          (if null-terminated-p (1+ count) count)))))
       (when initial-element-p
         (dotimes (i count)
-          (setf (deref sap i) initial-element)))
+          ;; (setf (deref sap i) initial-element)
+          (setf (sap-ref sap type i) initial-element)
+          ))
       (when initial-contents-p
         (dotimes (i contents-length)
-          (setf (deref sap i) (elt initial-contents i))))
+          (setf (sap-ref sap type i) (elt initial-contents i))))
       (when null-terminated-p
-        (setf (deref sap count) nil))
+        (setf (sap-ref sap type count) nil))
       sap)))
 
 ;; Simple compiler macro that kicks in when TYPE is constant and only
@@ -963,7 +968,7 @@ handle stored in another slot of the same object."))
               `(progn
                  (defclass ,cl-name (foreign-vector) ()
                    (:metaclass foreign-vector-class))
-                 (setf (slot-value (find-class ',cl-name) 'element-type) ',element-type)))
+                 (setf (slot-value (find-class ',cl-name) 'std/alien::element-type) ',element-type)))
              cl-name))))))
 ;;
 (defparameter *fvref-range-check* t)

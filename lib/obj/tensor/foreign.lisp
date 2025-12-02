@@ -45,16 +45,16 @@
   (letv* (((&key (initial-element (coerce 0 (field-type type)))) initargs)
           (element-type (or (real-subtypep (field-type type)) (field-type type))))
     (with-gensyms (sitm len vec idx init sap)
-      `(let*-typed ((,len (t.compute-store-size ,type (let ((,sitm ,size))
-                                                        (etypecase ,sitm
-                                                          (index-type ,sitm)
-                                                          (index-store-vector (lvec-foldr #'* (the index-store-vector ,sitm)))
-                                                          (cons (reduce #'* ,sitm))))))
-                    ,@(when initial-element `((,init ,initial-element :type ,(field-type type))))
-                    (,vec (let* ((,sap (foreign-alloc ,(element-type-to-alien element-type) :count ,len))
-                                 (,vec (make-instance (foreign-vector ',element-type) :sap ,sap :length ,len)))
-                            (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
-                            ,vec)))
+      `(lety* ((,len (t.compute-store-size ,type (let ((,sitm ,size))
+                                                   (etypecase ,sitm
+                                                     (index-type ,sitm)
+                                                     (index-store-vector (vector-foldr #'* (the index-store-vector ,sitm)))
+                                                     (cons (reduce #'* ,sitm))))))
+               ,@(when initial-element `((,init ,initial-element :type ,(field-type type))))
+               (,vec (let* ((,sap (foreign-alloc ',(element-type-to-alien element-type) :count ,len))
+                            (,vec (make-instance (foreign-vector ',element-type) :sap ,sap :length ,len)))
+                       (sb-ext:finalize ,vec #'(lambda () (foreign-free ,sap)))
+                       ,vec)))
          ,@(when initial-element
              `((with-optimization (:speed 3 :safety 0)
                  (loop :for ,idx :from 0 :below (t.store-size ,type ,vec)
@@ -80,7 +80,10 @@
   (:documentation "Object which holds all values of its components, with a simple-vector store."))
 
 (defmethod tensor-generator (field (tensor (eql 'foreign-dense-tensor)))
-  (let* ((super-classes (remove nil (list (if (member field '(single-float double-float (complex single-float) (complex double-float)) :test #'equal) 'blas-mixin) tensor #+nil (case order (1 'vector-mixin) (2 'matrix-mixin)))))
+  (let* ((super-classes (remove nil (list (if (member field '(single-float double-float (complex single-float) (complex double-float)) :test #'equal) 
+                                              'blas-mixin)
+                                          tensor 
+                                          #+nil (case order (1 'vector-mixin) (2 'matrix-mixin)))))
          (cl-name (intern (format nil "<~{~a~^ ~}: ~a>" super-classes field) (find-package "OBJ/TENSOR"))))
     (compile-and-eval
      `(progn
@@ -89,7 +92,7 @@
     cl-name))
 
 (deft/method t.total-size (sym foreign-dense-tensor) (ele)
-  `(lvec-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))
+  `(vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))
 
 (definline make-foreign-dense-tensor (dimensions sap &optional (type 'double-float)
                                                  &aux (dimensions (copy-seq (coerce (ensure-list dimensions) 'index-store-vector))))

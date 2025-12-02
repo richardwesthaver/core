@@ -542,7 +542,6 @@
   (:export
    :*loop-ansi-universe*
    :loop-standard-expansion
-   :loop-kernel
    :this :self
    :make-macro-lambda
    :parse-lambda-list

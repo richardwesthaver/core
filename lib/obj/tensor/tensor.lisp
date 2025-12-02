@@ -133,8 +133,8 @@
                        `(let (,@decl)
                           (declare (type ,(store-type sym) ,store)
                                    (type index-type ,idx))
-                          (let-typed ((,2idx (* 2 ,idx) :type index-type))
-                                     (values (complex (aref ,store ,2idx) (aref ,store (1+ ,2idx))) t))))
+                          (lety ((,2idx (* 2 ,idx) :type index-type))
+                            (values (complex (aref ,store ,2idx) (aref ,store (1+ ,2idx))) t))))
         `(values (aref (the ,(store-type sym) ,store) (the index-type ,idx)) t))))
 
 (deft/method t.store-set (sym simple-vector-store-mixin) (value store &rest idx)
@@ -146,9 +146,9 @@
                           (declare (type ,(store-type sym) ,store)
                                    (type ,(field-type sym) ,value)
                                    (type index-type ,idx))
-                          (let-typed ((,2idx (* 2 ,idx) :type index-type))
-                                     (setf (aref ,store ,2idx) (cl:realpart ,value)
-                                           (aref ,store (1+ ,2idx)) (cl:imagpart ,value)))
+                          (lety ((,2idx (* 2 ,idx) :type index-type))
+                            (setf (aref ,store ,2idx) (cl:realpart ,value)
+                                  (aref ,store (1+ ,2idx)) (cl:imagpart ,value)))
                           ,value))
         `(setf (aref (the ,(store-type sym) ,store) (the index-type ,idx)) ,value))))
 ;;
@@ -176,8 +176,8 @@
 
 (deft/method with-field-element (sym tensor) (decl &rest body)
   (destructuring-bind (var init &optional (count 1)) decl
-    `(let-typed ((,var (t.store-allocator ,sym ,count :initial-element ,init) :type ,(store-type sym)))
-                (locally ,@body))))
+    `(lety ((,var (t.store-allocator ,sym ,count :initial-element ,init) :type ,(store-type sym)))
+       (locally ,@body))))
 
 ;;Blas
 (deft/generic (t.blas-lb #'subtypep) sym (i))
@@ -238,7 +238,7 @@
 
 (defgeneric (setf ref) (value tensor &rest subscripts)
   (:generic-function-class tensor-method-generator))
-;;
+
 ;; (defgeneric store-size (obj)
 ;;   (:documentation "(store-size obj) => store-size
 

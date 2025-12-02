@@ -95,6 +95,10 @@ GROUP-NAME, the classes of the respective argument are the same."))
   (print-unreadable-object (obj stream :type t)
     (format stream ", ~a" (slot-value obj 'specializer-type))))
 
+;; (defmethod sb-pcl::specializer-type-specifier (proto-generic proto-method (specializer group-specializer))
+;;   (declare (ignore proto-generic proto-method))
+;;   (slot-value specializer 'specializer-type))
+
 (defmethod add-direct-method ((specializer subtype-specializer) method)
   (pushnew method (slot-value specializer 'direct-methods)))
 (defmethod remove-direct-method ((specializer subtype-specializer) method)
@@ -210,7 +214,6 @@ GROUP-NAME, the classes of the respective argument are the same."))
          (generate-groups (loop for ele in generate-args with ret = nil 
                                 do (setf ret (union ret (list (third ele))))
                                 finally (return ret))))
-    generate-groups
     (with-gensyms (xx value existsp type-methods func)
       `(eval-every
          ;;clear methods
@@ -283,6 +286,6 @@ GROUP-NAME, the classes of the respective argument are the same."))
                     (cdr ,xx)))
                  ,@(let ((dargs (mapcar #'(lambda (x) (first (ensure-list x))) (subseq args 0 keypos))))
                      (if-let ((rest-pos (position '&rest args)))
-                       `((apply #',name (list* ,@dargs ,@(mapcar #'(lambda (x) (first (ensure-list x))) (set-difference (subseq args keypos rest-pos) cl:lambda-list-keywords))
+                       `((apply #',name (list* ,@dargs ,@(mapcar #'(lambda (x) (first (ensure-list x))) (set-difference (subseq args keypos rest-pos) lambda-list-keywords))
                                                ,(elt args (1+ rest-pos)))))
-                       `((,@(if (symbolp name) `(,name) `(funcall #',name)) ,@dargs ,@(mapcar #'(lambda (x) (first (ensure-list x))) (remove-if #'(lambda (x) (member x cl:lambda-list-keywords)) (subseq args keypos))))))))))))))
+                       `((,@(if (symbolp name) `(,name) `(funcall #',name)) ,@dargs ,@(mapcar #'(lambda (x) (first (ensure-list x))) (remove-if #'(lambda (x) (member x lambda-list-keywords)) (subseq args keypos))))))))))))))

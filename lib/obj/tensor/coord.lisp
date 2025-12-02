@@ -31,6 +31,7 @@
      (values (t.fid+ (t.field-type ,(cl :x))) nil)))
 
 (define-tensor-method (setf ref) (value (x coordinate-tensor :x) &rest subscripts)
+  ;; TODO
   `(letv* ((subs/v (match subscripts
                      ((list* (and subs/v (type index-store-vector)) _) (subscripts-check (the index-store-vector subs/v) (dimensions x)))
                      (_ (subscripts-check (the list subscripts) (dimensions x))))
