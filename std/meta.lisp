@@ -505,35 +505,35 @@ Also returns a second value of the lambda-list itself."
   "Define a template method for one of the pre-defined templates in *TEMPLATE-TABLE*."
   (with-gensyms (data-sym meth-sym afun-sym disp-sym sort-sym)
     (std/macs:letv* (((name &optional filter) (std/list:ensure-list name))
-            (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
-            (ll (getf data :lambda-list))
-            (single? (not (consp (first ll))))
-            ;;
-            (disp-vars (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (car x) x)) disp))
-            (disp-spls (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (cadr x) t)) disp)))
+                     (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
+                     (ll (getf data :lambda-list))
+                     (single? (not (consp (first ll))))
+                     ;;
+                     (disp-vars (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (car x) x)) disp))
+                     (disp-spls (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (cadr x) t)) disp)))
       (assert (std/list:match-lambda-lists (list disp-vars args) ll) nil "mismatch in lambda-lists.")
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (let* ((,data-sym (or (gethash ',name *template-table*) (error "Undefined template : ~a~%" ',name)))
-              (,meth-sym (getf ,data-sym :methods))
-              (,afun-sym (lambda (,(if single? disp-vars disp-sym) ,@args)
-                           (declare (ignorable ,@(remove-if #'(lambda (x) (member x cl:lambda-list-keywords))
-                                                            (mapcar #'(lambda (x) (if (consp x) (car x) x))
-                                                                    (cons (if single? disp-vars disp-sym) args)))))
-                           ,(std/list:recursive-append
-                             (unless single?
-                               `(destructuring-bind (,@disp-vars) ,disp-sym
-                                  (declare (ignorable ,@disp-vars))))
-                             `(locally ,@body))))
-              (,sort-sym (getf ,data-sym :sorter)))
-         (declare (ignorable ,data-sym ,meth-sym ,afun-sym ,sort-sym))
-         (if-let ((lst (assoc ',disp-spls ,meth-sym :test #'equal)))
-           (if-let ((flst (find ,filter (cdr lst) :key #'cdr)))
-             (rplaca flst ,afun-sym)
-             (rplacd lst (sort (list* (cons ,afun-sym ,filter) (cdr lst)) #'(lambda (a b) (or (cdr a) (not (cdr b)))))))
-           (setf ,meth-sym (,(getf data :sort-function) (list* (list ',disp-spls (cons ,afun-sym ,filter)) ,meth-sym)
-                             #'(lambda (a b) (funcall ,sort-sym (first a) (first b))))))
-         (setf (getf ,data-sym :methods) ,meth-sym)
-         ,afun-sym)))))
+      `(eval-when (:compile-toplevel :load-toplevel :execute)
+         (let* ((,data-sym (or (gethash ',name *template-table*) (error "Undefined template : ~a~%" ',name)))
+                (,meth-sym (getf ,data-sym :methods))
+                (,afun-sym (lambda (,(if single? disp-vars disp-sym) ,@args)
+                             (declare (ignorable ,@(remove-if #'(lambda (x) (member x cl:lambda-list-keywords))
+                                                              (mapcar #'(lambda (x) (if (consp x) (car x) x))
+                                                                      (cons (if single? disp-vars disp-sym) args)))))
+                             ,(std/list:recursive-append
+                               (unless single?
+                                 `(destructuring-bind (,@disp-vars) ,disp-sym
+                                    (declare (ignorable ,@disp-vars))))
+                               `(locally ,@body))))
+                (,sort-sym (getf ,data-sym :sorter)))
+           (declare (ignorable ,data-sym ,meth-sym ,afun-sym ,sort-sym))
+           (if-let ((lst (assoc ',disp-spls ,meth-sym :test #'equal)))
+             (if-let ((flst (find ,filter (cdr lst) :key #'cdr)))
+               (rplaca flst ,afun-sym)
+               (rplacd lst (sort (list* (cons ,afun-sym ,filter) (cdr lst)) #'(lambda (a b) (or (cdr a) (not (cdr b)))))))
+             (setf ,meth-sym (,(getf data :sort-function) (list* (list ',disp-spls (cons ,afun-sym ,filter)) ,meth-sym)
+                              #'(lambda (a b) (funcall ,sort-sym (first a) (first b))))))
+           (setf (getf ,data-sym :methods) ,meth-sym)
+           ,afun-sym)))))
 
 (defun remt/method (name spls)
   "Remove a template method for a gf stored in *TEMPLATE-TABLE*, given the name and specializer."

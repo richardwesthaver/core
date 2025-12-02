@@ -100,7 +100,7 @@
   `(let ((ret nil))
      (with-memoization ()
        (loop for idx being the idx from 0 below (dimensions b) with-iterator (:stride ((of-a (strides a) (head a))
-                                                                               (of-b (strides b) (head b))))
+                                                                                       (of-b (strides b) (head b))))
              do (when (t.f= ,(field-type (cl :x))
                             (t.store-ref ,(cl :x) (memoizing (store a) :type ,(store-type (cl :x))) of-a)
                             (t.store-ref ,(cl :x) (memoizing (store b) :type ,(store-type (cl :x))) of-b))

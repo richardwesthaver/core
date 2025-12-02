@@ -33,7 +33,7 @@
 (definline graph-indexing! (idx tensor)
   (declare (type index-store-vector idx) (type graph-accessor tensor))
   (when (slot-value tensor 'transposep) (rotatef (aref idx 0) (aref idx 1)))
-  (letv* ((l r (fence tensor (aref idx 1)) :type (index-type index-type)))
+  (letv* ((l r (fence tensor (aref idx 1)) :type index-type index-type))
     (locally (declare (optimize (speed 3) (safety 0))) (binary-search (aref idx 0) l r (δ-i tensor)))))
 
 (define-tensor-method ref ((x graph-accessor :x) &rest subscripts)

@@ -110,6 +110,7 @@ of a matrix (default 0)
            (format stream "~,4,-2,,,,'Eg" realpart))))
     (t (format stream "~a" element))))
 
+#+nil
 (defmethod print-object ((tensor tensor) stream)
   (if (typep tensor 'dense-tensor)
       (print-unreadable-object (tensor stream :type t)

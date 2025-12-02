@@ -15,6 +15,10 @@
 
 ;;The scheme for this iterator was obtained from FEMLISP.
 (defmacro mod-update ((idx init dims &key order uplo) &rest body)
+  "IDX is an index which is updated from INIT based on DIMS.
+
+ORDER is one of :ROW-MAJOR or :COL-MAJOR.
+UPLO is one of :UL :L :LO :U :UO."
   (let* ((uplo (or uplo :ul))
          (order (or order (case uplo ((:u :uo) :col-major) ((:l :lo) :row-major)) *default-stride-ordering*)))
     (assert (null (remove-if #'(lambda (x) (member (first x) '(:update :reset))) body)) nil)
@@ -48,51 +52,61 @@
                         (return t))))))))
 
 ;;; FOR X BEING THE Y OF Z
+;; TODO: docs - return value spec
 (defgeneric for-index-iterator (clause-name init dims args))
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
 (defun loop-index-iteration-path (variable data-type prep-phrases)
   (mumble "variable: ~A" variable)
-  (mumble "data-type: ~A" data-type)
+  (mumble "data-type: ~A" data-type) ;; should always be nil?
   (mumble "prep: ~A" prep-phrases)
   (destructuring-bind (initial dimensions &optional iterator %uplo %order) prep-phrases
     (binding-gensyms (gm)
       (let ((iterable (when iterator
                         ;; strides = (cadadr iterator)
-                        (print (for-index-iterator (keywordicate (caadr iterator))
-                                                   (gm init)
-                                                   (gm dims)
-                                                   (cadadr iterator)))))
-            (variable (or variable (gensym "VAR")))
+                        (for-index-iterator (keywordicate (caadr iterator))
+                                            (gm init)
+                                            (gm dims)
+                                            (cadadr iterator))))
             (init (cadr initial))
             (uplo (cadr %uplo))
             (order (cadr %order)))
-        (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
-                      (,(gm init) (let ((,(gm idx) ,init))
-                                    (if (numberp ,(gm idx))
-                                        (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,(gm idx))
-                                        (coerce ,(gm idx) 'index-store-vector))))
-                      (,variable (copy-seq ,(gm init)))
-                      ,@(first iterable))
-                 (declare (type index-store-vector ,(gm dims) ,(gm init))
-                          (type ,(or data-type 'index-store-vector) ,variable))
-                 ,@(second iterable)
-                 (assert (ziprm (= length) (,(gm init) ,(gm dims)))))
-              (sb-loop::wrappers sb-loop::*loop*))
-        `(()
-          () ;prologue
-          () ;pre-test
-          () ;parallel steps
-          (not (with-optimization (:speed 3 :safety 0) ;post-test
-                 (mod-update (,variable 
-                              ,(gm init) 
-                              ,(gm dims) 
-                              :order ,order 
-                              :uplo ,uplo)
-                             ,@(cddr iterable))))
-          ()))))) ;post-steps
+        ;; TODO (print (sb-loop::loop-named-var :stride))
+        ;; (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
+        ;;               (,(gm init) 
+        ;;                 (let ((,variable ,init))
+        ;;                   (if (numberp ,variable)
+        ;;                       (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,variable)
+        ;;                       (coerce ,variable 'index-store-vector))))
+        ;;               (,variable (copy-seq ,(gm init)))
+        ;;               ,@(first iterable))
+        ;;          (declare (type index-store-vector ,(gm dims) ,(gm init) ,variable))
+        ;;          ,@(second iterable))
+        ;;       (sb-loop::wrappers sb-loop::*loop*))
+        (let ((var (if (numberp init)
+                       `(t.store-allocator index-store-vector (length (coerce ,(cadr dimensions) 'index-store-vector)) :initial-element ,init)
+                       `(coerce ,init 'index-store-vector))))
+          `(((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector) index-store-vector)
+             (,variable ,(copy-seq var) index-store-vector)
+             (,(gm init) ,var index-store-vector)
+             (,(gm %init))
+             ,@(first iterable))
+            ((assert (ziprm (= length) (,(gm init) ,(gm dims)))))
+            () ;pre-test
+            () ; psteps
+            (not (if ,(gm %init)
+                     (with-optimization (:speed 3 :safety 0) ;post-test
+                       (mod-update (,variable
+                                    ,(gm init) 
+                                    ,(gm dims) 
+                                    :order ,order 
+                                    :uplo ,uplo)
+                                   ,@(cddr iterable)))
+                     (setf ,(gm %init) t)))
+            ())))))) ;post-steps
 
 (sb-loop::add-loop-path '(idx index) 'loop-index-iteration-path *loop-ansi-universe*
-                        :preposition-groups '((:from :below) (:with-iterator :with-iter) (:uplo) (:order)))
+                        :preposition-groups '((:from :below) (:with-iterator :with-iter) (:uplo) (:order))
+                        :inclusive-permitted nil)
 
 ;; (defmethod sequence:make-sequence-iterator ((self tensor)))
 
@@ -139,7 +153,6 @@
 (defmethod for-index-iterator ((clause-name (eql :general)) init dims body)
   body)
 
-
 ;;; OFFSET-REF
 (defmacro offset-ref (decl &rest body)
   (let ((stack (mapcar #'(lambda (x) (declare (ignorable x)) (list (gensym "sto") (gensym))) decl)))
@@ -164,7 +177,7 @@
            ,@body)))))
 
 ;;; DOREFS
-(defmacro dorefs ((idx dims &key (loop-order *default-stride-ordering* loop-ordering-p) (uplo :ul)) (&rest ref-decls) &rest body)
+(defmacro dorefs ((idx dims &key (order *default-stride-ordering* loop-ordering-p) (uplo :ul)) (&rest ref-decls) &rest body)
   (let* ((tsyms (zipsym (mapcar #'second ref-decls)))
          (rsyms (mapcar #'car ref-decls))
          (types (mapcar #'(lambda (x) (destructuring-bind (ref ten &key type) x

@@ -206,6 +206,8 @@ GROUP-NAME, the classes of the respective argument are the same."))
 
 (defparameter *template-generated-methods* (make-hash-table :test 'equal))
 ;;(subclassp (find-class (tensor 'double-float)) (find-class 'base-tensor))
+;; TODO: something going wrong in method dispatch here, should also define
+;; SB-PCL:SPECIALIZER-TYPE-SPECIFIER as SBCL warns.
 (defmacro define-tensor-method (name (&rest args) &body body)
   (let* ((keypos (or (position-if (lambda (x) (member x cl:lambda-list-keywords)) args) (length args)))
          (dispatch-args (subseq args 0 keypos))
@@ -259,6 +261,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
              `((defmethod ,name 
                    (,@(mapcar (lambda (x) 
                                 (cond
+                                  ;; TODO
                                   ((and (listp x) (>= (length x) 3))
                                    (destructuring-bind (name dispatch group &optional _) x
                                      (declare (ignore _))
