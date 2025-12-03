@@ -368,7 +368,7 @@ long as ASDF is non-nil)."
          ,@body))))
 
 ;;;_. Logical Pathnames
-(defun logical-host-names ()
+(defun list-all-logical-host-names ()
   "Return a list of currently available logical hosts."
   (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
 

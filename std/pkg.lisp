@@ -779,7 +779,7 @@
    :package-symbols
    :package-symbol-names
    :define-logical-pathname
-   :logical-host-names
+   :list-all-logical-host-names
    :check-logical-host
    :check-logical-hosts
    :save-lisp-tree-shake-and-die

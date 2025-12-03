@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :math)
 
+;;; Floating-point Simplification
 (defconstant +epsilon+ 1.e-7
   "Used as a liminal value to work around floating point inaccuracy.")
 

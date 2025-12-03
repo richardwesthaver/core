@@ -51,8 +51,7 @@
      (:file "bool")
      (:file "rand")
      (:file "map")
-     (:file "misc")
-     (:file "readtable")))
+     (:file "misc")))
    (:module "tree"
     :components ((:file "node")
                  (:file "btree")))

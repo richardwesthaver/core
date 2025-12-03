@@ -10,9 +10,9 @@
 ;; As such, we're much better off using an automated approach to generating
 ;; our DEFAR forms.
 
-;; The approach we're using right now is be based on an external lisp
-;; script. This script uses the SYN/TS (tree-sitter) package to parse the entire
-;; lapack.h file into an AST, then walk that AST and collect function
+;; The approach we're using right now is based on an external lisp
+;; script. This script uses the SYN/TS (tree-sitter) package to parse the
+;; entire lapack.h file into an AST, then walk that AST and collect function
 ;; definitions, returning a list of alien definitions (as DEFAR forms).
 
 ;; This file provides alien type definitions for the generated bindings so

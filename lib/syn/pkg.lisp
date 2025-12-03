@@ -21,6 +21,10 @@
   (:use :cl :std :config :ast)
   (:export :fmt :fmt-config))
 
+(defpackage :syn/linfix
+  (:use :cl :std :config :ast :parse/yacc)
+  (:export :*linfix-parser*))
+
 (defpackage :syn/gen
   (:use :cl :std :doc :id :graph :ast)
   (:export :gen-designator :gen-condition :gen-condition

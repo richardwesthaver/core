@@ -5,6 +5,7 @@
   :depends-on (:std :obj :parse :tree-sitter :doc :cli :io :dat)
   :serial t
   :components ((:file "pkg")
+               (:file "linfix")
                (:file "ts")
                (:module "lang"
                 :components

@@ -1,7 +1,7 @@
 (defsystem :math
   :version "0.1.0"
   :description "Core Math System"
-  :depends-on (:std :obj :blas :cuda)
+  :depends-on (:std :obj :blas :cuda :syn)
   :components ((:file "pkg")
                (:file "var")
                (:file "proto")

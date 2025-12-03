@@ -13,6 +13,7 @@
 ;;; Level 1
 ;; from CL-OPENBLAS
 (defun test-saxpy (n &key (repeat 100))
+  ;; (with-static-vectors
   (let ((alpha 1.f0)
         (x (make-array n :element-type 'single-float :initial-element 0.f0))
         (y (make-array n :element-type 'single-float :initial-element 0.f0))

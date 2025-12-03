@@ -49,6 +49,7 @@
 (define-alien-type xdouble (array unsigned-long 2))
 (define-alien-type complex-float (array float 2))
 (define-alien-type complex-double (array double 2))
+;; or (array unsigned-long 4)?
 (define-alien-type complex-xdouble (array xdouble 2))
 (define-alien-type openblas-dojob-callback 
   (function void int (* t) int))
