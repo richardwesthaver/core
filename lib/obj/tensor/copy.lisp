@@ -83,6 +83,43 @@
     ((subtypep type 'tensor) (copy! arr (zeros (array-dimensions arr) type)))
     (t (error "don't know how to copy a list to type ~a" type))))
 
+(defgeneric tricopy! (a b uplo?)
+  (:documentation "Copy upper order, lower order, or diagonal.")
+  (:generic-function-class tensor-method-generator))
+
+(define-tensor-method tricopy! ((a dense-tensor :x) (b dense-tensor :x t) uplo?)
+  `(ecase uplo?
+     ,@(loop for op in '(:u :uo :l :lo)
+                collect `(,op (dorefs (idx (dimensions b) :uplo? ,op)
+                                  ((refa a :type ,(cl :x))
+                                   (refb b :type ,(cl :x)))
+                                  (setf refb refa))))
+     (:d
+      (lety ((ss.a (vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (+ x y))) (strides a)) :type index-type)
+             (ss.b (vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (+ x y))) (strides b)) :type index-type)
+             (sto.a (store a) :type ,(store-type (cl :x)))
+             (sto.b (store b) :type ,(store-type (cl :x))))
+        (loop :repeat (the index-type (vector-min (dimensions b)))
+              :for of.a :of-type index-type := (head a) :then (the index-type (+ of.a ss.a))
+              :for of.b :of-type index-type := (head b) :then (the index-type (+ of.b ss.b))
+              :do (setf (t.store-ref ,(cl :x) sto.b of.b) (t.store-ref ,(cl :x) sto.a of.a))))))
+  'b)
+
+(define-tensor-method tricopy! ((a t) (b dense-tensor :x) uplo?)
+  `(let ((a (t/coerce ,(field-type (cl :x)) a)))
+     (ecase uplo?
+       ,@(loop for op in '(:u :uo :l :lo)
+               collect `(,op (dorefs (idx (dimensions b) :uplo? ,op)
+                                 ((refb b :type ,(cl :x)))
+                                 (setf refb a))))
+       (:d
+        (lety ((ss.b (vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (+ x y))) (strides b)) :type index-type)
+               (sto.b (store b) :type ,(store-type (cl :x))))
+          (loop :repeat (the index-type (vector-min (dimensions b)))
+                :for of.b :of-type index-type := (head b) :then (the index-type (+ of.b ss.b))
+                :do (setf (t.store-ref ,(cl :x) sto.b of.b) a)))))
+     b))
+
 (defgeneric swap! (x y)
   (:documentation
 "(SWAP! x y)

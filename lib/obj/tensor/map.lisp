@@ -1,0 +1,195 @@
+;;; map.lisp --- Tensor Mapping Functions
+
+;; 
+
+;;; Code:
+(in-package :obj/tensor)
+
+(defgeneric mapsor! (func x y)
+  (:documentation
+"
+    Syntax
+    ======
+    (MAPSOR! func x y)
+
+    Purpose
+    =======
+    Applies the function element-wise on x, and sets the corresponding
+    elements in y to the value returned by the function.
+
+    Example
+    =======
+    > (mapsor! #'(lambda (idx x y)
+                  (if (= (car idx) (cadr idx))
+                      (sin x)
+                      y))
+       (randn '(2 2)) (zeros '(2 2)))
+    #<REAL-TENSOR #(2 2)
+    -9.78972E-2  0.0000
+     0.0000     -.39243
+    >
+    >
+")
+  (:method :before ((func function) (x tensor) (y tensor))
+    (assert (with-optimization (:speed 3 :safety 0) 
+              (vector-eq (dimensions x) (dimensions y))) 
+            nil 'tensor-dimension-mismatch))
+  (:generic-function-class tensor-method-generator))
+
+(define-tensor-method mapsor! ((func function) (x dense-tensor :x) (y dense-tensor :y))
+  `(dorefs (idx (dimensions x))
+     ((ref-x x :type ,(cl :x))
+      (ref-y y :type ,(cl :y)))
+     (setf ref-y (funcall func idx ref-x ref-y)))
+  'y)
+
+(define-tensor-method mapsor! ((func function) (x null) (y dense-tensor :y))
+  `(dorefs (idx (dimensions y))
+     ((ref-y y :type ,(cl :y)))
+     (setf ref-y (funcall func idx ref-y)))
+  'y)
+
+(definline mapsor (func x &optional output-type)
+  (let ((ret (zeros (dimensions x) (or output-type (class-of x)))))
+    (mapsor! #'(lambda (idx x y) (declare (ignore idx y)) (funcall func x)) x ret)))
+
+(defmacro map-tensor! (type (x tensor) &body body)
+  (declare (type symbol x))
+  (using-gensyms (decl (tensor) (idx ref))
+    `(let (,@decl)
+       (declare (type ,type ,tensor))
+       (with-optimization (:speed 3 :safety 0)
+         (dorefs (,idx (dimensions ,tensor))
+             ((,ref ,tensor :type ,type))
+             (setf ,ref (let-typed ((,x ,ref :type ,(field-type type))) ,@body))))
+       ,tensor)))
+
+(defun check-dims (axlst tensors)
+  (let ((axlst (if (numberp axlst) (make-list (length tensors) :initial-element axlst) axlst)))
+    (loop for x in tensors
+          for axis in axlst
+          with dims = nil
+          with strides = nil
+          with slices = nil
+          do (cond
+               ((typep x 'dense-tensor)
+                (lety ((xdims (dimensions x) :type index-store-vector))
+                  (assert (< axis (order x)) nil 'tensor-dimension-mismatch)
+                  (if (null dims)
+                      (setf dims (aref xdims (mod axis (order x))))
+                      (setf dims (min (aref xdims (mod axis (order x))) dims))))
+                (push (aref (strides x) (mod axis (order x))) strides)
+                (push (slice~ x axis 0 (if (> (order x) 1) nil t)) slices))
+               ((eq x nil)
+                (push nil strides)
+                (push nil slices))
+               (t (error 'invalid-arguments)))
+          finally (return (values dims (nreverse strides) slices)))))
+
+(defun mapslice (axis func tensor &rest more-tensors)
+  (letv* ((d.axis strides slices (check-dims axis (cons tensor more-tensors))))
+    (loop :for i :from 0 :below d.axis
+          :collect (prog1 (apply func (mapcar #'tensor-copy slices))
+                     (when (< i (1- d.axis))
+                       (loop :for slc :in slices
+                             :for std :in strides
+                             :do (when slc (incf (slot-value slc 'head) std))))))))
+
+(defun mapslice~ (axis func tensor &rest more-tensors)
+  (letv* ((d.axis strides slices (check-dims axis (cons tensor more-tensors))))
+   (loop :for i :from 0 :below d.axis
+      :collect (prog1 (apply func slices)
+                 (when (< i (1- d.axis))
+                   (loop :for slc :in slices
+                      :for std :in strides
+                      :do (when slc (incf (slot-value slc 'head) std))))))))
+
+(defun mapslicec~ (axis func tensor &rest more-tensors)
+  (letv* ((d.axis strides slices (check-dims axis (cons tensor more-tensors))))
+    (loop :for i :from 0 :below d.axis
+       :do (prog1 (apply func slices)
+             (when (< i (1- d.axis))
+               (loop :for slc :in slices
+                  :for std :in strides
+                  :do (when slc (incf (slot-value slc 'head) std)))))))
+  (values-list (cons tensor more-tensors)))
+;;
+
+(defmacro tensor-foldl (type func ten init &key (init-type (field-type type)) (key nil))
+  (using-gensyms (decl (ten init))
+    (with-gensyms (sto idx of funcsym keysym)
+    `(let* (,@decl
+            ,@(unless (symbolp func)
+                `((,funcsym ,func)))
+            ,@(unless (symbolp key)
+                `((,keysym ,key)))
+            (,sto (store ,ten)))
+       (declare (type ,type ,ten)
+                ,@(unless (symbolp func) `((type function ,funcsym)))
+                ,@(unless (symbolp key) `((type function ,keysym)))
+                (type ,(store-type type) ,sto)
+                ,@(when init-type
+                        `((type ,init-type ,init))))
+       (with-optimization (:speed 3 :safety 0)
+         (loop for ,idx being the idx from 0 below (dimensions ,ten) 
+               with-iterator ((:stride ((,of (strides ,ten) (head ,ten)))))
+               do (setf ,init (,@(if (symbolp func)
+                                     `(,func)
+                                     `(funcall ,funcsym))
+                               ,init 
+                               ,(recursive-append
+                                 (when key
+                                   (if (symbolp key)
+                                       `(,key)
+                                       `(funcall ,keysym)))
+                                 `(t/store-ref ,type ,sto ,of))))))
+       ,init))))
+
+;;
+(defmacro with-peeky! (((&rest tensors) &optional (step 1)) &rest body)
+  (let ((ts (zipsym tensors)))
+    (with-gensyms (e.step s)
+      `(let (,@ts
+             (,e.step ,step))
+         (unless (and
+                  ,@(mapcar #'(lambda (x) `(when-let ((,s (gethash 'slice-increment (attributes ,x))))
+                                             (incf (slot-value ,x 'head) (* ,e.step ,s))))
+                            (mapcar #'car ts)))
+           (error 'tensor-error :message "Can't find slice-increment in tensor's attributes"))
+         (prog1 (progn ,@body)
+           (unless (and
+                    ,@(mapcar #'(lambda (x) `(when-let ((,s (gethash 'slice-increment (attributes ,x))))
+                                               (decf (slot-value ,x 'head) (* ,e.step ,s))))
+                              (mapcar #'car ts)))
+             (error 'tensor-error :message "Can't find slice-increment in tensor's attributes")))))))
+
+(definline peek-tensor! (x &optional (step 1))
+  (if-let ((s (gethash 'slice-increment (memos x))))
+    (progn (incf (slot-value x 'head) (* step s)) x)
+    (error 'tensor-error :message "Can't find slice-increment in tensor's attributes" :tensor x)))
+
+(definline peek-tensor~ (x &optional (step 1))
+  (if-let ((s (gethash 'slice-increment (memos x))))
+    (let ((ret (subtensor~ x nil)))
+      (incf (slot-value ret 'head) (* step s)) ret)
+    (error 'tensor-error :message "Can't find slice-increment in tensor's attributes" :tensor x)))
+
+;; FOR x SLICING y ALONG axis (FROM BELOW TO DOWNTO WITH-INDEX BY
+
+;; req GER!
+#+nil
+(defun meshgrid (a b)
+  (declare (type tensor-vector a b))
+  (let ((x (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a)))
+        (y (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a))))
+    (ger! 1 a (ones (dimensions b 0) (class-of b)) x)
+    (ger! 1 (ones (dimensions a 0) (class-of a)) b y)
+    (values x y)))
+
+(defmacro with-coordinates ((&rest syms) vector &body code)
+  (with-gensyms (vec)
+    `(let ((,vec ,vector))
+       (declare (type tensor-vector ,vec))
+       (assert (= (dimensions ,vec 0) ,(length syms)) nil 'tensor-dimension-mismatch)
+       (symbol-macrolet (,@(mapcar (let ((i -1)) #'(lambda (x) `(,x (ref ,vec ,(incf i))))) syms))
+         ,@code))))

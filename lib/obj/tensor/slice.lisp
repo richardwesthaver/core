@@ -5,16 +5,16 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(defmethod subtensor :before ((tensor base-tensor) (subscripts list))
+(defmethod subtensor~ :before ((tensor base-tensor) (subscripts list))
   (assert (or (null subscripts) (= (length subscripts) (order tensor))) nil 'tensor-index-rank-mismatch))
 
-(defmethod (setf subtensor) (value (tensor dense-tensor) (subscripts list))
+(defmethod (setf subtensor~) (value (tensor dense-tensor) (subscripts list))
   (letv* ((hd dims stds (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))))
     (cond
       ((not hd) nil #+nil(error "no place found inside ~a." subscripts))
       ((not dims) (if subscripts
                       (setf (store-ref tensor hd) value)
-                      (copy! value (without-tensor-safety (subtensor tensor nil)))))
+                      (copy! value (without-tensor-safety (subtensor~ tensor nil)))))
       (t (copy! value
                 (without-tensor-safety
                     (make-instance (class-of tensor)
@@ -70,13 +70,13 @@
                  (push (* inc s) stds)))
           finally (return (values hd (nreverse dims) (nreverse stds))))))
 
-(definline slice (x axis &optional (idx 0) (preserve-rank-p (when (= (order x) 1) t)))
+(definline slice~ (x axis &optional (idx 0) (preserve-rank-p (when (= (order x) 1) t)))
   (let* ((axis (modproj axis (order x) nil 0))
          (subs (loop for i from 0 below (order x)
                      collect (cond ((/= i axis) '(nil nil))
                                    (preserve-rank-p (list idx (1+ idx)))
                                    (t idx)))))
-    (subtensor x subs)))
+    (subtensor~ x subs)))
 
 (defgeneric suptensor (tensor ord &optional start)
   (:method :before ((tensor base-tensor) ord &optional (start 0))
@@ -111,7 +111,7 @@
                                       strd))
     ten))
 
-(defun reshape (x dims) (reshape! (subtensor x nil) dims))
+(defun reshape (x dims) (reshape! (subtensor~ x nil) dims))
 
 (defun join (axis tensor &rest more-tensors)
   (if (null tensor)
@@ -119,7 +119,7 @@
       (let ((dims (copy-seq (dimensions tensor))))
         (loop for ele in more-tensors do (incf (aref dims axis) (aref (dimensions ele) axis)))
         (let* ((ret (zeros dims (class-of tensor)))
-               (view (slice ret axis 0 t)))
+               (view (slice~ ret axis 0 t)))
           (loop for ele in (cons tensor more-tensors)
                 with head = 0
                 do (progn

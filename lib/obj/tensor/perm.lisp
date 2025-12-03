@@ -200,7 +200,7 @@
   seq)
 
 (defmethod permute! ((A tensor) (perm permutation-pivot-flip) &optional (arg 0))
-  (lety ((t1 (slice A arg)) (t2 (slice A arg))
+  (lety ((t1 (slice~ A arg)) (t2 (slice~ A arg))
               (idiv (store perm) :type index-store-vector))
              (loop for σi across idiv
                    for i below (length idiv)

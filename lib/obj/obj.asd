@@ -49,6 +49,9 @@
      (:file "slice")
      (:file "foreign")
      (:file "bool")
+     (:file "rand")
+     (:file "map")
+     (:file "misc")
      (:file "readtable")))
    (:module "tree"
     :components ((:file "node")
