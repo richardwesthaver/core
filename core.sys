@@ -7,24 +7,22 @@
   :net :nlp :dat :doc
   :q :dsp :math :parse 
   :rdb :cry :io :pod
-  :box :web :syn :vc
-  :rt)
+  :box :syn :vc :rt)
  :components ((:file "core"))
  ;; :hook ((:load (lambda () (mumble "loading core"))))
  :provide 
  ((:tests
-   :depends-on
+   :require
    (:rt :std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
     :doc/tests :nlp/tests :skel/tests :box/tests
     :syn/tests :organ/tests :obj/tests :math/tests
     :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
-    :zstd/tests :uring/tests :blake3/tests :ublk/tests
+    :zstd/tests :uring/tests :blake3/tests
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
     :vc/tests :cli/tests :q/tests))
-  (:bench :core/bench
-   :depends-on (:std :rt :core)
+  (:bench
    :components
    ((:mod "bench"
      :components 

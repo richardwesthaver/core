@@ -219,11 +219,11 @@
 ;;	    (t/blas-axpy! ,(cl x) alpha x (first strd) y (second strd))))
 ;;        `(t/axpy! ,(cl x) alpha x y))))
 
-;; (defgeneric store-ref (tensor idx)
-;;   (:documentation  "Generic serial read access to the store.")
-;;   (:generic-function-class tensor-method-generator))
-;; (defgeneric (setf store-ref) (value tensor idx)
-;;   (:generic-function-class tensor-method-generator))
+(defgeneric store-ref (tensor idx)
+  (:documentation  "Generic serial read access to the store.")
+  (:generic-function-class tensor-method-generator))
+(defgeneric (setf store-ref) (value tensor idx)
+  (:generic-function-class tensor-method-generator))
 (define-tensor-method store-ref ((tensor tensor :x) idx)
   `(t.store-ref ,(cl :x) (t.store ,(cl :x) tensor) idx))
 (define-tensor-method (setf store-ref) (value (tensor tensor :x) idx)
@@ -244,20 +244,20 @@
 (defgeneric (setf ref) (value tensor &rest subscripts)
   (:generic-function-class tensor-method-generator))
 
-;; (defgeneric store-size (obj)
-;;   (:documentation "(store-size obj) => store-size
+(defgeneric store-size (obj)
+  (:documentation "(store-size obj) => store-size
 
-;;   Returns the number of elements the store of the obj can hold. This is not
-;;   necessarily equal to that returned by total-size.")
-;;   (:generic-function-class tensor-method-generator))
+  Returns the number of elements the store of the obj can hold. This is not
+  necessarily equal to that returned by total-size.")
+  (:generic-function-class tensor-method-generator))
 
 (define-tensor-method store-size ((tensor tensor :x))
   `(t.store-size ,(cl :x) (slot-value tensor 'store)))
 
-;; (defgeneric total-size (obj)
-;;   (:method ((obj sequence)) (length obj))
-;;   (:method ((arr array)) (array-total-size arr))
-;;   (:generic-function-class tensor-method-generator))
+(defgeneric total-size (obj)
+  (:method ((obj sequence)) (length obj))
+  (:method ((arr array)) (array-total-size arr))
+  (:generic-function-class tensor-method-generator))
 (define-tensor-method total-size ((obj tensor :x))
   `(t.total-size ,(cl :x) obj))
 (defmethod total-size ((x dense-tensor))
@@ -266,4 +266,3 @@
   (length x))
 (defmethod total-size ((x array))
   (array-total-size x))
-

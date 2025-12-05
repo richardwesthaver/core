@@ -4,7 +4,7 @@
    :net :nlp :dat :doc
    :q :dsp :math :parse 
    :rdb :cry :io :pod
-   :box :web :vc :syn
+   :box :vc :syn
    :rt)
   :components ((:file "core"))
   :build-pathname "core-source"
@@ -17,7 +17,7 @@
                :doc/tests :nlp/tests :skel/tests :box/tests
                :syn/tests :organ/tests :obj/tests :math/tests
                :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
-               :zstd/tests :uring/tests :blake3/tests :ublk/tests
+               :zstd/tests :uring/tests :blake3/tests
                :parse/tests :pod/tests :rt/tests :rdb/tests
                :dsp/tests :cry/tests :io/tests :net/tests 
                :vc/tests :cli/tests :q/tests)

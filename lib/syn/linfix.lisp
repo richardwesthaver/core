@@ -109,4 +109,4 @@
 ;;    modifying the value of the variable *operator-ordering*.
 
 ;;; Code:
-(in-package :syn/linparse)
+(in-package :syn/linfix)

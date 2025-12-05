@@ -49,6 +49,7 @@
      (:file "slice")
      (:file "foreign")
      (:file "bool")
+     (:file "dfs")
      (:file "rand")
      (:file "map")
      (:file "misc")))

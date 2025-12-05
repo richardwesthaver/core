@@ -56,8 +56,8 @@ UPLO is one of :UL :L :LO :U :UO."
 (defgeneric for-index-iterator (clause-name init dims args))
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
 (defun loop-index-iteration-path (variable data-type prep-phrases)
+  (declare (ignore data-type))
   (mumble "variable: ~A" variable)
-  (mumble "data-type: ~A" data-type) ;; should always be nil?
   (mumble "prep: ~A" prep-phrases)
   (destructuring-bind (initial dimensions &optional iterator %uplo %order) prep-phrases
     (binding-gensyms (gm)
@@ -71,28 +71,26 @@ UPLO is one of :UL :L :LO :U :UO."
             (uplo (cadr %uplo))
             (order (cadr %order)))
         ;; TODO (print (sb-loop::loop-named-var :stride))
-        ;; (push `(let* ((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector))
-        ;;               (,(gm init) 
-        ;;                 (let ((,variable ,init))
-        ;;                   (if (numberp ,variable)
-        ;;                       (t.store-allocator index-store-vector (length ,(gm dims)) :initial-element ,variable)
-        ;;                       (coerce ,variable 'index-store-vector))))
-        ;;               (,variable (copy-seq ,(gm init)))
-        ;;               ,@(first iterable))
-        ;;          (declare (type index-store-vector ,(gm dims) ,(gm init) ,variable))
-        ;;          ,@(second iterable))
-        ;;       (sb-loop::wrappers sb-loop::*loop*))
+        ;; wrappers come AFTER bindings
+        (when iterable
+          (push `(let* ,(first iterable)
+                   ,@(second iterable))
+                (sb-loop::wrappers sb-loop::*loop*)))
         (let ((var (if (numberp init)
                        `(t.store-allocator index-store-vector (length (coerce ,(cadr dimensions) 'index-store-vector)) :initial-element ,init)
                        `(coerce ,init 'index-store-vector))))
+          ;; TODO types
           `(((,(gm dims) (coerce ,(cadr dimensions) 'index-store-vector) index-store-vector)
              (,variable ,(copy-seq var) index-store-vector)
              (,(gm init) ,var index-store-vector)
              (,(gm %init))
-             ,@(first iterable))
+             ;; iterator bindings
+             ;; ,@(print (mapcar (lambda (x) (list (car x))) (first iterable)))
+             )
             ((assert (ziprm (= length) (,(gm init) ,(gm dims)))))
             () ;pre-test
-            () ; psteps
+            ()
+            ;; (,@(print (first iterable))) ; psteps
             (not (if ,(gm %init)
                      (with-optimization (:speed 3 :safety 0) ;post-test
                        (mod-update (,variable
@@ -205,7 +203,7 @@ UPLO is one of :UL :L :LO :U :UO."
                                                 (when typ `(,of (strides ,(car ten)) 
                                                                 (head ,(car ten)))))
                                             osyms tsyms types))))
-                    ,@(when loop-ordering-p `(order ,loop-order)) 
+                    ,@(when loop-ordering-p `(order ,order)) 
                  uplo ,uplo)
            (copy-vector-to-list ,idx ,lst)
            (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) 

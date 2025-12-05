@@ -175,6 +175,74 @@
     (error 'tensor-error :message "Can't find slice-increment in tensor's attributes" :tensor x)))
 
 ;; FOR x SLICING y ALONG axis (FROM BELOW TO DOWNTO WITH-INDEX BY
+;; TODO
+(defun loop-slice-iteration-path (xa data-type prep-phrases)
+  (declare (ignore data-type))
+  (destructuring-bind (x axis &optional start oend cend dend index step) prep-phrases  
+    ;; (when (or (and oend cend) (and dend (or cend oend))) (error "Use only one of BELOW TO DOWNTO."))
+    (when (setq xa (ensure-list xa))
+      (binding-gensyms (hy hyf)
+        (let ((n (length xa)))
+          (push 
+           `(let ((,(hy axis) ,(hy axis)))
+              (setf ,@(mapcan #'(lambda (x) `(,x (caar ,(hy axis)) ,(hy axis) (cdr ,(hy axis)))) xa)))
+           (sb-loop::wrappers sb-loop::*loop*))
+          (push
+           `(let ((,(hy x) (if (listp ,(hy x))
+                               (progn (assert (= (length ,(hy x)) ,n) nil 'invalid-arguments) ,(hy x))
+                               (make-list ,n :initial-element ,(hy x)))))
+             (loop for ,(hy xi) in ,(hy x)
+                      for ,(hy as) on ,(hy axis)
+                   do (etypecase ,(hy xi)
+                        (null (setf (car ,(hy as)) nil))
+                        (dense-tensor
+                         (let* ((,(hy ai) (modproj (car ,(hy as)) (order ,(hy xi))))
+                                (,(hy xi) ,(if (or start oend cend dend)
+                                               `(let ((,(hy dimi) (dimensions ,(hy xi) (the index-type ,(hy ai))))
+                                                      (,(hy slice) (make-list (order ,(hy xi)) :initial-element '(nil nil))))
+                                                  (declare (ignorable ,(hy dimi)))
+                                                  (setf (nth ,(hy ai) ,(hy slice))
+                                                        ,(cond
+                                                           (dend `(list* ,(and start (hy start)) (- (modproj ,(and dend (hy dend)) ,(hy dimi)) ,(hy dimi) 1) -1))
+                                                           (oend `(list ,(and start (hy start)) ,(and oend (hy oend))))
+                                                           (cend `(list ,(and start (hy start)) (1+ (modproj ,(and cend (hy cend)) ,(hy dimi)))))
+                                                           (t `(list ,(and start (hy start)) nil))))
+                                                  (subtensor~ ,(hy xi) ,(hy slice)))
+                                               (hy xi))))
+                           (if ,(hy xi)
+                               (progn
+                                 (when (or (< ,(hy dim) 0) (> ,(hy dim) (dimensions ,(hy xi) (the index-type ,(hy ai)))))
+                                   (setf ,(hy dim) (dimensions ,(hy xi) (the index-type ,(hy ai)))))
+                                 (setf (car ,(hy as))
+                                       (cons (let ((,(hy xs) (slice~ ,(hy xi) ,(hy ai))))
+                                               (setf (gethash 'slice-increment (memos ,(hy xs))) (strides ,(hy xi) ,(hy ai)))
+                                               ,(hy xs))
+                                             (strides ,(hy xi) ,(hy ai)))))
+                               (setf ,(hy dim) 0
+                                     (car ,(hy as)) (cons nil nil))))))))
+           (sb-loop::wrappers sb-loop::*loop*))
+          `(((,(hy x) ,x)
+             (,(hy dim) -1)
+            ;; ,@(mapcan #'(lambda (x y) (when x `((with ,(hyf y) = ,x) (declare (type index-type ,(hyf y))))))
+            ;;          (list start oend cend dend step)
+            ;;          '(start oend cend dend step))             
+             (,(hy axis) (let ((,(hy axis) ,axis))
+                           (if (listp ,(hy axis))
+                               (assert (= (length ,(hy axis)) ,n) nil 'invalid-arguments)
+                               (setq ,(hy axis) (make-list ,n :initial-element ,(hy axis))))
+                           ,(hy axis)))
+             ,@(mapcan #'(lambda (x) `((,x nil))) xa))
+            ()
+            ;; (repeat ,(if step `(floor ,(hy dim) ,(hy step)) (hy dim)))
+            ;; ,@(when index `((for ,index initially ,(or (and start (hy start)) (if dend `(1- ,(hy dim)) 0)) then (,(if dend '- '+) ,index ,(or (and step (hy step)) 1)))))
+            () ;pre-test
+            ()
+            ;; (,@(print (first iterable))) ; psteps
+            t
+            `((loop for ,(hy ai) in ,(hy axis)
+                  when ,(hy ai) 
+                  do (incf (slot-value (car ,(hy ai)) 'head) 
+                       ,(recursive-append (when step `(* ,(hy step))) `(cdr ,(hy ai))))))))))))
 
 ;; req GER!
 #+nil
