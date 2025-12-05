@@ -5,7 +5,6 @@
   :components ((:file "pkg")
                (:file "var")
                (:file "proto")
-               (:file "prim")
                (:file "util")
                (:file "sfc")
                (:file "auto")
@@ -17,7 +16,8 @@
                 :components
                 ((:file "lu")))
                (:file "linfix")
-               (:file "readtable"))
+               (:file "syn")
+               (:file "math"))
   :in-order-to ((test-op (test-op :math/tests))))
 
 (defsystem :math/tests

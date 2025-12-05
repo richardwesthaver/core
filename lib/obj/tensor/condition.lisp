@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(deferror tensor-error (error)
+(define-condition tensor-error (error)
   ((tensor :reader error-tensor :initarg :tensor)))
 
 (define-condition tensor-store-index-out-of-bounds (tensor-error)

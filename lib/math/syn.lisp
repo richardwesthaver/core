@@ -1,6 +1,6 @@
-;;; readtable.lisp --- Math Readtables
+;;; readtable.lisp --- Math Syntax and Readtables
 
-;; Standard Algebraic Notation (LR)
+;; Standard Algebraic Notation (LR), Tensor Notation
 
 ;;; Commentary:
 
@@ -10,24 +10,27 @@
 ;;; Code:
 (in-package :math/syn)
 
-(defparameter *tensor-symbol*
-  '((#\D (tensor 'double-float)
-     (#\Z (tensor '(complex double-float)))
-     (#\N (tensor 'fixnum))
-     (#\B (tensor 'boolean)))))
+(eval-always
+  (defparameter *tensor-symbol*
+    '((#\D (tensor 'double-float)
+       (#\Z (tensor '(complex double-float)))
+       (#\N (tensor 'fixnum))
+       (#\B (tensor 'boolean))))))
 
-(defparameter *operator-assoc-table* '((* math::tb*-opt)
-                                       (.* math::tb.*)
-                                       (@ math::tb@)
-                                       (^ math::tb^)
-                                       (+ math::tb+)
-                                       (- math::tb-)
-                                       (\\ math::tb\\)
-                                       (/ math::tb/)
-                                       (./ math::tb./)
-                                       (== math::tb==)
-                                       (transpose math::transpose)
-                                       (ctranspose math::ctranspose)))
+(defparameter *operator-assoc-table* nil
+  #+nil 
+  '((* math::tb*-opt)
+    (.* math::tb.*)
+    (@ math::tb@)
+    (^ math::tb^)
+    (+ math::tb+)
+    (- math::tb-)
+    (\\ math::tb\\)
+    (/ math::tb/)
+    (./ math::tb./)
+    (== math::tb==)
+    (transpose math::transpose)
+    (ctranspose math::ctranspose)))
 
 (defun op-overload (expr)
   (labels ((walker (expr)
@@ -59,15 +62,14 @@
                        ,@(mapcar #'walker (cdr expr))))))))
     (walker expr)))
 
-(in-package :syn/linfix)
 (defun infix-reader (stream subchar arg)
   ;; Read either #I(...) or #I"..."
   (declare (ignore subchar))
   (assert (null arg) nil "given arg where none was required.")
   ;;(ignore-characters +blank-characters+ stream)
-  (multiple-value-bind (iexpr bind) (syn/linfix::token-reader stream (ecase (read-char stream t nil t) (#\( (cons #\( #\))) (#\[ (cons #\[ #\]))))
+  (multiple-value-bind (iexpr bind) (token-reader stream (ecase (read-char stream t nil t) (#\( (cons #\( #\))) (#\[ (cons #\[ #\]))))
     (setf iexpr (nconc (list 'progn '\() iexpr (list '\))))
-    (let ((lexpr (math::op-overload (parse/yacc:parse-with-lexer (syn/linfix::list-lexer iexpr) syn/linfix:*linfix-parser*))))
+    (let ((lexpr (op-overload (parse/yacc:parse-with-lexer (list-lexer iexpr) *linfix-parser*))))
       (map nil #'(lambda (x) (setf lexpr (subst (second x) (first x) lexpr))) bind)
       lexpr)))
 
@@ -77,7 +79,7 @@
              `(defreadtable :tensor
                 (:merge :std)
                 (:dispatch-macro-char #\# #\I #'infix-reader)
-                ,@(mapcar #'(lambda (x) `(:dispatch-macro-char #\# ,(car x) #'tensor-reader)) math::*tensor-symbol*))))
+                ,@(mapcar #'(lambda (x) `(:dispatch-macro-char #\# ,(car x) #'tensor-reader)) *tensor-symbol*))))
   (tensor-symbol-enumerate))
 
 (defreadtable :math

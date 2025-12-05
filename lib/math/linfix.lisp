@@ -109,7 +109,7 @@
 ;;    modifying the value of the variable *operator-ordering*.
 
 ;;; Code:
-(in-package :math)
+(in-package :math/syn)
 
 (defparameter *operator-tokens*
   `(("^" ^) ("**" **)

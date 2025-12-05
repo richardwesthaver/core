@@ -33,6 +33,10 @@
   (:import-from :math/util :blasfunc)
   (:export))
 
+(defpkg :math/syn
+  (:use :std-lisp :tensor :parse/yacc)
+  (:export :*linfix-parser*))
+
 #+lapack
 (defpkg :math/lapack
   (:use :std-lisp :math/proto :lapack :tensor)
@@ -40,8 +44,3 @@
   (:export))
 
 (setq *defpkg-hook* nil)
-
-(defpkg :math
-  (:use :std-lisp :tensor :parse/yacc)
-  (:export :*linfix-parser*)
-  (:use-reexport . #.*math-packages*))
