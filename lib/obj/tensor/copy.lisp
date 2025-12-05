@@ -120,6 +120,18 @@
                 :do (setf (t.store-ref ,(cl :x) sto.b of.b) a)))))
      b))
 
+(deft/generic (t.swap! #'subtypep) sym (x y))
+(deft/method t.swap! (sym dense-tensor) (x y)
+  (using-gensyms (decl (x y) (idx ref-x ref-y))
+    `(let* (,@decl)
+       (declare (type ,sym ,x ,y))
+       (very-quickly
+         (dorefs (,idx (dimensions ,x))
+                 ((,ref-x ,x :type ,sym)
+                  (,ref-y ,y :type ,sym))
+           (rotatef ,ref-x ,ref-y))
+         ,y))))
+
 (defgeneric swap! (x y)
   (:documentation
 "(SWAP! x y)
@@ -132,3 +144,11 @@
 
   X, Y must have the same dimensions.")
   (:generic-function-class tensor-method-generator))
+
+(defmethod swap! :before ((x dense-tensor) (y dense-tensor))
+  (assert (with-optimization (:speed 3 :safety 0) 
+            (vector-eq (the index-store-vector (dimensions x)) 
+                       (the index-store-vector (dimensions y)) 
+                       #'=)) 
+          nil
+          'tensor-dimension-mismatch))

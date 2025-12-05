@@ -11,12 +11,12 @@
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *math-packages* :test 'string=)))
 
 (defpkg :math/proto
-  (:use :cl :std)
+  (:use :cl :std :tensor)
   (:export :math-error :math-warning))
 
 (defpkg :math/util
   (:use :cl :std :math/proto :tensor)
-  (:export :blasfunc))
+  (:export :blasfunc :lapackfunc))
 
 (defpkg :math/sfc
   (:use :std-lisp :math/proto)
@@ -28,8 +28,20 @@
   (:use :std-lisp :math/proto)
   (:export :life :cellular-automata :*rule-patterns*))
 
-(defpkg :math
-  (:use :std-lisp)
-  (:use-reexport :math/proto :math/sfc :math/auto))
+(defpkg :math/blas
+  (:use :std-lisp :math/proto :blas :tensor)
+  (:import-from :math/util :blasfunc)
+  (:export))
+
+#+lapack
+(defpkg :math/lapack
+  (:use :std-lisp :math/proto :lapack :tensor)
+  (:import-from :math/util :lapackfunc)
+  (:export))
 
 (setq *defpkg-hook* nil)
+
+(defpkg :math
+  (:use :std-lisp :tensor :parse/yacc)
+  (:export :*linfix-parser*)
+  (:use-reexport . #.*math-packages*))

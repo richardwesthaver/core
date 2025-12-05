@@ -21,7 +21,8 @@
              :finally (return (values (aref sort-std 0) perm-dims sort-std std-perm)))))))))
 
 (definline blas-func (name type)
-  "Return the name of a given BLAS/LAPACK function whose base name is NAME operating on the type TYPE."
+  "Return the name of a given BLAS/LAPACK function whose base name is NAME
+operating on the type TYPE."
   (let ((prefix (cond
                   ((eq type 'single-float) "s")
                   ((eq type 'double-float) "d")

@@ -145,7 +145,6 @@
                                  `(t/store-ref ,type ,sto ,of))))))
        ,init))))
 
-;;
 (defmacro with-peeky! (((&rest tensors) &optional (step 1)) &rest body)
   (let ((ts (zipsym tensors)))
     (with-gensyms (e.step s)

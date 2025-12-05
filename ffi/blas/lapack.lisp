@@ -58,7 +58,7 @@ b; arrays with matrices in the RFP storage have names ending in fp.
    #:load-lapacke))
 
 (in-package :lapack)
-
+(push :lapack *features*)
 (define-alien-loader lapack "/usr/lib/")
 (define-alien-loader lapacke "/usr/lib/")
 

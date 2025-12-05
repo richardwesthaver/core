@@ -9,6 +9,14 @@
                (:file "util")
                (:file "sfc")
                (:file "auto")
+               (:module "blas"
+                :components 
+                ((:file "axpy")))
+               (:module "lapack"
+                :if-feature :lapack
+                :components
+                ((:file "lu")))
+               (:file "linfix")
                (:file "readtable"))
   :in-order-to ((test-op (test-op :math/tests))))
 

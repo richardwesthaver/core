@@ -31,6 +31,7 @@
    (:module "tensor"
     :components 
     ((:file "var")
+     (:file "condition")
      (:file "meta")
      (:file "base")
      (:file "loop")
@@ -44,11 +45,11 @@
      (:file "graph")
      (:file "coord")
      (:file "perm")
-     ;; blas
      (:file "einstein")
      (:file "slice")
      (:file "foreign")
      (:file "bool")
+     (:file "complex")
      (:file "dfs")
      (:file "rand")
      (:file "map")
