@@ -589,8 +589,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     ((data :reader data
 	   :initform (make-array 12 :fill-pointer 0 :adjustable t))
      ;; Index is the number of rewinds we've done.
-     (index :accessor idx
-	    :initform 0)))
+     (idx :accessor idx
+	  :initform 0)))
 
   (defun %rewind-count (rewindable)
     (fill-pointer (data rewindable)))

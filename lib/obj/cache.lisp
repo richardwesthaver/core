@@ -78,7 +78,7 @@ history but less often recently.
    (expiry :reader entry-expiry)))
 
 (defclass indexed-cache-entry (cache-entry)
-  ((index :accessor index)))
+  ((idx :accessor idx)))
 
 (defclass linked-cache-entry (cache-entry)
   ((next :reader next)
@@ -162,8 +162,8 @@ history but less often recently.
 (defun heap-swap (heap i1 i2)
   (let ((e1 (aref heap i1))
 	(e2 (aref heap i2)))
-    (setf (index e1) i2
-	  (index e2) i1
+    (setf (idx e1) i2
+	  (idx e2) i1
 	  (aref heap i1) e2
 	  (aref heap i2) e1)
     (values e2 e1)))
@@ -215,16 +215,16 @@ history but less often recently.
   (:method :before (policy (queue vector-queue) (entry cache-entry))
     (change-class entry 'indexed-cache-entry))
   (:method (policy (queue vector-queue) (entry cache-entry))
-    (setf (index entry) (push-queue* entry queue)))
+    (setf (idx entry) (push-queue* entry queue)))
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry cache-entry))
     (change-class entry 'heap-cache-entry)
     (setf (entry-weight entry) 1
-          (index entry) (push-queue* entry queue))
-    (bubble-up (data queue) (index entry)))
+          (idx entry) (push-queue* entry queue))
+    (bubble-up (data queue) (idx entry)))
   (:method ((policy fixnum) queue (entry cache-entry))
     (entry-added :lfu queue entry)
     (incf (entry-weight entry) policy)
-    (sink-down (data queue) (index entry))))
+    (sink-down (data queue) (idx entry))))
 
 (defgeneric access-entry (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry)) t)
@@ -239,15 +239,15 @@ history but less often recently.
     t)
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
     (incf (entry-weight entry))
-    (sink-down (data queue) (index entry) t)
+    (sink-down (data queue) (idx entry) t)
     t))
 
 (defgeneric entry-removed (policy queue entry)
   (:method (policy (queue cons-queue) (entry cache-entry))
     (unlink entry))
   (:method (policy (queue vector-queue) (entry cache-entry))
-    (let ((i (index entry)))
-      (setf (index entry) nil
+    (let ((i (idx entry)))
+      (setf (idx entry) nil
             (aref (data queue) i) nil)
       (let ((w 0))
 	(loop for i below (queue-count queue)
@@ -255,16 +255,16 @@ history but less often recently.
 	      when e
 	      do (if (= w i)
 		     (incf w)
-		     (setf (index e) w
+		     (setf (idx e) w
 			   (aref (data queue) w) e
 			   w (1+ w))))
 	(setf (fill-pointer (data queue)) w))))
   (:method ((policy (eql :lfu)) (queue vector-queue) (entry heap-cache-entry))
-    (let ((i (index entry)))
-      (setf (index entry) nil)
+    (let ((i (idx entry)))
+      (setf (idx entry) nil)
       (unless (= i (1- (queue-count* queue)))
         (setf (aref (data queue) i) (pop-queue* queue)
-              (index (aref (data queue) i)) i)
+              (idx (aref (data queue) i)) i)
         (sink-down (data queue) i)))))
 
 (defgeneric evict-entry (policy queue)
@@ -294,7 +294,7 @@ history but less often recently.
             (heavy (pop-queue* queue)))
         (unless (queue-empty-p* queue)
           (setf (aref (data queue) 0) heavy
-                (index heavy) 0)
+                (idx heavy) 0)
           (sink-down (data queue) 0 t))
         light)))
   (:method ((policy fixnum) (queue vector-queue))

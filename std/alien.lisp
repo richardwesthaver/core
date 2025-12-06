@@ -396,8 +396,8 @@ alien (* size-t) with same size as the first value."
            (once-only (value)
              (ecase (eval type)
                ,@(loop for (keyword fn) in pairs
-                       collect `(,keyword `(setf (,',fn ,ptr ,offset) ,value)))))
-       form))))
+                       collect `(,keyword `(setf (,',fn ,ptr ,offset) ,value))))))
+       form)))
 
 (defun aggregatep (type)
   "Return T if the given ALIEN-TYPE is 'aggregate'."
@@ -481,10 +481,10 @@ return a pointer instead of its value."
 (defun sap-set (value sap type &optional (offset 0))
   "Set the value of TYPE at OFFSET bytes from SAP to VALUE."
   (let* ((ptype (parse-alien-type type nil))
-         (ctype (compute-alien-rep-type ptype)))
+         (ctype (print (compute-alien-rep-type ptype))))
     (if (aggregatep ptype) ; XXX: backwards incompatible?
         (setf (sap-svref (sap+ sap offset) (element-type-to-alien ctype)) value)
-        (%sap-set value sap (element-type-to-alien ctype) offset))))
+        (setf (%alien-value sap offset ctype) value))))
 
 (define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
   "SETF expander for SAP-REF that doesn't rebind TYPE.
@@ -519,10 +519,10 @@ to open-code (SETF SAP-REF) forms."
   (if (constantp type)
       (let* ((parsed-type (parse-alien-type (eval type) nil))
              (ctype (compute-alien-rep-type parsed-type)))
-          (if (aggregatep parsed-type)
-              `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) value)
-              `(%sap-set ,(deport value parsed-type)
-                         ,sap (element-type-to-alien ',ctype) ,offset)))
+        (if (aggregatep parsed-type)
+            `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) value)
+            `(%sap-set ,(print (deport value parsed-type))
+                       ,sap (element-type-to-alien ',ctype) ,offset)))
       form))
 
 ;;; DEFAR
@@ -838,15 +838,13 @@ newly allocated memory."
           (assert (>= count contents-length))
           (setq count contents-length)))
     ;; Everything looks good.
-    (with-alien ((sap (* t)
-                      (%foreign-alloc 
-                       (* (foreign-type-size type)
-                          (if null-terminated-p (1+ count) count)))))
+    (let ((sap (%foreign-alloc 
+                (* (foreign-type-size type)
+                   (if null-terminated-p (1+ count) count)))))
       (when initial-element-p
         (dotimes (i count)
           ;; (setf (deref sap i) initial-element)
-          (setf (sap-ref sap type i) initial-element)
-          ))
+          (setf (sap-ref sap type i) initial-element)))
       (when initial-contents-p
         (dotimes (i contents-length)
           (setf (sap-ref sap type i) (elt initial-contents i))))

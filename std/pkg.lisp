@@ -883,6 +883,7 @@
   (:import-from :std/serde :define-io)
   (:import-from :sb-posix :lisp-for-c-symbol)
   (:import-from :sb-alien 
+   :%alien-value
    :sap+ :*linkage-info* 
    :*shared-objects* :*alien-type-classes* 
    :unparse-alien-type :parse-alien-type :pick-lisp-and-alien-names :alien-type-bits
@@ -1165,7 +1166,7 @@
    :move-file))
 
 (defpkg :std/pipe
-  (:use :cl :std/array)
+  (:use :cl :std/array :std/meta)
   (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/type :octet)
@@ -1221,8 +1222,6 @@
    :*pool-kernel*
    :*thread-pool*
    :*thread-pool-table*
-   :worker-count*
-   :worker-index*
    :find-work
    :do-workers
    :submit-work
@@ -1270,7 +1269,6 @@
    :*worker-restarts*
    :worker-count
    :worker-count*
-   :worker-index
    :worker-index*
    :oracle 
    :oracle-id :find-thread

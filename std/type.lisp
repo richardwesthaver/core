@@ -12,6 +12,8 @@
   "An 8-bit unsigned-byte."
   '(unsigned-byte 8))
 
+;; these are already defined by SB-SIMD
+#+nil
 (macrolet ((def (name)
                `(deftype ,name () ,@(let* ((s (string name))
                                            (c (ecase (schar s 0)

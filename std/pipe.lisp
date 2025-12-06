@@ -124,7 +124,7 @@
 
 (defclass pipe ()
   ((pipe :initarg :pipe :initform (make-pipe) :accessor pipe)
-   (index :initarg :index :initform (make-hash-table :test 'eql) :accessor index))
+   (idx :initarg :idx :initform (make-hash-table :test 'eql) :accessor idx))
   (:documentation "Superclass of pipe objects containing a PIPE and INDEX slot."))
 
 ;; (defmethod sequence:make-sequence-iterator ((self pipe) &rest args)
@@ -135,7 +135,7 @@
   (:method ((pipe pipe) (path list) &key &allow-other-keys)
     (values path t))
   (:method ((pipe pipe) (path symbol) &key (if-does-not-exist :error))
-    (or (gethash path (index pipe))
+    (or (gethash path (idx pipe))
         (ecase if-does-not-exist
           (:error (restart-case (error 'unknown-element-name :name path :pipe pipe)
                     (use-value (value) value)))
@@ -229,11 +229,11 @@ If place is set, the element is added to the specified place as per INSERT-ELEME
           (withdraw-element parent pos))
       (loop with parent = (subseq elt 0 (1- (length elt)))
             with pos = (car (last elt))
-            for k being the hash-keys of (index pipe)
-            for v being the hash-values of (index pipe)
+            for k being the hash-keys of (idx pipe)
+            for v being the hash-values of (idx pipe)
             when (and (<= (length elt) (length v))
                       (every #'= elt v))
-            do (remhash k (index pipe))
+            do (remhash k (idx pipe))
             when (and (<= (length parent) (length v))
                       (every #'= parent v)
                       (< pos (nth (length parent) v)))
@@ -253,8 +253,8 @@ Returns the segment.")
           (insert-element* elt parent pos))
       (loop with parent = (subseq place 0 (1- (length place)))
             with pos = (car (last place))
-            for k being the hash-keys of (index self)
-            for v being the hash-values of (index self)
+            for k being the hash-keys of (idx self)
+            for v being the hash-values of (idx self)
             when (and (<= (length parent) (length v))
                       (every #'= parent v)
                       (<= pos (nth (length parent) v)))
@@ -265,8 +265,8 @@ Returns the segment.")
           (insert-element* elt parent pos))
       (loop with parent = (subseq place 0 (1- (length place)))
             with pos = (car (last place))
-            for k being the hash-keys of (index self)
-            for v being the hash-values of (index self)
+            for k being the hash-keys of (idx self)
+            for v being the hash-values of (idx self)
             when (and (<= (length parent) (length v))
                       (every #'= parent v)
                       (<= pos (nth (length parent) v)))
@@ -300,9 +300,9 @@ Returns the segment.")
         (call-next-method))))
 
 (defgeneric set-element-id (pipe path name)
-  (:documentation "Set a unique NAME for PATH on PIPE and store in the INDEX of PIPE.")
+  (:documentation "Set a unique NAME for PATH on PIPE and store in the IDX of PIPE.")
   (:method ((pipe pipe) (path list) (name symbol))
-    (setf (gethash name (index pipe)) path)))
+    (setf (gethash name (idx pipe)) path)))
 
 (defgeneric move-element (pipe elt new-elt)
   (:documentation "Move element NEW-ELT to ELT.")
@@ -310,8 +310,8 @@ Returns the segment.")
     (prog1
         (let ((e (remove-element pipe elt)))
           (insert-element* pipe e new-elt))
-      (loop for k being the hash-keys of (index pipe)
-            for v being the hash-values of (index pipe)
+      (loop for k being the hash-keys of (idx pipe)
+            for v being the hash-values of (idx pipe)
             when (and (<= (length elt) (length v))
                       (every #'= elt v))
             do (set-element-id pipe (append elt (subseq v (length elt))) k)))))
@@ -396,7 +396,7 @@ Returns the segment.")
 PIPE. Optional arg PLACE designates the position to insert the elements at
 when the slot is already filled."
   (with-gensyms (pipeline parent c)
-    (let ((index (loop for i from 0
+    (let ((idx (loop for i from 0
                        for e in elements
                        for id = (getf (rest e) :id)
                        when id collect (list i id))))
@@ -408,19 +408,19 @@ when the slot is already filled."
                                              ,@(remf args :id))
                                            ,pipeline))
          (add-element ,parent ,pipeline ,place)
-         ,(when index
+         ,(when idx
             `(let ((,c (1- (length (pipe ,parent)))))
-               ,@(loop for (i id) in index
+               ,@(loop for (i id) in idx
                        collect `(set-element-id ,parent (list ,c ,i) ,id))))
          ,parent))))
 
 (defun defpipe* (parent &rest elements)
-  (let ((index))
+  (let ((idx))
     (loop for i from 0
           for e in elements
           if (consp e)
           do (std/macs::when-let ((id (getf (cdr e) :id)))
-               (push (cons i id) index)))
+               (push (cons i id) idx)))
     (let ((pipe (make-pipe)))
       (loop for elt in elements
             do (insert-element*
@@ -431,8 +431,8 @@ when the slot is already filled."
                    (apply 'make-instance elt)))
                 pipe))
       (setf (pipe parent) pipe)
-      (when index
+      (when idx
         (let ((c (1- (length pipe))))
-          (loop for (i . id) in index
+          (loop for (i . id) in idx
                 do (set-element-id parent (list c i) id))))
       parent)))

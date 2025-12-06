@@ -461,7 +461,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 	   :initarg :thread)
    (kernel :initform *worker-kernel* :accessor kernel)
    (work :accessor work :type spin-queue :initarg :work)
-   (index :reader worker-index :type array-index :initarg :index :accessor index)
+   (index :type array-index :initarg :idx :accessor idx)
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
 (defmethod name ((self worker)) (thread-name (worker-thread self)))
@@ -481,12 +481,12 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
          (*print-length* 2)
          (*print-level* 4))
     (print-unreadable-object (self stream :type t :identity t)
-      (format stream "~@[~A ~]~X~@[ ~S~]" (name self) (index self) state))))
+      (format stream "~@[~A ~]~X~@[ ~S~]" (name self) (idx self) state))))
 
 (defun make-worker* (&key thread kernel bind index)
   (apply #'make-instance *worker-class*
 	 `(,@(when thread `(:thread ,thread))
-           :index ,(or index (random 1024))
+           :idx ,(or index (random 1024))
 	   ,@(when kernel `(:kernel ,kernel))
 	   ,@(when bind `(:bind ,bind)))))
 
@@ -523,7 +523,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 (definline worker= (a b) 
   (and a b
        (or
-        (= (index a) (index b))
+        (= (idx a) (idx b))
         (thread= (worker-thread a) (worker-thread b)))))
 
 (defun kill-worker (worker) 
@@ -591,7 +591,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
    (notify-count :initform 0 :type (integer 0))
    (spin-count :type array-index :initarg :spin-count :initform *default-spin-count*)
    ;; cursor?
-   (index :initform 0 :type array-index :initarg :index :accessor scheduler-index))
+   (idx :initform 0 :type array-index :initarg :idx :accessor scheduler-index))
   (:documentation
    "A scheduler is responsible for finding and sequencing work to be executed by
 WORKER threads."))
@@ -661,7 +661,7 @@ WORKER threads."))
              (values))
            (try-pop-all ()
              (with-slots (workers) sched
-               (do-workers (w workers (worker-index w) nil)
+               (do-workers (w workers (idx w) nil)
                  (try-pop (work w))))
              (values))
            (maybe-sleep ()
@@ -823,13 +823,13 @@ and execution of concurrent work using a pool of 'worker' threads."))
     (with-mutex (lock)
       (let ((i (position worker workers :test #'worker=)))
 	(assert i)
-	(assert (eql i (worker-index worker)))
+	(assert (eql i (idx worker)))
 	(warn "Replacing lost or dead worker")
         (unwind-protect-case ()
 	                     (let ((new-worker 
                                      (make-instance 'worker
                                        :kernel (kernel worker)
-                                       :index i 
+                                       :idx i 
                                        :bind (worker-bind worker)
                                        :work (work worker))))
 	                       (setf (svref workers i) new-worker)
@@ -875,7 +875,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
   (append bindings (list (cons '*kernel* kernel))))
 
 (defun %make-worker (index class)
-  (make-instance class :index index :thread nil))
+  (make-instance class :idx index :thread nil))
 
 (defun make-worker-thread (pool worker &optional bind)
   (with-thread (:bindings (or bind (worker-bind worker)))
@@ -998,7 +998,7 @@ provided. *THREAD-POOL* is returned."
 (defun worker-index* ()
   "If called from inside a worker return the worker's assigned index, ranging from 0 to (worker-count*)."
   (when-let ((worker *worker*))
-    (worker-index worker)))
+    (idx worker)))
 
 (defun workers* () (workers *thread-pool*))
 
