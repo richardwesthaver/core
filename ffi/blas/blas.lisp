@@ -30,7 +30,7 @@
 ;; (defar openblas-setaffinity int (thread-idx int) (cpusetsize size-t) (cpu-set (* cpu-set-t)))
 ;; (defar openblas-getaffinity int (thread-idx int) (cpusetsize size-t) (cpu-set (* cpu-set-t)))
 (defar openblas-get-parallel int)
-(define-alien-enum (openblas-parallel int)
+(define-alien-enum (openblas-parallel)
   :sequential 0
   :thread 1
   :openmp 2)

@@ -25,12 +25,12 @@
 ;; (gst-play-state-get-type)
 (defar gst-play-error-get-type gtype)
 
-(define-alien-enum (gst-play-error int)
+(define-alien-enum (gst-play-error)
                    :failed 0)
 
 (defar gst-play-error-get-name c-string (error gst-play-error))
 
-(define-alien-enum (gst-play-state int)
+(define-alien-enum (gst-play-state)
                    :stopped 0
                    :buffering 1
                    :paused 2
@@ -38,7 +38,7 @@
 
 (defar gst-play-state-get-name c-string (state gst-play-state))
 
-(define-alien-enum (gst-play-message int)
+(define-alien-enum (gst-play-message)
                    :uri-loaded 0
                    :position-updated 1
                    :duration-changed 2

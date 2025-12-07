@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-enum (gst-message-type int)
+(define-alien-enum (gst-message-type)
   :unknown 0
   :eos (ash 1 0)
   :error (ash 1 1)

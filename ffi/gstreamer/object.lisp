@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-enum (gst-object-flags int)
+(define-alien-enum (gst-object-flags)
                    :may-be-leaked (ash 1 0)
                    :constructed (ash 1 1)
                    :last (ash 1 4))

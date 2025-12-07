@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :openssl)
 
-(define-alien-enum (err-r int)
+(define-alien-enum (err-r)
   :sys-lib (err-lib :sys)
   :bn-lib (err-lib :bn)
   :rsa-lib (err-lib :rsa)

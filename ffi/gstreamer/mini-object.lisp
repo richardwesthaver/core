@@ -20,7 +20,7 @@
     (priv-uint unsigned-int)
     (priv-pointer gpointer)))
 
-(define-alien-enum (gst-mini-object-flags int)
+(define-alien-enum (gst-mini-object-flags)
                    :lockable (ash 1 0)
                    :lock-readonly (ash 1 1)
                    :may-be-leaked (ash 1 2)

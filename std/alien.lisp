@@ -419,7 +419,7 @@ return a pointer instead of its value."
         (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
           ;; todo: memoize
           `(funcall ,(compile nil extract) ,ptr ,(* sb-vm:n-byte-bits offset) nil)
-          (naturalize `(%sap-ref ,ptr ,type ,offset) ptyp)))
+          `(%alien-value ,ptr ,type ,(* offset (alien-type-bits ptyp)))))
       form))
 
 ;;;; SAP-SVREF
@@ -481,10 +481,10 @@ return a pointer instead of its value."
 (defun sap-set (value sap type &optional (offset 0))
   "Set the value of TYPE at OFFSET bytes from SAP to VALUE."
   (let* ((ptype (parse-alien-type type nil))
-         (ctype (print (compute-alien-rep-type ptype))))
-    (if (aggregatep ptype) ; XXX: backwards incompatible?
-        (setf (sap-svref (sap+ sap offset) (element-type-to-alien ctype)) value)
-        (setf (%alien-value sap offset ctype) value))))
+         (ctype (compute-alien-rep-type ptype)))
+    (if (aggregatep ptype)
+        (setf (sap-svref (sap+ sap offset) ctype) value)
+        (setf (%alien-value sap (* offset (alien-type-bits ptype)) ptype) value))))
 
 (define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
   "SETF expander for SAP-REF that doesn't rebind TYPE.
@@ -517,12 +517,11 @@ to open-code (SETF SAP-REF) forms."
     (&whole form value sap type &optional (offset 0))
   "Compiler macro to open-code (SETF SAP-REF) when type is constant."
   (if (constantp type)
-      (let* ((parsed-type (parse-alien-type (eval type) nil))
-             (ctype (compute-alien-rep-type parsed-type)))
-        (if (aggregatep parsed-type)
-            `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) value)
-            `(%sap-set ,(print (deport value parsed-type))
-                       ,sap (element-type-to-alien ',ctype) ,offset)))
+      (once-only (type)
+        (let ((parsed-type (parse-alien-type type nil)))
+          (if (aggregatep parsed-type)
+              `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) ,value)
+              `(setf (%alien-value ,sap ,(* offset (alien-type-bits parsed-type))) ,value))))
       form))
 
 ;;; DEFAR
@@ -535,7 +534,7 @@ to open-code (SETF SAP-REF) forms."
 
 ;;; DEFINE-ALIEN-ENUM
 ;; TODO: use SB-ALIEN:ENUM
-(defmacro define-alien-enum ((name type &key (test 'eql) (default :error)) &body forms)
+(defmacro define-alien-enum ((name &key (type 'enum) (test 'eql) (default :error)) &body forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
 SB-ALIEN, groveller, typedef enums, etc.
 
@@ -553,7 +552,9 @@ containing the variants. These are technically exposed anaphors
       (mapc (lambda (x) (setf (gethash (car x) %lisp-enum-table) (eval (cadr x)))) forms)
       (mapc (lambda (x) (setf (gethash (eval (cadr x)) %lisp-enum-table*) (car x))) forms)
       `(progn
-         (define-alien-type ,name ,type)
+         (define-alien-type ,name ,(if (eql type 'enum)
+                                       `(enum ,name ,@(std/hash:hash-table-list %lisp-enum-table))
+                                       type))
          (defun ,name (,val)
            ,(format nil "Given a keyword naming a variant of ~A, return the associated value." name)
            (let ((found (gethash ,val ,%lisp-enum-table ,default)))

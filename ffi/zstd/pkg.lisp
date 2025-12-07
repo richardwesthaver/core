@@ -109,7 +109,7 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
     (:documentation "Error signaled from Zstd Alien."))
     
 ;; found in zstd_errors.h
-(define-alien-enum (zstd-errorcode int)
+(define-alien-enum (zstd-errorcode)
                    :no-error 0
                    :generic 1
                    :prefix-unknown 10
@@ -193,7 +193,7 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t))
 ;;; Advanced API
-(define-alien-enum (zstd-strategy int)
+(define-alien-enum (zstd-strategy)
                    :fast 1
                    :dfast 2
                    :greedy 3
@@ -204,7 +204,7 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
                    :btultra 8
                    :btultra2 9)
 
-(define-alien-enum (zstd-cparameter int)
+(define-alien-enum (zstd-cparameter)
                    :compression-level 100
                    :window-log 101
                    :hash-log 102
@@ -245,12 +245,12 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
                    :expiremental18 1015
                    :expiremental19 1016)
 
-(define-alien-enum (zstd-reset-directive int)
+(define-alien-enum (zstd-reset-directive)
                    :session-only 1
                    :parameters 2
                    :session-and-parameters 3)
 
-(define-alien-enum (zstd-dparameter int)
+(define-alien-enum (zstd-dparameter)
                    :window-log-max 100
                    :experimental1 1000
                    :experimental2 1001

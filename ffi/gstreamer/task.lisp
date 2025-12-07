@@ -8,7 +8,7 @@
 (define-opaque gst-task-private)
 (define-opaque gst-task-class)
 
-(define-alien-enum (gst-task-state int)
+(define-alien-enum (gst-task-state)
                    :started 0
                    :stopped 1
                    :paused 2)

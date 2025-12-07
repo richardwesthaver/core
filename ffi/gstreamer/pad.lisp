@@ -7,20 +7,20 @@
 
 (define-alien-type gst-pad-private (* t))
 
-(define-alien-enum (gst-pad-presence int)
+(define-alien-enum (gst-pad-presence)
                    :always 0
                    :sometimes 1
                    :request 2)
 
-(define-alien-enum (gst-pad-template-flags int)
+(define-alien-enum (gst-pad-template-flags)
                    :last (ash (gst-object-flags :last) 4))
 
-(define-alien-enum (gst-pad-direction int)
+(define-alien-enum (gst-pad-direction)
                    :unknown 0
                    :src 1
                    :sink 2)
 
-(define-alien-enum (gst-pad-mode int)
+(define-alien-enum (gst-pad-mode)
                    :none 0
                    :push 1
                    :pull 2)

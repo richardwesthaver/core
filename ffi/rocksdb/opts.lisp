@@ -231,7 +231,7 @@
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
 (define-opt-accessor rocksdb-options memtable-op-scan-flush-trigger (unsigned 32))
-(define-alien-enum (rocksdb-compression-type int)
+(define-alien-enum (rocksdb-compression-type)
   :none 0
   :snappy 1
   :zlib 2
@@ -486,12 +486,12 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt rocksdb-flushoptions)
 (define-opt-accessor rocksdb-flushoptions wait)
 ;;; RocksDB Compact Options
-(define-alien-enum (rocksdb-compaction-type int)
+(define-alien-enum (rocksdb-compaction-type)
   :level 0
   :universal 1
   :fifo 2)
 
-(define-alien-enum (rocksdb-compaction-pri int)
+(define-alien-enum (rocksdb-compaction-pri)
   :compensated-size 0
   :oldest-largest 1
   :oldest-smallest 2

@@ -25,17 +25,17 @@
 
 (define-alien-loader asound "/usr/lib/")
 
-(define-alien-enum (snd-pcm-class int)
+(define-alien-enum (snd-pcm-class)
   :generic 0
   :multi 1
   :modem 2
   :digitizer 3)
 
-(define-alien-enum (snd-pcm-stream int)
+(define-alien-enum (snd-pcm-stream)
   :playback 0
   :capture 1)
 
-(define-alien-enum (snd-pcm-access int)
+(define-alien-enum (snd-pcm-access)
   :mmap-interleaved 0
   :mmap-noninterleaved 1
   :mmap-complex 2
@@ -43,7 +43,7 @@
   :rw-noninterleaved 4)
 
 ;; incomplete list of formats
-(define-alien-enum (snd-pcm-format int)
+(define-alien-enum (snd-pcm-format)
   :unknown -1
   :s8 0
   :u8 1
@@ -76,7 +76,7 @@
   :u24-3le 34
   :u24-3be 35)
 
-(define-alien-enum (snd-pcm-state int)
+(define-alien-enum (snd-pcm-state)
   :open 0
   :setup 1
   :prepared 2
@@ -94,7 +94,6 @@
 (define-alien-type snd-pcm (* t))
 (define-alien-type snd-output (* t))
 
-(define-alien-type snd-pcm-stream int)
 (define-alien-type snd-pcm-mode int)
 
 (defar snd-pcm-open int (pcm (* snd-pcm)) (name c-string) (ty snd-pcm-stream) (mode snd-pcm-mode))

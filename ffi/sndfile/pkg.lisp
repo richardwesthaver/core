@@ -74,13 +74,13 @@
       (extension c-string)))
 
 ;; SF_SEEK_*
-(define-alien-enum (sf-seek-mode int)
+(define-alien-enum (sf-seek-mode)
   :set 0
   :cur 1
   :end 2)
 
 ;; SFD_*
-(define-alien-enum (sf-dither int)
+(define-alien-enum (sf-dither)
   :default-level 0
   :custom-level #x40000000
   :no-dither 500
@@ -108,7 +108,7 @@
       (sample-offset unsigned-int)
       (name (array char 256))))
 
-(define-alien-enum (sf-loop int)
+(define-alien-enum (sf-loop)
   :none 800
   :forward 801
   :backward 802
@@ -142,7 +142,7 @@
       (root-key int)
       (future (array int 6))))
 
-(define-alien-enum (sf-format int)
+(define-alien-enum (sf-format)
   :wav #x010000               ; Microsoft WAV format (little endian default). 
   :aiff #x020000               ; Apple/SGI AIFF format (big endian). 
   :au #x030000               ; Sun/NeXT AU format (big endian). 
@@ -165,7 +165,7 @@
   :flac #x170000               ; FLAC lossless file format 
   :caf #x180000)               ; Core Audio File format 
 
-(define-alien-enum (sf-format-subtype int)
+(define-alien-enum (sf-format-subtype)
   ;; subtypes
   :pcm-s8 #x0001                 ; Signed 8 bit data 
   :pcm-16 #x0002                 ; Signed 16 bit data 
@@ -196,18 +196,18 @@
   :dpcm-16 #x0051)                 ; 16 bit differential PCM (XI only)
 
 ;;;; Endian-ness options. 
-(define-alien-enum (sf-endian int)
+(define-alien-enum (sf-endian)
   :file #x00000000     ; Default file endian-ness. 
   :little #x10000000     ; Force little endian-ness. 
   :big #x20000000     ; Force big endian-ness. 
   :cpu #x30000000)     ; Force CPU endian-ness. 
 
-(define-alien-enum (sf-format-mask int)
+(define-alien-enum (sf-format-mask)
   :sub #x0000FFFF
   :type #x0FFF0000
   :end #x30000000)
 
-(define-alien-enum (sf-str int)
+(define-alien-enum (sf-str)
   :title 1
   :copyright 2
   :software 3
@@ -215,7 +215,7 @@
   :comment 5
   :date 6)
 
-(define-alien-enum (sf-flag int)
+(define-alien-enum (sf-flag)
   :false 0
   :true 1
   :read #x10
@@ -225,7 +225,7 @@
   :ambisonic-b-format #x41)
 
 ;;;; Public error numbers
-(define-alien-enum (sf-err int)
+(define-alien-enum (sf-err)
   :no-error 0
   :unrecognized-format 1
   :system 2
@@ -233,7 +233,7 @@
   :unsupported-encoding 4)
 
 ;;;; SF commands
-(define-alien-enum (sf-command-op int)
+(define-alien-enum (sf-command-op)
   :get-lib-version #x1000
   :get-log-info #x1001
   :get-current-sf-info #x1002

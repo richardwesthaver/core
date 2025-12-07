@@ -23,7 +23,7 @@
 
 ;; TODO: recursive_key_scanner_t
 
-(define-alien-enum (key-spec int)
+(define-alien-enum (key-spec)
                    :thread +key-spec-thread-keyring+
                    :process +key-spec-process-keyring+
                    :session +key-spec-session-keyring+

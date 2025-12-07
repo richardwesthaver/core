@@ -52,7 +52,7 @@ And so on up to event31.
 
 (define-alien-type libevdev (struct libevdev))
 
-(define-alien-enum (libevdev-read-flag unsigned-char)
+(define-alien-enum (libevdev-read-flag :type unsigned-char)
                    :sync 1
                    :normal 2
                    :force-sync 4
@@ -67,7 +67,7 @@ And so on up to event31.
 (defar libevdev-free void
   (dev (* libevdev)))
 
-(define-alien-enum (libevdev-log-priority unsigned-char)
+(define-alien-enum (libevdev-log-priority :type unsigned-char)
                    :error 10
                    :info 20
                    :debug 30)
@@ -116,7 +116,7 @@ And so on up to event31.
   (priority libevdev-log-priority)
   (data (* t)))
 
-(define-alien-enum (libevdev-grab-mode unsigned-char)
+(define-alien-enum (libevdev-grab-mode :type unsigned-char)
                    :grab 3
                    :ungrab 4)
 

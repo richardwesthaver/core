@@ -42,19 +42,19 @@
 (define-alien-type xkb-led-index unsigned-int)
 (define-alien-type xkb-led-mask unsigned-int)
 
-(define-alien-enum (xkb-keysym-flags unsigned-char)
+(define-alien-enum (xkb-keysym-flags :type unsigned-char)
                    :no-flags 0
                    :case-insensitive (ash 1 0))
-(define-alien-enum (xkb-context-flags unsigned-char)
+(define-alien-enum (xkb-context-flags :type unsigned-char)
                    :no-flags 0
                    :no-default-includes (ash 1 0)
                    :no-environment-names (ash 1 1)
                    :no-secure-getenv (ash 1 2))
 
-(define-alien-enum (xkb-keymap-compile-flags unsigned-char)
+(define-alien-enum (xkb-keymap-compile-flags :type unsigned-char)
                    :no-flags 0)
 
-(define-alien-enum (xkb-keymap-format int)
+(define-alien-enum (xkb-keymap-format)
                    :text-v1 1)
 
 (define-alien-type xkb-rule-names
@@ -124,7 +124,7 @@
 
 ;; https://xkbcommon.org/doc/current/group__logging.html
 
-(define-alien-enum (xkb-log-level int)
+(define-alien-enum (xkb-log-level)
                    :critical 10
                    :error 20
                    :warning 30
@@ -236,11 +236,11 @@
 (defar xkb-state-unref void (state (* xkb-state)))
 (defar xkb-state-get-keymap (* xkb-keymap) (state (* xkb-state)))
 
-(define-alien-enum (xkb-key-direction unsigned-char)
+(define-alien-enum (xkb-key-direction :type unsigned-char)
                    :up 0
                    :down 1)
 
-(define-alien-enum (xkb-state-component int)
+(define-alien-enum (xkb-state-component)
                    :mods-depressed (ash 1 0)
                    :mods-latched (ash 1 1)
                    :mods-locked (ash 1 2)
@@ -293,7 +293,7 @@
   (key xkb-keycode)
   (layout xkb-layout-index))
 
-(define-alien-enum (xkb-state-match int)
+(define-alien-enum (xkb-state-match)
                    :any (ash 1 0)
                    :all (ash 1 1)
                    :non-exclusive (ash 1 16))
@@ -328,7 +328,7 @@
   (match xkb-state-match)
   #+nil ...)
 
-(define-alien-enum (xkb-consumed-mode int)
+(define-alien-enum (xkb-consumed-mode)
                    :xkb 0
                    :gtk 1)
 
@@ -380,10 +380,10 @@
 
 (define-alien-type xkb-compose-state (struct xkb-compose-state))
 
-(define-alien-enum (xkb-compose-compile-flags unsigned-char)
+(define-alien-enum (xkb-compose-compile-flags :type unsigned-char)
                    :no-flags 0)
 
-(define-alien-enum (xkb-compose-format unsigned-char)
+(define-alien-enum (xkb-compose-format :type unsigned-char)
                    :text-v1 1)
 
 (defar xkb-compose-table-new-from-locale (* xkb-compose-table)
@@ -434,7 +434,7 @@
 (defar xkb-compose-table-iterator-next (* xkb-compose-table-entry)
   (iter (* xkb-compose-table-iterator)))
 
-(define-alien-enum (xkb-compose-state-flags int)
+(define-alien-enum (xkb-compose-state-flags)
                    :no-flags 0)
 
 (defar xkb-compose-state-new (* xkb-compose-state)
@@ -450,13 +450,13 @@
 (defar xkb-compose-state-get-compose-table (* xkb-compose-table)
   (state (* xkb-compose-state)))
 
-(define-alien-enum (xkb-compose-status unsigned-char)
+(define-alien-enum (xkb-compose-status :type unsigned-char)
                    :nothing 0
                    :composing 1
                    :composed 2
                    :cancelled 3)
 
-(define-alien-enum (xkb-compose-feed-result unsigned-char)
+(define-alien-enum (xkb-compose-feed-result :type unsigned-char)
                    :ignored 0
                    :accepted 1)
 

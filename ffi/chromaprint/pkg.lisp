@@ -50,7 +50,7 @@ two fingerprints yourself, you probably want them in this form.  |#
 
 (define-alien-loader chromaprint "/usr/lib/")
 
-(define-alien-enum (chromaprint-algorithm int)
+(define-alien-enum (chromaprint-algorithm)
   :test1 0
   :test2 1
   :test3 2

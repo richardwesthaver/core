@@ -8,7 +8,7 @@
 (define-opaque btrfs-util-qgroup-inherit t)
 (define-opaque btrfs-util-subvolume-iterator t)
 
-(define-alien-enum (btrfs-util-error int)
+(define-alien-enum (btrfs-util-error)
                    :ok 0
                    :stop-iteration 1
                    :no-memory 2

@@ -5,12 +5,12 @@
 ;;; Code:
 (in-package :jpeg)
 
-(define-alien-enum (init-type int)
+(define-alien-enum (init-type)
   :compress 0
   :decompress 1
   :transform 2)
 
-(define-alien-enum (chrominance-sampling int)
+(define-alien-enum (chrominance-sampling)
   :unknown -1
   :444 0
   :422 1
@@ -40,7 +40,7 @@
     ((5 :411) 8)
     ((6 :441) 32)))
 
-(define-alien-enum (pixel-format int)
+(define-alien-enum (pixel-format)
   :rgb 0
   :bgr 1
   :rgbx 2
@@ -130,14 +130,14 @@
     ((10 :argb) 4)
     ((11 :cmyk) 4)))
 
-(define-alien-enum (color-space int)
+(define-alien-enum (color-space)
   :rgb 0
   :ycbcr 1
   :gray 2
   :cmyk 3
   :ycck 4)
 
-(define-alien-enum (parameter int)
+(define-alien-enum (parameter)
   :stop-on-warning 0
   :bottom-up 1
   :no-realloc 2
@@ -162,11 +162,11 @@
   :y-density 21
   :density-units 22)
 
-(define-alien-enum (error-type int)
+(define-alien-enum (error-type)
   :warning 0
   :fatal 1)
 
-(define-alien-enum (operation int)
+(define-alien-enum (operation)
   :none 0
   :horizontal-flip 1
   :vertical-flip 2
@@ -176,7 +176,7 @@
   :rotate-180 6
   :rotate-270 7)
 
-(define-alien-enum (option unsigned-char)
+(define-alien-enum (option :type unsigned-char)
   :perfect     #b000000001
   :trim        #b000000010
   :crop        #b000000100

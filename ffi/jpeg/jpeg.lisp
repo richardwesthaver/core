@@ -37,7 +37,7 @@
       (values (array unsigned-char 256))
       (sent boolean)))
 
-(define-alien-enum (j-color-space int)
+(define-alien-enum (j-color-space)
   :unknown 0
   :grayscale 1
   :rgb 2
@@ -56,12 +56,12 @@
   :ext-argb 15
   :rgb565 16)
 
-(define-alien-enum (j-dct-method int)
+(define-alien-enum (j-dct-method)
   :islow 0
   :ifast 1
   :float 2)
 
-(define-alien-enum (j-dither-mode int)
+(define-alien-enum (j-dither-mode)
   :none 0
   :ordered 1
   :fs 2)

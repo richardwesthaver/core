@@ -110,7 +110,7 @@
 
 (define-alien-type jack-default-audio-sample-t float)
 
-(define-alien-enum (jackoptions int)
+(define-alien-enum (jackoptions)
   :null #x00
   :no-start-server #x01
   :use-exact-name #x02
@@ -119,7 +119,7 @@
   :load-init #x10
   :session-id #x20)
 
-(define-alien-enum (jackportflags int)
+(define-alien-enum (jackportflags)
   :is-input #x1
   :is-output #x2
   :is-physical #x4

@@ -11,7 +11,7 @@
 (define-opaque libssh2-listener %libssh2-listener)
 (define-opaque libssh2-knownhosts %libssh2-knownhosts)
 (define-opaque libssh2-agent %libssh2-agent)
-(define-alien-enum (libssh2-error int)
+(define-alien-enum (libssh2-error)
   :NONE +LIBSSH2-ERROR-NONE+
   :SOCKET-NONE +LIBSSH2-ERROR-SOCKET-NONE+
   :BANNER-RECV +LIBSSH2-ERROR-BANNER-RECV+
@@ -60,7 +60,7 @@
   :BAD-SOCKET +LIBSSH2-ERROR-BAD-SOCKET+
   :KNOWN-HOSTS +LIBSSH2-ERROR-KNOWN-HOSTS+)
 
-(define-alien-enum (ssh-disconnect int)
+(define-alien-enum (ssh-disconnect)
   :HOST-NOT-ALLOWED-TO-CONNECT +SSH-DISCONNECT-HOST-NOT-ALLOWED-TO-CONNECT+
   :PROTOCOL-ERROR +SSH-DISCONNECT-PROTOCOL-ERROR+
   :KEY-EXCHANGE-FAILED +SSH-DISCONNECT-KEY-EXCHANGE-FAILED+
@@ -77,7 +77,7 @@
   :NO-MORE-AUTH-METHODS-AVAILABLE +SSH-DISCONNECT-NO-MORE-AUTH-METHODS-AVAILABLE+
   :ILLEGAL-USER-NAME +SSH-DISCONNECT-ILLEGAL-USER-NAME+)
 
-(define-alien-enum (libssh2-callback int)
+(define-alien-enum (libssh2-callback)
   :ignore 0
   :debug 1
   :disconnect 2
@@ -89,7 +89,7 @@
   :authagent-identities 8
   :authagent-sign 9)
 
-(define-alien-enum (libssh2-method int)
+(define-alien-enum (libssh2-method)
   :kex 0
   :hostkey 1
   :crypt-cs 2
@@ -102,12 +102,12 @@
   :lang-sc 9
   :sign-algo 10)
 
-(define-alien-enum (libssh2-flag int)
+(define-alien-enum (libssh2-flag)
   :sigpipe 1
   :compress 2
   :quote-paths 3)
 
-(define-alien-enum (libssh2-pollfd int)
+(define-alien-enum (libssh2-pollfd)
   :socket 1
   :channel 2
   :listener 3
@@ -122,7 +122,7 @@
   :channel-closed #x0080
   :listener-closed #x0080)
 
-(define-alien-enum (libssh2-hostkey-type int)
+(define-alien-enum (libssh2-hostkey-type)
   :unknown 0
   :rsa 1
   :dss 2 ;; deprecated
@@ -131,11 +131,11 @@
   :ecdsa-521 5
   :ed25519 6)
 
-(define-alien-enum (libssh2-session-block int)
+(define-alien-enum (libssh2-session-block)
   :inbound #x0001
   :outbound #x0002)
 
-(define-alien-enum (libssh2-hostkey-hash-type int)
+(define-alien-enum (libssh2-hostkey-hash-type)
   :md5 1
   :sha1 2
   :sha256 3)
@@ -438,7 +438,7 @@
 (defar libssh2-version c-string
   (req-version-num int))
 
-(define-alien-enum (libssh2-crypto-engine-type int)
+(define-alien-enum (libssh2-crypto-engine-type)
   :no-crypto 0
   :openssl 1
   :gcrypt 2

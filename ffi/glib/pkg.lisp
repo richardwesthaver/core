@@ -68,7 +68,7 @@
 (define-alien-type goptiongroup (* t))
 (define-alien-type goptionentry (* t))
 
-(define-alien-enum (goption-flags int)
+(define-alien-enum (goption-flags)
                    :none 0
                    :hidden (ash 1 0)
                    :in-main (ash 1 1)
@@ -78,7 +78,7 @@
                    :optional-arg (ash 1 5)
                    :noalias (ash 1 6))
 
-(define-alien-enum (goption-arg int)
+(define-alien-enum (goption-arg)
                    :none 0
                    :string 1
                    :int 2

@@ -60,6 +60,14 @@ to a new equality test specified with TEST."
              table)
     alist))
 
+(definline hash-table-list (table)
+  "Returns a list of lists containing the keys and values of TABLE."
+  (let ((list))
+    (maphash (lambda (k v)
+               (push (list k v) list))
+             table)
+    list))
+
 (definline hash-table-plist (table)
   "Returns a property list contains the keys and values of a hash-table."
   (let ((plist))

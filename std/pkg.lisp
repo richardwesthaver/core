@@ -480,6 +480,7 @@
    :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
    :make-so-set/addr :unbound-marker-p)
   (:export :hash-table-alist
+   :hash-table-list
    :copy-hash
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values

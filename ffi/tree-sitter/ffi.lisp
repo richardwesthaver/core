@@ -19,7 +19,7 @@
 (define-alien-type ts-language (struct ts-language))
 (define-alien-type ts-parser (struct ts-parser))
 (define-alien-type ts-tree (struct ts-tree))
-(define-alien-enum (ts-query-error unsigned-int)
+(define-alien-enum (ts-query-error :type unsigned-int)
   :none 0
   :syntax 1
   :node-type 2
@@ -77,7 +77,7 @@
           (start-byte unsigned-int)
           (end-byte unsigned-int)))
           
-(define-alien-enum (ts-log-type int)
+(define-alien-enum (ts-log-type)
                    :parse 0
                    :lex 1)
 
@@ -101,11 +101,11 @@
 	    (id (* t))
 	    (context (array unsigned-int 2))))
 
-(define-alien-enum (ts-input-encoding int)
+(define-alien-enum (ts-input-encoding)
                    :utf-8 0
                    :utf-16 2)
 
-(define-alien-enum (ts-symbol-type int)
+(define-alien-enum (ts-symbol-type)
                    :regular 0
                    :anonymous 1
                    :auxiliary 2)

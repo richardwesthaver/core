@@ -43,7 +43,7 @@
           (release (* arrow-release-function))
           (private-data (* t))))
 
-(define-alien-enum (arrow-device int)
+(define-alien-enum (arrow-device)
                    :cpu 1
                    :cuda 2
                    :cuda-host 3
@@ -95,7 +95,7 @@
           (major unsigned-int)
           (minor unsigned-int)))
 
-(define-alien-enum (dl-device-type int)
+(define-alien-enum (dl-device-type)
                    :cpu 1
                    :cuda 2
                    :cuda-host 3
@@ -116,7 +116,7 @@
           (device-type dl-device-type)
           (device-id int)))
 
-(define-alien-enum (dl-data-type-code unsigned-int)
+(define-alien-enum (dl-data-type-code)
                    :int 0
                    :uint 1
                    :float 2

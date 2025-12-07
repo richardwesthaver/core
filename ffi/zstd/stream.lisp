@@ -22,7 +22,7 @@
 (defar "ZSTD_createCStream" (* zstd-cstream))
 (defar "ZSTD_freeCStream" void (zcs (* zstd-cstream)))
 
-(define-alien-enum (zstd-enddirective int :default :error :test eq)
+(define-alien-enum (zstd-enddirective :default :error :test eq)
                    :continue 0
                    :flush 1
                    :end 2)

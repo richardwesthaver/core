@@ -12,7 +12,7 @@
       (data (* unsigned-char))
       (flags long)))
 
-(define-alien-enum (v-asn1 int)
+(define-alien-enum (v-asn1)
   :universal #x00
   :application #x40
   :context-specific #x80
@@ -196,7 +196,7 @@
 (define-opaque x509-store x509-store-st)
 (define-opaque x509-trust x509-trust-st)
 
-(define-alien-enum (err-lib int)
+(define-alien-enum (err-lib)
   :none 1
   :sys 2
   :bn 3

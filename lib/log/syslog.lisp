@@ -23,7 +23,7 @@
  ;; included in this file.
 
 ;; priorities (these are ordered)
-(define-alien-enum (syslog-priority (sb-alien:unsigned 8))
+(define-alien-enum (syslog-priority :type (sb-alien:unsigned 8))
   :EMERG 0 ; system is unusable 
   :ALERT 1 ; action must be taken immediately 
   :CRIT	2 ; critical conditions 
@@ -34,7 +34,7 @@
   :DEBUG 7) ; debug-level messages 
 
 ;; facility codes
-(define-alien-enum (syslog-facility (sb-alien:unsigned 8))
+(define-alien-enum (syslog-facility :type (sb-alien:unsigned 8))
   :KERN (ash 0 3) ; kernel messages
   :USER (ash 1 3) ; random user-level messages 
   :MAIL (ash 2 3) ; mail system 

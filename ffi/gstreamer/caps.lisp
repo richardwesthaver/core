@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-enum (gst-caps-flags int)
+(define-alien-enum (gst-caps-flags)
                    :any (ash (gst-mini-object-flags :last) 0))
 
 (define-alien-type gst-caps

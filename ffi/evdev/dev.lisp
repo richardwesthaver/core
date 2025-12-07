@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :evdev)
 
-(define-alien-enum (libevdev-read-status unsigned-char)
+(define-alien-enum (libevdev-read-status :type unsigned-char)
                    :success 0
                    :sync 1)
 
@@ -204,7 +204,7 @@
   (code unsigned-int)
   (abs (* input-absinfo)))
 
-(define-alien-enum (libevdev-led-value unsigned-char)
+(define-alien-enum (libevdev-led-value :type unsigned-char)
                    :on 3
                    :off 4)
 

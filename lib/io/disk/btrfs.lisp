@@ -21,9 +21,9 @@
 
 (defun subvolume-valid-p (subvol)
   (etypecase subvol
-    (string (zerop (btrfs-util-subvolume-is-valid subvol)))
-    (pathname (zerop (btrfs-util-subvolume-is-valid (namestring subvol))))
-    (disk (zerop (btrfs-util-subvolume-is-valid (namestring (path subvol)))))))
+    (string (eql :ok (btrfs-util-subvolume-is-valid subvol)))
+    (pathname (eql :ok (btrfs-util-subvolume-is-valid (namestring subvol))))
+    (disk (eql :ok (btrfs-util-subvolume-is-valid (namestring (path subvol)))))))
 
 (defclass btrfs-snapshot (disk-snapshot disk) ())
 
@@ -41,14 +41,14 @@
              (btrfs-util-subvolume-iter-create path 0 0 (sb-alien:addr iter))
              (with-alien ((path c-string)
                           (id (unsigned 64)))
-               (loop while (zerop (btrfs-util-subvolume-iter-next 
-                                   iter (addr path) (addr id)))
+               (loop while (eql :ok (btrfs-util-subvolume-iter-next 
+                                     iter (addr path) (addr id)))
                      collect (cons path id))))
         (btrfs-util-subvolume-iter-destroy iter)))))
 
 (defun btrfs-default-subvolume (path)
   (with-alien ((id (unsigned 64)))
     (let ((res (btrfs-util-subvolume-get-default path (addr id))))
-      (if (zerop res)
+      (if (eql res :ok)
           id
           (btrfs-simple-error (btrfs-util-strerror res))))))

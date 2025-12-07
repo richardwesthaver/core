@@ -179,44 +179,44 @@
     (:report (lambda (c s)
                (format s "ZSTD CDict signalled error: ~A" (zstd-errorcode* (zstd-error-code c))))))
 
-(define-alien-enum (zstd-dict-content-type int)
+(define-alien-enum (zstd-dict-content-type)
                    :auto 0
                    :raw-content 1
                    :full-dict 2)
 
-(define-alien-enum (zstd-dict-load-method int)
+(define-alien-enum (zstd-dict-load-method)
                    :by-copy 0
                    :by-ref 1)
 
-(define-alien-enum (zstd-force-ignore-checksum int)
+(define-alien-enum (zstd-force-ignore-checksum)
                    :validate-checksum 0
                    :ignore-checksum 1)
 
-(define-alien-enum (zstd-ref-multiple-ddicts int)
+(define-alien-enum (zstd-ref-multiple-ddicts)
                    :ref-single-ddict 0
                    :ref-multiple-ddicts 1)
 
-(define-alien-enum (zstd-dict-attach-pref int)
+(define-alien-enum (zstd-dict-attach-pref)
                    :default-attach 0
                    :force-attach 1
                    :force-copy 2
                    :force-load 3)
 
-(define-alien-enum (zstd-literal-compression-mode int)
+(define-alien-enum (zstd-literal-compression-mode)
                    :auto 0
                    :huffman 1
                    :uncompressed 2)
 
-(define-alien-enum (zstd-param-switch int)
+(define-alien-enum (zstd-param-switch)
                    :auto 0
                    :enable 1
                    :disable 2)
 
-(define-alien-enum (zstd-frame-type int)
+(define-alien-enum (zstd-frame-type)
                    :frame 0
                    :skippable-frame 1)
 
-(define-alien-enum (zstd-sequence-format int)
+(define-alien-enum (zstd-sequence-format)
                    :no-block-delimiters 0
                    :explicit-block-delimiters 1)
 

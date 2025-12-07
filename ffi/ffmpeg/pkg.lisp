@@ -154,7 +154,7 @@
 
 (defconstant +av-error-max-string-size+ 64)
 
-(define-alien-enum (averror int)
+(define-alien-enum (averror :type int)
   :bsf-not-found (fferrtag #xf8 (char-code #\B) (char-code #\S) (char-code #\F))
   :bug (fferrtag* "BUG!")
   :buffer-too-small (fferrtag* "BUFS")
@@ -187,7 +187,7 @@
 (defar av-strerror int (errnum int) (errbuf c-string) (errbuf-size size-t))
 ;; (defar av-make-error-string c-string (errbuf c-string) (errbuf-size size-t) (errnum int))
 
-(define-alien-enum (av-media-type int)
+(define-alien-enum (av-media-type :type int)
   :unknown -1
   :video 0
   :audio 1
@@ -210,7 +210,7 @@
       (den int)))
 
 ;; samplefmt.h
-(define-alien-enum (av-sample-format int)
+(define-alien-enum (av-sample-format :type int)
   :none -1
   :u8 0
   :s16 1
@@ -227,12 +227,12 @@
 
 ;; pixfmt.h
 ;; TODO 2025-04-07: 
-(define-alien-enum (av-pixel-format int)
+(define-alien-enum (av-pixel-format :type int)
   :none -1
   :yuv420p 0
   :yuv422 1)
 
-(define-alien-enum (av-color-primaries int)
+(define-alien-enum (av-color-primaries :type int)
   :reserved0 0
   :bt709 1
   :unspecified 2
@@ -250,7 +250,7 @@
   :ebu3213 22
   :jedec-p22 22)
 
-(define-alien-enum (av-color-transfer-characteristic int)
+(define-alien-enum (av-color-transfer-characteristic :type int)
   :reserved0 0
   :bt709 1
   :unspecified 2
@@ -273,7 +273,7 @@
   :smpte428-1 17
   :arib-std-b67 18)
 
-(define-alien-enum (av-color-space int)
+(define-alien-enum (av-color-space :type int)
   :rgb 0
   :bt709 1
   :unspecified 2
@@ -294,12 +294,12 @@
   :ycgco-re 16
   :ycgco-ro 17)
 
-(define-alien-enum (av-color-range int)
+(define-alien-enum (av-color-range :type int)
   :unspecified 0
   :mpeg 1
   :jpeg 2)
 
-(define-alien-enum (av-chroma-location int)
+(define-alien-enum (av-chroma-location :type int)
   :unspecified 0
   :left 1
   :center 2
@@ -311,7 +311,7 @@
 ;; opt.h
 (define-opaque av-option-ranges)
 
-(define-alien-enum (av-option-type int)
+(define-alien-enum (av-option-type :type int)
   :flags 1
   :int 2
   :int64 3
@@ -334,7 +334,7 @@
   :uint 20
   :flag-array (ash 1 16))
 
-(define-alien-enum (av-opt-flag int)
+(define-alien-enum (av-opt-flag :type int)
   :encoding-param (ash 1 0)
   :decoding-param (ash 1 1)
   :audio-param (ash 1 3)
@@ -382,7 +382,7 @@
       (size size-t)))
 
 ;; log.h
-(define-alien-enum (av-class-category int)
+(define-alien-enum (av-class-category)
   :na 0
   :input 1
   :output 2
@@ -432,7 +432,7 @@
 
 (defconstant +av-num-data-pointers+ 8)
 
-(define-alien-enum (av-io-data-marker-type int)
+(define-alien-enum (av-io-data-marker-type)
   :header 0
   :sync-point 1
   :boundary-point 2
@@ -484,12 +484,12 @@
       (buf-size int)
       (mime-type c-string)))
 
-(define-alien-enum (av-duration-estimation-method int)
+(define-alien-enum (av-duration-estimation-method)
   :pts 0
   :stream 1
   :bitrate 2)
 
-(define-alien-enum (av-codec-id int)
+(define-alien-enum (av-codec-id :type unsigned-int)
   :none 0
   :mpeg1video 1
   :mpeg2video 2
@@ -1031,7 +1031,7 @@
   :anull #x21003)
 
 (defconstant +avprobe-score-max+ 100)
-(define-alien-enum (avprobe-score int)
+(define-alien-enum (avprobe-score)
   :retry (/ +avprobe-score-max+ 4)
   :stream-retry (- (/ +avprobe-score-max+ 4) 1)
   :extension 50
@@ -1040,7 +1040,7 @@
 
 (defconstant +avprobe-padding-size+ 32)
 
-(define-alien-enum (avfmt int)
+(define-alien-enum (avfmt)
   :nofile #x0001
   :neednumber #x0002
   :experimental #x0004
@@ -1119,7 +1119,7 @@
     (end long)
     (metadata (* av-dictionary))))
 
-(define-alien-enum (av-discard int)
+(define-alien-enum (av-discard)
   :none -16
   :default 0
   :nonref 8
@@ -1244,7 +1244,7 @@ brevity.
 
 ;;; avcodec
 (defconstant +av-input-buffer-padding-size+ 64)
-(define-alien-enum (av-codec-flag int)
+(define-alien-enum (av-codec-flag)
   :unaligned (ash 1 0)
   :qscale (ash 1 1)
   :4mv (ash 1 2)
@@ -1267,7 +1267,7 @@ brevity.
   :interlaced-me (ash 1 29)
   :closer-gop (ash 1 31))
 
-(define-alien-enum (av-codec-flag2 int)
+(define-alien-enum (av-codec-flag2)
   :fast (ash 1 0)
   :no-output (ash 1 2)
   :local-header (ash 1 3)
@@ -1279,7 +1279,7 @@ brevity.
   :ro-flush-noop (ash 1 30)
   :icc-profiles (ash 1 31))
 
-(define-alien-enum (av-codec-export-data int)
+(define-alien-enum (av-codec-export-data)
   :mvs (ash 1 0)
   :prft (ash 1 1)
   :video-enc-params (ash 1 2)
@@ -1289,7 +1289,7 @@ brevity.
 (defconstant +av-get-buffer-flag-ref+ (ash 1 0))
 (defconstant +av-get-encode-buffer-flag-ref+ (ash 1 0))
 
-(define-alien-enum (ff-cmp int)
+(define-alien-enum (ff-cmp)
   :sad 0
   :sse 1
   :satd 2
@@ -1308,14 +1308,14 @@ brevity.
   :media-sad 15
   :chroma 256)
 
-(define-alien-enum (ff-mb-decision int)
+(define-alien-enum (ff-mb-decision)
   :simple 0
   :bits 1
   :rd 2)
 
 (defconstant +ff-compression-default+ -1)
 
-(define-alien-enum (ff-bug int)
+(define-alien-enum (ff-bug)
   :autodetect 1
   :xvid-ilace 4
   :ump4 8
@@ -1332,12 +1332,12 @@ brevity.
   :truncated 16384
   :iedge 32768)
 
-(define-alien-enum (ff-ec int)
+(define-alien-enum (ff-ec)
   :guess-mvs 1
   :deblock 2
   :favor-inter 256)
 
-(define-alien-enum (ff-debug int)
+(define-alien-enum (ff-debug)
   :pict-info 1
   :rc 2
   :bitstream 4
@@ -1354,7 +1354,7 @@ brevity.
   :green-md #x00800000
   :nomc #x01000000)
 
-(define-alien-enum (ff-dct int)
+(define-alien-enum (ff-dct)
   :auto 0
   :fastint 1
   :int 2
@@ -1363,7 +1363,7 @@ brevity.
   :faan 6
   :neon 7)
 
-(define-alien-enum (ff-idct int)
+(define-alien-enum (ff-idct)
   :auto 0
   :int 1
   :simple 2
@@ -1378,26 +1378,27 @@ brevity.
   :simpleneon 22
   :simpleauto 128)
 
-(define-alien-enum (ff-thread int)
+(define-alien-enum (ff-thread)
   :frame 1
-  :slice)
+  ;; TODO verify.. was previously missing
+  :slice 2)
 
-;; (define-alien-enum (ff-profile int) ;; see defs.h
+;; (define-alien-enum (ff-profile) ;; see defs.h
 
-(define-alien-enum (ff-codec-property int)
+(define-alien-enum (ff-codec-property)
   :lossless #x00000001
   :closed-captions #x00000002
   :film-grain #x00000004)
 
 
-(define-alien-enum (ff-sub-charenc-mode int)
+(define-alien-enum (ff-sub-charenc-mode)
   :do-nothing -1
   :automatic 0
   :pre-decoder 1
   :ignore 2)
 
 ;; AVHWAccel..
-(define-alien-enum (av-subtitle-type int)
+(define-alien-enum (av-subtitle-type)
   :none 0
   :bitmap 1
   :text 2
@@ -1405,7 +1406,7 @@ brevity.
 
 (defconstant +av-subtitle-flag-forced+ #x00000001)
 
-(define-alien-enum (av-codec-config int)
+(define-alien-enum (av-codec-config)
   :pix-format 0
   :frame-rate 1
   :sample-rate 2
@@ -1414,13 +1415,13 @@ brevity.
   :color-range 5
   :color-space 6)
 
-(define-alien-enum (av-picture-structure int)
+(define-alien-enum (av-picture-structure)
   :unknown 0
   :top-field 1
   :bottom-field 2
   :frame 3)
 
-(define-alien-enum (parser-flag int)
+(define-alien-enum (parser-flag)
   :complete-frames #x0001
   :once #x0002
   :fetched-offset #x0004
@@ -1445,7 +1446,7 @@ brevity.
       (rects (* (* av-subtitle-rect)))
       (pts (signed 64))))
 
-(define-alien-enum (av-field-order int)
+(define-alien-enum (av-field-order)
   :unknown 0
   :progressive 1
   :tt 2
@@ -1453,7 +1454,7 @@ brevity.
   :tb 4
   :bt 5)
 
-(define-alien-enum (av-packet-side-data-type int)
+(define-alien-enum (av-packet-side-data-type)
   :palette 0
   :new-extradata 1
   :param-change 2
@@ -1494,13 +1495,13 @@ brevity.
   :lcevc 37
   :nb 38)
 
-(define-alien-enum (av-channel-order int)
+(define-alien-enum (av-channel-order)
   :unspec 0
   :native 1
   :custom 2
   :ambisonic 3)
 
-(define-alien-enum (av-channel int)
+(define-alien-enum (av-channel)
   :none -1
   :front-left 0
   :front-right 1
@@ -1556,7 +1557,7 @@ brevity.
 	   (map (* av-channel-custom))))
       (opaque (* t))))
 
-(define-alien-enum (av-audio-service-type int)
+(define-alien-enum (av-audio-service-type)
   :main 0
   :effects 1
   :visually-impaired 2
@@ -1567,7 +1568,7 @@ brevity.
   :voice-over 7
   :karaoke 8)
 
-(define-alien-enum (av-frame-side-data-type int)
+(define-alien-enum (av-frame-side-data-type)
   :panscan 0
   :a53-cc 1
   :stereo3d 2
@@ -1647,7 +1648,7 @@ brevity.
       (metadata (* av-dictionary))
       (buf (* av-buffer-ref))))
 
-(define-alien-enum (av-picture-type int)
+(define-alien-enum (av-picture-type)
   :none 0
   :i 1
   :p 2

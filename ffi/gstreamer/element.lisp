@@ -6,7 +6,7 @@
 (in-package :gstreamer)
 
 (eval-always
-  (define-alien-enum (gst-state int)
+  (define-alien-enum (gst-state)
                      :void-pending 0
                      :null 1
                      :ready 2
@@ -17,7 +17,7 @@
   (defun %elt-flag (n)
     (ash (gst-object-flags :last) n)))
 
-(define-alien-enum (gst-state-change int)
+(define-alien-enum (gst-state-change)
                    :null-to-ready (%state-change :null :ready)
                    :ready-to-paused (%state-change :ready :paused)
                    :paused-to-playing (%state-change :paused :playing)
@@ -26,13 +26,13 @@
                    :paused-to-paused (%state-change :paused :paused)
                    :playing-to-playing (%state-change :playing :playing))
 
-(define-alien-enum (gst-state-change-return int)
+(define-alien-enum (gst-state-change-return)
                    :failure 0
                    :success 1
                    :async 2
                    :no-preroll 3)
 
-(define-alien-enum (gst-element-flags int)
+(define-alien-enum (gst-element-flags)
                    :locked-state (%elt-flag 0)
                    :sink (%elt-flag 1)
                    :source (%elt-flag 2)

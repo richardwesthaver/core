@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :gstreamer)
 
-(define-alien-enum (gst-debug-graph-details int)
+(define-alien-enum (gst-debug-graph-details)
                    :show-media-type (ash 1 0)
                    :show-caps-details (ash 1 1)
                    :show-non-default-params (ash 1 2)
@@ -18,7 +18,7 @@
   (bin (* gst-bin))
   (details gst-debug-graph-details))
 
-(define-alien-enum (gst-debug-level int)
+(define-alien-enum (gst-debug-level)
                    :none 0
                    :error 1
                    :warning 2
