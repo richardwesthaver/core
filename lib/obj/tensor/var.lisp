@@ -64,12 +64,3 @@ of a matrix (default 2)")
 (defparameter *default-uplo* :l
   "For routines which take symmetric (hermitian) matrices as arguments, this sets
 the default argument for UPLO.")
-
-;;; Conditions
-(define-condition tensor-invalid-dimension-value (error)
-  ((argument :initarg :argument)
-   (dimension :initarg :dimension))
-  (:report 
-   (lambda (c s)
-     (with-slots (argument dimension) c
-       (format s "Invalid dimension arg: ~A~%dimension: ~A" argument dimension)))))

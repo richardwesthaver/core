@@ -10,13 +10,18 @@
                (:file "auto")
                (:module "blas"
                 :components 
-                ((:file "axpy")))
+                ((:file "axpy")
+                 (:file "sum")
+                 (:file "gem")
+                 (:file "ger")
+                 (:file "trs")))
                (:module "lapack"
                 :if-feature :lapack
                 :components
                 ((:file "lu")))
                (:file "linfix")
                (:file "syn")
+               (:file "readtable")
                (:file "math"))
   :in-order-to ((test-op (test-op :math/tests))))
 

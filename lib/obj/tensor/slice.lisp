@@ -129,9 +129,10 @@
                      (incf head (* (aref (strides ret) axis) (aref (dimensions ele) axis)))))
           ret))))
 ;;
-(defgeneric minors (x &rest indices)
-  (:documentation "Copy minors of x corresponding to indices.")
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric minors (x &rest indices)
+    (:documentation "Copy minors of x corresponding to indices.")
+    (:generic-function-class tensor-method-generator)))
 
 (with-memoization ((make-hash-table :weakness :key-or-value :test 'equalp))
   (memoizing

@@ -1,4 +1,4 @@
-;;; dot.lisp --- Dot (inner) Product
+;;; trs.lisp --- TRS
 
 ;; 
 

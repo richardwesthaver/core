@@ -111,17 +111,22 @@
 ;;; Code:
 (in-package :math/syn)
 
+(defparameter *linfix-reader* (copy-readtable))
+
+(defparameter *exponent-tokens* '(#\E #\S #\D #\F #\L))
 (defparameter *operator-tokens*
-  `(("^" ^) ("**" **)
+  `(("⊗" ⊗) ;;<- CIRCLE TIMES
+    (".^" .^) ("^" ^) ("⟼" ⟼)
     ("./" ./) ("/" /)
     ("*" *) (".*" .*) ("@" @)
+    ("·" @) ;; <- MIDDLE DOT
     (".+" +) ("+" +)
     (".-" -) ("-" -)
     ("(" \() (")" \))
     ("[" \[) ("]" \])
-    (":" |:|)
-    ("=" =) ("==" ==)
-    ("," \,)
+    (":" |:|) (":=" :=)
+    ("←" ←) ("=" =) (".=" .=)
+    ("," \,) ("." \.)
     ("'" ctranspose) (".'" transpose)))
 
 (defun find-token (str stream)
@@ -154,28 +159,31 @@
                   (read-char stream t nil t)
                   (read-stack)
                   (return (values (reverse expr) lspe)))
-                 ((member c '(#\# #\\))
+                 ((member c '(#\# #\\ #\"))
                   (when (char= c #\\) (read-char stream t nil t))
                   (let ((word (read stream))
                         (sym (gensym)))
                     (push sym expr)
                     (push (list sym word) lspe)))
-                 ((when-let ((tok (find-if #'(lambda (x) (find-token (first x) stream)) (sort (remove-if-not #'(lambda (x) (char= c (aref (first x) 0))) *operator-tokens*) #'> :key #'(lambda (x) (length (first x)))))))
-                    (read-stack)
-                    (push (second tok) expr)))
                  ((and (char= c #\i) (numberp (read-stack nil)))
                   (read-char stream t nil t)
                   (push (complex 0 (read-stack nil)) expr)
                   (setf stack nil))
+                 ((when-let ((tok (find-if #'(lambda (x) (find-token (first x) stream)) 
+                                           (sort (remove-if-not #'(lambda (x) (char= c (aref (first x) 0))) 
+                                                                *operator-tokens*) 
+                                                 #'> 
+                                                 :key #'(lambda (x) (length (first x)))))))
+                    (if (and (eql (second tok) '|.|) (integerp (read-stack nil)))
+                        (push #\. stack)
+                        (progn
+                          (read-stack)
+                          (push (second tok) expr)))))
                  ((member c *whitespaces*)
                   (read-char stream t nil t)
                   (read-stack))
-                 ((char= c #\\)
-                  (read-char stream t nil t)
-                  (read-stack)
-                  (push (read stream t nil nil) expr))
-                 (t
-                  (push (read-char stream t nil t) stack)))))))
+                 (t (push (read-char stream t nil t) stack)))))))
+                  
 
 (defun list-lexer (list)
   #'(lambda () (if (null list) (values nil nil)
@@ -186,56 +194,9 @@
                                    (t (error "Unexpected value ~S" value)))
                              value)))))
 
-(define-parser *linfix-parser*
-  (:start-symbol expr)
-  (:terminals (** ./ / * .* @ ^ + - = == |(| |)| [ ] |:| |,| ctranspose transpose id number))
-  (:precedence ((:left ctranspose transpose)
-                (:right **)
-                (:left ./ / * .* @ ^)
-                (:left + -)
-                (:left = ==)))
-  (expr
-   (expr ctranspose #'(lambda (a b) (list b a)))
-   (expr transpose #'(lambda (a b) (list b a)))
-   (expr + expr #'(lambda (a b c) (list b a c)))
-   (expr - expr #'(lambda (a b c) (list b a c)))
-   (expr / expr #'(lambda (a b c) (list b a c)))
-   (expr ./ expr #'(lambda (a b c) (list b a c)))
-   (expr * expr #'(lambda (a b c) (list b a c)))
-   (expr .* expr #'(lambda (a b c) (list b a c)))
-   (expr @ expr #'(lambda (a b c) (list b a c)))
-   (expr ^ expr #'(lambda (a b c) (list b a c)))
-   (expr ** expr #'(lambda (a b c) (list b a c)))
-   (expr = expr #'(lambda (a b c) (declare (ignore b)) (list 'setf a c)))
-   (expr == expr #'(lambda (a b c) (list b a c)))
-   callable slice
-   term)
-  ;;
-  (args
-   (expr #'list)
-   (expr |,| args #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
-  (callable
-   (term |(| |)| #'(lambda (a b c) (declare (ignore b c)) (list a)))
-   (term |(| args |)| #'(lambda (a b c d) (declare (ignore b d)) (list* a c))))
-  ;;
-  (idxs
-   expr
-   (expr |:| expr #'(lambda (a b c) (declare (ignore b)) (list :slice a c)))
-   (expr |:| expr |:| expr #'(lambda (a b c d e) (declare (ignore b d)) (list :slice a c e))))
-  (sargs
-   (idxs #'list)
-   (idxs |,| sargs #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
-  (slice
-   (term [ ] #'(lambda (a b c) (declare (ignore b c)) (list 'generic-ref a)))
-   (term [ sargs ] #'(lambda (a b c d) (declare (ignore b d)) (list* 'generic-ref a c))))
-  ;;
-  (term
-   number
-   id
-   (- term)
-   (/ term)
-   (./ term)
-   (|(| expr |)| #'(lambda (a b c) (declare (ignore a c)) b))))
+(defun funcify (lst)
+  (if (symbolp (car lst)) lst
+      `(funcall ,(car lst) ,@(cdr lst))))
 
 (defparameter *ref-list* '((cons elt) (array aref) (obj/tensor::base-tensor obj/tensor::ref)))
 
@@ -268,3 +229,104 @@
                                ,@(mapcar #'(lambda (l) `(,(car l) (setf (,(cadr l) ,arr ,@args) ,store))) (if (> (length args) 1) (cdr *ref-list*) *ref-list*)))))
                    ,setter))
               `(generic-ref ,getter ,@args)))))
+
+(defmacro generic-incf (x expr &optional (alpha 1) &environment env)
+  (multiple-value-bind (dummies vals new setter getter) (get-setf-expansion x env)
+    (when (cdr new) (error "Can't expand this."))
+    (with-gensyms (val)
+      (let ((new (car new)))
+        `(let* (,@(zip dummies vals)
+                (,new ,getter)
+                (,val ,expr))
+           (etypecase ,new
+             (tensor::base-tensor (math/blas::axpy! ,alpha ,val ,new))
+             (t (setq ,new (+ ,new ,val))))
+           ,setter)))))
+
+(define-parser *linfix-parser*
+  (:start-symbol expr)
+  (:terminals (⟼ ^ .^ ./ / * .* @ ⊗ + - := ← = .= |(| |)| [ ] |:| |.| |,| ctranspose transpose id number))
+  (:precedence ((:left |.| ctranspose transpose)
+                (:right .^ ^)
+                (:left ./ / * .* @ ⊗)
+                (:left + -)
+                (:left ⟼)
+                (:right := ← = .=)))
+  (expr
+   (expr ctranspose #'(lambda (a b) (list b a)))
+   (expr transpose #'(lambda (a b) (list b a)))
+   (expr + expr #'(lambda (a b c) (list b a c)))
+   (expr - expr #'(lambda (a b c) (list b a c)))
+   (- expr)
+   (expr / expr #'(lambda (a b c) (list b a c)))
+   (expr ./ expr #'(lambda (a b c) (list b a c)))
+   (expr * expr #'(lambda (a b c) (list b a c)))
+   (expr .* expr #'(lambda (a b c) (list b a c)))
+   (expr @ expr #'(lambda (a b c) (list b a c)))
+   (expr ⊗ expr #'(lambda (a b c) (list b a c)))
+   (expr .^ expr #'(lambda (a b c) (list b a c)))
+   (expr ^ expr #'(lambda (a b c) (list b a c)))
+   (list ⟼ expr #'(lambda (a b c) (declare (ignore b)) `(lambda (,@(cdr a)) ,c)))
+   (expr ← expr #'(lambda (a b c) (declare (ignore b)) (list 'setf a c)))
+   (expr := expr #'(lambda (a b c) (declare (ignore b)) (list :deflet a c)))
+   (expr = expr #'(lambda (a b c) (list b a c)))
+   (expr .= expr #'(lambda (a b c) (list b a c)))
+   term)
+  ;;
+  (lid
+   id
+   (lid |.| id #'(lambda (a b c) (declare (ignore b) (type (not number) a) (type symbol c)) `(slot-value ,a ',c)))
+   (lid |.| |.| id #'(lambda (a b c d &aux (aa (gensym "A")))
+                       (declare (ignore b c) (type (not number) a) (type symbol d))
+                       `(let ((,aa ,a))
+                          (slot-value ,aa (find-symbol ,(symbol-name d) (symbol-package (type-of ,aa)))))))
+   (|(| expr |)| #'(lambda (a b c) (declare (ignore a c)) b)))
+  ;;
+  (args
+   (expr #'list)
+   (expr |,| args #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
+  ;;
+  #+nil
+  (1+args
+   (expr |,| expr #'(lambda (a b c) (declare (ignore b)) (list a c)))
+   (expr |,| 1+args #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
+  (list
+   ([ args ] #'(lambda (a b c) (declare (ignore a c)) (list* 'list b)))
+   #+nil
+   (|(| 1+args |)| #'(lambda (a b c) (declare (ignore a c)) (list* 'list b))))
+  ;;
+  (callable
+   (lid |(| |)| #'(lambda (a b c) (declare (ignore b c)) (funcify (list a))))
+   (lid |(| args |)| #'(lambda (a b c d) (declare (ignore b d)) (funcify (list* a c))))
+   (callable |(| |)| #'(lambda (a b c) (declare (ignore b c)) (funcify (list a))))
+   (callable |(| args |)| #'(lambda (a b c d) (declare (ignore b d)) (funcify (list* a c)))))
+  ;;
+  (idxs
+   expr
+   (|:| #'(lambda (a) (declare (ignore a)) (list :slice nil nil nil)))
+   (|:| expr  #'(lambda (a b) (declare (ignore a)) (list :slice nil b nil)))
+   (expr |:| #'(lambda (a b) (declare (ignore b)) (list :slice a nil nil)))
+   (|:| expr |:|  #'(lambda (a b c) (declare (ignore a c)) (list :slice nil nil b)))
+   (expr |:| expr #'(lambda (a b c) (declare (ignore b)) (list :slice a c nil)))
+   (expr |:| expr |:|  #'(lambda (a b c d) (declare (ignore b d)) (list :slice a nil c)))
+   (expr |:| expr |:| expr #'(lambda (a b c d e) (declare (ignore b d)) (list :slice a c e))))
+  (sargs
+   (idxs #'list)
+   (idxs |,| sargs #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
+  ;;
+  (slice
+   (callable [ ] #'(lambda (a b c) (declare (ignore b c)) (list 'generic-ref a)))
+   (callable [ sargs ] #'(lambda (a b c d) (declare (ignore b d)) (list* 'generic-ref a c)))
+   (lid [ ] #'(lambda (a b c) (declare (ignore b c)) (list ':generic-ref a)))
+   (lid [ sargs ] #'(lambda (a b c d) (declare (ignore b d)) (list* 'generic-ref a c)))
+   (slice [ ] #'(lambda (a b c) (declare (ignore b c)) (list 'generic-ref a)))
+   (slice [ sargs ] #'(lambda (a b c d) (declare (ignore b d)) (list* 'generic-ref a c))))
+  ;;
+  (term
+   number lid
+   (ctranspose id #'(lambda (a b) (declare (ignore a)) (list 'quote b)))
+   (ctranspose |:| id #'(lambda (a b c) (declare (ignore a b)) (intern (symbol-name c) :keyword)))
+   list callable slice
+   ;;(- term)
+   (/ term #'(lambda (a b) (list a b)))
+   (./ term)))

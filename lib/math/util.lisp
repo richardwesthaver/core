@@ -5,10 +5,10 @@
 ;;; Code:
 (in-package :math/util)
 
-(defun blasfunc (name type)
+(defmacro blasfunc (name type)
   `(function ,(intern (string-upcase (obj/tensor::blas-func name type)) :blas)))
 
-(defun lapackfunc (name type)
+(defmacro lapackfunc (name type)
   `(function ,(intern (string-upcase (obj/tensor::blas-func name type)) :lapack)))
 
 #+nil

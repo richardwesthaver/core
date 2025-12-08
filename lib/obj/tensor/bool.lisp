@@ -24,6 +24,14 @@
     (:method ((a tensor) (b tensor))
       (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
     (:generic-function-class tensor-method-generator))
+  (defgeneric ga= (a b)
+    (:method ((a tensor) (b tensor))
+      (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator))
+  (defgeneric go= (a b)
+    (:method ((a tensor) (b tensor))
+      (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method ge= (a (b dense-tensor :x))
   `(let ((a (t.coerce ,(field-type (cl :x)) a))
@@ -42,11 +50,6 @@
               (ref.r ret :type ,(tensor 'boolean)))
              (setf ref.r (t.f= ,(field-type (cl :x)) ref.a ref.b)))
      ret))
-
-(defgeneric ga= (a b)
-  (:method ((a tensor) (b tensor))
-    (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
 
 (define-tensor-method ga= (a (b dense-tensor :x))
   `(let ((a (t.coerce ,(field-type (cl :x)) a))
@@ -81,11 +84,6 @@
                  (return))))
     ret))
 
-(defgeneric go= (a b)
-  (:method ((a tensor) (b tensor))
-    (assert (vector-eq (dimensions a) (dimensions b)) nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
-
 (define-tensor-method go= (a (b dense-tensor :x))
   `(let ((a (t.coerce ,(field-type (cl :x)) a))
          (ret nil))
@@ -116,7 +114,7 @@
             do (when (t.store-ref #.(tensor 'boolean) (memoizing (store b) :type #.(store-type (tensor 'boolean))) of-b)
                  (setf ret t)
                  (return))))
-      ret)))
+      ret))
 
 ;; (zeros 2 (tensor 'boolean))
 ;; (go= (ones 2) #d[1, 0])

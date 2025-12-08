@@ -5,22 +5,23 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(defgeneric copy! (from to)
-  (:documentation
-   "
+(eval-always
+  (defgeneric copy! (from to)
+    (:documentation
+     "
   (COPY! x y)
 
   Copy the contents of X into Y. Return Y.
 ")
-  (:method :before ((x array) (y array))
-     (assert (equal (array-dimensions x) (array-dimensions y)) nil 'dimension-mismatch))
-  (:method  :before ((x array) (y tensor))
-     (assert (equal (array-dimensions x) (dimensions y t)) nil 'dimension-mismatch))
-  (:method :before ((x tensor) (y array))
-     (assert (equal (array-dimensions y) (dimensions x t)) nil 'dimension-mismatch))  
-  (:method :before ((x cons) (y cons))
-     (assert (= (length x) (length y)) nil 'dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+    (:method :before ((x array) (y array))
+      (assert (equal (array-dimensions x) (array-dimensions y)) nil 'dimension-mismatch))
+    (:method  :before ((x array) (y tensor))
+      (assert (equal (array-dimensions x) (dimensions y t)) nil 'dimension-mismatch))
+    (:method :before ((x tensor) (y array))
+      (assert (equal (array-dimensions y) (dimensions x t)) nil 'dimension-mismatch))  
+    (:method :before ((x cons) (y cons))
+      (assert (= (length x) (length y)) nil 'dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (definline tensor-copy (obj &optional type)
   (copy! obj (etypecase type (symbol type) (standard-class (class-name type)))))
@@ -83,9 +84,10 @@
     ((subtypep type 'tensor) (copy! arr (zeros (array-dimensions arr) type)))
     (t (error "don't know how to copy a list to type ~a" type))))
 
-(defgeneric tricopy! (a b uplo?)
-  (:documentation "Copy upper order, lower order, or diagonal.")
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric tricopy! (a b uplo?)
+    (:documentation "Copy upper order, lower order, or diagonal.")
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method tricopy! ((a dense-tensor :x) (b dense-tensor :x t) uplo?)
   `(ecase uplo?
@@ -132,9 +134,10 @@
            (rotatef ,ref-x ,ref-y))
          ,y))))
 
-(defgeneric swap! (x y)
-  (:documentation
-"(SWAP! x y)
+(eval-always
+  (defgeneric swap! (x y)
+    (:documentation
+     "(SWAP! x y)
 
   Given tensors X,Y, perform:
 
@@ -143,7 +146,7 @@
   and return Y.
 
   X, Y must have the same dimensions.")
-  (:generic-function-class tensor-method-generator))
+    (:generic-function-class tensor-method-generator)))
 
 (defmethod swap! :before ((x dense-tensor) (y dense-tensor))
   (assert (with-optimization (:speed 3 :safety 0) 

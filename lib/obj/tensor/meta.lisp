@@ -78,6 +78,9 @@ GROUP-NAME, the classes of the respective argument are the same."))
   (print-unreadable-object (obj stream :type t)
     (format stream ", ~a, ~a" (class-name (slot-value obj 'object-class)) (slot-value obj 'group-name))))
 
+(defmethod sb-pcl:specializer-type-specifier ((self tensor-method-generator) (method standard-method) (spec group-specializer))
+  (class-name (slot-value spec 'object-class)))
+
 (defmethod add-direct-method ((specializer group-specializer) method)
   (pushnew method (slot-value specializer 'direct-methods)))
 (defmethod remove-direct-method ((specializer group-specializer) method)
@@ -85,7 +88,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
         (remove method (slot-value specializer 'direct-methods))))
 (defmethod make-load-form ((obj group-specializer) &optional env)
   (declare (ignore env))
-  (values `(group-specializer ',(class-name (slot-value obj 'object-class)) ',(slot-value obj 'group-name)) nil))
+  (values `(group-specializer ',(class-name (slot-value obj 'object-class)) ,(slot-value obj 'group-name)) nil))
 ;;Subtype
 (defclass subtype-specializer (specializer)
   ((specializer-type :initform nil :initarg :specializer-type)
@@ -209,6 +212,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
 ;; TODO: something going wrong in method dispatch here, should also define
 ;; SB-PCL:SPECIALIZER-TYPE-SPECIFIER as SBCL warns.
 (defmacro define-tensor-method (name (&rest args) &body body)
+  "Define a tensor method on the GF NAME which should be a class of type TENSOR-METHOD-GENERATOR."
   (let* ((keypos (or (position-if (lambda (x) (member x cl:lambda-list-keywords)) args) (length args)))
          (dispatch-args (subseq args 0 keypos))
          (dispatch-key (mapcar (lambda (x) (if (consp x) (second x) t)) dispatch-args))
@@ -273,7 +277,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
                        (,xx (or (assoc ',dispatch-key (cdr (gethash ',name *template-generated-methods*)) :test #'equal)
                                 (error "Method table missing from *template-generated-methods*!"))))
                    (push
-                    (macrolet ((cl (,xx) (ecase ,xx ,@(mapcar #'(lambda (x) `(,(second x) (quote ,(first x))))  sym))))
+                    (macrolet ((cl (,xx) (ecase ,xx ,@(mapcar #'(lambda (x) `(,(second x) (quote ,(first x)))) sym))))
                       (compile-and-eval
                        `(defmethod ,',name (,@(list ,@(mapcar 
                                                        (lambda (x) 

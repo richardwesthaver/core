@@ -50,13 +50,17 @@
      (:file "foreign")
      (:file "bool")
      (:file "complex")
+     (:file "dot")
+     (:file "scal")
+     (:file "transpose")
      (:file "dfs")
      (:file "rand")
      (:file "map")
      (:file "misc")))
    (:module "tree"
-    :components ((:file "node")
-                 (:file "btree")))
+    :components 
+    ((:file "node")
+     (:file "btree")))
    (:file "equiv")
    (:module "color"
     :components ((:file "color")

@@ -5,9 +5,10 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(defgeneric mapsor! (func x y)
-  (:documentation
-"
+(eval-always
+  (defgeneric mapsor! (func x y)
+    (:documentation
+     "
     Syntax
     ======
     (MAPSOR! func x y)
@@ -30,11 +31,11 @@
     >
     >
 ")
-  (:method :before ((func function) (x tensor) (y tensor))
-    (assert (with-optimization (:speed 3 :safety 0) 
-              (vector-eq (dimensions x) (dimensions y))) 
-            nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+    (:method :before ((func function) (x tensor) (y tensor))
+      (assert (with-optimization (:speed 3 :safety 0) 
+                (vector-eq (dimensions x) (dimensions y))) 
+              nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method mapsor! ((func function) (x dense-tensor :x) (y dense-tensor :y))
   `(dorefs (idx (dimensions x))

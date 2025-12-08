@@ -109,6 +109,32 @@
 
 ;;; Look up alien type information and build both define-sap-accessors form
 ;;; and convert-alien-type function definition.
+(defmacro define-sap-accessors (&body pairs)
+  `(progn
+     (defun %sap-ref (ptr type &optional (offset 0))
+       (ecase type
+         ,@(loop for (keyword fn) in pairs
+                 collect `(,keyword (,fn ptr offset)))))
+     (defun %sap-set (value ptr type &optional (offset 0))
+       (ecase type
+         ,@(loop for (keyword fn) in pairs
+                 collect `(,keyword (setf (,fn ptr offset) value)))))
+     (define-compiler-macro %sap-ref
+         (&whole form ptr type &optional (offset 0))
+       (if (constantp type)
+           (ecase (eval type)
+             ,@(loop for (keyword fn) in pairs
+                     collect `(,keyword `(,',fn ,ptr ,offset))))
+           form))
+     (define-compiler-macro %sap-set
+         (&whole form value ptr type &optional (offset 0))
+       (if (constantp type)
+           (once-only (value)
+             (ecase (eval type)
+               ,@(loop for (keyword fn) in pairs
+                       collect `(,keyword `(setf (,',fn ,ptr ,offset) ,value))))))
+       form)))
+
 (defmacro define-type-mapping (accessor-table alien-table)
   (let* ((accessible-types
            (remove 'void alien-table :key #'second))
@@ -373,32 +399,6 @@ alien (* size-t) with same size as the first value."
          :format-arguments (list var enum)))
 
 ;;; SAP-REF
-(defmacro define-sap-accessors (&body pairs)
-  `(progn
-     (defun %sap-ref (ptr type &optional (offset 0))
-       (ecase type
-         ,@(loop for (keyword fn) in pairs
-                 collect `(,keyword (,fn ptr offset)))))
-     (defun %sap-set (value ptr type &optional (offset 0))
-       (ecase type
-         ,@(loop for (keyword fn) in pairs
-                 collect `(,keyword (setf (,fn ptr offset) value)))))
-     (define-compiler-macro %sap-ref
-         (&whole form ptr type &optional (offset 0))
-       (if (constantp type)
-           (ecase (eval type)
-             ,@(loop for (keyword fn) in pairs
-                     collect `(,keyword `(,',fn ,ptr ,offset))))
-           form))
-     (define-compiler-macro %sap-set
-         (&whole form value ptr type &optional (offset 0))
-       (if (constantp type)
-           (once-only (value)
-             (ecase (eval type)
-               ,@(loop for (keyword fn) in pairs
-                       collect `(,keyword `(setf (,',fn ,ptr ,offset) ,value))))))
-       form)))
-
 (defun aggregatep (type)
   "Return T if the given ALIEN-TYPE is 'aggregate'."
   ;; always arrays and structs, never 'built-in'
@@ -962,7 +962,7 @@ handle stored in another slot of the same object."))
      (or (std/macs:if-let ((class (find element-type (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'element-type)))
            (class-name class)
            (let* ((cl-name (intern (format nil "<FOREIGN-VECTOR: ~a>"  element-type) (find-package "STD/ALIEN"))))
-             (assert (member (element-type-to-alien element-type) '(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'invalid-arguments)
+             (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
              (compile-and-eval
               `(progn
                  (defclass ,cl-name (foreign-vector) ()

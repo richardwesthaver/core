@@ -31,11 +31,24 @@
 (defpkg :math/blas
   (:use :std-lisp :math/proto :blas :tensor)
   (:import-from :math/util :blasfunc)
-  (:export))
+  (:import-from :tensor 
+   :t.fid+ :t.f+ :t.f* :t.fc 
+   :t.coerce :t.store-ref 
+   :tensor-method-generator
+   :define-tensor-method
+   :dense-tensor :field-type
+   :store-type :tensor-vectorp
+   :dimensions :cl :t.store :t.blas-lb
+   :t.f= :dorefs :tensor-dimension-mismatch :with-field-element
+   :clinear-storep :complexified-tensor
+   :blas-func :tensor-copy
+   :base-tensor :zeros :order :total-size
+   :scal! :index-type)
+  (:export :axpy :tensor-sum :mean :prod))
 
 (defpkg :math/syn
-  (:use :std-lisp :tensor :parse/yacc)
-  (:export :*linfix-parser*))
+  (:use :std-lisp :tensor :parse/yacc :id)
+  (:export :*linfix-parser* :^))
 
 #+lapack
 (defpkg :math/lapack

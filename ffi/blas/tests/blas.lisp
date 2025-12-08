@@ -85,3 +85,4 @@ Evaluation took:
     (sb-sys:with-pinned-objects (a b c)
       (dgemm (char-code #\n) (char-code #\n) 2 2 3 1d0 (double-array-pointer b) 2 (double-array-pointer a) 3 0d0 (double-array-pointer c) 2))
     (isequalp expected-c c)))
+
