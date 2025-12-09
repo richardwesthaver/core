@@ -62,7 +62,7 @@
        (with-optimization (:speed 3 :safety 0)
          (dorefs (,idx (dimensions ,tensor))
              ((,ref ,tensor :type ,type))
-             (setf ,ref (let-typed ((,x ,ref :type ,(field-type type))) ,@body))))
+             (setf ,ref (lety ((,x ,ref :type ,(field-type type))) ,@body))))
        ,tensor)))
 
 (defun check-dims (axlst tensors)

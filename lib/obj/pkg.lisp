@@ -293,7 +293,37 @@
 (defpkg :obj/tensor
   (:nicknames :tensor)
   (:use :cl :std)
-  (:export :tensor :foreign-dense-tensor :foreign-tensor :blas-mixin))
+  (:export :tensor 
+   :foreign-dense-tensor :foreign-tensor 
+   :blas-mixin #:orphanize 
+   #:index-type #:index-store-vector
+   #:dimensions #:order #:tensor-field-type #:ref #:einstein-sum
+   #:base-tensor #:memos #:store-size #:total-size 
+   #:parent #:dorefs
+   #:tensor-class #:sparse-tensor #:stride-tensor #:dense-tensor #:simple-dense-tensor #:foreign-dense-tensor
+   #:hash-tensor #:graph-tensor 
+   #:simple-graph-tensor #:coordinate-tensor 
+   #:tensor-typep #:tensor-type
+   #:tensor-method-generator #:define-tensor-method #:cl #:zeros
+   #:define-tensor-generic
+   #:deftensor
+   #:tensor-vector #:tensor-matrix #:tensor-square-matrix
+   #:complexified-tensor #:realified-tensor
+   #:indices #:fence #:δ-I #:strides #:head #:store
+   #:idxv #:pick-random #:shuffle! #:permutation #:permutation-action #:permutation-cycle
+   #:permutation-pivot-flip #:permute! #:permute #:permutation/ #:permutation*
+   #:sort-permute #:subtensor~ #:slice~ #:suptensor~ #:reshape! #:reshape~
+   #:matrixify~ #:join #:minors
+   #:tensor-realpart~ #:tensor-realpart #:tensor-imagpart~ #:tensor-imagpart
+   #:transpose! #:transpose~ #:transpose #:ctranspose! #:ctranspose #:tensor-conjugate! #:tensor-conjugate
+   ;;L1
+   #:copy! #:tensor-copy #:swap! #:swap #:dot #:scal! #:scal #:div! #:div #:scald!
+   ;; bool
+   #:ge= #:ga= #:go=
+   #:mapsor! #:mapsor #:map-tensor! #:mapslice #:mapslice~ #:mapslicec~ #:tensor-foldl
+   #:ones #:eye! #:eye #:diag #:diag~
+   #:rand #:randn #:randi #:rande
+   #:range #:linspace))
 
 (defpkg :obj/ast
   (:nicknames :ast)
@@ -468,6 +498,7 @@
 
 (defpkg :obj/schema
   (:nicknames :schema)
+  (:import-from :obj/tensor :field-type)
   (:use :cl :std :config :build :stored :sb-mop :id :ast :dynamic)
   (:export
    #:schema
@@ -696,6 +727,9 @@
   (:nicknames :obj/btree :btree)
   (:use :cl :std :obj/tree :stored :db :val)
   (:export
+   #:primary
+   #:key-form
+   #:key-fn
    #:existsp
    #:btree
    #:drop-btree
@@ -810,7 +844,7 @@
 
 (defpkg :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val)
+  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor)
   (:export
    #:store
    #:next-oid

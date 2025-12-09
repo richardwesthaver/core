@@ -1074,7 +1074,7 @@ empty string."
 
 (defun check-logical-pathname (string)
   (acond 
-   ((find (trim string :char-bag ":") (logical-host-names) :test 'string-equal)
+   ((find (trim string :char-bag ":") (list-all-logical-host-names) :test 'string-equal)
     (list (replace string it)))
    ((ignore-errors 
      (namestring 

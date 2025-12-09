@@ -56,8 +56,9 @@
 ")
     (:generic-function-class tensor-method-generator)))
 
-(defmethod tensor-sum! :before ((x dense-tensor) (y dense-tensor) &optional (axis 0))
-  (assert (reduce-check x y axis) nil 'tensor-dimension-mismatch))
+;; before methods still don't work..
+;; (defmethod tensor-sum! :before ((x dense-tensor) (y dense-tensor) &optional (axis 0))
+;;   (assert (reduce-check x y axis) nil 'tensor-dimension-mismatch))
 
 (define-tensor-method tensor-sum! ((x dense-tensor :x) (y dense-tensor :y) &optional (axis 0))
   `(t.sum ,(cl :y) x (copy! (t.fid+ ,(field-type (cl :y))) y) axis))
@@ -99,11 +100,11 @@
   (:method ((x dense-tensor) &optional (axis 0) (preserve-rank? nil))
     (if axis
         (let ((axis (modproj axis (order x))))
-          (tensor-sum! x (let ((dims (loop for ele across (dimensions x)
-                                           for i = 0 then (1+ i)
-                                           when (if preserve-rank? t (/= i axis)) 
-                                           collect (if (= i axis) 1 ele))))
-                           (and dims (zeros dims (class-of x))))
+          (tensor-sum! x (let ((d (loop for ele across (dimensions x)
+                                        for i from 0
+                                        when (if preserve-rank? t (/= i axis))
+                                        collect (if (= i axis) 1 ele))))
+                           (and d (zeros d (class-of x))))
                 axis))
         (tensor-sum! x nil)))
   (:method ((x number) &optional axis preserve-rank?)
@@ -152,9 +153,3 @@
   (:method ((x sequence) &optional axis preserve-rank?)
     (declare (ignore axis preserve-rank?))
     (reduce #'cl:* x)))
-
-;; requires NORM < GER!
-#+nil
-(definline normalize! (x &optional (n 1))
-  (let ((norm (norm x n)))
-    (values (scal! (/ norm) x) norm)))

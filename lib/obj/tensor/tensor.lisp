@@ -132,7 +132,7 @@
 
 (deft/method t.store-ref (sym simple-vector-store-mixin) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
-  (let ((idx (car idx)))
+  (let ((idx (print (car idx))))
     (if (clinear-storep sym)
         (using-gensyms (decl (store idx) (2idx))
           `(let (,@decl)
@@ -200,7 +200,7 @@
 
 ;; (defgeneric testg (x &optional ele))
 ;; (define-tensor-method testg ((x dense-tensor :a) &optional (ele 1))
-;;   `(t/copy! (t ,(cl x)) (coerce ele ',(field-type (cl x))) x)
+;;   `(t.copy! (t ,(cl x)) (coerce ele ',(field-type (cl x))) x)
 ;;   'x)
 
 ;; (testg (zeros 10))
@@ -208,7 +208,7 @@
 ;; (defgeneric copy!-test (x y))
 
 ;; (define-tensor-method copy!-test ((x dense-tensor :a) (y dense-tensor :b t))
-;;   `(t/copy! (,(cl x) ,(cl y)) x y))
+;;   `(t.copy! (,(cl x) ,(cl y)) x y))
 
 ;; (define-tensor-method axpy-test (alpha (x dense-tensor :a) (y dense-tensor :a t))
 ;;   `(let ((alpha (t/coerce ,(field-type (cl x)) alpha)))
@@ -224,6 +224,7 @@
     (:generic-function-class tensor-method-generator))
   (defgeneric (setf store-ref) (value tensor idx)
     (:generic-function-class tensor-method-generator)))
+
 (define-tensor-method store-ref ((tensor tensor :x) idx)
   `(t.store-ref ,(cl :x) (t.store ,(cl :x) tensor) idx))
 (define-tensor-method (setf store-ref) (value (tensor tensor :x) idx)

@@ -1087,6 +1087,7 @@
    :counter :make-counter :counter-value :inc-counter 
    :dec-counter
    ;; iterator protocol
+   :iter
    :iterator :next
    :key :val
    :prev

@@ -49,26 +49,29 @@
 (defgeneric load-field (self field)
   (:documentation "Load a FIELD with object SELF."))
 
-(defstruct field
+(defstruct (field (:conc-name "%FIELD-"))
   "A single named field."
   (name (symbol-name (gensym "#")))
   (type t :type (or symbol list)))
+
+(defmethod name ((self field)) (%field-name field))
+(defmethod field-type ((self field)) (%field-type field))
 
 (defmethod read-ast ((self field) stream)
   (apply 'make-fields (read stream))
   self)
 
 (defmethod build-ast ((self field) &key)
-  `(,(keywordicate (string-upcase (field-name self))) ,(field-type self)))
+  `(,(keywordicate (string-upcase (%field-name self))) ,(field-type self)))
 
 (defmethod write-ast ((self field) stream &key)
   (write (build-ast self) :stream stream))
 
-(defaccessor name ((self field)) (field-name self))
+(defaccessor name ((self field)) (%field-name self))
 
 (defmethod make-load-form ((self field) &optional env)
   (declare (ignore env))
-  `(make-field :name ,(field-name self) :type ,(field-type self)))
+  `(make-field :name ,(%field-name self) :type ,(field-type self)))
 
 ;; convenience interface for FIELD-VECTOR
 (defclass column-vector () ((data :type simple-vector :accessor column-data)))
@@ -191,7 +194,7 @@ SCHEMA."
 
 (defmethod print-object ((self schema) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream ":fields ~A" (map 'list 'field-name (fields self)))))
+    (format stream ":fields ~A" (map 'list 'obj/schema::%field-name (fields self)))))
 
 (defmethod make-load-form ((self schema) &optional env)
   (declare (ignore env))

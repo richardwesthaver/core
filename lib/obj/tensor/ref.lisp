@@ -38,6 +38,7 @@
       ((and (not (cdr subscripts)) (symbolp (first subscripts))) (setf (getf obj (first subscripts)) value))
       (t (setf (elt obj (list-subs obj subscripts)) value)))))
 
+;; TODO
 ;; (defmethod ref :before ((obj hash-table) &rest subscripts)
 ;;   (assert (and (first subscripts) (not (cdr subscripts))) nil 'invalid-arguments))
 

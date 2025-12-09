@@ -25,7 +25,7 @@
 	  (println (hash-table-alist (backfill-opts db)))
 	  (with-iter (it (iter db))
 	    seek-to-first
-	    (loop while (iter-valid-p it)
+	    (loop while iter-valid-p
 		  do (progn
                        (format t "~A : ~A~%"
 			       (sb-ext:octets-to-string key :external-format '(:ascii :replacement #\_))

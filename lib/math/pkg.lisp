@@ -32,6 +32,7 @@
   (:use :std-lisp :math/proto :blas :tensor)
   (:import-from :math/util :blasfunc)
   (:import-from :tensor 
+   :tricopy!
    :t.fid+ :t.f+ :t.f* :t.fc 
    :t.coerce :t.store-ref 
    :tensor-method-generator
@@ -43,7 +44,7 @@
    :clinear-storep :complexified-tensor
    :blas-func :tensor-copy
    :base-tensor :zeros :order :total-size
-   :scal! :index-type)
+   :scal! :index-type :define-tensor-generic)
   (:export :axpy :tensor-sum :mean :prod))
 
 (defpkg :math/syn

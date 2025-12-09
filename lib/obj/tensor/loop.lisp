@@ -203,16 +203,18 @@ UPLO is one of :UL :L :LO :U :UO."
                                                 (when typ `(,of (strides ,(car ten)) 
                                                                 (head ,(car ten)))))
                                             osyms tsyms types))))
-                    ,@(when loop-ordering-p `(order ,order)) 
-                 uplo ,uplo)
-           (copy-vector-to-list ,idx ,lst)
-           (symbol-macrolet (,@(mapcar #'(lambda (ref sto ten of typ) 
-                                           (list ref 
-                                                 (if typ
-                                                     `(the ,(field-type typ) 
-                                                           (t.store-ref ,typ 
-                                                                        (the ,(store-type typ) ,(car sto)) 
-                                                                        ,of))
-                                                     `(apply #'ref (list* ,(car ten) ,lst)))))
-                                       rsyms ssyms tsyms osyms types))
-             ,@body))))))
+                    ,@(when loop-ordering-p `(order ,order))
+                 uplo ,uplo
+                 do (copy-vector-to-list ,idx ,lst)
+                 do (symbol-macrolet 
+                        (,@(mapcar #'(lambda (ref sto ten of typ) 
+                                       (list ref 
+                                             (if typ
+                                                 `(the ,(field-type typ) 
+                                                       (t.store-ref 
+                                                        ,typ 
+                                                        (the ,(store-type typ) ,(car sto)) 
+                                                        ,of))
+                                                 `(apply #'ref (list* ,(car ten) ,lst)))))
+                                   rsyms ssyms tsyms osyms types))
+                      ,@body)))))))

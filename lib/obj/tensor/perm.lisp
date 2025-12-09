@@ -61,7 +61,6 @@
                       :do (assert (= (aref srepr i) i) nil 'permutation-invalid-error)))
                (setf (slot-value perm 'permutation-size) (length repr)))))
 
-;;
 (defclass permutation-cycle (permutation)
   ((store :type list)))
 

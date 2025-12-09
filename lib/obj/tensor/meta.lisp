@@ -59,6 +59,9 @@
   (print-unreadable-object (obj stream :type t)
     (format stream ", ~a" (class-name (slot-value obj 'object-class)))))
 
+(defmethod sb-pcl:specializer-type-specifier ((self tensor-method-generator) (method standard-method) (spec classp-specializer))
+  (class-name (slot-value spec 'object-class)))
+
 (defmethod add-direct-method ((specializer classp-specializer) method)
   (pushnew method (slot-value specializer 'direct-methods)))
 (defmethod remove-direct-method ((specializer classp-specializer) method)
@@ -97,10 +100,8 @@ GROUP-NAME, the classes of the respective argument are the same."))
 (defmethod print-object ((obj subtype-specializer) stream)
   (print-unreadable-object (obj stream :type t)
     (format stream ", ~a" (slot-value obj 'specializer-type))))
-
-;; (defmethod sb-pcl::specializer-type-specifier (proto-generic proto-method (specializer group-specializer))
-;;   (declare (ignore proto-generic proto-method))
-;;   (slot-value specializer 'specializer-type))
+(defmethod sb-pcl:specializer-type-specifier ((self tensor-method-generator) (method standard-method) (spec subtype-specializer))
+  (slot-value spec 'specializer-type))
 
 (defmethod add-direct-method ((specializer subtype-specializer) method)
   (pushnew method (slot-value specializer 'direct-methods)))
@@ -211,6 +212,13 @@ GROUP-NAME, the classes of the respective argument are the same."))
 ;;(subclassp (find-class (tensor 'double-float)) (find-class 'base-tensor))
 ;; TODO: something going wrong in method dispatch here, should also define
 ;; SB-PCL:SPECIALIZER-TYPE-SPECIFIER as SBCL warns.
+
+(defmacro define-tensor-generic (name args &body body)
+  "Like DEFGENERIC except automatically sets the GENERIC-FUNCTION-CLASS to
+TENSOR-METHOD-GENERATOR. The resulting DEFGENERIC is wrapped in an EVAL-ALWAYS
+to ensure we don't accidentally redefine the class as STANDARD-GENERIC-FUNCTION."
+  `(eval-always (defgeneric ,name ,args ,@body (:generic-function-class tensor-method-generator))))
+
 (defmacro define-tensor-method (name (&rest args) &body body)
   "Define a tensor method on the GF NAME which should be a class of type TENSOR-METHOD-GENERATOR."
   (let* ((keypos (or (position-if (lambda (x) (member x cl:lambda-list-keywords)) args) (length args)))

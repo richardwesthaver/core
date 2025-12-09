@@ -94,15 +94,17 @@
              (ret (zeros (if (slot-value g 'transposep) (dimensions g) (reverse (dimensions g))) ',(cl :x) (store-size g))))
          (when (slot-value g 'transposep) (setf (slot-value ret 'dimensions) (reverse (dimensions ret))
                                                 (slot-value ret 'transposep) t))
-         (iter (for u from 0 below (1- (length (fence g))))
-               (letv* ((ll rr (fence g u)))
-                 (iter (for v in-vector (δ-i g) from ll below rr with-index iuv) (push ,@(if (subtypep (cl :x) 'tensor) `((cons u iuv)) `(u)) (aref adj v)))))
-         (iter (for v from 0 below (1- (length (fence ret))))
-               (iter (for ,@(if (subtypep (cl :x) 'tensor) `((u . iuv)) `(u)) in (setf (aref adj v) (sort (aref adj v) #'< ,@(if (subtypep (cl :x) 'tensor) `(:key #'car)))))
-                     (let ((idx (+ (fence ret v) j)))
-                       (setf (aref (δ-i ret) idx) u
-                             ,@(if (subtypep (cl :x) 'tensor) `((t/store-ref ,(cl :x) (t/store ,(cl :x) ret) idx) (t/store-ref ,(cl :x) (t/store ,(cl :x) g) iuv))))
-                       (counting t into j) (finally (setf (aref (fence ret) (1+ v)) (+ (fence ret v) j))))))
+         (loop for u from 0 below (1- (length (fence g)))
+               do (letv* ((ll rr (fence g u)))
+                    (loop for v across (δ-i g) from ll below rr for iuv from 0 
+                          do (push ,@(if (subtypep (cl :x) 'tensor) `((cons u iuv)) `(u)) (aref adj v)))))
+         (loop for v from 0 below (1- (length (fence ret)))
+               do (loop for ,@(if (subtypep (cl :x) 'tensor) `((u . iuv)) `(u)) in (setf (aref adj v) (sort (aref adj v) #'< ,@(if (subtypep (cl :x) 'tensor) `(:key #'car))))
+                        do (let ((idx (+ (fence ret v) j)))
+                             (setf (aref (δ-i ret) idx) u
+                                   ,@(if (subtypep (cl :x) 'tensor) `((t/store-ref ,(cl :x) (t/store ,(cl :x) ret) idx) (t/store-ref ,(cl :x) (t/store ,(cl :x) g) iuv)))))
+                        counting t into j 
+                        finally (setf (aref (fence ret) (1+ v)) (+ (fence ret v) j))))
          ret)))
 
 (definline (setf transpose) (value A &optional permutation)
