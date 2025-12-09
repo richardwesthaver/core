@@ -10,7 +10,6 @@
                 :components
                 ((:file "c")
                  (:file "js")
-                 (:file "rs")
                  (:file "py")))
                (:module "gen"
                 :components
@@ -32,14 +31,6 @@
                    (:file "sym")))
                  (:module "cu"
                   :components ((:file "pkg")))
-                 (:module "rs"
-                  :components 
-                  ((:file "pkg")
-                   (:file "read")
-                   (:file "ast")
-                   (:file "sym")
-                   (:file "util")
-                   (:file "print")))
                  (:module "py"
                   :components ((:file "pkg")))
                  (:module "js"
@@ -67,13 +58,11 @@
                   ((:file "pkg")
                    (:file "c")
                    (:file "cpp")
-                   (:file "cu")
-                   (:file "rs")))
+                   (:file "cu")))
                  (:module "lang"
                   :components
                   ((:file "pkg")
                    (:file "c")
-                   (:file "rs")
                    (:file "js")
                    (:file "py"))))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :syn)))

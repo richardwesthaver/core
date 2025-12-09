@@ -7,7 +7,7 @@
 (defvar *gen* nil)
 
 (eval-always
-  (defvar *gen-designators* (list :c :cpp :cu :rs :py :js :apl :forth)))
+  (defvar *gen-designators* (list :c :cpp :cu :py :js)))
 
 (deftype gen-designator () `(or (member ,@*gen-designators*) null))
 
