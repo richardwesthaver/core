@@ -19,6 +19,7 @@
                 :if-feature :lapack
                 :components
                 ((:file "lu")))
+               ;; (:module "cuda" :components ((:file "kern")))
                (:file "linfix")
                (:file "syn")
                (:file "readtable")
