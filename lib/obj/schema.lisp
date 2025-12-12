@@ -54,8 +54,8 @@
   (name (symbol-name (gensym "#")))
   (type t :type (or symbol list)))
 
-(defmethod name ((self field)) (%field-name field))
-(defmethod field-type ((self field)) (%field-type field))
+(defmethod name ((self field)) (%field-name self))
+(defmethod field-type ((self field)) (%field-type self))
 
 (defmethod read-ast ((self field) stream)
   (apply 'make-fields (read stream))

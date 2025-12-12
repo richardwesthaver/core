@@ -13,16 +13,12 @@
   Copy the contents of X into Y. Return Y.
 ")
   ;; TODO 2025-12-08: 
-  #+nil
   (:method :before ((x array) (y array))
     (assert (equal (array-dimensions x) (array-dimensions y)) nil 'dimension-mismatch))
-  #+nil
   (:method  :before ((x array) (y tensor))
     (assert (equal (array-dimensions x) (dimensions y t)) nil 'dimension-mismatch))
-  #+nil
   (:method :before ((x tensor) (y array))
     (assert (equal (array-dimensions y) (dimensions x t)) nil 'dimension-mismatch))  
-  #+nil
   (:method :before ((x cons) (y cons))
     (assert (= (length x) (length y)) nil 'dimension-mismatch)))
 
@@ -338,7 +334,6 @@
        ,y)))
 
 ;; TODO 2025-12-08: 
-#+nil
 (defmethod copy! :before ((x tensor) (y tensor))
   (assert (and (with-optimization (:speed 3 :safety 0) (vector-eq (dimensions x) (dimensions y) '=))) nil 'tensor-dimension-mismatch)
   (assert (<= (total-size x) (store-size y)) nil 'tensor-insufficient-store))

@@ -1,4 +1,4 @@
-;;; pkg.lisp --- low-level bindings to AWS_LC (libcrypto)
+;;; pkg.lisp --- low-level bindings to OpenSSL (libcrypto)
 
 ;; OpenSSL
 
@@ -26,17 +26,75 @@
    :asn1-string-length
    :asn1-string-data
    :d2i-x509
-   :aws-lc-c-error
-   :aws-lc-condition
-   :read-aws-lc-error-queue
-   :aws-lc-error-call
    :pem-write
    :pem-read
    :ssl-free
    :openssl-add-all-algorithms
-   :openssl-config))
+   :openssl-config
+   :invalid-asn1-string
+   :server-certificate-missing
+   :asn1-error
+   :err-r
+   :openssl-condition
+   :openssl-error
+   :openssl-sap-error
+   :openssl-error-initialize
+   :openssl-error-want-something
+   :openssl-error-none
+   :openssl-error-zero-return
+   :openssl-error-want-read
+   :openssl-error-want-write
+   :openssl-error-want-connect
+   :openssl-error-want-x509-lookup
+   :openssl-error-syscall
+   :openssl-error-verify
+   :openssl-error-call
+   :read-openssl-error-queue
+   :format-error-queue
+   :ssl-get-error
+   :ssl-connect
+   :ssl-accept
+   :ssl-write
+   :ssl-read
+   :ssl-shutdown
+   :ssl-ctx-free
+   :ssl-set-alpn-protos
+   :ssl-get0-alpn-selected
+   :ssl-ctx-set-default-verify-paths
+   :ssl-ctx-set-default-verify-dir
+   :ssl-ctx-set-default-verify-file
+   :rsa-generate-key
+   :rsa-free
+   :bio-ctrl
+   :bio-new-socket
+   :bio-new
+   :bio-get-new-index
+   :bio-meth-new
+   :bio-meth-set-puts
+   :bio-meth-set-write
+   :bio-meth-set-read
+   :bio-meth-set-gets
+   :bio-meth-set-create
+   :bio-meth-set-destroy
+   :bio-meth-set-ctrl
+   :bio-set-init
+   :bio-set-flags
+   :bio-clear-flags
+   :bio-test-flags
+   :ssl-new
+   :ssl-set-bio
+   :ssl-get-fd
+   :ssl-set-fd
+   :ssl-set-connect-state
+   :ssl-set-accept-state
+   :tls-method))
 
 (in-package :openssl)
 
 (define-alien-loader ssl "/usr/lib/")
 (define-alien-loader crypto "/usr/lib/")
+
+(defconstant +BIO-FLAGS-IN-EOF+ #x800)
+
+(defun tls-method ()
+  (sb-alien::extern-alien "TLS_method" (* ssl-method)))

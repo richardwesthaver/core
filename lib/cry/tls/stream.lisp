@@ -35,9 +35,8 @@
     ((sap self)
      (unless abort
        (force-output self)
-       ;; (ensure-ssl-funcall stream (complement #'minusp) #'ssl-shutdown (sap self))
-       (ssl-free (sap self))
-       (setf (sap self) nil)
+       (openssl::ssl-shutdown (sap self))
+       (setf (sap self) (ssl-free (sap self)))
        (when (streamp (ssl-stream-socket self))
          (close (ssl-stream-socket self) :abort abort))
        (when-let ((f (ssl-stream-close-callback self)))

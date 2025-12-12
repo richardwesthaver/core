@@ -49,7 +49,7 @@
 
 (defclass tensor-method-generator (standard-generic-function) ()
   (:metaclass funcallable-standard-class))
-(defmethod sb-mop:validate-superclass ((class tensor-method-generator) (superclass standard-generic-function)) t)
+(defmethod sb-mop:validate-superclass ((class standard-generic-function) (superclass tensor-method-generator)) t)
 
 (defclass classp-specializer (specializer)
   ((object-class :initform nil :initarg :object-class)

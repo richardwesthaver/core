@@ -18,7 +18,6 @@
                (grovel-constants-file "constants" :package :openssl)
                (:file "types")
                (:file "openssl")
-               (:file "bio")
                (:file "condition"))
   :in-order-to ((test-op (test-op "openssl/tests"))))
 

@@ -461,7 +461,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 	   :initarg :thread)
    (kernel :initform *worker-kernel* :accessor kernel)
    (work :accessor work :type spin-queue :initarg :work)
-   (index :type array-index :initarg :idx :accessor idx)
+   (idx :type array-index :initarg :idx :accessor idx)
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
 (defmethod name ((self worker)) (thread-name (worker-thread self)))
@@ -591,7 +591,7 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
    (notify-count :initform 0 :type (integer 0))
    (spin-count :type array-index :initarg :spin-count :initform *default-spin-count*)
    ;; cursor?
-   (idx :initform 0 :type array-index :initarg :idx :accessor scheduler-index))
+   (idx :initform 0 :type array-index :initarg :idx :accessor idx))
   (:documentation
    "A scheduler is responsible for finding and sequencing work to be executed by
 WORKER threads."))
@@ -616,7 +616,7 @@ WORKER threads."))
 (defun push-to-random-worker (work sched)
   (declare (scheduler sched))
   (with-slots (workers) sched
-    (push-spin-queue work (work (svref workers (mod-decf (scheduler-index sched) (length workers))))))
+    (push-spin-queue work (work (svref workers (mod-decf (idx sched) (length workers))))))
   (values))
 
 (defmacro with-mutex-p ((mutex predicate &key (wait-p t) timeout) &body body)
@@ -688,7 +688,7 @@ WORKER threads."))
 
 (defun steal-work (scheduler)
   (declare (scheduler scheduler))
-  (with-slots (workers index low-priority-work) scheduler
+  (with-slots (workers idx low-priority-work) scheduler
     (let ((low-priority-work low-priority-work))
       (flet ((try-pop (work)
                (declare (spin-queue work low-priority-work))
@@ -700,7 +700,7 @@ WORKER threads."))
         (declare (dynamic-extent #'try-pop))
         ;; Start with the worker that has the most recently submitted
         ;; work (approximately) and advance rightward.
-        (do-workers (worker workers index t)
+        (do-workers (worker workers idx t)
           (try-pop (work worker)))
         (try-pop low-priority-work))))
   nil)

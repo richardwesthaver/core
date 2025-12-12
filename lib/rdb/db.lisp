@@ -227,7 +227,7 @@ object. (SAP CF) is the raw pointer."))
     self))
 
 (defmethod change-class ((self field) (new-class (eql 'rdb-column-family)) &key)
-  (make-instance new-class :cf (make-rdb-cf (field-name self)) :type (field-type self)))
+  (make-instance new-class :cf (make-rdb-cf (name self)) :type (field-type self)))
 
 (defmethod change-class ((self rdb-cf) (new-class (eql 'rdb-column-family)) &key)
   (make-instance new-class :cf self))
@@ -627,11 +627,11 @@ extractor."
 and update existing key/value types for cfs with the same name. Existing cfs
 only get their type slots updated on non-nil values."
   (loop for field across (fields schema)
-        do (if-let ((col (find-column (field-name field) self)))
+        do (if-let ((col (find-column (name field) self)))
              (load-field col field)
              (add-column
               (load-field
-               (make-instance 'rdb-column-family :cf (make-rdb-cf (field-name field)) :type (field-type field))
+               (make-instance 'rdb-column-family :cf (make-rdb-cf (name field)) :type (field-type field))
                field)
               self))
         finally (return self)))

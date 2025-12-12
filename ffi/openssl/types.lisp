@@ -12,7 +12,7 @@
       (data (* unsigned-char))
       (flags long)))
 
-(define-alien-enum (v-asn1)
+(define-alien-enum (v-asn1 :type int)
   :universal #x00
   :application #x40
   :context-specific #x80
@@ -98,8 +98,37 @@
 (define-opaque x509-sig x509-sig-st)
 (define-opaque bn-ctx bignum-ctx)
 (define-opaque bignum bignum-st)
-(define-opaque bio-method bio-method-st)
-(define-opaque bio bio-st)
+(define-alien-type bio-method 
+    (struct bio-method-st
+      (type int)
+      (name (* t))
+      (bwrite (* t))
+      (bread (* t))
+      (bputs (* t))
+      (bgets (* t))
+      (ctrl (* t))
+      (create (* t))
+      (destroy (* t))
+      (callback-ctrl (* t))))
+(define-alien-type bio 
+  (struct bio-st
+    (method (* t))
+    (callback (* t))
+    (cb-arg (* t))
+    (init int)
+    (shutdown int)
+    (flags int)
+    (retry-reason int)
+    (num int)
+    (ptr (* t))
+    (next-bio (* t))
+    (prev-bio (* t))
+    (references int)
+    (num-read unsigned-long)
+    (num-write unsigned-long)
+    (crypto-ex-data-stack (* t))
+    (crypto-ex-data-dummy int)))
+
 (define-opaque blake2b-ctx blake2b-state-st)
 (define-opaque bn-gencb bn-gencb-st)
 (define-opaque bn-mont-ctx bn-mont-ctx-st)

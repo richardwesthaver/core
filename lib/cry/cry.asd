@@ -13,6 +13,11 @@
                (:file "crc64" :depends-on ("condition"))
                (:module "tls"
                 :components ((:file "pkg")
+                             (:file "var")
+                             (:file "x509")
+                             (:file "bio")
+                             (:file "init")
+                             (:file "ctx")
                              (:file "stream")))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))

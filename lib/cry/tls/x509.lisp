@@ -30,7 +30,7 @@
     (with-alien ((buf (* unsigned-char) (sap-alien buffer (* unsigned-char))))
       (let ((cert (d2i-x509 nil (addr buf) (length bytes))))
         (when (null-alien cert)
-          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))
+          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-openssl-error-queue)))
         cert))))
 
 (defun decode-pem-octet-vector (bytes)
@@ -38,7 +38,7 @@
     (with-alien ((buf (* unsigned-char) (sap-alien buffer (* unsigned-char))))
       (let ((cert (d2i-x509 nil (addr buf) (length bytes))))
         (when (null-alien cert)
-          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-aws-lc-error-queue)))
+          (error 'aws-lc-error-call :message "d2i-X509 failed" :queue (read-openssl-error-queue)))
         cert))))
 
 (defun cert-format-from-path (path)

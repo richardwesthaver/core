@@ -1458,6 +1458,7 @@
   (:shadowing-import-from :std/meta :version)
   (:export 
    :*sysdefs*
+   :*asdf-compatibility*
    :*defining-system*
    :*system-table*
    :*module-table*
