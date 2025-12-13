@@ -71,7 +71,7 @@
 (defun ssl-ctx-set-max-proto-version (ctx version)
   (openssl::ssl-ctx-ctrl ctx +SSL-CTRL-SET-MAX-PROTO-VERSION+ version nil))
 
-(defun make-context (&key (method nil method-supplied-p)
+(defun make-ssl-context (&key (method nil method-supplied-p)
                           disabled-protocols
                           (options (list openssl::+SSL-OP-ALL+))
                           min-proto-version
@@ -158,7 +158,7 @@ Keyword arguments:
           ;; Having them error out is a sane default - it's better than to keep
           ;; on running with insecure values.
           ;; People that _have_ to use much too old OpenSSL versions will
-          ;; have to call MAKE-CONTEXT with :MIN-PROTO-VERSION nil.
+          ;; have to call MAKE-SSL-CONTEXT with :MIN-PROTO-VERSION nil.
           ;;
           ;; As an aside: OpenSSL had the "SSL_OP_NO_TLSv1_2" constant since
           ;;   7409d7ad517    2011-04-29 22:56:51 +0000
@@ -177,7 +177,8 @@ Keyword arguments:
                    :reason
                    "Can't set SSL cipher list: SSL_CTX_set_cipher_list returned 0"
                    :queue (read-openssl-error-queue)))
-          (openssl::ssl-ctx-set-default-password-cb ssl-ctx (alien-callable-function pem-password-callback))
+          ;; (let ((pem-pw-cb (alien-sap (alien-callable-function pem-password-callback))))
+          ;; (openssl::ssl-ctx-set-default-password-cb ssl-ctx pem-pw-cb))
           (when certificate-chain-file
             (openssl::ssl-ctx-use-certificate-chain-file ssl-ctx certificate-chain-file))
           (when private-key-file
@@ -192,7 +193,7 @@ Keyword arguments:
   ;; by the BODY-FN may start initialization which
   ;; will override the global context we bind to SSL-CTX.
   ;; (This may happen when the SSL-CTX is created _not_
-  ;; by MAKE-CONTEXT, which ensures initialization by itself)
+  ;; by MAKE-SSL-CONTEXT, which ensures initialization by itself)
   ;; https://github.com/cl-plus-ssl/cl-plus-ssl/issues/191
   ;; (ensure-initialized)
   (let* ((*ssl-global-context* ssl-ctx))

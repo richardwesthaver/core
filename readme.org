@@ -13,9 +13,9 @@
 | skel-id     | 4611004031065916102                     |
 | root        | ~/comp/core/                            |
 | tags        | (CORE LISP EMACS C)                     |
-| updated     | Tue Dec 09 22:24:44 2025 -0500          |
+| updated     | Thu Dec 11 22:54:10 2025 -0500          |
 | langs       | c elisp lisp org text                   |
-| lines       | 156972 :λ 125237 :# 13928 :_ 17807 |
+| lines       | 157727 :λ 125891 :# 13954 :_ 17882 |
 |-------------+-----------------------------------------|
 
 #+END:
@@ -36,4 +36,3 @@ To successfully bootstrap the core you must have the following
 dependencies accessible to ASDF:
 - cl-ppcre
 - ironclad
-- cl-plus-ssl (for now)

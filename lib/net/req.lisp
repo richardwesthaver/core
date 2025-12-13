@@ -961,32 +961,35 @@ keep-alive-stream), and should handle clean-up of it"
 
 (defun make-ssl-stream (stream ca-path ssl-key-file ssl-cert-file ssl-key-password hostname insecure)
   (progn
-    (ssl:ensure-initialized)
-    (let ((ctx (ssl:make-context :verify-mode
-                                 (if insecure
-                                     ssl:+ssl-verify-none+
-                                     ssl:+ssl-verify-peer+)
-                                 :verify-location
-                                 ;; TODO 2024-05-22: 
-                                 (cond
-                                   ;; REVIEW 2025-06-16: was uiop:native-namestring
-                                   (ca-path (namestring ca-path))
-                                   ((probe-file *ca-bundle*) *ca-bundle*)
-                                   ;; In executable environment, perhaps
-                                   ;; *ca-bundle* doesn't exist.
-                                   (t :default))))
-          (ssl-cert-pem-p (and ssl-cert-file
-                               (std/seq:ends-with-subseq ".crt" ssl-cert-file))))
-      (ssl:with-global-context (ctx :auto-free-p t)
+    (ensure-ssl)
+    (let ((ctx (make-ssl-context 
+                :verify-mode
+                (if insecure
+                    openssl::+ssl-verify-none+
+                    openssl::+ssl-verify-peer+)
+                :verify-location
+                ;; TODO 2024-05-22: 
+                (cond
+                  ;; REVIEW 2025-06-16: was uiop:native-namestring
+                  (ca-path (namestring ca-path))
+                  ((probe-file *ca-bundle*) *ca-bundle*)
+                  ;; In executable environment, perhaps
+                  ;; *ca-bundle* doesn't exist.
+                  (t :default))))
+          (ssl-cert-pem-p 
+            (and ssl-cert-file
+                 (std/seq:ends-with-subseq ".crt" ssl-cert-file))))
+      (tls::with-global-context (ctx :auto-free-p t)
         (when ssl-cert-pem-p
-          (ssl:use-certificate-chain-file ssl-cert-file))
-        (ssl:make-ssl-client-stream stream
-                                    :hostname hostname
-                                    :verify (not insecure)
-                                    :key ssl-key-file
-                                    :certificate (and (not ssl-cert-pem-p)
-                                                      ssl-cert-file)
-                                    :password ssl-key-password)))))
+          (tls::use-certificate-chain-file ssl-cert-file))
+        (tls::make-ssl-client-stream 
+         stream
+         :hostname hostname
+         :verify (not insecure)
+         :key ssl-key-file
+         :certificate (and (not ssl-cert-pem-p)
+                           ssl-cert-file)
+         :password ssl-key-password)))))
 
 (defun request (uri &rest args
                     &key (method :get) (version 1.1)

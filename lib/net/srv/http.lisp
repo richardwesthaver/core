@@ -800,7 +800,7 @@ segment after the prefix.
 
 (defun send-bad-request-response (stream &optional additional-info)
   "Send a ``Bad Request'' response to the client."
-  (write-sequence (flex:string-to-octets
+  (write-sequence (sb-ext:string-to-octets
 		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
 			   codec::+http-bad-request+ (http-status-message codec::+http-bad-request+) #\Return #\Linefeed
 			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
@@ -810,7 +810,7 @@ segment after the prefix.
 
 (defun send-unknown-protocol-response (stream &optional additional-info)
   "Send a ``HTTP Version Not Supported'' response to the client."
-  (write-sequence (flex:string-to-octets
+  (write-sequence (sb-ext:string-to-octets
 		   (format nil "HTTP/1.0 ~D ~A~C~CConnection: close~C~C~C~CYour request could not be interpreted by this HTTP server~C~C~@[~A~]~C~C"
 			   +http-version-not-supported+ (http-status-message +http-version-not-supported+) #\Return #\Linefeed
 			   #\Return #\Linefeed #\Return #\Linefeed #\Return #\Linefeed additional-info #\Return #\Linefeed))
@@ -1042,7 +1042,7 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
                                  `(:password ,pw))))))
 
 (defun get-peer-ssl-certificate ()
-  (ssl:ssl-stream-x509-certificate *service-stream*))
+  (ssl-stream-x509-certificate *service-stream*))
 
 (defclass https-service (http-service ssl-service) ()
   (:default-initargs

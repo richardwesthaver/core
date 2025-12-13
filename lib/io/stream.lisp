@@ -9,8 +9,120 @@
 
 (defgeneric ensure-file-position (self))
 
+;;; Flex Streams
+;; based on FLEXI-STREAMS
+(defclass flex-stream (io-stream wrapped-stream)
+  ((external-format 
+    :initform (std:get-external-format :iso-8859-1)
+    :initarg :external-format
+    :accessor external-format
+    :documentation "The encoding currently used by this stream. Can be changed on the fly.")
+   (element-type 
+    :initform 'character
+    :initarg :element-type
+    :accessor element-type
+    :documentation "The element type of this stream."))
+  (:documentation "A FLEX-STREAM object is a stream that's
+layered atop an existing binary/bivalent stream in order to allow for
+multi-octet external formats. FLEX-STREAM itself is a mixin and should not be
+instantiated."))
+
+(defmethod stream-element-type ((stream flex-stream))
+  "Returns the element type that was provided by the creator of
+the stream."
+  (std:with-optimization (:speed 3 :safety 0)
+    (element-type stream)))
+
+(defclass flex-output-stream (flex-stream 
+                               std:wrapped-character-output-stream
+                               fundamental-binary-output-stream)
+  ()
+  (:documentation "A FLEX-OUTPUT-STREAM is a FLEX-STREAM that
+can actually be instatiated and used for output."))
+
+(defclass flex-input-stream (flex-stream 
+                             fundamental-binary-input-stream
+                             fundamental-character-input-stream)
+  ((last-char-code 
+    :initform nil
+    :accessor last-char-code
+    :documentation "This slot either holds NIL or the last character read successfully. This is
+mainly used for UNREAD-CHAR sanity checks.")
+   (last-octet 
+    :initform nil
+    :accessor last-octet
+    :documentation "This slot either holds NIL or the last
+octet read successfully from the stream using a binary operation
+such as READ-BYTE. This is mainly used for UNREAD-BYTE sanity
+checks.")
+   (octet-stack 
+    :initform nil
+    :accessor octet-stack
+    :documentation "A small buffer which holds octets
+that were already read from the underlying stream but not yet
+used to produce characters. This is mainly used if we have to
+look ahead for a CR/LF line ending.")
+   (position :initform 0
+             :initarg :position
+             :type integer
+             :accessor stream-position
+             :documentation "The position within the stream where each
+octet read counts as one.")
+   (bound :initform nil
+          :initarg :bound
+          :type (or null integer)
+          :accessor stream-bound
+          :documentation "When this is not NIL, it must be an integer
+and the stream will behave as if no more data is available as soon as POSITION
+is greater or equal than this value."))
+  (:documentation "A FLEX-INPUT-STREAM is a FLEX-STREAM that
+can actually be instatiated and used for input."))
+
+(defclass flex-io-stream (flex-input-stream flex-output-stream)
+  ()
+  (:documentation "A FLEX-IO-STREAM is a FLEX-STREAM that can
+actually be instatiated and used for input and output."))
+
+(defun make-flex-stream (stream &rest args
+                                 &key (external-format (std:get-external-format :iso-8859-1))
+                                      element-type column position bound)
+  "Create and return a new FLEX-STREAM. STREAM must be an open
+binary or bivalent stream, i.e. it must be capable of reading/writing octets
+with READ-SEQUENCE and/or WRITE-SEQUENCE. The resulting flex stream is an
+input stream if and only if STREAM is an input stream. Likewise, it's an
+output stream if and only if STREAM is an output stream. The default for
+ELEMENT-TYPE is LW:SIMPLE-CHAR on LispWorks and CHARACTER on other Lisps.
+EXTERNAL-FORMAT must be an EXTERNAL-FORMAT object or a symbol or a list
+denoting such an object. COLUMN is the initial column of the stream which is
+either a non-negative integer or NIL. The COLUMN argument must only be used
+for output streams. POSITION (only used for input streams) should be an
+integer and it denotes the position the stream is in - it will be increased by
+one for each octet read. BOUND (only used for input streams) should be NIL or
+an integer. If BOUND is not NIL and POSITION has gone beyond BOUND, then the
+stream will behave as if no more input is available."
+  (declare (optimize (speed 3) (safety 0)))
+  ;; these arguments are ignored - they are only there to provide a
+  ;; meaningful parameter list for IDEs
+  (declare (ignore element-type column position bound))
+  (unless (and (streamp stream)
+               (open-stream-p stream))
+    (error "~S should have been an open stream." stream))
+  (apply #'make-instance
+         ;; actual type depends on STREAM
+         (cond ((and (input-stream-p stream)
+                     (output-stream-p stream))
+                'flex-io-stream)
+               ((input-stream-p stream)
+                'flex-input-stream)
+               ((output-stream-p stream)
+                'flex-output-stream)
+               (t
+                (error "~S is neither an input nor an output stream." stream)))
+         :stream stream
+         :external-format external-format
+         (std:remove-from-plist args :external-format)))
+
 ;;; Decoding Stream
-;;; decoding-stream
 (declaim (type fixnum +buffer-size+))
 (eval-always (defconstant +buffer-size+ 128))
 

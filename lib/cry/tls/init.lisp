@@ -61,7 +61,6 @@ will use this value.")
   `(let ((*pem-password* (or ,password "")))
      ,@body))
 
-
 #+nil
 (progn
   (defvar *ssl-thread-table* (make-hash-table :weakness :key))
@@ -86,14 +85,15 @@ will use this value.")
   (unless (eql 1 (openssl::ssl-ctx-set-default-verify-paths *ssl-global-context*))
     (error "ssl-ctx-set-default-verify-paths failed."))
   (ssl-ctx-set-session-cache-mode *ssl-global-context* 3)
-  (openssl::ssl-ctx-set-default-password-cb 
+  (openssl::ssl-ctx-set-default-passwd-cb 
    *ssl-global-context*
-   (alien-callable-function 'pem-password-callback)))
+   (alien-sap (alien-callable-function 'pem-password-callback))))
 
 (defun ensure-ssl (&key method seed)
   (with-recursive-lock (*ssl-init-lock*)
     (unless (ssl-initialized-p)
-      (init :ssl :method method :seed seed))))
+      (init :ssl :method method :seed seed)))
+    (values))
   
 (defun use-certificate-chain-file (certificate-chain-file)
   "Apply OpenSSL function SSL_CTX_use_certificate_chain_file
@@ -118,12 +118,9 @@ their memory accross image reloads).
 This should work fine if the location and version of the OpenSSL shared
 libraries have not changed. If they have changed, you may get errors, as users
 report: https://github.com/cl-plus-ssl/cl-plus-ssl/issues/167"
-  ;; (unless (member :cl+ssl-foreign-libs-already-loaded
-  ;; *features*)
-  ;; (cffi:use-foreign-library libcrypto)
-  ;; (cffi:load-foreign-library 'libssl))
-  (load-crypto)
-  (load-ssl)
+  (unless (every (lambda (X) (member x *features*)) '(:crypto :ssl))
+    (load-crypto)
+    (load-ssl))
   (setf *ssl-global-context* nil
         *ssl-global-method* nil
         *tmp-rsa-key-512* nil

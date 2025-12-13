@@ -7,7 +7,7 @@
    :sb-posix :sb-bsd-sockets 
    :std :log :obj :dat
    :blake3 :keyutils
-   :cl+ssl :openssl)
+   :openssl :io)
   :components ((:file "pkg")
                (:file "condition" :depends-on ("pkg"))
                (:file "crc64" :depends-on ("condition"))
@@ -16,8 +16,10 @@
                              (:file "var")
                              (:file "x509")
                              (:file "bio")
+                             (:file "condition")
                              (:file "init")
                              (:file "ctx")
+                             (:file "funcall")
                              (:file "stream")))
                (:file "b3" :depends-on ("condition"))
                (:file "password" :depends-on ("condition"))

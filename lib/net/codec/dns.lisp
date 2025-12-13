@@ -341,7 +341,7 @@
           (aref octets (+ 3 start))))
 
 (defmethod decode-record-payload ((type (eql :AAAA)) octets start end)
-  (usocket:vector-to-ipv6-host octets))
+  (sb-bsd-sockets:get-host-by-address octets))
 
 (defmethod decode-record-payload ((type (eql :TXT)) octets start end)
   (decode-host octets start 0))

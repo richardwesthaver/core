@@ -65,11 +65,11 @@
              openssl::+BIO-FLAGS-SHOULD-RETRY+)))
 
 (define-alien-callable lisp-write int
-    ((bio (* t))
-     (buf (* t))
+    ((bio (* openssl::bio))
+     (buf (* char))
      (n int))
   (dotimes (i n)
-    (write-byte (cffi:mem-ref buf :unsigned-char i) *bio-socket*))
+    (write-byte (deref buf i) *bio-socket*))
   (finish-output *bio-socket*)
   n)
   
@@ -156,3 +156,25 @@
      (openssl::bio-set-init bio 0)
      (clear-retry-flags bio)
      1)))
+
+(defmacro with-bio-output-to-string ((bio &key (element-type ''character))
+                                     &body body)
+  "Evaluate BODY with BIO bound to a SSL BIO structure that writes to a
+Common Lisp string.  The string is returned."
+  `(let ((*bio-socket* (make-string-output-stream :element-type ,element-type))
+         (,bio (bio-new-lisp)))
+     (unwind-protect
+          (progn ,@body)
+       (bio-free ,bio))
+     (get-output-stream-string *bio-socket*)))
+
+(defmacro with-bio-input-from-string ((bio
+                                       string)
+                                      &body body)
+  "Evaluate BODY with BIO bound to a SSL BIO structure that reads from
+a Common Lisp STRING."
+  `(let ((*bio-socket* (make-string-input-stream ,string))
+         (,bio (bio-new-lisp)))
+     (unwind-protect
+          (progn ,@body)
+       (bio-free ,bio))))

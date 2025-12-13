@@ -30,6 +30,48 @@
   (inp (* (* unsigned-char)))
   (len long))
 
+(defar ("X509_free" x509-free) void
+  (x509 (* x509)))
+
+(defar ("X509_NAME_oneline" x509-name-oneline) (* t)
+  (x509-name (* t))
+  (buf (* t))
+  (size int))
+
+(defar ("X509_NAME_get_index_by_NID" x509-name-get-index-by-nid) int
+  (name (* t))
+  (nid int)
+  (lastpos int))
+
+(defar ("X509_NAME_get_entry" x509-name-get-entry) (* t)
+  (name (* t))
+  (log int))
+
+(defar ("X509_NAME_ENTRY_get_data" x509-name-entry-get-data) (* t)
+  (name-entry (* t)))
+
+(defar ("X509_get_issuer_name" x509-get-issuer-name) (* x509-name)
+  (x509 (* x509)))
+
+(defar ("X509_get_subject_name" x509-get-subject-name) (* x509-name)
+  (x509 (* x509)))
+
+(defar ("X509_get0_notBefore" x509-get0-not-before) (* asn1-time)
+  (x509 (* x509)))
+
+(defar ("X509_get0_notAfter" x509-get0-not-after) (* asn1-time)
+  (x509 (* x509)))
+
+(defar ("X509_get_ext_d2i" x509-get-ext-d2i) (* t)
+  (cert (* t))
+  (nid int)
+  (crit (* t))
+  (idx (* t)))
+
+(defar ("X509_STORE_CTX_get_error" x509-store-ctx-get-error) int
+  (ctx (* ssl-ctx)))
+
+;;; Errors
 (defar ("ERR_get_error" err-get-error) unsigned-int)
 
 (defar ("ERR_error_string" err-error-string) c-string
@@ -48,6 +90,8 @@
 
 ;; (defar ("ERR_add_error_data" err-add-error-data) void
 ;;   (num int) &rest)
+
+;; (define-alien-routine ("ERR_add_error_data" err-add-error-data) void (num int) &rest)
 
 (defar ("ERR_add_error_txt" err-add-error-txt) void
   (sep c-string)
@@ -76,7 +120,8 @@
 
 (defar ("SSL_use_PrivateKey_file" ssl-use-privatekey-file) int
   (ssl (* ssl))
-  (str c-string))
+  (str c-string)
+  (type int))
 
 (defar ("SSL_CTX_use_PrivateKey_file" ssl-ctx-use-privatekey-file) int
   (ctx (* ssl-ctx))
@@ -128,9 +173,9 @@
 (defar ("SSL_load_client_CA_file" ssl-load-client-ca-list) (* t)
   (file c-string))
 
-(defar ("SSL_CTX_set_default_password_cb" ssl-ctx-set-default-password-cb) void
+(defar ("SSL_CTX_set_default_passwd_cb" ssl-ctx-set-default-passwd-cb) void
   (ctx (* ssl-ctx))
-  (pem-password-cb (* t)))
+  (pem-password-cb (* (function (signed 32) (* (signed 8)) (signed 32) (signed 32) (* t)))))
 
 (defar ("RAND_seed" rand-seed) void
   (buf (* t))
@@ -269,6 +314,8 @@
   (fd int)
   (close-flag int))
 (defar ("BIO_new" bio-new) (* t)
+  (method (* t)))
+(defar ("BIO_free" bio-free) void
   (method (* t)))
 (defar ("BIO_get_new_index" bio-get-new-index) int)
 (defar ("BIO_meth_new" bio-meth-new) (* t)

@@ -267,7 +267,7 @@
 
 (defpkg net/cookie
   (:use :cl :std :parse/bytes :obj/uri)
-  (:shadowing-import-from :alexandria :when-let :if-let)
+  (:shadowing-import-from :std :when-let :if-let)
   (:import-from :obj/time
    :today :timestamp-century
    :timestamp-to-universal :universal-to-timestamp

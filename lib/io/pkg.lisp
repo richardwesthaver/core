@@ -42,6 +42,11 @@
    :peeking-input-stream :peeked
    :peeked-count
    :peeked-size
+   :make-flex-stream
+   :flex-stream
+   :flex-input-stream
+   :flex-output-stream
+   :flex-io-stream
    :make-decoding-stream
    :decoding-stream
    :+buffer-size+

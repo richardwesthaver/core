@@ -97,7 +97,7 @@ candidate as the first value and all candidates as the second."
       (handler-bind ((dns-server-failure #'continue))
         (let* ((ipv6-p (find #\: ip))
                (parts (if ipv6-p
-                          (loop for byte across (usocket:ipv6-host-to-vector ip)
+                          (loop for byte across (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-address ip))
                                 collect (format nil "~x" (ldb (byte 4 4) byte))
                                 collect (format nil "~x" (ldb (byte 4 0) byte)))
                           (ssplit #\. ip)))

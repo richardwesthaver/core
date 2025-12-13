@@ -172,6 +172,7 @@
    :error-reason
    :invalid-argument
    :unwind-protect-case
+   :protect-abort
    :def-simple-error-reporter
    :std-warning
    :defwarning
@@ -1021,6 +1022,7 @@
    :explore :with-fslots
    :upgrade :version
    :status :validate
+   :deadline
    :lock :bind
    :head :tail
    :call :swap
@@ -1309,7 +1311,7 @@
   (:use :cl :std/thread :std/prim :std/seq :std/sym :std/list :std/macs)
   (:import-from :std/macs :with-gensyms :when-let)
   (:export :future :promise :await
-   :future-kernel :fulfill :fulfilledp :while-waiting-for
+   :future-kernel :fulfill :fulfilledp
    :speculate :defpun :defptyped :plet 
    :plet-if :pcount :pcount-if :pcount-if-not
    :pdotimes :por :pand :pnotany

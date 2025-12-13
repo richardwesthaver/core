@@ -14,7 +14,7 @@
         ;; ignore the preceding "."
         (when (char= (aref cookie-domain 0) #\.)
           (setq cookie-domain (subseq cookie-domain 1)))
-        (when-let (registered-domain (parse-domain domain))
+        (when-let ((registered-domain (parse-domain domain)))
           (cond
             ((= (length registered-domain) (length cookie-domain))
              (string= registered-domain cookie-domain))
@@ -73,13 +73,13 @@
 
 (defun expired-cookie-p (cookie)
   "Check if cookie is expired, whereas max-age has priority over expires."
-  (if-let (max-age
-           (cookie-max-age cookie))
+  (if-let ((max-age
+            (cookie-max-age cookie)))
     (< (+ max-age
           (cookie-creation-timestamp cookie))
        (get-universal-time))
-    (when-let (expires
-               (cookie-expires cookie))
+    (when-let ((expires
+               (cookie-expires cookie)))
       (< expires (get-universal-time)))))
 
 (defun delete-old-cookies (cookie-jar)

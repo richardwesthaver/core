@@ -9,7 +9,6 @@
 (defparameter *ca-bundle*
   #.(namestring #P"/etc/ca-certificates/extracted/ca-bundle.trust.crt")
   "The default public root certificates used for SSL verification.")
-(defparameter *openssl-error-num* (openssl::err-get-next-error-library))
 (defvar *ssl-buffer-size* 2048
   "The default size of input and output buffers of SSL-STREAM.")
 (defvar *ssl-context* nil)

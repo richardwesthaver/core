@@ -60,6 +60,7 @@
    :ssl-ctx-free
    :ssl-set-alpn-protos
    :ssl-get0-alpn-selected
+   :ssl-set-default-passwd-cb
    :ssl-ctx-set-default-verify-paths
    :ssl-ctx-set-default-verify-dir
    :ssl-ctx-set-default-verify-file
@@ -87,7 +88,28 @@
    :ssl-set-fd
    :ssl-set-connect-state
    :ssl-set-accept-state
-   :tls-method))
+   :tls-method
+   :bio-free
+   :+ssl-error-none+
+   :+ssl-error-ssl+
+   :+ssl-error-want-read+
+   :+ssl-error-want-write+
+   :+ssl-error-want-x509-lookup+
+   :+ssl-error-syscall+
+   :+ssl-error-zero-return+
+   :+ssl-error-want-connect+
+   :x509-free
+   :x509-name-oneline
+   :x509-name-get-index-by-nid
+   :x509-name-get-entry
+   :x509-name-entry-get-data
+   :x509-get-issuer-name
+   :x509-get-subject-name
+   :x509-get0-not-before
+   :x509-get0-not-after
+   :x509-get-ext-d2i
+   :x509-store-ctx-get-error
+   :ssl-set-cipher-list))
 
 (in-package :openssl)
 
@@ -95,6 +117,4 @@
 (define-alien-loader crypto "/usr/lib/")
 
 (defconstant +BIO-FLAGS-IN-EOF+ #x800)
-
-(defun tls-method ()
-  (sb-alien::extern-alien "TLS_method" (* ssl-method)))
+(defconstant +SSL-CTRL-SET-TLSEXT-HOSTNAME+ 55)

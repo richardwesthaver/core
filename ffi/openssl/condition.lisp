@@ -68,23 +68,7 @@
   ((queue :initform nil :initarg :queue :reader error-queue)))
 
 (define-condition openssl-sap-error (openssl-error)
-  (;; Misnamed, better to be called CODE :READER SSL-ERROR-CODE
-   ;; becuase OpenSSL docs use the term RET for return
-   ;; values of IO calls like SSL_Read, etc, while
-   ;; here we store explanation of such failures
-   ;; as returned by SSL_get_error called
-   ;; after the failure.
-   ;; Unfortunately, SSL-ERROR-CODE is already used
-   ;; by SSL-ERROR-VERIFY condition class below
-   ;; for return values of SSL_get_verify_result,
-   ;; and that's already exported from cl+ssl package.
-   ;; Using the same generic function for two different
-   ;; types of error codes is not the best approach.
-   ;; Keeping it as is for now.
-   ;; Or maybe the intention was for SSL-SIGNAL-ERROR
-   ;; to really pass RET here (the IO call return value)?
-   ;; Unlikely, RET is not very useful.
-   (code :initarg :code
+  ((code :initarg :code
          :reader error-code
          :documentation "The error code returned by SSL_get_error. " )
    (sap :initarg :sap
@@ -216,17 +200,14 @@
     violates the protocol. If ret == -1, the underlying BIO reported an I/O error (for socket
     I/O on Unix systems, consult errno for details).")
   (:report (lambda (condition stream)
-             (if (zerop (length (error-queue condition)))
-                 (case (error-code condition)
-                   (0 (format stream "An I/O error occurred: An unexpected EOF was observed on handle ~A (SSL_get_error: ~A). "
-                              (error-sap condition)
-                              (error-code condition)))
-                   (-1 (format stream "An I/O error occurred in the underlying BIO (SSL_get_error: ~A). "
-                               (error-code condition)))
-                   (otherwise (format stream "An I/O error occurred: undocumented reason (SSL_get_error: ~A). "
-                                      (error-code condition))))
-                 (format stream "An UNKNOWN I/O error occurred in the underlying BIO (SSL_get_error: ~A). "
-                         (error-code condition)))
+             (case (error-code condition)
+               (0 (format stream "An I/O error occurred: An unexpected EOF was observed on handle ~A (SSL_get_error: ~A). "
+                          (error-sap condition)
+                          (error-code condition)))
+               (-1 (format stream "An I/O error occurred in the underlying BIO (SSL_get_error: ~A). "
+                           (error-code condition)))
+               (otherwise (format stream "An I/O error occurred: undocumented reason (SSL_get_error: ~A). "
+                                  (error-code condition))))
              (format-error-queue stream condition))))
 
 (defparameter *ssl-verify-error-alist*
@@ -305,13 +286,10 @@ by READ-SSL-ERROR-QUEUE) or an SSL-ERROR condition."
   (flet ((body (stream)
            (let ((queue (etypecase queue-designator
                           (openssl-error (error-queue queue-designator))
-                          (list queue-designator))))
+                          (string queue-designator))))
              (format stream "SSL error queue")
-             (if queue
-                 (progn
-                   (format stream ":~%")
-                   (loop for error-code in queue
-                         do (format stream "~a~%" (err-error-string error-code nil))))
+             (if (not (sequence:emptyp queue))
+                 (format stream ":~%~A~%" queue)
                  (format stream " is empty.")))))
     (case stream-designator
       ((t) (body *standard-output*))
