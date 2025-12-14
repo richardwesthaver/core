@@ -17,3 +17,4 @@
 ;; based on http://www.openssl.org/docs/ssl/SSL_CTX_set_default_passwd_cb.html
 (defvar *pem-password* ""
   "The callback to be registered with SSL_CTX_set_default_passwd_cb.")
+(defvar *ssl-client-stream-verify-default* :required)

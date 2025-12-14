@@ -82,3 +82,6 @@
       (time (dotimes (i n) (.crc64sum)));; 8 bytes
       )))
 
+(deftest tls ()
+  (ensure-ssl)
+  (is (ssl-initialized-p)))

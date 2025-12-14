@@ -43,6 +43,14 @@
    :peeked-count
    :peeked-size
    :make-flex-stream
+   :make-in-memory-output-stream
+   :make-in-memory-input-stream
+   :with-output-to-sequence
+   :with-input-from-sequence
+   :output-stream-sequence-length
+   :get-output-stream-sequence
+   :peek-byte
+   :peeked
    :flex-stream
    :flex-input-stream
    :flex-output-stream

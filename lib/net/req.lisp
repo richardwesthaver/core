@@ -968,10 +968,8 @@ keep-alive-stream), and should handle clean-up of it"
                     openssl::+ssl-verify-none+
                     openssl::+ssl-verify-peer+)
                 :verify-location
-                ;; TODO 2024-05-22: 
                 (cond
-                  ;; REVIEW 2025-06-16: was uiop:native-namestring
-                  (ca-path (namestring ca-path))
+                  (ca-path (sb-ext:native-namestring ca-path))
                   ((probe-file *ca-bundle*) *ca-bundle*)
                   ;; In executable environment, perhaps
                   ;; *ca-bundle* doesn't exist.
@@ -982,7 +980,7 @@ keep-alive-stream), and should handle clean-up of it"
       (tls::with-global-context (ctx :auto-free-p t)
         (when ssl-cert-pem-p
           (tls::use-certificate-chain-file ssl-cert-file))
-        (tls::make-ssl-client-stream 
+        (make-ssl-client-stream 
          stream
          :hostname hostname
          :verify (not insecure)
@@ -1026,24 +1024,30 @@ keep-alive-stream), and should handle clean-up of it"
                           (connection (sb-bsd-sockets:socket-connect
                                        socket
                                        (sb-bsd-sockets:make-inet-address (or (net/proto/dns:resolve (uri-host con-uri)) (uri-host con-uri)))
-                                       (or (uri-port con-uri) (when insecure 80) 443)))
+                                       (or (uri-port con-uri) (when (or insecure (string-equal (uri-scheme con-uri) "http")) 80) 443)))
                           (stream (sb-bsd-sockets:socket-make-stream connection
                                                                      :input t
                                                                      :output t
                                                                      :timeout connect-timeout
                                                                      :auto-close t
                                                                      :element-type :default))
-                          
-                          (scheme (uri-scheme uri)))
-                     (declare (type keyword scheme))
-                     ;; (when read-timeout ;; TODO 2024-06-19: test
-                     ;;   (setf (io/socket:sockopt-receive-timeout connection) read-timeout)) 
+                          (scheme (or (uri-scheme uri) "https")))
+                     (when read-timeout ;; TODO 2024-06-19: test
+                       (with-alien ((timeout timeval))
+                         (setf (slot timeout 'std/alien::tv-sec) read-timeout)
+                         (setf (io/socket:sockopt-receive-timeout connection) timeout)))
                      (when (socks5-proxy-p proxy-uri)
                        (ensure-socks5-connected stream stream uri method))
-                     (if (string= (symbol-name scheme) "HTTPS")
+                     (if (string-equal scheme "https")
                          (make-ssl-stream (if (http-proxy-p proxy-uri)
                                               (make-connect-stream uri version stream (make-proxy-authorization con-uri))
-                                              stream) ca-path ssl-key-file ssl-cert-file ssl-key-password (uri-host uri) insecure)
+                                              stream) 
+                                          ca-path 
+                                          ssl-key-file 
+                                          ssl-cert-file 
+                                          ssl-key-password 
+                                          (uri-host uri) 
+                                          insecure)
                          stream))
                  (retry-request ()
                    :report "Retry the same request."

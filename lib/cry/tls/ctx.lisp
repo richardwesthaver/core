@@ -116,7 +116,7 @@ Keyword arguments:
             :DEFAULT-FILE - SSL_CTX_set_default_verify_file will be called. Requires OpenSSL >= 1.1.0.
             :DEFAULT-DIR - SSL_CTX_set_default_verify_dir will be called. Requires OpenSSL >= 1.1.0.
             A STRING or a PATHNAME - will be passed to SSL_CTX_load_verify_locations
-                as file or dir argument depending on wether it's really
+                as file or dir argument depending on whether it's really
                 a file or a dir. Must exist on the file system and be available.
             A LIST - each value assumed to be either a STRING or a PATHNAME and
                 will be passed to SSL_CTX_load_verify_locations as described above.
@@ -128,8 +128,7 @@ Keyword arguments:
         Defaults to +VERIFY-PEER+
 
     VERIFY-CALLBACK. The verify_callback parameter to SSL_CTX_set_verify.
-        Please note: if specified, must be a CFFI callback i.e. defined as
-        (DEFCALLBACK :INT ((OK :INT) (SSL-CTX :POINTER)) .. ).
+        Please note: if specified, must be an alien callback.
 
     CIPHER-LIST. If specified, must be a string to pass to SSL_CTX_set_cipher_list.
         An ERROR is signalled if SSL_CTX_set_cipher_list fails.
@@ -169,16 +168,16 @@ Keyword arguments:
           (ssl-ctx-set-session-cache-mode ssl-ctx session-cache-mode)
           (ssl-ctx-set-verify-location ssl-ctx verify-location)
           (openssl::ssl-ctx-set-verify-depth ssl-ctx verify-depth)
-          (openssl::ssl-ctx-set-verify ssl-ctx verify-mode (when verify-callback
-                                                               (alien-callable-function verify-callback)))
+          (when verify-callback
+            (openssl::ssl-ctx-set-verify ssl-ctx verify-mode (alien-callable-function verify-callback)))
           (when (and cipher-list
                      (zerop (openssl::ssl-ctx-set-cipher-list ssl-ctx cipher-list)))
             (error 'ssl-error-initialize
                    :reason
                    "Can't set SSL cipher list: SSL_CTX_set_cipher_list returned 0"
                    :queue (read-openssl-error-queue)))
-          ;; (let ((pem-pw-cb (alien-sap (alien-callable-function pem-password-callback))))
-          ;; (openssl::ssl-ctx-set-default-password-cb ssl-ctx pem-pw-cb))
+          (let ((pem-pw-cb (alien-sap (alien-callable-function pem-password-callback))))
+            (openssl::ssl-ctx-set-default-passwd-cb ssl-ctx pem-pw-cb))
           (when certificate-chain-file
             (openssl::ssl-ctx-use-certificate-chain-file ssl-ctx certificate-chain-file))
           (when private-key-file
@@ -186,7 +185,6 @@ Keyword arguments:
               (openssl::ssl-ctx-use-privatekey-file ssl-ctx private-key-file private-key-file-type)))
       ssl-ctx)
       (:abort (ssl-ctx-free ssl-ctx)))))
-
 
 (defun call-with-global-context (ssl-ctx auto-free-p body-fn)
   ;; Ensure initialized, otherwise cl+ssl functions called

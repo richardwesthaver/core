@@ -256,8 +256,8 @@
            :reader error-stream
            :documentation "The SSL stream whose peer certificate didn't verify.")
    (code :initarg :code
-               :reader error-code
-               :documentation "The peer certificate verification error code
+         :reader error-code
+         :documentation "The peer certificate verification error code
 (as returned by functions like SSL_get_verify_result or X509_STORE_CTX_get_error)."))
   (:report (lambda (condition stream)
              (let ((code (error-code condition)))
@@ -287,7 +287,7 @@ by READ-SSL-ERROR-QUEUE) or an SSL-ERROR condition."
            (let ((queue (etypecase queue-designator
                           (openssl-error (error-queue queue-designator))
                           (string queue-designator))))
-             (format stream "SSL error queue")
+             (format stream "~&SSL error queue")
              (if (not (sequence:emptyp queue))
                  (format stream ":~%~A~%" queue)
                  (format stream " is empty.")))))

@@ -9,6 +9,13 @@
 
 (defgeneric ensure-file-position (self))
 
+(defmethod check-if-open (stream)
+  "Checks if STREAM is open and signals an error otherwise."
+  (declare (optimize (speed 3) (safety 0)))
+  (unless (open-stream-p stream)
+    (error 'stream-error
+           :stream stream)))
+
 ;;; Flex Streams
 ;; based on FLEXI-STREAMS
 (defclass flex-stream (io-stream wrapped-stream)
@@ -121,6 +128,371 @@ stream will behave as if no more input is available."
          :stream stream
          :external-format external-format
          (std:remove-from-plist args :external-format)))
+
+;;; In-memory streams
+(defclass in-memory-stream ()
+  ((transformer 
+    :initarg :transformer
+    :accessor transformer
+    :documentation "A function used to transform the
+written/read octet to the value stored/retrieved in/from the
+underlying vector."))
+  (:documentation "An IN-MEMORY-STREAM is a binary stream that reads
+octets from or writes octets to a sequence in RAM."))
+
+(defclass in-memory-input-stream (in-memory-stream fundamental-binary-input-stream)
+  ()
+  (:documentation "An IN-MEMORY-INPUT-STREAM is a binary stream that
+reads octets from a sequence in RAM."))
+
+(defclass in-memory-output-stream (in-memory-stream fundamental-binary-output-stream)
+  ()
+  (:documentation "An IN-MEMORY-OUTPUT-STREAM is a binary stream that
+writes octets to a sequence in RAM."))
+
+(defclass buffered-stream ()
+  ((buffer 
+    :initarg :buffer
+    :accessor buffer
+    :documentation "The underlying stream buffer.")))
+
+(defclass buffered-input-stream (buffered-stream in-memory-input-stream)
+  ()
+  (:documentation "A binary input stream that gets its data from an
+associated octet buffer."))
+
+(defclass buffered-output-stream (buffered-stream in-memory-output-stream)
+  ()
+  (:documentation "A binary output stream that writes its data to an
+associated octet buffer."))
+
+(defclass list-input-stream (buffered-input-stream)
+  ()
+  (:documentation "A binary input stream that gets its data from an
+associated list of octets."))
+
+(defclass vector-input-stream (buffered-input-stream)
+  ((idx :initarg :idx
+        :accessor idx
+        :type std:array-index
+        :documentation "An index into the underlying vector denoting
+the current position.")
+   (end :initarg :end
+        :accessor stream-end
+        :type std:array-index
+        :documentation "An index into the underlying vector denoting
+the end of the available data."))
+  (:documentation "A binary input stream that gets its data from an
+associated octet vector."))
+
+(defclass vector-output-stream (buffered-output-stream)
+  ()
+  (:documentation "A binary output stream that writes its data to an
+associated vector."))
+
+(defmethod stream-element-type ((stream in-memory-stream))
+  "The element type is always OCTET by definition."
+  'octet)
+
+(defgeneric peek-byte (stream &optional peek-type eof-err-p eof-value)
+  (:documentation
+   "PEEK-BYTE is like PEEK-CHAR, i.e. it returns a byte from the stream without
+   actually removing it. If PEEK-TYPE is NIL the next byte is returned, if
+   PEEK-TYPE is T, the next byte which is not 0 is returned, if PEEK-TYPE is an
+   byte, the next byte which equals PEEK-TYPE is returned. EOF-ERROR-P and
+   EOF-VALUE are interpreted as usual."))
+
+(defmethod peek-byte ((stream vector-input-stream) &optional peek-type (eof-error-p t) eof-value)
+  "Returns a byte from VECTOR-INPUT-STREAM without actually removing it."
+  (declare (optimize (speed 3) (safety 0)))
+  (let ((index (idx stream)))
+    (loop :for byte = (read-byte stream eof-error-p :eof)
+       :for new-index :from index
+       :until (cond ((eq byte :eof)
+                     (return eof-value))
+                    ((null peek-type))
+                    ((eq peek-type 't)
+                     (plusp byte))
+                    ((= byte peek-type)))
+       :finally (setf (slot-value stream 'index) new-index)
+                (return byte))))
+
+(defmethod peek-byte ((stream list-input-stream) &optional peek-type (eof-error-p t) eof-value)
+  "Returns a byte from VECTOR-INPUT-STREAM without actually removing it."
+  (declare (optimize (speed 3) (safety 0)))
+  (loop
+     :for list-elem = (car (buffer stream))
+     :for byte = (read-byte stream eof-error-p :eof)
+     :until (cond ((eq byte :eof)
+                   (return eof-value))
+                  ((null peek-type))
+                  ((eq peek-type 't)
+                   (plusp byte))
+                  ((= byte peek-type)))
+     :finally (push list-elem (buffer stream))
+              (return byte)))
+
+(defmethod transform-octet ((stream in-memory-stream) octet)
+  "Applies the transformer of STREAM to octet and returns the result."
+  (declare (optimize (speed 3) (safety 0)))
+  (funcall (or (transformer stream)
+               #'identity) octet))
+
+(defmethod stream-read-byte ((stream list-input-stream))
+  "Reads one byte by simply popping it off of the top of the list."
+  (declare (optimize (speed 3) (safety 0)))
+  (check-if-open stream)
+  (with-accessors ((list buffer))
+      stream
+    (transform-octet stream (or (pop list) (return-from stream-read-byte :eof)))))
+
+(defmethod stream-listen ((stream list-input-stream))
+  "Checks whether list is not empty."
+  (declare (optimize (speed 3) (safety 0)))
+  (check-if-open stream)
+  (with-accessors ((list buffer))
+      stream
+    list))
+
+(defmethod stream-read-sequence ((stream list-input-stream) sequence &optional start end)
+  "Repeatedly pops elements from the list until it's empty."
+  (declare (optimize (speed 3) (safety 0)))
+  (with-accessors ((list buffer))
+      stream
+    (loop with transformer = (transformer stream)
+          for index of-type fixnum from start below end
+          while list
+          do (let ((elt (pop list)))
+               (setf (elt sequence index)
+                     (if transformer
+                         (funcall transformer elt)
+                         elt)))
+          finally (return index))))
+
+(defmethod stream-read-byte ((stream vector-input-stream))
+  "Reads one byte and increments INDEX pointer unless we're beyond
+END pointer."
+  (declare (optimize (speed 3) (safety 0)))
+  (check-if-open stream)
+  (with-accessors ((index idx)
+                   (end stream-end)
+                   (vector buffer))
+      stream
+    (let ((current-index index))
+      (declare (fixnum current-index))
+      (cond ((< current-index (the fixnum end))
+             (incf (the fixnum index))
+             (transform-octet stream (aref vector current-index)))
+            (t :eof)))))
+
+(defmethod stream-listen ((stream vector-input-stream))
+  "Checking whether INDEX is beyond END."
+  (declare (optimize (speed 3) (safety 0)))
+  (check-if-open stream)
+  (with-accessors ((index idx)
+                   (end stream-end))
+      stream
+    (< (the fixnum index) (the fixnum end))))
+
+(defmethod stream-read-sequence ((stream vector-input-stream) sequence &optional start end)
+  "Traverses both sequences in parallel until the end of one of them
+is reached."
+  (declare (optimize (speed 3) (safety 0)))
+  (loop with vector-end of-type fixnum = (stream-end stream)
+        with vector = (buffer stream)
+        with transformer = (transformer stream)
+        for index of-type fixnum from start below end
+        for vector-index of-type fixnum = (idx stream)
+        while (< vector-index vector-end)
+        do (let ((elt (aref vector vector-index)))
+             (setf (elt sequence index)
+                   (if transformer
+                       (funcall transformer elt)
+                       elt)))
+           (incf (the fixnum (idx stream)))
+        finally (return index)))
+
+(defmethod stream-write-byte ((stream vector-output-stream) byte)
+  "Writes a byte \(octet) by extending the underlying vector."
+  (declare (optimize (speed 3) (safety 0)))
+  (check-if-open stream)
+  (with-accessors ((vector buffer))
+      stream
+    (vector-push-extend (transform-octet stream byte) vector)))
+
+(defmethod stream-write-sequence ((stream vector-output-stream) sequence &optional start end)
+  "Just calls VECTOR-PUSH-EXTEND repeatedly."
+  (declare (optimize (speed 3) (safety 0)))
+  (with-accessors ((vector buffer))
+      stream
+    (loop for index of-type fixnum from start below end
+          do (vector-push-extend (transform-octet stream (elt sequence index)) vector))
+    sequence))
+
+(defmethod stream-file-position ((stream vector-input-stream) &optional position-spec)
+  "Simply returns the index into the underlying vector."
+  (declare (optimize (speed 3) (safety 0)))
+  (if position-spec
+      (with-accessors ((index idx) (end stream-end)) stream
+        (setq index
+              (case position-spec
+                (:start 0)
+                (:end end)
+                (otherwise
+                 (unless (integerp position-spec)
+                   (error 'sb-int::simple-stream-error
+                          :format-control "Unknown file position designator: ~S."
+                          :format-arguments (list position-spec)
+                          :stream stream))
+                 (unless (<= 0 position-spec end)
+                   (error 'sb-int:simple-stream-error
+                          :format-control "File position designator ~S is out of bounds."
+                          :format-arguments (list position-spec)
+                          :stream stream))
+                 position-spec))))
+        position-spec)
+      (idx stream))
+
+(defmethod stream-file-position ((stream vector-output-stream) &optional position-spec)
+  "Simply returns the fill pointer of the underlying vector."
+  (declare (optimize (speed 3) (safety 0)))
+  (if position-spec
+      (with-accessors ((vector buffer)) stream
+        (let* ((total-size (array-total-size vector))
+               (new-fill-pointer
+                 (case position-spec
+                   (:start 0)
+                   (:end
+                    (warn "File position designator :END doesn't really make sense for an output stream.")
+                    total-size)
+                   (otherwise
+                    (unless (integerp position-spec)
+                      (error 'in-memory-stream-position-spec-error
+                             :format-control "Unknown file position designator: ~S."
+                             :format-arguments (list position-spec)
+                             :stream stream
+                             :position-spec position-spec))
+                    (unless (<= 0 position-spec array-total-size-limit)
+                      (error 'in-memory-stream-position-spec-error
+                             :format-control "File position designator ~S is out of bounds."
+                             :format-arguments (list position-spec)
+                             :stream stream
+                             :position-spec position-spec))
+                    position-spec))))
+          (declare (fixnum total-size new-fill-pointer))
+          (when (> new-fill-pointer total-size)
+            (adjust-array vector new-fill-pointer))
+          (setf (fill-pointer vector) new-fill-pointer)
+          position-spec))
+      (fill-pointer (buffer stream))))
+
+(defmethod make-in-memory-input-stream ((vector vector) &key (start 0)
+                                                             (end (length vector))
+                                                             transformer)
+  "Returns a binary input stream which will supply, in order, the
+octets in the subsequence of VECTOR bounded by START and END.
+Each octet returned will be transformed in turn by the optional
+TRANSFORMER function."
+  (declare (optimize (speed 3) (safety 0)))
+  (make-instance 'vector-input-stream
+                 :buffer vector
+                 :index start
+                 :end end
+                 :transformer transformer))
+
+(defmethod make-in-memory-input-stream ((list list) &key (start 0)
+                                                         (end (length list))
+                                                         transformer)
+  "Returns a binary input stream which will supply, in order, the
+octets in the subsequence of LIST bounded by START and END.  Each
+octet returned will be transformed in turn by the optional
+TRANSFORMER function."
+  (declare (optimize (speed 3) (safety 0)))
+  (make-instance 'list-input-stream
+                 :buffer (subseq list start end)
+                 :transformer transformer))
+
+(defun make-output-vector (&key (element-type 'octet))
+  "Creates and returns an array which can be used as the underlying
+vector for a VECTOR-OUTPUT-STREAM."
+  (declare (optimize (speed 3) (safety 0)))
+  (make-array 0 :adjustable t
+                :fill-pointer 0
+                :element-type element-type))
+
+(defun make-in-memory-output-stream (&key (element-type 'octet) transformer)
+  "Returns a binary output stream which accepts objects of type
+ELEMENT-TYPE \(a subtype of OCTET) and makes available a sequence
+that contains the octes that were actually output.  The octets
+stored will each be transformed by the optional TRANSFORMER
+function."
+  (declare (optimize (speed 3) (safety 0)))
+  (make-instance 'vector-output-stream
+                 :buffer (make-output-vector :element-type element-type)
+                 :transformer transformer))
+
+(defmethod get-output-stream-sequence ((stream in-memory-output-stream) &key as-list)
+  "Returns a vector containing, in order, all the octets that have
+been output to the IN-MEMORY stream STREAM. This operation clears any
+octets on STREAM, so the vector contains only those octets which have
+been output since the last call to GET-OUTPUT-STREAM-SEQUENCE or since
+the creation of the stream, whichever occurred most recently.  If
+AS-LIST is true the return value is coerced to a list."
+  (declare (optimize (speed 3) (safety 0)))
+  (with-accessors ((vector buffer))
+      stream
+    (prog1
+        (if as-list
+          (coerce vector 'list)
+          vector)
+      (setq vector
+            (make-output-vector)))))
+
+(defmethod output-stream-sequence-length ((stream in-memory-output-stream))
+  "Returns the current length of the underlying vector of the
+IN-MEMORY output stream STREAM."
+  (declare (optimize speed))
+  (length (the vector (buffer stream))))
+
+(defmacro with-input-from-sequence ((var sequence &key start end transformer) 
+                                    &body body)
+  "Creates an IN-MEMORY input stream from SEQUENCE using the
+parameters START and END, binds VAR to this stream and then
+executes the code in BODY.  A function TRANSFORMER may optionally
+be specified to transform the returned octets.  The stream is
+automatically closed on exit from WITH-INPUT-FROM-SEQUENCE, no
+matter whether the exit is normal or abnormal.  The return value
+of this macro is the return value of BODY."
+  (std:using-gensyms (decl (sequence))
+    `(let (,var ,@decl)
+       (unwind-protect
+           (progn
+             (setq ,var (make-in-memory-input-stream ,sequence
+                                                     :start (or ,start 0)
+                                                     :end (or ,end (length ,sequence))
+                                                     :transformer ,transformer))
+             ,@body)
+         (when ,var (close ,var))))))
+
+(defmacro with-output-to-sequence ((var &key as-list (element-type ''octet) transformer)
+                                   &body body)
+  "Creates an IN-MEMORY output stream, binds VAR to this stream
+and then executes the code in BODY.  The stream stores data of
+type ELEMENT-TYPE \(a subtype of OCTET) which is \(optionally)
+transformed by the function TRANSFORMER prior to storage.  The
+stream is automatically closed on exit from
+WITH-OUTPUT-TO-SEQUENCE, no matter whether the exit is normal or
+abnormal.  The return value of this macro is a vector \(or a list
+if AS-LIST is true) containing the octets that were sent to the
+stream within BODY."
+  `(let (,var)
+     (unwind-protect
+         (progn
+           (setq ,var (make-in-memory-output-stream :element-type ,element-type
+                                                    :transformer ,transformer))
+           ,@body
+           (get-output-stream-sequence ,var :as-list ,as-list))
+       (when ,var (close ,var)))))
 
 ;;; Decoding Stream
 (declaim (type fixnum +buffer-size+))

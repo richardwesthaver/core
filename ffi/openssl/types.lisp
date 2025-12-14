@@ -79,7 +79,10 @@
 (define-opaque basic-constraints basic-constraints-st)
 (define-opaque dist-point dist-point-st)
 (define-opaque dsa-sig dsa-sig-st)
-(define-opaque general-name general-name-st)
+(define-alien-type general-name 
+  (struct general-name-st
+    (type int)
+    (data (* t))))
 (define-opaque issuing-dist-point issuing-dist-point-st)
 (define-opaque name-constraints name-constraints-st)
 (define-opaque netscape-spkac netscape-spkac-st)

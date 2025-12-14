@@ -157,23 +157,27 @@
      (clear-retry-flags bio)
      1)))
 
-(defmacro with-bio-output-to-string ((bio &key (element-type ''character))
+(defmacro with-bio-output-to-string ((bio &key (element-type ''character)
+                                               (transformer '#'code-char))
                                      &body body)
   "Evaluate BODY with BIO bound to a SSL BIO structure that writes to a
 Common Lisp string.  The string is returned."
-  `(let ((*bio-socket* (make-string-output-stream :element-type ,element-type))
+  `(let ((*bio-socket* (make-in-memory-output-stream 
+                        :element-type ,element-type
+                        :transformer ,transformer))
          (,bio (bio-new-lisp)))
      (unwind-protect
           (progn ,@body)
        (bio-free ,bio))
-     (get-output-stream-string *bio-socket*)))
+     (get-output-stream-sequence *bio-socket*)))
 
 (defmacro with-bio-input-from-string ((bio
-                                       string)
+                                       string
+                                       &key (transformer '#'char-code))
                                       &body body)
   "Evaluate BODY with BIO bound to a SSL BIO structure that reads from
 a Common Lisp STRING."
-  `(let ((*bio-socket* (make-string-input-stream ,string))
+  `(let ((*bio-socket* (make-in-memory-input-stream ,string :transformer ,transformer))
          (,bio (bio-new-lisp)))
      (unwind-protect
           (progn ,@body)

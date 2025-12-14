@@ -49,7 +49,7 @@
     OpenSSL error queue contains more information on the error.")
   (:report (lambda (condition stream)
              (format stream
-                     "A failure in the SSL library occurred on handle ~A (SSL_get_error: ~A). "
+                     "A failure in the SSL library occurred on handle ~A~%(SSL_get_error: ~A).~%"
                      (openssl::error-sap condition)
                      (openssl::error-code condition))
              (openssl::format-error-queue stream condition)
@@ -66,8 +66,8 @@
                     code (openssl::openssl-verify-error-keyword code))))))
 
 (defun collecting-verify-error-impl (handle body-fn)
-  (handler-bind ((ssl-error (lambda (c)
-                              (collect-verify-error c handle))))
+  (handler-bind ((openssl-error (lambda (c)
+                                  (collect-verify-error c handle))))
     (funcall body-fn)))
 
 (defmacro collecting-verify-error ((handle) &body body)
@@ -104,3 +104,16 @@ ERROR-CODE is return value of SSL_get_error - an explanation of the failure."
                :sap handle
                :code error-code
                :queue printed-queue))))
+
+;;; Hostname Verification
+(define-condition hostname-verification-error (error)
+  ())
+
+(define-condition unable-to-match-altnames (hostname-verification-error)
+  ())
+
+(define-condition unable-to-decode-common-name (hostname-verification-error)
+  ())
+
+(define-condition unable-to-match-common-name (hostname-verification-error)
+  ())

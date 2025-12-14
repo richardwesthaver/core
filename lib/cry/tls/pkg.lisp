@@ -5,7 +5,7 @@
 ;;; Code:
 (pkg:defpkg :cry/tls
   (:nicknames :tls :ssl)
-  (:use :cl :std :sb-gray :io :config :build :sb-alien :cry-int :openssl)
+  (:use :cl :std :sb-gray :io :config :build :sb-alien :cry-int :openssl :dat/asn1)
   (:shadowing-import-from :std/rand :random-bytes)
   (:export :*ssl-cipher-list* :*ssl-buffer-size* :*ca-bundle* 
    :*no-ssl*
@@ -14,4 +14,7 @@
    :ensure-ssl
    :make-ssl-client-stream
    :make-ssl-server-stream
-   :ssl-stream-x509-certificate))
+   :ssl-stream-x509-certificate
+   #:decode-der-octet-vector
+   #:decode-certificate-from-file))
+

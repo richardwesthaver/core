@@ -109,7 +109,17 @@
    :x509-get0-not-after
    :x509-get-ext-d2i
    :x509-store-ctx-get-error
-   :ssl-set-cipher-list))
+   :ssl-set-cipher-list
+   :+NID-subject-alt-name+
+   :+NID-commonName+
+   :openssl-sk-num
+   :openssl-sk-value
+   :general-names-free
+   :evp-get-digest-by-name
+   :evp-md-get-size
+   :pem-read-bio-x509
+   :pem-write-bio-x509
+   :x509-digest))
 
 (in-package :openssl)
 
@@ -118,3 +128,24 @@
 
 (defconstant +BIO-FLAGS-IN-EOF+ #x800)
 (defconstant +SSL-CTRL-SET-TLSEXT-HOSTNAME+ 55)
+
+(defconstant +NID-subject-alt-name+ 85)
+(defconstant +NID-commonName+   13)
+
+(defconstant +GEN-OTHERNAME+  0)
+(defconstant +GEN-EMAIL+  1)
+(defconstant +GEN-DNS+    2)
+(defconstant +GEN-X400+ 3)
+(defconstant +GEN-DIRNAME+  4)
+(defconstant +GEN-EDIPARTY+ 5)
+(defconstant +GEN-URI+    6)
+(defconstant +GEN-IPADD+  7)
+(defconstant +GEN-RID+    8)
+
+(defconstant +v-asn1-octet-string+ 4)
+(defconstant +v-asn1-utf8string+ 12)
+(defconstant +v-asn1-printablestring+ 19)
+(defconstant +v-asn1-teletexstring+ 20)
+(defconstant +v-asn1-iastring+ 22)
+(defconstant +v-asn1-universalstring+ 28)
+(defconstant +v-asn1-bmpstring+ 30)

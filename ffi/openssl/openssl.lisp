@@ -30,6 +30,23 @@
   (inp (* (* unsigned-char)))
   (len long))
 
+(defar ("X509_digest" x509-digest) int
+  (cert (* t))
+  (type (* t))
+  (buf (* t))
+  (*len (* int)))
+
+(defar ("PEM_write_bio_X509" pem-write-bio-x509) int
+  (bio (* t))
+  (x509 (* t)))
+
+(defar ("PEM_read_bio_X509" pem-read-bio-x509) (* t)
+  ;; all args are pointers in fact, but they are NULL anyway
+  (bio (* t))
+  (x509 int)
+  (callback int)
+  (passphrase int))
+
 (defar ("X509_free" x509-free) void
   (x509 (* x509)))
 
@@ -200,7 +217,7 @@
 (defar ("SSL_get_peer_certificate" ssl-get-peer-certificate) (* t)
   (ssl (* t)))
 
-(defar ("SSL_get1_peer_certificate" ssl-get1-peer-certificate) (* t)
+(defar ("SSL_get1_peer_certificate" ssl-get1-peer-certificate) (* x509)
   (ssl (* t)))
 
 (defconstant +err-error-string-buf-len+ 120)
@@ -245,7 +262,7 @@
 (defar ("SSL_CTX_new" ssl-ctx-new) (* ssl-ctx)
   (method (* ssl-method)))
 (defar ("SSL_new" ssl-new) (* ssl)
-  (method (* ssl-method)))
+  (method (* ssl-ctx)))
 (defar ("SSL_get_fd" ssl-get-fd) int
   (ssl (* ssl)))
 (defar ("SSL_set_fd" ssl-set-fd) int
@@ -354,3 +371,19 @@
 (defar ("BIO_test_flags" bio-test-flags) int
   (meth (* t))
   (value int))
+
+(defar ("OPENSSL_sk_value" openssl-sk-value) (* t)
+  (stack (* t))
+  (index int))
+
+(defar ("OPENSSL_sk_num" openssl-sk-num) int
+  (stack (* t)))
+
+(defar ("GENERAL_NAMES_free" general-names-free) void
+  (general-names (* t)))
+
+(defar ("EVP_get_digestbyname" evp-get-digest-by-name) (* t)
+  (name c-string))
+
+(defar ("EVP_MD_get_size" evp-md-get-size) int
+  (evp (* t)))

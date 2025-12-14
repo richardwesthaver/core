@@ -5,8 +5,7 @@
 ;;; Code:
 (in-package :tls)
 
-(defclass* ssl-stream (wrapped-stream
-                      fundamental-binary-input-stream
+(defclass* ssl-stream (fundamental-binary-input-stream
                       fundamental-binary-output-stream)
   (socket close-callback
    (sap :initform nil :accessor sap)
@@ -252,9 +251,10 @@ After RELOAD, you need to call this again."
                         (null-alien srv-cert))
                (error 'server-certificate-missing
                       :format-control "The server didn't present a certificate."))
+             ;; FIX 2025-12-13: always failing as zero-len self-signed cert
              (let ((err (openssl::ssl-get-verify-result handle)))
                (unless (eql err openssl::+x509-v-ok+)
-                 (error 'openssl-error-verify :stream ssl-stream :error-code err)))
+                 (error 'openssl-error-verify :stream ssl-stream :code err)))
              (when (and hostname
                         (not (null-alien srv-cert)))
                (or (verify-hostname srv-cert hostname)
@@ -283,7 +283,7 @@ After RELOAD, you need to call this again."
 
 (defun handle-external-format (stream ef)
   (if ef
-      (io:make-flex-stream stream :external-format ef)
+      (make-flex-stream stream :external-format ef)
       stream))
 
 ;; fixme: free the context when errors happen in this function
@@ -293,14 +293,12 @@ After RELOAD, you need to call this again."
                                  hostname
                                  close-callback
                                  external-format
-                                 (verify (if (ssl-check-verify-p)
-                                             :optional
-                                             *make-ssl-client-stream-verify-default*))
+                                 (verify *ssl-client-stream-verify-default*)
                                  alpn-protocols
                                  certificate key password
-                                 (cipher-list *default-cipher-list*)
+                                 (cipher-list *ssl-cipher-list*)
                                  method
-                                 (buffer-size *default-buffer-size*)
+                                 (buffer-size *ssl-buffer-size*)
                                  (input-buffer-size buffer-size)
                                  (output-buffer-size buffer-size))
   "Performs TLS/SSL handshake over the specified SOCKET using
@@ -341,7 +339,7 @@ passed as a parameter to an internall call of SSL_new.)
         ssl stream is CL:CLOSE'ed. The only argument is this ssl stream.
 
     EXTERNAL-FORMAT - if NIL (the default), a plain (UNSIGNED-BYTE 8)
-        ssl stream is returned. With a non-NIL external-format, a WRAPPED-STREAM
+        ssl stream is returned. With a non-NIL external-format, a FLEX-STREAM
         capable of character I/O will be returned instead, with the specified
         value as its initial external format.
 
@@ -349,7 +347,7 @@ passed as a parameter to an internall call of SSL_new.)
         :OPTIONAL to verify the server's certificate if server presents one or
         :REQUIRED to verify the server's certificate and fail if an invalid
         or no certificate was presented. Defaults to
-        *MAKE-SSL-CLIENT-STREAM-VERIFY-DEFAULT* which is initialized
+        *SSL-CLIENT-STREAM-VERIFY-DEFAULT* which is initialized
         to :REQUIRED
 
         The verification includes verifying the HOSTNAME against the server
@@ -358,13 +356,12 @@ passed as a parameter to an internall call of SSL_new.)
         An error is signalled in case of the certificate or hostname
         verification failure.
 
-        Note, the VERIFY logic expects that the global
-        SSL_CTX object does not have the SSL_VERIFY_PEER
-        flag enabled - the default for the cl+ssl's global SSL_CTX.
-        If the current global SSL_CTX object has SSL_VERIFY_PEER enabled,
-        the SSL_Connect will perform certificate (but not hostname)
-        verification on its own, and an error will be signalled for a
-        bad certificate even with :VERIFY NIL.
+        Note, the VERIFY logic expects that the global SSL_CTX object does not
+        have the SSL_VERIFY_PEER flag enabled - the default for the global
+        SSL_CTX.  If the current global SSL_CTX object has SSL_VERIFY_PEER
+        enabled, the SSL_Connect will perform certificate (but not hostname)
+        verification on its own, and an error will be signalled for a bad
+        certificate even with :VERIFY NIL.
 
     ALPN-PROTOCOLS, if specified, should be a list of alpn protocol names,
         such as \"h2\", that will be offered to the server. The protocol
@@ -382,7 +379,7 @@ passed as a parameter to an internall call of SSL_new.)
 
     CIPHER-LIST - If not NIL, must be a string to pass to SSL_set_cipher_list.
         An ERROR is signalled if SSL_CTX_set_cipher_list fails.
-        Defaults to *DEFAULT-CIPHER-LIST* which is initialized to NIL.
+        Defaults to *SSL-CIPHER-LIST* which is initialized to NIL.
 
     METHOD - usually you want to leave the default value. It is used
         to compute the parameter for OpenSSL function SSL_CTX_new when
@@ -393,7 +390,7 @@ passed as a parameter to an internall call of SSL_new.)
 
     BUFFER-SIZE - default value for both the INPUT-BUFFER-SIZE and
         OUTPUT-BUFFER-SIZE parameters. In turn defaults to the
-        *DEFAULT-BUFFER-SIZE* special variable.
+        *SSL-BUFFER-SIZE* special variable.
 
     INPUT-BUFFER-SIZE - size of the input buffer of the ssl stream.
         Defaults to the BUFFER-SIZE parameter.
@@ -408,10 +405,11 @@ passed as a parameter to an internall call of SSL_new.)
                                :output-buffer-size output-buffer-size)))
     (with-new-ssl (handle)
       (if hostname
-          (with-alien ((chostname c-string hostname))
-            (openssl::ssl-ctrl handle #.openssl::+ssl-ctrl-set-tlsext-hostname+ 1 chostname)))
+          (with-alien ((chostname c-string (make-alien-string hostname)))
+            ;; TODO 2025-12-13: test - is (* c-string) ok?
+            (openssl::ssl-ctrl handle #.openssl::+ssl-ctrl-set-tlsext-hostname+ 1 (addr chostname))))
       (when alpn-protocols
-        (with-alien ((string c-string (make-alpn-proto-string alpn-protocols)))
+        (with-alien ((string c-string (make-alien-string (make-alpn-proto-string alpn-protocols))))
           (ssl-set-alpn-protos handle string (1- (length alpn-protocols)))))
       (setf socket (install-sap-and-bio stream handle socket unwrap-stream-p))
       (openssl::ssl-set-connect-state handle)
@@ -434,9 +432,9 @@ passed as a parameter to an internall call of SSL_new.)
                                  close-callback
                                  external-format
                                  certificate key password
-                                 (cipher-list *default-cipher-list*)
+                                 (cipher-list *ssl-cipher-list*)
                                  method
-                                 (buffer-size *default-buffer-size*)
+                                 (buffer-size *ssl-buffer-size*)
                                  (input-buffer-size buffer-size)
                                  (output-buffer-size buffer-size))
   "Performs server-side TLS handshake over the specified SOCKET using
