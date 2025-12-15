@@ -57,7 +57,8 @@
     (t (error "unknown sockaddr size"))))
 
 (defmethod sb-bsd-sockets::free-sockaddr-for ((socket tcp-socket) sockaddr)
-  (sb-alien:free-alien sockaddr))
+  (when sockaddr
+    (sb-alien:free-alien sockaddr)))
 
 (defclass tcp-client (tcp-socket client) ())
 (defclass tcp-server (tcp-socket server) ())

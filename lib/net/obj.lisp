@@ -26,9 +26,13 @@
   ((addr)
    (port)))
 
-(defclass connection () ()
-  (:documentation
-   "Generic connection object."))
+(defclass connection (obj:edgex) ()
+  (:documentation "Base class of connection objects between network nodes. Compatible with the
+EDGE and ID protocols."))
+
+(defclass route (obj:edgex) ()
+  (:documentation "Base class of route objects which may be spawned by a router. Compatible with
+the EDGE and ID protocols."))
 
 (defconfig socket-config (net-config)
   ((reuse-address)
@@ -75,23 +79,31 @@ sockets."))
                 :accessor connected-p
                 :initarg :connected-p)))
 
-(defclass client (wrapped-socket) ())
+(defclass client (wrapped-socket obj:vertex) ()
+  (:documentation "Base class of client objects which wrap a socket and may be treated as nodes
+in a NETWORK-GRAPH."))
 
 (defconfig client-config (net-config) ())
 
-(defclass server (wrapped-socket) ())
+(defclass server (wrapped-socket obj:vertex) ()
+  (:documentation "Base class of server objects which wrap a socket and may be treated as nodes
+in a NETWORK-GRAPH."))
 
 (defconfig server-config (net-config) ())
 
-(defclass proxy (server)
-  ((client :type client :initarg :client :accessor client))
-  (:documentation
-   "An object which acts as a proxy between clients and a remote server."))
+(defclass router (obj:vertex) ()
+  (:documentation "Base class of router objects which may spawn routes. Compatible with the NODE
+and ID protocols."))
 
-(defclass peer () ()
-  (:documentation 
-   "Base class of peers, which typically represent a direct communication channel
-with a remote client or server."))
+(defclass proxy (server route) ()
+  (:documentation "Base class of proxy objects which are servers that can act like a route."))
+
+(defclass peer (obj:vertex) ()
+  (:documentation "Base class of peer objects which represent network peers in the NETWORK-GRAPH."))
+
+(defclass network-graph (obj:graph) ()
+  (:documentation "Graph representation of networks containing clients,
+servers, and peers as vertices and connections as edges."))
 
 ;;; Protocol
 (defverb connect (self &key &allow-other-keys))

@@ -16,3 +16,5 @@
 
 (defpkg :net-user
   (:use :cl :std :net :uri :url))
+
+(in-package :net)

@@ -624,13 +624,13 @@ resulting function is stored within the *ROUTER* collection and may be
 dispatched to by a SERVICE instance.
 
 SPEC is either a symbol NAME or a list matching the
-destructuring lambda list
+destructured lambda list
 
   (name &key uri service-names host
         default-parameter-type default-request-type).
 
 ARGS is a list the elements of which are either a symbol
-VAR or a list matching the destructuring lambda list
+VAR or a list matching the destructured lambda list
 
   (var &key real-name parameter-type init-form request-type)."
   (declare (ignore spec args body)))

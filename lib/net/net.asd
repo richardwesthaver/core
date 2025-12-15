@@ -9,13 +9,13 @@
   ((:file "pkg")
    (:file "obj")
    (:file "util")
-   (:file "udp")
-   (:file "tcp")
    (:module "codec"
     :components ((:file "dns")
                  (:file "tlv")
                  (:file "osc")
                  (:file "http")))
+   (:file "udp")
+   (:file "tcp")
    (:module "proto"
     :components ((:file "swank")
                  (:file "crew")

@@ -48,34 +48,6 @@
    :*default-proxy*
    :*default-user-agent*))
 
-(defpkg :net/udp
-  (:nicknames :udp)
-  (:use :cl :std :net/core :sb-bsd-sockets :config)
-  (:export
-   :udp-server
-   :with-udp-client
-   :with-udp-server
-   :udp-receive-ping
-   :udp-echo
-   :udp-socket
-   :udp-client))
-
-(defpkg :net/tcp
-  (:nicknames :tcp)
-  (:use :cl :std :net/core :sb-bsd-sockets :config)
-  (:export
-   :tcp-server
-   :with-tcp-client
-   :tcp-ping-server
-   :*tcp-ping-size*
-   :tcp-echo
-   :tcp-receive-ping
-   :tcp-client
-   :tcp-source
-   :tcp-sink
-   :tcp-socket
-   :tcp-config))
-
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
   (:use :cl :std :net/core :punycode)
@@ -134,6 +106,34 @@
    :*http-status-message-map* :http-status-message :http-keyword :+known-http-versions+
    :+known-http-methods+))
 
+(defpkg :net/udp
+  (:nicknames :udp)
+  (:use :cl :std :net/core :sb-bsd-sockets :config)
+  (:export
+   :udp-server
+   :with-udp-client
+   :with-udp-server
+   :udp-receive-ping
+   :udp-echo
+   :udp-socket
+   :udp-client))
+
+(defpkg :net/tcp
+  (:nicknames :tcp)
+  (:use :cl :std :net/core :sb-bsd-sockets :config)
+  (:export
+   :tcp-server
+   :with-tcp-client
+   :tcp-ping-server
+   :*tcp-ping-size*
+   :tcp-echo
+   :tcp-receive-ping
+   :tcp-client
+   :tcp-source
+   :tcp-sink
+   :tcp-socket
+   :tcp-config))
+
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :punycode))
@@ -144,7 +144,7 @@
 
 (defpkg :net/proto/dns
   (:nicknames :net/dns)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/dns)
+  (:use :cl :sb-bsd-sockets :std :net/core :codec/dns)
   (:export
    :dns-servers-exhausted
    :dns-port

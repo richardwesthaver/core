@@ -57,7 +57,7 @@ that a vertex always carries an ID slot."))
 
 (defclass edge (node)
   ((in :initarg :in :accessor edge-in) (out :initarg :out :accessor edge-out))
-  (:documentation "generic edge mixin. Compatible with the NODE and ID protocols."))
+  (:documentation "generic edge mixin. Compatible with the NODE protocol."))
 
 (defmethod name ((self edge))
   (cons (edge-in self) (edge-out self)))
