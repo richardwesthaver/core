@@ -16,5 +16,6 @@
    :make-ssl-server-stream
    :ssl-stream-x509-certificate
    #:decode-der-octet-vector
-   #:decode-certificate-from-file))
+   #:decode-certificate-from-file
+   #:ssl-initialized-p))
 

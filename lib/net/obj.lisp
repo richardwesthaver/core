@@ -90,8 +90,8 @@ sockets."))
 
 (defclass peer () ()
   (:documentation 
-   "An object which designates a peer. Peers typically designate an implicit
-communication channel with a client/server."))
+   "Base class of peers, which typically represent a direct communication channel
+with a remote client or server."))
 
 ;;; Protocol
 (defverb connect (self &key &allow-other-keys))

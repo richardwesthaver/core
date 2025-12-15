@@ -118,7 +118,7 @@ the underlying link).")
   "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
   (once-only (socket)
     `(let ((,var ,socket))
-       (unwind-protect (when ,var ,@body)
+       (unwind-protect (when ,var . ,body)
          (when ,var (socket-close ,var))))))
 
 (defmacro with-client-socket ((socket-var stream-var &rest args) &body body)

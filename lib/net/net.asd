@@ -25,8 +25,7 @@
                  (:file "dict")
                  (:file "ssh")
                  (:file "dm")
-                 (:file "sesh")
-                 (:file "nsm")))
+                 (:file "sesh")))
    (:file "cookie")               
    (:file "req")
    (:module "srv"

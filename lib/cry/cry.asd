@@ -39,6 +39,6 @@
   :in-order-to ((test-op (test-op :cry/tests))))
 
 (defsystem :cry/tests
-  :depends-on (:rt :cry)
+  :depends-on (:rt :cry :net)
   :components ((:file "tests"))
   :perform (test-op (o c) (symbol-call :rt :do-tests :cry)))

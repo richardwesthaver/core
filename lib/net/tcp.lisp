@@ -61,5 +61,5 @@
 
 (defclass tcp-client (tcp-socket client) ())
 (defclass tcp-server (tcp-socket server) ())
-(defclass tcp-source (tcp-server source) ())
 (defclass tcp-sink (tcp-client sink) ())
+(defclass tcp-source (tcp-server source) ())

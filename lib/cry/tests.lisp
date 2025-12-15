@@ -2,7 +2,7 @@
   (:use :rt :std :cl 
    :cry-int :cry/hotp :cry/totp :cry/crc64 
    :cry/jwt :cry/b3 :cry/keyring :cry/authinfo 
-   :cry/password :cry/drm :cry/tls :config)
+   :cry/password :cry/drm :cry/tls :config :net/tcp)
   (:shadowing-import-from :rt :random-bytes))
 
 (in-package :cry/tests)
@@ -83,5 +83,14 @@
       )))
 
 (deftest tls ()
+  (reset :ssl)
   (ensure-ssl)
-  (is (ssl-initialized-p)))
+  (is (ssl-initialized-p))
+  (let ((ctx (make-ssl-context :verify-mode openssl::+ssl-verify-none+)))
+    (with-global-context (ctx :auto-free-p t)
+      (let ((stream (socket-stream host port))
+            (ssl-stream (make-ssl-client-stream stream)))
+        (write-sequence (map 'vector #'char-code "foobar") ssl-stream)
+        (finish-output ssl-stream)
+        (close stream)))))
+

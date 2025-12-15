@@ -215,7 +215,6 @@
    :cb-body
    :cb-message-complete
    :cb-status
-
    :parsing-error
    :invalid-eof-state
    :header-overflow
@@ -265,7 +264,7 @@
   (:nicknames :net/nsm)
   (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/osc))
 
-(defpkg net/cookie
+(defpkg :net/cookie
   (:use :cl :std :parse/bytes :obj/uri)
   (:shadowing-import-from :std :when-let :if-let)
   (:import-from :obj/time

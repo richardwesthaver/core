@@ -119,7 +119,10 @@
    :evp-md-get-size
    :pem-read-bio-x509
    :pem-write-bio-x509
-   :x509-digest))
+   :x509-digest
+   :+SSL-CTRL-OPTIONS+
+   :+SSL-CTRL-SET-SESS-CACHE-MODE+
+   :+SSL-CTRL-MODE+))
 
 (in-package :openssl)
 
@@ -128,6 +131,9 @@
 
 (defconstant +BIO-FLAGS-IN-EOF+ #x800)
 (defconstant +SSL-CTRL-SET-TLSEXT-HOSTNAME+ 55)
+(defconstant +SSL-CTRL-OPTIONS+ 32)
+(defconstant +SSL-CTRL-SET-SESS-CACHE-MODE+ 44)
+(defconstant +SSL-CTRL-MODE+ 33)
 
 (defconstant +NID-subject-alt-name+ 85)
 (defconstant +NID-commonName+   13)

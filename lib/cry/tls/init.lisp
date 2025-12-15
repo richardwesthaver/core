@@ -6,19 +6,8 @@
 (in-package :cry/tls)
 
 ;;; Global state
-(defvar *ssl-global-context* nil)
-(defvar *ssl-global-method* nil)
-
 (defun ssl-initialized-p ()
   (and *ssl-global-context* *ssl-global-method*))
-
-(defvar *tmp-rsa-key-512* nil)
-(defvar *tmp-rsa-key-1024* nil)
-(defvar *tmp-rsa-key-2048* nil)
-
-(defconstant +SSL-CTRL-OPTIONS+ 32)
-(defconstant +SSL-CTRL-SET-SESS-CACHE-MODE+ 44)
-(defconstant +SSL-CTRL-MODE+ 33)
 
 (defun ssl-ctx-set-session-cache-mode (ctx mode)
   (openssl::ssl-ctx-ctrl ctx +SSL-CTRL-SET-SESS-CACHE-MODE+ mode nil))
@@ -113,15 +102,13 @@ loaded certificate chain."
   "If you save your application as a Lisp image, call this function when that
 image is loaded, to perform the necessary SSL re-initialization (unless your
 lisp implementation automatically re-loads foreign libraries and preserves
-their memory accross image reloads).
-
-This should work fine if the location and version of the OpenSSL shared
-libraries have not changed. If they have changed, you may get errors, as users
-report: https://github.com/cl-plus-ssl/cl-plus-ssl/issues/167"
-  (unless (every (lambda (X) (member x *features*)) '(:crypto :ssl))
-    (load-crypto)
+their memory accross image reloads)."
+  (unless (member :crypto *features*)
+    (load-crypto))
+  (unless (member :ssl *features*)
     (load-ssl))
   (setf *ssl-global-context* nil
         *ssl-global-method* nil
         *tmp-rsa-key-512* nil
         *tmp-rsa-key-1024* nil))
+
