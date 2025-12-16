@@ -158,7 +158,7 @@
 
 (defmethod decode-asn1-string (self (type (eql #.(v-asn1 :ia5string))))
   (let ((bytes (asn1-string-octet-vector self)))
-    (if (asn1-iastring-p self)
+    (if (asn1-iastring-p bytes)
         (sb-ext:octets-to-string bytes :external-format :ascii)
         (error 'invalid-asn1-string :type #.(v-asn1 :ia5string)))))
 
@@ -243,7 +243,7 @@
 
 (defun try-get-asn1-string-data (asn1-string allowed-types)
   (let ((type (asn1-string-type asn1-string)))
-    (assert (member (v-asn1 (asn1-string-type asn1-string)) allowed-types) nil "Invalid asn1 string type")
+    (assert (member (asn1-string-type asn1-string) allowed-types) nil "Invalid asn1 string type")
     (decode-asn1-string asn1-string type)))
 
 ;; ASN1 Times are represented with ASN1 Strings

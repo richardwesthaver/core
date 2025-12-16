@@ -12,6 +12,9 @@
 (defun ssl-ctx-set-session-cache-mode (ctx mode)
   (openssl::ssl-ctx-ctrl ctx +SSL-CTRL-SET-SESS-CACHE-MODE+ mode nil))
 
+(defun ssl-set-tlsext-host-name (ctx hostname)
+  (openssl::ssl-ctrl ctx 55 #|SSL_CTRL_SET_TLSEXT_HOSTNAME|# 0 #|TLSEXT_NAMETYPE_host_name|# hostname))
+
 (define-alien-callable tmp-rsa-callback (* t) ((ssl (* t)) (export-p int) (key-length int))
   (flet ((rsa-key (length)
            (rsa-generate-key length #.openssl::+RSA-F4+ nil nil)))
@@ -63,6 +66,24 @@ will use this value.")
             (setf (gethash self *threads*)
                   (incf *thread-counter*)))))))
 
+(defun ssl-load-global-verify-locations (&rest pathnames)
+  "PATHNAMES is a list of pathnames to PEM files containing server and CA certificates.
+Install these certificates to use for verifying on all SSL connections.
+After RELOAD, you need to call this again."
+  (dolist (path pathnames)
+    (let ((namestring (namestring (truename path))))
+      (with-alien ((cafile c-string namestring))
+        (unless (eql 1 (openssl::ssl-ctx-load-verify-locations
+                        *ssl-global-context*
+                        cafile nil))
+          (error "ssl-ctx-load-verify-locations failed."))))))
+
+(defun ssl-set-global-default-verify-paths ()
+  "Load the system default verification certificates.
+After RELOAD, you need to call this again."
+  (unless (eql 1 (ssl-ctx-set-default-verify-paths *ssl-global-context*))
+    (error "ssl-ctx-set-default-verify-paths failed.")))
+
 (defmethod init ((self (eql :ssl)) &key method seed)
   (bio-init)
   (when seed 
@@ -74,6 +95,7 @@ will use this value.")
   (unless (eql 1 (openssl::ssl-ctx-set-default-verify-paths *ssl-global-context*))
     (error "ssl-ctx-set-default-verify-paths failed."))
   (ssl-ctx-set-session-cache-mode *ssl-global-context* 3)
+  (ssl-set-global-default-verify-paths)
   (openssl::ssl-ctx-set-default-passwd-cb 
    *ssl-global-context*
    (alien-sap (alien-callable-function 'pem-password-callback))))

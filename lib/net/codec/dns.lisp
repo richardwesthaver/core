@@ -162,7 +162,6 @@
     (:ZONEMD 63)
     ;; Pseudo records
     (T 255)
-    (* 255)
     (:* 255)
     (:AXFR 252)
     (:IXFR 251)

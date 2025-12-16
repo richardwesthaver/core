@@ -7,7 +7,7 @@
 
 ;;;_. ASN1/X509
 ;; TODO
-(defar ("ASN1_STRING_data" asn1-string-data) (* unsigned-char)
+(defar ("ASN1_STRING_data" asn1-string-data) (* char)
   (str (* t)))
 
 (defar ("ASN1_STRING_length" asn1-string-length) int

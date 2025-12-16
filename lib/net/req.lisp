@@ -1569,25 +1569,37 @@ function of the following signature:
 (ftype (uri &key method headers content-type content) *)
 
 All return values are passed back to the caller following a call to
-MAKE-CLIENT-REQUEST.")
-   (de :type function :accessor de
+MAKE-CLIENT-REQUEST."))
+  (:documentation "A TCP-based HTTP client driven by a KERNEL function."))
+
+(defclass simple-http-client (http-client)
+  ((de :type function :accessor de
        :initarg :de
-       :documentation "Client deserializer function. This function should take two arguments and
-return a single value. The first argument is a partially decoded response and
-the second arg is an optional character encoding.")
+       :documentation "Client deserializer function. This function should take a single argument (a
+HTTP response) and return a single value.")
    (ser :type function :accessor ser
         :initarg :ser
         :documentation "Client serializer function. This function should take
-        a single argument and return a single value. The first argument is
-        passed to this function while preparing http requests.")))
+        a single argument (a HTTP request) and return a single value."))
+  (:documentation "A HTTP Client with builtin SERializer and DEserializer. The serializer is
+called before MAKE-CLIENT-REQUEST and the deserializer is called on the result
+of SEND-REQUEST."))
 
 (defmethod make-client ((kind (eql :http)) &rest args)
   (declare (ignore kind))
   (apply 'make-instance 'http-client args))
 
+(defmethod make-client ((kind (eql :simple-http)) &rest args)
+  (declare (ignore kind))
+  (apply 'make-instance 'simple-http-client args))
+
 (defmethod make-client-request ((self http-client) (req uri) &key)
   (declare (ignore self))
   req)
+
+(defmethod make-client-request :before ((self simple-http-client) req &key)
+  (when (slot-boundp self 'ser)
+    (setf req (funcall (ser self) req))))
 
 (defmethod make-client-request ((self http-client) req &key)
   (declare (ignore self))
@@ -1596,3 +1608,9 @@ the second arg is an optional character encoding.")
 (defmethod send-request ((self http-client) req &rest args)
   ;; req is assumed to be a string or uri
   (apply (kernel self) req args))
+
+(defmethod send-request :around ((self simple-http-client) req &key)
+  ;; req is assumed to be an object
+  (if (slot-boundp self 'de)
+      (funcall (de self) (call-next-method))
+      (call-next-method)))

@@ -834,13 +834,12 @@
 
 (defpkg :obj/cache
   (:nicknames :cache)
-  (:use :cl :std :stored :id :db :schema :config)
+  (:use :cl :std :stored :id :db :schema :config :val)
   (:import-from :std :queue :make-queue)
   (:export :cache :cache-cleanup :cache-policy
-   :cache-size :cache-count :make-cache :cache-release
+   :cache-size :cache-count :make-cache
    :with-cache :cache-remove :cache-flush :cache-entry
-   :entry-expiry :entry-weight :make-cache-table :remcache
-   :get-cache))
+   :entry-weight :make-cache-table :remcache :get-cache))
 
 (defpkg :obj/store
   (:nicknames :store)

@@ -80,7 +80,7 @@
 (defun ssl-signal-error (handle syscall error-code ret)
   "RET is return value of the failed SYSCALL (like SSL_read, SSL_connect,
 SSL_shutdown, etc - most of them designate failure by returning
-RET <= 0, althought SSL_shutdow fails with RET < 0.
+RET <= 0, althought SSL_shutdown fails with RET < 0.
 
 ERROR-CODE is return value of SSL_get_error - an explanation of the failure."
   (let ((printed-queue (err-print-errors-to-string)))

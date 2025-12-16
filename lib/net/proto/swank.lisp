@@ -180,7 +180,7 @@ Swank server."
   (let ((sock (make-instance 'tcp-socket)))
     (handler-case (socket-connect sock (host-ent-address (get-host-by-name host-name)) port)
       (socket-error (c)
-        (error c)
+        (signal c)
         (return-from slime-net-connect nil)))
     (socket-keep-alive sock)
     (let ((connection

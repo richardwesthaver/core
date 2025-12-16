@@ -83,17 +83,18 @@ extension when NIL (:DER or :PEM)."
 
 (defun certificate-dns-alt-names (cert)
   (let ((altnames (certificate-alt-names cert)))
-    (unless (null-alien altnames)
+    (unless (or (null altnames) (null-alien altnames))
       (unwind-protect
           (flet ((alt-name-to-string (alt-name)
-                   (with-alien-slots (type data) alt-name
-                     (case type
-                       (#.openssl::+GEN-IPADD+
-                        (let ((address (dat/asn1::asn1-string-octet-vector data)))
-                          (sb-bsd-sockets:host-ent-name (sb-bsd-sockets:get-host-by-address address))))
-                       (#.openssl::+GEN-DNS+
-                         (or (try-get-asn1-string-data data '(#.openssl::+v-asn1-iastring+))
-                             (error "Malformed certificate: possibly NULL in dns-alt-name")))))))
+                   (let ((name (cast alt-name (* openssl::general-name))))
+                     (with-alien-slots ((type openssl::type) (data openssl::data)) name
+                       (case type
+                         (#.openssl::+GEN-IPADD+
+                          (let ((address (dat/asn1::asn1-string-octet-vector data)))
+                            (sb-bsd-sockets:host-ent-name (sb-bsd-sockets:get-host-by-address address))))
+                         (#.openssl::+GEN-DNS+
+                          (or (try-get-asn1-string-data data '(#.(v-asn1 :ia5string)))
+                              (error "Malformed certificate: possibly NULL in dns-alt-name"))))))))
             (let ((altnames-count (openssl::openssl-sk-num altnames)))
               (loop for i from 0 below altnames-count
                     as alt-name = (openssl::openssl-sk-value altnames i)
@@ -103,7 +104,7 @@ extension when NIL (:DER or :PEM)."
 (defun certificate-subject-common-names (cert)
   (let ((i -1)
         (subject-name (x509-get-subject-name cert)))
-    (when (null-alien subject-name)
+    (when (or (null subject-name) (null-alien subject-name))
       (error "X509_get_subject_name returned NULL"))
     (flet ((extract-cn ()
              (setf i (x509-name-get-index-by-nid subject-name +NID-commonName+ i))

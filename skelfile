@@ -75,6 +75,8 @@
   (:install () 
    (with-sudo "cp .stash/libzstd-alien.so /usr/local/lib/")))
  (psl.dat (%stash)
+  (reset :ssl)
+  (init :ssl)
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
    ".stash/psl.dat"
    :if-exists nil))

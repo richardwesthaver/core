@@ -72,10 +72,10 @@ history but less often recently.
 ;;; Entry
 (defclass cache-entry ()
   ((key :accessor key :initarg :key)
-   (data :accessor data)
+   (data :initarg :data :accessor data)
    (pending :initarg :pending)
-   (rc :accessor entry-rc :initform 0)
-   (expiry :reader entry-expiry)))
+   (rc :accessor entry-rc :initform 0 :initarg :rc)
+   (deadline :reader deadline :initarg :deadline)))
 
 (defclass indexed-cache-entry (cache-entry)
   ((idx :accessor idx)))
@@ -305,11 +305,19 @@ history but less often recently.
 
 ;;; Cache
 (defclass cache ()
-  ((policy :initarg :policy :accessor cache-policy)
-   (kernel :initarg :kernel :accessor kernel)
-   (cleanup :initarg :cleanup :accessor cache-cleanup)
-   (table :initarg :table :accessor table)
-   (queue :initform (make-queue) :initarg :queue :accessor queue)))
+  ((policy :initarg :policy :reader cache-policy :type cache-policy
+           :documentation "The designated policy of this cache instance.")
+   (kernel :initarg :kernel :accessor kernel
+           :documentation "A function which provisions cache entries given a single argument - used
+as the source of the cache.")
+   (cleanup :initarg :cleanup :accessor cache-cleanup
+            :documentation "A function which is called on the DATA slot of a given cache entry via REM-VAL.")
+   (table :initarg :table :accessor table
+          :documentation "A hash-table containing all cached entries.")
+   (queue :initform (make-queue)
+          :initarg :queue 
+          :accessor queue
+          :documentation "sequence of cache entries")))
 
 (defmethod initialize-instance ((cache cache) &key policy kernel (test 'eql) capacity element-type
                                               &allow-other-keys)
@@ -384,7 +392,7 @@ the provider and stored in the cache.
 If FORCE is specified, a new value is fetched from the provider even if
 it already exists in the cache.
 
-If a cleanup function is defined for the cache, remember to call cache-release
+If a cleanup function is defined for the cache, remember to call REM-VAL
 with the second value returned by GET-VAL."
   (with-slots (table policy kernel) cache
     (let ((lock (lock (queue cache))))
@@ -432,8 +440,8 @@ with the second value returned by GET-VAL."
 				     (return (values t (slot-value entry 'data) entry)))
 				   (return (values t (slot-value entry 'data)))))))
 			  ((and entry policy
-			        (or (and (slot-boundp entry 'expiry)
-					 (<= (slot-value entry 'expiry)
+			        (or (and (slot-boundp entry 'deadline)
+					 (<= (deadline entry)
 					     (get-universal-time)))
 				    (and (>= (entry-rc entry) 0)
 					 (not (access-entry policy (queue cache) entry)))))
@@ -473,7 +481,7 @@ with the second value returned by GET-VAL."
 			  ;; (slot-value data 'size) size)
 		    ;; (with-slots (lifetime) cache
 		    ;;   (when lifetime
-		    ;;     (setf (slot-value data 'expiry)
+		    ;;     (setf (slot-value data 'deadline)
 		    ;;           (+ (get-universal-time) lifetime))))
 		    (condition-notify (slot-value data 'pending))
 		    (slot-makunbound data 'pending)
@@ -487,10 +495,10 @@ with the second value returned by GET-VAL."
 			  (values content data))
 		        (values content nil)))))))))))
 
-(defmethod cache-release ((cache cache) entry)
+(defmethod rem-val ((cache cache) entry &key)
   "Releases a reference for an item fetched earlier.
 
-An item fetched from the cache with cache-fetch will not be cleaned up before
+An item fetched from the cache with GET-VAL will not be cleaned up before
 it is released."
   (when entry
     (with-slots (table cleanup) cache
@@ -512,14 +520,14 @@ it is released."
   nil)
 
 (defmacro with-cache (var (cache key &key shallow) &body body)
-  "Combines a cache-fetch and cache-release in a form."
+  "Combines a GET-VAL and REM-VAL in a form."
   (with-gensyms (c-var tag)
     `(let ((,c-var ,cache))
        (multiple-value-bind (,var ,tag)
-	   (cache-fetch ,c-var ,key ,@(and shallow '(:shallow t)))
+	   (get-val ,c-var ,key ,@(and shallow '(:shallow t)))
 	 (unwind-protect
 	      (progn ,@body)
-	   (cache-release ,c-var ,tag))))))
+	   (rem-val ,c-var ,tag))))))
 
 (defmethod cache-remove ((cache cache) key)
   "Remove the item with the specified key from the cache."
