@@ -391,8 +391,8 @@ passed as a parameter to an internall call of SSL_new.)
                     :output-buffer-size output-buffer-size)))
       (with-new-ssl (handle)
         (if hostname
-            (with-alien ((chostname c-string (make-alien-string hostname)))
-              (ssl-set-tlsext-host-name handle (addr chostname))))
+            (let ((chostname (make-alien-string hostname)))
+              (ssl-set-tlsext-host-name handle (alien-sap chostname))))
         (when alpn-protocols
           (with-alien ((string c-string (make-alien-string (make-alpn-proto-string alpn-protocols))))
             (ssl-set-alpn-protos handle string (1- (length alpn-protocols)))))
