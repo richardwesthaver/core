@@ -72,7 +72,7 @@
   (:export :lint))
 
 (defpackage :syn/tempo
-  (:use :cl :std :syn/ts :syn/lang :syn/gen))
+  (:use :cl :std :syn/ts :syn/lang :syn/gen :id :graph :ast))
 
 (defpackage :syn/grovel
   (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint))
