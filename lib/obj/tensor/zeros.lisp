@@ -18,8 +18,8 @@
              (slot-value ,ret 'strides) ,strdv
              (slot-value ,ret 'head) 0
              (slot-value ,ret 'store) ,(recursive-append
-                                       (when initial-element `(if ,init (t.store-allocator ,class ,tsize :initial-element (t.coerce ,(field-type class) ,init))))
-                                       `(t.store-allocator ,class ,tsize))
+                                        (when initial-element `(if ,init (t.store-allocator ,class ,tsize :initial-element (t.coerce ,(field-type class) ,init))))
+                                        `(t.store-allocator ,class ,tsize))
              (slot-value ,ret 'parent) nil
              (slot-value ,ret 'memos) nil)
        ,ret)))

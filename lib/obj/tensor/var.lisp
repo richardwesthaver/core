@@ -64,3 +64,66 @@ of a matrix (default 2)")
 (defparameter *default-uplo* :l
   "For routines which take symmetric (hermitian) matrices as arguments, this sets
 the default argument for UPLO.")
+
+(defparameter *rcond-scale* 10
+  "Factor by which the float-epsilon is to be scaled, so as to obtain a condition
+number threshold, to be used for determining the rank of a matrix (used in
+gelsy).")
+
+(defparameter *default-uplo* :l
+  "
+For routines which take symmetric (hermitian) matrices as
+arguments, this sets the default argument for UPLO.")
+
+;; Level 1
+(defparameter *real-l1-alien-threshold* 5000
+  "If the size of the array is less than this parameter, the
+lisp version of axpy is called in order to avoid FFI overheads.
+The Fortran function is not called if the tensor does not have
+a consecutive store.")
+
+(defparameter *complex-l1-alien-threshold* 2500
+  "If the size of the array is less than this parameter, the
+lisp version of axpy is called in order to avoid FFI overheads.
+The Fortran function is not called if the tensor does not have
+a consecutive store.")
+
+;; Level 2
+(defparameter *real-l2-alien-threshold* 1000
+  "If the maximum dimension in the MV is lower than this
+parameter, then the lisp code is used by default, instead of
+calling BLAS. Used to avoid the FFI overhead when calling
+MM with small matrices. Note that if the dimensions do exceed
+this lower  bound, then the Fortran function is called even if
+the matrix has a BLAS incompatible stride (by doing a copy).
+
+Default set with SBCL on x86-64 linux. A reasonable value
+is something between 800 and 2000.")
+
+(defparameter *complex-l2-alien-threshold* 600
+  "If the maximum dimension in the MV is lower than this
+parameter, then the lisp code is used by default, instead of
+calling BLAS. Used to avoid the FFI overhead when calling
+MM with small matrices. Note that if the dimensions do exceed
+this lower bound, then the Fortran function is called even when
+the matrices have a BLAS incompatible stride (by using a copy).
+
+Default set with SBCL on x86-64 linux. A reasonable value
+is something between 400 and 1000.")
+
+;; Level 3
+(defparameter *real-l3-alien-threshold* 50
+  "If the maximum dimension in the MM is lower than this
+parameter, then the lisp code is used by default, instead of
+calling BLAS. Used to avoid the FFI overhead when calling
+MM with small matrices.
+Default set with SBCL on x86-64 linux. A reasonable value
+is something between 20 and 200.")
+
+(defparameter *complex-l3-alien-threshold* 30
+  "If the maximum dimension in the MM is lower than this
+parameter, then the lisp code is used by default, instead of
+calling BLAS. Used to avoid the FFI overhead when calling
+MM with small matrices.
+Default set with SBCL on x86-64 linux. A reasonable value
+is something between 20 and 200.")

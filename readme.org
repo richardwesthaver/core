@@ -8,14 +8,14 @@
 #+RESULTS:
 |-------------+-----------------------------------------|
 | name        | core                                    |
-| version     | 0.1.0                                   |
+| version     | 0.1.1                                   |
 | description | The Compiler Company Core               |
-| skel-id     | 4611004031065916102                     |
+| skel-id     | 4611004031049662566                     |
 | root        | ~/comp/core/                            |
 | tags        | (CORE LISP EMACS C)                     |
-| updated     | Mon Dec 15 21:14:10 2025 -0500          |
+| updated     | Tue Dec 16 20:45:28 2025 -0500          |
 | langs       | c elisp lisp org text                   |
-| lines       | 158568 :λ 126618 :# 13977 :_ 17973 |
+| lines       | 158658 :λ 126686 :# 13981 :_ 17991 |
 |-------------+-----------------------------------------|
 
 #+END:

@@ -12,9 +12,10 @@
 
 ;;; Code:
 (in-package :obj/tensor)
+
 (definline lazy-coerce (x output-type-spec)
   (if (typep x output-type-spec) x
-      (let ((ret (copy x output-type-spec)))
+      (let ((ret (tensor-copy x output-type-spec)))
         (when (slot-exists-p x 'memos) (maphash (lambda (k v) (setf (gethash k (memos ret)) v)) (memos x)))
         ret)))
 
@@ -55,6 +56,7 @@
   ((object-class :initform nil :initarg :object-class)
    (direct-methods :initform nil :reader specializer-direct-methods))
   (:documentation "Exact class specializer."))
+
 (defmethod print-object ((obj classp-specializer) stream)
   (print-unreadable-object (obj stream :type t)
     (format stream ", ~a" (class-name (slot-value obj 'object-class)))))
@@ -112,6 +114,15 @@ GROUP-NAME, the classes of the respective argument are the same."))
   (declare (ignore env))
   (values `(subtype-specializer ',(slot-value obj 'specializer-type)) nil))
 
+(defmethod initialize-instance :after ((self classp-specializer) &key object-class)
+  (setf (slot-value self 'sb-pcl::%type) object-class))
+
+(defmethod initialize-instance :after ((self group-specializer) &key object-class group-name)
+  (setf (slot-value self 'sb-pcl::%type) (cons group-name object-class)))
+
+(defmethod initialize-instance :after ((self subtype-specializer) &key specializer-type)
+  (setf (slot-value self 'sb-pcl::%type) (cons specializer-type (sb-pcl::specializer-type specializer-type))))
+
 (defparameter *specializer-table* (make-hash-table :test 'equal))
 (with-memoization (*specializer-table*)
   (memoizing
@@ -131,7 +142,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
         with applicable-methods
         do (loop for s in (method-specializers m)
                  for c in required-classes with group-keys = nil
-                 do
+                 always
                     (etypecase s
                       (class (subtypep c s))
                       (eql-specializer (and (eql c (class-of (eql-specializer-object s)))
@@ -148,7 +159,7 @@ GROUP-NAME, the classes of the respective argument are the same."))
                  finally (push m applicable-methods))
         finally (return-from mc
                   (values 
-                   (sort (copy-list applicable-methods) 
+                   (sort (reverse applicable-methods)
                          #'(lambda (m1 m2) (method-more-specific-p m1 m2 required-classes)))
                    class-info-enoughp))))
 
@@ -157,22 +168,24 @@ GROUP-NAME, the classes of the respective argument are the same."))
         for m in (generic-function-methods gf)
         with applicable-methods = nil
         do (loop for s in (method-specializers m)
-                 for a in arguments with group-keys = nil
-                 do (etypecase s
-                      (class (typep a s))
-                      (eql-specializer (and (eql a (eql-specializer-object s))))
-                      (subtype-specializer (subtypep a (slot-value s 'specializer-type)))
-                      (group-specializer
-                       (let ((key-name (slot-value s 'group-name)))
-                         (if-let ((key (assoc key-name group-keys)))
-                           (eql (cdr key) (class-of a))
-                           (when (typep a (slot-value s 'object-class))
-                             (push (cons key-name (class-of a)) group-keys) t))))
-                      (classp-specializer (eq (class-of a) (slot-value s 'object-class))))
+                 for a in arguments 
+                 with group-keys = nil
+                 always (etypecase s
+                          (class (typep a s))
+                          (eql-specializer (and (eql a (eql-specializer-object s))))
+                          (subtype-specializer (subtypep a (slot-value s 'specializer-type)))
+                          (group-specializer
+                           (let ((key-name (slot-value s 'group-name)))
+                             (if-let ((key (assoc key-name group-keys)))
+                               (eql (cdr key) (class-of a))
+                               (when (typep a (slot-value s 'object-class))
+                                 (push (cons key-name (class-of a)) group-keys) t))))
+                          (classp-specializer (eq (class-of a) (slot-value s 'object-class))))
                  finally (push m applicable-methods))
-        finally (return-from mc 
-                  (sort (copy-list applicable-methods) 
-                        #'(lambda (m1 m2) (method-more-specific-p m1 m2 argument-classes))))))
+        finally 
+           (return-from mc 
+             (sort (reverse applicable-methods)
+                   #'(lambda (m1 m2) (method-more-specific-p m1 m2 argument-classes))))))
 
 ;;Borrowed from AMOP p.122
 (defun method-more-specific-p (method1 method2 required-classes)

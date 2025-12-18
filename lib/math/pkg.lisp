@@ -39,7 +39,7 @@
    :define-tensor-method
    :dense-tensor :field-type
    :store-type :tensor-vectorp
-   :dimensions :cl :t.store :t.blas-lb
+   :dimensions :cl :t.store :t.blas-threshold
    :t.f= :dorefs :tensor-dimension-mismatch :with-field-element
    :clinear-storep :complexified-tensor
    :blas-func :tensor-copy

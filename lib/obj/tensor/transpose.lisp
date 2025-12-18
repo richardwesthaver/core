@@ -89,7 +89,7 @@
     (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method transpose ((g graph-accessor :x) &optional permutation)
-  `(if (and permutation (= (permutation-size permutation) 1)) (copy g)
+  `(if (and permutation (= (permutation-size permutation) 1)) (tensor-copy g)
        (let ((adj (make-array (dimensions g (if (slot-value g 'transposep) 1 0)) :initial-element nil))
              (ret (zeros (if (slot-value g 'transposep) (dimensions g) (reverse (dimensions g))) ',(cl :x) (store-size g))))
          (when (slot-value g 'transposep) (setf (slot-value ret 'dimensions) (reverse (dimensions ret))

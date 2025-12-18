@@ -156,17 +156,17 @@ UPLO is one of :UL :L :LO :U :UO."
   (let ((stack (mapcar #'(lambda (x) (declare (ignorable x)) (list (gensym "sto") (gensym))) decl)))
 
     `(lety (,@(mapcar #'(lambda (x s)
-                          (declare (sb-ext:muffle-conditions style-warning))
+                          ;; (declare (sb-ext:muffle-conditions style-warning))
                           (letv* (((ref offset tensor &key type) x))
                             `(,(second s) ,tensor ,@(when type `(:type ,type)))))
                       decl stack))
        (lety (,@(mapcar #'(lambda (x s) 
-                            (declare (sb-ext:muffle-conditions style-warning))
+                            ;; (declare (sb-ext:muffle-conditions style-warning))
                             (letv* (((ref offset tensor &key type) x))
                               `(,(first s) (store ,(second s)) ,@(when type `(:type ,(store-type type))))))
                         decl stack))
          (symbol-macrolet (,@(mapcar #'(lambda (x s)
-                                         (declare (sb-ext:muffle-conditions style-warning))
+                                         ;; (declare (sb-ext:muffle-conditions style-warning))
                                          (letv* (((ref offset tensor &key type) x))
                                            `(,ref ,(if type
                                                        `(the ,(field-type type) (t/store-ref ,type ,(first s) ,offset))
@@ -185,8 +185,8 @@ UPLO is one of :UL :L :LO :U :UO."
          (ssyms (mapcar #'(lambda (x y) (when y `(,(gensym) (slot-value ,(car x) 'store)))) tsyms types))
          (osyms (mapcar #'(lambda (y) (when y (gensym))) types)))
     (using-gensyms (decl (dims) (lst))
-      `(lety (,@decl
-                 ,@(mapcar #'(lambda (x y) (if y (append x `(:type ,y)) x)) tsyms types))
+      `(lety* (,@decl
+                  ,@(mapcar #'(lambda (x y) (if y (append x `(:type ,y)) x)) tsyms types))
          (declare (type index-store-vector ,dims))
          (lety ((,lst (make-list (length ,dims) :initial-element 0))
                 ,@(remove-if #'null (mapcar #'(lambda (x y) (when y (append x `(:type ,(store-type y))))) ssyms types)))

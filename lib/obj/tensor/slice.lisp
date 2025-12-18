@@ -8,22 +8,6 @@
 (defmethod subtensor~ :before ((tensor base-tensor) (subscripts list))
   (assert (or (null subscripts) (= (length subscripts) (order tensor))) nil 'tensor-index-rank-mismatch))
 
-(defmethod (setf subtensor~) (value (tensor dense-tensor) (subscripts list))
-  (letv* ((hd dims stds (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))))
-    (cond
-      ((not hd) nil #+nil(error "no place found inside ~a." subscripts))
-      ((not dims) (if subscripts
-                      (setf (store-ref tensor hd) value)
-                      (copy! value (without-tensor-safety (subtensor~ tensor nil)))))
-      (t (copy! value
-                (without-tensor-safety
-                    (make-instance (class-of tensor)
-                      :head (+ hd (head tensor))
-                      :dimensions (coerce dims 'index-store-vector)
-                      :strides (coerce stds 'index-store-vector)
-                      :store (slot-value tensor 'store)
-                      :parent tensor)))))))
-
 (definline parse-slice (subs dimensions)
   (declare (type index-store-vector dimensions))
   (let ((dims) (psubs))
@@ -77,6 +61,43 @@
                                    (preserve-rank-p (list idx (1+ idx)))
                                    (t idx)))))
     (subtensor~ x subs)))
+
+(defmethod subtensor~ ((tensor dense-tensor) (subscripts list))
+  (letv* ((hd dims stds (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))))
+    (cond
+      ((not hd) nil)
+      ((not dims) (if subscripts
+                      (store-ref tensor hd)
+                      (without-tensor-safety
+                          (make-instance (class-of tensor)
+                                         :head (head tensor)
+                                         :dimensions (copy-seq (dimensions tensor))
+                                         :strides (copy-seq (strides tensor))
+                                         :store (slot-value tensor 'store)
+                                         :parent tensor))))
+      (t (without-tensor-safety
+             (make-instance (class-of tensor)
+                            :head (+ hd (head tensor))
+                            :dimensions (coerce dims 'index-store-vector)
+                            :strides (coerce stds 'index-store-vector)
+                            :store (slot-value tensor 'store)
+                            :parent tensor))))))
+
+(defmethod (setf subtensor~) (value (tensor dense-tensor) (subscripts list))
+  (letv* ((hd dims stds (parse-slice-for-strides subscripts (dimensions tensor) (strides tensor))))
+    (cond
+      ((not hd) nil #+nil(error "no place found inside ~a." subscripts))
+      ((not dims) (if subscripts
+                      (setf (store-ref tensor hd) value)
+                      (copy! value (without-tensor-safety (subtensor~ tensor nil)))))
+      (t (copy! value
+                (without-tensor-safety
+                    (make-instance (class-of tensor)
+                      :head (+ hd (head tensor))
+                      :dimensions (coerce dims 'index-store-vector)
+                      :strides (coerce stds 'index-store-vector)
+                      :store (slot-value tensor 'store)
+                      :parent tensor)))))))
 
 (defgeneric suptensor (tensor ord &optional start)
   (:method :before ((tensor base-tensor) ord &optional (start 0))

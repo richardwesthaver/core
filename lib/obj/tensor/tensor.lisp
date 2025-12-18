@@ -70,7 +70,7 @@
 
 (deft/method t.total-size (sym coordinate-accessor) (ele)
   `(slot-value ,ele 'tail))
-;;
+
 (deft/method t.store-allocator (sym index-store) (size &rest initargs)
   (letv* ((() initargs))
     `(the index-store (make-array ,size :element-type 'index-type))))
@@ -98,7 +98,7 @@
                  ,@(when initial-element `((,init ,initial-element :type ,(field-type sym))))
                  (,arr (make-array ,size-sym :element-type ',type :initial-element ,(if (subtypep type 'number) `(t.fid+ ,type) nil)) :type ,(store-type sym)))
            ,@(when initial-element
-               `((with-optimization (:speed 3 :safety 0) (loop :for ,idx :from 0 :below ,size-sym :do (t.store-set ,sym ,init ,arr ,idx)))))
+               `((with-optimization (:speed 3 :safety 0) (loop for ,idx from 0 below ,size-sym do (t.store-set ,sym ,init ,arr ,idx)))))
            ,arr)))))
 
 (deft/method (t.store-allocator #'hash-table-storep) (sym stride-accessor) (size &rest initargs)
@@ -132,7 +132,7 @@
 
 (deft/method t.store-ref (sym simple-vector-store-mixin) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
-  (let ((idx (print (car idx))))
+  (let ((idx (car idx)))
     (if (clinear-storep sym)
         (using-gensyms (decl (store idx) (2idx))
           `(let (,@decl)
@@ -156,7 +156,7 @@
                      (aref ,store (1+ ,2idx)) (cl:imagpart ,value)))
              ,value))
         `(setf (aref (the ,(store-type sym) ,store) (the index-type ,idx)) ,value))))
-;;
+
 (deft/method (t.store-ref #'hash-table-storep) (sym stride-accessor) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   `(the (values ,(field-type sym) boolean) (gethash (the index-type ,(car idx)) (the hash-table ,store) (t.fid+ ,(field-type sym)))))
@@ -185,17 +185,17 @@
        (locally ,@body))))
 
 ;;Blas
-(deft/generic (t.blas-lb #'subtypep) sym (i))
-(deft/method t.blas-lb (sym blas-mixin) (i)
+(deft/generic (t.blas-threshold #'subtypep) sym (i))
+(deft/method t.blas-threshold (sym blas-mixin) (i)
   (if (clinear-storep sym)
       (ecase i
-        (1 '*complex-l1-fcall-lb*)
-        (2 '*complex-l2-fcall-lb*)
-        (3 '*complex-l3-fcall-lb*))
+        (1 '*complex-l1-alien-threshold*)
+        (2 '*complex-l2-alien-threshold*)
+        (3 '*complex-l3-alien-threshold*))
       (ecase i
-        (1 '*real-l1-fcall-lb*)
-        (2 '*real-l2-fcall-lb*)
-        (3 '*real-l3-fcall-lb*))))
+        (1 '*real-l1-alien-threshold*)
+        (2 '*real-l2-alien-threshold*)
+        (3 '*real-l3-alien-threshold*))))
 
 
 ;; (defgeneric testg (x &optional ele))
@@ -262,9 +262,12 @@
 
 (define-tensor-method total-size ((obj tensor :x))
   `(t.total-size ,(cl :x) obj))
+
 (defmethod total-size ((x dense-tensor))
   (t.total-size dense-tensor x))
+
 (defmethod total-size ((x sequence))
   (length x))
+
 (defmethod total-size ((x array))
   (array-total-size x))
