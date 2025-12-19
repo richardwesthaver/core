@@ -11,7 +11,7 @@
     (using-gensyms (decl (a x y) (sto-x))
       `(let (,@decl)
          (declare (type ,sym ,@(unless apy? `(,x)) ,y)
-                  ,@(when apy? `((ignore ,x))))
+                  (ignorable ,x ,a))
          ,(recursive-append
            (when apy? `(with-field-element ,sym (,sto-x (t.fid* ,ftype))))
            `(,(blas-func "axpy" ftype)
@@ -30,7 +30,7 @@
       `(let (,@decl)
          (declare (type ,sym ,@(unless apy? `(,x)) ,y)
                   (type ,(field-type sym) ,a)
-                  ,@(when apy? `((ignore ,x))))
+                  (ignorable ,x ,a))
          (with-optimization (:speed 3 :safety 0)
            (dorefs (,idx (dimensions ,y))
                    (,@(unless apy? `((,ref-x ,x :type ,sym)))
@@ -65,11 +65,12 @@
 (define-tensor-method axpy! (alpha (x dense-tensor :y) (y dense-tensor :y t))
   `(let ((alpha (t.coerce ,(field-type (cl :y)) alpha)))
      (declare (type ,(field-type (cl :y)) alpha))
-     ,(recursive-append
-       (when (subtypep (cl :y) 'blas-mixin)
-         `(if-let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
-            (t.blas-axpy! ,(cl :y) alpha x (first strd) y (second strd))))
-       `(t.axpy! ,(cl :y) alpha x y))
+     ,(if (subtypep (cl :y) 'blas-mixin)
+          `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
+             (if strd
+                 (t.blas-axpy! ,(cl :y) alpha x (first strd) y (second strd))
+                 (t.axpy! ,(cl :y) alpha x y)))
+          `(t.axpy! ,(cl :y) alpha x y))
      y))
 
 (define-tensor-method axpy! (alpha x (y dense-tensor :y t))
@@ -77,11 +78,12 @@
      (declare (type ,(field-type (cl :y)) alpha))
      (when x (setq alpha (t.f* ,(field-type (cl :y)) alpha (t.coerce ,(field-type (cl :y)) x))))
      (unless (t.f= ,(field-type (cl :y)) alpha (t.fid+ ,(field-type (cl :y))))
-       ,(recursive-append
-         (when (subtypep (cl :y) 'blas-mixin)
-           `(if-let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
-              (t.blas-axpy! ,(cl :y) alpha nil nil y strd)))
-         `(t.axpy! ,(cl :y) alpha nil y)))
+       ,(if (subtypep (cl :y) 'blas-mixin)
+            `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
+               (if strd
+                   (t.blas-axpy! ,(cl :y) alpha nil nil y strd)
+                   (t.axpy! ,(cl :y) alpha nil y)))
+            `(t.axpy! ,(cl :y) alpha nil y)))
      y))
 ;;
 (defgeneric axpy (alpha x y)

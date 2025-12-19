@@ -26,12 +26,12 @@
             (let ((nrm (zeros (subseq (dimensions vec) 1) ',(realified-tensor (cl :x))))
                   (sl (subtensor~ vec (list* '(nil nil) (make-list (1- (order vec)) :initial-element 0)))))
               (with-memoization ()
-                (iter (for-mod idx from 0 below (dimensions nrm) with-iterator ((:stride ((of-nrm (strides nrm) (head nrm))
-                                                                                          (of-sl (subseq (strides vec) 1) (head sl))))))
-                      (setf
-                       (slot-value sl 'head) of-sl
-                       (t/store-ref ,(realified-tensor (cl :x)) (memoizing (store nrm) :type ,(store-type (realified-tensor (cl :x)))) of-nrm) (norm sl p))))
-
+                (loop for idx being the index from 0 below (dimensions nrm) 
+                      with-iterator ((:stride ((of-nrm (strides nrm) (head nrm))
+                                               (of-sl (subseq (strides vec) 1) (head sl)))))
+                      do (setf
+                          (slot-value sl 'head) of-sl
+                          (t/store-ref ,(realified-tensor (cl :x)) (memoizing (store nrm) :type ,(store-type (realified-tensor (cl :x)))) of-nrm) (norm sl p))))
               (norm nrm (list* :L args)))
             (norm vec p)))
        ;;Schatten
@@ -46,10 +46,10 @@
           (:sup (norm (transpose~ vec) '(:operator 1))))))))
 
 (defun psd-proj (m)
-  (letv* ((λλ u (eig (scal! 1/2 (axpy! 1 (transpose~ m) (copy m))) :v))
+  (letv* ((λλ u (eig (scal! 1/2 (axpy! 1 (transpose~ m) (tensor-copy m))) :v))
           (ret (zeros (dimensions m) (type-of m))))
-    (iter (for (λi ui) slicing (list λλ u) along (list 0 -1))
-          (if (< 0 (ref λi 0)) (ger! (ref λi 0) ui ui ret t)))
+    (loop for (λi ui) being the slice of (list λλ u) along (list 0 -1)
+             if (< 0 (ref λi 0)) (ger! (ref λi 0) ui ui ret t))
     ret))
 
 (define-tensor-generic tensor-max (object &optional key))

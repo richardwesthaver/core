@@ -44,7 +44,8 @@
    :clinear-storep :complexified-tensor
    :blas-func :tensor-copy
    :base-tensor :zeros :order :total-size
-   :scal! :index-type :define-tensor-generic)
+   :scal! :index-type :define-tensor-generic :blas-copyablep
+   :call-fortran? :tensor-matrixp :split-job :cclass-max :*default-uplo*)
   (:export :axpy :tensor-sum :mean :prod))
 
 (defpkg :math/syn

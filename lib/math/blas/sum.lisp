@@ -30,7 +30,7 @@
                         (axpy! (t.fid* ,(field-type sym)) ,view ,ret)
                         (incf (slot-value ,view 'head) ,argstd))))
              ,ret)))))
-;;
+
 (defun reduce-check (x y axis)
   (declare (base-tensor x y))
   (let ((axis (modproj (or axis 0) (order x) nil 0)))
@@ -56,9 +56,8 @@
 ")
     (:generic-function-class tensor-method-generator)))
 
-;; before methods still don't work..
-;; (defmethod tensor-sum! :before ((x dense-tensor) (y dense-tensor) &optional (axis 0))
-;;   (assert (reduce-check x y axis) nil 'tensor-dimension-mismatch))
+(defmethod tensor-sum! :before ((x dense-tensor) (y dense-tensor) &optional (axis 0))
+  (assert (reduce-check x y axis) nil 'tensor-dimension-mismatch))
 
 (define-tensor-method tensor-sum! ((x dense-tensor :x) (y dense-tensor :y) &optional (axis 0))
   `(t.sum ,(cl :y) x (copy! (t.fid+ ,(field-type (cl :y))) y) axis))
@@ -95,7 +94,7 @@
   (define-tensor-method prod! ((x dense-tensor :x) (y (eql nil)) &optional axis)
     `(declare (ignore axis))
     (*-ify `(t.sum ,(cl :x) x nil))))
-;;
+
 (defgeneric tensor-sum (x &optional axis preserve-rank?)
   (:method ((x dense-tensor) &optional (axis 0) (preserve-rank? nil))
     (if axis
@@ -133,9 +132,10 @@
            (type index-type axis))
   (let* ((d (dimensions x (ecase (modproj axis 2 nil) (0 1) (1 0))))
          (μ (mean x axis)) (δ (zeros d (type-of x))))
-    (iter (for xi slicing x along axis) (with ret = (zeros (list d d) (type-of x)))
-          (ger! 1 (axpy! -1 μ (copy! xi δ)) δ ret)
-          (finally (return (values (scal! (/ (- (dimensions x axis) (if bias 0 1))) ret) μ))))))
+    (loop for xi slicing x along axis 
+          with ret = (zeros (list d d) (type-of x))
+          do (ger! 1 (axpy! -1 μ (copy! xi δ)) δ ret)
+          finally (return (values (scal! (/ (- (dimensions x axis) (if bias 0 1))) ret) μ)))))
 
 (defgeneric prod (x &optional axis preserve-rank?)
   (:method ((x dense-tensor) &optional (axis 0) (preserve-rank? nil))
