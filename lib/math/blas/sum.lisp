@@ -66,15 +66,16 @@
   `(declare (ignore axis))
   `(t.sum ,(cl :x) x nil))
 
-(defgeneric prod! (x y &optional axis)
-  (:documentation "
+(eval-always
+  (defgeneric prod! (x y &optional axis)
+    (:documentation "
   (PROD! x y [axis 0])
        __
   y <- || x(:, : ..., i, :, :..)
         i
   where the index to be summed over is chosen using @arg{axis}.
 ")
-  (:generic-function-class tensor-method-generator))
+    (:generic-function-class tensor-method-generator)))
 
 (defmethod prod! :before ((x dense-tensor) (y dense-tensor) &optional (axis 0))
   (assert (reduce-check x y axis) nil 'tensor-dimension-mismatch))

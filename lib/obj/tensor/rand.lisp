@@ -62,7 +62,6 @@
              (declare (type double-float mult))
              (return (* z mult))))))))
 
-;; TODO: dorefs needs work
 (defmacro generate-rand (func type clause)
   (let ((clause (etypecase clause (symbol `(,clause)) (cons clause)))
         (func! (intern (concatenate 'string (symbol-name func) "!"))))
@@ -79,7 +78,6 @@
              (,func! (zeros dims ',(tensor type)))
              ,clause)))))
 
-#+nil
 (macrolet ((generate-rands ((&rest args))
              `(progn
                 ,@(mapcar #'(lambda (x) `(generate-rand ,(car x) double-float ,(cadr x))) args))))
@@ -87,7 +85,6 @@
                    (rand (random 1d0))
                    (rande (draw-standard-exponential)))))
 
-#+nil
 (defun randi (&optional dims (arg 2))
   (if dims
       (let ((ret (zeros dims '(double-float))))

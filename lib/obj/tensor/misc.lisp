@@ -5,6 +5,22 @@
 ;;; Code:
 (in-package :obj/tensor)
 
+(definline quaternion-vectorp (x)
+  (declare (type dense-tensor x))
+  (and (= (order x) 1) (= (dimensions x 0) 4) (= (strides x 0) 1)))
+(deftype quaternion-vector (&optional (type '* type-p))
+  (if type-p
+      `(and ,(tensor type) (satisfies quaternion-vectorp))
+      `(satisfies quaternion-vectorp)))
+
+(definline r3-vectorp (x)
+  (declare (type dense-tensor x))
+  (and (= (order x) 1) (= (dimensions x 0) 3) (= (strides x 0) 1)))
+(deftype r3-vector (&optional (type '* type-p))
+  (if type-p
+      `(and ,(tensor type) (satisfies r3-vectorp))
+      `(satisfies r3-vectorp)))
+
 (defun consecutive-storep (tensor)
   (declare (type stride-accessor tensor))
   (with-memoization ((memos tensor))

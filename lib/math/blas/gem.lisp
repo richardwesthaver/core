@@ -109,10 +109,10 @@
                                              :collect `(,tb ,(generate-mm-code ta tb))))))))
       ,C)))
 
-;;---------------------------------------------------------------;;
-(defgeneric gem! (alpha A B beta C &optional job)
-  (:documentation
-   "
+(eval-always
+  (defgeneric gem! (alpha A B beta C &optional job)
+    (:documentation
+     "
   Syntax
   ======
   (GEM! alpha a b beta c [job])
@@ -134,19 +134,19 @@
      T                 Transpose
      C                 Hermitian transpose {conjugate transpose}
 ")
-  (:method :before (alpha (A tensor) (B tensor) beta (C tensor) &optional (job :nn))
-    (assert (not (or (eq A C) (eq B C))) nil 'invalid-arguments :message "GEM!: C = {A or B} is not allowed.")
-    (letv* (((joba &optional (jobb #\N)) (split-job job)))
-      (assert (and
-               (tensor-matrixp A)
-               (= (order B) (order C)) (if (char= jobb #\N) (<= (order C) 2) (tensor-matrixp C))
-               (let ((loga (ecase joba (#\N 0) ((#\T #\C) 1)))
-                     (logb (ecase jobb (#\N 0) ((#\T #\C) 1))))
-                 (and (= (dimensions C 0) (dimensions A (logxor 0 loga)))
-                      (= (dimensions A (logxor 1 loga)) (dimensions B (logxor 0 logb)))
-                      (or (not (tensor-matrixp C)) (= (dimensions C 1) (dimensions B (logxor 1 logb)))))))
-              nil 'tensor-dimension-mismatch)))
-  (:generic-function-class tensor-method-generator))
+    (:method :before (alpha (A tensor) (B tensor) beta (C tensor) &optional (job :nn))
+      (assert (not (or (eq A C) (eq B C))) nil 'invalid-arguments :message "GEM!: C = {A or B} is not allowed.")
+      (letv* (((joba &optional (jobb #\N)) (split-job job)))
+        (assert (and
+                 (tensor-matrixp A)
+                 (= (order B) (order C)) (if (char= jobb #\N) (<= (order C) 2) (tensor-matrixp C))
+                 (let ((loga (ecase joba (#\N 0) ((#\T #\C) 1)))
+                       (logb (ecase jobb (#\N 0) ((#\T #\C) 1))))
+                   (and (= (dimensions C 0) (dimensions A (logxor 0 loga)))
+                        (= (dimensions A (logxor 1 loga)) (dimensions B (logxor 0 logb)))
+                        (or (not (tensor-matrixp C)) (= (dimensions C 1) (dimensions B (logxor 1 logb)))))))
+                nil 'tensor-dimension-mismatch)))
+    (:generic-function-class tensor-method-generator)))
 
 (defmethod gem! (alpha A (B dense-tensor) beta (C dense-tensor) &optional (job :n))
   (axpy! (* alpha A) B (scal! beta C)))
@@ -178,28 +178,19 @@
 ;;---------------------------------------------------------------;;
 (defgeneric gem (alpha a b beta c &optional job)
   (:documentation
-   "
-  Syntax
-  ======
-  (GEM alpha a b beta c [job])
+ "Performs the GEneral Matrix Multiplication given by
 
-  Purpose
-  =======
-  Performs the GEneral Matrix Multiplication given by
-               --      -      -
+           alpha * op(A) * op(B) + beta * C
 
-             alpha * op(A) * op(B) + beta * C
+and returns the result in a new matrix.
 
-  and returns the result in a new matrix.
+alpha,beta are scalars and A,B,C are matrices.
+op(A) means either A or A'.
 
-  alpha,beta are scalars and A,B,C are matrices.
-  op(A) means either A or A'.
-
-  JOB must be a keyword with two of these alphabets
-     N                 Identity
-     T                 Transpose
-     C                 Hermitian conjugate
-"))
+JOB must be a keyword with two of these alphabets
+   N                 Identity
+   T                 Transpose
+   C                 Hermitian conjugate"))
 
 (defmethod gem (alpha (A dense-tensor) (B dense-tensor) beta (C dense-tensor) &optional (job :n))
   (gem! alpha A B beta (tensor-copy C) job))
@@ -211,7 +202,9 @@
                         (when (tensor-matrixp B) (list (dimensions B (ecase jobb (#\N 1) ((#\C #\T) 0))))))
                  (ziprm (cclass-max class-of) (A B))))
         job))
-;;
+
+;; FIX 2025-12-18: 
+#+nil
 (labels ((gem-compiler (function alpha A B beta C job)
            (trivia:match* (a b)
              (((or (list (and op-a (or 'ctranspose 'ctranspose~ 'transpose 'transpose~)) code-a) code-a)
@@ -234,16 +227,17 @@
 #+nil
 (funcall (compiler-macro-function 'gem) '(gem! alpha (transpose A) (ctranspose~ B) beta (tensor-copy C) :nc) nil)
 (defparameter *tensor-contraction-functable* (make-hash-table :test 'equal))
-(defgeneric gett! (alpha a b beta c)
-  (:documentation "Returns the tensor contraction of A B: C <- beta * C + alpha A · B")
-  (:method :before (alpha (a tensor) (b tensor) beta (c tensor))
-     (declare (ignore alpha beta))
-     (assert (and (= (dimensions a -1) (dimensions b 0))
-                  (=  (+ (order a) (order b) -2) (order c))
-                  (dotimes (i (1- (order a)) t) (unless (= (dimensions a i) (dimensions c i)) (return nil)))
-                  (dotimes (i (1- (order b)) t) (unless (= (dimensions b (1+ i)) (dimensions c (+ (order a) i -1))) (return nil))))
-             nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric gett! (alpha a b beta c)
+    (:documentation "Returns the tensor contraction of A B: C <- beta * C + alpha A · B")
+    (:method :before (alpha (a tensor) (b tensor) beta (c tensor))
+      (declare (ignore alpha beta))
+      (assert (and (= (dimensions a -1) (dimensions b 0))
+                   (=  (+ (order a) (order b) -2) (order c))
+                   (dotimes (i (1- (order a)) t) (unless (= (dimensions a i) (dimensions c i)) (return nil)))
+                   (dotimes (i (1- (order b)) t) (unless (= (dimensions b (1+ i)) (dimensions c (+ (order a) i -1))) (return nil))))
+              nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method gett! (alpha (a dense-tensor :x) (b dense-tensor :x) beta (c dense-tensor :x t))
   `(let ((func (or (gethash (list (order a) (order b) ',(cl :x)) *tensor-contraction-functable*)
@@ -258,10 +252,11 @@
      (unless (t.f= ,(field-type (cl :x)) beta (t.fid* ,(field-type (cl :x)))) (scal! beta c))
      (funcall func alpha a b c)
      c))
-;;
-(defgeneric gekr! (alpha a b beta c)
-  (:documentation "Returns the kronecker product product of a and b. C <- beta * C + alpha A ⊗ B")
-  (:generic-function-class tensor-method-generator))
+
+(eval-always
+  (defgeneric gekr! (alpha a b beta c)
+    (:documentation "Returns the kronecker product product of a and b. C <- beta * C + alpha A ⊗ B")
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method gekr! (alpha (a dense-tensor :x) (b dense-tensor :x) beta (c dense-tensor :x))
   `(let* ((ret (zeros (append (dimensions a t) (dimensions b t)) ',(cl :x)))

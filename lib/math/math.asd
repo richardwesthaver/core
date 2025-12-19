@@ -18,8 +18,17 @@
                (:module "lapack"
                 :if-feature :lapack
                 :components
-                ((:file "lu")))
-               ;; (:module "cuda" :components ((:file "kern")))
+                ((:file "lu")
+                 (:file "chol")
+                 (:file "eig")
+                 (:file "lstsq")
+                 (:file "qr")
+                 (:file "schur")
+                 (:file "svd")
+                 (:file "syl")
+                 (:file "poly")))
+               (:module "cuda" 
+                :components (#+nil(:file "kern")))
                (:file "linfix")
                (:file "syn")
                (:file "readtable")

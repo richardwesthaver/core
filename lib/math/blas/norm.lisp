@@ -10,42 +10,53 @@
 (define-tensor-method norm ((vec dense-tensor :x) &optional (n 2))
   (let ((rtype (field-type (realified-tensor (cl :x)))))
     ;; TODO 2025-12-08: 
-    `(ematch n
+    `(cond
        ;;Element-wise
-       ((and (type cl:real) (guard n_ (<= 1 n_)))
+       ((and (typep n cl:real) (<= 1 n))
         (lety ((sum (t/fid+ ,rtype) :type ,rtype))
           (dorefs (idx (dimensions vec))
-                  ((ref vec :type ,(cl :x)))
-            (setf sum (t/f+ ,rtype sum (expt (abs ref) n))))
+              ((ref vec :type ,(cl :x)))
+              (setf sum (t/f+ ,rtype sum (expt (abs ref) n))))
           (expt sum (/ n))))
-       (:sup
+       ((eql n :sup)
         (tensor-foldl ,(cl :x) max vec (t/fid+ ,rtype) :init-type ,rtype :key cl:abs))
-       ;;L-ijk...       
-       ((and (list* :L (and p (or :sup (and (type cl:real) (guard p_ (<= 1 p_))))) args))
-        (if args
-            (let ((nrm (zeros (subseq (dimensions vec) 1) ',(realified-tensor (cl :x))))
-                  (sl (subtensor~ vec (list* '(nil nil) (make-list (1- (order vec)) :initial-element 0)))))
-              (with-memoization ()
-                (loop for idx being the index from 0 below (dimensions nrm) 
-                      with-iterator ((:stride ((of-nrm (strides nrm) (head nrm))
-                                               (of-sl (subseq (strides vec) 1) (head sl)))))
-                      do (setf
-                          (slot-value sl 'head) of-sl
-                          (t/store-ref ,(realified-tensor (cl :x)) (memoizing (store nrm) :type ,(store-type (realified-tensor (cl :x)))) of-nrm) (norm sl p))))
-              (norm nrm (list* :L args)))
-            (norm vec p)))
-       ;;Schatten
-       ((and (list :schatten (and (type cl:real) (guard p (<= 1 p)))) (guard _ (typep vec 'tensor-matrix)))
-        (norm (svd vec :nn) p))
-       ((and (list :schatten :sup) (guard _ (typep vec 'tensor-matrix))) (ref (svd vec :nn) 0))
-       ;;Operator
-       ((and (list :operator (and p (or 1 2 :sup))) (guard _ (typep vec 'tensor-matrix)))
-        (ecase p
-          (1 (norm vec '(:L 1 :sup)))
-          (2 (norm vec '(:schatten :sup)))
-          (:sup (norm (transpose~ vec) '(:operator 1))))))))
+       ((listp n)
+        (or
+         (destructuring-case n
+           ;;L-ijk...       
+           ((:L p args)
+            (assert (or (eql p :sup (and (typep p real) (<= 1 p)))))
+            (if args
+                (let ((nrm (zeros (subseq (dimensions vec) 1) ',(realified-tensor (cl :x))))
+                      (sl (subtensor~ vec (list* '(nil nil) (make-list (1- (order vec)) :initial-element 0)))))
+                  (with-memoization ()
+                    (loop for idx being the index from 0 below (dimensions nrm) 
+                          with-iterator ((:stride ((of-nrm (strides nrm) (head nrm))
+                                                   (of-sl (subseq (strides vec) 1) (head sl)))))
+                          do (setf
+                              (slot-value sl 'head) of-sl
+                              (t.store-ref ,(realified-tensor (cl :x)) (memoizing (store nrm) :type ,(store-type (realified-tensor (cl :x)))) of-nrm) (norm sl p))))
+                  (norm nrm (list* :L args)))
+                (norm vec p)))
+           ;;Schatten
+           ((:schatten p vec)
+            (assert (and (typep p real) (<= 1 p) (typep vec 'tensor-matrix)))
+            (norm (svd vec :nn) p)))
+         (destructuring-bind (x vec)
+             (assert (typep vec 'tensor-matrix))
+           (cond
+             ((equalp '(:schatten :sup) x)
+              (ref (svd vec :nn) 0))
+          ;;Operator
+          ((and (eql (car x) :operator) (= (length x) 2))
+           (assert (typep vec 'tensor-matrix))
+           (ecase (second x)
+             (1 (norm vec '(:L 1 :sup)))
+             (2 (norm vec '(:schatten :sup)))
+             (:sup (norm (transpose~ vec) '(:operator 1))))))))))))
 
 (defun psd-proj (m)
+  ;; FIX 2025-12-18: EIG is a lapack symbol
   (letv* ((λλ u (eig (scal! 1/2 (axpy! 1 (transpose~ m) (tensor-copy m))) :v))
           (ret (zeros (dimensions m) (type-of m))))
     (loop for (λi ui) being the slice of (list λλ u) along (list 0 -1)

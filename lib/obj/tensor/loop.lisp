@@ -108,27 +108,6 @@ UPLO is one of :UL :L :LO :U :UO."
 
 ;; (defmethod sequence:make-sequence-iterator ((self tensor)))
 
-#+nil
-(defmacro-clause (FOR-MOD idx FROM initial BELOW dimensions &optional WITH-ITERATOR updates LOOP-ORDER order UPLO ul)
-  (check-type idx symbol)
-  (binding-gensyms (gm gf)
-    (let ((iterables (mapcar #'(lambda (x) (for-index-iterator (first x) (gm init) (gm dims) (second x))) updates)))
-      `(progn
-         (with ,(gm dims) = (coerce ,dimensions 'index-store-vector))
-         (with ,(gm init) = (let ((,(gm idx) ,initial))
-                              (if (numberp ,(gm idx))
-                                  (t/store-allocator index-store-vector (length ,(gm dims)) :initial-element ,(gm idx))
-                                  (coerce ,(gm idx) 'index-store-vector))))
-         (with ,idx = (copy-seq ,(gm init)))
-         (declare (type index-store-vector ,(gm dims) ,idx ,(gm init)))
-         (initially (assert (ziprm (= length) (,(gm init) ,(gm dims)))))
-         ,@(mapcan #'first iterables)
-         (after-each
-          (unless
-              (with-optimization (:speed 3 :safety 0) (mod-update (,idx ,(gm init) ,(gm dims) :order ,order :uplo ,ul) 
-                                                                  ,@(mapcan #'cdr iterables)))
-            (finish)))))))
-
 (defmethod for-index-iterator ((clause-name (eql :stride)) init dims strides)
   (binding-gensyms (gm gf)
     (list 

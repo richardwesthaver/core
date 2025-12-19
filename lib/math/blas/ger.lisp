@@ -40,9 +40,10 @@
                       nil))
       ,A)))
 
-(defgeneric ger! (alpha x y A &optional conjugate-p)
-  (:documentation
-   "Performs the GEneral matrix Rank-1 update given by
+(eval-always
+  (defgeneric ger! (alpha x y A &optional conjugate-p)
+    (:documentation
+     "Performs the GEneral matrix Rank-1 update given by
 
 A <- alpha * x * op(y) + A
 
@@ -53,14 +54,14 @@ x,y are vectors.
 A is a matrix.
 
 If conjugate-p is nil, then op(y) = y^T, else op(y) = y^H.")
-  (:method :before (alpha (x dense-tensor) (y dense-tensor) (A dense-tensor) &optional conjugate-p)
-    (declare (ignore conjugate-p))
-    (assert (and
-             (tensor-vectorp x) (tensor-vectorp y) (tensor-matrixp A)
-             (= (dimensions x 0) (dimensions A 0))
-             (= (dimensions y 0) (dimensions A 1)))
-            nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+    (:method :before (alpha (x dense-tensor) (y dense-tensor) (A dense-tensor) &optional conjugate-p)
+      (declare (ignore conjugate-p))
+      (assert (and
+               (tensor-vectorp x) (tensor-vectorp y) (tensor-matrixp A)
+               (= (dimensions x 0) (dimensions A 0))
+               (= (dimensions y 0) (dimensions A 1)))
+              nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method ger! (alpha (x dense-tensor :x) (y dense-tensor :x) (A dense-tensor :A) &optional (conjugate-p t))
   `(let ((alpha (t.coerce ,(field-type (cl :x)) alpha)))
@@ -76,7 +77,7 @@ If conjugate-p is nil, then op(y) = y^T, else op(y) = y^H.")
             (t.ger! ,(cl :a) alpha x y A t)
             (t.ger! ,(cl :a) alpha x y A nil))))
   'A)
-;;---------------------------------------------------------------;;
+
 (defgeneric ger (alpha x y A &optional conjugate-p)
   (:documentation
    "Performs the GEneral matrix Rank-1 update given by
