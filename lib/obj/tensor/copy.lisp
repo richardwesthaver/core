@@ -142,11 +142,13 @@
 ;;; BLAS
 (deft/generic (t.blas-copy! #'subtypep) sym (x st-x y st-y))
 (deft/method t.blas-copy! (sym blas-mixin) (x st-x y st-y)
-  (let ((ncp? (null st-x)) (ftype (field-type sym)))
+  (let ((ncp? (null st-x)) 
+        (ftype (field-type sym)))
     (using-gensyms (decl (x y) (sto-x))
       `(let (,@decl)
          (declare (type ,sym ,@(unless ncp? `(,x)) ,y)
-                  ,@(when ncp? `((type ,(field-type sym) ,x))))
+                  ,@(when ncp? `((type ,(field-type sym) ,x)))
+                  (ignorable ,x))
          ,(recursive-append
            (when ncp? `(with-field-element ,sym (,sto-x ,x)))
            `(,(blas-func "copy" ftype)
@@ -355,19 +357,20 @@
      y))
 
 (define-tensor-method copy! ((x tensor :x) (y tensor :y t))
-  (recursive-append
-   (when (and (eql (cl :x) (cl :y)) (subtypep (cl :y) 'blas-mixin))
-     `(if-let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
-        (t.blas-copy! ,(cl :y) x (first strd) y (second strd))))
-   `(t.copy! (,(cl :x) ,(cl :y)) x y))
+  (if (and (eql (cl :x) (cl :y)) (subtypep (cl :y) 'blas-mixin))
+      `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
+         (if strd
+             (t.blas-copy! ,(cl :y) x (first strd) y (second strd))
+             (t.copy! (,(cl :x) ,(cl :y)) x y)))
+      `(t.copy! (,(cl :x) ,(cl :y)) x y))
   'y)
 
 (define-tensor-method copy! ((x t) (y dense-tensor :y t))
-  (recursive-append
-   (when (subtypep (cl :y) 'blas-mixin)
-     `(if-let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
-        (t.blas-copy! ,(cl :y) (t.coerce ,(field-type (cl :y)) x) nil y strd)))
-   `(t.copy! (t ,(cl :y)) x y)))
+  (if (subtypep (cl :y) 'blas-mixin)
+      `(if-let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
+         (t.blas-copy! ,(cl :y) (t.coerce ,(field-type (cl :y)) x) nil y strd)
+         (t.copy! (t ,(cl :y)) x y))
+      `(t.copy! (t ,(cl :y)) x y)))
 
 (define-tensor-method copy! ((x t) (y coordinate-tensor :y t))
   `(with-memoization ()
@@ -478,8 +481,8 @@
           'tensor-dimension-mismatch))
 
 (define-tensor-method swap! ((x dense-tensor :x t) (y dense-tensor :x t))
-  (recursive-append
-   (when (subtypep (cl :x) 'blas-mixin)
+  (if (subtypep (cl :x) 'blas-mixin)
      `(if-let ((strd (and (call-fortran? x (t.blas-threshold ,(cl :x) 1)) (blas-copyablep x y))))
-        (t.blas-swap! ,(cl :x) x (first strd) y (second strd)))))
-  `(t.swap! ,(cl :x) x y))
+        (t.blas-swap! ,(cl :x) x (first strd) y (second strd))
+        (t.swap! ,(cl :x) x y))
+     `(t.swap! ,(cl :x) x y)))
