@@ -250,7 +250,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
        (setf (gethash ,%name *alien-load-table*) (function ,fname)))))
 
 (defmacro alien-size* (ty &optional (units :bits))
-  `(alien-size ,(eval ty) ,units))
+  `(alien-size ,`,ty ,units))
 
 (defmacro define-opaque (ty &optional foreign-type)
   "Define an 'opaque' alien type. This is an internal convenience function for
@@ -258,6 +258,10 @@ types which are effectively aliases for other types. The default target type
 is TY with a -T prepended as is customary in many C codebases."
   (eval-when (:compile-toplevel :load-toplevel :execute)
     `(define-alien-type ,ty (struct ,(or foreign-type (symbolicate ty '-t))))))
+
+(declaim (inline null-pointer))
+(defun null-pointer ()
+  #.(sb-sys:int-sap 0))
 
 (defun double-array-pointer (array)
   "Return a SAP pointing to the start of ARRAY's storage vector."
@@ -952,7 +956,7 @@ handle stored in another slot of the same object."))
 (defmethod sb-mop:validate-superclass ((class foreign-vector-class) (superclass standard-class))  t)
 
 (defclass foreign-vector ()
-  ((sap :initarg :sap :initform nil)
+  ((sap :initarg :sap :initform nil :accessor sap)
    (length :initarg :length :initform 0))
   (:metaclass foreign-vector-class))
 
@@ -962,14 +966,20 @@ handle stored in another slot of the same object."))
      (or (std/macs:if-let ((class (find element-type (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'element-type)))
            (class-name class)
            (let* ((cl-name (intern (format nil "<FOREIGN-VECTOR: ~a>"  element-type) (find-package "STD/ALIEN"))))
-             (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
+             (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double c-string)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
              (compile-and-eval
               `(progn
                  (defclass ,cl-name (foreign-vector) ()
                    (:metaclass foreign-vector-class))
                  (setf (slot-value (find-class ',cl-name) 'std/alien::element-type) ',element-type)))
              cl-name))))))
-;;
+
+(defun foreign-vector-length (fv)
+  (slot-value fv 'length))
+
+(defun foreign-vector-element-type (fv)
+  (slot-value fv 'element-type))
+
 (defparameter *fvref-range-check* t)
   
 (defun fvref (x i)

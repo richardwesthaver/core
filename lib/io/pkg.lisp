@@ -31,8 +31,7 @@
    :fill-buffer :header
    :header-type :header-length
    :offset
-   :snapshot
-   :sync))
+   :snapshot))
 
 (defpkg :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)

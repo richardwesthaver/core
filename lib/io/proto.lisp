@@ -30,4 +30,3 @@
 (defgeneric header-length (self))
 (defgeneric offset (self))
 (defgeneric snapshot (self &rest args &key &allow-other-keys))
-(defgeneric sync (self &key &allow-other-keys))

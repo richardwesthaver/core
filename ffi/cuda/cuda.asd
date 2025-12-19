@@ -11,7 +11,8 @@
                                       :package :cuda)
                (:file "type")
                (:file "alien")
-               (:file "cuda"))
+               (:file "ctx")
+               (:file "mem"))
   :in-order-to ((test-op (test-op "cuda/tests"))))
 
 (defsystem :cuda/tests

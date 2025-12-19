@@ -99,6 +99,8 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Return the version of object SELF."))
 (defverb lock (self)
   (:documentation "Return the lock associated with SELF."))
+(defverb sync (self &key &allow-other-keys)
+  (:documentation "Sync object SELF."))
 (defverb upgrade (self)
   (:documentation "Return the upgrade-function associated with object SELF."))
 (defverb bind (self)

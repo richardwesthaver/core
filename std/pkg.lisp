@@ -909,6 +909,7 @@
    :c-string :int 
    :enum :long :slot :void
    :cast :char :addr :short
+   :null-pointer
    :alien :deref
    :double :union
    :signed :unsigned
@@ -943,6 +944,7 @@
    :clone-integer-list
    :clone-octet-vector-list*
    :octets-to-alien-array
+   :foreign-type-size
    :with-foreign-pointer
    :with-foreign-object
    :with-foreign-objects
@@ -999,7 +1001,11 @@
    :sap-ref
    :sap-set
    :sap-svref
-   :foreign-vector))
+   :foreign-vector
+   :foreign-vector-class
+   :foreign-vector-length
+   :foreign-vector-element-type
+   :fvref))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
@@ -1022,7 +1028,7 @@
    :explore :with-fslots
    :upgrade :version
    :status :validate
-   :deadline
+   :deadline :sync
    :lock :bind
    :head :tail
    :call :swap

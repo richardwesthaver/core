@@ -5,6 +5,7 @@
 ;;; Code:
 (in-package :math/util)
 
+;;; BLAS/LAPACK
 (defmacro blasfunc (name type)
   `(function ,(intern (string-upcase (obj/tensor::blas-func name type)) :blas)))
 
@@ -24,6 +25,37 @@
                    (:* ,(element-type-to-alien ftype) :+ (head ,x)) (the ,(store-type sym) (store ,x)) (:& :int) ,st-x
                    (:* ,(element-type-to-alien ftype) :+ (head ,y)) (the ,(store-type sym) (store ,y)) (:& :int) ,st-y)
          ,y))))
+
+;;; CUDA/NVCC
+(defun write-cuda-file (cu-path cuda-code)
+  (with-open-file (out cu-path :direction :output :if-exists :supersede)
+    (princ cuda-code out)))
+
+(defun nvcc-compile (cuda-code cu-path ptx-path)
+  (write-cuda-file cu-path cuda-code)
+  (run-nvcc cu-path ptx-path)
+  (namestring ptx-path))
+
+(defun nvcc-options (cu-path ptx-path include-path)
+  (list "-I" (namestring include-path)
+        "-ptx"
+        "-o" (namestring ptx-path)
+        (namestring cu-path)))
+
+(defun get-nvcc-arch (dev-id)
+  (multiple-value-bind (major minor)
+      (device-compute-capability dev-id)
+    (format nil "-arch=sm_~D~D" major minor)))
+
+(defun arch-exists-p (options)
+  (some #'(lambda (option)
+            (eql 0 (search "-arch=" option)))
+        options))
+
+(defun append-arch (options dev-id)
+  (check-type options list)
+  (cons (get-nvcc-arch dev-id)
+        options))
 
 ;;; Floating-point Simplification
 (defconstant +epsilon+ 1.e-7

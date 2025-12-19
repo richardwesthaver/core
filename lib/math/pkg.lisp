@@ -16,6 +16,8 @@
 
 (defpkg :math/util
   (:use :cl :std :math/proto :tensor)
+  (:import-from :cli/tools/cc :run-nvcc)
+  (:import-from :cuda :device-compute-capability)
   (:export :blasfunc :lapackfunc))
 
 (defpkg :math/sfc
