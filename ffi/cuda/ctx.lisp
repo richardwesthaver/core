@@ -15,10 +15,6 @@
     (cu-device-compute-capability (addr maj) (addr min) dev-id)
     (values maj min)))
 
-(defun get-nvcc-arch (dev-id)
-  (multiple-value-bind (maj min) (device-compute-capability dev-id)
-    (format nil "-arch=sm_~D~D" maj min)))
-
 (defun get-cuda-device (dev-id)
   (with-alien ((dev cu-device))
     (cu-device-get (addr dev) dev-id)
