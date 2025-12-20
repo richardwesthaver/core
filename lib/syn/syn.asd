@@ -2,7 +2,7 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <richard.westhaver@gmail.com>"
   :bug-tracker "https://vc.compiler.company/comp/core/issues"
-  :depends-on (:std :obj :parse :tree-sitter :doc :cli :io :dat)
+  :depends-on (:std :obj :parse :tree-sitter :doc :cli :io :dat :cuda)
   :serial t
   :components ((:file "pkg")
                (:file "ts")
@@ -28,9 +28,16 @@
                  (:module "cpp"
                   :components 
                   ((:file "pkg")
-                   (:file "sym")))
+                   (:file "ast")
+                   (:file "sym")
+                   (:file "print")
+                   (:file "read")))
                  (:module "cu"
-                  :components ((:file "pkg")))
+                  :components 
+                  ((:file "pkg")
+                   (:file "ast")
+                   (:file "print")
+                   (:file "read")))
                  (:module "py"
                   :components ((:file "pkg")))
                  (:module "js"

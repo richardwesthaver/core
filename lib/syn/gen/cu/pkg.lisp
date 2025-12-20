@@ -1,16 +1,22 @@
 ;;; cu/pkg.lisp --- CUDA Code Generator
 
-;; 
+;; Generate CUDA C code (.cu)
+
+;;; Commentary:
+
+;; This package derives mostly from C-MERA which inspiration from CL-CUDA. The
+;; AST must be compiled to a .cu file so that NVCC may compile it into a CUDA
+;; kernel module (.ptx file).
+
+;; To use the compiled kernel modules from Common Lisp see the MATH/CUDA
+;; package.
 
 ;;; Code:
 (defpackage :syn/gen/cu
   (:nicknames :gen/cu)
-  (:use :cl :syn/gen :syn/gen/c :syn/gen/cpp)
+  (:use :syn/gen :syn/gen/c :syn/gen/cpp :std/pipe :std/seq :std/meta :cli/tools/cc :cli/env :id :ast)
   (:export
    #:*cu-backend*))
-
-(pkg:defpkg :syn/gen/cu/sym
-  (:use :cl :syn/gen/cu))
 
 (in-package :syn/gen/cu)
 
@@ -30,4 +36,28 @@
           '(size cuda-alignment shared threads
             blocks cuda-funcall)))
 
-(define-gen-backend :cu :syn/gen/cu)
+(defparameter *cu-symbols*
+  *cpp-symbols*)
+
+(defparameter *cu-syntax*
+  (append *cpp-syntax*
+          '(launch)))
+
+(defparameter *cu-exports*
+  (append *cu-symbols*
+          *cu-syntax*
+          *cl-symbols*))
+
+(defparameter *cu-swap*
+  (append *cu-symbols* *cu-syntax*))
+
+(pkg:defpackage* :syn/gen/cu/swap
+  (:shadow-symbols *cu-swap*))
+
+(pkg:defpackage* :syn/gen/cu/sym
+  (:shadow-symbols nil :export-symbols *cu-exports*)
+  (:shadow :struct)
+  (:use :syn/gen/cpp/sym)
+  (:import-from :syn/gen/cpp :decompose-declaration))
+
+(define-gen-backend :cu :syn/gen/cu :sym :syn/gen/cu/sym :swap :syn/gen/cu/swap)

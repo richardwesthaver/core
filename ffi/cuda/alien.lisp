@@ -47,3 +47,9 @@
   (defcu ("cuStreamQuery" cu-stream-query) (hstream cu-stream))
   (defcu ("cuStreamSynchronize" cu-stream-synchronize) (hstream cu-stream))
   (defcu ("cuStreamWaitEvent" cu-stream-wait-event) (hstream cu-stream) (hevent cu-event) (flags unsigned-int)))
+
+(define-alien-routine curand-init void
+  (seed unsigned-long-long)
+  (subsequence unsigned-long-long)
+  (offset unsigned-long-long)
+  (state (* curand-state-xorwow)))

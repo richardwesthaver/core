@@ -27,6 +27,7 @@
    :simple-gen-error :defsyntax
    :function-call :src-location
    :ident :str-literal
+   :cintern
    :num-literal :char-literal
    :load-gen :init-gen
    :*gen* :*gen-designators*

@@ -12,7 +12,8 @@
                (:file "type")
                (:file "alien")
                (:file "ctx")
-               (:file "mem"))
+               (:file "mem")
+               (:file "event"))
   :in-order-to ((test-op (test-op "cuda/tests"))))
 
 (defsystem :cuda/tests

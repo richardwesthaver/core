@@ -60,4 +60,8 @@
   (:import-from :math/util :lapackfunc)
   (:export))
 
+#+cuda
+(defpkg :math/cuda
+  (:use :std-lisp :math/proto :tensor))
+
 (setq *defpkg-hook* nil)

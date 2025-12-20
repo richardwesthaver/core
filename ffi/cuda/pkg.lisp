@@ -5,8 +5,10 @@
 ;;; Code:
 (defpackage :cuda
   (:use :cl :std :log :sb-alien)
-  (:export :load-cuda :load-cudnn
-           :device-compute-capability))
+  (:export :load-cuda :load-cudnn :device-compute-capability
+   :*cuda-home* :*cuda-lib-path*
+   :load-cublas :load-cufft :load-cufftw :load-cudart :load-cublas :load-curand))
+           
 
 (in-package :cuda)
 
@@ -20,6 +22,7 @@
 (define-alien-loader cufft *cuda-lib-path*)
 (define-alien-loader cufftw *cuda-lib-path*)
 (define-alien-loader cudart *cuda-lib-path*)
+(define-alien-loader curand *cuda-lib-path*)
 
 (define-condition cuda-error (error)
   ((name :initarg :name :reader error-name)

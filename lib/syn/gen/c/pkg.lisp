@@ -20,7 +20,6 @@
 (defpackage :syn/gen/c
   (:nicknames :gen/c)
   (:use :cl :syn/gen :std/pipe :std/seq :std/meta :cli/tools/cc :cli/env :id :ast)
-  ;; (:shadowing-import-from :cl :type :float)
   (:export
    #:*c-backend*
    #:split-aref
@@ -70,6 +69,8 @@
    #:make-simple-block
    #:switch-reader
    #:decompose-declaration
+   #:decompose-type
+   #:make-declaration-node
    #:else-if-traverser
    #:nested-ast-remover
    #:renamer
@@ -152,7 +153,7 @@
     (:shadow-symbols *c-swap*))
 
 (pkg:defpackage* :syn/gen/c/sym
-    (:shadow-symbols *c-swap* :export-symbols *c-exports*)
+  (:shadow-symbols *c-swap* :export-symbols *c-exports*)
   (:nicknames :c)
   (:use :cl)
   (:import-from :syn/gen :quoty :print-code :write-code :cintern :gen-package :code-print :cl-reader)

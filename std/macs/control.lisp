@@ -142,10 +142,6 @@ value."
   (once-only (pred)
     `(if ,pred ,pred (progn ,@alt))))
 
-;; Inspired by TRIVIA
-;; (defmacro match (x &body body))
-;; (defmacro ematch (x &body body))
-
 ;; ref: https://github.com/bendudson/array-operations
 (defmacro nested-loop (syms dimensions &body body)
   "Iterates over a multidimensional range of indices.
@@ -188,3 +184,7 @@ value."
          ;; dimensions reversed so that innermost is last:
          (destructuring-bind ,(reverse dims-rev) ,dims
            ,result)))))
+
+;; Inspired by CL-PATTERN
+;; (defmacro match (x &body body))
+;; (defmacro ematch (x &body body))

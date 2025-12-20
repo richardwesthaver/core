@@ -666,3 +666,54 @@
   * This indicates that an unknown internal error has occurred.
   |#
   :error-unknown 999)
+
+;;; RNG Types
+(define-alien-enum (curand-rng-type)
+  :test 0
+  :pseudo-default 100
+  :pseudo-xorwow 101
+  :pseudo-mrg32k3a 121
+  :pseudo-mtgp32 141
+  :pseudo-mt19937 142
+  :pseudo-philox4-32-10 161
+  :quasi-default 200
+  :curand-rng-quasi-sobol32 201
+  :curand-rng-quasi-scrambled-sobol32 202
+  :curand-rng-quasi-sobol64 203
+  :curand-rng-quasi-scrambled-sobol64 204)
+
+(define-alien-type curand-state-xorwow
+    (struct curand-state-xorwow
+      (d unsigned-int)
+      (v (array unsigned-int 5))
+      (boxmuller-flag int)
+      (boxmuller-flag-double int)
+      (boxmuller-extra float)
+      (boxmuller-extra-double double)))
+  
+;;; Vector Types
+;; REVIEW 2025-12-19: may be better suited as FV or even TENSOR
+;; We define all CUDA vector types as arrays.
+(macrolet ((defveci (i name &optional type)
+             (let ((type (or type name)))
+               `(progn
+                  ,@(loop for n from 1 below (1+ i)
+                                 for s = (symbolicate (format nil "~A~A" (string-upcase name) n))
+                                 collect `(define-alien-type ,s
+                                              (array ,type ,n))
+                                 #+nil collect 
+                                 #+nil `(define-alien-routine ,(symbolicate (format nil "MAKE-~A" s)) ,s
+                                          ,@(loop for x below n
+                                                  collect `(,(gensym) ,type))))))))
+  (defveci 4 float)
+  (defveci 4 double)
+  (defveci 4 char)
+  (defveci 4 uchar unsigned-char)
+  (defveci 4 short)
+  (defveci 4 ushort unsigned-short)
+  (defveci 4 int)
+  (defveci 4 uint unsigned-int)
+  (defveci 4 long)
+  (defveci 4 ulong unsigned-long)
+  (defveci 4 longlong long-long)
+  (defveci 4 ulonglong unsigned-long-long))
