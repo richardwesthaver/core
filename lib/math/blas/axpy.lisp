@@ -66,7 +66,7 @@
   `(let ((alpha (t.coerce ,(field-type (cl :y)) alpha)))
      (declare (type ,(field-type (cl :y)) alpha))
      ,(if (subtypep (cl :y) 'blas-mixin)
-          `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
+          `(let ((strd (and (call-alien-p y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
              (if strd
                  (t.blas-axpy! ,(cl :y) alpha x (first strd) y (second strd))
                  (t.axpy! ,(cl :y) alpha x y)))
@@ -79,7 +79,7 @@
      (when x (setq alpha (t.f* ,(field-type (cl :y)) alpha (t.coerce ,(field-type (cl :y)) x))))
      (unless (t.f= ,(field-type (cl :y)) alpha (t.fid+ ,(field-type (cl :y))))
        ,(if (subtypep (cl :y) 'blas-mixin)
-            `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
+            `(let ((strd (and (call-alien-p y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
                (if strd
                    (t.blas-axpy! ,(cl :y) alpha nil nil y strd)
                    (t.axpy! ,(cl :y) alpha nil y)))

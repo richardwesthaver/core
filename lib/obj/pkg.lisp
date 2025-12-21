@@ -303,6 +303,7 @@
    #:tensor-class #:sparse-tensor #:stride-tensor #:dense-tensor #:simple-dense-tensor #:foreign-dense-tensor
    #:hash-tensor #:graph-tensor 
    #:simple-graph-tensor #:coordinate-tensor 
+   #:simple-coordinate-tensor
    #:tensor-typep #:tensor-type
    #:tensor-method-generator #:define-tensor-method #:cl #:zeros
    #:define-tensor-generic
@@ -323,6 +324,7 @@
    #:mapsor! #:mapsor #:map-tensor! #:mapslice #:mapslice~ #:mapslicec~ #:tensor-foldl
    #:ones #:eye! #:eye #:diag #:diag~
    #:rand #:randn #:randi #:rande
+   #:generate-rand
    #:range #:linspace))
 
 (defpkg :obj/ast

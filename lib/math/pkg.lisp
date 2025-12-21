@@ -47,8 +47,12 @@
    :blas-func :tensor-copy
    :base-tensor :zeros :order :total-size
    :scal! :index-type :define-tensor-generic :blas-copyablep
-   :call-fortran? :tensor-matrixp :split-job :cclass-max :*default-uplo*)
-  (:export :axpy :tensor-sum :mean :prod))
+   :call-alien-p :tensor-matrixp :split-job :cclass-max :*default-uplo*)
+  (:export :axpy 
+   :tensor-sum :mean 
+   :prod
+   ;; may want to export this from obj/tensor..
+   :meshgrid))
 
 (defpkg :math/syn
   (:use :std-lisp :tensor :parse/yacc :id)
@@ -60,8 +64,10 @@
   (:import-from :math/util :lapackfunc)
   (:export))
 
-#+cuda
 (defpkg :math/cuda
-  (:use :std-lisp :math/proto :tensor))
+  (:use :std-lisp :math/proto :tensor :cuda)
+  (:import-from :tensor :t.store-type :t.compute-store-size :t.store-size :foreign-vector-store-mixin
+   :real-subtypep :field-type :store-type :t.total-size :t.store-ref :t.store-set :t.store-allocator
+   :with-field-element :tensor-generator))
 
 (setq *defpkg-hook* nil)

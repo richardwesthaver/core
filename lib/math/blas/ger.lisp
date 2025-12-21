@@ -68,7 +68,7 @@ If conjugate-p is nil, then op(y) = y^T, else op(y) = y^H.")
      (declare (type ,(field-type (cl :x)) alpha))
      ,(recursive-append
        (when (subtypep (cl :x) 'blas-mixin)
-         `(if (call-fortran? A (t.blas-lb ,(cl :a) 2))
+         `(if (call-alien-p A (t.blas-lb ,(cl :a) 2))
               (with-columnification (() (A))
                 (if conjugate-p
                     (t.blas-ger! ,(cl :a) alpha x (strides x 0) y (strides y 0) A (or (blas-matrix-compatiblep A #\N) 0) t)
@@ -98,3 +98,12 @@ If conjugate-p is nil, then op(y) = y^T, else op(y) = y^H."))
 
 (defmethod ger (alpha (x dense-tensor) (y dense-tensor) (A (eql nil)) &optional conjugate-p)
   (ger! alpha x y (zeros (append (dimensions x t) (dimensions y t))) conjugate-p))
+
+;; late definition of tensor/map function (requires GER!)
+(defun meshgrid (a b)
+  (declare (type tensor-vector a b))
+  (let ((x (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a)))
+        (y (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a))))
+    (ger! 1 a (ones (dimensions b 0) (class-of b)) x)
+    (ger! 1 (ones (dimensions a 0) (class-of a)) b y)
+    (values x y)))

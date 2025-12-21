@@ -215,7 +215,7 @@
 ;;      (declare (type ,(field-type (cl x)) alpha))
 ;;      ,(recursive-append
 ;;        (when (blas-tensorp (cl x))
-;;	 `(if-let ((strd (and (call-fortran? x (t/l1-lb ,(cl x))) (blas-copyablep x y))))
+;;	 `(if-let ((strd (and (call-alien-p x (t/l1-lb ,(cl x))) (blas-copyablep x y))))
 ;;	    (t/blas-axpy! ,(cl x) alpha x (first strd) y (second strd))))
 ;;        `(t/axpy! ,(cl x) alpha x y))))
 (eval-always

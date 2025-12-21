@@ -966,7 +966,7 @@ handle stored in another slot of the same object."))
      (or (std/macs:if-let ((class (find element-type (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'element-type)))
            (class-name class)
            (let* ((cl-name (intern (format nil "<FOREIGN-VECTOR: ~a>"  element-type) (find-package "STD/ALIEN"))))
-             (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double c-string)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
+             (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
              (compile-and-eval
               `(progn
                  (defclass ,cl-name (foreign-vector) ()

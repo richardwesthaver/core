@@ -55,7 +55,7 @@ operating on the type TYPE."
       (when (and csto-a? csto-b? (with-optimization (:speed 3 :safety 0) (vector-eq perm-a perm-b)) (with-optimization (:speed 3 :safety 0) (vector-eq pdims-a pdims-b)))
         (list csto-a? csto-b?)))))
 
-(definline call-fortran? (x lb)
+(definline call-alien-p (x lb)
   (declare (type stride-accessor x))
   (> (total-size x) lb))
 

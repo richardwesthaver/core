@@ -358,7 +358,7 @@
 
 (define-tensor-method copy! ((x tensor :x) (y tensor :y t))
   (if (and (eql (cl :x) (cl :y)) (subtypep (cl :y) 'blas-mixin))
-      `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
+      `(let ((strd (and (call-alien-p y (t.blas-threshold ,(cl :y) 1)) (blas-copyablep x y))))
          (if strd
              (t.blas-copy! ,(cl :y) x (first strd) y (second strd))
              (t.copy! (,(cl :x) ,(cl :y)) x y)))
@@ -367,7 +367,7 @@
 
 (define-tensor-method copy! ((x t) (y dense-tensor :y t))
   (if (subtypep (cl :y) 'blas-mixin)
-      `(let ((strd (and (call-fortran? y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
+      `(let ((strd (and (call-alien-p y (t.blas-threshold ,(cl :y) 1)) (consecutive-storep y))))
          (if strd
              (t.blas-copy! ,(cl :y) (t.coerce ,(field-type (cl :y)) x) nil y strd)
              (t.copy! (t ,(cl :y)) x y)))
@@ -483,7 +483,7 @@
 
 (define-tensor-method swap! ((x dense-tensor :x t) (y dense-tensor :x t))
   (if (subtypep (cl :x) 'blas-mixin)
-     `(let ((strd (and (call-fortran? x (t.blas-threshold ,(cl :x) 1)) (blas-copyablep x y))))
+     `(let ((strd (and (call-alien-p x (t.blas-threshold ,(cl :x) 1)) (blas-copyablep x y))))
         (if strd
             (t.blas-swap! ,(cl :x) x (first strd) y (second strd))
             (t.swap! ,(cl :x) x y)))

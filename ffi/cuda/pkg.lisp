@@ -7,8 +7,8 @@
   (:use :cl :std :log :sb-alien)
   (:export :load-cuda :load-cudnn :device-compute-capability
    :*cuda-home* :*cuda-lib-path*
-   :load-cublas :load-cufft :load-cufftw :load-cudart :load-cublas :load-curand))
-           
+   :load-cublas :load-cufft :load-cufftw :load-cudart :load-cublas :load-curand
+   :cuda-vector))
 
 (in-package :cuda)
 

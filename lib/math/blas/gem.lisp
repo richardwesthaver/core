@@ -160,14 +160,14 @@
      (if (tensor-vectorp C)
          ,(recursive-append
            (when (subtypep (cl :x) 'blas-mixin)
-             `(if (call-fortran? A (t.blas-lb ,(cl :x) 2))
+             `(if (call-alien-p A (t.blas-lb ,(cl :x) 2))
                   (with-columnification (((A joba)) ())
                     (letv* ((lda opa (blas-matrix-compatiblep A joba)))
                       (t.blas-gemv! ,(cl :x) alpha A lda B (strides B 0) beta C (strides C 0) opa)))))
            `(t.gemv! ,(cl :x) alpha A B beta C joba))
          ,(recursive-append
            (when (subtypep (cl :x) 'blas-mixin)
-             `(if (call-fortran? C (t.blas-lb ,(cl :x) 3))
+             `(if (call-alien-p C (t.blas-lb ,(cl :x) 3))
                   (with-columnification (((a joba) (b jobb)) (c))
                     (letv* ((lda opa (blas-matrix-compatiblep a joba))
                             (ldb opb (blas-matrix-compatiblep b jobb)))

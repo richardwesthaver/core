@@ -174,7 +174,7 @@
       (incf (slot-value ret 'head) (* step s)) ret)
     (error 'tensor-error :message "Can't find slice-increment in tensor's attributes" :tensor x)))
 
-;; FOR x SLICING y ALONG axis (FROM BELOW TO DOWNTO WITH-INDEX BY
+;; FOR x BEING THE SLICE OF y ALONG axis (FROM BELOW TO DOWNTO) (WITH-INDEX) (BY)
 ;; TODO
 (defun loop-slice-iteration-path (xa data-type prep-phrases)
   (declare (ignore data-type))
@@ -244,15 +244,9 @@
                   do (incf (slot-value (car ,(hy ai)) 'head) 
                        ,(recursive-append (when step `(* ,(hy step))) `(cdr ,(hy ai))))))))))))
 
-;; req GER!
-#+nil
-(defun meshgrid (a b)
-  (declare (type tensor-vector a b))
-  (let ((x (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a)))
-        (y (zeros (list (dimensions a 0) (dimensions b 0)) (class-of a))))
-    (ger! 1 a (ones (dimensions b 0) (class-of b)) x)
-    (ger! 1 (ones (dimensions a 0) (class-of a)) b y)
-    (values x y)))
+(sb-loop::add-loop-path '(slice) 'loop-slice-iteration-path *loop-ansi-universe*
+                        :preposition-groups '((:of :across :in) (:along) (:from) (:below) (:to) (:downto) (:with-index) (:by))
+                        :inclusive-permitted nil)
 
 (defmacro with-coordinates ((&rest syms) vector &body code)
   (with-gensyms (vec)

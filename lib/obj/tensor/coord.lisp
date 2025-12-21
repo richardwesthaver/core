@@ -20,22 +20,17 @@
   (declare (type index-store-vector idx) (type coordinate-accessor tensor))
   (lety* ((hash-value (stride-hash idx (strides tensor)) :type index-type)
           (hash-vector (slot-value tensor 'stride-hash) :type index-store-vector))
-    (with-optimization (:speed 3 :safety 0) (binary-search hash-value 0 (the index-type (slot-value tensor 'tail)) hash-vector))))
+    (with-optimization (:speed 3 :safety 0) 
+      (binary-search hash-value 0 (the index-type (slot-value tensor 'tail)) hash-vector))))
 
 (define-tensor-method ref ((x coordinate-tensor :x) &rest subscripts)
-  `(if-let ((idx (coordinate-indexing (match subscripts
-                                        ((list* (and subs/v (type index-store-vector)) _) (subscripts-check (the index-store-vector subs/v) (dimensions x)))
-                                        (_ (subscripts-check (the list subscripts) (dimensions x))))
-                                      x)))
+  `(if-let ((idx (coordinate-indexing (%tensor-ref-subscripts subscripts x) x)))
      (values (t.store-ref ,(cl :x) (t.store ,(cl :x) x) (the index-type idx)) t)
      (values (t.fid+ (t.field-type ,(cl :x))) nil)))
 
 (define-tensor-method (setf ref) (value (x coordinate-tensor :x) &rest subscripts)
   ;; TODO
-  `(letv* ((subs/v (match subscripts
-                     ((list* (and subs/v (type index-store-vector)) _) (subscripts-check (the index-store-vector subs/v) (dimensions x)))
-                     (_ (subscripts-check (the list subscripts) (dimensions x))))
-                   :type index-store-vector)
+  `(letv* ((subs/v (%tensor-ref-subscripts subscripts x) :type index-store-vector)
            (m lb (coordinate-indexing subs/v x)))
      (if m
          (values (setf (t.store-ref ,(cl :x) (t.store ,(cl :x) x) (the index-type m)) (t.coerce ,(field-type (cl :x)) value)) t)
