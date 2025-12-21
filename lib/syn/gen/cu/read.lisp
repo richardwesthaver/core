@@ -58,3 +58,16 @@
    (set-macro-character #\{ #'syn/gen/cpp::left-brace-reader)
    (set-macro-character #\} (get-macro-character #\) nil))
    (set-dispatch-macro-character #\# #\: #'syn/gen/cpp::sharp-colon-reader)))
+
+(defmethod gen-reader ((self (eql :cu))) (function cu-reader))
+(defmethod gen-reader-switch ((self (eql :cu))) (function cu-reader-switch))
+
+(defmethod load-gen ((self (eql :cu))) 
+  (init-gen :cu)
+  (cu-reader))
+
+(defmethod unload-gen ((self (eql :cu))) 
+  (init-gen nil) 
+  (cl-reader))
+
+;; (export *cu-backend*)

@@ -298,5 +298,3 @@
 (defmethod unload-gen ((self (eql :c)))
   (init-gen nil)
   (cl-reader))
-
-(defmethod gen-package ((self (eql :c))) (find-package :syn/gen/c/sym))

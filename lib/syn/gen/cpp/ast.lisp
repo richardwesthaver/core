@@ -29,7 +29,7 @@
 ;; operator
 (defexpr new () (operator specifier type))
 ;; operator
-(defexpr delete () ( operator object))
+(defexpr delete () (operator object))
 (defexpr lambda-definition () (capture parameter tail-qualifiers type body))
 
 ;;; Syntax

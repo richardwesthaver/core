@@ -83,6 +83,8 @@
 
 (in-package :syn/gen/c)
 
+(defmethod gen-package ((self (eql :c))) (find-package :syn/gen/c/sym))
+
 (defvar *c-backend*
   (append *cl-symbols*
           '(name preprocessor-macro include typedef

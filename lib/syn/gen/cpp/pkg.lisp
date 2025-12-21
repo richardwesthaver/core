@@ -5,10 +5,12 @@
 ;;; Code:
 (defpackage :syn/gen/cpp
   (:nicknames :gen/cpp)
-  (:use :syn/gen/c :syn/gen :std/pipe :std/seq :std/meta :cli/tools/cc :cli/env :id :ast)
-  (:shadow :delete :class :catch :decompose-declaration :function)
+  (:use :syn/gen :syn/gen/c :ast :id)
+  (:shadow :delete :class :catch :cl-reader :decompose-declaration)
   (:import-from :syn/gen/c :*c-backend* :*c-symbols*)
   (:export
+   :decompose-declaration
+   :cpp-reader-switch :cpp-reader
    #:*cpp-backend*
    #:*cpp-symbols*
    #:*cpp-syntax*
@@ -17,13 +19,8 @@
 
 (in-package :syn/gen/cpp)
 
-(defmethod load-gen ((self (eql :cpp))) 
-  (init-gen :cpp) 
-  ;; (cpp-reader)
-  )
+(defmethod gen-package ((self (eql :cpp))) (find-package :syn/gen/cpp/sym))
 
-(defmethod unload-gen ((self (eql :cpp))) (init-gen nil) (cl-reader))
-(defmethod gen-package ((self (eql :cpp))) (find-package :syn/gen/cpp))
 (defparameter *cpp-backend*
   (append *c-backend*
           '(delete new instantiate from-namespace
@@ -59,12 +56,12 @@
 
 (pkg:defpackage* :syn/gen/cpp/sym
   (:shadow-symbols () :export-symbols *cpp-exports*)
+  (:use :syn/gen/c/sym)
+  (:nicknames :cpp)
   (:shadow :class :delete :vector :throw :catch :function 
            :for :struct)
   (:import-from :syn/gen/cpp :decompose-declaration)
-  (:shadowing-import-from :syn/gen/c
-   :gen-reader :gen-reader-switch
-   :cl-reader :c-reader)
-  (:use :syn/gen/c/sym :syn/gen/cpp))
+  (:shadowing-import-from :syn/gen/cpp
+   :cpp-reader-switch :cl-reader :cpp-reader))
 
 (define-gen-backend :cpp :syn/gen/cpp :sym :syn/gen/cpp/sym :swap :syn/gen/cpp/swap)

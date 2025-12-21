@@ -11,7 +11,7 @@
     `(syn/gen/cpp/sym::reference-type ,(dissect (intern (subseq name 0 (- len 1))) :quoty t))))
 
 (defun dissect (item &key (quoty nil))
-  "extended c pre processor"
+  "extended cpp pre processor"
   (if (symbolp item)
       (cond ((or (eql item 'syn/gen/cpp/sym::new[])
                  (eql item 'syn/gen/cpp/sym::delete[])
@@ -122,7 +122,7 @@
    (set-dispatch-macro-character #\# #\: #'sharp-colon-reader)))
 
 ;; Define a start-up function
-(define-code-processor cpp-processor
+(define-code-processor gen-cpp
   :file-reader   read-cpp-file
   :string-reader read-cpp-string
   :traverse
@@ -142,7 +142,7 @@
 ;;  :in-package :cmu-c++)
 
 ;;; Define a reader switch with c++ pre-processing
-(define-code-switch switch-reader
+(define-code-switch cpp-reader-switch
   :macro-character
   ((set-macro-character #\Space #'pre-process)
    (set-macro-character #\Tab #'pre-process)
@@ -163,3 +163,14 @@
    (set-macro-character #\{ #'left-brace-reader)
    (set-macro-character #\} (get-macro-character #\) nil))
    (set-dispatch-macro-character #\# #\: #'sharp-colon-reader)))
+
+(defmethod gen-reader ((self (eql :cpp))) (std-lisp:function cpp-reader))
+(defmethod gen-reader-switch ((self (eql :cpp))) (std-lisp:function cpp-reader-switch))
+
+(defmethod load-gen ((self (eql :cpp)))
+  (init-gen :cpp) 
+  (cpp-reader))
+
+(defmethod unload-gen ((self (eql :cpp))) (init-gen nil) (cl-reader))
+
+;; (export *cpp-backend*)

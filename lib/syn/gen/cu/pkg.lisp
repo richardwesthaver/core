@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; This package derives mostly from C-MERA which inspiration from CL-CUDA. The
+;; This package derives mostly from C-MERA with inspiration from CL-CUDA. The
 ;; AST must be compiled to a .cu file so that NVCC may compile it into a CUDA
 ;; kernel module (.ptx file).
 
@@ -14,33 +14,28 @@
 ;;; Code:
 (defpackage :syn/gen/cu
   (:nicknames :gen/cu)
-  (:use :syn/gen :syn/gen/c :syn/gen/cpp :std/pipe :std/seq :std/meta :cli/tools/cc :cli/env :id :ast)
+  (:use :syn/gen :syn/gen/c :ast :id)
+  (:shadow :cl-reader)
   (:export
-   #:*cu-backend*))
+   #:*cu-backend*
+   #:*cu-symbols*
+   #:*cu-exports*
+   #:*cu-swap*))
 
 (in-package :syn/gen/cu)
 
-(defmethod load-gen ((self (eql :cu))) 
-  (init-gen :cu)
-  ;; (cu-reader)
-  )
-
-(defmethod unload-gen ((self (eql :cu))) 
-  (init-gen nil) 
-  (cl-reader))
-
-(defmethod gen-package ((self (eql :cu))) (find-package :syn/gen/cu))
+(defmethod gen-package ((self (eql :cu))) (find-package :syn/gen/cu/sym))
 
 (defparameter *cu-backend*
-  (append *cpp-backend*
+  (append syn/gen/cpp:*cpp-backend*
           '(size cuda-alignment shared threads
             blocks cuda-funcall)))
 
 (defparameter *cu-symbols*
-  *cpp-symbols*)
+  syn/gen/cpp:*cpp-symbols*)
 
 (defparameter *cu-syntax*
-  (append *cpp-syntax*
+  (append syn/gen/cpp:*cpp-syntax*
           '(launch)))
 
 (defparameter *cu-exports*
@@ -51,11 +46,13 @@
 (defparameter *cu-swap*
   (append *cu-symbols* *cu-syntax*))
 
+;; (export *cu-backend*)
 (pkg:defpackage* :syn/gen/cu/swap
   (:shadow-symbols *cu-swap*))
 
 (pkg:defpackage* :syn/gen/cu/sym
-  (:shadow-symbols nil :export-symbols *cu-exports*)
+  (:shadow-symbols () :export-symbols *cu-exports*)
+  (:nicknames :cu)
   (:shadow :struct)
   (:use :syn/gen/cpp/sym)
   (:import-from :syn/gen/cpp :decompose-declaration))
