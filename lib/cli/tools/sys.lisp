@@ -110,10 +110,11 @@
 ;; additional static step needed to fill in the jitdump info: 
 
 ;; perf inject -j -i perf.data -o perf.jit.data
-(define-cli-tool :perf (cmd args &key (output t))
-  (let ((proc (sb-ext:run-program *perf* #1=(cons cmd args) :wait t :output output)))
-    (unless (eq 0 (sb-ext:process-exit-code proc))                                    
-      (perf-error "PERF command failed: ~A ~A" *perf* #1#))))
+(define-cli-tool :perf (cmd args &key (output t) wait)
+  (let ((proc (sb-ext:run-program *perf* #1=(cons cmd args) :wait wait :output output)))
+    (unless (and wait (eq 0 (sb-ext:process-exit-code proc)))
+      (perf-error "PERF command failed: ~A ~A" *perf* #1#))
+    proc))
 
 (defun perf-record (&rest args)
   (run-perf "record" args))

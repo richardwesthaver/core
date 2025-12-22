@@ -204,7 +204,8 @@
    :*loginctl* :run-loginctl
    :*networkctl* :run-networkctl
    :*resolvectl* :run-resolvectl
-   :*journalctl* :run-journalctl))
+   :*journalctl* :run-journalctl
+   :*perf* :run-perf :perf-record :perf-inject-jit))
 
 (defpkg :cli/tools/rust
   (:nicknames :tools/rust)
