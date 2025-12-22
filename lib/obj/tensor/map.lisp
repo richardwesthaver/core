@@ -178,7 +178,7 @@
 ;; TODO
 (defun loop-slice-iteration-path (xa data-type prep-phrases)
   (declare (ignore data-type))
-  (destructuring-bind (x axis &optional start oend cend dend index step) prep-phrases  
+  (destructuring-bind (x axis &optional start oend cend dend index step) prep-phrases
     ;; (when (or (and oend cend) (and dend (or cend oend))) (error "Use only one of BELOW TO DOWNTO."))
     (when (setq xa (ensure-list xa))
       (binding-gensyms (hy hyf)

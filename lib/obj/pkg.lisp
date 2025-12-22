@@ -299,6 +299,7 @@
    #:index-type #:index-store-vector
    #:dimensions #:order #:tensor-field-type #:ref #:einstein-sum
    #:base-tensor #:memos #:store-size #:total-size 
+   #:store-ref #:store-type
    #:parent #:dorefs
    #:tensor-class #:sparse-tensor #:stride-tensor #:dense-tensor #:simple-dense-tensor #:foreign-dense-tensor
    #:hash-tensor #:graph-tensor 
@@ -325,7 +326,8 @@
    #:ones #:eye! #:eye #:diag #:diag~
    #:rand #:randn #:randi #:rande
    #:generate-rand
-   #:range #:linspace))
+   #:range #:linspace
+   #:einstein-sum))
 
 (defpkg :obj/ast
   (:nicknames :ast)

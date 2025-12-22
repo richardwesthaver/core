@@ -99,3 +99,24 @@
   (let ((proc (sb-ext:run-program *machinectl* args :wait t :output t)))               
     (unless (eq 0 (sb-ext:process-exit-code proc))                                    
       (machinectl-error "Machinectl command failed: ~A ~A" *machinectl* (or args "")))))
+
+;;; Perf
+
+;; Linux perf is the modern means of collecting performance info. In languages
+;; like JS/Java/CL we need to provide symbol info to perf for it to be useful
+;; though. The special jit-PID.dump format as well as perf-PID.map files may
+;; be generated using SB-PERF - these always go in /tmp/ and are picked up
+;; automatically. Once recording with 'perf record -k mono CMD' there is an
+;; additional static step needed to fill in the jitdump info: 
+
+;; perf inject -j -i perf.data -o perf.jit.data
+(define-cli-tool :perf (cmd args &key (output t))
+  (let ((proc (sb-ext:run-program *perf* #1=(cons cmd args) :wait t :output output)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))                                    
+      (perf-error "PERF command failed: ~A ~A" *perf* #1#))))
+
+(defun perf-record (&rest args)
+  (run-perf "record" args))
+
+(defun perf-inject-jit (&optional (input "perf.data") (output "perf.jit.data"))
+  (run-perf "inject" `("-j" "-i" ,input "-o" ,output)))

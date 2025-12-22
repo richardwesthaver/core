@@ -92,5 +92,6 @@
   :components ((:module "tests" 
                 :components ((:file "pkg")
                              (:file "sealed")
-                             (:file "meta"))))
+                             (:file "meta")
+                             (:file "tensor"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :obj)))

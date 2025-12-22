@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :obj/id)
-
+(declaim (optimize (debug 3)))
 (defglobal *global-id-table* (make-hash-table))
 
 (defclass id ()

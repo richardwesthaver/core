@@ -174,7 +174,7 @@ operating on the type TYPE."
                ((float t) (type-of x)))))
     (if (eq ret 'ratio) 'rational ret)))
 
-(defun range (start end &optional h_ list-outputp &aux (h (or h_ 1)))
+(defun range (start end &optional (h (the fixnum 1)) list-outputp)
   (declare (type real start end h))
   (let ((quo (ceiling (if (> start end) (- start end) (- end start)) h))
         (h (if (> start end) (- h) h)))

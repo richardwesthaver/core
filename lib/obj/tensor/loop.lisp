@@ -57,8 +57,7 @@ UPLO is one of :UL :L :LO :U :UO."
 ;; (loop for y being the idx in X below (dims) using (iterator order ul) ...)
 (defun loop-index-iteration-path (variable data-type prep-phrases)
   (declare (ignore data-type))
-  (mumble "variable: ~A" variable)
-  (mumble "prep: ~A" prep-phrases)
+  ;; (mumble "variable: ~A~%prep:~A~%" variable prep-phrases)
   (destructuring-bind (initial dimensions &optional iterator %uplo %order) prep-phrases
     (binding-gensyms (gm)
       (let ((iterable (when iterator
