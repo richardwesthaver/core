@@ -7,14 +7,17 @@
 
 ;; copied from MATLISP, but with MATCH/EMATCH from the TRIVIA library factored
 ;; out.
-;; (macroexpand (with-memoization (*ht*) (memoizing (defun foo (a b) (+ a b)))))
-;; (foo 2 3) ; => ((#:MEMOIZE* 2 3) 5)
+;; (macroexpand '(with-memoization () (memoizing (defun foo (a b) (+ a b)))))
+;; (foo 2 3) ; => ((#:MEMOIZE1337 2 3) 5)
 (defmacro with-memoization ((&optional (hash-table `(make-hash-table :test 'equal))) &body body &aux cache need-hashtablep)
   "Evaluate forms of BODY with memoization. Forms starting with MEMOIZING are
 handled specially in order to cache their results. If the wrapped form is a
 function definition then calls to that function are cached in HASH-TABLE.
 
-Other possible memoizable forms include: LET, FLET, LABELS
+Functions with &REST or &ALLOW-OTHER-KEYS arguments are unsupported and will
+signal an error. &OPTIONAL and &KEY are supported.
+
+Other automatically memoizable forms include: LET, FLET, LABELS
 
 The fall-back mechanism of MEMOIZING supports additional keywords :TYPE and
 :BIND which are assigned defaults if not bound."
@@ -73,6 +76,6 @@ The fall-back mechanism of MEMOIZING supports additional keywords :TYPE and
                                        (push (list* (first decl) (funcall f (second decl)) (cddr decl)) cache)
                                        (first decl))))))))))))
       (let ((transformed-body (std/list:maptree '(memoizing with-memoization quote) #'transformer body)))
-        `(lety* (,@(if need-hashtablep `((,table ,hash-table)))
+        `(lety* (,@(if need-hashtablep `((,table ,hash-table :type hash-table)))
                  ,@(reverse cache))
            ,@transformed-body)))))

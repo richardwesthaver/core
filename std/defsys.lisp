@@ -23,6 +23,7 @@
 
 ;;; Code:
 (in-package :std/defsys)
+(declaim (optimize (speed 3)))
 (in-readtable :std)
 
 (defvar *sysdefs* nil
@@ -57,6 +58,10 @@ ASDF:DEFSYSTEM.")
 (define-condition system-warning (warning system-condition) ())
 (defwarning simple-system-warning (simple-warning system-warning) () (:auto t))
 (deferror simple-system-error (simple-error system-condition) () (:auto t))
+
+(deferror system-session-missing (system-error) ()
+  (:report "Missing *SYSTEM-SESSION*.")
+  (:auto t))
 
 (deferror defsys-load-error (system-error file-error)
   ((system-name :initarg :name :accessor error-system-name))
@@ -193,14 +198,6 @@ ending with the target component name."
         (loop for p in path
               do (setf c (find p (components c) :test 'string-equal :key 'name))
               finally (return c)))))
-
-;;; Tasks
-;; System Tasks are simple function which take a single component as an argument
-(defkernel system-task (task) ())
-
-;;; Jobs
-;; System Jobs are effectively plans composed of system tasks
-(defkernel system-job (job system-task) ())
 
 ;;; Provider
 (eval-when (:compile-toplevel :load-toplevel)
@@ -372,24 +369,22 @@ ending with the target component name."
        (%load-module v k)))))
 
 (defun load-module (name &rest args)
-  (let ((*current-module-name* name))
+  (let ((*module* name))
     (when-let ((*load-module* (apply 'find-module name args)))
       (apply '%load-module *load-module* args))))
 
-;; TODO 2025-09-20: 
-(defun partial-load-module (name &rest args)
-  (if args 
-      (nyi!)
-      (load-module name)))
+(defun load-modules (name &rest args)
+  (mapcar (lambda (x) 
+            (if (atom x)
+                (load-module name x)
+                (apply 'load-module name x)))
+          args))
 
-(defun unload-module (name)
+(defun unload-module (name &rest args)
+  (declare (ignore args))
   (when (eql *module* name)
     (setf *module* nil))
   (nyi!))
-
-(defun partial-unload-module (name &rest args)
-  (declare (ignore args))
-  (unload-module name))
 
 (defun module-provide-system (name)
   "Provide a SYSTEM, adding valid entries to the *MODULES* variable. The function
@@ -406,7 +401,7 @@ USE should be called in order to load and activate a module."
 (defmacro use (name &body body)
   "Load and activate a package or module by NAME with the provider forms in BODY."
   (if body
-      `(partial-load-module ,name ,@body)
+      `(load-modules ,name ,@body)
       (if (find-package name)
           `(use-package ,name)
           `(load-module ,name))))
@@ -418,7 +413,7 @@ USE should be called in order to load and activate a module."
 (defmacro refuse (name &body body)
   "Unload and deactivate a package or module by NAME modulo BODY."
   (if body
-      `(partial-unload-module ,name ,@body)
+      `(unload-module ,name ,@body)
       (if (find-package name)
           `(unuse-package ,name)
           `(unload-module ,name))))
@@ -602,15 +597,44 @@ system jobs to be executed in an async context."
 (sb-ext:defglobal *system-session* nil
     "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
-(defmacro with-system-session ((&optional sys) &body body)
+(defun check-system-session ()
+  (assert *system-session* (*system-session*) 'system-session-missing))
+
+(defmacro with-system-session ((sym &optional sys) &body body)
   "Bind *SYSTEM-SESSION* to a fresh value around BODY."
-  `(progn
-     (unless *system-session* (setf *system-session* (make-system-session)))
-     . ,(if sys
-            `((let ((*default-pathname-defaults* (if (pathnamep ,sys) ,sys
-                                                     (pathname (directory-namestring (probe-file (path ,sys)))))))
-                ,@body))
-            `(,@body))))
+  `(let ((,sym (or *system-session* (make-system-session)))
+         ,@(when sys `((*default-pathname-defaults* 
+                        (if (pathnamep ,sys) 
+                            ,sys
+                            (pathname (directory-namestring (probe-file (path ,sys)))))))))
+     ,@body))
+
+(defmacro with-system-files (files &body body)
+  `(progn 
+     ,@body
+     (loop for f in ,files 
+           do (setf (gethash f (system-session-file-cache *system-session*)) (sb-ext:get-time-of-day)))))
+
+(defmacro with-system-task ((sym &rest args) &body body)
+  `(let ((,sym (make-instance 'system-task ,@args)))
+     . ,body))
+
+(defmacro with-system-job ((sym &rest args) &body body)
+  `(let ((,sym (make-instance 'system-job ,@args)))
+     . ,body))
+
+;;; Tasks
+;; System Tasks are simple function which take a single component as an argument
+(defkernel system-task (task) 
+  ((name :reader name :initarg :name)))
+
+(defmethod initialize-instance :after ((self system-task) &key)
+  (check-system-session)
+  (setf (gethash (name self) (system-session-task-cache *system-session*)) self))
+
+;;; Jobs
+;; System Jobs are effectively plans composed of system tasks
+(defkernel system-job (job system-task) ())
 
 ;;; Defsys
 (defun %parse-provide-form (form)
@@ -623,15 +647,13 @@ system jobs to be executed in an async context."
      form)
     (nreverse ret)))
 
-#+nil
 (defun %parse-require-form (form)
-  (mapcar
+  (mapc
    (lambda (x)
-     (if (atom x)
-         (load-system x :asdf t) ; default case, assumed to be a system
-         (apply 'partial-load-module x))
-     x)
-   form))
+     (when-let ((y (find-system (if (atom x) x (car x)))))
+       (init y)))
+     form)
+   form)
 
 (defvar *wildcard-regexp* (cl-ppcre:create-scanner ".*"))
 
@@ -763,7 +785,7 @@ internally. On success the path is added to the *SYSDEFS* list."
       (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
         (setf path compiled)))
     ;; (mumble "loading systems from ~A" path)
-    (with-system-session ((pathname (directory-namestring path)))
+    (with-system-session (s (pathname (directory-namestring path)))
       (when 
           (restart-case (load path)
             (load-file (p)
@@ -771,7 +793,7 @@ internally. On success the path is added to the *SYSDEFS* list."
               :interactive (lambda () 
                              (list (setf path (interact-line "File: "))))
               (load p)))
-        (setf (gethash path (system-session-file-cache *system-session*))
+        (setf (gethash path (system-session-file-cache s))
               (sb-ext:get-time-of-day))
         (pushnew path *sysdefs* :test 'equal)
         (if name 
@@ -798,8 +820,9 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and some PROVIDE forms to be loaded. The
 underlying object SELF remains unmodified."
-  (with-system-session (self)
-    (let ((*current-module-name* (name self)))
+  (with-system-session (s self)
+    (declare (ignore s))
+    (let ((*module* (name self)))
       ;; first process all requires
       (mapc
        (lambda (x)
@@ -808,9 +831,9 @@ underlying object SELF remains unmodified."
              (apply 'load-module x)))
        (slot-value self 'require))
       ;; then we call providers
-      (mapc (lambda (x) (call-provider (car x) (cons *current-module-name* (cdr x))))
+      (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
             (slot-value self 'provide))
-      t)))
+      self)))
   ;; (typecase x
   ;;   ;; symbols and strings use PROVIDE
   ;;   ((or symbol simple-string) (provide x) x)
@@ -838,7 +861,8 @@ LOAD-SYS is called."
 (defgeneric register-system (name self)
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
   (:method (name self)
-    (with-system-session (self)
+    (with-system-session (s self)
+      (declare (ignore s))
       (setf (gethash name *system-table*) self))))
 
 (defgeneric find-system (self &key &allow-other-keys)
@@ -855,9 +879,10 @@ LOAD-SYS is called."
   (:method ((self system) &rest args)
     (apply 'remove-system (name self) args))
   (:method ((self t) &key)
-    (with-system-session ()
+    (with-system-session (s self)
       ;; freeze the session by acquiring the queue lock
-      (with-queue-lock (system-session-systems *system-session*)
+      (with-queue-lock (system-session-systems s)
+        ;; should we also remove from the queue?
         (remhash self *system-table*)))))
 
 (defgeneric load-system (self &key &allow-other-keys)
@@ -869,7 +894,8 @@ LOAD-SYS is called."
     ;; - build-plan
     (if asdf 
         (asdf:load-system (name self) :verbose verbose :force force)
-        (with-system-session (self)
+        (with-system-session (s self)
+          (declare (ignore s))
           (case (plan self)
             ((or :serial nil) (mapc 'load-component (components self)))
             (t (nyi! "Unrecognized PLAN keyword"))))))
@@ -887,7 +913,8 @@ LOAD-SYS is called."
     (mumble "Compiling system ~A" (name self))
     (if asdf
         (asdf:compile-system (name self) :verbose verbose)
-        (with-system-session (self)
+        (with-system-session (s self)
+          (declare (ignore s))
           (mapc 'compile-component (components self)))))
   (:method ((self symbol) &rest args &key (default :error))
     (remf args :default)
