@@ -400,15 +400,18 @@ when remove-kv is called"
   "A comparison function that mirrors the ordering of the data stores for <= on
 all sortable types. It does not provide ordering on non-sorted values other
 than by type class (i.e. not serialized lexical values)"
-  (declare (optimize (speed 3) (safety 2) (debug 0)))
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
   (handler-case 
       (typecase a
-        (number (<= a b))
+        (fixnum (<= a (the fixnum b)))
+        (rational (<= a (the rational b)))
+        (single-float (<= a (the single-float b)))
+        (double-float (<= a (the double-float b)))
         (character (<= (char-code a) (char-code b)))
         (string (string-not-greaterp a b))
         (symbol (string-not-greaterp (symbol-name a) (symbol-name b)))
         (pathname (string-not-greaterp (namestring a) (namestring b)))
-        (stored (<= (oid a) (oid b)))
+        (stored (<= (the oid (oid a)) (the oid (oid b))))
         (cons (or (compare<= (car a) (car b))
                   (compare<= (cdr a) (cdr b))))
         (t nil))
@@ -419,15 +422,18 @@ than by type class (i.e. not serialized lexical values)"
   "A comparison function that mirrors the ordering of the data stores for < on
 all sortable types. It does not provide ordering on non-sorted values other
 than by type class (i.e. not serialized lexical values)"
-  (declare (optimize (speed 3) (safety 2) (debug 0)))
+  (declare (optimize (speed 3) (safety 0) (debug 0)))
   (handler-case 
       (typecase a
-        (number (< a b))
+        (fixnum (< a (the fixnum b)))
+        (rational (< a (the rational b)))
+        (single-float (< a (the single-float b)))
+        (double-float (< a (the double-float b)))
         (character (< (char-code a) (char-code b)))
         (string (string-lessp a b))
         (symbol (string-lessp (symbol-name a) (symbol-name b)))
         (pathname (string-lessp (namestring a) (namestring b)))
-        (stored (< (oid a) (oid b)))
+        (stored (< (the oid (oid a)) (the oid (oid b))))
         (cons (if (compare-equal (car a) (car b))
                   (compare< (cdr a) (cdr b))
                   (compare< (car a) (car b))))

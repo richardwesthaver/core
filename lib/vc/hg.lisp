@@ -256,6 +256,10 @@ first value and 'stuff' as the second."
 (defmethod vc-addremove ((self hg-repo) &rest files)
   (apply 'vc-run self "addremove" files))
 
+(defmethod vc-purge ((self hg-repo) &key all (ignored t) &allow-other-keys) 
+  (apply 'vc-run self "purge" 
+         `(,@(when all "--all") ,@(when ignored "--ignored"))))
+
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 
 (defmethod vc-branch ((self hg-repo)) (vc-run self "branch"))

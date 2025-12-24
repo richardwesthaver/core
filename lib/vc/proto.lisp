@@ -61,6 +61,10 @@
   (:documentation "Add any untracked files in the current directory and delete tracked files that
 are missing."))
 
+(defgeneric vc-purge (self &key &allow-other-keys)
+  (:documentation "Purge the repo of unrecognized files. By default we only clear files and
+directories which are ignored."))
+
 (defgeneric vc-branch (self)
   (:documentation "Return the name of the current branch."))
 

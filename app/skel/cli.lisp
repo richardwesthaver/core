@@ -107,15 +107,16 @@
 
 (defcmd skc-make ()
   (let ((sk *skel-project*))
-    (sb-ext:enable-debugger)
-    (if *args*
-        (loop for a in *args*
-              do (debug!
-                  (if-let ((rule (sk-find a sk)))
-                    (sk-make sk rule)
-                    ;;  TODO 2024-08-23: restart condition here
-                    (skel-simple-error "rule not found: ~A" a))))
-        (sk-make sk (aref (skel/core/obj::rules sk) 0)))))
+    (with-directory (project-root sk)
+      (sb-ext:enable-debugger)
+      (if *args*
+          (loop for a in *args*
+                do (debug!
+                    (if-let ((rule (sk-find a sk)))
+                      (sk-make sk rule)
+                      ;;  TODO 2024-08-23: restart condition here
+                      (skel-simple-error "rule not found: ~A" a))))
+          (sk-make sk (aref (skel/core/obj::rules sk) 0))))))
 
 (defcmd skc-status ()
   (vc:vc-status (vc:vc *skel-project*)))
@@ -199,10 +200,6 @@
    (:name edit
     :description "edit a project file in emacs."
     :thunk skc-edit)
-   (:name show
-    :description "show skel objects slots"
-    :opts ((:name "file" :description "path to skelfile" :type file))
-    :thunk skc-show)
    (:name status
     :description "show the current project status"
     :thunk skc-status)

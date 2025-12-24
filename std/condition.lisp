@@ -375,8 +375,8 @@ Examples:
 (defmacro protect-abort ((&body cleanup-forms) &body body)
   "Executes the BODY, and if during the execution any non-local
 exit happens, executes the CLEANUP-FORMS"
-  (std/sym:with-gensyms (normal-exit)
-    `(let* ((,normal-exit nil))
+  (sb-int:with-unique-names (normal-exit)
+    `(let ((,normal-exit nil))
        (unwind-protect
             (multiple-value-prog1 (progn ,@body)
               (setq ,normal-exit t))

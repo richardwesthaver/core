@@ -340,7 +340,7 @@ captured and later returned in place of the condition."
                                  &key
                                  ,@(mapcar #'list +optimization-quality-keywords+
                                            '#1=(optimization-quality-range-designator . #1#))
-                                 (filter function)))
+                                 (:filter function)))
                 map-optimization-quality-combinations
                 map-optimize-declarations))
 

@@ -199,6 +199,8 @@ ASDF:*USER-CACHE*"
 (defun sk-project-clean (&optional (project *skel-project*))
   "Default function called to clean a SK-PROJECT."
   (with-directory (project-root project)
-    (delete-directory ".stash/" :recursive t)))
+    (vc:vc-purge (vc:vc project))
+    (when-let ((stash (probe-directory ".stash/")))
+      (delete-directory stash :recursive t))))
 
 (setq *default-clean-function* 'sk-project-clean)

@@ -7,6 +7,10 @@
 (std-int:in-readtable :std)
 
 ;;;_. System Paths
+(defun user-config-path () (funcall sb-ext:*userinit-pathname-function*))
+(defmethod std/meta:init ((self (eql :user)) &key (load t))
+  (when load (load (user-config-path))))
+
 ;; These paths may be rebound based on application context.
 (defvar *stash* (merge-pathnames ".stash/" (user-homedir-pathname)))
 (defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
@@ -344,6 +348,7 @@ we can't determine endianness at compile-time.")
   #+x86 t
   #+x86-64 nil)
 
+#+nil
 (defun register-project-directory (path &optional (asdf t))
   "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY* (as
 long as ASDF is non-nil)."

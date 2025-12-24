@@ -39,11 +39,17 @@ project-like objects."))
 
 (defvar *default-project-class* 'simple-project)
 
-(defconfig project-config () ()
+(defglobal *project-table* (make-hash-table)
+  "An EQL hash-table containing all registered projects.")
+
+(defconfig project-config (project-metadata ast) ()
   (:documentation "A generic project configuration."))
 
 (defun make-project (name &rest args &key (class *default-project-class*) &allow-other-keys)
   (apply 'make-instance class :name name (remove-from-plist args :class)))
+
+(defun register-project (project)
+  (setf (gethash (name project) *project-table*) project))
 
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)

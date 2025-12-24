@@ -1011,6 +1011,7 @@
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
+  (:import-from :std/named-readtables :readtable :readtable-name)
   (:import-from :std/list :toposort)
   (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
   (:import-from :sb-ext :without-package-locks)
@@ -1458,7 +1459,7 @@
    :std/seq :std/pipe :std/prim :std/condition
    :std/print :std/meta :std/path :std/sym
    :std/macs)
-  (:import-from :std/named-readtables :in-readtable)
+  (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
   (:shadow :load-system :compile-system :find-system :system)
@@ -1506,6 +1507,7 @@
    :register-system
    :test-system
    :with-system-session
+   :make-system-session
    :*system-session*
    :*system-table*
    :+sys-extension+))

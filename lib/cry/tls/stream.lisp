@@ -99,195 +99,194 @@
       ;; fixme: kein out-of-file wenn (zerop start)?
       start)))
 
-  (defmethod stream-write-byte ((stream ssl-stream) b)
-    (let ((buf (output-buffer stream)))
-      (when (eql (length buf) (output stream))
-        (force-output stream))
-      (setf (elt buf (output stream)) b)
-      (incf (output stream)))
-    b)
+(defmethod stream-write-byte ((stream ssl-stream) b)
+  (let ((buf (output-buffer stream)))
+    (when (eql (length buf) (output stream))
+      (force-output stream))
+    (setf (elt buf (output stream)) b)
+    (incf (output stream)))
+  b)
 
-  (defmacro while (cond &body body)
-    `(do () ((not ,cond)) ,@body))
+(defmacro while (cond &body body)
+  `(do () ((not ,cond)) ,@body))
 
-  (defmethod stream-write-sequence ((stream ssl-stream) seq &optional (start 0) end)
-    (declare (fixnum start))
-    (let ((buf (output-buffer stream))
-          (end (or end (length seq))))
-      (declare (fixnum end))
-      (when (> (+ (- end start) (output stream)) (length buf))
-        ;; not enough space left?  flush buffer.
-        (force-output stream)
-        ;; still doesn't fit?
-        (while (> (- end start) (length buf))
-          (replace buf seq :start2 start)
-          (incf start (length buf))
-          (setf (output stream) (length buf))
-          (force-output stream)))
-      (replace buf seq
-               :start1 (output stream)
-               :start2 start
-               :end2 end)
-      (incf (output stream) (- end start)))
-    seq)
+(defmethod stream-write-sequence ((stream ssl-stream) seq &optional (start 0) end)
+  (declare (fixnum start))
+  (let ((buf (output-buffer stream))
+        (end (or end (length seq))))
+    (declare (fixnum end))
+    (when (> (+ (- end start) (output stream)) (length buf))
+      ;; not enough space left?  flush buffer.
+      (force-output stream)
+      ;; still doesn't fit?
+      (while (> (- end start) (length buf))
+        (replace buf seq :start2 start)
+        (incf start (length buf))
+        (setf (output stream) (length buf))
+        (force-output stream)))
+    (replace buf seq
+             :start1 (output stream)
+             :start2 start
+             :end2 end)
+    (incf (output stream) (- end start)))
+  seq)
 
-  (defmethod stream-finish-output ((stream ssl-stream))
-    (stream-force-output stream))
+(defmethod stream-finish-output ((stream ssl-stream))
+  (stream-force-output stream))
 
-  (defmethod stream-force-output ((stream ssl-stream))
-    (let ((buf (output-buffer stream))
-          (fill-ptr (output stream))
-          (handle (sap stream)))
-      (when (plusp fill-ptr)
-        (unless handle
-          (error "output operation on closed SSL stream"))
-        (with-vector-sap (ptr buf)
-          (ensure-ssl-funcall stream #'plusp #'ssl-write handle ptr fill-ptr))
-        (setf (output stream) 0))))
+(defmethod stream-force-output ((stream ssl-stream))
+  (let ((buf (output-buffer stream))
+        (fill-ptr (output stream))
+        (handle (sap stream)))
+    (when (plusp fill-ptr)
+      (unless handle
+        (error "output operation on closed SSL stream"))
+      (with-vector-sap (ptr buf)
+        (ensure-ssl-funcall stream #'plusp #'ssl-write handle ptr fill-ptr))
+      (setf (output stream) 0))))
 
-  (defun install-nonblock-flag (fd)
-    (sb-posix:fcntl 
-     fd
-     sb-posix::f-setfl
-     (logior (sb-posix:fcntl fd sb-posix::f-getfl)
-             sb-posix::o-nonblock)))
+(defun install-nonblock-flag (fd)
+  (sb-posix:fcntl 
+   fd
+   sb-posix::f-setfl
+   (logior (sb-posix:fcntl fd sb-posix::f-getfl)
+           sb-posix::o-nonblock)))
 
-  (defvar *default-unwrap-stream-p* t
-    "Default value for UNWRAP-STREAM-P function parameter.
+(defvar *default-unwrap-stream-p* t
+  "Default value for UNWRAP-STREAM-P function parameter.
 
 If true (the default), cl+ssl will try to extract file descriptor
 from the given TCP Lisp stream and tell OpenSSL to use a socket BIO
 based on that file descriptor;
 otherwise use a Lisp BIO wrapping the TCP Lisp stream.")
 
-  (defun install-sap-and-bio (stream handle socket unwrap-stream-p)
-    (setf (sap stream) handle)
-    (when unwrap-stream-p
-      (let ((fd (sb-sys:fd-stream-fd socket)))
-        (when fd
-          (setf socket fd))))
-    (etypecase socket
-      (integer
-       (install-nonblock-flag socket)
-       (ssl-set-fd handle socket))
-      (stream
-       (ssl-set-bio handle (bio-new-lisp) (bio-new-lisp))))
+(defun install-sap-and-bio (stream handle socket unwrap-stream-p)
+  (setf (sap stream) handle)
+  (when unwrap-stream-p
+    (let ((fd (sb-sys:fd-stream-fd socket)))
+      (when fd
+        (setf socket fd))))
+  (etypecase socket
+    (integer
+     (install-nonblock-flag socket)
+     (ssl-set-fd handle socket))
+    (stream
+     (ssl-set-bio handle (bio-new-lisp) (bio-new-lisp))))
 
-    ;; The below call setting +SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER+ mode
-    ;; existed since commit 5bd5225.
-    ;; It is implemented wrong - ssl-ctx-ctrl expects
-    ;; a context as the first parameter, not handle.
-    ;; It was lucky to not crush on Linux and Windows,
-    ;; untill crash was detedcted on OpenBSD + LibreSSL.
-    ;; See https://github.com/cl-plus-ssl/cl-plus-ssl/pull/42.
-    ;; We keep this code commented but not removed because
-    ;; we don't know what David Lichteblau meant when
-    ;; added this - maybe he has some idea?
-    ;; (Although modifying global context is a bad
-    ;; thing to do for install-sap-and-bio function,
-    ;; also we don't see a need for movable buffer -
-    ;; we don't repeat calls to ssl functions with
-    ;; moved buffer).
-    ;;
-    ;; (ssl-ctx-ctrl handle
-    ;;   +SSL_CTRL_MODE+
-    ;;   +SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER+
-    ;;   nil)
+  ;; The below call setting +SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER+ mode
+  ;; existed since commit 5bd5225.
+  ;; It is implemented wrong - ssl-ctx-ctrl expects
+  ;; a context as the first parameter, not handle.
+  ;; It was lucky to not crush on Linux and Windows,
+  ;; untill crash was detedcted on OpenBSD + LibreSSL.
+  ;; See https://github.com/cl-plus-ssl/cl-plus-ssl/pull/42.
+  ;; We keep this code commented but not removed because
+  ;; we don't know what David Lichteblau meant when
+  ;; added this - maybe he has some idea?
+  ;; (Although modifying global context is a bad
+  ;; thing to do for install-sap-and-bio function,
+  ;; also we don't see a need for movable buffer -
+  ;; we don't repeat calls to ssl functions with
+  ;; moved buffer).
+  ;;
+  ;; (ssl-ctx-ctrl handle
+  ;;   +SSL_CTRL_MODE+
+  ;;   +SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER+
+  ;;   nil)
 
-    socket)
+  socket)
 
-  (defun install-key-and-cert (handle key certificate)
-    (when certificate
-      (unless (eql 1 (openssl::ssl-use-certificate-file handle
-                                                        certificate
-                                                        openssl::+x509-filetype-pem+))
-        (error 'openssl-error-initialize
-               :reason (format nil "Can't load certificate ~A" certificate))))
-    (when key
-      (unless (eql 1 (openssl::ssl-use-privatekey-file handle
-                                                       key
-                                                       openssl::+x509-filetype-pem+))
-        (error 'openssl-error-initialize :reason (format nil "Can't load private key file ~A" key)))))
+(defun install-key-and-cert (handle key certificate)
+  (when certificate
+    (unless (eql 1 (openssl::ssl-use-certificate-file handle
+                                                      certificate
+                                                      openssl::+x509-filetype-pem+))
+      (error 'openssl-error-initialize
+             :reason (format nil "Can't load certificate ~A" certificate))))
+  (when key
+    (unless (eql 1 (openssl::ssl-use-privatekey-file handle
+                                                     key
+                                                     openssl::+x509-filetype-pem+))
+      (error 'openssl-error-initialize :reason (format nil "Can't load private key file ~A" key)))))
 
-  (defun x509-certificate-names (x509-certificate)
-    (unless (null-alien x509-certificate)
-      (with-foreign-pointer (buf 1024)
-        (let ((issuer-name (x509-get-issuer-name x509-certificate))
-              (subject-name (x509-get-subject-name x509-certificate)))
-          (values
-           (unless (null-alien issuer-name)
-             (x509-name-oneline issuer-name buf 1024)
-             (sap-alien buf c-string))
-           (unless (null-alien subject-name)
-             (x509-name-oneline subject-name buf 1024)
-             (sap-alien buf c-string)))))))
+(defun x509-certificate-names (x509-certificate)
+  (unless (null-alien x509-certificate)
+    (with-foreign-pointer (buf 1024)
+      (let ((issuer-name (x509-get-issuer-name x509-certificate))
+            (subject-name (x509-get-subject-name x509-certificate)))
+        (values
+         (unless (null-alien issuer-name)
+           (x509-name-oneline issuer-name buf 1024)
+           (sap-alien buf c-string))
+         (unless (null-alien subject-name)
+           (x509-name-oneline subject-name buf 1024)
+           (sap-alien buf c-string)))))))
 
-  (defun ssl-stream-x509-certificate (ssl-stream)
-    (openssl::ssl-get1-peer-certificate (sap ssl-stream)))
+(defun ssl-stream-x509-certificate (ssl-stream)
+  (openssl::ssl-get1-peer-certificate (sap ssl-stream)))
 
-  (defun maybe-verify-client-stream (ssl-stream verify-mode hostname)
-    ;; VERIFY-MODE is one of NIL, :OPTIONAL, :REQUIRED
-    ;; HOSTNAME is either NIL or a string.
-    (when verify-mode
-      (let* ((handle (sap ssl-stream))
-             (srv-cert (openssl::ssl-get1-peer-certificate handle)))
-        (unwind-protect
-             (progn
-               (when (and (eq :required verify-mode)
-                          (null-alien srv-cert))
-                 (error 'server-certificate-missing
-                        :format-control "The server didn't present a certificate."))
-               ;; FIX 2025-12-13: always failing as zero-len self-signed cert
-               (let ((err (openssl::ssl-get-verify-result handle)))
-                 (unless (eql err openssl::+x509-v-ok+)
-                   (error 'openssl-error-verify :stream ssl-stream :code err)))
-               (when (and hostname
-                          (not (null-alien srv-cert)))
-                 (or (verify-hostname srv-cert hostname)
-                     ;; verify-hostname must either return true
-                     ;; or signal an error
-                     (error "Unexpected NIL returned by VERIFY-HOSTNAME for ~A"
-                            hostname))))
-          (unless (null-alien srv-cert)
-            (x509-free srv-cert))))))
+(defun maybe-verify-client-stream (ssl-stream verify-mode hostname)
+  ;; VERIFY-MODE is one of NIL, :OPTIONAL, :REQUIRED
+  ;; HOSTNAME is either NIL or a string.
+  (when verify-mode
+    (let* ((handle (sap ssl-stream))
+           (srv-cert (openssl::ssl-get1-peer-certificate handle)))
+      (unwind-protect
+           (progn
+             (when (and (eq :required verify-mode)
+                        (null-alien srv-cert))
+               (error 'server-certificate-missing
+                      :format-control "The server didn't present a certificate."))
+             (let ((err (openssl::ssl-get-verify-result handle)))
+               (unless (eql err openssl::+x509-v-ok+)
+                 (error 'openssl-error-verify :stream ssl-stream :code err)))
+             (when (and hostname
+                        (not (null-alien srv-cert)))
+               (or (verify-hostname srv-cert hostname)
+                   ;; verify-hostname must either return true
+                   ;; or signal an error
+                   (error "Unexpected NIL returned by VERIFY-HOSTNAME for ~A"
+                          hostname))))
+        (unless (null-alien srv-cert)
+          (x509-free srv-cert))))))
 
-  (defun make-alpn-proto-string (protocols)
-    "Convert list of protocol names to the wire-format byte string."
-    (with-output-to-string (s)
-      (dolist (proto protocols)
-        (check-type proto string)
-        (write-char (code-char (length proto)) s)
-        (write-string proto s))))
+(defun make-alpn-proto-string (protocols)
+  "Convert list of protocol names to the wire-format byte string."
+  (with-output-to-string (s)
+    (dolist (proto protocols)
+      (check-type proto string)
+      (write-char (code-char (length proto)) s)
+      (write-string proto s))))
 
-  (defmacro with-new-ssl ((var) &body body)
-    (with-gensyms (ssl)
-      `(let* ((,ssl (ssl-new *ssl-global-context*))
-              (,var ,ssl))
-         (when (null-alien ,ssl)
-           (error 'openssl-error-call :message "Unable to create SSL structure" :queue (read-openssl-error-queue)))
-         (protect-abort ((ssl-free ,ssl)) ,@body))))
+(defmacro with-new-ssl ((var) &body body)
+  (with-gensyms (ssl)
+    `(let* ((,ssl (ssl-new *ssl-global-context*))
+            (,var ,ssl))
+       (when (null-alien ,ssl)
+         (error 'openssl-error-call :message "Unable to create SSL structure" :queue (read-openssl-error-queue)))
+       (protect-abort ((ssl-free ,ssl)) ,@body))))
 
-  (defun handle-external-format (stream ef)
-    (if ef
-        (make-flex-stream stream :external-format ef)
-        stream))
+(defun handle-external-format (stream ef)
+  (if ef
+      (make-flex-stream stream :external-format ef)
+      stream))
 
-  ;; fixme: free the context when errors happen in this function
-  (defun make-ssl-client-stream (socket
-                                 &key
-                                 (unwrap-stream-p *default-unwrap-stream-p*)
-                                 hostname
-                                 close-callback
-                                 external-format
-                                 (verify *ssl-client-stream-verify-default*)
-                                 alpn-protocols
-                                 certificate key password
-                                 (cipher-list *ssl-cipher-list*)
-                                 method
-                                 (buffer-size *ssl-buffer-size*)
-                                 (input-buffer-size buffer-size)
-                                 (output-buffer-size buffer-size))
-    "Performs TLS/SSL handshake over the specified SOCKET using
+;; fixme: free the context when errors happen in this function
+(defun make-ssl-client-stream (socket
+                               &key
+                               (unwrap-stream-p *default-unwrap-stream-p*)
+                               hostname
+                               close-callback
+                               external-format
+                               (verify *ssl-client-stream-verify-default*)
+                               alpn-protocols
+                               certificate key password
+                               (cipher-list *ssl-cipher-list*)
+                               method
+                               (buffer-size *ssl-buffer-size*)
+                               (input-buffer-size buffer-size)
+                               (output-buffer-size buffer-size))
+  "Performs TLS/SSL handshake over the specified SOCKET using
 the SSL_connect OpenSSL function and returns a Lisp stream that
 uses OpenSSL library to encrypt the output data when sending
 it to the socket and to decrypt the input received.
@@ -383,46 +382,46 @@ passed as a parameter to an internall call of SSL_new.)
 
     OUTPUT-BUFFER-SIZE - size of the output buffer of the ssl stream.
         Defaults to the BUFFER-SIZE parameter."
-    (ensure-ssl :method method)
-    (let ((stream (make-instance 'ssl-stream
-                    :socket socket
-                    :close-callback close-callback
-                    :input-buffer-size input-buffer-size
-                    :output-buffer-size output-buffer-size)))
-      (with-new-ssl (handle)
-        (if hostname
-            (let ((chostname (make-alien-string hostname)))
-              (ssl-set-tlsext-host-name handle (alien-sap chostname))))
-        (when alpn-protocols
-          (with-alien ((string c-string (make-alien-string (make-alpn-proto-string alpn-protocols))))
-            (ssl-set-alpn-protos handle string (1- (length alpn-protocols)))))
-        (setf socket (install-sap-and-bio stream handle socket unwrap-stream-p))
-        (openssl::ssl-set-connect-state handle)
-        (when (and cipher-list
-                   (zerop (ssl-set-cipher-list handle cipher-list)))
-          (error 'openssl-error-initialize
-                 :reason
-                 "Can't set SSL cipher list: SSL_set_cipher_list returned 0"))
-        (with-pem-password (password)
-          (install-key-and-cert handle key certificate))
-        (collecting-verify-error (handle)
-          (ensure-ssl-funcall stream #'plusp #'ssl-connect handle))
-        (maybe-verify-client-stream stream verify hostname)
-        (handle-external-format stream external-format))))
+  (ensure-ssl :method method)
+  (let ((stream (make-instance 'ssl-stream
+                  :socket socket
+                  :close-callback close-callback
+                  :input-buffer-size input-buffer-size
+                  :output-buffer-size output-buffer-size)))
+    (with-new-ssl (handle)
+      (if hostname
+          (let ((chostname (make-alien-string hostname)))
+            (ssl-set-tlsext-host-name handle (alien-sap chostname))))
+      (when alpn-protocols
+        (with-alien ((string c-string (make-alien-string (make-alpn-proto-string alpn-protocols))))
+          (ssl-set-alpn-protos handle string (1- (length alpn-protocols)))))
+      (setf socket (install-sap-and-bio stream handle socket unwrap-stream-p))
+      (openssl::ssl-set-connect-state handle)
+      (when (and cipher-list
+                 (zerop (ssl-set-cipher-list handle cipher-list)))
+        (error 'openssl-error-initialize
+               :reason
+               "Can't set SSL cipher list: SSL_set_cipher_list returned 0"))
+      (with-pem-password (password)
+        (install-key-and-cert handle key certificate))
+      (collecting-verify-error (handle)
+        (ensure-ssl-funcall stream #'plusp #'ssl-connect handle))
+      (maybe-verify-client-stream stream verify hostname)
+      (handle-external-format stream external-format))))
 
-  ;; fixme: free the context when errors happen in this function
-  (defun make-ssl-server-stream (socket
-                                 &key
-                                 (unwrap-stream-p *default-unwrap-stream-p*)
-                                 close-callback
-                                 external-format
-                                 certificate key password
-                                 (cipher-list *ssl-cipher-list*)
-                                 method
-                                 (buffer-size *ssl-buffer-size*)
-                                 (input-buffer-size buffer-size)
-                                 (output-buffer-size buffer-size))
-    "Performs server-side TLS handshake over the specified SOCKET using
+;; fixme: free the context when errors happen in this function
+(defun make-ssl-server-stream (socket
+                               &key
+                               (unwrap-stream-p *default-unwrap-stream-p*)
+                               close-callback
+                               external-format
+                               certificate key password
+                               (cipher-list *ssl-cipher-list*)
+                               method
+                               (buffer-size *ssl-buffer-size*)
+                               (input-buffer-size buffer-size)
+                               (output-buffer-size buffer-size))
+  "Performs server-side TLS handshake over the specified SOCKET using
 the SSL_accept OpenSSL function and returns a Lisp stream that
 uses OpenSSL library to encrypt the output data when sending
 it to the socket and to decrypt the input received.
@@ -434,33 +433,33 @@ passed as a parameter to an internall call of SSL_new.)
 All parameters have the same meaning as documented
 for MAKE-SSL-CLIENT-STREAM.
 "
-    (ensure-ssl :method method)
-    (let ((stream (make-instance 'ssl-server-stream
-                    :socket socket
-                    :close-callback close-callback
-                    :certificate certificate
-                    :key key
-                    :input-buffer-size input-buffer-size
-                    :output-buffer-size output-buffer-size)))
-      (with-new-ssl (handle)
-        (setf socket (install-sap-and-bio stream handle socket unwrap-stream-p))
-        (openssl::ssl-set-accept-state handle)
-        (when (and cipher-list
-                   (zerop (ssl-set-cipher-list handle cipher-list)))
-          (error 'openssl-error-initialize
-                 :reason
-                 "Can't set SSL cipher list: SSL_set_cipher_list returned 0"))
-        (with-pem-password (password)
-          (install-key-and-cert handle key certificate))
-        (collecting-verify-error (handle)
-          (ensure-ssl-funcall stream #'plusp #'ssl-accept handle))
-        (handle-external-format stream external-format))))
+  (ensure-ssl :method method)
+  (let ((stream (make-instance 'ssl-server-stream
+                  :socket socket
+                  :close-callback close-callback
+                  :certificate certificate
+                  :key key
+                  :input-buffer-size input-buffer-size
+                  :output-buffer-size output-buffer-size)))
+    (with-new-ssl (handle)
+      (setf socket (install-sap-and-bio stream handle socket unwrap-stream-p))
+      (openssl::ssl-set-accept-state handle)
+      (when (and cipher-list
+                 (zerop (ssl-set-cipher-list handle cipher-list)))
+        (error 'openssl-error-initialize
+               :reason
+               "Can't set SSL cipher list: SSL_set_cipher_list returned 0"))
+      (with-pem-password (password)
+        (install-key-and-cert handle key certificate))
+      (collecting-verify-error (handle)
+        (ensure-ssl-funcall stream #'plusp #'ssl-accept handle))
+      (handle-external-format stream external-format))))
 
-  (defun get-selected-alpn-protocol (ssl-stream)
-    "A wrapper around SSL_get0_alpn_selected.
+(defun get-selected-alpn-protocol (ssl-stream)
+  "A wrapper around SSL_get0_alpn_selected.
 Returns the ALPN protocol selected by server, or NIL if none was selected.
 
 SSL-STREAM is the client ssl stream returned by make-ssl-client-stream. "
-    (with-alien ((ptr c-string) (len int))
-      (ssl-get0-alpn-selected (sap ssl-stream) (addr ptr) (addr len))
-      ptr))
+  (with-alien ((ptr c-string) (len int))
+    (ssl-get0-alpn-selected (sap ssl-stream) (addr ptr) (addr len))
+    ptr))

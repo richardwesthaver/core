@@ -487,4 +487,3 @@ stream, and the second value is the output stream."
     (sb-alien:alien-sap
      (sb-alien::alien-lambda sb-alien:void ((signum sb-alien:int))
        ,@body))))
-

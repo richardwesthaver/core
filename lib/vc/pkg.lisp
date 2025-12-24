@@ -10,10 +10,12 @@
    :vc-path
    :vc-head
    :vc-name
+   :vc-clean
    :vc-bundle :vc-unbundle
    :vc-error :vc-status
    :vc-clone :vc-push :vc-pull :vc-commit
-   :vc-init :vc-id :vc-add :vc-remove
+   :vc-init :vc-add 
+   :vc-remove
    :vc-addremove :vc-diff
    :vc-branch :repo
    :vc-meta :find-repo
@@ -34,7 +36,8 @@
    :vc-submodule
    :vc-submodules
    :vc-config
-   :find-repo-root))
+   :find-repo-root
+   :vc-purge))
 
 (defpackage :vc/git
   (:use :cl :std :cli :vc/proto :config)
