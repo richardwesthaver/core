@@ -405,7 +405,7 @@ default value will automatically combine the message's status-min and
 ;;;
 ;;; midi messages
 
-(define-midi-message message ()
+(define-midi-message midi-message (message)
   :slots ((time :initarg :time :accessor message-time)
 	  (status :initarg :status :reader message-status :initform 0))
   :length 1
@@ -413,7 +413,7 @@ default value will automatically combine the message's status-min and
   :writer (write-bytes status))
 
 (defgeneric print-midi-message (object stream)
-  (:method ((object message) stream)
+  (:method ((object midi-message) stream)
     (when (slot-boundp object 'time)
       (format stream " T=~A" (slot-value object 'time)))
     (when (slot-boundp object 'status)
@@ -423,12 +423,12 @@ default value will automatically combine the message's status-min and
 \(common ancestor\): that method prints the wrapping, then calls
 the PRINT-MIDI-MESSAGE method to print the slots."))
 
-(defmethod print-object ((obj message) stream)
+(defmethod print-object ((obj midi-message) stream)
   (print-unreadable-object (obj stream :type t :identity t)
     (print-midi-message obj stream))
   obj)
 
-(define-midi-message channel-message (message)
+(define-midi-message channel-message (midi-message)
   :slots ((channel :reader message-channel))
   :filler (setf channel (logand *status* #x0f)))
 
@@ -572,9 +572,9 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
   :length 2
   :writer (write-bytes #x7f 0))
 
-(define-midi-message system-message (message))
+(define-midi-message system-message (midi-message))
 
-(define-midi-message tempo-map-message (message))
+(define-midi-message tempo-map-message (midi-message))
 
 ;;; system common messages
 (define-midi-message common-message (system-message))
@@ -657,7 +657,7 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
 		 (loop for elem across data do (write-bytes elem))))
 
 ;;; meta messages
-(define-midi-message meta-message (message)
+(define-midi-message meta-message (midi-message)
   :status-min #xff :status-max #xff
   :length 2 ; the first data byte and the length byte
   :filler next-byte ; the first data byte which gives the type of meta message

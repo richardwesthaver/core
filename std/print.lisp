@@ -13,7 +13,8 @@
   "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
-(deffmt fmt-row "~&| ~{~A~^ | ~} |~%" "Format a single row of data delimited by '|'.")
+(deffmt fmt-row "~&| ~@{~A~^ | ~} |~%" "Format a single row of data delimited by '|'.")
+(deffmt fmt-column "~&~@{~A~%~}" "Format a single column of data delimited by a newline.")
 
 (defun printer-status ()
   "Return the current printer status."

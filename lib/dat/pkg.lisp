@@ -286,7 +286,7 @@
            #:message-channel #:message-key #:message-time
            #:message-velocity #:message-numerator #:message-denominator
            #:message-sf #:message-mi #:message-tempo #:message-program
-           #:message-value
+           #:message-value #:midi-message
            #:unknown-event #:data-byte #:dd #:bb #:cc #:nn))
 
 (defpkg :dat/png

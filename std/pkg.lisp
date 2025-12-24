@@ -1378,6 +1378,7 @@
   (:import-from :sb-impl :prin1-to-line)
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
+   :fmt-column
    :iprintln :fmt-tree :println :human-readable-size 
    :print-slots :format-slots :*print-slot-indent* :make-bitmap
    :with-bitmap :set-pixel :outside-bounds :draw

@@ -70,16 +70,19 @@
 (defcmd skc-show ()
   (if *args*
       (mapc (lambda (x) 
-              (let ((y (string-left-trim ":" x)))
+              (lety ((y (string-left-trim ":" x) :type base-string))
                 (if (sk-project-slot y nil)
-                    (sk-print
-                     (slot-value
-                      *skel-project*
-                      (sb-mop:slot-definition-name
-                       (find y 
-                             (sb-mop:class-slots (class-of *skel-project*))
-                             :test 'string=
-                             :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x)))))))
+                    (let ((val
+                            (slot-value
+                             *skel-project*
+                             (sb-mop:slot-definition-name
+                              (find y
+                                    (sb-mop:class-slots (class-of *skel-project*))
+                                    :test 'string=
+                                    :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))))))
+                      (if (sequencep val) 
+                          (apply 'fmt-column t (coerce val 'list))
+                          (sk-print val)))
                     (log:fatal! "unknown argument: ~A~%" x))))
             *args*)
       (cond
