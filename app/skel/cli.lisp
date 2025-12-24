@@ -33,7 +33,7 @@
   (inspect (or *skel-project* *skel-user-config*)))
 
 (defun call-with-args (action args)
-  (let* ((*default-pathname-defaults* *skel-path*))
+  (with-directory (project-root *skel-project*)
     (if (null args)
         (sk-call *skel-project* action)
         (mapc (lambda (x)
