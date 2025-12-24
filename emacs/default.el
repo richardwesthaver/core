@@ -72,7 +72,7 @@
 (package-refresh-contents)
 (package-install-selected-packages t)
 
-;;;_ Treesitter
+;;; Treesitter
 
 ;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
 
@@ -88,7 +88,7 @@
 ;;              (directory-files "/usr/local/share/tree-sitter")))
 ;;            treesit-extra-load-path))))
 
-;;;_ Variables
+;;; Variables
 (defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
@@ -97,7 +97,7 @@
 (defvar user-store-directory (expand-file-name ".store" user-home-directory))
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
 (defvar user-org-stash-directory (expand-file-name "org" user-stash-directory))
-(defvar default-theme 'leuven-dark)
+(defvar default-theme 'modus-vivendi)
 (defvar company-source-directory (join-paths user-home-directory "comp"))
 (defvar company-org-directory (join-paths company-source-directory "org"))
 (defvar company-babel-file (join-paths company-org-directory "meta/babel.org"))
@@ -120,7 +120,7 @@
   (require 'skel)
   (require 'c2))
 
-;;;_ Env
+;;; Env
 (require 'exec-path-from-shell)
 (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
                                       "SSH_AUTH_SOCK"
@@ -145,7 +145,7 @@
 (add-to-list 'exec-path "/usr/local/bin/")
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
 
-;;;_ Util
+;;; Util
 ;;;###autoload
 (defun edit-emacs-config (&optional src)
   (interactive (list current-prefix-arg))
@@ -154,7 +154,7 @@
 		user-custom-file)))
     (find-file file)))
 
-;;;_ Completions
+;;; Completions
 (use-package marginalia :ensure t
   :config (marginalia-mode))
 ;; avoid obsolete warnings about if-let -> if-let* etc
@@ -210,25 +210,25 @@
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
 
-;;;_ Desktop
+;;; Desktop
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
 
-;;;_ Multisession
+;;; Multisession
 (setq multisession-storage 'sqlite)
 
-;;;_ Kill Ring
+;;; Kill Ring
 (kill-ring-deindent-mode)
 
-;;;_ VC
+;;; VC
 ;; use rhg, fallback to hg. see hgrc
 (if (file-exists-p "~/.local/bin/rhg")
     (setq hg-binary "~/.local/bin/rhg"))
 
-;;;_ Dired
+;;; Dired
 (setq dired-dwim-target t
       dired-free-space 'separate)
 
-;;;_ Speedbar
+;;; Speedbar
 (require 'speedbar)
 (setq speedbar-sort-tags t
       speedbar-prefer-window t
@@ -236,7 +236,7 @@
 
 (add-hook 'speedbar-after-create-hook 'turn-on-hide-mode-line-mode)
 
-;;;_ Projects
+;;; Projects
 (setopt  project-list-file (expand-file-name "projects" user-emacs-directory)
          project-mode-line t
          project-file-history-behavior 'relativize)
@@ -254,10 +254,10 @@
   (interactive)
   (project-remember-projects-under company-source-directory t))
 
-;;;_ Tabs
+;;; Tabs
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
-;;;_ Lisp
+;;; Lisp
 (use-package company :ensure t)
 (require 'slime "slime")
 (defvar core-lisp-program "/usr/local/bin/core")
@@ -447,7 +447,7 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 (add-hook 'lisp-mode-hook 'slime-cape-enable)
 (add-hook 'slime-repl-mode-hook 'slime-cape-enable)
 
-;;;_ Eglot
+;;; Eglot
 ;; (with-eval-after-load 'eglot
 ;;   (unless (package-installed-p 'eglot-x)
 ;;     (package-vc-install '(eglot-x :url "https://vc.compiler.company/packy/eglot-x")))
@@ -458,36 +458,36 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 ;;                    ("rust-analyzer" :initializationOptions (:check (:command "clippy")))))
 ;;     (eglot-x-setup)))
 
-;;;_ Asm
+;;; Asm
 (require 'x86-lookup "x86-lookup")
 (setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf")
 (use-package nasm-mode :ensure t)
 (add-hook 'asm-mode-hook 'nasm-mode)
 
-;;;_ Rust
+;;; Rust
 (add-hook 'rust-mode-hook 'eglot-ensure)
 
 (setq rust-rustfmt-switches nil
       rust-indent-offset 2)
 
-;;;_ Python
+;;; Python
 (setq python-indent-offset 2)
 (add-hook 'python-mode-hook 'eglot-ensure)
 
-;;;_ Javascript
+;;; Javascript
 (setq js-indent-level 2
       css-indent-offset 2)
 
-;;;_ Bash
+;;; Bash
 (setq sh-basic-offset 2)
 
-;;;_ Graphviz
+;;; Graphviz
 ;; (use-package graphviz-dot-mode
 ;;   :ensure t
 ;;   :config
 ;;   (setq graphviz-dot-indent-width 2))
 
-;;;_ Comments
+;;; Comments
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
@@ -606,7 +606,7 @@ specified by `prog-comment-timestamp-format-verbose'."
 (setq hexl-bits 8)
 (setq tab-width 4)
 
-;;;_ Keyboard Macros
+;;; Keyboard Macros
 (defun toggle-macro-recording ()
   (interactive)
   (if defining-kbd-macro
@@ -619,7 +619,7 @@ specified by `prog-comment-timestamp-format-verbose'."
       (end-kbd-macro)
     (call-last-kbd-macro)))
 
-;;;_ Registers
+;;; Registers
 ;; - additional register vtypes: buffer
 (defun decrement-register (number register)
   "Subtract NUMBER from the contents of register REGISTER.
@@ -658,7 +658,7 @@ Interactively, NUMBER is the prefix arg."
 ;;   (cond
 ;;    (t (cl-call-next-method val delete))))
 
-;;;_ Outlines
+;;; Outlines
 (defun outline-hook (&optional rx)
   "Enable `outline-minor-mode' and set `outline-regexp'."
   (when rx (setq-local outline-regexp rx))
@@ -688,15 +688,7 @@ Interactively, NUMBER is the prefix arg."
                (html-mode)
                (skel-mode))
 
-;; Activate allout in prog buffers
-(require 'allout)
-(setopt allout-auto-activation t
-	allout-default-layout '(0)
-	allout-widgets-auto-activation t)
-
-(add-hook 'outline-minor-mode-hook 'allout-minor-mode)
-
-;;;_ Scratch
+;;; Scratch
 (defcustom default-scratch-buffer-mode 'lisp-interaction-mode
   "Default major mode for new scratch buffers"
   :group 'default
@@ -779,7 +771,7 @@ buffer."
     (insert initial-scratch-message)
     (lisp-interaction-mode)))
 
-;;;_ Shell
+;;; Shell
 (defun set-no-process-query-on-exit ()
   (let ((proc (get-buffer-process (current-buffer))))
     (when (processp proc)
@@ -788,7 +780,7 @@ buffer."
 (add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
 (add-hook 'term-exec-hook 'set-no-process-query-on-exit)
 
-;;;_ Eshell
+;;; Eshell
 (defun eshell-new()
   "Open a new instance of eshell."
   (interactive)
@@ -848,7 +840,7 @@ buffer."
                                (delete-dups
                                 (ring-elements eshell-history-ring)))))
 
-;;;_ Eww
+;;; Eww
 (setopt
  browse-url-browser-function 'eww
  eww-auto-rename-buffer 'title
@@ -911,15 +903,15 @@ Add this function to appropriate major mode hooks such as
 (add-hook 'eww-mode-hook 'shr-heading-setup-imenu)
 (add-hook 'eww-mode-hook (lambda () (define-key eww-mode-map "i" shr-heading-map)))
 
-;;;_ Tramp
+;;; Tramp
 (setopt tramp-default-method "ssh"
         tramp-default-user user-login-name
         tramp-default-host "localhost")
 
-;;;_ Imenu
+;;; Imenu
 ;; (use-package imenu-list :ensure t)
 
-;;;_ Org
+;;; Org
 (require 'org)
 (require 'org-agenda)
 (require 'org-id)
@@ -1618,16 +1610,16 @@ EXT is a list of the extensions of files to be included."
      files)
     files))
 
-;;;_ Dictionary
+;;; Dictionary
 (setq dictionary-server "compiler.company"
       switch-to-buffer-obey-display-actions t)
 
-;;;_ Ispell
+;;; Ispell
 ;; requires aspell and a hunspell dictionary (hunspell-en_us)
 (setq-default ispell-program-name "hunspell")
 (add-hook 'mail-send-hook  #'ispell-message)
 
-;;;_ Skel
+;;; Skel
 (require 'skel)
 (require 'skt)
 

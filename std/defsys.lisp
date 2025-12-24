@@ -833,7 +833,18 @@ internally. On success the path is added to the *SYSDEFS* list."
             (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
             t)))))
 
-;;; Protocol
+;;; Templates
+(deft/generic (s.load #'subtypep) sym (&key))
+(deft/generic (s.compile #'subtypep) sym (&key))
+(deft/generic (s.save #'subtypep) sym (&key))
+(deft/generic (c.load #'subtypep) sym (&key))
+(deft/generic (c.compile #'subtypep) sym (&key))
+(deft/generic (c.save #'subtypep) sym (&key))
+
+(defmacro define-system-method ())
+(defmacro define-component-method ())
+
+;;; Protocola
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
