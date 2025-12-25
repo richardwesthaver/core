@@ -76,22 +76,21 @@ is bound to the correct target THREAD-POOL before calling."
   "A function which drives THREAD-POOLs.")
 
 (declaim (worker-kernel-function %work))
+
 (definline %work (&optional work)
   "Default worker-kernel-function."
   (declare (optimize (speed 3) (safety 0)))
   (let ((work (or work (when-let ((w (work *worker*))) (pop-spin-queue w)))))
     (typecase work
-      (function (funcall work))
       (null)
       (cons (apply (the function (car work)) (cdr work)))
+      (function (funcall work))
       (t work))))
 
 (defparameter *worker-kernel* (make-kernel #'%work)
   "A kernel which drives WORKERs.")
 
 ;;; Globals
-(sb-ext:defglobal *worker-threads* nil
-    "list of worker threads.")
 (sb-ext:defglobal *super-threads* nil
     "List of threads with supervisor privileges.")
 (sb-ext:defglobal *oracle-table* (make-hash-table)
@@ -466,9 +465,6 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 
 (defmethod name ((self worker)) (thread-name (worker-thread self)))
 
-(defmethod initialize-instance :after ((self worker) &key &allow-other-keys)
-  (push (worker-thread self) *worker-threads*))
-
 (defmethod print-object ((self worker) stream)
   (let* ((thread (worker-thread self))
          (state (cond ((thread-alive-p thread) :running)
@@ -535,7 +531,6 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 (defun join-worker (worker)
   (declare (worker worker))
   (let ((th (worker-thread worker)))
-    (remove th *worker-threads* :test 'thread=)
     (join-thread th)))
 
 ;; called from pool
@@ -1248,8 +1243,9 @@ Calling `broadcast-work' from inside a worker is an error."
   (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait 2)) *thread-pool-table*))
 
 (pushnew 'exit-workers sb-ext:*exit-hooks*)
-(pushnew 'exit-thread-pools sb-ext:*save-hooks*)
 (pushnew 'exit-workers sb-ext:*save-hooks*)
+(pushnew 'exit-thread-pools sb-ext:*exit-hooks*)
+(pushnew 'exit-thread-pools sb-ext:*save-hooks*)
 
 ;;; Utils
 (defmacro with-timeout* ((seconds timeout-form) &body body)

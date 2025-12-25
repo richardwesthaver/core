@@ -1226,6 +1226,8 @@
    :work
    :scheduler
    :make-scheduler
+   :schedule-work
+   :submit-raw-work
    :worker-kernel-function
    :pool-kernel-function
    :channel-kernel-function

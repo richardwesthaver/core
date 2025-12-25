@@ -30,6 +30,10 @@
   (:documentation "Base class of connection objects between network nodes. Compatible with the
 EDGE and ID protocols."))
 
+(defgeneric open-connection (self &key))
+(defgeneric open-connection-with (conn self &key))
+(defgeneric close-connection (self))
+
 (defclass route (obj:edgex) ()
   (:documentation "Base class of route objects which may be spawned by a router. Compatible with
 the EDGE and ID protocols."))

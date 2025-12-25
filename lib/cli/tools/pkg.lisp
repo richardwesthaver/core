@@ -205,6 +205,7 @@
    :*networkctl* :run-networkctl
    :*resolvectl* :run-resolvectl
    :*journalctl* :run-journalctl
+   :*busctl* :run-busctl
    :*perf* :run-perf :perf-record :perf-inject-jit))
 
 (defpkg :cli/tools/rust

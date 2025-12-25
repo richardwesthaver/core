@@ -48,6 +48,7 @@
 (defclass udp-server (udp-socket server) ())
 (defclass udp-sink (udp-client sink) ())
 (defclass udp-source (udp-server source) ())
+(defclass udp-connection (udp-socket connection) ())
 
 ;;; MTU Discovery
 ;; ref: https://www.rfc-editor.org/rfc/rfc9000.html#section-14.3

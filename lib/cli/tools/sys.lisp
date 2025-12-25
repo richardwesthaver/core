@@ -100,6 +100,11 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))                                    
       (machinectl-error "Machinectl command failed: ~A ~A" *machinectl* (or args "")))))
 
+(define-cli-tool :busctl (&rest args)                                              
+  (let ((proc (sb-ext:run-program *busctl* args :wait t :output t)))               
+    (unless (eq 0 (sb-ext:process-exit-code proc))                                    
+      (busctl-error "Busctl command failed: ~A ~A" *busctl* (or args "")))))
+
 ;;; Perf
 
 ;; Linux perf is the modern means of collecting performance info. In languages

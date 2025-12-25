@@ -598,7 +598,7 @@ for processing.")
     (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
     ;; A simple cache of TASK results
     (task-cache (make-hash-table))
-    ;; A simple cache of file operation times
+    ;; A simple cache of file operation times (:read :write :load :compile)
     (file-cache (make-hash-table :test 'equal))
     ;; A thread-pool which is dedicated to running system tasks
     pool
@@ -639,11 +639,15 @@ to be a system which is pushed to the session queue before BODY."
          (when ,system (push-queue ,system (queue ,sym)))
          ,@%body))))
 
-(defmacro with-system-files (files &body body)
+(defmacro with-system-files (files (&key load compile) &body body)
   `(progn 
      ,@body
      (loop for f in ,files 
-           do (setf (gethash f (system-session-file-cache *system-session*)) (sb-ext:get-time-of-day)))))
+           do (setf (gethash f (system-session-file-cache *system-session*))
+                    `(:read ,(sb-ext:get-time-of-day)
+                      :write ,(file-write-date f)
+                      ,,@(when load `(:load ,(sb-ext:get-time-of-day)))
+                      ,,@(when compile `(:load ,(sb-ext:get-time-of-day))))))))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -797,7 +801,6 @@ the following extensions:
                    (slot-value ,sys 'provide) (%parse-provide-form ',prov)
                    (slot-value ,sys 'require) ',req)
              (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
-             ;; (inspect ,sys)
              (register-system ,name ,sys)
              ,sys))))))
 

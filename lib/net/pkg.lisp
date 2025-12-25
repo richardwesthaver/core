@@ -28,9 +28,13 @@
    :server
    :server-config
    :peer
+   :route
    :proxy
    :tunnel
    :connection
+   :open-connection
+   :open-connection-with
+   :close-connection
    :connect
    :disconnect
    :make-client
@@ -106,6 +110,10 @@
    :*http-status-message-map* :http-status-message :http-keyword :+known-http-versions+
    :+known-http-methods+))
 
+(defpkg :net/codec/dbus
+  (:use :std-lisp :net/core)
+  (:export))
+
 (defpkg :net/udp
   (:nicknames :udp)
   (:use :cl :std :net/core :sb-bsd-sockets :config)
@@ -133,6 +141,18 @@
    :tcp-sink
    :tcp-socket
    :tcp-config))
+
+(defpkg :net/unix
+  (:nicknames :uds)
+  (:use :cl :std :net/core :sb-bsd-sockets :config)
+  (:export
+   :unix-server
+   :with-unix-client
+   :with-unix-server
+   :unix-receive-ping
+   :unix-echo
+   :unix-socket
+   :unix-client))
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
@@ -163,8 +183,12 @@
    :response-code-name
    :with-dns-error-handling))
 
+(defpkg :net/proto/dbus
+  (:use :std-lisp :net/core)
+  (:export))
+
 (defpkg :net/proto/ssh
-  (:use :cl :std :net/core :sb-bsd-sockets)
+  (:use :std-lisp :net/core :sb-bsd-sockets)
   (:export))
 
 (defpkg :net/proto/http

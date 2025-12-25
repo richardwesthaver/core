@@ -8,6 +8,7 @@
 
 ;;; Code:
 (in-package :std/bit)
+(declaim (optimize (speed 3) (safety 0)))
 
 ;;; Bits
 (defun make-bits (length &rest args)
@@ -596,3 +597,13 @@ the number having BYTES octets (defaulting to 4)."
 (defun octets (&rest bytes)
   "Return an octet-vector with initial contents BYTES."
   (make-octets (length bytes) :initial-contents bytes))
+
+(defun signed-to-unsigned (value size)
+  "Return the unsigned representation of a signed byte with a given size."
+  (ldb (byte size 0) value))
+
+(defun unsigned-to-signed (value size)
+  "Return the signed representation of an unsigned byte with a given size."
+  (if (logbitp (1- size) value)
+      (dpb value (byte size 0) -1)
+      value))
