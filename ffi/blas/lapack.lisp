@@ -86,4 +86,12 @@ b; arrays with matrices in the RFP storage have names ending in fp.
   (compile-file file))
 
 (defmacro deflapack (sym ret &rest args)
-  `(defar (,(concatenate 'string "LAPACK_" (substitute #\_ #\- (string-downcase (symbol-name sym)))) ,sym) ,ret ,@args))
+  `(defar (,(concatenate 
+             'string 
+             (substitute #\_ #\- 
+                         (string-downcase 
+                          (symbol-name sym)))
+             "_")
+           ,sym)
+     ,ret
+     ,@args))

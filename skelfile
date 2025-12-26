@@ -130,7 +130,7 @@
   	    (lasyms (x start end)
   	     (symbolicate (string-upcase (substitute #\- #\_ (lastr x start end)))))
             (lasymf (x start end)
-             (symbolicate (string-upcase (substitute #\- #\_ (remove-string "LAPACK_" (lastr x start end))))))
+             (symbolicate (string-upcase (substitute #\- #\_ (remove-string "_base" (remove-string "LAPACK_" (lastr x start end)))))))
   	    (laparm (str)
   	     (let ((a (nreverse (split-sequence #\space str))))
   	      (list (if (string-equal (first a) "T")
