@@ -8,8 +8,6 @@
 (in-suite :blas)
 (load-blas)
 
-(deftest static-vector ())
-
 ;;; Level 1
 ;; from CL-OPENBLAS
 (defun test-saxpy (n &key (repeat 100))
