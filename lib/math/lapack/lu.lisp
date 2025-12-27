@@ -13,15 +13,20 @@
          (declare (type ,sym ,A)
                   (type (simple-array ,(element-type-to-alien :int) (*)) ,ipiv)
                   (type index-type ,lda))
-         (ffuncall ,(blas-func "getrf" ftype)
-                   (:& :int) (dimensions ,A 0) (:& :int) (dimensions ,A 1)
-                   (:* ,(alien-to-element-type ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
-                   (:* :int) (the (simple-array ,(element-type-to-alien :int) (*)) ,ipiv) (:& :int :output) 0)))))
+         (,(lapackfunc "getrf" ftype)
+          (dimensions ,A 0) (dimensions ,A 1)
+          #+nil
+          (:* ,(alien-to-element-type ftype) :+ (head ,A)) 
+          (the ,(store-type sym) (store ,A)) (:& :int) ,lda
+          (the (simple-array ,(element-type-to-alien :int) (*)) ,ipiv) 
+          ;; FIX 2025-12-26: 
+          0)))))
 
 ;;
-(defgeneric getrf! (A)
-  (:documentation
-"
+(eval-always
+  (defgeneric getrf! (A)
+    (:documentation
+     "
   Syntax
   ======
   (GETRF! a)
@@ -50,8 +55,8 @@
   [3] INFO = T: successful
              i:  U(i,i) is exactly zero.
 ")
-  (:method :before ((A tensor)) (assert (tensor-matrixp A) nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+    (:method :before ((A tensor)) (assert (tensor-matrixp A) nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method getrf! ((A blas-mixin :x))
   `(let ((upiv (make-array (lvec-min (the index-store-vector (dimensions A))) :element-type ',(element-type-to-alien :int))))
@@ -65,7 +70,6 @@
      (setf (gethash 'getrf (memos A)) upiv)
      (values A (with-no-init-checks (make-instance 'permutation-pivot-flip :store (pflip.f->l upiv) :size (dimensions A 0))))))
 
-;;
 (deft/generic (t.lapack-getrs! #'subtypep) sym (A lda B ldb ipiv transp))
 (deft/method t.lapack-getrs! (sym blas-mixin) (A lda B ldb ipiv transp)
   (let ((ftype (field-type sym)))
@@ -75,7 +79,7 @@
                   (type (simple-array ,(element-type-to-alien :int) (*)) ,ipiv)
                   (type index-type ,lda ,ldb)
                   (type character ,transp))
-         (ffuncall ,(blas-func "getrs" ftype)
+         (,(lapackfunc "getrs" ftype)
            (:& :char) ,transp
            (:& :int) (dimensions ,A 0) (:& :int) (dimensions ,B 1)
            (:* ,(alien-to-element-type ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
@@ -84,32 +88,27 @@
            (:& :int :output) 0)))))
 
 (defgeneric getrs! (A B &optional job ipiv)
-  (:documentation
-   "
-  Syntax
-  ======
-  (GETRS! a b [:trans :N])
+  (:documentation "Solve a system of linear equations
 
-  Purpose
-  =======
-  Solves a system of linear equations
-      A * X = B  or  A' * X = B
-  with a general N-by-N matrix A using the LU factorization computed
-  by GETRF.  A and IPIV are the results from GETRF, TRANS specifies
-  the form of the system of equations:
-           = 'N':  A * X = B  (No transpose)
-           = 'T':  A'* X = B  (Transpose)
-           = 'C':  A'* X = B  (Conjugate transpose)
+    A * X = B  or  A' * X = B
 
-  Return Values
-  =============
-  [1] The NxM matrix X. (overwriting B)
-  [4] INFO = T: successful
-             i:  U(i,i) is exactly zero.  The LU factorization
-                 used in the computation has been completed,
-                 but the factor U is exactly singular.
-                 Solution could not be computed.
-")
+with a general N-by-N matrix A using the LU factorization computed
+by GETRF. A and IPIV are the results from GETRF, TRANS specifies
+the form of the system of equations:
+
+         = 'N':  A * X = B  (No transpose)
+
+         = 'T':  A'* X = B  (Transpose)
+
+         = 'C':  A'* X = B  (Conjugate transpose)
+
+Return Values
+[1] The NxM matrix X. (overwriting B)
+[4] INFO = T: successful
+           i:  U(i,i) is exactly zero.  The LU factorization
+               used in the computation has been completed,
+               but the factor U is exactly singular.
+               Solution could not be computed.")
   (:method :before ((A tensor) (B tensor) &optional (job :n) ipiv)
      (declare (type (or null permutation) ipiv) (ignore job))
      (assert (and (tensor-matrixp A) (<= (order B) 2)
@@ -144,24 +143,21 @@
                   (type (simple-array ,(element-type-to-alien :int) (*)) ,ipiv)
                   (type index-type ,lda))
          (with-lapack-query ,sym (,xxx ,lwork)
-           (ffuncall ,(blas-func "getri" ftype)
-             (:& :int) (dimensions ,A 0)
-             (:* ,(alien-to-element-type ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
-             (:* :int) (the (simple-array ,(element-type-to-alien :int) (*)) ,ipiv)
-             (:* ,(alien-to-element-type ftype)) ,xxx (:& :int) ,lwork
-             (:& :int :output) 0))))))
+           (with-alien ((info int 0))
+             (,(lapackfunc "getri" ftype)
+              (dimensions ,A 0)
+              #+nil
+              (:* ,(alien-to-element-type ftype) :+ (head ,A)) 
+              (the ,(store-type sym) (store ,A)) 
+              ,lda
+              ,ipiv
+              ,xxx 
+              ,lwork
+              (addr info))))))))
 
 (defgeneric getri! (A &optional perm)
   (:documentation
-   "
-  Syntax
-  ======
-  (GETRI! a &optional perm)
-
-  Purpose
-  =======
-  Computes the inverse of A using the LU factorization returned by GETRF!
-")
+   "Compute the inverse of A using the LU factorization returned by GETRF!")
   (:method :before ((A tensor) &optional ipiv)
      (declare (type (or null permutation) ipiv))
      (assert (and (typep A 'tensor-square-matrix) (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0)))) nil 'tensor-dimension-mismatch))
@@ -180,20 +176,9 @@
      A))
 ;;
 (defun lu (a &optional (split-lu? t))
-  "
-  Syntax
-  ======
-  (LU a split-lu?)
+  "Compute the LU decomposition of A. This function is an interface to GETRF!
 
-  Purpose
-  =======
-  Computes the LU decomposition of A.
-
-  This functions is an interface to GETRF!
-
-  If SPLIT-LU? is T, then return (L, U, P), otherwise
-  returns (LU, P).
-"
+If SPLIT-LU? is T, then return (L, U, P), otherwise returns (LU, P)."
   (declare (type blas-mixin a))
   (multiple-value-bind (lu perm) (getrf! (copy a))
     (if (not split-lu?) (values lu perm)

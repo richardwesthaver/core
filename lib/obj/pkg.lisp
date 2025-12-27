@@ -297,7 +297,7 @@
    :foreign-dense-tensor :foreign-tensor 
    :blas-mixin #:orphanize 
    #:index-type #:index-store-vector
-   #:dimensions #:order #:tensor-field-type #:ref #:einstein-sum
+   #:dimensions #:order #:field-type #:ref #:einstein-sum
    #:base-tensor #:memos #:store-size #:total-size 
    #:store-ref #:store-type
    #:parent #:dorefs
@@ -308,7 +308,11 @@
    #:tensor-typep #:tensor-type
    #:tensor-method-generator #:define-tensor-method #:cl #:zeros
    #:define-tensor-generic
-   #:deftensor
+   #:deftensor #:tensor-dimension-mismatch
+   #:with-field-element #:clinear-storep #:complexified-tensor #:blas-func
+   #:with-field-elements #:with-columnification #:without-tensor-safety
+   #:call-alien-p #:tensor-matrixp #:split-job #:cclass-max
+   #:*default-uplo*
    #:tensor-vector #:tensor-matrix #:tensor-square-matrix
    #:complexified-tensor #:realified-tensor
    #:indices #:fence #:δ-I #:strides #:head #:store
@@ -318,8 +322,12 @@
    #:matrixify~ #:join #:minors
    #:tensor-realpart~ #:tensor-realpart #:tensor-imagpart~ #:tensor-imagpart
    #:transpose! #:transpose~ #:transpose #:ctranspose! #:ctranspose #:tensor-conjugate! #:tensor-conjugate
+   #:t.fid+ #:t.f+ #:t.f* #:t.fc 
+   #:t.blas-threshold #:t.store
+   #:t.f=
    ;;L1
    #:copy! #:tensor-copy #:swap! #:swap #:dot #:scal! #:scal #:div! #:div #:scald!
+   #:tricopy!
    ;; bool
    #:ge= #:ga= #:go=
    #:mapsor! #:mapsor #:map-tensor! #:mapslice #:mapslice~ #:mapslicec~ #:tensor-foldl

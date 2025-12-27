@@ -14,7 +14,7 @@
          (declare (type ,sym ,A ,x ,y)
                   (type ,(field-type sym) ,alpha)
                   (type index-type ,st-x ,st-y ,lda ,m ,n))
-         (,(blas-func (concatenate 'string "ger" (when (subtypep ftype 'complex) (if conjp "c" "u"))) ftype)
+         (,(blasfunc (concatenate 'string "ger" (when (subtypep ftype 'complex) (if conjp "c" "u"))) ftype)
           ,m ,n
           ,alpha
           (deref (the ,(store-type sym) (store ,x)) (head ,x))

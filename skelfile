@@ -133,16 +133,17 @@
              (symbolicate (string-upcase (substitute #\- #\_ (remove-string "_base" (remove-string "LAPACK_" (lastr x start end)))))))
   	    (laparm (str)
   	     (let ((a (nreverse (split-sequence #\space str))))
-  	      (list (if (string-equal (first a) "T")
-                     '%t
-                     (lasym (first a)))
-               (if (third a)
+  	      `(,(if (string-equal (first a) "T")
+                  '%t
+                  (lasym (first a)))
+                ,(if (third a)
                 ;; type param (could be X const* or const X*)
-                (if (string-equal (third a) "const")
-                 (lasym* (second a))
-                 (lasym* (third a)))
-                (when (second a)
-                 (lasym* (second a)))))))
+                  (if (string-equal (third a) "const")
+                   (lasym (second a))
+                   (lasym (third a)))
+                  (when (second a)
+                   (lasym* (second a))))
+                ,@(when (third a) '(:copy)))))
             (gen-lapack-args (x)
              (let* ((pa (position :parameter-list x)) ;; param start
   	            (pb (position :preproc-ifdef x)) ;; param end

@@ -14,7 +14,7 @@
                   (ignorable ,x ,a))
          ,(recursive-append
            (when apy? `(with-field-element ,sym (,sto-x (t.fid* ,ftype))))
-           `(,(blas-func "axpy" ftype)
+           `(,(blasfunc "axpy" ftype)
              (the index-type (total-size ,y))
               (the ,(field-type sym) ,a)
               ,(if apy? sto-x `(t.store ,sym ,x))

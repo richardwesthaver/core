@@ -33,24 +33,10 @@
 (defpkg :math/blas
   (:use :std-lisp :math/proto :blas :tensor)
   (:import-from :math/util :blasfunc)
-  (:import-from :tensor 
-   :tricopy!
-   :t.fid+ :t.f+ :t.f* :t.fc 
-   :t.coerce :t.store-ref 
-   :tensor-method-generator
-   :define-tensor-method
-   :dense-tensor :field-type
-   :store-type :tensor-vectorp
-   :dimensions :cl :t.store :t.blas-threshold
-   :t.f= :dorefs :tensor-dimension-mismatch :with-field-element
-   :clinear-storep :complexified-tensor
-   :blas-func :tensor-copy
-   :base-tensor :zeros :order :total-size
-   :scal! :index-type :define-tensor-generic :blas-copyablep
-   :call-alien-p :tensor-matrixp :split-job :cclass-max :*default-uplo*)
   (:export :axpy 
-   :tensor-sum :mean 
-   :prod
+   :tensor-sum #:tensor-sum! #:prod! :mean 
+   #:axpy! #:normalize!
+   :prod #:ger! #:ger #:trs! #:gem! #:gem #:gett! #:gekr!
    ;; may want to export this from obj/tensor..
    :meshgrid))
 
@@ -58,11 +44,15 @@
   (:use :std-lisp :tensor :parse/yacc :id)
   (:export :*linfix-parser* :^))
 
-#+lapack
 (defpkg :math/lapack
-  (:use :std-lisp :math/proto :lapack :tensor)
+  (:use :std-lisp :math/proto #+lapack :lapack :tensor)
   (:import-from :math/util :lapackfunc)
-  (:export))
+  (:export
+   #:potrf! #:chol! #:chol #:potrs! #:potri! #:ldl! #:ldl-permute! #:ldl
+   #:geev! #:geev-complexify-eigvec  #:heev! #:eig
+   #:gelsy #:lstsq
+   #:getrf! #:getrs! #:getri! #:lu
+   #:qr! #:qr #:schur #:svd #:trsyl! #:syl))
 
 (defpkg :math/cuda
   (:use :std-lisp :math/proto :tensor :cuda)

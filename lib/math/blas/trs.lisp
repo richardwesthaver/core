@@ -14,7 +14,7 @@
                   (type ,(field-type sym) ,alpha)
                   (type index-type ,lda ,ldb)
                   (type character ,transa ,diaga ,uplo ,side))
-         (,(blas-func "trsm" ftype)
+         (,(blasfunc "trsm" ftype)
           ,side ,uplo ,transa ,diagA
           (dimensions ,B 0) (dimensions ,B 1)
           ,alpha
@@ -31,7 +31,7 @@
          (declare (type ,sym ,A ,b)
                   (type index-type ,lda ,st-b)
                   (type character ,transa ,diaga ,uplo))
-         (,(blas-func "trsv" ftype)
+         (,(blasfunc "trsv" ftype)
            ,uplo ,transa ,diagA
            (dimensions ,A 0)
            (deref (the ,(store-type sym) (store ,A)) (head ,A))

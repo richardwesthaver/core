@@ -15,7 +15,7 @@
          (declare (type ,sym ,A ,x ,y)
                   (type ,(field-type sym) ,alpha ,beta)
                   (type index-type ,st-x ,st-y ,lda ,m ,n))
-         (,(blas-func "gemv" ftype)
+         (,(blasfunc "gemv" ftype)
           ,transp
           ,m ,n
           ,alpha
@@ -39,7 +39,7 @@
                   (type ,(field-type sym) ,alpha ,beta)
                   (type index-type ,lda ,ldb ,ldc ,m ,n ,k)
                   (type character ,transa ,opa ,opb))
-         (,(blas-func "gemm" ftype)
+         (,(blasfunc "gemm" ftype)
           ,opa ,opb
           ,m ,n ,k
           ,alpha
