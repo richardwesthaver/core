@@ -44,11 +44,12 @@
              (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,xxx) (:& :int) ,lwork
              (:& :int :output) 0))))))
 ;;
-(defgeneric qr! (a &optional pivot?)
-  (:method :before ((a dense-tensor) &optional pivot?)
-     (declare (ignore pivot?))
-     (assert (tensor-matrixp a) nil 'tensor-not-matrix))
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric qr! (a &optional pivot?)
+    (:method :before ((a dense-tensor) &optional pivot?)
+      (declare (ignore pivot?))
+      (assert (tensor-matrixp a) nil 'tensor-not-matrix))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method qr! ((a blas-mixin :x) &optional pivot?)
   `(let-typed ((tau (zeros (lvec-min (dimensions a)) ',(cl :x)) :type ,(cl :x)))
@@ -83,8 +84,9 @@
              (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,xxx) (:& :int) ,lwork
              (:& :int :output) 0))))))
 
-(defgeneric qr (a &optional pivot?)
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric qr (a &optional pivot?)
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method qr ((a blas-mixin :x t) &optional pivot?)
   `(letv* ((qr tau p (qr! (copy a) pivot?))

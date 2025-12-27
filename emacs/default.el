@@ -844,7 +844,7 @@ buffer."
 (setopt
  browse-url-browser-function 'eww
  eww-auto-rename-buffer 'title
- eww-search-prefix "https://google.com/search?q=")
+ eww-search-prefix "https://html.duckduckgo.com/html/?q=")
 
 (defun eww-at-point ()
   (interactive)

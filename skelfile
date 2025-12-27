@@ -120,7 +120,7 @@
            (push (subseq tree di ei) ret))))))
    (labels ((lastr (x start end)
              (apply 'subseq lapack.h (subseq x start end)))
-            (lasym (str) (symbolicate (string-upcase (substitute #\- #\_ str))))
+            (lasym (str) (symbolicate (string-upcase (substitute #\- #\_ (string-trim '(#\*) str)))))
             (lasym* (str)
              (let ((len (length str)))
               (list '* (lasym (subseq str 0 

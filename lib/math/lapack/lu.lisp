@@ -87,8 +87,9 @@
            (:* ,(alien-to-element-type ftype) :+ (head ,B)) (the ,(store-type sym) (store ,B)) (:& :int) ,ldb
            (:& :int :output) 0)))))
 
-(defgeneric getrs! (A B &optional job ipiv)
-  (:documentation "Solve a system of linear equations
+(eval-always
+  (defgeneric getrs! (A B &optional job ipiv)
+    (:documentation "Solve a system of linear equations
 
     A * X = B  or  A' * X = B
 
@@ -109,13 +110,13 @@ Return Values
                used in the computation has been completed,
                but the factor U is exactly singular.
                Solution could not be computed.")
-  (:method :before ((A tensor) (B tensor) &optional (job :n) ipiv)
-     (declare (type (or null permutation) ipiv) (ignore job))
-     (assert (and (tensor-matrixp A) (<= (order B) 2)
-                  (= (dimensions A 0) (dimensions A 1) (dimensions B 0))
-                  (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0))))
-             nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+    (:method :before ((A tensor) (B tensor) &optional (job :n) ipiv)
+      (declare (type (or null permutation) ipiv) (ignore job))
+      (assert (and (tensor-matrixp A) (<= (order B) 2)
+                   (= (dimensions A 0) (dimensions A 1) (dimensions B 0))
+                   (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0))))
+              nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method getrs! ((A blas-mixin :x) (B blas-mixin :x t) &optional (job :n) ipiv)
   `(if (tensor-vectorp b)
@@ -155,13 +156,14 @@ Return Values
               ,lwork
               (addr info))))))))
 
-(defgeneric getri! (A &optional perm)
-  (:documentation
-   "Compute the inverse of A using the LU factorization returned by GETRF!")
-  (:method :before ((A tensor) &optional ipiv)
-     (declare (type (or null permutation) ipiv))
-     (assert (and (typep A 'tensor-square-matrix) (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0)))) nil 'tensor-dimension-mismatch))
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric getri! (A &optional perm)
+    (:documentation
+     "Compute the inverse of A using the LU factorization returned by GETRF!")
+    (:method :before ((A tensor) &optional ipiv)
+      (declare (type (or null permutation) ipiv))
+      (assert (and (typep A 'tensor-square-matrix) (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0)))) nil 'tensor-dimension-mismatch))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method getri! ((a blas-mixin :x) &optional ipiv)
   `(let ((upiv (if ipiv (pflip.l->f (store (copy ipiv 'permutation-action)))
