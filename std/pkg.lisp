@@ -622,7 +622,8 @@
    :distance-designator
    :defwith
    :with-memoization
-   :memoizing))
+   :memoizing
+   :match :lambda-match :ematch))
 
 (defpkg :std/array
   (:use :cl)

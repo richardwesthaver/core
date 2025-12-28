@@ -68,7 +68,7 @@
    :skip-until
    :skip-while
    :bind*
-   :match
+   :matching
    :match-i
    :match?
    :match-case

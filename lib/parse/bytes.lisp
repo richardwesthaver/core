@@ -302,7 +302,7 @@
                 `(%match-case
                   ,@(loop for vec in vectors
                           collect `(,vec))))
-              (match (&rest vectors)
+              (matching (&rest vectors)
                 `(block match-block
                    (tagbody
                       (return-from match-block (%match ,@vectors))

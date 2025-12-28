@@ -47,7 +47,7 @@
    #:qr! #:qr #:schur #:svd #:trsyl! #:syl))
 
 (defpkg :math/cuda
-  (:use :std-lisp :math/proto :tensor :cuda)
+  (:use :std-lisp :math/util :tensor :cuda)
   (:import-from :tensor :t.store-type :t.compute-store-size :t.store-size :foreign-vector-store-mixin
    :real-subtypep :field-type :store-type :t.total-size :t.store-ref :t.store-set :t.store-allocator
    :with-field-element :tensor-generator))

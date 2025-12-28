@@ -3,7 +3,6 @@
   :description "Core Math System"
   :depends-on (:std :obj :blas :cuda :syn)
   :components ((:file "pkg")
-               (:file "var")
                (:file "util")
                (:file "sfc")
                (:file "auto")
@@ -27,7 +26,8 @@
                  (:file "syl")
                  (:file "poly")))
                (:module "cuda" 
-                :components (#+nil(:file "kern")))
+                :components ((:file "tensor")
+                             (:file "kernel")))
                (:file "sym")
                (:file "linfix")
                (:file "syn")
