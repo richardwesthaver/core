@@ -4,7 +4,7 @@
 (in-package :std/print)
 
 (defmacro deffmt (name control-string &optional doc)
-  `(progn
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf (fdefinition ',name) (formatter ,control-string))
      ,@(when doc `((setf (documentation ',name 'function) ,doc)))
      ',name))

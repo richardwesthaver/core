@@ -360,6 +360,17 @@ ability to bind multiple values."
   `(multiple-value-bind (,args ,size ,parts) (parse-options ,args)
      ,@body))
 
+(defmacro with-parsed-body ((body declares &optional docstring) &body own-body)
+  "Pop docstring and declarations off `body' and assign them to the
+variables `docstring' and `declares' respectively. If `docstring' is
+not present then no docstring is parsed."
+  (if docstring
+      `(multiple-value-bind (,body ,declares ,docstring)
+           (sb-int:parse-body ,body t)
+         ,@own-body)
+      `(multiple-value-bind (,body ,declares) (sb-int:parse-body ,body t)
+         ,@own-body)))
+
 (defun preduce/common (function sequence subsize
                        &key
                        key
@@ -1038,17 +1049,6 @@ Default is (kernel-worker-count)."
   ;; This is used outside of the defpun macro.
   (with-mutex (*defpun-registration-lock*)
     (setf *defpuns* (set-difference *defpuns* names))))
-
-(defmacro with-parsed-body ((body declares &optional docstring) &body own-body)
-  "Pop docstring and declarations off `body' and assign them to the
-variables `docstring' and `declares' respectively. If `docstring' is
-not present then no docstring is parsed."
-  (if docstring
-      `(multiple-value-bind (,body ,declares ,docstring)
-           (sb-int:parse-body ,body t)
-         ,@own-body)
-      `(multiple-value-bind (,body ,declares) (sb-int:parse-body ,body t)
-         ,@own-body)))
 
 (defmacro define-defpun (defpun doc defun &rest types)
   `(defmacro ,defpun (name lambda-list ,@types &body body)

@@ -99,12 +99,12 @@
                       :store (slot-value tensor 'store)
                       :parent tensor)))))))
 
-(defgeneric suptensor (tensor ord &optional start)
+(defgeneric suptensor~ (tensor ord &optional start)
   (:method :before ((tensor base-tensor) ord &optional (start 0))
     (declare (type index-type start))
     (assert (<= 0 start (- ord (order tensor))) nil 'invalid-arguments)))
 
-(defmethod suptensor ((ten dense-tensor) ord &optional (start 0))
+(defmethod suptensor~ ((ten dense-tensor) ord &optional (start 0))
   (declare (type index-type ord start))
   (if (= (order ten) ord) ten
       (without-tensor-safety
@@ -120,7 +120,7 @@
             :head (head ten) :store (slot-value ten 'store) :parent ten))))
 
 (definline matrixify (vec &optional (col-vectorp t))
-  (if (tensor-matrixp vec) vec (suptensor vec 2 (if col-vectorp 0 1))))
+  (if (tensor-matrixp vec) vec (suptensor~ vec 2 (if col-vectorp 0 1))))
 
 (defmethod reshape! ((ten dense-tensor) (dims cons))
   (let ((idim (coerce dims 'index-store-vector)))

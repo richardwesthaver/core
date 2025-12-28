@@ -312,12 +312,14 @@
    #:with-field-element #:clinear-storep #:complexified-tensor #:blas-func
    #:with-field-elements #:with-columnification #:without-tensor-safety
    #:call-alien-p #:tensor-matrixp #:split-job #:cclass-max
-   #:*default-uplo*
+   #:*default-uplo* #:*default-tensor-type*
+   #:*default-stride-ordering*
    #:tensor-vector #:tensor-matrix #:tensor-square-matrix
    #:complexified-tensor #:realified-tensor
+   #:real-subtypep
    #:indices #:fence #:δ-I #:strides #:head #:store
    #:idxv #:pick-random #:shuffle! #:permutation #:permutation-action #:permutation-cycle
-   #:permutation-pivot-flip #:permute! #:permute #:permutation/ #:permutation*
+   #:permutation-pivot-flip #:permute! #:permute #:permutation/ #:permutation* #:permutation-size
    #:sort-permute #:subtensor~ #:slice~ #:suptensor~ #:reshape! #:reshape~
    #:matrixify~ #:join #:minors
    #:tensor-realpart~ #:tensor-realpart #:tensor-imagpart~ #:tensor-imagpart

@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :math/util)
 
+;;; Conditions
+(define-condition math-condition () ())
+(deferror math-error (math-condition error) () (:auto t))
+(defwarning math-warning (math-condition warning) () (:auto t))
+
 ;;; BLAS/LAPACK
 (defun blasfunc (name type)
   `(function ,(intern (string-upcase (obj/tensor::blas-func name type)) :blas)))

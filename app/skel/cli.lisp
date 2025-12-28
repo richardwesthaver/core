@@ -36,9 +36,11 @@
   (with-directory (project-root *skel-project*)
     (if (null args)
         (sk-call *skel-project* action)
-        (mapc (lambda (x)
-                (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
-              args))))
+        (if-let ((comp (find (car args) (components *skel-project*) :key 'name :test 'string-equal)))
+          (apply (symbolicate "SK-" (symbol-name action)) comp (cdr args))
+          (mapc (lambda (x)
+                  (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
+                args)))))
 
 (defcmd skc-compile ()
   (call-with-args :compile *args*))
@@ -80,7 +82,7 @@
                                     (sb-mop:class-slots (class-of *skel-project*))
                                     :test 'string=
                                     :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))))))
-                      (if (sequencep val) 
+                      (if (and (sequencep val) (not (stringp val)))
                           (apply 'fmt-column t (coerce val 'list))
                           (sk-print val)))
                     (log:fatal! "unknown argument: ~A~%" x))))

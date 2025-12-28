@@ -59,7 +59,7 @@
     (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method getrf! ((A blas-mixin :x))
-  `(let ((upiv (make-array (lvec-min (the index-store-vector (dimensions A))) :element-type ',(element-type-to-alien :int))))
+  `(let ((upiv (make-array (vector-min (the index-store-vector (dimensions A))) :element-type ',(element-type-to-alien :int))))
      (declare (type (simple-array ,(element-type-to-alien :int) (*)) upiv))
      (with-columnification (() (A))
        (let ((info (t.lapack-getrf! ,(cl :x) A (or (blas-matrix-compatiblep A #\N) 0) upiv)))
@@ -122,7 +122,7 @@ Return Values
   `(if (tensor-vectorp b)
        (getrs! a (suptensor~ b 2) job ipiv)
        (let ((upiv (if ipiv
-                       (pflip.l->f (store (copy ipiv 'permutation-pivot-flip)))
+                       (pflip.l->f (store (tensor-copy ipiv 'permutation-pivot-flip)))
                        (or (gethash 'getrf (memos A)) (error "Cannot find permutation for the PLU factorisation of A."))))
              (cjob (aref (symbol-name job) 0)))
          (declare (type (simple-array (signed-byte 32) (*)) upiv))
@@ -166,7 +166,7 @@ Return Values
     (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method getri! ((a blas-mixin :x) &optional ipiv)
-  `(let ((upiv (if ipiv (pflip.l->f (store (copy ipiv 'permutation-action)))
+  `(let ((upiv (if ipiv (pflip.l->f (store (tensor-copy ipiv 'permutation-action)))
                    (or (gethash 'getrf (memos A)) (error "Cannot find permutation for the PLU factorisation of A.")))))
      (declare (type (simple-array (signed-byte 32) (*)) upiv))
      (with-columnification (() (A))
@@ -182,9 +182,9 @@ Return Values
 
 If SPLIT-LU? is T, then return (L, U, P), otherwise returns (LU, P)."
   (declare (type blas-mixin a))
-  (multiple-value-bind (lu perm) (getrf! (copy a))
+  (multiple-value-bind (lu perm) (getrf! (tensor-copy a))
     (if (not split-lu?) (values lu perm)
-        (let* ((min.d (lvec-min (dimensions lu)))
+        (let* ((min.d (vector-min (dimensions lu)))
                (l (tricopy! 1 (tricopy! lu (zeros (list (dimensions lu 0) min.d) (class-of a)) :l) :d))
                (u (tricopy! lu (zeros (list min.d (dimensions lu 1)) (class-of a)) :u)))
           (values l u perm)))))
@@ -192,5 +192,5 @@ If SPLIT-LU? is T, then return (L, U, P), otherwise returns (LU, P)."
 ;; (let* ((a (randn '(10 10)))
 ;;        (x (randn '(10 5)))
 ;;        (b (t* a x)))
-;;   (values (norm (t- x (getrs! (getrf! (copy a)) (copy b))))
-;; 	  (norm (t- x (t* (getri! (getrf! (copy a))) b)))))
+;;   (values (norm (t- x (getrs! (getrf! (tensor-copy a)) (tensor-copy b))))
+;; 	  (norm (t- x (t* (getri! (getrf! (tensor-copy a))) b)))))

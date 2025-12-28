@@ -5,6 +5,28 @@
 ;;; Code:
 (in-package :net/codec/dbus)
 
+;;; Conditions
+(define-condition dbus-error (error)
+  ())
+
+(define-condition dbus-auth-error (dbus-error)
+  ((command :initarg :command)
+   (argument :initarg :argument))
+  (:report (lambda (condition stream)
+             (format stream "Authentication error, command ~S with argument ~S."
+                     (slot-value condition 'command)
+                     (slot-value condition 'argument)))))
+
+(define-condition dbus-method-error (dbus-error)
+  ((arguments :initarg :arguments))
+  (:report (lambda (condition stream)
+             (format stream "Method error: ~S."
+                     (let ((all-args (slot-value condition 'arguments))
+                           (first-arg (first (slot-value condition 'arguments))))
+                       (if (stringp first-arg)
+                           first-arg
+                           all-args))))))
+
 ;;; DBUS IO
 ;; May just want to DEFINE-IO here
 #+nil

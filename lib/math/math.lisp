@@ -5,9 +5,9 @@
 ;;; Code:
 (in-package :math-int)
 
-(defpkg :math 
+(defpkg :math
   (:use :std-lisp)
   (:use-reexport . #.*math-packages*))
   
 (defpkg :math-user
-  (:use :std-lisp :tensor))
+  (:use :math :math/sym :tensor :id))

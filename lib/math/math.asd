@@ -4,7 +4,6 @@
   :depends-on (:std :obj :blas :cuda :syn)
   :components ((:file "pkg")
                (:file "var")
-               (:file "proto")
                (:file "util")
                (:file "sfc")
                (:file "auto")
@@ -29,6 +28,7 @@
                  (:file "poly")))
                (:module "cuda" 
                 :components (#+nil(:file "kern")))
+               (:file "sym")
                (:file "linfix")
                (:file "syn")
                (:file "readtable")

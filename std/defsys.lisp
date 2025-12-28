@@ -52,6 +52,12 @@ ASDF:DEFSYSTEM.")
   :test 'string=
   :documentation "The default file extension used in system definitions.")
 
+(defvar *compile-module* nil "The name of the module being compiled or NIL.")
+(defvar *module-stack* nil "A list of modules to be visited.")
+(defvar *module* nil "The name of the current module or NIL.")
+(defparameter *module-table* (make-hash-table :test 'equal)
+  "A table which maps modules names to objects.")
+
 ;;; Conditions
 (define-condition system-condition () ())
 (define-condition system-error (error system-condition) ())
@@ -105,8 +111,9 @@ ASDF:DEFSYSTEM.")
    (path :initarg :path :accessor path)
    (require :initarg :require :accessor component-require)))
 
-(defun register-component-class (name class)
-  (setf (gethash name *component-class-table*) class))
+(eval-always
+  (defun register-component-class (name class)
+    (setf (gethash name *component-class-table*) class)))
 
 (defmacro defcomponent (name supers slots &rest opts)
   (let ((kw (find :keyword opts :key 'car)))
@@ -315,13 +322,6 @@ ending with the target component name."
 ;; need to concern themselves with checking for external dependencies. Note
 ;; that internal dependencies still need to be coordinated between operations
 ;; - that's what the system plan is for.
-
-;; Both of these slots
-(defvar *compile-module* nil "The name of the module being compiled or NIL.")
-(defvar *module-stack* nil "A list of modules to be visited.")
-(defvar *module* nil "The name of the current module or NIL.")
-(defparameter *module-table* (make-hash-table :test 'equal)
-  "A table which maps modules names to objects.")
 
 (defclass module ()
   ((name :initarg :name :accessor name)

@@ -37,12 +37,18 @@
                   (type index-type ,lda)
                   (type ,(store-type sym) ,tau))
          (with-lapack-query ,sym (,xxx ,lwork)
-           (,(lapackfunc "geqrf" ftype)
-             (:& :int) (dimensions ,A 0) (:& :int) (dimensions ,A 1)
-             (:* ,(lisp->mffi ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,tau)
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,xxx) (:& :int) ,lwork
-             (:& :int :output) 0))))))
+           (with-alien ((ret int 0))
+             (,(lapackfunc "geqrf" ftype)
+              (dimensions ,A 0) (dimensions ,A 1)
+              #+nil
+              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
+              (the ,(store-type sym) (store ,A)) 
+              ,lda
+              (the ,(store-type sym) ,tau)
+              (the ,(store-type sym) ,xxx) 
+              ,lwork
+              (addr ret))
+             ret))))))
 ;;
 (eval-always
   (defgeneric qr! (a &optional pivot?)
@@ -77,12 +83,20 @@
                   (type index-type ,lda ,rank)
                   (type ,(store-type sym) ,tau))
          (with-lapack-query ,sym (,xxx ,lwork)
-           (,(lapackfunc (if complex? "ungqr" "orgqr") ftype)
-             (:& :int) (dimensions ,A 0) (:& :int) (dimensions ,A 1) (:& :int) ,rank
-             (:* ,(lisp->mffi ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,tau)
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,xxx) (:& :int) ,lwork
-             (:& :int :output) 0))))))
+           (with-alien ((ret int 0))
+             (,(lapackfunc (if complex? "ungqr" "orgqr") ftype)
+              (dimensions ,A 0) 
+              (dimensions ,A 1) 
+              ,rank
+              #+nil
+              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
+              (the ,(store-type sym) (store ,A)) 
+              ,lda
+              (the ,(store-type sym) ,tau)
+              (the ,(store-type sym) ,xxx) 
+              ,lwork
+              (addr ret))
+             ret))))))
 
 (eval-always
   (defgeneric qr (a &optional pivot?)
@@ -115,14 +129,25 @@
                   (type ,(store-type sym) ,tau)
                   (type character ,side ,trans))
          (with-lapack-query ,sym (,xxx ,lwork)
-           (,(lapackfunc (if complex? "unmqr" "ormqr") ftype)
-             (:& :char) ,side (:& :char) ,trans
-             (:& :int) (dimensions ,C 0) (:& :int) (dimensions ,C 1) (:& :int) ,rank
-             (:* ,(lisp->mffi ftype) :+ (head ,A)) (the ,(store-type sym) (store ,A)) (:& :int) ,lda
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,tau)
-             (:* ,(lisp->mffi ftype) :+ (head ,C)) (the ,(store-type sym) (store ,C)) (:& :int) ,ldc
-             (:* ,(lisp->mffi ftype)) (the ,(store-type sym) ,xxx) (:& :int) ,lwork
-             (:& :int :output) 0))))))
+           (with-alien ((ret int 0))
+             (,(lapackfunc (if complex? "unmqr" "ormqr") ftype)
+              ,side ,trans
+              (dimensions ,C 0) 
+              (dimensions ,C 1) 
+              ,rank
+              #+nil
+              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
+              (the ,(store-type sym) (store ,A)) 
+              ,lda
+              (the ,(store-type sym) ,tau)
+              #+nil
+              (:* ,(lisp->mffi ftype) :+ (head ,C)) 
+              (the ,(store-type sym) (store ,C)) 
+              ,ldc
+              (the ,(store-type sym) ,xxx) 
+              ,lwork
+              (addr ret))
+             ret))))))
 
 ;;(defgeneric geqrs! (a tau b))
 #+nil
