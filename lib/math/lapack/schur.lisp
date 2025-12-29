@@ -19,16 +19,12 @@
              (,(lapackfunc "gees" ftype)
               ,@(let ((args `((if ,vs #\V #\N) #\N (null-pointer)
                               (dimensions ,A 0)
-                              #+nil
-                              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-                              (the ,(store-type sym) (store ,A)) 
+                              (deref (the ,(store-type sym) (store ,A)) (head ,A))
                               ,lda
                               0
                               (the ,(store-type sym) ,wr) 
                               (the ,(store-type sym) ,wi)
-                              #+nil
-                              (:* ,(lisp->mffi ftype) :+ (if ,vs (head ,vs) 0)) 
-                              (if ,vs (the ,(store-type sym) (store ,vs)) (null-pointer)) 
+                              (deref (if ,vs (the ,(store-type sym) (store ,vs)) (null-pointer)) (if ,vs (head ,vs) 0))
                               (if ,vs ,ldvs 1)
                               (the ,(store-type sym) ,xxx) 
                               ,lwork

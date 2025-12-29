@@ -178,7 +178,9 @@
 ;; TODO
 (defun loop-slice-iteration-path (xa data-type prep-phrases)
   (declare (ignore data-type))
-  (destructuring-bind (x axis &optional start oend cend dend index step) prep-phrases
+  (destructuring-bind (%x %axis &optional start oend cend dend index step) prep-phrases
+    (let ((x (cadr %x))
+          (axis (cadr %axis)))
     ;; (when (or (and oend cend) (and dend (or cend oend))) (error "Use only one of BELOW TO DOWNTO."))
     (when (setq xa (ensure-list xa))
       (binding-gensyms (hy hyf)
@@ -239,10 +241,10 @@
             ()
             ;; (,@(print (first iterable))) ; psteps
             t
-            `((loop for ,(hy ai) in ,(hy axis)
+            ((loop for ,(hy ai) in ,(hy axis)
                   when ,(hy ai) 
                   do (incf (slot-value (car ,(hy ai)) 'head) 
-                       ,(recursive-append (when step `(* ,(hy step))) `(cdr ,(hy ai))))))))))))
+                       ,(if step `(* ,(hy step) (cdr ,(hy ai))) `(cdr ,(hy ai)))))))))))))
 
 (sb-loop::add-loop-path '(slice) 'loop-slice-iteration-path *loop-ansi-universe*
                         :preposition-groups '((:of :across :in) (:along) (:from) (:below) (:to) (:downto) (:with-index) (:by))

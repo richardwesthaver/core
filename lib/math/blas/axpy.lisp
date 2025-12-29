@@ -41,22 +41,16 @@
 (eval-always
   (defgeneric axpy! (alpha x y)
     (:documentation
-     " 
- Syntax
- ======
- (AXPY! alpha x y)
+     "Y <- alpha * x + y
 
- Y <- alpha * x + y
+If x is T, then
 
- If x is T, then
+Y <- alpha + y
 
- Y <- alpha + y
-
- Purpose
- =======
-  Same as AXPY except that the result
-  is stored in Y and Y is returned.
-")
+Purpose
+=======
+ Same as AXPY except that the result
+ is stored in Y and Y is returned.")
     (:generic-function-class tensor-method-generator)))
 
 (defmethod axpy! :before ((alpha number) (x base-tensor) (y base-tensor))

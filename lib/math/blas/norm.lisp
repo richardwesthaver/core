@@ -13,13 +13,13 @@
     `(cond
        ;;Element-wise
        ((and (typep n cl:real) (<= 1 n))
-        (lety ((sum (t/fid+ ,rtype) :type ,rtype))
+        (lety ((sum (t.fid+ ,rtype) :type ,rtype))
           (dorefs (idx (dimensions vec))
               ((ref vec :type ,(cl :x)))
-              (setf sum (t/f+ ,rtype sum (expt (abs ref) n))))
+              (setf sum (t.f+ ,rtype sum (expt (abs ref) n))))
           (expt sum (/ n))))
        ((eql n :sup)
-        (tensor-foldl ,(cl :x) max vec (t/fid+ ,rtype) :init-type ,rtype :key cl:abs))
+        (tensor-foldl ,(cl :x) max vec (t.fid+ ,rtype) :init-type ,rtype :key cl:abs))
        ((listp n)
         (or
          (destructuring-case n
@@ -54,14 +54,6 @@
              (1 (norm vec '(:L 1 :sup)))
              (2 (norm vec '(:schatten :sup)))
              (:sup (norm (transpose~ vec) '(:operator 1))))))))))))
-
-(defun psd-proj (m)
-  ;; FIX 2025-12-18: EIG is a lapack symbol
-  (letv* ((λλ u (eig (scal! 1/2 (axpy! 1 (transpose~ m) (tensor-copy m))) :v))
-          (ret (zeros (dimensions m) (type-of m))))
-    (loop for (λi ui) being the slice of (list λλ u) along (list 0 -1)
-             if (< 0 (ref λi 0)) (ger! (ref λi 0) ui ui ret t))
-    ret))
 
 (define-tensor-generic tensor-max (object &optional key))
 

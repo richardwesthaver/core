@@ -14,17 +14,7 @@
   (:use :cl :std :tensor)
   (:import-from :cli/tools/cc :run-nvcc)
   (:import-from :cuda :device-compute-capability)
-  (:export :blasfunc :lapackfunc))
-
-(defpkg :math/sfc
-  (:use :std-lisp)
-  (:export
-   #:hilbert-list
-   #:hilbert-curve))
-
-(defpkg :math/auto
-  (:use :std-lisp)
-  (:export :life :cellular-automata :*rule-patterns*))
+  (:export :blasfunc :lapackfunc :with-lapack-query :~))
 
 (defpkg :math/blas
   (:use :std-lisp :blas :tensor)
@@ -52,23 +42,36 @@
    :real-subtypep :field-type :store-type :t.total-size :t.store-ref :t.store-set :t.store-allocator
    :with-field-element :tensor-generator))
 
-(defpkg :math/syn
-  (:use :std-lisp :tensor :parse/yacc :id :math/blas :math/lapack :math/cuda)
-  (:export :*linfix-parser* :^))
+(defpkg :math/sfc
+  (:use :std-lisp)
+  (:export
+   #:hilbert-list
+   #:hilbert-curve))
+
+(defpkg :math/auto
+  (:use :std-lisp)
+  (:export :life :cellular-automata :*rule-patterns*))
 
 (setq *defpkg-hook* nil)
 
-(defpkg :math/sym
-  (:use :cl :std :tensor :math/blas :math/lapack :math/cuda :id)
-  (:shadow #:+ #:- #:* #:/ #:= #:conjugate #:realpart #:imagpart #:sum #:min #:max
-           #:sin #:cos #:tan #:asin #:acos #:exp #:sinh #:cosh #:tanh #:asinh #:acosh #:atanh #:log #:expt #:atan)
-  (:export
-   ;;arithmetic
-   #:+ #:- #:* #:.* #:/ #:./ #:@ #:· #:^ #:⊗ #:= #:.=
-   ;;function
-   #:sin! #:cos! #:tan! #:asin! #:acos! #:exp! #:sinh! #:cosh! #:tanh! #:asinh! #:acosh! #:atanh!
-   #:sin #:cos #:tan #:asin #:acos #:exp #:sinh #:cosh #:tanh #:asinh #:acosh #:atanh
-   #:log #:log! #:atan #:atan! #:expt #:expt!
+(eval-always
+  (defparameter *math-syntax*
+    '(;;arithmetic
+      #:+ #:- #:* #:.* #:/ #:./ #:@ #:· #:expt #:^ #:⊗ #:= #:.=
+      ;;function
+      #:sin! #:cos! #:tan! #:asin! #:acos! #:exp! #:sinh! #:cosh! #:tanh! #:asinh! #:acosh! #:atanh!
+      #:sin #:cos #:tan #:asin #:acos #:exp #:sinh #:cosh #:tanh #:asinh #:acosh #:atanh
+      #:log #:log! #:atan #:atan! #:expt #:expt!
+      ;; #:transpose #:ctranspose
+      #:sum #:realpart #:imagpart #:max #:min #:conjugate))
 
-   #:transpose #:ctranspose))
+  (defparameter *math-exports* (append syn:*cl-symbols* *math-syntax*))
 
+  (defpackage* :math/sym
+    (:shadow-symbols *math-syntax* :export-symbols *math-exports*)
+    (:use :cl :std :tensor :math/blas :math/lapack :math/cuda :id)))
+
+(defpkg :math/syn
+  (:shadowing-import-from :math/sym . #.*math-exports*)
+  (:use :std-lisp :tensor :parse/yacc :id :math/blas :math/lapack :math/cuda :math/sym)
+  (:export :*linfix-parser*))

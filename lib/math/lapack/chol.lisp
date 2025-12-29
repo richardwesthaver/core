@@ -17,8 +17,7 @@
            (,(lapackfunc "potrf" ftype)
             ,uplo
             (dimensions ,A 0)
-            #+nil (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-            (the ,(store-type sym) (store ,A)) 
+            (deref (the ,(store-type sym) (store ,A)) (head ,A))
             ,lda
             (addr ret))
            ret)))))
@@ -74,11 +73,9 @@
             (:& :char) ,uplo
             (:& :int) (dimensions ,A 0) (:& :int) (dimensions ,B 1)
             
-            #+nil (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-            (the ,(store-type sym) (store ,A)) 
+            (deref (the ,(store-type sym) (store ,A)) (head ,A))
             ,lda
-            #+nil (:* ,(lisp->mffi ftype) :+ (head ,B)) 
-            (the ,(store-type sym) (store ,B)) 
+            (deref (the ,(store-type sym) (store ,B)) (head ,B))
             ,ldb
             (addr ret))
            ret)))))
@@ -135,9 +132,7 @@
                   (type character ,uplo))
          (,(lapackfunc "potri" ftype)
           ,uplo (dimensions ,A 0)
-          #+nil
-          (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-          (the ,(store-type sym) (store ,A)) 
+          (deref (the ,(store-type sym) (store ,A)) (head ,A))
           ,lda
           (addr ret))))))
 
@@ -190,8 +185,7 @@
              (,(lapackfunc (if (or (not het?) (not complex?)) "sytrf" "hetrf") ftype)
               ,uplo
               (dimensions ,A 0) 
-              #+nil (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-              (the ,(store-type sym) (store ,A)) 
+              (deref (the ,(store-type sym) (store ,A)) (head ,A))
               ,lda
               (the (simple-array ,(alien-to-element-type 'int) (*)) ,ipiv)
               (the ,(store-type sym) ,xxx) 

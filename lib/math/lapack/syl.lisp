@@ -13,25 +13,20 @@
          (declare (type character ,op.A ,op.B ,sgn)
                   (type ,sym ,A ,B ,C)
                   (type index-type ,ld.a ,ld.b ,ld.c))
-         (with-alien ((ret int 0))
+         (with-alien ((ret1 int 0)
+                      (ret2 int 0))
            (,(lapackfunc "trsyl" ftype)
             ,op.a ,op.b (if (char= ,sgn #\P) 1 -1)
             (dimensions ,C 0) (dimensions ,C 1)
-            #+nil
-            (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-            (the ,(store-type sym) (store ,A)) 
+            (deref (the ,(store-type sym) (store ,A)) (head ,A))
             ,ld.a
-            #+nil
-            (:* ,(lisp->mffi ftype) :+ (head ,B)) 
-            (the ,(store-type sym) (store ,B)) 
+            (deref (the ,(store-type sym) (store ,B)) (head ,B))
             ,ld.b
-            #+nil
-            (:* ,(lisp->mffi ftype) :+ (head ,C)) 
-            (the ,(store-type sym) (store ,C)) 
+            (deref (the ,(store-type sym) (store ,C)) (head ,C))
             ,ld.c
             #+nil
             (:& ,(lisp->mffi (field-type (realified-tensor sym))) :output) 
-            (t.fid* ,(field-type (realified-tensor sym)))
+            (addr (t.fid* ,(field-type (realified-tensor sym))))
             (addr ret))
            ret)))))
 

@@ -5,12 +5,6 @@
 ;;; Code:
 (in-package :std-user)
 
-(defpkg :cli
-  (:use :cl :std :log)
-  (:import-from :time :format-timestring :timestamp)
-  (:use-reexport . #.cli-int:*cli-packages*)
-  (:export :sudop :call-with-sudo :with-sudo :*sudo-output* :ensure-sudo))
-
 (defpkg :cli/tools
   (:nicknames :tools)
   (:use :cl :std)
@@ -36,6 +30,13 @@
    :cmds :opts
    :help-opt :version-opt :level-opt :keep-ast-opt)
   (:use-reexport . #.cli-int:*cli-clap-packages*))
+
+(defpkg :cli
+  (:use :cl :std :log)
+  (:import-from :time :format-timestring :timestamp)
+  (:use-reexport :cli/tools :cli/clap)
+  (:use-reexport . #.cli-int:*cli-packages*)
+  (:export :sudop :call-with-sudo :with-sudo :*sudo-output* :ensure-sudo))
 
 (defpkg :cli-user 
   (:use :cl :std :cli :tools :clap))

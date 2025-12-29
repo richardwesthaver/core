@@ -4,11 +4,9 @@
 
 ;;; Code:
 (in-package :math/sym)
-(sb-ext:unlock-package :cl)
 ;;; Arithmetic
 ;;All the b macros will (only) assume that the first argument is destructible
 ;;when both arguments are supplied (i.e (not (null b))).
-
 (defmacro b+ (a &optional b)
   (using-gensyms (decl (a b))
     `(let (,@decl)
@@ -19,14 +17,14 @@
          ((number tensor) (axpy 1 ,a ,b))
          ((tensor null) (tensor-copy ,a))))))
 
-(definline + (&rest objects &aux (ret (if objects (b+ (car objects)) 0)))
+(definline math/sym:+ (&rest objects &aux (ret (if objects (b+ (car objects)) 0)))
   (loop for fst in (cdr objects) do (setf ret (b+ ret fst)))
   ret)
 
 (define-compiler-macro + (&rest objects)
   (rec reducer ((ret (if objects `(b+ ,(car objects)) 0)) (objs (cdr objects)))
-       (if (not objs) ret
-           (reducer `(b+ ,ret ,(car objs)) (cdr objs)))))
+    (if (not objs) ret
+        (reducer `(b+ ,ret ,(car objs)) (cdr objs)))))
 
 #+nil
 (defun test+ ()
@@ -35,7 +33,7 @@
      (etypecase a
        (tensor (dotimes (i 100000) (+ a a)))
        (number (dotimes (i 100000) (+ a a)))))))
-;;
+
 (defmacro b- (a &optional b)  
   (using-gensyms (decl (a b))
     `(let (,@decl)
@@ -56,8 +54,8 @@
 (define-compiler-macro - (object &rest more-objects)
   (if more-objects
       (rec reducer ((ret `(b+ ,object)) (objs more-objects))
-           (if (not objs) ret
-               (reducer `(b- ,ret ,(car objs)) (cdr objs))))
+        (if (not objs) ret
+            (reducer `(b- ,ret ,(car objs)) (cdr objs))))
       `(b- ,object)))
 
 #+nil
@@ -67,7 +65,7 @@
      (etypecase a
        (tensor (dotimes (i 100000) (- a a a)))
        (number (dotimes (i 100000) (- a a a)))))))
-;;
+
 (defmacro b.* (a &optional b)
   (using-gensyms (decl (a b))
     `(let (,@decl)
@@ -78,52 +76,61 @@
          ((number tensor) (scal ,a ,b))
          ((tensor null) (tensor-copy ,a))))))
 
-(definline .* (&rest objects &aux (ret (if objects (b.* (car objects)) 1)))
-  (loop for fst in (cdr objects) do (setf ret (b.* ret fst)))
-  ret)
+(definline .* (&rest objects)
+  (let ((ret (if objects (b.* (car objects)) 1)))
+    (loop for fst in (cdr objects) do (setf ret (b.* ret fst)))
+    ret))
 
 (define-compiler-macro .* (&rest objects)
   (rec reducer ((ret (if objects `(b.* ,(car objects)) 1)) (objs (cdr objects)))
-       (if (not objs) ret
-           (reducer `(b.* ,ret ,(car objs)) (cdr objs)))))
-;;
+    (if (not objs) ret
+        (reducer `(b.* ,ret ,(car objs)) (cdr objs)))))
+
 (defmacro b* (a &optional b)
-  (match* (a b)
-    (((or (list (and op-a (or 'ctranspose 'ctranspose~ 'transpose 'transpose~)) code-a) code-a)
-      (or (list (and op-b (or 'ctranspose 'ctranspose~ 'transpose 'transpose~)) code-b) code-b))
-     (using-gensyms (decl (code-a code-b))
-       (symbol-macrolet ((a (if op-a `(,op-a ,code-a) code-a))
-                         (b (if op-b `(,op-b ,code-b) code-b)))
-         `(let (,@decl)
-            (cart-etypecase (,code-a ,code-b)
-              ((number number) (cl:* ,a ,b))
-              ((number null) ,a)
-              ;;Scaling
-              ((number tensor) (scal ,a ,b))
-              ((tensor number) (scal ,b ,a))
-              ;;Matrix, vector/matrix product
-              ((tensor-matrix (or tensor-matrix tensor-vector)) (gem 1 ,a ,b nil nil))
-              ((tensor null) (tensor-copy ,a))
-              ;;Permutation action. Left action permutes axis-0, right action permutes the last axis (-1).
-              ((permutation base-tensor) (permute ,b ,a 0))
-              ((tensor permutation) (permute ,a ,b -1))
-              ;;The correctness of this depends on the left-right order in reduce (foldl).
-              ((permutation permutation) (permutation* ,a ,b))
-              ((permutation null) (tensor-copy ,a)))))))))
+  (when (and (listp a) (listp b))
+    (let* ((op-a (find (car a) #1='(ctranspose ctranspose~ tranpose transpose~)))
+           (op-b (find (car b) #1#))
+           (code-a (if op-a (second a) a))
+           (code-b (if op-b (second b) b)))
+      (with-gensyms (%code-a %code-b)
+        (symbol-macrolet ((a (if op-a `(,op-a ,code-a) code-a))
+                          (b (if op-b `(,op-b ,code-b) code-b)))
+          `(let ((,%code-a ,code-a)
+                 (,%code-b ,code-b))
+             (cart-etypecase (,%code-a ,%code-b)
+               ((number number) (cl:* ,a ,b))
+               ((number null) ,a)
+               ;;Scaling
+               ((number tensor) (scal ,a ,b))
+               ((tensor number) (scal ,b ,a))
+               ;;Matrix, vector/matrix product
+               ((tensor-matrix (or tensor-matrix tensor-vector)) (gem 1 ,a ,b nil nil))
+               ((tensor null) (tensor-copy ,a))
+               ;;Permutation action. Left action permutes axis-0, right action permutes the last axis (-1).
+               ((permutation base-tensor) (permute ,b ,a 0))
+               ((tensor permutation) (permute ,a ,b -1))
+               ;;The correctness of this depends on the left-right order in reduce (foldl).
+               ((permutation permutation) (permutation* ,a ,b))
+               ((permutation null) (tensor-copy ,a)))))))))
 
-(definline * (&rest objects &aux (ret (if objects (b* (car objects)) 1)))
-  (loop for fst in (cdr objects) do (setf ret (b* ret fst)))
-  ret)
+;; FIX 2025-12-28: 
+#+nil
+(definline * (&rest objects)
+  (let ((ret (if objects (b* (car objects)) 1)))
+    (loop for fst in (cdr objects) do (setf ret (b* ret fst)))
+    ret))
 
+#+nil
 (define-compiler-macro * (&rest objects)
-  (rec reducer ((ret (if objects `(b* ,(car objects)) 1)) (objs (cdr objects)))
-       (if (not objs) ret	  
-           (destructuring-case (car objs)
-             (('/ a)
-              (if (cdr objs)
-                  `(b* ,ret (b\\ ,@(if (cddr objs) `((* ,@(cdr objs))) (cdr objs)) ,a))
-                  `(b/ ,ret ,a)))
-             ((t) (reducer `(b* ,ret ,(car objs)) (cdr objs)))))))
+  (rec reducer ((ret (if objects `(b* ,(car objects)) 1))
+                (objs (cdr objects)))
+    (if (not objs) ret	  
+        (destructuring-case (car objs)
+          (('/ a)
+           (if (cdr objs)
+               `(b* ,ret (b\\ ,@(if (cddr objs) `((* ,@(cdr objs))) (cdr objs)) ,a))
+               `(b/ ,ret ,a)))
+          ((t) (reducer `(b* ,ret ,(car objs)) (cdr objs)))))))
 
 (defmacro b./ (a &optional b)
   (using-gensyms (decl (a b))
@@ -145,46 +152,48 @@
 (define-compiler-macro ./ (object &rest more-objects)
   (if more-objects
       (rec reducer ((ret `(b+ ,object)) (objs more-objects))
-           (if (not objs) ret
-               (reducer `(b./ ,ret ,(car objs)) (cdr objs))))
+        (if (not objs) ret
+            (reducer `(b./ ,ret ,(car objs)) (cdr objs))))
       `(b./ ,object)))
 ;;
 (defmacro b@ (a &optional b)
-  (match* (a b)
-    (((or (list (and op-a (or 'ctranspose 'ctranspose~ 'transpose 'transpose~)) code-a) code-a)
-      (or (list (and op-b (or 'ctranspose 'ctranspose~ 'transpose 'transpose~)) code-b) code-b))
-     (using-gensyms (decl (code-a code-b))
-       (symbol-macrolet ((a (if op-a `(,op-a ,code-a) code-a))
-                         (b (if op-b `(,op-b ,code-b) code-b)))
-         `(let (,@decl)
-            (cart-etypecase (,code-a ,code-b)
-              ((number number) (cl:* ,a ,b))
-              ((number null) ,a)
-              ;;Scaling
-              ((number tensor) (scal ,a ,b))
-              ((tensor number) (scal ,b ,a))
-              ;;Matrix, vector/matrix product
-              ((tensor-vector tensor-vector) (dot ,a ,b nil))
-              ((tensor-matrix (or tensor-matrix tensor-vector)) (gem 1 ,a ,b nil nil))
-              ((tensor-vector tensor-matrix) (gem 1 ,b ,a nil nil :t))
-              ((tensor tensor) (gett! 1 ,a ,b 1 (zeros (append (butlast (dimensions ,code-a t)) (cdr (dimensions ,code-b t))) (class-of ,code-a))))
-              ((tensor null) (tensor-copy ,a))
-              ;;Permutation action on arguments. Left action unpermutes arguments, right action permutes them.
-              ;;See tb* for comparison.
-              ((permutation tensor) (transpose ,b (permutation/ ,a)))
-              ((tensor permutation) (transpose! ,a ,b))
-              ;;The correctness of this depends on the left-right order in reduce (foldl).
-              ((permutation permutation) (permutation* ,a ,b))
-              ((permutation null) (tensor-copy ,a)))))))))
+  (when (and (listp a) (listp b))
+    (let* ((op-a (find (car a) #2='(ctranspose ctranspose~ tranpose transpose~)))
+           (op-b (find (car b) #2#))
+           (code-a (if op-a (second a) a))
+           (code-b (if op-b (second b) b)))
+      (using-gensyms (decl (code-a code-b))
+        (symbol-macrolet ((a (if op-a `(,op-a ,code-a) code-a))
+                          (b (if op-b `(,op-b ,code-b) code-b)))
+          `(let (,@decl)
+             (cart-etypecase (,code-a ,code-b)
+               ((number number) (cl:* ,a ,b))
+               ((number null) ,a)
+               ;;Scaling
+               ((number tensor) (scal ,a ,b))
+               ((tensor number) (scal ,b ,a))
+               ;;Matrix, vector/matrix product
+               ((tensor-vector tensor-vector) (dot ,a ,b nil))
+               ((tensor-matrix (or tensor-matrix tensor-vector)) (gem 1 ,a ,b nil nil))
+               ((tensor-vector tensor-matrix) (gem 1 ,b ,a nil nil :t))
+               ((tensor tensor) (gett! 1 ,a ,b 1 (zeros (append (butlast (dimensions ,code-a t)) (cdr (dimensions ,code-b t))) (class-of ,code-a))))
+               ((tensor null) (tensor-copy ,a))
+               ;;Permutation action on arguments. Left action unpermutes arguments, right action permutes them.
+               ;;See tb* for comparison.
+               ((permutation tensor) (tensor:transpose ,b (permutation/ ,a)))
+               ((tensor permutation) (transpose! ,a ,b))
+               ;;The correctness of this depends on the left-right order in reduce (foldl).
+               ((permutation permutation) (permutation* ,a ,b))
+               ((permutation null) (tensor-copy ,a)))))))))
 
 (definline @ (&rest objects &aux (ret (if objects (b@ (car objects)) 1)))
     (loop for fst in (cdr objects) do (setf ret (b@ ret fst)))
   ret)
 
 (define-compiler-macro @ (&rest objects)
-  (rec reducer ((ret (if objects `(b@ ,(car objects)) 1)) (objs (cdr objects)))
-       (if (not objs) ret
-           (reducer `(b@ ,ret ,(car objs)) (cdr objs)))))
+    (rec reducer ((ret (if objects `(b@ ,(car objects)) 1)) (objs (cdr objects)))
+      (if (not objs) ret
+          (reducer `(b@ ,ret ,(car objs)) (cdr objs)))))
 
 (definline · (&rest objects) (apply #'@ objects))
 #+nil
@@ -196,7 +205,7 @@
      (etypecase a
        (tensor (dotimes (i 100000) (+ a a)))
        (number (dotimes (i 100000) (+ a a)))))))
-;;
+
 (defmacro b/ (a &optional b)
   "Solve x b = a (a /b); or compute /a"
   (using-gensyms (decl (a b))
@@ -208,7 +217,7 @@
          (((or tensor-vector tensor-matrix) tensor-square-matrix) ;; (/b' a')' =  a / b	  
           (copy! (transpose!
                   (let ((tensor:*default-stride-ordering* :col-major))
-                    (getrs! (getrf! (tensor-copy ,b)) (transpose ,a) :t)))
+                    (getrs! (getrf! (tensor-copy ,b)) (tensor:transpose ,a) :t)))
                  ,a))
          ((tensor-square-matrix null) (getri! (getrf! (tensor-copy ,a))))
          ((tensor permutation) (permute! ,a (permutation/ ,b) -1))
@@ -243,10 +252,10 @@
 (define-compiler-macro / (object &rest more-objects)
   (if more-objects
       (rec reducer ((ret `(b+ ,object)) (objs more-objects))
-           (if (not objs) ret
-               (reducer `(b/ ,ret ,(car objs)) (cdr objs))))
+        (if (not objs) ret
+            (reducer `(b/ ,ret ,(car objs)) (cdr objs))))
       `(b/ ,object)))
-;;
+
 (defmacro b= (a &optional b)
   (using-gensyms (decl (a b))
     `(let (,@decl)
@@ -265,7 +274,7 @@
   (with-gensyms (o)
     `(let ((,o ,object))
        (and ,@ (mapcar #'(lambda (x) `(b= ,o ,x)) more-objects)))))
-;;
+
 ;; (defmacro b.= (a &optional b)
 ;;   (using-gensyms (decl (a b))
 ;;     `(let (,@decl)
@@ -285,6 +294,7 @@
 ;;     `(let ((,o ,object))
 ;;        (and ,@ (mapcar #'(lambda (x) `(b.= ,o ,x)) more-objects)))))
 ;;
+
 (defmacro b⊗ (a &optional b)
   (using-gensyms (decl (a b))
     `(let (,@decl)
@@ -303,8 +313,8 @@
 
 (define-compiler-macro ⊗ (object &rest more-objects)
   (rec reducer ((ret `(b⊗ ,object)) (objs more-objects))
-       (if (not objs) ret
-           (reducer `(b⊗ ,ret ,(car objs)) (cdr objs)))))
+    (if (not objs) ret
+        (reducer `(b⊗ ,ret ,(car objs)) (cdr objs)))))
 ;;
 (definline realpart~ (object) (tensor-realpart~ object))
 (definline realpart (object) (tensor-realpart object))
@@ -322,22 +332,24 @@
 
 (definline conjugate (a)
   (tensor-conjugate a))
-;;
 
-(defmacro lift-function (fn &aux (pkg (find-package "MATH-USER")))
+(defmacro lift-function (fn &aux (pkg (find-package "MATH/SYM")))
+  "Lift a FN which may exist in the COMMON-LISP, interning it in PKG as a tensor
+method."
   (letv* ((fname (symbol-name fn)) (fpkg (symbol-package fn)))
     (letv* ((fn (find-symbol fname fpkg))
             (fn-package (intern fname pkg))
             (ge-fn (intern (concatenate 'string fname "-GENERIC!") pkg)))
       `(progn
-         (defgeneric ,ge-fn (x)
-           (:generic-function-class tensor-method-generator))
+         (eval-always
+           (defgeneric ,ge-fn (x)
+             (:generic-function-class tensor-method-generator)))
          (define-tensor-method ,ge-fn ((x dense-tensor :x))
            `(dorefs (idx (dimensions x))
                     ((ref-x x :type ,(tensor:cl :x)))
                     (setf ref-x (,',fn ref-x)))
            'x)
-         (definline ,(intern (concatenate 'string fname "!") (find-package "MATH-USER")) (x)
+         (definline ,(intern (concatenate 'string fname "!") (find-package "MATH/SYM")) (x)
            (etypecase x
              (number (,fn x))
              (tensor (,ge-fn x))))
@@ -351,23 +363,25 @@
   (lift-fns cl:sin cl:cos cl:tan cl:asin cl:acos cl:exp cl:sinh cl:cosh cl:tanh cl:asinh cl:acosh cl:atanh))
 
 ;;log
-(defgeneric log-generic! (x y)
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric log-generic! (x y)
+    (:generic-function-class tensor-method-generator)))
+
 (define-tensor-method log-generic! ((x dense-tensor :x) (y dense-tensor :y))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x))
             (ref-y y :type ,(tensor:cl :y)))
-     (setf ref-x (cl:log ref-x ref-y)))
+           (setf ref-x (cl:log ref-x ref-y)))
   'x)
 (define-tensor-method log-generic! ((x dense-tensor :x) (y number))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x)))
-     (setf ref-x (cl:log ref-x y)))
+           (setf ref-x (cl:log ref-x y)))
   'x)
 (define-tensor-method log-generic! ((x dense-tensor :x) (y null))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x)))
-     (setf ref-x (cl:log ref-x)))
+           (setf ref-x (cl:log ref-x)))
   'x)
 
 (definline log! (base &optional power)
@@ -382,24 +396,27 @@
     ((number tensor) (log-generic! (copy! base (zeros (dimensions power) (tensor (let ((type (type-of base)))
                                                                                    (if (subtypep type 'complex) type `(complex ,type))))))
                                    power))))
+
 ;;atan
-(defgeneric atan-generic! (x y)
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric atan-generic! (x y)
+    (:generic-function-class tensor-method-generator)))
+
 (define-tensor-method atan-generic! ((x dense-tensor :x) (y dense-tensor :y))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x))
             (ref-y y :type ,(tensor:cl :y)))
-     (setf ref-x (cl:atan ref-x ref-y)))
+           (setf ref-x (cl:atan ref-x ref-y)))
   'x)
 (define-tensor-method atan-generic! ((x dense-tensor :x) (y number))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x)))
-     (setf ref-x (cl:atan ref-x y)))
+           (setf ref-x (cl:atan ref-x y)))
   'x)
 (define-tensor-method atan-generic! ((x dense-tensor :x) (y null))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x)))
-     (setf ref-x (cl:atan ref-x)))
+           (setf ref-x (cl:atan ref-x)))
   'x)
 
 (definline atan! (y &optional x)
@@ -416,8 +433,10 @@
                                                                              (if (subtypep type 'complex) type `(complex ,type))))))
                                     x))))
 ;;expt
-(defgeneric expt-generic! (x y)
-  (:generic-function-class tensor-method-generator))
+(eval-always
+  (defgeneric expt-generic! (x y)
+    (:generic-function-class tensor-method-generator)))
+
 (define-tensor-method expt-generic! ((x dense-tensor :x) (y dense-tensor :y))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x))
@@ -427,7 +446,7 @@
 (define-tensor-method expt-generic! ((x dense-tensor :x) (y number))
   `(dorefs (idx (dimensions x))
            ((ref-x x :type ,(tensor:cl :x)))
-     (setf ref-x (expt ref-x y)))
+           (setf ref-x (expt ref-x y)))
   'x)
 
 (definline expt! (base power)
@@ -440,4 +459,4 @@
     ((tensor (or tensor number)) (expt-generic! (tensor-copy base) power))
     ((number tensor) (expt-generic! (copy! base (zeros (dimensions power) (tensor (type-of base)))) power))))
 
-(sb-ext:lock-package :cl)
+(alias-function ^ expt)

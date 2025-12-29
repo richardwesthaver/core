@@ -623,7 +623,7 @@
    :defwith
    :with-memoization
    :memoizing
-   :match :lambda-match :ematch))
+   :match :lambda-match))
 
 (defpkg :std/array
   (:use :cl)

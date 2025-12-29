@@ -19,23 +19,17 @@
               ,@(let ((args 
                         `((if ,vl #\V #\N) (if ,vr #\V #\N)
                           (dimensions ,A 0)
-                              #+nil
-                              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-                              (the ,(store-type sym) (store ,A))
-                              ,lda
-                              (the ,(store-type sym) ,wr) 
-                              (the ,(store-type sym) ,wi)
-                              #+nil
-                              (:* ,(lisp->mffi ftype) :+ (if ,vl (head ,vl) 0)) 
-                              (if ,vl (the ,(store-type sym) (store ,vl)) (nqull-pointer)) 
-                              (if ,vl ,ldvl 1)
-                              #+nil
-                              (:* ,(lisp->mffi ftype) :+ (if ,vr (head ,vr) 0)) 
-                              (if ,vr (the ,(store-type sym) (store ,vr)) (null-pointer)) 
-                              (if ,vr ,ldvr 1)
-                              ,xxx 
-                              ,lwork
-                              (addr ret))))
+                          (deref (the ,(store-type sym) (store ,A)) (head ,A))
+                          ,lda
+                          (the ,(store-type sym) ,wr) 
+                          (the ,(store-type sym) ,wi)
+                          (deref (if ,vl (the ,(store-type sym) (store ,vl)) (nqull-pointer)) (if ,vl (head ,vl) 0))
+                          (if ,vl ,ldvl 1)
+                          (deref (if ,vr (the ,(store-type sym) (store ,vr)) (null-pointer)) (if ,vr (head ,vr) 0))
+                          (if ,vr ,ldvr 1)
+                          ,xxx 
+                          ,lwork
+                          (addr ret))))
                   (if (subtypep ftype 'cl:complex)
                       (apply #'append (permute (pair args) (make-instance 'permutation-cycle :store (list (idxv 12 11 10 9 8 7 6)))))
                       args)))))))))
@@ -46,25 +40,23 @@
     (let ((complex? (subtypep (field-type sym) 'complex))
           (ftype (field-type sym)))
       `(let (,@decl)
-       (declare (type ,sym ,A)
-                (type character ,jobz ,uplo)
-                (type index-type ,lda)
-                (type ,(store-type (realified-tensor sym)) ,w))
-       (with-field-elements ,(realified-tensor sym) (,@(when complex? `((,xxr (t.fid+ (t.field-type (t.realified-tensor ,sym))) (* 3 (dimensions ,A 0))))))
-         (with-lapack-query ,sym (,xxx ,lwork)
-           (with-alien ((ret int 0))
-             (,(lapackfunc (if complex? "heev" "syev") ftype)
-              ,jobz ,uplo
-              (dimensions ,A 0)
-              #+nil
-              (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-              (the ,(store-type sym) (store ,A)) 
-              ,lda
-              ,w
-              ,xxx ,lwork
-              ,@(when complex? `(,xxr))
-              (addr ret))
-             ret)))))))
+         (declare (type ,sym ,A)
+                  (type character ,jobz ,uplo)
+                  (type index-type ,lda)
+                  (type ,(store-type (realified-tensor sym)) ,w))
+         (with-field-elements ,(realified-tensor sym) (,@(when complex? `((,xxr (t.fid+ (t.field-type (t.realified-tensor ,sym))) (* 3 (dimensions ,A 0))))))
+           (with-lapack-query ,sym (,xxx ,lwork)
+             (with-alien ((ret int 0))
+               (,(lapackfunc (if complex? "heev" "syev") ftype)
+                ,jobz ,uplo
+                (dimensions ,A 0)
+                (deref (the ,(store-type sym) (store ,A)) (head ,A))
+                ,lda
+                ,w
+                ,xxx ,lwork
+                ,@(when complex? `(,xxr))
+                (addr ret))
+               ret)))))))
 
 ;;
 (deft/generic (t.geev-output-fix #'subtypep) sym (wr wi))
@@ -77,12 +69,12 @@
       (let ((csym (complexified-tensor sym)))
         (using-gensyms (decl (wr wi) (ret i))
           `(let* (,@decl
-                  (,ret (t.store-allocator ,csym (t.store-size ,sym ,wr))))
+                     (,ret (t.store-allocator ,csym (t.store-size ,sym ,wr))))
              (declare (type ,(store-type sym) ,wr ,wi)
                       (type ,(store-type csym) ,ret))
              (with-optimization (:speed 3 :safety 0)
                (loop :for ,i :from 0 :below (t.store-size ,sym ,wr)
-                  :do (t.store-set ,csym (complex (t.store-ref ,sym ,wr ,i) (t.store-ref ,sym ,wi ,i)) ,ret ,i)))
+                     :do (t.store-set ,csym (complex (t.store-ref ,sym ,wr ,i) (t.store-ref ,sym ,wi ,i)) ,ret ,i)))
              ,ret)))))
 
 (eval-always
@@ -140,31 +132,31 @@
           (wi (t.store-allocator ,(cl :x) n)))
      (ecase jobvl
        ,@(loop :for jvl :in '(#\N #\V) :collect
-            `(,jvl
-              (ecase jobvr
-                ,@(loop :for jvr :in '(#\N #\V) :collect
-                     `(,jvr
-                       (with-columnification (() (A ,@(when (char= jvl #\V) `(vl)) ,@(when (char= jvr #\V) `(vr))))
-                         (let ((info (t.lapack-geev! ,(cl :x)
-                                                     A (or (blas-matrix-compatiblep A #\N) 0)
-                                                     ,@(if (char= jvl #\N) `(nil 1) `(vl (or (blas-matrix-compatiblep vl #\N) 0)))
-                                                     ,@(if (char= jvr #\N) `(nil 1) `(vr (or (blas-matrix-compatiblep vr #\N) 0)))
-                                                     wr wi)))
-                           (unless (= info 0)
-                             (if (< info 0)
-                                 (error "GEEV: Illegal value in the ~:r argument." (- info))
-                                 (error "GEEV: the QR algorithm failed to compute all the eigenvalues, and no eigenvectors have been computed;
+                  `(,jvl
+                    (ecase jobvr
+                      ,@(loop :for jvr :in '(#\N #\V) :collect
+                                 `(,jvr
+                                   (with-columnification (() (A ,@(when (char= jvl #\V) `(vl)) ,@(when (char= jvr #\V) `(vr))))
+                                     (let ((info (t.lapack-geev! ,(cl :x)
+                                                                 A (or (blas-matrix-compatiblep A #\N) 0)
+                                                                 ,@(if (char= jvl #\N) `(nil 1) `(vl (or (blas-matrix-compatiblep vl #\N) 0)))
+                                                                 ,@(if (char= jvr #\N) `(nil 1) `(vr (or (blas-matrix-compatiblep vr #\N) 0)))
+                                                                 wr wi)))
+                                       (unless (= info 0)
+                                         (if (< info 0)
+                                             (error "GEEV: Illegal value in the ~:r argument." (- info))
+                                             (error "GEEV: the QR algorithm failed to compute all the eigenvalues, and no eigenvectors have been computed;
 elements ~a:~a of WR and WI contain eigenvalues which have converged." info n)))))))))))
      (let ((ret nil))
        (when vr (push vr ret))
        (when vl (push vl ret))
        (values-list (list* (with-no-init-checks
                                (make-instance ',(complexified-tensor (cl :x))
-                                              :dimensions (coerce (list (dimensions A 0)) 'index-store-vector)
-                                              :strides (coerce (list 1) 'index-store-vector)
-                                              :head 0
-                                              :store (t.geev-output-fix ,(cl :x) wr wi)))
-                          ret)))))
+                                 :dimensions (coerce (list (dimensions A 0)) 'index-store-vector)
+                                 :strides (coerce (list 1) 'index-store-vector)
+                                 :head 0
+                                 :store (t.geev-output-fix ,(cl :x) wr wi)))
+                           ret)))))
 (eval-always
   (defgeneric heev! (a &optional job uplo?)
     (:documentation "
@@ -248,3 +240,11 @@ elements ~a:~a of WR and WI contain eigenvalues which have converged." info n)))
 ;;     #+nil(norm (t- a (t* v (diag s 2) (inv v))))
 ;;     #+nil(values (norm (t- (diag~ (octave-read-tensor "l")) s))
 ;; 		 (norm (t- (octave-read-tensor "v") v)))))
+
+;; originally from blas/norm.lisp
+(defun psd-proj (m)
+  (letv* ((λλ u (eig (scal! 1/2 (axpy! 1 (transpose~ m) (tensor-copy m))) :v))
+          (ret (zeros (dimensions m) (type-of m))))
+    (loop for (λi ui) being the slice of (list λλ u) along (list 0 -1)
+          if (< 0 (ref λi 0)) (ger! (ref λi 0) ui ui ret t))
+    ret))

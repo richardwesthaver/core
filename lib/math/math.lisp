@@ -10,4 +10,5 @@
   (:use-reexport . #.*math-packages*))
   
 (defpkg :math-user
-  (:use :math :math/sym :tensor :id))
+  (:use :math :tensor :math/sym :id))
+

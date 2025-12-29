@@ -15,9 +15,8 @@
                   (type index-type ,lda))
          (,(lapackfunc "getrf" ftype)
           (dimensions ,A 0) (dimensions ,A 1)
-          #+nil
-          (:* ,(alien-to-element-type ftype) :+ (head ,A)) 
-          (the ,(store-type sym) (store ,A)) (:& :int) ,lda
+          (deref (the ,(store-type sym) (store ,A)) (head ,A))
+          ,lda
           (the (simple-array ,(element-type-to-alien :int) (*)) ,ipiv) 
           ;; FIX 2025-12-26: 
           0)))))
@@ -147,9 +146,7 @@ Return Values
            (with-alien ((info int 0))
              (,(lapackfunc "getri" ftype)
               (dimensions ,A 0)
-              #+nil
-              (:* ,(alien-to-element-type ftype) :+ (head ,A)) 
-              (the ,(store-type sym) (store ,A)) 
+              (deref (the ,(store-type sym) (store ,A)) (head ,A))
               ,lda
               ,ipiv
               ,xxx 

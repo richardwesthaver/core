@@ -31,6 +31,13 @@
                    (:* ,(element-type-to-alien ftype) :+ (head ,y)) (the ,(store-type sym) (store ,y)) (:& :int) ,st-y)
          ,y))))
 
+(defmacro with-lapack-query (class (work lwork) &rest code)
+  `(lety ((,lwork -1 :type index-type))
+     (with-field-element ,class (,work (tensor::t.fid+ ,(field-type class)) 1)
+       (progn ,@code)
+       (setq ,lwork (ceiling (tensor::t.frealpart ,(field-type class) (tensor::t.store-ref ,class ,work 0)))))
+     (with-field-element ,class (,work (tensor::t.fid+ ,(field-type class)) ,lwork) ,@code)))
+
 ;;; CUDA/NVCC
 (defun write-cuda-file (cu-path cuda-code)
   (with-open-file (out cu-path :direction :output :if-exists :supersede)

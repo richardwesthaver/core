@@ -23,13 +23,11 @@
       (loop for li across observations
             for (Ai bi) being the slice of (list A b) along 0
             ;; FIX 2025-12-27: 
-            #+nil
                do
-            #+nil
-               (ematch li
-                          ((λlist ti value &optional (derivative 0))
-                           (setf (ref bi 0) value)
-                           (row-ti ti Ai derivative))))
+               (match li
+                 ((ti value &optional derivative)
+                  (setf (ref bi 0) value)
+                  (row-ti ti Ai (or derivative 0)))))
       (lstsq A b))))
 
 (defun polyval (tt poly &aux (tn 1))

@@ -305,6 +305,7 @@
    #:hash-tensor #:graph-tensor 
    #:simple-graph-tensor #:coordinate-tensor 
    #:simple-coordinate-tensor
+   #:with-coordinates
    #:tensor-typep #:tensor-type
    #:tensor-method-generator #:define-tensor-method #:cl #:zeros
    #:define-tensor-generic

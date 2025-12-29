@@ -20,30 +20,23 @@
                (,(lapackfunc "gesvd" ftype)
                 (if ,u #\A #\N) (if ,v #\A #\N)
                 (dimensions ,A 0) (dimensions ,A 1)
-                #+nil
-                (:* ,(lisp->mffi ftype) :+ (head ,A)) 
-                (the ,(store-type sym) (store ,A)) 
+                (deref (the ,(store-type sym) (store ,A)) (head ,A))
                 ,lda
-                #+nil
-                (:* ,(lisp->mffi rtype) :+ (head ,s)) 
-                (the ,(store-type (realified-tensor sym)) (store ,s))
-                #+nil
-                (:* ,(lisp->mffi ftype) :+ (if ,u (head ,u) 0)) 
-                (if ,u (the ,(store-type sym) (store ,u)) (null-pointer)) 
+                (deref (the ,(store-type (realified-tensor sym)) (store ,s)) (head ,s))
+                (deref (if ,u (the ,(store-type sym) (store ,u)) (null-pointer)) (if ,u (head ,u) 0))
                 (if ,u ,ldu 1)
-                #+nil
-                (:* ,(lisp->mffi ftype) :+ (if ,v (head ,v) 0)) 
-                (if ,v (the ,(store-type sym) (store ,v)) (null-pointer)) 
+                (deref (if ,v (the ,(store-type sym) (store ,v)) (null-pointer)) (if ,v (head ,v) 0))
                 (if ,v ,ldv 1)
                 (the ,(store-type sym) ,xxx) 
                 ,lwork
                 ,@(when complex? `(,xxr))
                 (addr ret))
                ret)))))))
-;;
-(defgeneric svd (a &optional job)
-  (:documentation
-   "Compute the singular value decomposition (SVD) of the 
+
+(eval-always
+  (defgeneric svd (a &optional job)
+    (:documentation
+     "Compute the singular value decomposition (SVD) of the 
 NxM matrix A. The SVD of A is given by:
 
                A = U * SIGMA * V'
@@ -85,9 +78,9 @@ JOB              Return Value
 :UN             SIGMA, U
 :NV             SIGMA, V
 :UV             SIGMA, U, V")
-  (:method :before ((a tensor) &optional (job :nn))
-    (assert (member job '(:nn :un :nv :uv)) nil 'invalid-arguments))
-  (:generic-function-class tensor-method-generator))
+    (:method :before ((a tensor) &optional (job :nn))
+      (assert (member job '(:nn :un :nv :uv)) nil 'invalid-arguments))
+    (:generic-function-class tensor-method-generator)))
 
 (define-tensor-method svd ((a blas-mixin :x) &optional (job :nn))
   `(destructuring-bind (ujob vjob) (split-job job)

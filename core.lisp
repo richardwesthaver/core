@@ -7,7 +7,6 @@
   (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math)
   (:export #:app-config))
 
-
 (in-package :core)
 
 (define-lisp-package :core)

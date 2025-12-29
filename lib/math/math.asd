@@ -4,15 +4,14 @@
   :depends-on (:std :obj :blas :cuda :syn)
   :components ((:file "pkg")
                (:file "util")
-               (:file "sfc")
-               (:file "auto")
                (:module "blas"
                 :components 
                 ((:file "axpy")
                  (:file "sum")
                  (:file "gem")
                  (:file "ger")
-                 (:file "trs")))
+                 (:file "trs")
+                 (:file "norm")))
                (:module "lapack"
                 :if-feature :lapack
                 :components
@@ -32,6 +31,8 @@
                (:file "linfix")
                (:file "syn")
                (:file "readtable")
+               (:file "sfc")
+               (:file "auto")
                (:file "math"))
   :in-order-to ((test-op (test-op :math/tests))))
 

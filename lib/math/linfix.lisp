@@ -116,7 +116,7 @@
 (defparameter *exponent-tokens* '(#\E #\S #\D #\F #\L))
 (defparameter *operator-tokens*
   `(("⊗" ⊗) ;;<- CIRCLE TIMES
-    (".^" .^) ("^" ^) ("⟼" ⟼)
+    (".^" ^) ("^" ^) ("⟼" ⟼)
     ("./" ./) ("/" /)
     ("*" *) (".*" .*) ("@" @)
     ("·" @) ;; <- MIDDLE DOT
@@ -125,7 +125,7 @@
     ("(" \() (")" \))
     ("[" \[) ("]" \])
     (":" |:|) (":=" :=)
-    ("←" ←) ("=" =) (".=" .=)
+    ("←" ←) ("="=) (".=" .=)
     ("," \,) ("." \.)
     ("'" ctranspose) (".'" transpose)))
 
@@ -165,6 +165,12 @@
                         (sym (gensym)))
                     (push sym expr)
                     (push (list sym word) lspe)))
+                 ((and (member (char-upcase c) *exponent-tokens*) (numberp (read-stack nil)))
+                  (push (read-char stream t nil t) stack)
+                  (when (char= (peek-char nil stream t nil t) #\-)
+                    (push (read-char stream t nil t) stack)
+                    (unless (digit-char-p (peek-char nil stream t nil t))
+                      (unread-char (pop stack) stream))))
                  ((and (char= c #\i) (numberp (read-stack nil)))
                   (read-char stream t nil t)
                   (push (complex 0 (read-stack nil)) expr)
@@ -198,8 +204,6 @@
   (if (symbolp (car lst)) lst
       `(funcall ,(car lst) ,@(cdr lst))))
 
-(defparameter *ref-list* '((cons elt) (array aref) (obj/tensor::base-tensor obj/tensor::ref)))
-
 (defun process-slice (args)
   (mapcar #'(lambda (x) (if (and (consp x) (eql (car x) :slice)) `(list* ,@(cdr x)) x)) args))
 
@@ -207,28 +211,24 @@
   (cond
     ((null args) x)
     ((find-if #'(lambda (sarg) (and (consp sarg) (eql (car sarg) ':slice))) args)
-     `(obj/tensor::subtensor~ ,x (list ,@(process-slice args))))
-    (t
-     `(etypecase ,x
-        ,@(mapcar #'(lambda (l) `(,(car l) (,(cadr l) ,x ,@args))) (if (> (length args) 1) (cdr *ref-list*) *ref-list*))))))
+     `(subtensor~ ,x (list ,@(process-slice args))))
+    (t `(ref ,x ,@args))))
 
 (define-setf-expander generic-ref (x &rest args &environment env)
-  (multiple-value-bind (dummies vals newval setter getter)
-      (get-setf-expansion x env)
+  (multiple-value-bind (dummies vals newval setter getter) (get-setf-expansion x env)
+    (declare (ignore setter))
     (with-gensyms (store)
       (values (append dummies newval)
               (append vals (list getter))
               `(,store)
               (let ((arr (car newval)))
-                `(prog1 ,(cond
-                          ((null args)
-                           `(obj/tensor::copy! ,store ,arr))
-                          ((find-if #'(lambda (sarg) (and (consp sarg) (eql (car sarg) ':slice))) args)
-                           `(setf (obj/tensor::subtensor~ ,arr (list ,@(process-slice args))) ,store))
-                          (t`(etypecase ,arr
-                               ,@(mapcar #'(lambda (l) `(,(car l) (setf (,(cadr l) ,arr ,@args) ,store))) (if (> (length args) 1) (cdr *ref-list*) *ref-list*)))))
-                   ,setter))
-              `(generic-ref ,getter ,@args)))))
+                (cond
+                  ((null args)
+                   `(copy! ,store ,arr))
+                  ((find-if #'(lambda (sarg) (and (consp sarg) (eql (car sarg) ':slice))) args)
+                   `(setf (subtensor~ ,arr (list ,@(process-slice args))) ,store))
+                  (t `(setf (ref ,arr ,@args) ,store))))
+              `(generic-ref ,(car newval) ,@args)))))
 
 (defmacro generic-incf (x expr &optional (alpha 1) &environment env)
   (multiple-value-bind (dummies vals new setter getter) (get-setf-expansion x env)
@@ -239,7 +239,7 @@
                 (,new ,getter)
                 (,val ,expr))
            (etypecase ,new
-             (tensor::base-tensor (math/blas::axpy! ,alpha ,val ,new))
+             (base-tensor (axpy! ,alpha ,val ,new))
              (t (setq ,new (+ ,new ,val))))
            ,setter)))))
 
@@ -266,6 +266,7 @@
    (expr ⊗ expr #'(lambda (a b c) (list b a c)))
    (expr .^ expr #'(lambda (a b c) (list b a c)))
    (expr ^ expr #'(lambda (a b c) (list b a c)))
+   ;; (expr  expr #'(lambda (a b c) (list b a c)))
    (list ⟼ expr #'(lambda (a b c) (declare (ignore b)) `(lambda (,@(cdr a)) ,c)))
    (expr ← expr #'(lambda (a b c) (declare (ignore b)) (list 'setf a c)))
    (expr := expr #'(lambda (a b c) (declare (ignore b)) (list :deflet a c)))
