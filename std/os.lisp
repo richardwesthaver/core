@@ -98,7 +98,7 @@ arrange for FVAR to be closed after BODY."
 
 (defar setmntent (* t) (filename c-string) (type c-string))
 
-(defar getmntent (* t) (stream (* t)))
+(defar getmntent (* mntent) (stream (* t)))
 
 (defar endmntent int (stream (* t)))
 
@@ -256,6 +256,50 @@ arrange for FVAR to be closed after BODY."
           (when-let ((p
                       (.find (concatenate 'string "." rc-name) (std/path:directory-files (user-homedir-pathname)))))
             (warn 'simple-warning :format-control "config file in $HOME: ~A" :format-arguments p))))))
+
+(defun xdg-data-directory (name)
+  (directory-path (merge-pathnames name (xdg-dir :data-home))))
+
+(defun xdg-data-dir (name &optional path)
+  "Attempt to find xdg-data directory for NAME and optional PATH searching for a match in ~/.data/NAME/PATH."
+  (unless (stringp name) (setf name (string-downcase name)))
+  (let ((dir (probe-directory (xdg-data-directory name))))
+    (if (and dir path) 
+        (merge-pathnames path dir)
+        dir)))
+
+(defun xdg-cache-directory (name)
+  (directory-path (merge-pathnames name (xdg-dir :cache-home))))
+
+(defun xdg-cache-dir (name &optional path)
+  "Attempt to find xdg-cache directory for NAME and optional PATH searching for a match in ~/.cache/NAME/PATH."
+  (unless (stringp name) (setf name (string-downcase name)))
+  (let ((dir (probe-directory (xdg-cache-directory name))))
+    (if (and dir path) 
+        (merge-pathnames path dir)
+        dir)))
+
+(defun xdg-runtime-directory (name)
+  (directory-path (merge-pathnames name (xdg-dir :runtime-dir))))
+
+(defun xdg-runtime-dir (name &optional path)
+  "Attempt to find xdg-runtime directory for NAME and optional PATH searching for a match in /run/user/*/NAME/PATH."
+  (unless (stringp name) (setf name (string-downcase name)))
+  (let ((dir (probe-directory (xdg-runtime-directory name))))
+    (if (and dir path) 
+        (merge-pathnames path dir)
+        dir)))
+
+(defun xdg-state-directory (name)
+  (directory-path (merge-pathnames name (xdg-dir :state-home))))
+
+(defun xdg-state-dir (name &optional path)
+  "Attempt to find xdg-state directory for NAME and optional PATH searching for a match in ~/.local/state/NAME/PATH."
+  (unless (stringp name) (setf name (string-downcase name)))
+  (let ((dir (probe-directory (xdg-state-directory name))))
+    (if (and dir path) 
+        (merge-pathnames path dir)
+        dir)))
 
 ;;;_. user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
@@ -486,4 +530,5 @@ stream, and the second value is the output stream."
     ;; callback function
     (sb-alien:alien-sap
      (sb-alien::alien-lambda sb-alien:void ((signum sb-alien:int))
-       ,@body))))
+       ,@body
+       signum))))

@@ -14,8 +14,11 @@
 (defconstant +maximum-thread-count+ 1000)
 
 ;;; Vars
-(defvar *swank-connections* (make-cons-queue))
 (defvar *swank-thread-offset* 0)
+(define-constant +abort+ (cons nil nil) :test 'equal
+  :documentation "Unique object used to signal that a computation was aborted on the server.")
+(defvar *swank-connections* '() "List of all open Swank connections.")
+(defvar *swank-connections-lock* (make-mutex) "Lock protecting *SWANK-CONNECTIONS*.")
 
 ;;; Conditions
 (define-condition slime-network-error (error)
@@ -69,24 +72,21 @@ match each returned value with the continuation it should be passed to.")
 concurrently running threads."))
   (:documentation "A connection to a Swank server."))
 
-(defvar *open-connections* '() "List of all open Swank connections.")
-(defvar *connections-lock* (make-mutex) "Lock protecting *OPEN-CONNECTIONS*.")
-
 (defun add-open-connection (connection)
   "Adds CONNECTION to the set of open Swank connections."
-  (with-mutex (*connections-lock*)
-    (push connection *open-connections*)))
+  (with-mutex (*swank-connections-lock*)
+    (push connection *swank-connections*)))
 
 (defun remove-open-connection (connection)
   "Removes CONNECTION from the set of open Swank connections."
-  (with-mutex (*connections-lock*)
-    (setf *open-connections* (remove connection *open-connections*))))
+  (with-mutex (*swank-connections-lock*)
+    (setf *swank-connections* (remove connection *swank-connections*))))
 
 (defun find-connection-for-thread-id (thread-id)
   "Returns the open Swank connection associated with THREAD-ID."
-  (with-mutex (*connections-lock*)
+  (with-mutex (*swank-connections-lock*)
     (let ((thread-offset (* (floor thread-id +maximum-thread-count+) +maximum-thread-count+)))
-      (find thread-offset *open-connections* :key #'idx))))
+      (find thread-offset *swank-connections* :key #'idx))))
 
 (defun server-thread-id (thread-id)
   "Maps the THREAD-ID in an event that must be forwarded to the thread ID known
@@ -136,7 +136,7 @@ evaluated by the remote Lisp."
     (setf (aref message (1- (length message))) (char-code #\Newline))
     ;; We use IGNORE-ERRORS here to catch SB-INT:CLOSED-STREAM-ERROR on SBCL and any other
     ;; system-dependent network or stream errors.
-    (let ((success (ignore-errors (write-sequence message (sb-bsd-sockets:socket-make-stream sock)))))
+    (let ((success (ignore-errors (write-sequence message (sb-bsd-sockets:socket-make-stream sock :output t)))))
       (unless success (error 'slime-network-error)))))
 
 (defun slime-send (sexp connection)
@@ -148,7 +148,7 @@ if there are communications problems."
     ;; system-dependent network or stream errors.
     (let ((success nil))
       (ignore-errors
-       (progn (force-output (sb-bsd-sockets:socket-make-stream sock))
+       (progn (force-output (sb-bsd-sockets:socket-make-stream sock :output t))
               (setf success t)))
       (unless success (error 'slime-network-error))))
   (values))
@@ -184,33 +184,10 @@ Swank server."
         (return-from slime-net-connect nil)))
     (socket-keep-alive sock)
     (let ((connection
-            (make-instance 'swank-connection :host-name host-name :port port :socket sock))
+            (make-instance 'swank-connection :host host-name :port port :socket sock))
           (secret (slime-secret)))
       (when secret (slime-send secret connection))
       connection)))
-
-(defmacro destructure-case (value &body patterns)
-  "Dispatches VALUE to one of PATTERNS.  A cross between CASE and DESTRUCTURING-BIND.
-The pattern syntax is: ((HEAD . ARGS) . BODY).  The list of patterns is searched
-for a HEAD that's EQ to the car of VALUE.  If one is found, BODY is executed
-with ARGS bound to the corresponding values in the CDR of VALUE."
-  (let ((operator (gensym "op-"))
-        (operands (gensym "rand-"))
-        (tmp (gensym "tmp-")))
-    `(let* ((,tmp ,value)
-            (,operator (car ,tmp))
-            (,operands (cdr ,tmp)))
-       (case ,operator
-         ,@(mapcar (lambda (clause)
-                     (if (eq (car clause) t)
-                         `(t ,@(cdr clause))
-                         (destructuring-bind ((op &rest rands) &rest body) clause
-                           `(,op (destructuring-bind ,rands ,operands
-                                   . ,body)))))
-                   patterns)
-         ,@(if (eq (caar (last patterns)) t)
-               '()
-               `((t (error "destructure-case failed: ~S" ,tmp))))))))
 
 (defun send-to-emacs (event)
   "Sends EVENT to Emacs."
@@ -222,7 +199,7 @@ with ARGS bound to the corresponding values in the CDR of VALUE."
 (defun slime-dispatch-event (event connection)
   "Handles EVENT for a Swank CONNECTION.  Signals SLIME-NETWORK-ERROR if there
 are communications problems."
-  (destructure-case event
+  (destructuring-case event
     ((:emacs-rex form package-name thread continuation)
      (let ((id nil))
        (with-mutex ((connection-lock connection))
@@ -249,7 +226,6 @@ are communications problems."
        (when send-to-emacs
          (force-output)
          (send-to-emacs `(:return ,*current-thread* ,value ,id)))))
-
     ;; When a remote computation signals a condition and control ends up in the debugger, Swank
     ;; sends these events back to pop up a Slime breakpoint window.  Forward the events to Slime.
     ;; Modify the thread ID of each event to uniquely identify which remote Lisp generated it.
@@ -310,8 +286,8 @@ are communications problems."
      (error "Invalid rpc: ~S" message))
     ((:emacs-skipped-packet packet)
      (print (list :emacs-skipped-packet packet)))
-    (t
-     (error "Unknown event received: ~S" event))))
+    ((t &rest args)
+     (error "Unknown event received: ~S" args))))
 
 (defun slime-net-read (connection)
   "Reads a Swank message from a network CONNECTION to a Swank server.  Returns
@@ -322,7 +298,7 @@ the Swank event or NIL, if there was a problem reading data."
            (let ((result (ignore-errors (read-sequence buffer stream))))
              (unless result (return-from slime-net-read))
              result)))
-    (let ((stream (socket-make-stream (socket connection)))
+    (let ((stream (socket-make-stream (socket connection) :input t))
           (length-buffer (make-octets 6)))
       (if (/= (safe-read-sequence length-buffer stream) 6)
           nil
@@ -347,7 +323,7 @@ either a symbol or a list (VAR INIT-VALUE).
 SEXP is evaluated and the PRIN1-ed version is sent over CONNECTION to a remote
 Lisp.
 
-CLAUSES is a list of patterns with same syntax as `destructure-case'.  The
+CLAUSES is a list of patterns with same syntax as `destructuring-case'.  The
 result of the evaluation of SEXP is dispatched on CLAUSES.  The result is either
 a sexp of the form (:ok VALUE) or (:abort CONDITION).  CLAUSES is executed
 asynchronously.
@@ -363,11 +339,8 @@ Signals SLIME-NETWORK-ERROR when there are network problems sending SEXP."
                                    "COMMON-LISP-USER"
                                    t
                                    (lambda (,result)
-                                     (destructure-case ,result ,@continuations)))
+                                     (destructuring-case ,result ,@continuations)))
                              ,connection))))
-
-(define-constant +abort+ (cons nil nil) :test 'equal
-  :documentation "Unique object used to signal that a computation was aborted on the server.")
 
 (defun slime-eval-async (sexp connection &optional continuation)
   "Sends SEXP over CONNECTION to a Swank server for evaluation, then immediately
@@ -481,6 +454,9 @@ closed."
     (setf (state connection) :closing))
   (slime-eval-async nil connection)
   (values))
+
+(defmethod close-connection ((self swank-connection))
+  (slime-close self))
 
 (defmacro with-slime-connection ((variable host-name port &optional connection-closed-hook)
                                  &body body)

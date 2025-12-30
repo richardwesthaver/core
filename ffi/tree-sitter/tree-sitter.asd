@@ -3,18 +3,13 @@
 ;; TREE-SITTER for lisp.
 
 ;;; Code:
-(defpackage :tree-sitter.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :tree-sitter.sys)
-
 (defsystem :tree-sitter
   :depends-on (:std)
   :components ((:file "pkg")
                (:file "ffi")
                (:file "lang")
                (:file "api")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :tree-sitter))
   :in-order-to ((test-op (test-op :tree-sitter/tests))))
 

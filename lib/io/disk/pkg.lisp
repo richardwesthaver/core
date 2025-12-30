@@ -6,6 +6,7 @@
 (defpackage :io/disk
   (:nicknames :disk)
   (:use :cl :std :io/proto :btrfs :sb-alien)
+  (:shadowing-import-from :std/os :dir :fsname :opts :freq :passno)
   (:export
    #:*default-filesystem*
    #:*filesystem-backends*
@@ -23,12 +24,6 @@
    :disk-free-space
    #:statvfs
    #:disk-info
-   #:mnt-fsname
-   #:mnt-dir
-   #:mnt-type
-   #:mnt-opts
-   #:mnt-freq
-   #:mnt-passno
    #:mountpoint-get
    #:mountpoint-device
    #:mountpoint-fstype

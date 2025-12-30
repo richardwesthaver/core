@@ -7,15 +7,10 @@
 ;; 
 
 ;;; Code:
-(defpackage :keyutils.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :keyutils.sys)
-
 (defsystem :keyutils
   :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :keyutils)
                (:file "keyutils" :depends-on ("pkg" "constants"))
                (:file "keyctl" :depends-on ("keyutils")))

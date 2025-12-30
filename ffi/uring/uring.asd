@@ -1,15 +1,9 @@
-;;; uring.asd-*- mode: lisp; -*-
-;; (require 'sb-grovel)
-(defpackage :uring.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :uring.sys)
-
+;;; uring.asd --- URING SYSTEMS -*- mode: lisp; -*-
 (defsystem :uring
   :depends-on (:std :obj)
   :serial t
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :uring)
                (:file "util")
                (:file "macs")

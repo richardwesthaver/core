@@ -23,10 +23,10 @@
 (defun mntent-all-infos (&optional (mount-info-file "/etc/mtab"))
   (let ((root-info (std/os::setmntent mount-info-file "ro"))
         (infos))
-    (if (not (null-alien root-info))
+    (if (not (or (null root-info) (null-alien root-info)))
         (labels ((get-info ()
                    (let ((info (std/os::getmntent root-info)))
-                     (if (not (null-alien info))
+                     (if (not (or (null info) (null-alien info)))
                          (progn 
                            (push info infos)
                            (get-info))
@@ -48,20 +48,20 @@
   (mntent-all-infos mount-info-file))
 
 (defun mountpoint-get (mount-info-file mountpoint key)
-  (when-let ((infos (mntent-info mount-info-file 'mnt-dir mountpoint)))
+  (when-let ((infos (mntent-info mount-info-file 'dir mountpoint)))
     (slot infos key)))
 
 (defun mountpoint-directory (mountpoint &optional default (mount-info-file "/etc/mtab"))
-  (or (mountpoint-get mount-info-file mountpoint 'mnt-dir) default))
+  (or (mountpoint-get mount-info-file mountpoint 'dir) default))
 
 (defun mountpoint-device (mountpoint &optional default (mount-info-file "/etc/mtab"))
-  (or (mountpoint-get mount-info-file mountpoint 'mnt-fsname) default))
+  (or (mountpoint-get mount-info-file mountpoint 'fsname) default))
 
 (defun mountpoint-fstype (mountpoint &optional (mount-info-file "/etc/mtab"))
-  (mountpoint-get mount-info-file mountpoint 'mnt-type))
+  (mountpoint-get mount-info-file mountpoint 'type))
 
 (defun mountpoint-options (mountpoint &optional (mount-info-file "/etc/mtab"))
-  (let* ((raw            (mountpoint-get mount-info-file mountpoint 'mnt-opts))
+  (let* ((raw            (mountpoint-get mount-info-file mountpoint 'opts))
          (comma-splitted (ssplit +option-separator+ raw)))
     (loop for i in comma-splitted collect
              (if (cl-ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
@@ -71,9 +71,9 @@
 (defun all-mountpoints (&optional (mount-info-file "/etc/mtab"))
   (mapcar 
    (lambda (i) 
-     (with-alien-slots (mnt-fsname mnt-dir mnt-type mnt-opts) i
-       (list :fsname mnt-fsname :type mnt-type 
-             :opts mnt-opts :dir mnt-dir)))
+     (with-alien-slots (fsname dir type opts) i
+       (list :fsname fsname :type type 
+             :opts opts :dir dir)))
    (all-infos mount-info-file)))
 
 ;;; Unix Statvfs

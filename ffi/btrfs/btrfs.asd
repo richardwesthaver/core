@@ -3,15 +3,10 @@
 ;; BTRFS for lisp.
 
 ;;; Code:
-(defpackage :btrfs.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :btrfs.sys)
-
 (defsystem "btrfs"
   :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :btrfs)
                (:file "util" :depends-on ("pkg" "constants")))
   :in-order-to ((test-op (test-op "btrfs/tests"))))

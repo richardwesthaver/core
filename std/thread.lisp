@@ -748,7 +748,7 @@ within their DOMAIN and SCOPE."))
    (scheduler :initarg :scheduler :accessor scheduler)
    (workers :initarg :workers :accessor workers :type (simple-array worker))
    (lock :initarg :lock :initform (make-mutex :name "workers") :type mutex :accessor lock)
-   (alive :initform t :accessor alive :type boolean :initarg :alive))
+   (state :initform t :accessor state :type boolean :initarg :state))
   (:documentation "Thread pools are similar to LPARALLEL kernels - they encompass the scheduling
 and execution of concurrent work using a pool of 'worker' threads."))
 
@@ -786,13 +786,13 @@ and execution of concurrent work using a pool of 'worker' threads."))
           (throw '#.+worker-suicide-tag+ nil))))))
 
 (defun ensure-working-p (pool)
-  (setf (alive (the thread-pool pool)) t))
+  (setf (state (the thread-pool pool)) t))
 
 (defun update-limiter-count* (pool delta)
   (declare (thread-pool pool) (fixnum delta) 
            (optimize (speed 3) (safety 0)))
   (incf (the fixnum (limiter-count pool)) delta)
-  (setf (alive pool)
+  (setf (state pool)
         (plusp (the fixnum (limiter-count pool))))
   (values))
 
@@ -949,7 +949,7 @@ worker threads in certain situations."
                    :name name
 		   :bind bind
 	           :kernel *pool-kernel*
-                   :alive alive
+                   :state alive
                    :workers workers
 	           :scheduler (make-scheduler workers spin-count scheduler-class)
 	           :limiter-count (initial-limiter-count count)
@@ -1071,7 +1071,7 @@ assigned to the input state and then return two values."
 
 ;; make-work 
 (defun submit-raw-work (work pool &optional (priority *work-priority*))
-  (unless (alive pool)
+  (unless (state pool)
     (error "attempted to submit work to a dead thread-pool"))
   (schedule-work (scheduler pool) work priority))
 
@@ -1147,15 +1147,15 @@ bound to RET."
   (let ((*work-priority* :low))
     (submit-work channel (lambda ())))
   (receive-result channel)
-  (with-slots (workers scheduler alive) pool
+  (with-slots (workers scheduler state) pool
     (repeat (length workers)
       (schedule-work scheduler nil :low))
     (map nil #'wait-for-worker workers)
-    (setf alive nil)))
+    (setf state nil)))
 
 (definline stop-thread-pool (pool &key wait)
   (declare (thread-pool pool))
-  (when (and pool (alive pool))
+  (when (and pool (state pool))
     (let ((channel (make-channel :pool pool))
           (threads (map 'list #'worker-thread (workers pool))))
       (cond
@@ -1175,7 +1175,7 @@ bound to RET."
 
 (definline start-thread-pool (pool)
   (declare (thread-pool pool))
-  (setf (alive pool) t)
+  (setf (state pool) t)
   (ensure-working-p pool)
   (start-workers pool)
   pool)
@@ -1203,7 +1203,7 @@ bound to RET."
 
 (defun thread-pool-info (pool)
   (list :workers (worker-count pool)
-        :alive (alive pool)
+        :alive (state pool)
         :spins (slot-value (scheduler pool) 'spin-count)
         :limit (limiter-count pool)))
 

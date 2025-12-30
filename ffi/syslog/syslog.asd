@@ -7,15 +7,10 @@
 ;; 
 
 ;;; Code:
-(defpackage :syslog.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :syslog.sys)
-
 (defsystem :syslog
   :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :syslog)
                (:file "syslog"))
   :in-order-to ((test-op (test-op "syslog/tests"))))

@@ -5,17 +5,12 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :sndfile.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :sndfile.sys)
-
 (defsystem "sndfile"
   :description "SNDFILE C FFI"
   :depends-on (:std)
   :in-order-to ((test-op (test-op "sndfile/tests")))
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :sndfile))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :sndfile)))
 

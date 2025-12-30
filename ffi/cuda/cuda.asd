@@ -1,13 +1,8 @@
 ;;; cuda.asd --- Cuda Sytem Definitions
-(defpackage :cuda.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :cuda.sys)
-
 (defsystem :cuda
   :depends-on (:std :log)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :cuda)
                (:file "type")
                (:file "alien")

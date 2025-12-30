@@ -26,9 +26,8 @@
   ((addr)
    (port)))
 
-(defclass connection (obj:edgex) ()
-  (:documentation "Base class of connection objects between network nodes. Compatible with the
-EDGE and ID protocols."))
+(defclass connection () ()
+  (:documentation "Base class of connection objects between network nodes."))
 
 (defgeneric open-connection (self &key))
 (defgeneric open-connection-with (conn self &key))

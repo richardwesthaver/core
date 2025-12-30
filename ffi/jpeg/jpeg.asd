@@ -1,12 +1,9 @@
 ;;; jpeg.asd --- JPEG Sytem Definitions (libjpeg-turbo)
-(defpackage :jpeg-sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-(in-package :jpeg-sys)
 (defsystem :jpeg
   :depends-on (:std :log)
   :description "FFI wrapper for JPEG. Currently binds to libjpeg-turbo."
   :components ((:file "pkg")
-               (grovel-constants-file "constants" :package :jpeg)
+               (sb-grovel:grovel-constants-file "constants" :package :jpeg)
                (:file "jpeg")
                (:file "turbo")
                (:file "api"))

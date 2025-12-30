@@ -11,17 +11,12 @@
 ;;   blake3_avx512_x86-64_unix.S
 
 ;;; Code:
-(defpackage :blake3.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :blake3.sys)
-
 (defsystem "blake3"
   :description "BLAKE3/C FFI"
   :depends-on (:std)
   :in-order-to ((test-op (test-op "blake3/tests")))
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :blake3))
   :perform (test-op (op c) (uiop:symbol-call '#:rt '#:do-tests :blake3)))
 

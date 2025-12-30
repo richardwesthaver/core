@@ -315,8 +315,10 @@
    :cookie-date))
 
 (defpkg :net/proto/swank
+  (:nicknames :net/swank)
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
   (:export 
+   #:*swank-connections*
    #:swank-connection
    #:slime-connect
    #:slime-close

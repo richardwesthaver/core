@@ -190,11 +190,11 @@ value."
   (once-only (key)
     `(if (typep ,key 'cons)
          (,case (car ,key)
-           ,@(mapcar (lambda (clause)
-                       (destructuring-bind ((keys . lambda-list) &body body) clause
-                         `(,keys
-                           (destructuring-bind ,lambda-list (cdr ,key)
-                             ,@body))))
+           . ,(mapcar (lambda (clause)
+                        (destructuring-bind ((keys . lambda-list) &body body) clause
+                          `(,keys
+                            (destructuring-bind ,lambda-list (cdr ,key)
+                              . ,body))))
               clauses))
          (error "Invalid key to DESTRUCTURING-~S: ~S" ',case ,key))))
 

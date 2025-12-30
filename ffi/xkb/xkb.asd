@@ -1,13 +1,8 @@
 ;;; xkb.asd-*- mode: lisp; -*-
-(defpackage :xkb.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :xkb.sys)
-
 (defsystem :xkb
   :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants"
+               (sb-grovel:grovel-constants-file "constants"
                                       :package :xkb))
   :in-order-to ((test-op (test-op :xkb/tests))))
 

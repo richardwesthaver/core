@@ -1439,8 +1439,16 @@
    :xdg-dir
    :init-xdg-dirs
    :xdg-config-file
-   :xdg-config-dir
    :xdg-config-directory
+   :xdg-config-dir
+   :xdg-data-directory
+   :xdg-data-dir
+   :xdg-cache-directory
+   :xdg-cache-dir
+   :xdg-runtime-directory
+   :xdg-runtime-dir
+   :xdg-state-directory
+   :xdg-state-dir
    :termios
    :winsize
    :isatty

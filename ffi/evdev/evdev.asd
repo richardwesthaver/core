@@ -7,15 +7,10 @@
 ;; https://gitlab.freedesktop.org/libevdev/libevdev
 
 ;;; Code:
-(defpackage :evdev.sys
-  (:use :cl :asdf :sb-grovel :sb-alien))
-
-(in-package :evdev.sys)
-
 (defsystem :evdev
   :depends-on (:std)
   :components ((:file "pkg")
-               (grovel-constants-file "constants" :package :evdev)
+               (sb-grovel:grovel-constants-file "constants" :package :evdev)
                (:file "input")
                (:file "dev"))
   :in-order-to ((test-op (test-op "evdev/tests"))))
