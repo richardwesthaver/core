@@ -6,17 +6,17 @@
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+-----------------------------------------------------------------------------------------------------------------|
-| name        | core                                                                                                            |
-| version     | (("#:fatal" 0.153999 "") ("unknown" "argument:" "show") ("0.1.1" "" ""))                                        |
-| description | (("#:fatal" 0.153999 "" "") ("unknown" "argument:" "show" "") ("The" "Compiler" "Company" "Core"))              |
-| skel-id     | (("#:fatal" 0.154999 "") ("unknown" "argument:" "show") (4611004031049662566 "" ""))                            |
-| root        | ~/comp/core/                                                                                                    |
-| tags        | (("#:fatal" 0.153 "") ("unknown" "argument:" "show") ("CORE" "" "") ("LISP" "" "") ("EMACS" "" "") ("C" "" "")) |
-| updated     | Sun Dec 28 23:16:19 2025 -0500                                                                                  |
-| langs       | c elisp lisp org text                                                                                           |
-| lines       | 163139 :λ 130399 :# 14300 :_ 18440                                                                              |
-|-------------+-----------------------------------------------------------------------------------------------------------------|
+|-------------+--------------------------------------------------------------------------------------------------------------------|
+| name        | core                                                                                                               |
+| version     | (("#:fatal" 0.153999 "") ("unknown" "argument:" "show") ("0.1.1" "" ""))                                           |
+| description | (("#:fatal" 0.154999 "" "") ("unknown" "argument:" "show" "") ("The" "Compiler" "Company" "Core"))                 |
+| skel-id     | (("#:fatal" 0.156999 "") ("unknown" "argument:" "show") (4611004031049662566 "" ""))                               |
+| root        | ~/comp/core/                                                                                                       |
+| tags        | (("#:fatal" 0.153999 "") ("unknown" "argument:" "show") ("CORE" "" "") ("LISP" "" "") ("EMACS" "" "") ("C" "" "")) |
+| updated     | Mon Dec 29 21:49:41 2025 -0500                                                                                     |
+| langs       | c elisp lisp org text                                                                                              |
+| lines       | 163139 :λ 130399 :# 14300 :_ 18440                                                                                 |
+|-------------+--------------------------------------------------------------------------------------------------------------------|
 
 #+END:
 
