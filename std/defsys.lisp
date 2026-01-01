@@ -109,7 +109,7 @@ ASDF:DEFSYSTEM.")
 (defclass component () 
   ((name :initarg :name :accessor name)
    (path :initarg :path :accessor path)
-   (require :initarg :require :accessor component-require)))
+   (require :initform nil :initarg :require :accessor component-require)))
 
 (eval-always
   (defun register-component-class (name class)
@@ -206,6 +206,24 @@ ending with the target component name."
         (loop for p in path
               do (setf c (find p (components c) :test 'string-equal :key 'name))
               finally (return c)))))
+
+(defun expand-component-paths (c)
+  "Walk the components of C, expanding PATH slots along the way to
+absolute pathnames. Shouldn't be needed if all system components exist when
+LOAD-SYS is called."
+  (with-optimization (:speed 3 :safety 0)
+    (labels ((%expand (comp)
+               (when (probe-file (path comp)) (setf (path comp) (probe-file (path comp))))
+               (when (and (mod-component-p comp) (components comp))
+                 (let ((*default-pathname-defaults* (path comp)))
+                   (mapc #'%expand (components comp))))))
+      (declare (dynamic-extent (function %expand)))
+      (mapc (the (function (component) (values)) #'%expand) (components c)))))
+
+#+todo
+(defun expand-component-requires (c)
+  "Walk the components of C, expanding REQUIRE slots along the way to
+objects of type COMPONENT.")
 
 ;;; Provider
 (eval-when (:compile-toplevel :load-toplevel)
@@ -847,7 +865,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defmacro define-system-method ())
 (defmacro define-component-method ())
 
-;;; Protocola
+;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
@@ -889,19 +907,6 @@ underlying object SELF remains unmodified."
 ;;   ;; otherwise return as-is
 ;;   (t x)))
 ;; (slot-value self 'provide)))
-
-(defun expand-component-paths (c)
-  "Walk the components of C, expanding PATH slots along the way to
-absolute pathnames. Shouldn't be needed if all system components exist when
-LOAD-SYS is called."
-  (labels ((.expand (comp)
-             (when (probe-file (path comp)) (setf (path comp) (probe-file (path comp))))
-             (when (and (mod-component-p comp) (components comp))
-               (let ((*default-pathname-defaults* (path comp)))
-                 (mapc #'.expand (components comp))))))
-    (declare (dynamic-extent (function .expand))
-             (optimize (speed 3) (safety 0)))
-    (mapc (the (function (component) (values)) #'.expand) (components c))))
 
 (defgeneric register-system (name self)
   (:documentation "Register system SELF as NAME. This is called during DEFSYS.")

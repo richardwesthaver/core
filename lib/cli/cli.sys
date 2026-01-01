@@ -1,0 +1,56 @@
+;;; ~/comp/core/lib/cli/cli.sys --- CLI Sytem Definitions
+(defsys :cli
+ :require (:std :log :dat :obj :io)
+ :components 
+ ((:file "pkg")
+   (:mod "clap"
+    :require ("pkg")
+    :components
+    ((:file "ast")
+     (:file "vars")
+     (:file "util" :require ("vars"))
+     (:file "macs" :require ("util"))
+     (:file "proto" :require ("util"))
+     (:file "opt" :require ("macs" "proto" "ast"))
+     (:file "cmd" :require ("macs" "proto" "ast"))
+     (:file "cli" :require ("opt" "cmd"))))
+   (:file "ansi" :require ("pkg"))
+   (:file "env" :require ("pkg"))
+   (:file "progress" :require ("pkg"))
+   (:file "spark" :require ("pkg"))
+   (:file "terminfo" :require ("pkg"))
+   (:file "linedit" :require ("pkg" "terminfo"))
+   (:file "repl" :require ("pkg"))
+   (:file "shell" :require ("env"))
+   (:file "ed" :require ("env"))
+   (:mod "tools"
+    :components
+    ((:file "pkg")
+     (:file "term" :require ("pkg"))
+     (:file "tmux" :require ("term"))
+     (:file "pacman" :require ("pkg"))
+     (:file "cc" :require ("pkg"))
+     (:file "build" :require ("pkg"))
+     (:file "virt" :require ("pkg"))
+     (:file "sys" :require ("pkg"))
+     (:file "rust" :require ("pkg"))
+     (:file "sbcl" :require ("pkg"))
+     (:file "net" :require ("pkg"))
+     (:file "media" :require ("pkg"))
+     (:file "mail" :require ("pkg"))
+     (:file "fs" :require ("pkg"))
+     (:file "plot" :require ("pkg"))))
+  (:file "main" :require ("repl" "clap"))
+  (:file "tui" :require ("ansi" "progress" "spark" "linedit"))
+  (:file "cli" :require ("pkg" "clap")))
+ :provide
+ ((:tests
+   :require (:std :rt)
+   :description "CLI Tests"
+   :components
+   ((:mod "tests"
+     :components
+     ((:file "pkg")
+      (:file "ansi")
+      (:file "clap")))))))
+
