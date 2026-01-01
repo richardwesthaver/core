@@ -8,14 +8,14 @@
 #+RESULTS:
 |-------------+-----------------------------------------------------------------------------------------------------------------|
 | name        | core                                                                                                            |
-| version     | (("#:fatal" 0.157 "") ("unknown" "argument:" "show") ("0.1.1" "" ""))                                           |
-| description | (("#:fatal" 0.163 "" "") ("unknown" "argument:" "show" "") ("The" "Compiler" "Company" "Core"))                 |
-| skel-id     | (("#:fatal" 0.166 "") ("unknown" "argument:" "show") (4611004031049662566 "" ""))                               |
+| version     | (("#:fatal" 0.159 "") ("unknown" "argument:" "show") ("0.1.1" "" ""))                                           |
+| description | (("#:fatal" 0.162 "" "") ("unknown" "argument:" "show" "") ("The" "Compiler" "Company" "Core"))                 |
+| skel-id     | (("#:fatal" 0.162 "") ("unknown" "argument:" "show") (4611004031049662566 "" ""))                               |
 | root        | ~/comp/core/                                                                                                    |
-| tags        | (("#:fatal" 0.162 "") ("unknown" "argument:" "show") ("CORE" "" "") ("LISP" "" "") ("EMACS" "" "") ("C" "" "")) |
-| updated     | Tue Dec 30 22:56:54 2025 -0500                                                                                  |
+| tags        | (("#:fatal" 0.168 "") ("unknown" "argument:" "show") ("CORE" "" "") ("LISP" "" "") ("EMACS" "" "") ("C" "" "")) |
+| updated     | Thu Jan 01 00:46:47 2026 -0500                                                                                  |
 | langs       | c elisp lisp org text                                                                                           |
-| lines       | 163461 :λ 130686 :# 14293 :_ 18482                                                                              |
+| lines       | 163506 :λ 130727 :# 14294 :_ 18485                                                                              |
 |-------------+-----------------------------------------------------------------------------------------------------------------|
 
 #+END:

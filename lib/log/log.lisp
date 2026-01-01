@@ -25,7 +25,9 @@ T which indicates that message data will be sent without generating a new
 object.")
 
 (defvar *log-show-backtrace* t
-  "Whether or not to show a backtrace with log messages.")
+  "When non-nil, show a backtrace in log error messages.
+
+Note that this setting only applies to the :ERROR and :FATAL log levels.")
 
 (defvar *logger* nil
   "The global logger instance currently in use by applications. If this value is
@@ -57,17 +59,23 @@ function in which case it is used as the function value of
     (number (/ (get-real-time-since *log-timestamp*) #.internal-time-units-per-second))
     (t (/ (get-internal-real-time) #.internal-time-units-per-second))))
 
-(defmacro define-log-level (name &body pred)
+(defmacro define-log-level (name pred &optional backtrace)
   "Define a log-level of NAME with PRED being the body of the predicate
 function 'NAME-P'."
   (let ((%name (string-upcase name)))
     `(progn
        (defun ,(intern (concatenate 'string %name "-P")) ()
-         ,@(or pred `((eql *log-level* ,(sb-int:keywordicate name)))))
+         ,(or pred `(eql *log-level* ,(sb-int:keywordicate name))))
        (defun ,(intern (concatenate 'string %name "!")) (&rest args)
          (cond 
            ((and *logger* (started-p *logger*))
-            (log-message ,(keywordicate name) nil args))
+            (log-message ,(keywordicate name) nil 
+                         (if (stringp (car args))
+                             (with-output-to-string (s)
+                               (apply 'format s args)
+                               (fresh-line s)
+                               ,@(when backtrace `((when *log-show-backtrace* (sb-debug:print-backtrace :stream s)))))
+                             args)))
            ((,(symbolicate (concatenate 'string %name "-P")))
             (fresh-line *trace-output*)
             (format *trace-output* "#:~(~A~)~@[ ~f~]~&"
@@ -76,20 +84,26 @@ function 'NAME-P'."
             (if (and (stringp (car args)) (> (length args) 1))
                 (let ((fmt (pop args)))
                   (apply 'format *trace-output* fmt args))
-                (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))))
+                (mapc (lambda (x) (format *trace-output* "; ~A~&" x)) args))
+            ,@(when backtrace '((when *log-show-backtrace* (sb-debug:print-backtrace :stream *trace-output*))))))
          (case (length args)
            (0 (values))
            (1 (car args))
-           (t args)))
-       (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (&rest args)
-         (,(intern (concatenate 'string %name "!")) (apply #'describe args))))))
+           (t (if (stringp (car args)) 
+                  (if (= (length args) 2) 
+                      (cadr args)
+                      (cdr args))
+                  args))))
+       (defun ,(intern (concatenate 'string %name "-DESCRIBE")) (arg)
+         (,(intern (concatenate 'string %name "!")) (with-output-to-string (s) (describe arg s)))
+         (values)))))
 
 (define-log-level trace (or (eq *log-level* :trace) (eq *log-level* t)))
 (define-log-level debug (or (trace-p) (eq *log-level* :debug)))
 (define-log-level info (or (debug-p) (eq *log-level* :info)))
 (define-log-level warn (or (info-p) (eq *log-level* :warn)))
-(define-log-level error (or (warn-p) (eq *log-level* :error)))
-(define-log-level fatal t) ;; probably needs to be a special case
+(define-log-level error (or (warn-p) (eq *log-level* :error)) t)
+(define-log-level fatal t t) ;; probably needs to be a special case
 
 ;; TODO 2023-08-31: single format control string
 ;; (defun debug! (&rest args)
@@ -124,10 +138,10 @@ function 'NAME-P'."
   (unless (every #'keywordp tags)
     (error "Tags must be keywords")))
 
-(defvar *simple-log-message-formatter* (formatter "~a [~4,a] ~{<~a>~}: ~a"))
+(defvar *log-message-format* "~a [~4,a] ~{<~a>~}: ~a")
 
 (defmethod format-message (stream (message simple-log-message))
-  (format stream *simple-log-message-formatter*
+  (format stream *log-message-format*
           (format-timestring nil (timestamp message) :format *log-timestamp-format*)
           (level message)
           (tags message)

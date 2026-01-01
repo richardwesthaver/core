@@ -90,7 +90,7 @@
    :*log-show-backtrace*
    :log-pipe
    :log-config
-   :*simple-log-message-formatter*
+   :*log-message-formatter*
    :*log-message-class*
    :db-source
    :logger-config

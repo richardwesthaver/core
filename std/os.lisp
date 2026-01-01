@@ -229,13 +229,20 @@ arrange for FVAR to be closed after BODY."
 (defun xdg-config-dir (name &optional path)
   "Attempt to find xdg-config directory for NAME and optional PATH searching for a match in this order:
 - ~/.config/NAME/PATH
-- ~/.NAME.d/PATH (with warning)"
+- ~/.NAME.d/PATH (with warning)
+
+A second value is returned indicating if this path exists (via PROBE-FILE).
+
+Note that unlike other XDG-*-DIR functions we probe the paths above and then
+default to the default supplied path (XDG-CONFIG-DIRECTORY NAME)."
   (unless (stringp name) (setf name (string-downcase name)))
-  (let ((dir (or (probe-directory (xdg-config-directory name))
-                 (probe-directory (merge-homedir-pathnames (concatenate 'string "." name ".d"))))))
-    (if (and dir path) 
-        (merge-pathnames path dir)
-        dir)))
+  (let ((dir (or (probe-directory #1=(xdg-config-directory name))
+                 (probe-directory (merge-homedir-pathnames (concatenate 'string "." name ".d")))
+                 #1#)))
+    (if (and dir path)
+        (let ((ret (merge-pathnames (string-downcase path) dir)))
+          (values ret (probe-file ret)))
+        (values dir (probe-file dir)))))
 
 (defun xdg-config-file (name)
   "Attempt to find an xdg config file for NAME for searching for a match in this order: 
@@ -261,45 +268,56 @@ arrange for FVAR to be closed after BODY."
   (directory-path (merge-pathnames name (xdg-dir :data-home))))
 
 (defun xdg-data-dir (name &optional path)
-  "Attempt to find xdg-data directory for NAME and optional PATH searching for a match in ~/.data/NAME/PATH."
+  "Attempt to find xdg-data directory for NAME and optional PATH searching for a
+match in ~/.data/NAME/PATH. Second value is result of PROBE-FILE on the match."
   (unless (stringp name) (setf name (string-downcase name)))
   (let ((dir (probe-directory (xdg-data-directory name))))
-    (if (and dir path) 
-        (merge-pathnames path dir)
-        dir)))
+    (if (and path dir)
+        (let ((ret (merge-pathnames (string-downcase path) dir)))
+          (values ret (probe-file ret)))
+        (values dir (probe-file dir)))))
 
 (defun xdg-cache-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :cache-home))))
 
 (defun xdg-cache-dir (name &optional path)
-  "Attempt to find xdg-cache directory for NAME and optional PATH searching for a match in ~/.cache/NAME/PATH."
+  "Attempt to find xdg-cache directory for NAME and optional PATH searching for a
+match in ~/.cache/NAME/PATH. Second value is result of PROBE-FILE on the
+match."
   (unless (stringp name) (setf name (string-downcase name)))
-  (let ((dir (probe-directory (xdg-cache-directory name))))
-    (if (and dir path) 
-        (merge-pathnames path dir)
-        dir)))
+  (let ((dir (xdg-cache-directory name)))
+    (if (and path dir)
+        (let ((ret (merge-pathnames (string-downcase path) dir)))
+          (values ret (probe-file ret)))
+        (values dir (probe-file dir)))))
 
 (defun xdg-runtime-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :runtime-dir))))
 
 (defun xdg-runtime-dir (name &optional path)
-  "Attempt to find xdg-runtime directory for NAME and optional PATH searching for a match in /run/user/*/NAME/PATH."
+  "Attempt to find xdg-runtime directory for NAME and optional PATH searching for
+a match in /run/user/*/NAME/PATH. Second value is result of PROBE-FILE on the
+match."
   (unless (stringp name) (setf name (string-downcase name)))
-  (let ((dir (probe-directory (xdg-runtime-directory name))))
-    (if (and dir path) 
-        (merge-pathnames path dir)
-        dir)))
+  (let ((dir (xdg-runtime-directory name)))
+    (if (and path dir)
+        (let ((ret (merge-pathnames (string-downcase path) dir)))
+          (values ret (probe-file ret)))
+        (values dir (probe-file dir)))))
 
 (defun xdg-state-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :state-home))))
 
 (defun xdg-state-dir (name &optional path)
-  "Attempt to find xdg-state directory for NAME and optional PATH searching for a match in ~/.local/state/NAME/PATH."
+  "Attempt to find xdg-state directory for NAME and optional PATH searching for a
+match in ~/.local/state/NAME/PATH. Second value is result of PROBE-FILE on the
+match."
   (unless (stringp name) (setf name (string-downcase name)))
-  (let ((dir (probe-directory (xdg-state-directory name))))
-    (if (and dir path) 
-        (merge-pathnames path dir)
-        dir)))
+  (let ((dir (xdg-state-directory name)))
+    (if (and path dir)
+        (let ((ret (merge-pathnames (string-downcase path) dir)))
+          (values ret (probe-file ret)))
+        (values dir (probe-file dir)))))
 
 ;;;_. user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
