@@ -328,7 +328,7 @@
    #:transpose! #:transpose~ #:transpose #:ctranspose! #:ctranspose #:tensor-conjugate! #:tensor-conjugate
    #:t.fid+ #:t.f+ #:t.f* #:t.fc 
    #:t.blas-threshold #:t.store
-   #:t.f=
+   #:t.f= #:t.store-type #:t.store-allocator #:t.store-ref
    ;;L1
    #:copy! #:tensor-copy #:swap! #:swap #:dot #:scal! #:scal #:div! #:div #:scald!
    #:tricopy!

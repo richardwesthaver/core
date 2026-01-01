@@ -55,7 +55,11 @@
 
 (defpkg :math/graph
   (:use :std-lisp :tensor)
-  (:export))
+  (:export
+   #:graph-to-adlist #:alist->graph #:hyper-to-bipartite #:order-to-tree 
+   #:gnp #:moralize! #:symmetrize! #:graphfib #:max-cardinality-search #:triangulate-graph 
+   #:elimination-tree #:cholesky-cover #:chordal-cover #:line-graph #:tree-decomposition 
+   #:dijkstra #:dijkstra-prims #:directed-subgraph #:max-dag #:topological-order))
 
 (setq *defpkg-hook* nil)
 

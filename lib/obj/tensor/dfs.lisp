@@ -8,13 +8,16 @@
 ;; FIX 2025-12-20: 
 (defun loop-graph-iteration-path (v data-type prep-phrases)
   (declare (ignore data-type))
-  (destructuring-bind (%g &optional root order color p visited-array) prep-phrases
+  (destructuring-bind (%g &optional root from order col par visited-array) prep-phrases
     (let ((g (cadr %g)))
       (print prep-phrases)
       (binding-gensyms (gm gf)
-        (let* ((order (or order :dfs)) 
-               (colorp color) 
-               (color (or color (gf 'color))))
+        (let* ((order (or (cadr order) :dfs))
+               (colorp col) 
+               (color (if colorp (cadr col) (gf 'color)))
+               (p (when par (cadr par)))
+               (from (when from (cadr from))))
+          (declare (ignore from))
           ;;(visited (ecase order (:sfd (gf 'visited)) ((:dfs :bfs) color)))
           (check-type color symbol) (check-type v symbol)
           (let* ((pushor `(letv* ((,(gm l) ,(gm r) (fence ,(gm g) (the index-type ,v)) :type index-type index-type))

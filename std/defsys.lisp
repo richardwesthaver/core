@@ -26,6 +26,7 @@
 (declaim (optimize (speed 3)))
 (in-readtable :std)
 
+;;; Variables
 (defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
@@ -57,6 +58,7 @@ ASDF:DEFSYSTEM.")
 (defvar *module* nil "The name of the current module or NIL.")
 (defparameter *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
+
 
 ;;; Conditions
 (define-condition system-condition () ())
@@ -106,7 +108,7 @@ ASDF:DEFSYSTEM.")
   (std/hash:hash-table-alist *provider-table*))
 
 ;;; Components
-(defclass component () 
+(defclass component ()
   ((name :initarg :name :accessor name)
    (path :initarg :path :accessor path)
    (require :initform nil :initarg :require :accessor component-require)))
@@ -204,7 +206,14 @@ ending with the target component name."
       (find path (components self) :test 'string-equal :key 'name)
       (let ((c self))
         (loop for p in path
-              do (setf c (find p (components c) :test 'string-equal :key 'name))
+              with parents = (list c)
+              if (and (not p) (not (null parents))) ; go back one level
+              do (setf c (pop parents))
+              else do
+              (progn 
+                (setf c (find p (components c) :test 'string-equal :key 'name))
+                (when (mod-component-p c)
+                  (push c parents)))
               finally (return c)))))
 
 (defun expand-component-paths (c)
@@ -220,10 +229,27 @@ LOAD-SYS is called."
       (declare (dynamic-extent (function %expand)))
       (mapc (the (function (component) (values)) #'%expand) (components c)))))
 
-#+todo
 (defun expand-component-requires (c)
   "Walk the components of C, expanding REQUIRE slots along the way to
-objects of type COMPONENT.")
+objects of type COMPONENT."
+  (with-optimization (:speed 3 :safety 0)
+    
+      (labels ((%expand (comp)
+                 (let ((ptr c))
+                   (when (component-require comp)
+                     (setf (component-require comp)
+                           (mapcar (lambda (x)
+                                     (etypecase x
+                                       ((or string symbol list)
+                                        (find-component x ptr))
+                                       (component x)))
+                                   (component-require comp))))
+                   (when (and (mod-component-p comp) (components comp))
+                     (setf ptr comp)
+                     (mapc #'%expand (components comp)))
+                   (values))))
+        (declare (dynamic-extent (function %expand)))
+        (mapc (the (function (t) (values)) #'%expand) (components c)))))
 
 ;;; Provider
 (eval-when (:compile-toplevel :load-toplevel)
@@ -793,8 +819,8 @@ to be a system which is pushed to the session queue before BODY."
 SYSTEM objects register their own ASDF:SYSTEM objects as needed and provide
 the following extensions:
 - :PROVIDE    system-provided features, modules, readtables
-- :HOOK       hook-spec to load with this system
-- :REQUIRE    system-required modules and features"
+- :HOOK       hook specs
+- :REQUIRE    system/component required modules, features, and components"
   (multiple-value-bind (%body dec doc) (std-int:parse-body body :documentation t)
     (declare (ignore dec))
     (unless (symbolp name) (setq name (keywordicate (string-upcase name))))
@@ -819,6 +845,7 @@ the following extensions:
                    (slot-value ,sys 'provide) (%parse-provide-form ',prov)
                    (slot-value ,sys 'require) ',req)
              (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
+             (expand-component-requires ,sys)
              (register-system ,name ,sys)
              ,sys))))))
 
