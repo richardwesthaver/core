@@ -498,7 +498,7 @@ push."
 		   (return count))
 		  (t
 		   (condition-wait %pop lock)))))))
-		                   
+
 
 (defun push-vector-queue (obj queue)
   "Push OBJ to QUEUE with locking."
@@ -845,6 +845,172 @@ associated priority vector."
         (map nil #'push-elem initial-contents)))
     queue))
 
+;;; Fibonacci Queue
+;; fibonacci heap implementation (min-priority queue)
+(defstruct hnode
+  (id -1 :type fixnum)
+  (degree 0 :type fixnum)
+  (mark nil :type boolean)
+  (parent nil :type (or null hnode))
+  (children nil :type list)
+  (data nil :type list) ;dcons
+  key)
+
+(defmethod data ((self hnode)) (hnode-data self))
+
+(defmethod print-object ((nd hnode) stream)
+  (print-unreadable-object (nd stream :type t)
+    (format stream ":key ~A :degree ~A :mark ~A" (hnode-key nd) (hnode-degree nd) (hnode-mark nd))))
+
+(definline dappend2 (a b)
+  (declare (type list a b))
+  (cond
+    ((null a) b) ((null b) a)
+    (t (rotatef (first a) (first b))
+       (rotatef (second (first a)) (second (first b)))
+       a)))
+
+(defstruct fib-heap
+  (root nil)
+  (trees 0)
+  (elements 0)
+  (order #'<)
+  (data (make-hash-table)))
+
+(defmethod data ((self fib-heap)) (fib-heap-data self))
+
+(defmethod print-object ((fib fib-heap) stream)
+  (print-unreadable-object (fib stream :type t)
+    (format stream ":size ~A :trees ~A" (fib-heap-elements fib) (fib-heap-trees fib))))
+
+(defun make-heap (&optional (order #'<) (test #'eql))
+  (make-fib-heap :order order :data (make-hash-table :test test)))
+
+(definline fib-order (a b fib)
+  (funcall (slot-value fib 'std/seq::order) a b))
+
+(definline min-key (fib)
+  (when (fib-heap-root fib)
+    (values (hnode-key (dcar (fib-heap-root fib))) (hnode-id (dcar (fib-heap-root fib))))))
+
+(definline node-existsp (id fib)
+  (letv* ((node exists-p (gethash id (fib-heap-data fib))))
+    (and exists-p (hnode-data node) t)))
+
+(defun fib-insert (key fib &optional id)
+  (letv* ((pmin mid (min-key fib))
+          (node (make-hnode :key key :id (or id (fib-heap-elements fib)))))
+    (assert (not (node-existsp (hnode-id node) fib)) nil "id already exists in the heap")
+    (setf (hnode-data node) (dpush node (fib-heap-root fib)))
+    (unless (and mid (fib-order key pmin fib))
+      (setf (fib-heap-root fib) (dcdr (fib-heap-root fib))))
+    (setf (gethash (hnode-id node) (fib-heap-data fib)) node)
+    (incf (fib-heap-elements fib))
+    (incf (fib-heap-trees fib))
+    (hnode-id node)))
+
+(definline node-key (id fib)
+  (std/macs:letv* ((node exists-p (gethash id (fib-heap-data fib))))
+    (when exists-p (hnode-key node))))
+
+(definline (setf node-key) (value id fib)
+  (decrease-key id value fib))
+
+(defun extract-min (fib)
+  (let ((z (dpop (fib-heap-root fib))))
+    ;;move the children of z into root
+    (when z
+      (decf (fib-heap-elements fib))
+      (decf (fib-heap-trees fib))
+      (let ((i 0))
+        (within-dlist (node (hnode-children z))
+          (incf i)
+          (setf (hnode-parent node) nil))
+        (incf (fib-heap-trees fib) i))
+      (setf (fib-heap-root fib) (dappend2 (hnode-children z) (fib-heap-root fib)))
+      (setf (hnode-children z) nil
+            (hnode-degree z) 0
+            (hnode-data z) nil))
+    (when (> (fib-heap-trees fib) 1)
+      ;;consolidate
+      (let ((an (make-array (+ 2 (integer-length (fib-heap-elements fib))) :initial-element nil)))
+        (with-dlist (w (fib-heap-root fib))
+          (let ((fw (list t t)))
+            ;;This hack allows for destructive updates. See the iterate defclause in dlist.lisp
+            (setf (second fw) (second w))
+            (loop with x = w
+                  with d = (hnode-degree (dcar x))
+                  while (aref an d)
+                  do (let ((y (aref an d)))
+                       (when (fib-order (hnode-key (dcar y)) (hnode-key (dcar x)) fib)
+                         (rotatef y x))
+                       ;; fib-heap-link
+                       (let ((y.node (dpop y)))
+                         (setf (fib-heap-root fib) y
+                               (hnode-parent y.node) (dcar x)
+                               (hnode-mark y.node) nil)
+                         (decf (fib-heap-trees fib))
+                         (setf (hnode-children (dcar x)) (dappend2 (hnode-data y.node) (hnode-children (dcar x))))))
+                  do (progn
+                       (setf (aref an d) nil)
+                       
+                       (incf d)
+                       (setf (hnode-degree (dcar x)) d))
+                  finally (setf (aref an d) x))
+            (setq w fw)))
+        ;; update min
+        (let ((fmin nil))
+          (with-dlist (rot (fib-heap-root fib))
+            (when (or (null fmin) (fib-order (hnode-key (dcar rot)) (hnode-key (dcar fmin)) fib))
+              (setf fmin rot)))
+          (setf (fib-heap-root fib) fmin))))
+    (when z
+      (values (hnode-key z) (hnode-id z)))))
+
+(definline cut (x y fib)
+  "cut T_x from δ(y)"
+  (decf (hnode-degree y))
+  (setf (hnode-children y) (let ((tmp (hnode-data x))) (dpop tmp) tmp)
+        (hnode-parent x) nil
+        (hnode-mark x) nil)
+  (incf (fib-heap-trees fib))
+  (dappend2 (hnode-data x) (fib-heap-root fib)))
+
+(defun ccut (y fib)
+  "cascading cut"
+  (when-let ((z (hnode-parent y)))
+    (if (hnode-mark y)
+        (progn (cut y z fib) (ccut z fib))
+        (setf (hnode-mark y) t))))
+
+(defun decrease-key (id key fib)
+  (let ((node (gethash id (fib-heap-data fib))))
+    (declare (type hnode node))
+    (assert (not (fib-order (hnode-key node) key fib)) (key) 'invalid-item :reason "new key is greater than the current." :item key)
+    (setf (hnode-key node) key)
+    (when (hnode-data node)
+      ;;cut node
+      (let ((y (hnode-parent node)))
+        (when (and y (fib-order key (hnode-key y) fib))
+          (cut node y fib) (ccut y fib)))
+      ;;update min
+      (when (fib-order key (min-key fib) fib)
+        (setf (fib-heap-root fib) (hnode-data node)))))
+  key)
+
+(defun fib-delete (id fib &optional delete?)
+  (let ((node (gethash id (fib-heap-data fib))))
+    (declare (type hnode node))
+    (when (hnode-data node)
+      ;;cut node
+      (let ((y (hnode-parent node)))
+        (when y (cut node y fib) (ccut y fib)))
+      ;;move to root
+      (setf (fib-heap-root fib) (hnode-data node))
+      (extract-min fib))
+    (when delete? (remhash id (fib-heap-data fib))))
+  id)
+
 ;;; Spin Queue
 (defconstant +dummy+ :null
   "Dummy SPIN-QUEUE value.")
@@ -1166,7 +1332,7 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
       (when-let ((i (position key self :end *idx* :test test)))
         (setf *idx* i)
         (elt self *idx*)))))
-    
+
 (defvar *iter*)
 
 (defvar *iterator-functions*

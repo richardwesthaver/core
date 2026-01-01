@@ -373,7 +373,7 @@ implementation of A*.")
               (heuristic (constantly 0))
             &aux
               (from (make-hash-table))
-              (fringe (sb-concurrency:make-queue))
+              (fringe (make-queue))
               (open (make-hash-table))
               (closed (make-hash-table))
               (g (make-hash-table))
@@ -386,9 +386,9 @@ implementation of A*.")
             (get-val f a) (funcall heuristic a)
             (get-val open a) t)
 
-      (sb-concurrency:enqueue (get-val f a) fringe)
+      (push-queue (get-val f a) fringe)
 
-      (do ((current (sb-concurrency:dequeue fringe) (sb-concurrency:dequeue fringe)))
+      (do ((current (pop-queue fringe) (pop-queue fringe)))
           ((zerop (hash-table-count open))
            (multiple-value-bind (value present-p) (get-val f b)
              (when present-p
@@ -416,7 +416,7 @@ implementation of A*.")
                                         (get-val g next) tentative
                                         (get-val f next)
                                         (+ tentative (funcall heuristic next)))
-                                  (sb-concurrency:enqueue fringe (get-val f next)))))))
+                                  (push-queue fringe (get-val f next)))))))
                         (etypecase graph
                           (directed-graph (cdr (member current edge)))
                           (graph (remove current edge))))))
@@ -498,9 +498,9 @@ implementation of A*.")
                 y)))
            (.map (x)
              (mapcar
-              (lambda (y) (when y (mapcar 'class-name (sb-mop:class-direct-subclasses (find-class y)))))
+              (lambda (y) (when y (mapcar 'class-name (class-direct-subclasses (find-class y)))))
                x)))
-      (let* ((classes (mapcar 'class-name (sb-mop:class-direct-subclasses (find-class class))))
+      (let* ((classes (mapcar 'class-name (class-direct-subclasses (find-class class))))
              (subs (.map classes))) ; 2nd level
         (add-node graph class)
         (.insert class classes)

@@ -33,6 +33,7 @@
                (:file "readtable")
                (:file "sfc")
                (:file "auto")
+               (:file "graph")
                (:file "math"))
   :in-order-to ((test-op (test-op :math/tests))))
 

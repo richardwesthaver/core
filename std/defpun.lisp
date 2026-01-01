@@ -167,7 +167,7 @@ ability to bind multiple values."
   `(with-lock-predicates
      :lock            (limiter-lock (the thread-pool ,pool))
      :predicate1      ,predicate
-     :predicate2      (alive ,pool)
+     :predicate2      (state ,pool)
      :succeed/lock    (std/thread::update-limiter-count* ,pool ,(- spawn-count))
      :succeed/no-lock (%%%%plet ,pool ,bindings ,body)
      :fail            (slet ,bindings ,@body)))
@@ -180,13 +180,13 @@ ability to bind multiple values."
 
 (defmacro %plet (pool bindings &body body)
   `(%%plet ,pool
-           (alive ,pool)
+           (state ,pool)
            ,bindings
            ,body))
 
 (defmacro %plet-if (pool predicate bindings &body body)
   `(%%plet ,pool
-           (and (alive ,pool) ,predicate)
+           (and (state ,pool) ,predicate)
            ,bindings
            ,body))
 

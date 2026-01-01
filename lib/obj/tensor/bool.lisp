@@ -115,6 +115,3 @@
                  (setf ret t)
                  (return))))
       ret))
-
-;; (zeros 2 (tensor 'boolean))
-;; (go= (ones 2) #d[1, 0])

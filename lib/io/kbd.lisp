@@ -23,7 +23,7 @@
 ;;; Vars
 (defconstant +evdev-offset+ 8)
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
-
+(defparameter *keyboards* nil)
 ;;; Conditions
 (define-condition kbd-error (error) ())
 (deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
@@ -99,8 +99,6 @@ can't be opened, else returns nil."
 
 (defun print-device-input-info (path)
   (when-let ((dev (new-device-from-path path)))
-    ;; (when (evdev::libevdev-has-event-code dev evdev::+ev-key+ evdev::+key-scrollup+)
-    ;;   (println "best-guess: mouse"))
     (pprint 
      (list (evdev::libevdev-get-name dev) 
            (evdev::libevdev-get-id-bustype dev) 
@@ -115,8 +113,8 @@ can't be opened, else returns nil."
       (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
       (values 
-       (time:make-timestamp :sec (sb-posix::alien-timeval-sec time) 
-                            :nsec (* 1000 (sb-posix::alien-timeval-usec time)))
+       (sb-posix::alien-timeval-sec time) 
+       (the fixnum (* 1000 (sb-posix::alien-timeval-usec time)))
        (evdev::libevdev-event-type-get-name type) 
        (evdev::libevdev-event-code-get-name type code) 
        value))))
@@ -125,5 +123,8 @@ can't be opened, else returns nil."
   (let (ret)
     (dotimes (i count ret)
       (multiple-value-bind (s ms type code val) (device-read-event dev)
-        (push (list type code val ) ret)))))
+        (push (list type code val (cons s ms)) ret)))))
         
+(defmethod init ((self (eql :kbd)) &key (directory "/dev/input/"))
+  (load-kbd-libs)
+  (when directory (setq *keyboards* (get-keyboards directory))))

@@ -14,7 +14,8 @@
   (:use :cl :std :tensor)
   (:import-from :cli/tools/cc :run-nvcc)
   (:import-from :cuda :device-compute-capability)
-  (:export :blasfunc :lapackfunc :with-lapack-query :~))
+  (:export :blasfunc :lapackfunc :with-lapack-query :~
+           :math-error :math-warning))
 
 (defpkg :math/blas
   (:use :std-lisp :blas :tensor)
@@ -51,6 +52,10 @@
 (defpkg :math/auto
   (:use :std-lisp)
   (:export :life :cellular-automata :*rule-patterns*))
+
+(defpkg :math/graph
+  (:use :std-lisp :tensor)
+  (:export))
 
 (setq *defpkg-hook* nil)
 

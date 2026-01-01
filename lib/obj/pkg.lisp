@@ -301,10 +301,11 @@
    #:base-tensor #:memos #:store-size #:total-size 
    #:store-ref #:store-type
    #:parent #:dorefs
+   #:print-tensor
    #:tensor-class #:sparse-tensor #:stride-tensor #:dense-tensor #:simple-dense-tensor #:foreign-dense-tensor
+   #:graph-accessor #:stride-accessor #:base-accessor #:coordinate-accessor
    #:hash-tensor #:graph-tensor 
-   #:simple-graph-tensor #:coordinate-tensor 
-   #:simple-coordinate-tensor
+   #:coordinate-tensor
    #:with-coordinates
    #:tensor-typep #:tensor-type
    #:tensor-method-generator #:define-tensor-method #:cl #:zeros

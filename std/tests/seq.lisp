@@ -41,14 +41,21 @@
   (let ((q (make-queue :prioritize t)))
     (istype 'priority-queue q)))
 
+(deftest fib-heap ()
+  (let ((fib (make-heap)))
+    (loop for i from 0 below 100 do (fib-insert i fib))
+    (loop for i from 0 below 100 
+          do (let ((min (extract-min fib)))
+	       (iseql i min)))))
+
 (deftest accumulator ()
   (let ((acc (make-instance 'max-accumulator)))
     (istype 'accumulator acc)
     (accumulate acc 40)
     (accumulate acc 32)
     (is= (accumulated acc) 40)
-    (accumulate acc 2)
-    (is= (accumulated acc) 40)))
+    (accumulate acc 42)
+    (is= (accumulated acc) 42)))
 
 (deftest iter ()
   (with-iter (it (make-instance 'iterator))

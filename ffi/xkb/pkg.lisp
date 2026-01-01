@@ -23,7 +23,10 @@
    :xkb-context-get-user-data :xkb-context-include-path-append
    :xkb-context-include-path-append-default :xkb-context-include-path-reset-defaults
    :xkb-context-include-path-clear :xkb-context-num-include-paths :xkb-context-include-path-get
-   :load-xkbcommon))
+   :load-xkbcommon
+   :with-xkb-context
+   :with-xkb-state
+   :with-xkb-compose-state))
 
 (in-package :xkb)
 
@@ -130,8 +133,8 @@
                    :warning 30
                    :info 40
                    :debug 50)
-;;; Keymap Init
 
+;;; Keymap Init
 (defar xkb-keymap-new-from-names (* xkb-keymap)
   (context (* xkb-context))
   (names (* xkb-rule-names))
@@ -388,12 +391,13 @@
 
 (defar xkb-compose-table-new-from-locale (* xkb-compose-table)
   (context (* xkb-context))
-  (locale (* unsigned-char))
+  (locale c-string)
   (flags xkb-compose-compile-flags))
 
 (defar xkb-compose-table-new-from-file (* xkb-compose-table)
+  (context (* xkb-context))
   (file (* t)) ;;FILE
-  (locale (* unsigned-char))
+  (locale c-string)
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
@@ -401,7 +405,7 @@
   (context (* xkb-context))
   (buffer (* unsigned-char))
   (length size-t)
-  (locale (* unsigned-char))
+  (locale c-string)
   (format xkb-compose-format)
   (flags xkb-compose-compile-flags))
 
@@ -477,3 +481,16 @@
 
 (defar xkb-compose-state-get-one-sym xkb-keysym
   (state (* xkb-compose-state)))
+
+;;; Macros
+(defmacro with-xkb-context ((ctx &optional (flags 0)) &body body)
+  `(with-alien ((,ctx (* xkb-context) (xkb-context-new ,flags)))
+     ,@body))
+
+(defmacro with-xkb-state ((st map) &body body)
+  `(with-alien ((,st (* xkb-state) (xkb-state-new ,map)))
+     ,@body))
+
+(defmacro with-xkb-compose-state ((st table &optional (flags :no-flags)) &body body)
+  `(with-alien ((,st (* xkb-compose-state) (xkb-compose-state-new ,table ,flags)))
+     ,@body))

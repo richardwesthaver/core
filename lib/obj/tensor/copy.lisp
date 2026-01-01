@@ -404,19 +404,6 @@
        (copy! tensor (zeros (dimensions tensor) type (if (subtypep type 'sparse-tensor) (total-size tensor))))))
     (t (error "don't know how to copy ~a into ~a." (class-name (class-of tensor)) type))))
 
-#+nil
-(defmethod copy-generic ((tensor sparse-tensor) type)
-  (cond
-    ((or (not type) (subtypep type 'sparse-tensor))
-     (let ((ret (zeros (dimensions tensor) (or type (class-of tensor)) (store-size tensor))))
-       (copy! tensor ret)))
-    ((subtypep type 'standard-tensor)
-     (let ((ret (zeros (dimensions tensor) type (store-size tensor))))
-       (copy! tensor ret)))
-    (t (error "don't know how to copy ~a into ~a." (class-name (class-of tensor)) type))))
-
-
-;;
 (define-tensor-generic tricopy! (a b uplo?)
   (:documentation "Copy upper order, lower order, or diagonal."))
 
@@ -452,7 +439,7 @@
                          :for of.b :of-type index-type := (head b) :then (the index-type (+ of.b ss.b))
                          :do (setf (t.store-ref ,(cl :x) sto.b of.b) a)))))
      b))
-;;
+
 (deft/generic (t.blas-swap! #'subtypep) sym (x st-x y st-y))
 (deft/method t.blas-swap! (sym blas-mixin) (x st-x y st-y)
   (let ((ftype (field-type sym)))

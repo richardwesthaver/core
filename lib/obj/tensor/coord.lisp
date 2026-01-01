@@ -91,7 +91,7 @@
 ;;   (indices ret)
 ;;   )
 
-;; (copy! (adlist->graph '((0) (1 0)) (tensor 'double-float 'simple-graph-tensor)))
+;; (copy! (adlist->graph '((0) (1 0)) (tensor 'double-float 'graph-tensor)))
 
 #+nil
 (let ((ret (zeros '(4 4) (tensor 'double-float 'coordinate-tensor) 4))

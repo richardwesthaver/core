@@ -22,6 +22,7 @@
     (null (the index-store-vector (slot-value x 'dimensions)))
     (index-type (the index-type (aref (the index-store-vector (slot-value x 'dimensions)) (modproj (or idx 0) (order x) nil 0))))
     (t (loop for e across (the index-store-vector (slot-value x 'dimensions)) collect e))))
+
 ;;Can this be moved out into MOP ?
 (defmethod initialize-instance :after ((x base-accessor) &rest initargs)
   (declare (ignore initargs))
@@ -29,11 +30,12 @@
     (locally (declare (optimize (speed 3) (safety 0)))
       (loop :for i :from 0 :below (length (dimensions x))
          :do (assert (> (dimensions x i) 0) nil 'tensor-invalid-dimension-value :argument i :dimension (dimensions x i) :tensor x)))))
+
 ;;We use order (opposed to CL convention) so as not to cause confusion with matrix rank.
 (definline order (x)
   (declare (type base-accessor x))
   (length (the index-store-vector (slot-value x 'dimensions))))
-;;
+
 (defclass stride-accessor (base-accessor)
   ((strides :initarg :strides :type index-store-vector :documentation "Strides for accesing elements of the tensor.")
    (head :initarg :head :initform 0 :type index-type :documentation "Head for the store's accessor."))
@@ -49,6 +51,7 @@
    (neighbours :initarg :neighbours :type index-store-vector :documentation "Neighbour ids.")
    (transposep :initarg :transposep :initform nil :type boolean :documentation "Choose between row-column compressed forms."))
   (:documentation "Graph store via Adjacency lists; only works for matrices."))
+
 ;;Store types
 (defclass simple-vector-store-mixin () ())
 (defclass hash-table-store-mixin () ())
@@ -86,18 +89,15 @@
   (declare (type dense-tensor))
   (setf (slot-value x 'parent) nil) x)
 
-;;
 (deftensor simple-dense-tensor (dense-tensor simple-vector-store-mixin) ()
   (:documentation "Dense tensor with simple-vector store."))
 (defclass blas-mixin () ()
   (:documentation "Mixin which indicates that there exist foreign-routines for an object of this type."))
-;;
-(deftensor graph-tensor (tensor graph-accessor) ())
-(deftensor simple-graph-tensor (graph-tensor simple-vector-store-mixin) ())
-;;
-(deftensor coordinate-tensor (tensor coordinate-accessor) ())
-(deftensor simple-coordinate-tensor (coordinate-tensor simple-vector-store-mixin) ())
-;;
+
+(deftensor graph-tensor (tensor graph-accessor simple-vector-store-mixin) ())
+
+(deftensor coordinate-tensor (tensor coordinate-accessor simple-vector-store-mixin) ())
+
 (defclass vector-mixin () ())
 (defclass matrix-mixin () ())
 
@@ -179,7 +179,7 @@ Checking for a matrix with 2 columns:
     cl-name))
 
 (defmethod tensor-generator (field (tensor symbol))
-  (assert (member tensor #1='(simple-graph-tensor hash-tensor simple-coordinate-tensor)) (tensor) 'std:invalid-argument
+  (assert (member tensor #1='(graph-tensor hash-tensor coordinate-tensor)) (tensor) 'std:invalid-argument
           :reason (format nil "TENSOR must be one of: ~A" #1#)
           :item tensor)
   (let* ((super-classes (list tensor #+nil (case order (1 'vector-mixin) (2 'matrix-mixin))))
@@ -215,7 +215,7 @@ Checking for a matrix with 2 columns:
        (t (error "Unknown complex tensor for ~a" class))))))
 (defmethod complexified-tensor :around ((class tensor-class))
   (class-name (call-next-method)))
-;;Now we're just making up names
+
 (defgeneric realified-tensor (class)
   (:method ((class-name symbol))
     (realified-tensor (find-class class-name)))

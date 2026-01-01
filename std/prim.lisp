@@ -80,6 +80,10 @@ evaluated once and bound to a G!-symbol for use in BODY."
 	   ,@body)))))
 
 ;;; Util
+(defmacro pswap (a b)
+  "Swap the values of A and B using PSETF."
+  `(psetf ,a ,b
+          ,b ,a))
 (defun unquote-args (lst args)
   "Makes a list suitable for use inside macros (sort-of), by building a
 new list quoting every symbol in @arg{lst} other than those in @arg{args}.

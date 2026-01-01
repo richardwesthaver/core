@@ -35,33 +35,25 @@
 (eval-always
   (defgeneric dot (x y &optional conjugate-p)
     (:documentation
-     "
-  Sytnax
-  ======
-  (DOT x y [conjugate-p])
+     "Compute the inner product of X,Y.
 
-  Purpose
-  =======
-  Computes the inner product of X,Y.
-
-  CONJUGATE-P       Computed Result
-  ---------------------------------
-                         H
-  T (default)           X * Y
-                         T
-  NIL                   X * Y
+CONJUGATE-P       Computed Result
+---------------------------------
+                       H
+T (default)           X * Y
+                       T
+NIL                   X * Y
 
 
-  If X is real then CONJUGATE-P has no 
-  effect since for real vectors:
+If X is real then CONJUGATE-P has no 
+effect since for real vectors:
 
-                H   T
-               X = X
+              H   T
+             X = X
 
-  If X and Y are both scalars then this is the same
-  as (* (CONJUGATE X) Y) if CONJUAGTE-P and (* X Y)
-  otherwise.
-")
+If X and Y are both scalars then this is the same
+as (* (CONJUGATE X) Y) if CONJUAGTE-P and (* X Y)
+otherwise.")
     (:method :before ((x tensor) (y tensor) &optional (conjugate-p t))
       (declare (ignore conjugate-p))
       (assert (and (tensor-vectorp x) (tensor-vectorp y) (= (dimensions x 0) (dimensions y 0))) nil 'tensor-dimension-mismatch))

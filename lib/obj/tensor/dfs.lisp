@@ -108,4 +108,4 @@
                         :preposition-groups '((:of :in :across) (:from) (:in-order) (:with-color) (:with-parent) (:with-visited))
                         :inclusive-permitted nil)
 
-;; (print (macroexpand-all '(loop for i being the gidx of (zeros '(10 10) (tensor 'single-float 'simple-graph-tensor)))))
+;; (print (macroexpand-all '(loop for i being the gidx of (zeros '(10 10) (tensor 'single-float 'graph-tensor)))))

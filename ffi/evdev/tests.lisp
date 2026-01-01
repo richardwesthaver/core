@@ -8,9 +8,7 @@
 (in-package :evdev/tests)
 (defsuite :evdev)
 (in-suite :evdev)
-(load-evdev nil)
-(deftest sanity ())
-  
+(load-evdev)
 #|
 struct libevdev *dev;
 int err;

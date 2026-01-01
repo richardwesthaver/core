@@ -87,6 +87,7 @@
    :set-equal
    :dcons :dpush
    :dpop :dlist :drdc :dcdr :dcar :dappendf
+   :with-dlist :within-dlist
    :topological-sort :match-lambda-lists
    :toposort
    :reconsify :deconsify))
@@ -96,6 +97,7 @@
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
   (:export 
+   :pswap
    :read-until-end
    :read-lisp-until-end
    :read-lisp-file
@@ -171,6 +173,7 @@
    :error-items
    :error-reason
    :invalid-argument
+   :invalid-item
    :unwind-protect-case
    :protect-abort
    :def-simple-error-reporter
@@ -1059,10 +1062,11 @@
   (:use :cl)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
-  (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case :eval-always)
+  (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case :eval-always :letv*)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/meta :data :defaccessor :lock)
-  (:import-from :std/list :firstn)
+  (:import-from :std/condition :invalid-item)
+  (:import-from :std/list :firstn :dcons :dcdr :dcar :dpush :dpop :with-dlist :within-dlist)
   (:import-from :sb-int :collect)
   (:import-from :std/prim :definline)
   (:import-from :std/array :signed-array-length)
@@ -1092,6 +1096,8 @@
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
    :with-spin-lock
    :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
+   ;; fib heap
+   :make-heap :fib-insert :extract-min :fib-delete :fib-heap
    ;; accumulator
    :accumulated :accumulate :accumulator :max-accumulator :min-accumulator
    :counter :make-counter :counter-value :inc-counter 
@@ -1319,6 +1325,7 @@
 
 (defpkg :std/async
   (:use :cl :std/thread :std/prim :std/seq :std/sym :std/list :std/macs)
+  (:import-from :std/meta :state)
   (:import-from :std/macs :with-gensyms :when-let)
   (:export :future :promise :await
    :future-kernel :fulfill :fulfilledp

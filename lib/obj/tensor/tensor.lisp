@@ -21,7 +21,6 @@
   (defun clinear-storep (x) (and (subtypep x 'tensor) (linear-storep x) (real-subtypep (field-type x))))
   (defun float-tensorp (type) (member (field-type type) '(single-float double-float (complex single-float) (complex double-float)) :test #'equal)))
 
-                                        ;(class-direct-subclasses (find-class (tensor 'double-float)))
 (deft/method t.store-type (type simple-vector-store-mixin) (&optional (size '*))
   `(simple-array ,(or (real-subtypep (field-type type)) (field-type type)) (,size)))
 (deft/method t.store-type (type hash-table-store-mixin) (&optional (size '*))
@@ -38,18 +37,17 @@
     (handler-case (progn (macroexpand-1 `(t.strict-coerce ((t.field-type ,clx) (t.field-type ,cly)) x)) t)
       (error () nil))))
 
-;;
 (deft/generic (t.complexified-tensor #'subtypep) sym ())
 (deft/method t.complexified-tensor (class tensor) () (complexified-tensor class))
 
 (deft/generic (t.realified-tensor #'subtypep) sym ())
 (deft/method t.realified-tensor (class tensor) () (realified-tensor class))
-;;
+
 (deft/generic (t.compute-store-size #'subtypep) sym (size))
 (deft/generic (t.store-size #'subtypep) sym (ele))
 (deft/generic (t.store-allocator #'subtypep) sym (size &rest initargs))
 (deft/generic (t.total-size #'subtypep) sym (ele))
-;;
+
 (deft/method t.compute-store-size (cl simple-vector-store-mixin) (size)
   (if (real-subtypep (field-type cl)) `(* 2 ,size) size))
 
@@ -58,7 +56,7 @@
 
 (deft/method (t.store-size #'hash-table-storep) (sym stride-accessor) (ele)
   `(hash-table-size ,ele))
-;;
+
 (deft/method t.total-size (sym dense-tensor) (ele)
   `(vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))
 
@@ -104,22 +102,9 @@
 (deft/method (t.store-allocator #'hash-table-storep) (sym stride-accessor) (size &rest initargs)
   (letv* (((&key size) initargs))
     `(make-hash-table :size ,size)))
-;;
+
 (deft/generic (t.store-ref #'subtypep) sym (store &rest idx))
 (deft/generic (t.store-set #'subtypep) sym (value store &rest idx))
-
-;; (define-setf-expander t.store-ref (sym store &rest idx &environment env)
-;;   (with-gensyms (nval)
-;;     (values nil nil `(,nval)
-;;             `(t.store-set ,sym ,nval ,store ,@idx)
-;;             `(t.store-ref ,sym ,store ,@idx)))
-;;   #+nil(multiple-value-bind (dummies vals newval setter getter)
-;;       (get-setf-expansion store env)
-;;     (declare (ignore newval setter))
-;;     (with-gensyms (nval)
-;;       (values dummies vals `(,nval)
-;;               `(t.store-set ,sym ,nval ,getter ,@idx)
-;;               `(t.store-ref ,sym ,getter ,@idx)))))
 
 (define-setf-expander t.store-ref (sym store &rest idx &environment env)
   (multiple-value-bind (dummies vals newval setter getter)
@@ -197,27 +182,6 @@
         (2 '*real-l2-alien-threshold*)
         (3 '*real-l3-alien-threshold*))))
 
-
-;; (defgeneric testg (x &optional ele))
-;; (define-tensor-method testg ((x dense-tensor :a) &optional (ele 1))
-;;   `(t.copy! (t ,(cl x)) (coerce ele ',(field-type (cl x))) x)
-;;   'x)
-
-;; (testg (zeros 10))
-
-;; (defgeneric copy!-test (x y))
-
-;; (define-tensor-method copy!-test ((x dense-tensor :a) (y dense-tensor :b t))
-;;   `(t.copy! (,(cl x) ,(cl y)) x y))
-
-;; (define-tensor-method axpy-test (alpha (x dense-tensor :a) (y dense-tensor :a t))
-;;   `(let ((alpha (t/coerce ,(field-type (cl x)) alpha)))
-;;      (declare (type ,(field-type (cl x)) alpha))
-;;      ,(recursive-append
-;;        (when (blas-tensorp (cl x))
-;;	 `(if-let ((strd (and (call-alien-p x (t/l1-lb ,(cl x))) (blas-copyablep x y))))
-;;	    (t/blas-axpy! ,(cl x) alpha x (first strd) y (second strd))))
-;;        `(t/axpy! ,(cl x) alpha x y))))
 (eval-always
   (defgeneric store-ref (tensor idx)
     (:documentation  "Generic serial read access to the store.")
@@ -232,24 +196,14 @@
 
 (eval-always
   (defgeneric ref (tensor &rest subscripts)
-    (:documentation "
-  Syntax
-  ======
-  (ref store subscripts)
-
-  Purpose
-  =======
-  Return the element corresponding to subscripts.
-")
+    (:documentation "Return the element corresponding to subscripts.")
     (:generic-function-class tensor-method-generator))
 
   (defgeneric (setf ref) (value tensor &rest subscripts)
     (:generic-function-class tensor-method-generator))
 
-  (defgeneric store-size (obj)
-    (:documentation "(store-size obj) => store-size
-
-  Returns the number of elements the store of the obj can hold. This is not
+  (defgeneric store-size (self)
+    (:documentation "Return the number of elements the store of SELF can hold. This is not
   necessarily equal to that returned by total-size.")
     (:generic-function-class tensor-method-generator))
   (defgeneric total-size (obj)

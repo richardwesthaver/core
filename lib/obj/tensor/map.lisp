@@ -8,29 +8,19 @@
 (eval-always
   (defgeneric mapsor! (func x y)
     (:documentation
-     "
-    Syntax
-    ======
-    (MAPSOR! func x y)
+     "Apply FUNC element-wise on X, and set the corresponding elements in Y to the
+value returned by the function.
 
-    Purpose
-    =======
-    Applies the function element-wise on x, and sets the corresponding
-    elements in y to the value returned by the function.
-
-    Example
-    =======
-    > (mapsor! #'(lambda (idx x y)
-                  (if (= (car idx) (cadr idx))
-                      (sin x)
-                      y))
-       (randn '(2 2)) (zeros '(2 2)))
-    #<REAL-TENSOR #(2 2)
-    -9.78972E-2  0.0000
-     0.0000     -.39243
-    >
-    >
-")
+Example
+=======
+> (mapsor! #'(lambda (idx x y)
+              (if (= (car idx) (cadr idx))
+                  (sin x)
+                  y))
+   (randn '(2 2)) (zeros '(2 2)))
+#<REAL-TENSOR #(2 2)
+-9.78972E-2  0.0000
+ 0.0000     -.39243")
     (:method :before ((func function) (x tensor) (y tensor))
       (assert (with-optimization (:speed 3 :safety 0) 
                 (vector-eq (dimensions x) (dimensions y))) 
@@ -114,7 +104,6 @@
                   :for std :in strides
                   :do (when slc (incf (slot-value slc 'head) std)))))))
   (values-list (cons tensor more-tensors)))
-;;
 
 (defmacro tensor-foldl (type func ten init &key (init-type (field-type type)) (key nil))
   (using-gensyms (decl (ten init))

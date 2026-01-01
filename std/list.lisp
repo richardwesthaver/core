@@ -534,11 +534,8 @@ be used with SETF.")
 be used with SETF."))
 
 ;;; DLIST
-
 ;; Simple doubly-linked lists
-
-;; ref: https://github.com/bharath1097/matlisp/blob/94b65e68f2de5208ef9641cd105e25512c36a7f5/src/utilities/dlist.lisp
-
+;; ref: matlisp/src/utilities/dlist.lisp
 ;; ref: https://github.com/krzysz00/dlist
 (defun dcons (obj)
   (let ((lst (list* nil nil obj)))
@@ -607,6 +604,30 @@ be used with SETF."))
 	       (rotatef (first ft) (first se))
 	       (rotatef (second (first ft)) (second (first se))))
           finally (return ft))))
+
+;; utility macros (replaces iter:defmacro-clause for ON-DLIST and IN-DLIST
+(defmacro with-dlist ((elt v &key reverse until) &body body)
+  "Bind the symbol ELT to all unique elements ON the dlist V and eval BODY."
+  (with-gensyms (dlist end nxt)
+    `(loop
+       with ,dlist = ,v
+       while ,dlist
+       with ,end = ,(or until (if reverse `(second ,dlist) `(first ,dlist)))
+       for ,elt = ,dlist then (if (or (null ,end) (eql ,elt ,end)) 
+                                  (loop-finish)
+                                  (let ((,nxt ,(if reverse `(first ,elt) `(second ,elt))))
+                                    (when (null ,nxt) (loop-finish))
+                                    (when (eql ,nxt ,end) (setf ,end nil))
+                                    ,nxt))
+       do (progn ,@body))))
+
+
+(defmacro within-dlist ((elt v &key reverse until) &body body)
+  "Bind the symbol ELT to all unique elements IN the dlist V and eval BODY."
+  (with-gensyms (%elt)
+    `(with-dlist (,%elt ,v ,@(when reverse `(:reverse ,reverse)) ,@(when until `(:until ,until)))
+       (let ((,elt (cddr ,%elt)))
+         ,@body))))
 
 ;;; Template utils
 ;; Topological sort (matlisp)

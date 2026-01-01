@@ -55,10 +55,9 @@
     A generic version of @func{zeros}.
 ")
   (:method ((dims list) (dtype t) &optional initarg)
-    ;;(assert (tensor-leafp dtype) nil 'tensor-abstract-class :tensor-class dtype)
     (compile-and-eval
      `(defmethod zeros-generic ((dims list) (dtype (eql ',dtype)) &optional initarg)
-        (t.zeros ,dtype dims initarg)))
+        (t.zeros ,dtype ,(coerce dims 'index-store-vector) initarg)))
     (zeros-generic dims dtype initarg)))
 
 (definline zeros (dims &optional type initarg)
@@ -80,7 +79,7 @@ M> (zeros 3 (tensor '(complex double-float) 'simple-dense-tensor) 2)
  2.000   2.000   2.000
 >
 
-M> (zeros '(10000 10000) (tensor 'fixnum 'simple-graph-tensor) 10000)
+M> (zeros '(10000 10000) (tensor 'fixnum 'graph-tensor) 10000)
 #<MATLISP::|<GRAPH-TENSOR: FIXNUM>| #(10000 10000), size: 0/100000>"
   (let ((type (let ((type (or type *default-tensor-type*)))
                 (typecase type (symbol type) (list (apply #'tensor type))))))
