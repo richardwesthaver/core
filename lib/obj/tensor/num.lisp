@@ -69,7 +69,6 @@
                     (error "Cannot solve equation ~a * x = ~a mod ~a" ,a ,b ,(second ty))))))))
       `(cl:/ ,@(mapcar #'(lambda (x) `(the ,ty ,x)) nums))))
 
-;;
 (deft/generic (t.fid+ #'subtypep) ty ())
 (deft/method t.fid+ (ty t) ()
   nil)
@@ -79,7 +78,7 @@
 (deft/generic (t.fid* #'subtypep) ty ())
 (deft/method t.fid* (ty number) ()
   (coerce 1 ty))
-;;
+
 (deft/generic (t.fc #'subtypep) ty (num))
 (deft/method t.fc (ty number) (num)
  `(cl:conjugate ,num))
@@ -98,9 +97,9 @@
        `(defmethod fc ((x ,clname))
           (t.fc ,clname x)))
       (fc x))))
+
 (defun field-realp (fil)
   (eql (macroexpand-1 `(t.fc ,fil phi)) 'phi))
-;;
 
 (deft/generic (t.frealpart #'subtypep) ty (num))
 (deft/method t.frealpart (ty number) (num)
@@ -165,6 +164,7 @@
 ;;Any number can be coerced into '(complex double-float) (with loss of precision of course)
 (deft/method t.strict-coerce ((from number) (to (complex double-float))) (val)
  `(coerce ,val ',to))
+
 ;;-do-
 (deft/method t.strict-coerce ((from number) (to (complex single-float))) (val)
  `(coerce ,val ',to))
@@ -177,18 +177,3 @@
 
 (deft/method t.strict-coerce ((from index-type) (to index-type)) (val)
   `(the index-type ,val))
-;;
-;; (deft/method t.strict-coerce ((from fixnum) (to (complex fixnum))) (val)
-;;  `(coerce ,val ',to))
-
-;; (deft/method t.strict-coerce ((from integer) (to (complex integer))) (val)
-;;  `(coerce ,val ',to))
-
-;; (t.strict-coerce (number (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
-;; (t.strict-coerce (complex (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
-;; (t.strict-coerce (real (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
-;; (t.strict-coerce (real complex) x) -> error: template not defined
-;; (t.strict-coerce (fixnum double-float) x) -> (COERCE X 'DOUBLE-FLOAT)
-;; (t.strict-coerce (fixnum fixnum) x) -> error: template not defined
-;; (t.strict-coerce (fixnum real) x) -> (COERCE X 'REAL)
-;; (t.strict-coerce (double-float t) x) -> X

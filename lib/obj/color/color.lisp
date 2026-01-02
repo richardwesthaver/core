@@ -11,6 +11,10 @@
   "Real number in [0,1]."
   '(real 0 1))
 
+(deftype x11-colormap-class () 
+  '(member :static-gray :static-color :true-color
+    :gray-scale :pseudo-color :direct-color))
+
 (eval-always
   (defstruct (color (:constructor color (alpha))
                     (:conc-name nil))

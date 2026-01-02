@@ -327,6 +327,7 @@
              (map nil #'(lambda (v) (if (std/seq::node-existsp v fib) (pushnew i (aref adg v)))) (δ-i gt i t))))
       (adlist-to-graph adg (type-of g)))))
 
+#+nil
 (defun topological-order (dag)
   (let ((dagt (transpose dag))
         (order (t.store-allocator index-store-vector (dimensions dag -1)))
@@ -335,7 +336,7 @@
           with ii = -1
           unless cu
           ;; FIX 2026-01-01: WITH-COLOR
-          do (loop for tu being the gidx of dag from u in-order :sfd
+          do (loop for tu being the gidx of dag from u in-order :sfd with-color color
                       #+nil (with-color color with-parent tp with-visited-array visited)
                    do (setf (aref order (incf ii)) tu)
                    when (some #'(lambda (x) (aref color x)) (δ-i dagt tu t))

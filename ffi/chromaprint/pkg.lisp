@@ -44,7 +44,8 @@ two fingerprints yourself, you probably want them in this form.  |#
            :chromaprint-get-fingerprint-hash
            :chromaprint-clear-fingerprint
            :chromaprint-encode-fingerprint
-           :with-chromaprint-ctx))
+           :with-chromaprint-ctx
+           :*default-chromaprint-algorithm*))
 
 (in-package :chromaprint)
 
@@ -55,8 +56,9 @@ two fingerprints yourself, you probably want them in this form.  |#
   :test2 1
   :test3 2
   :test4 3
-  :test5 4
-  :default 1)
+  :test5 4)
+
+(defvar *default-chromaprint-algorithm* (chromaprint-algorithm :test2))
 
 (define-opaque chromaprint-context)
 ;; (define-opaque chromaprint-matcher-context)

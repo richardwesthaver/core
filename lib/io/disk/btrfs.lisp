@@ -5,10 +5,6 @@
 ;;; Code:
 (in-package :io/disk/btrfs)
 
-(defun load-btrfs-libs ()
-  (load-btrfs)
-  (load-btrfsutil))
-
 (define-condition btrfs-error (io-error) ())
 
 (deferror btrfs-simple-error (simple-error btrfs-error) () (:auto t))

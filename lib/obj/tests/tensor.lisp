@@ -27,3 +27,12 @@
   ;; FIX 2025-12-31: 
   #+nil(tensor::print-tensor (zeros 10) nil)
   (is= 10 (total-size (copy!-test (zeros 100) (zeros 10)))))
+
+;; (t.strict-coerce (number (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
+;; (t.strict-coerce (complex (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
+;; (t.strict-coerce (real (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
+;; (t.strict-coerce (real complex) x) -> error: template not defined
+;; (t.strict-coerce (fixnum double-float) x) -> (COERCE X 'DOUBLE-FLOAT)
+;; (t.strict-coerce (fixnum fixnum) x) -> error: template not defined
+;; (t.strict-coerce (fixnum real) x) -> (COERCE X 'REAL)
+;; (t.strict-coerce (double-float t) x) -> X

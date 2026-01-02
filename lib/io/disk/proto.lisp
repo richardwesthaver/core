@@ -13,14 +13,13 @@
 ;;; Vars
 (defvar *filesystem-backends* (list :btrfs :ext4 :xfs))
 (defvar *default-filesystem* :btrfs)
-
+(defvar *disks* nil)
 ;;; Conditions
 (define-condition disk-condition () ())
 
 (defun load-filesystem-backend (&optional (fs *default-filesystem*))
   (case fs
-    (:btrfs (load-btrfs) (load-btrfsutil) t)
-    (:xfs t)))
+    (:btrfs (load-btrfs) (load-btrfsutil))))
 
 (defclass disk () ((path :initarg :path :initform #p"/" :accessor path)))
 
@@ -29,3 +28,6 @@
 (defclass disk-subvolume () ())
 
 (defclass disk-snapshot () ())
+
+(defmethod init ((self (eql :disk)) &key (backend *default-filesystem*))
+  (load-filesystem-backend backend))
