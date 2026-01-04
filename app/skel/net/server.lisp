@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :skel/net/server)
 
-(defservice sk-server (sk-service udp-service) ()
+(defclass sk-server (net:udp-server) ()
   (:default-initargs
+   :id "skel-server"
    :port *skel-service-port*))
+

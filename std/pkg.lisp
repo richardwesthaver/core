@@ -261,14 +261,15 @@
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-c :integer-type-length :ctype-of :ctype :widetag-of :lowtag-of)
   (:import-from :sb-kernel :*type-classes* :type-class 
-   :make-type-class :*type-cache-nonce* :type-class-name :type-class-id
+   :*type-cache-nonce* :type-class-name :type-class-id
    :classoid :type-id->type-class
    :type-hash-value :*ctype-hashsets*
    :find-classoid :classoid-of
    :ctype-of :ctype
-   :layout-of)
+   :layout-of :function-designator)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+
+   :function-designator
    :type-class-of :unsigned-byte*
    :type-class-id :find-classoid
    :classoid :type-class-id-of
@@ -276,7 +277,7 @@
    :type-id<= :type-id< :type-id= :array-type=
    :type-id->type-class :type-hash-value
    :type-class-name-of :type-class-name
-   :*type-cache-nonce* :make-type-class
+   :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
    #:negative-double-float :*ctype-hashsets*
@@ -656,7 +657,7 @@
    :unbound-marker-p :generation-of
    :current-sp :current-fp 
    :make-unbound-marker)
-  (:import-from :std/prim :definline)
+  (:import-from :std/prim :definline :defhook)
   (:import-from :sb-impl :*external-formats*)
   (:import-from :sb-vm :list-allocated-objects :fun-signature=
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
@@ -1397,7 +1398,9 @@
    :draw-filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
    :smile :draw-one-in-chance :draw-chance :mumble
-   :*mumble-timestamp* :deffmt))
+   :*mumble-timestamp* :deffmt :defprint :define-printer
+   :*printer-table* :find-printer :with-printer :use-printer
+   :in-printer :*default-printer* :*print-color*))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)
@@ -1487,7 +1490,7 @@
   (:export 
    :*sysdefs*
    :*asdf-compatibility*
-   :*defining-system*
+   :*defsys*
    :*system-table*
    :*module-table*
    :*provider-table*

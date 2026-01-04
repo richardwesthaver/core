@@ -41,13 +41,15 @@
      (not (search "xn--" (subseq after-wildcard 0 after-w-dot-pos))))))
 
 (defun try-match-wildcard (before-wildcard after-wildcard single-char-wildcard pattern)
-  ;; Compare AfterW part with end of pattern with length (length AfterW)
-  ;; was Wildcard the only character in left-most label in identifier
-  ;; doesn't matter since parts after Wildcard should match unconditionally.
-  ;; However if Wildcard was the only character in left-most label we can't match this *.example.com and bar.foo.example.com
-  ;; if i'm correct if it wasn't the only character
-  ;; we can match like this: *o.example.com = bar.foo.example.com
-  ;; but this is prohibited anyway thanks to check-vildcard-in-leftmost-label
+  ;; Compare AfterW part with end of pattern with length (length AfterW) was
+  ;; Wildcard the only character in left-most label in identifier doesn't
+  ;; matter since parts after Wildcard should match unconditionally.  However
+  ;; if Wildcard was the only character in left-most label we can't match this
+  ;; *.example.com and bar.foo.example.com
+
+  ;; if we're correct and * wasn't the only character we can match like this:
+  ;; *o.example.com = bar.foo.example.com but this is prohibited anyway thanks
+  ;; to check-vildcard-in-leftmost-label
   (if single-char-wildcard
       (let ((pattern-except-left-most-label
              (if-let ((first-hostname-dot-post (position #\. pattern)))

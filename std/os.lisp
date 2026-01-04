@@ -513,14 +513,16 @@ Signals an error if PATHSPEC is wild."
 new one."
   (declare (ignorable program arguments))
   (sb-alien:with-alien ((prg sb-alien:c-string program)
-                        (argv (array sb-alien:c-string 256)))
+                        (argv (* c-string) (make-alien c-string (length arguments))))
     (loop
       for i in arguments
-      for j below 255
-      do (setf (sb-alien:deref argv j) i))
+      for j from 0 below (length arguments)
+      do (setf (sb-alien:deref argv j) (make-alien-string i)))
     (setf (sb-alien:deref argv (length arguments)) nil)
     (sb-alien:alien-funcall (sb-alien:extern-alien "execv" (function sb-alien:int sb-alien:c-string (* sb-alien:c-string)))
-                            prg (sb-alien:cast argv (* sb-alien:c-string)))))
+                            prg argv)))
+
+;; (apply 'execv "/usr/local/bin/core" sb-ext:*posix-argv*)
 
 (defun open-pipe (&key (element-type '(unsigned-byte 8)))
   "Create a pipe and return two fd-streams. The first value is the input

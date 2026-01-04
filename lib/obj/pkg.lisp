@@ -495,7 +495,11 @@
    :decode-universal-time-with-tz
    :octets-to-timestamp
    :timestamp-to-octets
-   :duration))
+   :duration
+   :timetag
+   :timetag+
+   :unix-time-to-timetag
+   :timetag-to-unix-time))
 
 (defpkg :obj/uuid
   (:nicknames :uuid)

@@ -68,7 +68,8 @@
                  (:file "x11")
                  (:file "base16")
                  (:file "modus")
-                 (:file "theme")))
+                 (:file "theme")
+                 (:file "print")))
    (:module "time"
     :components ((:file "local")
                  (:file "util")))

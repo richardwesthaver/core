@@ -270,7 +270,7 @@
 
 
 (defglobal +quirks-mode-doctypes-regexp+
-  (cl-ppcre:create-scanner
+  (ppcre:create-scanner
    '(:sequence :start-anchor
      (:alternation
       "+//silmaril//dtd html pro v0r11 19970101//"

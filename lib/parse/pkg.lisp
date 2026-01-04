@@ -6,7 +6,7 @@
 
 (defpackage :parse/lex
   (:nicknames :lex)
-  (:use :cl :cl-ppcre :std :parse/proto)
+  (:use :cl :ppcre :std :parse/proto)
   (:export
    #:*string*
    #:*length*

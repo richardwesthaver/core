@@ -298,30 +298,28 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
            (pushnew :sbcl+safe-standard-readtable *features*)))
 
 ;;;; Mapping between a readtable object and its readtable-name.
-
 (defvar *readtable-names* (make-hash-table :test 'eq))
 
 (define-cruft %associate-readtable-with-name (name readtable)
   "Associate READTABLE with NAME for READTABLE-NAME to work."
-  #+ :common-lisp (setf (gethash readtable *readtable-names*) name))
+  (setf (gethash readtable *readtable-names*) name))
 
 (define-cruft %unassociate-readtable-from-name (name readtable)
   "Remove the association between READTABLE and NAME."
-  #+ :common-lisp (progn (assert (eq name (gethash readtable *readtable-names*)))
-                         (remhash readtable *readtable-names*)))
+  (progn (assert (eq name (gethash readtable *readtable-names*)))
+         (remhash readtable *readtable-names*)))
 
 (define-cruft %readtable-name (readtable)
   "Return the name associated with READTABLE."
-  #+ :common-lisp (values (gethash readtable *readtable-names*)))
+  (values (gethash readtable *readtable-names*)))
 
 (define-cruft %list-all-readtable-names ()
   "Return a list of all available readtable names."
-  #+ :common-lisp (list* :standard :current :modern
-                         (loop for name being each hash-value of *readtable-names*
-                               collect name)))
+  (list* :standard :current :modern
+         (loop for name being each hash-value of *readtable-names*
+               collect name)))
 
 ;;;; Mapping READTABLE objects to docstrings.
-
 (defvar *readtable-to-docstring* (make-hash-table :test 'eq))
 
 (defun %associate-docstring-with-readtable (readtable docstring)
@@ -332,7 +330,6 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
     (remhash readtable *readtable-to-docstring*)))
 
 ;;;; Specialized DOCUMENTATION for named readtables.
-
 (sb-ext:with-unlocked-packages (:common-lisp)
 
   (defmethod documentation ((name symbol) (doc-type (eql 'readtable)))

@@ -18,9 +18,9 @@
 (require 'sb-sprof)
 (require 'sb-introspect)
 (require 'sb-rotate-byte)
-;; (asdf:load-system :cl-ppcre)
+;; (asdf:load-system :ppcre)
 (flet ((%load (f) (asdf:load-asd (probe-file f))))
-  (%load "~/comp/shed/ppcre/cl-ppcre.asd")
+  (%load "~/comp/shed/ppcre/ppcre.asd")
   (%load "~/comp/shed/ironclad/ironclad.asd")
   (%load "std/std.asd"))
 

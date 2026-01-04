@@ -13,10 +13,10 @@
                      (mapcar #'string-downcase tokens)
                      tokens))
          (tokens (if alphabetic
-                     (delete-if-not (lambda (x) (cl-ppcre:scan "^[A-Za-z]*$" x)) tokens)
+                     (delete-if-not (lambda (x) (ppcre:scan "^[A-Za-z]*$" x)) tokens)
                      tokens)))
     tokens))
 
 (defun sentence-tokenize (string)
   "Split a string into a list of sentences."
-  (remove "" (mapcar #'std:trim (cl-ppcre:split "[.!?]" string)) :test #'equal))
+  (remove "" (mapcar #'std:trim (ppcre:split "[.!?]" string)) :test #'equal))

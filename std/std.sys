@@ -12,7 +12,7 @@
 (defsys :std
  "CC Standard Library"
  :version "0.1.0"
- :require (:cl-ppcre)
+ :require (:ppcre)
  :components 
  ((:file "named-readtables") (:file "defpkg")
   (:dir "num")

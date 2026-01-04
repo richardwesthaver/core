@@ -2959,13 +2959,13 @@ to :data because that's what's needed after a token has been emitted."
 
     (cond ((or (not correct)
                (string/= name "html")
-               (cl-ppcre:scan +quirks-mode-doctypes-regexp+ public-id)
+               (ppcre:scan +quirks-mode-doctypes-regexp+ public-id)
                (member public-id '("-//w3o//dtd w3 html strict 3.0//en//"
                                    "-/w3c/dtd html 4.0 transitional/en"
                                    "html")
                        :test #'string=)
                (and (not system-id)
-                    (cl-ppcre:scan '(:sequence :start-anchor (:alternation
+                    (ppcre:scan '(:sequence :start-anchor (:alternation
                                                               "-//w3c//dtd html 4.01 frameset//"
                                                               "-//w3c//dtd html 4.01 transitional//"))
                                    public-id))
@@ -2973,12 +2973,12 @@ to :data because that's what's needed after a token has been emitted."
                     (equal (ascii-upper-2-lower system-id)
                            "http://www.ibm.com/data/dtd/v11/ibmxhtml1-transitional.dtd")))
            (setf compat-mode :quirks))
-          ((or (cl-ppcre:scan '(:sequence :start-anchor (:alternation
+          ((or (ppcre:scan '(:sequence :start-anchor (:alternation
                                                          "-//w3c//dtd xhtml 1.0 frameset//"
                                                          "-//w3c//dtd xhtml 1.0 transitional//"))
                               public-id)
                (and system-id
-                    (cl-ppcre:scan '(:sequence :start-anchor (:alternation
+                    (ppcre:scan '(:sequence :start-anchor (:alternation
                                                               "-//w3c//dtd html 4.01 frameset//"
                                                               "-//w3c//dtd html 4.01 transitional//"))
                                    public-id)))
@@ -4876,7 +4876,7 @@ to :data because that's what's needed after a token has been emitted."
       (setf (getf token :name) replacement))))
 
 (defparameter +only-space-characters-regexp+
-  (cl-ppcre:create-scanner `(:sequence :start-anchor
+  (ppcre:create-scanner `(:sequence :start-anchor
                                        (:greedy-repetition
                                         0 nil
                                         (:alternation ,@(coerce +space-characters+ 'list)))
@@ -4884,7 +4884,7 @@ to :data because that's what's needed after a token has been emitted."
                            :multi-line-mode t))
 
 (defun only-space-characters-p (string)
-  (cl-ppcre:scan +only-space-characters-regexp+ string))
+  (ppcre:scan +only-space-characters-regexp+ string))
 
 (def :in-foreign-content process-characters (frameset-ok)
   (cond ((equal (getf token :data) (string #\u0000))
@@ -5181,7 +5181,7 @@ See: https://www.w3.org/TR/html5/syntax.html#coercing-an-html-dom-into-an-infose
 
 (defun xml-unescape-name (name)
   "Reverert escaping done by xml-unescape-name."
-  (cl-ppcre:regex-replace-all
+  (ppcre:regex-replace-all
    "U[0-9A-F]{6}"
    name
    (lambda (u)

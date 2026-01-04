@@ -11,7 +11,7 @@
   (:export :stem))
 
 (defpackage :nlp/tokenize
-  (:use :cl :std :cl-ppcre :nlp/data :nlp/stem/porter)
+  (:use :cl :std :ppcre :nlp/data :nlp/stem/porter)
   (:export :word-tokenize :sentence-tokenize))
 
 (defpackage :nlp/doc

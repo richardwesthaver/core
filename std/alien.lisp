@@ -587,7 +587,7 @@ variant associated with this value." type name)
 ;; SAP-REF is finished.
 
 ;; all operations are performed on (* unsigned-char)
-(define-io alien
+(define-io :alien
   ((unsigned-char 8) 
    (:read (vec) 
           vec))

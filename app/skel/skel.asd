@@ -35,7 +35,8 @@
      (:file "org")
      (:file "dir-locals")
      (:file "makefile")
-     (:file "sys")))
+     (:file "sys")
+     (:file "infer")))
    (:module "packy"
     :components
     ((:file "pkg")
@@ -67,14 +68,13 @@
      (:file "srv")
      (:file "cli")
      (:file "homer")))
-   (:file "srv")
-   (:file "infer")
    (:module "net"
     :components
     ((:file "var")
      (:file "server")
      (:file "client")
-     (:file "endpoint")))
+     (:file "endpoint")
+     (:file "srv")))
    (:file "cli")
    (:file "skel"))
   :in-order-to ((test-op (test-op "skel/tests"))))

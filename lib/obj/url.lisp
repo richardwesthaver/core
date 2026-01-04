@@ -347,7 +347,17 @@ a scheme, i.e. something like 'https://' or 'mailto:'."
     ;;  TODO 2025-06-13: handle leniency
     (octets-to-string buffer :end i :external-format external-format)))
 
+;;; Serde
+(defmethod serialize (self (fmt (eql :url)) &rest args)
+  (apply 'url-encode self args))
+
+(defmethod deserialize (self (fmt (eql :url)) &rest args)
+  (apply 'url-decode self args))
+
+;; (deserialize (serialize "foo://test" :url) :url)
+
 ;;; url-rewrite
+;; rewrite URLs in an HTML document streamed from *STANDARD-INPUT*.
 (defvar *url-rewrite-tags*
   '(("a" . "href")
     ("area" . "href")
@@ -820,12 +830,9 @@ input."
               ;; anything else means this is just #\<, no markup
               (write-char (read-char)))))))
 
-;;; Multiaddr (mURL)
-
+;;; Multiaddr (mURI)
 ;; a ground-up implementation of libp2p multiaddr.
 ;; ref: https://github.com/multiformats/multiaddr
 
-;; piping?
-
-;; A multiaddr is represented internally as a list of KV pairs - 
+;; A multiaddr is represented internally as a list of KV pairs:
 ;; ((ip4 . "0.0.0.0") (udp . 44200) (dm . "ping")) ;= dm://0.0.0.0:44200/ping

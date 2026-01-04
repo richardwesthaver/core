@@ -10,7 +10,8 @@
   (when codec (load-avcodec))
   (when format (load-avformat)))
 
-(eval-always (deferror av-error (dsp-error std-error) ()))
+(eval-always 
+  (deferror av-error (dsp-error std-error) ()))
 
 (defmacro with-av-handlers (&body body)
   `(handler-case (progn ,@body)

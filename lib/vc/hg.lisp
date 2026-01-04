@@ -258,7 +258,7 @@ first value and 'stuff' as the second."
 
 (defmethod vc-purge ((self hg-repo) &key all (ignored t) &allow-other-keys) 
   (apply 'vc-run self "purge" 
-         `(,@(when all "--all") ,@(when ignored "--ignored"))))
+         `(,@(when all '("--all")) ,@(when ignored '("--ignored")))))
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 

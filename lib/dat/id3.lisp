@@ -23,7 +23,7 @@ approval status.
 
 (deftype u28 () '(unsigned-byte 28))
 
-(define-io id3
+(define-io :id3
   (u28
    (:read (in)
           (loop with val = 0

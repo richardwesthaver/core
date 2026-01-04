@@ -1,15 +1,4 @@
 ;;; std.asd --- standard library
-
-;; the build op on the STD system system concatenates all dependency systems -
-;; make sure CL-PPCRE is loaded first but not included in the build output.
-#-cl-ppcre
-(handler-case
-    (or
-     #+quicklisp (ql:quickload :cl-ppcre)
-     (asdf:load-system :cl-ppcre))
-  (error () (error "unable to load system CL-PPCRE - make sure you have it installed in a path
-that ASDF can find, or have quicklisp installed.")))
-
 (require 'sb-cltl2)
 (require 'sb-concurrency)
 (require 'sb-sprof)
@@ -20,7 +9,7 @@ that ASDF can find, or have quicklisp installed.")))
 (defsystem :std
   :version "0.1.0"
   :description "CC Standard Library"
-  :depends-on (:cl-ppcre)
+  :depends-on (:ppcre)
   :serial t
   :components 
   ((:file "named-readtables")
@@ -30,9 +19,9 @@ that ASDF can find, or have quicklisp installed.")))
    (:file "sym")
    (:file "list")
    (:file "prim")
-   (:file "kernel")
    (:file "type")
    (:file "string")
+   (:file "kernel")
    (:module "num"
     :components
     ((:file "float")

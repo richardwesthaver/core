@@ -64,7 +64,7 @@
   (let* ((raw            (mountpoint-get mount-info-file mountpoint 'opts))
          (comma-splitted (ssplit +option-separator+ raw)))
     (loop for i in comma-splitted collect
-             (if (cl-ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
+             (if (ppcre:scan  #.(format nil "[~A]" +suboption-separator+) i)
                  (ssplit +suboption-separator+ i)
                  i))))
 

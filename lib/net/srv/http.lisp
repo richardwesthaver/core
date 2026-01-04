@@ -160,11 +160,11 @@ name doesn't exist, it is created.")
 
 (let ((scanner-hash (make-hash-table :test #'equal)))
   (defun scanner-for-get-param (param-name)
-    "Returns a CL-PPCRE scanner which matches a GET parameter in a
+    "Returns a PPCRE scanner which matches a GET parameter in a
 URL.  Scanners are memoized in SCANNER-HASH once they are created."
     (or (gethash param-name scanner-hash)
         (setf (gethash param-name scanner-hash)
-              (cl-ppcre:create-scanner
+              (ppcre:create-scanner
                `(:alternation
                  ;; session=value at end of URL
                  (:sequence
@@ -193,7 +193,7 @@ are replaced with '&amp;'. The resulting URL is returned."
     (unless url
       ;; see URL-REWRITE:*URL-REWRITE-FILL-TAGS*
       (setq url (uri:uri *request*)))
-    (setq url (cl-ppcre:regex-replace-all (scanner-for-get-param cookie-name) url "\\1"))
+    (setq url (ppcre:regex-replace-all (scanner-for-get-param cookie-name) url "\\1"))
     (when value
       (setq url (format nil "~A~:[?~;&~]~A=~A"
                         url
@@ -201,7 +201,7 @@ are replaced with '&amp;'. The resulting URL is returned."
                         cookie-name
                         (url:url-encode value))))
     (when replace-ampersands-p
-      (setq url (cl-ppcre:regex-replace-all "&" url "&amp;")))
+      (setq url (ppcre:regex-replace-all "&" url "&amp;")))
     url))
 
 (defun maybe-rewrite-urls-for-session (html &key
@@ -226,8 +226,8 @@ true.  See the docs for URL-REWRITE:REWRITE-URLS."
                                          :value value))))))))
 
 (defun maybe-add-charset-to-content-type-header (content-type external-format)
-  (if (and (cl-ppcre:scan "(?i)^text" content-type)
-           (not (cl-ppcre:scan "(?i);\\s*charset=" content-type)))
+  (if (and (ppcre:scan "(?i)^text" content-type)
+           (not (ppcre:scan "(?i);\\s*charset=" content-type)))
       (format nil "~A; charset=~(~A~)" content-type external-format)
       content-type))
 
@@ -588,7 +588,7 @@ can be parsed by most log analysis tools."
   the number of bytes to transfer from the file.  Invalid specified
   ranges are reported to the client with a HTTP 416 status code."
   (let ((bytes-to-send (file-length file)))
-    (cl-ppcre:register-groups-bind
+    (ppcre:register-groups-bind
         (start end)
         ("^bytes=(\\d+)-(\\d*)$" (header-in* :range) :sharedp t)
       ;; body won't be executed if regular expression does not match
@@ -772,7 +772,7 @@ REQUEST."
   (when (every #'graphic-char-p path)
     (let* ((pathname (sb-ext:parse-native-namestring
                       ;; Just disallow anything with :wild components later.
-                      (remove #\\ (cl-ppcre:regex-replace "^/*" path ""))))
+                      (remove #\\ (ppcre:regex-replace "^/*" path ""))))
            (directory (pathname-directory pathname)))
       (when (and (or (null (pathname-host pathname))
                      (equal (pathname-host pathname)
@@ -885,7 +885,7 @@ protocol of the request."
           (send-bad-request-response stream "Non-ASCII character in request line")
           (return-from get-http-request-data nil))
         (destructuring-bind (&optional method url-string protocol)
-            (cl-ppcre:split "\\s+" first-line :limit 3)
+            (ppcre:split "\\s+" first-line :limit 3)
           (cond ((not
                   (setf method
                         (find method +known-http-methods+ :test #'string-equal)))
@@ -949,7 +949,7 @@ protocol of the request."
                                             (assoc :transfer-encoding headers-in))))
                    (when transfer-encodings
                      (setq transfer-encodings
-                           (cl-ppcre:split "\\s*,\\s*" transfer-encodings))
+                           (ppcre:split "\\s*,\\s*" transfer-encodings))
                      (when (member "chunked" transfer-encodings :test #'equalp)
                        (setf *service-stream* (io/chunky:make-chunked-stream *service-stream*))))
                    (with-request-count-incf *service*

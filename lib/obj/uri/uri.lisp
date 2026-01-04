@@ -37,25 +37,23 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
   (defvar *strict-parse* t))
 
 
+;; uri-host is computed and cached.  See the hand-written method below.
+;; uri-ipv6 and uri-zone-id are read-only by users, so they are in the
+;;   internal section below.
 (defclass uri ()
-  (
-;;;; external:
-   ;; uri-host is computed and cached.  See the hand-written method below.
-   ;; uri-ipv6 and uri-zone-id are read-only by users, so they are in the
-   ;;   internal section below.
-
-;;;; These slots are special: when they are changed, the string and
-;;;; hashcode slots need to be set to nil.  For path, parsed-path also
-;;;; needs to be set to nil.  See define-special-uri-slot-setters below.
+  (;; special slots..
+   ;; These slots are special: when they are changed, the string and
+   ;; hashcode slots need to be set to nil.  For path, parsed-path also
+   ;; needs to be set to nil.  See define-special-uri-slot-setters below.
    (scheme :initarg :scheme :initform nil :accessor uri-scheme)
    (userinfo :initarg :userinfo :initform nil :accessor uri-userinfo)
    (port :initarg :port :initform nil :accessor uri-port)
    (path :initarg :path :initform nil :accessor uri-path)
    (query :initarg :query :initform nil :accessor uri-query)
    (fragment :initarg :fragment :initform nil :accessor uri-fragment)
-;;;; ...end special slots.
+   ;; ..end special slots
    (plist :initarg :plist :initform nil :accessor uri-plist)
-;;;; internal:
+   ;; internal slots
    (%host ;; where part of the value for uri-host is stored
     ;; The values stored here are for URIs with names or IPv4 addresses.
     ;; IPv6 addresses are stored in the .ipv6 and .zone-id slots.
@@ -87,7 +85,7 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
    (hashcode ;; cached sxhash, so we don't have to compute it more than once
     :initarg :hashcode :initform nil :accessor uri-hashcode)))
 
-  #+has-clos-fixed-index-feature (:metaclass fixed-index-class)
+#+has-clos-fixed-index-feature (:metaclass fixed-index-class)
 
 ;;; IRI
 ;; - The grammar for IRIs is identical to that of URIs, except the allowed
@@ -108,8 +106,8 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 (defclass iri (uri) ())
 
 (defvar %iri-mode
-    ;; Bound to T when we are parsing in IRI mode
-    nil)
+  ;; Bound to T when we are parsing in IRI mode
+  nil)
 
 (defmethod uri-host ((uri uri))
   ;; Return the computed host for URI.  It is the value which could be used
@@ -125,9 +123,9 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
      elseif (setq ipv6 (%uri-ipv6 uri))
        then ;; This setf clears the cached printed value (string slot)
 	    (setf (%uri-host uri)
-	      (if* (setq zone-id (%uri-zone-id uri))
-		 then (concatenate 'string ipv6 "%" zone-id)
-		 else ipv6)))))
+	          (if* (setq zone-id (%uri-zone-id uri))
+		     then (concatenate 'string ipv6 "%" zone-id)
+		     else ipv6)))))
 
 ;; It is by design there are no public setf methods for these
 (defmethod uri-ipv6    ((uri uri)) (%uri-ipv6    uri))
@@ -151,7 +149,7 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
        elseif (stringp v)
 	 then (multiple-value-bind (found whole ipv6 zone-id)
 		  ;; This embodies knowledge of the URI IPv6 syntax
-		  (cl-ppcre:scan "^(.*:.*?)(%.*)?$" v)
+		  (ppcre:scan "^(.*:.*?)(%.*)?$" v)
 		(declare (ignore whole))
 		(if* found
 		   then (set-host uri nil ipv6 zone-id)
@@ -274,7 +272,7 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
       (if* (%uri-parsed-path uri)
 	 thenret
 	 else (setf (%uri-parsed-path uri)
-		(parse-path (uri-path uri) (uri-escaped uri)))))))
+		    (parse-path (uri-path uri) (uri-escaped uri)))))))
 
 (defmethod (setf uri-parsed-path) (path-list (uri uri))
   (if* (null path-list)
@@ -314,22 +312,3 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 (defmethod uri ((thing t))      (error "Cannot coerce ~s to a uri." thing))
 
 ;; (parse-uri-string-rfc3986 "https://test.com")
-
-;; TODO
-;; (defmacro do-all-uris ((var &optional uri-space result-form)
-;; 		       &rest forms
-;; 		       &environment env)
-;;   "do-all-uris (var [[uri-space] result-form])
-;;   		    {declaration}* {tag | statement}*
-;; Executes the forms once for each uri with var bound to the current uri"
-;;   (let ((f (gensym))
-;; 	(g-ignore (gensym))
-;; 	(g-uri-space (gensym))
-;; 	(body (third (excl::parse-body forms env))))
-;;     `(let ((,g-uri-space (or ,uri-space *uris*)))
-;;        (prog nil
-;; 	 (flet ((,f (,var &optional ,g-ignore)
-;; 		  (declare (ignorable ,var ,g-ignore))
-;; 		  (tagbody ,@body)))
-;; 	   (maphash #',f ,g-uri-space))
-;; 	 (return ,result-form)))))

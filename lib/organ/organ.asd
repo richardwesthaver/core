@@ -1,7 +1,7 @@
 (defsystem :organ
   :version "0.1.0"
   :description "org-mode utils"
-  :depends-on (:cl-ppcre :std :nlp :parse :cry :obj :rdb :log :cry)
+  :depends-on (:ppcre :std :nlp :parse :cry :obj :rdb :log :cry)
   :components ((:file "pkg")
                (:file "vars")
                (:file "condition")

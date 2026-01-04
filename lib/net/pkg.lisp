@@ -28,6 +28,8 @@
    :server
    :server-config
    :peer
+   :router
+   :endpoint
    :route
    :proxy
    :tunnel
@@ -67,7 +69,7 @@
    :decode-data))
 
 (defpkg :net/codec/tlv
-  (:nicknames :codec/tlv)
+  (:nicknames :codec/tlv :net/tlv :tlv)
   (:use :cl :std :net/core :dat/proto)
   (:export
    :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
@@ -75,32 +77,25 @@
 (defpkg :net/codec/osc
   (:nicknames :codec/osc)
   (:use :cl :std :log :net/core)
+  (:import-from :obj/time :get-unix-time)
   (:export
    :*default-osc-buffer-size*
    :make-osc-message
    :osc-message
-   :make-bundle
-   :bundle
+   :make-osc-bundle
+   :osc-bundle
    :format-osc-data
-   :command
-   ;; :args ;; conflict
-   :timetag
-   :elements
-   :encode-message
-   :encode-bundle
-   :decode-message
-   :decode-bundle
+   :osc-command
+   :osc-args
+   :osc-timetag
+   :osc-elements
+   :decode-osc-message
+   :decode-osc-bundle
    :make-osc-tree
-   :dp-register
-   :dp-remove
-   :dp-match
-   ;; :dispatch
-   :get-current-timetag            ; osc-time
-   :timetag+
-   :get-unix-time
-   :unix-time->timetag
-   :timetag->unix-time
-   :print-as-double))
+   :osc-register
+   :osc-remove
+   :osc-match
+   :osc-dispatch))
 
 (defpkg :net/codec/http
   (:use :cl :net/core)

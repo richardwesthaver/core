@@ -4,3 +4,11 @@
 
 ;;; Code:
 (in-package :net/proto/sesh)
+
+(defclass sesh-router (router) ())
+
+(defclass sesh-node (sesh-router peer) ())
+
+(defclass sesh-server (sesh-node server) ())
+
+(defclass sesh-client (sesh-node client) ())

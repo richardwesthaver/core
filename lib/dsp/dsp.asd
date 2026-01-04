@@ -1,7 +1,7 @@
 ;;; dsp.asd --- Dsp Sytem Definitions
 (defsystem :dsp
   :description "High-level DSP"
-  :depends-on (:cl-ppcre :std :obj :dat :sndfile :net :math :gstreamer :log :io :jack :chromaprint :alsa :ffmpeg)
+  :depends-on (:ppcre :std :obj :dat :sndfile :net :math :gstreamer :log :io :jack :chromaprint :alsa :ffmpeg)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

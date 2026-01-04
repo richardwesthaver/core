@@ -35,7 +35,7 @@
                            #2# ,g!a)))
              (build-batcher-sn (length places))))))
 
-#+cl-ppcre
+#+ppcre
 (defun dollar-symbol-p (s)
   (and (symbolp s)
        (> (length (symbol-name s)) 1)
@@ -46,7 +46,7 @@
        (ignore-errors (parse-integer (subseq (symbol-name s) 1)))))
 
 
-#+cl-ppcre
+#+ppcre
 (defmacro! if-match ((match-regex str) then &optional else)
   (let* ((dollars (remove-duplicates
                    (remove-if-not #'dollar-symbol-p
@@ -66,7 +66,7 @@
                ,then
                ,else))))))
 
-#+cl-ppcre
+#+ppcre
 (defmacro when-match ((match-regex str) &body forms)
   `(if-match (,match-regex ,str)
              (progn ,@forms)))

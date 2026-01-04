@@ -40,18 +40,18 @@
        (error 'openssl-error-call
               :queue (read-openssl-error-queue)
               :message (format nil "Unable to load default verify paths"))))
-     ((eq :default-file location)
-      ;; supported since openssl 1.1.0
-      (unless (= 1 (ssl-ctx-set-default-verify-file ssl-ctx))
-        (error 'openssl-error-call
-               :queue (read-openssl-error-queue)
-               :message (format nil "Unable to load default verify file"))))
-     ((eq :default-dir location)
-      ;; supported since openssl 1.1.0
-      (unless (= 1 (ssl-ctx-set-default-verify-dir ssl-ctx))
-        (error 'openssl-error-call
-               :queue (read-openssl-error-queue)
-               :message (format nil "Unable to load default verify dir"))))
+    ((eq :default-file location)
+     ;; supported since openssl 1.1.0
+     (unless (= 1 (ssl-ctx-set-default-verify-file ssl-ctx))
+       (error 'openssl-error-call
+              :queue (read-openssl-error-queue)
+              :message (format nil "Unable to load default verify file"))))
+    ((eq :default-dir location)
+     ;; supported since openssl 1.1.0
+     (unless (= 1 (ssl-ctx-set-default-verify-dir ssl-ctx))
+       (error 'openssl-error-call
+              :queue (read-openssl-error-queue)
+              :message (format nil "Unable to load default verify dir"))))
     ((stringp location)
      (add-verify-locations ssl-ctx (list location)))
     ((pathnamep location)
@@ -72,20 +72,20 @@
   (openssl::ssl-ctx-ctrl ctx +SSL-CTRL-SET-MAX-PROTO-VERSION+ version nil))
 
 (defun make-ssl-context (&key (method nil method-supplied-p)
-                          disabled-protocols
-                          (options (list openssl::+SSL-OP-ALL+))
-                          min-proto-version
-                          (session-cache-mode openssl::+ssl-sess-cache-server+)
-                          (verify-location :default)
-                          (verify-depth 100)
-                          (verify-mode openssl::+ssl-verify-peer+)
-                          verify-callback
-                          cipher-list
-                          (pem-password-callback 'pem-password-callback)
-                          certificate-chain-file
-                          private-key-file
-                          private-key-password
-                          (private-key-file-type openssl::+x509-filetype-pem+))
+                              disabled-protocols
+                              (options (list openssl::+SSL-OP-ALL+))
+                              min-proto-version
+                              (session-cache-mode openssl::+ssl-sess-cache-server+)
+                              (verify-location :default)
+                              (verify-depth 100)
+                              (verify-mode openssl::+ssl-verify-peer+)
+                              verify-callback
+                              cipher-list
+                              (pem-password-callback 'pem-password-callback)
+                              certificate-chain-file
+                              private-key-file
+                              private-key-password
+                              (private-key-file-type openssl::+x509-filetype-pem+))
   "Creates a new SSL_CTX using SSL_CTX_new and initializes it according to
 the specified parameters.
 

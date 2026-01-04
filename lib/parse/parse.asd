@@ -2,7 +2,7 @@
 (defsystem :parse
   :version "0.1.0"
   :maintainer "ellis <ellis@rwest.io>"
-  :depends-on (:cl-ppcre :std)
+  :depends-on (:ppcre :std)
   :components ((:file "pkg")
                (:file "bytes")
                (:file "lex")

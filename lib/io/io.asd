@@ -1,6 +1,6 @@
 (defsystem :io
   :description "Lisp IO Interface"
-  :depends-on (:cl-ppcre 
+  :depends-on (:ppcre 
                :std
                :ironclad
                :uring

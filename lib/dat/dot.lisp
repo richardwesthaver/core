@@ -165,22 +165,22 @@ dot executable."
            (label-name-re "label=(\"([^\"]+)\"|([^, ]+))[,\\]]")
            (number-re     "[0-9.\/e]+")
            (graph (multiple-value-bind (string matches)
-                      (cl-ppcre:scan-to-strings graph-type-re dot-string)
+                      (ppcre:scan-to-strings graph-type-re dot-string)
                     (declare (ignorable string))
                     (make-instance (string->symbol (aref matches 0))))))
       ;; add nodes
-      (cl-ppcre:do-register-groups (node spec) (node-spec-re dot-string)
+      (ppcre:do-register-groups (node spec) (node-spec-re dot-string)
         (declare (ignorable spec))
         (unless (member node '("node" "graph") :test 'string=)
           (add-node graph (symbolicate node))))
       ;; add edges
-      (cl-ppcre:do-register-groups (left arrow right spec) (edge-spec-re dot-string)
+      (ppcre:do-register-groups (left arrow right spec) (edge-spec-re dot-string)
         (declare (ignorable arrow))
-        (multiple-value-bind (matchp regs) (cl-ppcre:scan-to-strings label-name-re spec)
+        (multiple-value-bind (matchp regs) (ppcre:scan-to-strings label-name-re spec)
           (add-edge graph
                     (mapcar #'symbolicate (list left right))
                     (when matchp
-                      (if (cl-ppcre:scan number-re (aref regs 1))
+                      (if (ppcre:scan number-re (aref regs 1))
                           (read-from-string (aref regs 1)))))))
       graph)))
 

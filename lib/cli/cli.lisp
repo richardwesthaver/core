@@ -70,7 +70,7 @@ only."
   `(clap:load-package-cli ,name . ,(when package '(:package package))))
 
 (defprovider :bin (&rest args)
-  (if-let ((sys *defining-system*))
+  (if-let ((sys *defsys*))
     `((cons ,sys (:bin ,@args)))
     args))
 

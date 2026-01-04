@@ -82,13 +82,13 @@ sockets."))
                 :accessor connected-p
                 :initarg :connected-p)))
 
-(defclass client (wrapped-socket obj:vertex) ()
+(defclass client (wrapped-socket obj:node) ()
   (:documentation "Base class of client objects which wrap a socket and may be treated as nodes
 in a NETWORK-GRAPH."))
 
 (defconfig client-config (net-config) ())
 
-(defclass server (wrapped-socket obj:vertex) ()
+(defclass server (wrapped-socket obj:node) ()
   (:documentation "Base class of server objects which wrap a socket and may be treated as nodes
 in a NETWORK-GRAPH."))
 
@@ -101,8 +101,11 @@ and ID protocols."))
 (defclass proxy (server route) ()
   (:documentation "Base class of proxy objects which are servers that can act like a route."))
 
-(defclass peer (obj:vertex) ()
-  (:documentation "Base class of peer objects which represent network peers in the NETWORK-GRAPH."))
+(defclass endpoint (obj:vertex) ()
+  (:documentation "Base class of endpoint objects containing a network address."))
+
+(defclass peer (endpoint) ()
+  (:documentation "A network-accessible peer."))
 
 (defclass network-graph (obj:graph) ()
   (:documentation "Graph representation of networks containing clients,

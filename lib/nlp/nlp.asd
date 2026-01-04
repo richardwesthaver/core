@@ -3,7 +3,7 @@
   :version "0.1.0"
   :maintainer "Richard Westhaver <ellis@rwest.io>"
   :bug-tracker "https://lab.rwest.io/comp/core/issues"
-  :depends-on (:std :rdb :cl-ppcre :parse :obj)
+  :depends-on (:std :rdb :ppcre :parse :obj)
   :components ((:file "pkg")
                (:file "data")
                (:file "tokenize")

@@ -33,12 +33,12 @@ of a string."
      (string (* (length ,s) 4))))
 
 (defun ssplit (separator s &key (omit-nulls *omit-nulls*))
-  "Split s into substring by separator (cl-ppcre takes a regex, we do not).
+  "Split s into substring by separator (ppcre takes a regex, we do not).
 
    `limit' limits the number of elements returned (i.e. the string is
    split at most `limit' - 1 times)."
-  ;; cl-ppcre:split doesn't return a null string if the separator appears at the end of s.
-  (let* ((res (cl-ppcre:split separator s)))
+  ;; ppcre:split doesn't return a null string if the separator appears at the end of s.
+  (let* ((res (ppcre:split separator s)))
     (if omit-nulls
         (remove-if (lambda (it) (sequence:emptyp it)) res)
         res)))
@@ -46,7 +46,7 @@ of a string."
 (defun collapse-whitespaces (s)
   "Ensure there is only one space character between words.
   Remove newlines."
-  (cl-ppcre:regex-replace-all "\\s+" s " "))
+  (ppcre:regex-replace-all "\\s+" s " "))
 
 (defun trim (s &key (char-bag *whitespaces*))
   "Removes all characters in `char-bag` (default: whitespaces) at the beginning and end of `s`.

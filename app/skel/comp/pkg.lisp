@@ -56,3 +56,7 @@
 (defpackage :skel/comp/box
   (:use :cl :std :skel/core/obj :skel/core/proto :box :obj/id :skel/core/int :skel/core/util)
   (:export :sk-box-file))
+
+(defpackage :skel/comp/infer
+  (:use :cl :std :skel/core/obj :srv :skel/core/proto :id :ast :skel/core/int :skel/core/util :dat :config :vc :nlp)
+  (:export :sk-infer))

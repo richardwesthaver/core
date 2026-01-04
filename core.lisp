@@ -12,7 +12,7 @@
 (define-lisp-package :core)
 
 (defreadtable :core
-  (:fuse :modern :std :shell :graph :q :math))
+  (:fuse :modern :std :shell :graph :math))
 
 (eval-when (:load-toplevel)
   (pushnew :core *features*))

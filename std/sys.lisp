@@ -51,27 +51,26 @@ and we may query the user for input.")
 
 (define-symbol-macro .i sb-ext:*inspected*)
 
-(defun sbcl-hooks ()
-  "Return the available SBCL hook symbols as an unevaluated plist."
-  '(:init sb-ext:*init-hooks*
-    :after-gc sb-ext:*after-gc-hooks*
-    :run-gc sb-impl::*run-gc-hooks*
-    :compile-component sb-c::*compile-component-hook*
-    :macroexpand *macroexpand-hook*
-    :setf-fdefinition sb-impl::*setf-fdefinition-hook*
-    :setf-compiler-macro-function sb-int:*setf-compiler-macro-function-hook*
-    :setf-macro-function sb-int:*setf-macro-function-hook*
-    :default-dstate sb-disassem:*default-dstate-hooks*
-    :debugger *debugger-hook*
-    :debugger sb-ext:*invoke-debugger-hook*
-    :executing-breakpoint sb-di::*executing-breakpoint-hooks*
-    :defstruct sb-kernel::*defstruct-hooks*
-    :define-condition sb-kernel::*define-condition-hooks*
-    #+sb-fasteval :apply #+sb-fasteval sb-interpreter::*applyhook*
-    #+sb-fasteval :self-apply #+sb-fasteval sb-interpreter::*self-applyhook*
-    :stepper sb-ext:*stepper-hook*
-    :save sb-ext:*save-hooks*
-    :exit sb-ext:*exit-hooks*))
+(defhook *sbcl-hooks*
+    ((:init sb-ext:*init-hooks*)
+     (:after-gc sb-ext:*after-gc-hooks*)
+     (:run-gc sb-impl::*run-gc-hooks*)
+     (:compile-component sb-c::*compile-component-hook*)
+     (:macroexpand *macroexpand-hook*)
+     (:setf-fdefinition sb-impl::*setf-fdefinition-hook*)
+     (:setf-compiler-macro-function sb-int:*setf-compiler-macro-function-hook*)
+     (:setf-macro-function sb-int:*setf-macro-function-hook*)
+     (:default-dstate sb-disassem:*default-dstate-hooks*)
+     (:debugger *debugger-hook*)
+     (:debugger sb-ext:*invoke-debugger-hook*)
+     (:executing-breakpoint sb-di::*executing-breakpoint-hooks*)
+     (:defstruct sb-kernel::*defstruct-hooks*)
+     (:define-condition sb-kernel::*define-condition-hooks*)
+     #+sb-fasteval :apply #+sb-fasteval sb-interpreter::*applyhook*
+     #+sb-fasteval :self-apply #+sb-fasteval sb-interpreter::*self-applyhook*
+     (:stepper sb-ext:*stepper-hook*)
+     (:save sb-ext:*save-hooks*)
+     (:exit sb-ext:*exit-hooks*)))
 
 (defparameter *default-arena-size* (* 10 1024 1024 1024)
   "The default size of freshly allocated arenas.")

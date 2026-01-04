@@ -93,8 +93,8 @@
   ;; convert "translate(-10,-20) scale(2) rotate(45) translate(5,10)" into
   ;; "(translate -10 -20) (scale 2) (rotate 45) (translate 5 10)"
   ;; (ie read-from-string'able)
-  (let* ((transform (cl-ppcre::regex-replace-all "([a-z]+)\\(" transform "(\\1 "))
-         (transform (cl-ppcre::regex-replace-all "," transform " ")))
+  (let* ((transform (ppcre::regex-replace-all "([a-z]+)\\(" transform "(\\1 "))
+         (transform (ppcre::regex-replace-all "," transform " ")))
     (read-from-string (format nil "( ~a )" transform))))
 
 (defun get-transformations (object groups)
@@ -210,7 +210,7 @@
   points without continuing the path. The idea here is we are generating
   polygons so breaks or cutouts are not acceptable."
     (let ((commands (split "(?=[a-zA-Z])" str-data))
-          (scanner-empty-p (cl-ppcre:create-scanner (concatenate 'string "[" *whitespaces* "]") :multi-line-mode t))
+          (scanner-empty-p (ppcre:create-scanner (concatenate 'string "[" *whitespaces* "]") :multi-line-mode t))
           (points nil)
         (parts nil)
         (first-point nil)
@@ -220,11 +220,11 @@
     (dolist (cmd-str commands)
       ;; this (let) splits the command from "M-113-20" to
       ;; ("M" "-113" "-20")
-      (let* ((cmd-parts (cl-ppcre:split "( |,|(?<=[A-Za-z])|(?=\-))" cmd-str))
+      (let* ((cmd-parts (ppcre:split "( |,|(?<=[A-Za-z])|(?=\-))" cmd-str))
              (cmd (aref (car cmd-parts) 0))
              ;(forget (format t "cmd: ~s~%" cmd-parts))
              (args (remove-if #'null (mapcar (lambda (a)
-                                               (if (cl-ppcre:scan scanner-empty-p a)
+                                               (if (ppcre:scan scanner-empty-p a)
                                                    nil
                                                    (read-from-string a)))
                                              (cdr cmd-parts))))

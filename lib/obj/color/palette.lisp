@@ -70,10 +70,10 @@ Note that the input file we expect called rgb.txt is no longer
 distributed with X11 by default (AFAIK). You should be able to find it
 with a quick google search."
   (let ((color-scanner ;will only take names w/o spaces
-          (cl-ppcre:create-scanner
+          (ppcre:create-scanner
            "^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+([\\s\\w]+\?)\\s*$"
            :extended-mode t))
-        (comment-scanner (cl-ppcre:create-scanner "^\\s*!"))
+        (comment-scanner (ppcre:create-scanner "^\\s*!"))
         colornames)
     (with-open-file (source input
                        :direction :input
@@ -101,9 +101,9 @@ with a quick google search."
                      (/ i 255))))
           (do ((line (read-line source nil nil) (read-line source nil nil)))
               ((not line))
-            (unless (cl-ppcre:scan-to-strings comment-scanner line)
+            (unless (ppcre:scan-to-strings comment-scanner line)
               (multiple-value-bind (match registers)
-                  (cl-ppcre:scan-to-strings color-scanner line)
+                  (ppcre:scan-to-strings color-scanner line)
                 ;; we don't ingest color names with spaces because they are
                 ;; duplicates - 'dark goldenrod' has the same value as
                 ;; 'darkgoldenrod' so just use that.

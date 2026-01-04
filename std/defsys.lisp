@@ -41,8 +41,10 @@
 (defvar *provider-table* (make-hash-table)
   "A hash-table containing PROVIDER functions.")
 
-(defvar *defining-system* nil
-  "When non-nil, indicates the name of the system currently being defined.")
+(defvar *defsys* nil
+  "When non-nil, indicates the name of the system currently being defined (at
+macro-expansion time) or the SYSTEM object itself. This variable is rebound
+inside every DEFSYS form.")
 
 (defvar *asdf-compatibility* nil
   "When non-nil, enable compatibility between STD/DEFSYS and SYSTTEM - component
@@ -53,8 +55,6 @@ ASDF:DEFSYSTEM.")
   :test 'string=
   :documentation "The default file extension used in system definitions.")
 
-(defvar *compile-module* nil "The name of the module being compiled or NIL.")
-(defvar *module-stack* nil "A list of modules to be visited.")
 (defvar *module* nil "The name of the current module or NIL.")
 (defparameter *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
@@ -252,7 +252,7 @@ objects of type COMPONENT."
         (mapc (the (function (t) (values)) #'%expand) (components c)))))
 
 ;;; Provider
-(eval-when (:compile-toplevel :load-toplevel)
+(eval-always
   (defun register-provider (name function)
     (setf (gethash name *provider-table*) function)))
 
@@ -310,10 +310,8 @@ objects of type COMPONENT."
 (defprovider :pool (root name)
   (register-module :pool root (compile-and-eval `(find-thread-pool ,name))))
 
-;; TODO 2025-09-28: 
-(defprovider :module (name &rest args)
-  (compile-and-eval 
-   `(defmodule ,name ,@args)))
+(defprovider :printer (root name)
+  (register-module :printer root (compile-and-eval `(find-printer ,name))))
 
 (defprovider :sys (root name &rest args)
   (register-module
@@ -420,11 +418,14 @@ objects of type COMPONENT."
 ;; templates?
 (defun %load-module (form &rest args)
   (case (car args)
-    ((member :alien :io :proto) form) ; unevaluated
-    (:prelude form)
+    ((member :proto) form) ; unevaluated
+    ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
+    (:io (gethash form *io-table*))
+    (:alien (funcall (gethash form std/alien:*alien-load-table*)))
+    (:prelude (use-package form))
     (:tests (load-system form))
     (:bench (load-system form))
-    (:readtable form)
+    (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
     (t
      (sb-int:doplist (k v) form
        (%load-module v k)))))
@@ -690,8 +691,8 @@ to be a system which is pushed to the session queue before BODY."
            do (setf (gethash f (system-session-file-cache *system-session*))
                     `(:read ,(sb-ext:get-time-of-day)
                       :write ,(file-write-date f)
-                      ,,@(when load `(:load ,(sb-ext:get-time-of-day)))
-                      ,,@(when compile `(:load ,(sb-ext:get-time-of-day))))))))
+                      ,,@(when load `(:load ,(the fixnum (sb-ext:get-time-of-day))))
+                      ,,@(when compile `(:load ,(the fixnum (sb-ext:get-time-of-day)))))))))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -735,7 +736,7 @@ to be a system which is pushed to the session queue before BODY."
    form)
   form)
 
-(defvar *wildcard-regexp* (cl-ppcre:create-scanner ".*"))
+(defvar *wildcard-regexp* (ppcre:create-scanner ".*"))
 
 (defun %mod-component-walk (c &optional inc exc)
   (walk-directory (path c)
@@ -743,7 +744,7 @@ to be a system which is pushed to the session queue before BODY."
     (lambda (x)
       (dolist (f (directory-files x))
         (let ((f (namestring f))) ; set name only
-          (when (and inc (cl-ppcre:scan inc f) (or (not exc) (not (cl-ppcre:scan exc f))))
+          (when (and inc (ppcre:scan inc f) (or (not exc) (not (ppcre:scan exc f))))
             (push (%parse-component-form f) (components c)))))))
   ;; fill in the path
   (mapc (lambda (x) 
@@ -831,12 +832,12 @@ the following extensions:
           (plan (or (%sys-get :plan %body) :serial))
           (class (or (%sys-get :class %body) ''system))
           (comp (%sys-get :components %body))
-          (*defining-system* name))
+          (*defsys* name))
       (std/sym:with-gensyms (sys)
         `(let ((,sys (apply 'make-instance ,class :name ,name ',%body)))
            (when-let ((fpath (or *compile-file-truename* *load-truename* ,path)))
              (setf *default-pathname-defaults* (make-pathname :directory (pathname-directory fpath))))
-           (let ((*defining-system* ,sys))
+           (let ((*defsys* ,sys))
              (setf (path ,sys) (or ,path *compile-file-truename* *load-truename*)
                    (slot-value ,sys 'plan) ,plan
                    (slot-value ,sys 'description) ,doc
@@ -901,7 +902,6 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *system-session* (make-system-session 
                           :pool (when pool (make-thread-pool (std/alien:num-cpus) :name :sys)))
         *module* nil
-        *module-stack* nil
         *module-table* (make-hash-table :test 'equal))
   (ensure-directories-exist *system-data-directory*)
   (ensure-directories-exist *system-cache-directory*)

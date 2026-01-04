@@ -66,24 +66,28 @@ relying on a designated format and generating an object in the method body."))
 BODY contains elements of the form:
 
 (OBJECT &KEY READ WRITE)"
+  ;; reset io-table entry
   (when body
-    `(progn
-       (setf (gethash ,(std/sym:keywordicate name) *io-table*) '(:read nil :write nil))
-       (defmacro ,(symbolicate 'read- name) (ty from)
-         `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
-       (defmacro ,(symbolicate 'write- name) (ty obj to)
-         `(,(intern (string (symbolicate 'write- ',name '- ty)) ,*package*) ,to ,obj))
-       ,@(loop for form in body
-               append 
-                  (let* ((type (car form))
-                         (type-name (if (consp type)
-                                        (format nil "~@[~{~A-~^~A~}~]" type)
-                                        type))
-                         (rfn (symbolicate 'read- name '- type-name))
-                         (wfn (symbolicate 'write- name '- type-name)))
-                    `(,@(when-let ((rf (cdr (assoc :read (cdr form)))))
-                          (when #1=(cdr rf)
-                                `((defun ,rfn ,(car rf) ,@(if (atom #1#) (list #1#) #1#)))))
-                      ,@(when-let ((wf (cdr (assoc :write (cdr form)))))
-                          (when #2=(cdr wf)
-                                `((defun ,wfn ,(car wf) ,@(if (atom #2#) (list #2#) #2#)))))))))))
+    (with-gensyms (readers writers)
+      `(progn
+         (defmacro ,(symbolicate 'read- name) (ty from)
+           `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
+         (defmacro ,(symbolicate 'write- name) (ty obj to)
+           `(,(intern (string (symbolicate 'write- ',name '- ty)) ,*package*) ,to ,obj))
+         (let* ((,readers)
+                (,writers))
+           ,@(loop for form in body
+                   append 
+                      (let* ((type (car form))
+                             (type-name (if (consp type)
+                                            (format nil "~@[~{~A-~^~A~}~]" type)
+                                            type))
+                             (rfn (symbolicate 'read- name '- type-name))
+                             (wfn (symbolicate 'write- name '- type-name)))
+                        `(,@(when-let ((rf (cdr (assoc :read (cdr form)))))
+                              (when #1=(cdr rf)
+                                    `((push (defun ,rfn ,(car rf) ,@(if (atom #1#) (list #1#) #1#)) ,readers))))
+                          ,@(when-let ((wf (cdr (assoc :write (cdr form)))))
+                              (when #2=(cdr wf)
+                                    `((push (defun ,wfn ,(car wf) ,@(if (atom #2#) (list #2#) #2#)) ,writers)))))))
+           (setf (gethash ,name *io-table*) (list :read ,readers :write ,writers)))))))

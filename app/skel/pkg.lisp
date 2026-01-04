@@ -91,11 +91,3 @@
   (:nicknames :sk-net)
   (:use :cl :std :net/srv/udp :skel/core/log :srv :log :skel/srv)
   (:use-reexport :skel/net/client :skel/net/server))
-
-(defpackage :skel/infer
-  (:use :cl :std :db :skel/core :skel/srv :dat :nlp :id :config :vc :srv)
-  (:export
-   #:sk-inference-engine
-   #:sk-inference-service
-   #:sk-inferred-project))
-        

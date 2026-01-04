@@ -7,8 +7,7 @@
                (:file "parser")
                (:file "engine")
                (:file "sql")
-               (:file "dql")
-               (:file "readtable"))
+               (:file "dql"))
   :in-order-to ((test-op (test-op "q/tests"))))
 
 (defsystem :q/tests

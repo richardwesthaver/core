@@ -13,8 +13,9 @@
 (in-package :skel/comp/asd)
 
 (defclass sk-asdf-system (sk-mod asdf:system)
-  ;; these slots are inferred in ASDF:SYSTEM. Since we are primarily concerned
-  ;; with generating ASDF:SYSTEM definitions rather than parsing them we restore them here.
+  ;; these slots are inferred in ASDF:SYSTEM. Since we are also concerned with
+  ;; generating ASDF:SYSTEM definitions rather than just parsing them we
+  ;; restore them here.
   ((serial :initform nil :type boolean :accessor sk-asdf-system-serial)
    (perform :initform nil :type list :accessor sk-asdf-system-perform)))
 
@@ -108,7 +109,7 @@
                 s)
         (terpri s)))))
 
-;; (sk-write-file (find-sk-system :obj) :path "test")
+;; (sk-write-file (find-sk-asdf-system :obj) :path "test")
 ;; (describe (parse-sk-asdf-system "skel" "/home/ellis/comp/core/lib/"))
 
 (defmethod sk-read-file ((self sk-asdf-system) path)

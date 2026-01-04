@@ -91,7 +91,7 @@ Elements can be any types"
      (when (oddp q-count) (warn 'simple-warning :format-control "odd number of #\" in a line (~A)"
                                                 :format-arguments (list q-count)))
      (if (zerop q-count)
-         (cl-ppcre:split delimiter str) ;(cl-ppcre:split *csv-separator* str)
+         (ppcre:split delimiter str) ;(ppcre:split *csv-separator* str)
          (macrolet ((push-f (fld flds) `(push (coerce (reverse ,fld) 'string) ,flds)))
            (loop with state = :at-first ;; :at-first | :data-nq | :data-q | :q-in-nq | q-in-q
                  with field with fields

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rdb/cli)
-(rocksdb:load-rocksdb t)
+;; (rocksdb:load-rocksdb t)
 
 (defopt rdb-config-opt (init-rdbrc (cli/clap/obj::parse-file-opt *arg*)))
 

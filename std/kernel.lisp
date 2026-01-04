@@ -84,7 +84,7 @@ restarts is provided. *KERNEL* is returned."
          (sb-mop:set-funcallable-instance-function self (compile nil (lambda ,(cadr k) ,@(cddr k))))))))
 
 (defkernel hook () ()
-  (:documentation "Hooks are Kernel objects which call an instance-specific
+  (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
 (defkernel value-hook (hook) 
@@ -165,3 +165,30 @@ functions themselves.")
          (mapcar (lambda (x) (add-hook ,val x)) '(,@forms))
          ,val)
        ,@(or documentation))))
+
+;; TODO 2026-01-03: a few more things we could do here.. possibly redefine the
+;; function slot to dispatch to the newly bound special vars instead of the
+;; class instance. May need to also have a method for syncing the instance
+;; from special vars.. Do we need any of this though? WM defines all hooks as
+;; special vars but does it need to?
+(defmacro compile-key-hook (symbol)
+  "Compile the hooks designated by a SYMBOL which should be a special variable
+bound to a KEY-HOOK instance. This will simply generate a new special variable
+for each key in the HOOK-VALUE table."
+  (let ((val (hook-value (symbol-value symbol))))
+    (when val
+      `(progn
+         ,@(let ((ret))
+             (maphash 
+              (lambda (k v)
+                (push
+                 `(defvar ,(intern (format nil "*~A-~A-HOOK*"
+                                           (concatenate 'string
+                                            (loop for c across (string-left-trim "*" (string symbol))
+                                                  while (and c (not (char= c #\-)))
+                                                  collect c))
+                                           k))
+                    ,v)
+                 ret))
+              val)
+             (nreverse ret))))))

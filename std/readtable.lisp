@@ -73,7 +73,7 @@ sharps."
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun segment-reader (stream ch n)
     "Recursively read a CH delimited sequence of strings from STREAM. N is a
-recursion count. Used internally by the CL-PPCRE reader (#~)."
+recursion count. Used internally by the PPCRE reader (#~)."
     (if (> n 0)
         (let ((chars))
           (do ((curr (read-char stream)
@@ -85,13 +85,13 @@ recursion count. Used internally by the CL-PPCRE reader (#~)."
 
 (defmacro! scan-mode-ppcre-lambda-form (o!args)
   ``(lambda (,',g!str)
-      (cl-ppcre:scan
+      (ppcre:scan
        ,(car ,g!args)
        ,',g!str)))
 
 (defmacro! match-mode-ppcre-lambda-form (o!args o!mods)
   ``(lambda (,',g!str)
-      (cl-ppcre:scan-to-strings
+      (ppcre:scan-to-strings
        ,(if (zerop (length ,g!mods))
             (car ,g!args)
             (format nil "(?~a)~a" ,g!mods (car ,g!args)))
@@ -99,7 +99,7 @@ recursion count. Used internally by the CL-PPCRE reader (#~)."
 
 (defmacro! subst-mode-ppcre-lambda-form (o!args)
   ``(lambda (,',g!str)
-      (cl-ppcre:regex-replace-all
+      (ppcre:regex-replace-all
        ,(car ,g!args)
        ,',g!str
        ,(cadr ,g!args))))

@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :cli/ansi)
 
+;; (define-formatter :ansi)
+
 ;;; Basic terminal control functions based on 7bit escape sequences
 ;;; according to ANSI X3.64 / ECMA 48 / ISO/IEC 6429 / VT10X / XTerm
 

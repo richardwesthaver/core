@@ -89,7 +89,7 @@
     (let ((line (read-line input)))
       (multiple-value-bind (start _ reg-start reg-end)
           ;; scan for headline
-          (cl-ppcre:scan org-headline-rx line)
+          (ppcre:scan org-headline-rx line)
         (declare (ignore _))
         (when start
           (loop for rs across reg-start
@@ -104,7 +104,7 @@
                                (org-priority res) prio
                                (org-title res) title))))))
       ;; scan for tags, modifies title slot
-      (let ((tag-str (cl-ppcre:scan-to-strings org-tag-rx (org-title res))))
+      (let ((tag-str (ppcre:scan-to-strings org-tag-rx (org-title res))))
         (when tag-str
           (setf (org-tags res) (apply #'vector (mapcar (lambda (x) (org-create :tag :name x)) (org-tag-split tag-str)))
                 (org-title res) (string-right-trim

@@ -3,24 +3,37 @@
 ;;; Code:
 (in-package :std/print)
 
+;;; Variables
+(defvar *print-slot-indent* 0
+  "A variable indicating the default level of indentation to print slots with the DESCRIBE-SLOT function.
+
+Default value: 0")
+
+(defvar *print-color* nil
+  "A variable indicating whether the current environment supports color
+output. This is usually inferred from the current terminal capabilities.
+
+Default value: NIL")
+
+;;; Utils
 (defmacro deffmt (name control-string &optional doc)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (setf (fdefinition ',name) (formatter ,control-string))
      ,@(when doc `((setf (documentation ',name 'function) ,doc)))
      ',name))
 
+(deffmt fmt-row "~&| ~@{~A~^ | ~} |~%" "Format a single row of data delimited by '|'.")
+(deffmt fmt-column "~&~@{~A~%~}" "Format a single column of data delimited by a newline.")
+
 (defun iprintln (x &optional (n 2) stream)
   "Print object X with indentation N to stream followed by a new line."
   (println (format nil "~A~A" (make-string n :initial-element #\Space) x) stream))
 
-(deffmt fmt-row "~&| ~@{~A~^ | ~} |~%" "Format a single row of data delimited by '|'.")
-(deffmt fmt-column "~&~@{~A~%~}" "Format a single column of data delimited by a newline.")
-
-(defun printer-status ()
+(defun printer-status (&optional (stream t))
   "Return the current printer status."
   (macrolet ((fmt (var) `(list ',var ,var)))
     (pprint-tabular
-     t
+     stream
      (list
       (fmt *print-array*)
       (fmt *print-base*)
@@ -36,7 +49,10 @@
       (fmt *print-pretty*)
       (fmt *print-radix*)
       (fmt *print-readably*)
-      (fmt *print-right-margin*)))))
+      (fmt *print-right-margin*)
+      (fmt *print-slot-indent*)
+      (fmt *print-color*))
+     nil)))
 
 (defun format-sxhash (code &optional stream)
   "Turn the fixnum value CODE into a human-friendly string. CODE should
@@ -51,7 +67,7 @@ be produced by `sxhash'."
       (lambda (x) (format nil "~{~(~2,'0x~)~}" x))
       (group r 2)))))
 
-;;;_. Trees
+;;; Trees
 
 ;; from https://gist.github.com/WetHat/9682b8f70f0241c37cd5d732784d1577
 
@@ -181,9 +197,7 @@ be produced by `sxhash'."
                      (float (/ number (ash 1 size)))
                      unit))))
 
-;;;_. MOP
-(defvar *print-slot-indent* 0)
-
+;;; MOP
 (defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
   "Describe slot NAME with associated VALUE."
   (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (prin1-to-line value)))
@@ -236,7 +250,7 @@ be produced by `sxhash'."
       (describe-slot (string k) v 30 stream))
     (force-output stream)))
 
-;;;_. Drawing
+;;; Bitmaps
 
 ;; These bits of lovely code are sourced from here:
 ;; https://github.com/whalliburton/academy/blob/87a1a13ffbcd60d8553e42e647c59486c761e8cf/drawing.lisp
@@ -333,7 +347,8 @@ be produced by `sxhash'."
                    (aref bitmap y (1- width)) t)))
   (values))
 
-;;;_ , Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
+;;; Draw
+;; Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
 (defun draw-circle (x-center y-center radius &optional (bitmap *bitmap*))
   (labels ((pixel (x y) (set-pixel (+ x-center x) (+ y-center y) bitmap))
            (draw-points (x y)
@@ -538,7 +553,7 @@ be produced by `sxhash'."
       (princ "└") (print-times columns "─") (princ "┘")
       (fresh-line))))
 
-;;;_. Box
+;;; Box
 ;; TODO 2025-04-04: 
 ;; APL Box Formatting (Dyalog)
 (sb-int:defconstant-eqx +lead-axis-markers+ "⌽↓⍒" #'string=)
@@ -595,7 +610,7 @@ STYLE indicates the level of decoration to apply to the output:
     #  object
     +  t")
 
-;;;_. Mumble
+;;; Mumble
 (defvar *mumble-timestamp* t)
 
 (deffmt fmt-time "~D:~2,'0D:~2,'0D.~3,'0D")
@@ -621,8 +636,9 @@ STYLE indicates the level of decoration to apply to the output:
     (force-output stream)
     (values)))
 
-;;;_. Print Tables
-
+;;; Printer Table
+(defvar *printer-table* (make-hash-table))
+(defvar *default-printer* sb-pretty::*standard-pprint-dispatch-table*)
 ;; Common Lisp provides the ability to bind and modify the
 ;; *PRINT-PPRINT-DISPATCH* variable to achieve dynamic pretty printing based
 ;; on the mapping from predicates to print functions defined in a
@@ -635,11 +651,42 @@ STYLE indicates the level of decoration to apply to the output:
 ;; NOTE: PPD = Pretty Print Dispatch
 ;; (inspect *print-pprint-dispatch*)
 ;; (set-pprint-dispatch t nil)
-(defmacro defprint (name type args &body body)
+(std/macs:eval-always
+  (defun find-printer (name) (gethash name *printer-table*))
+  (defun (setf find-printer) (new name) (setf (gethash name *printer-table*) new))
+  (defun unknown-printer (name)
+    (error 'std/condition:invalid-argument :item name :reason "Unknown printer")))
+
+(defmacro defprint ((name type &optional (priority 0) (table *default-printer*)) args &body body)
   "Define a (pretty) printer function which interprets the forms in OPTS for
   insertion into a specified PPRINT-DISPATCH-TABLE via SET-PPRINT-DISPATCH."
   `(prog1 (defun ,name ,args ,@body)
-     (set-pprint-dispatch ,type #',name)))
+     (set-pprint-dispatch ,type #',name ,priority ,table)))
 
-#+nil
-(let ((ppdt (copy-pprint-dispatch nil))))
+(defmacro define-printer (name &body body)
+  "Define a new PPRINT-DISPATCH-TABLE and add it to the global *PRINTER-TABLE* with a key
+  of NAME. Each element of BODY is fed to SET-PPRINT-DISPATCH."
+  (with-gensyms (printer)
+    `(let ((,printer (copy-pprint-dispatch)))
+       ,@(mapcar (lambda (x) `((set-pprint-dispatch ,@x))) body)
+       (setf (find-printer ,name) ,printer))))
+
+(defmacro with-printer (name &body body)
+  (let ((%previous-print-table *print-pprint-dispatch*))
+    `(progn
+       (setq *print-pprint-dispatch* (find-printer ,name))
+       ,@body
+       (unwind-protect (progn ,@body)
+         (setq *print-pprint-dispatch* ,%previous-print-table)))))
+
+(defun use-printer (name)
+  (setq *print-pprint-dispatch* 
+        (or (if (typep name 'sb-pretty::pprint-dispatch-table)
+                name
+                (find-printer name))
+            (unknown-printer name))))
+
+(defmacro in-printer (name)
+  `(setf *print-pprint-dispatch* ,(or (find-printer name) (unknown-printer name))))
+
+;;; Annotations..?

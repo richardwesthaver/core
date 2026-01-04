@@ -40,20 +40,20 @@
 
 (defclass osc-message (osc-data)
   ((command
-    :reader command
+    :reader osc-command
     :initarg :command)
    (args
-    :reader args
+    :reader osc-args
     :initarg :args
     :initform nil)))
 
-(defclass bundle (osc-data)
+(defclass osc-bundle (osc-data)
   ((timetag
-    :reader timetag
+    :reader osc-timetag
     :initarg :timetag
     :initform :now)
    (elements
-    :reader elements
+    :reader osc-elements
     :initarg :elements
     :initform nil)))
 
@@ -69,114 +69,35 @@
 (defun osc-message (command &rest args)
   (make-osc-message command args))
 
-(defun make-bundle (timetag elements)
+(defun make-osc-bundle (timetag elements)
   (unless (listp elements)
     (setf elements (list elements)))
-  (make-instance 'bundle
+  (make-instance 'osc-bundle
                  :timetag timetag
                  :elements elements))
 
-(defun bundle (timetag &rest elements)
-  (make-bundle timetag elements))
+(defun osc-bundle (timetag &rest elements)
+  (make-osc-bundle timetag elements))
 
 (defgeneric format-osc-data (data &key stream width))
 
 (defmethod format-osc-data ((message osc-message) &key (stream t)
                                                        (width 80))
-  (let ((args-string (format nil "~{~a~^ ~}" (args message))))
+  (let ((args-string (format nil "~{~a~^ ~}" (osc-args message))))
     (when (> (length args-string) width)
       (setf args-string
             (concatenate 'string
                          (subseq args-string 0 width)
                          "...")))
     (format stream "~a ~a~%"
-            (command message)
+            (osc-command message)
             args-string)))
 
-(defmethod format-osc-data ((bundle bundle) &key (stream t) (width 80))
-  (format stream "~&[ ~a~%" (timetag bundle))
-  (dolist (element (elements bundle))
+(defmethod format-osc-data ((bundle osc-bundle) &key (stream t) (width 80))
+  (format stream "~&[ ~a~%" (osc-timetag bundle))
+  (dolist (element (osc-elements bundle))
     (format-osc-data element :stream stream :width width))
   (format stream "~&]~%"))
-
-;;; Time
-
-(defconstant +unix-epoch+ (encode-universal-time 0 0 0 1 1 1970 0))
-(defconstant +2^32+ (expt 2 32))
-(defconstant +2^32/million+ (/ +2^32+ (expt 10 6)))
-(defconstant +usecs+ (expt 10 6))
-
-(deftype timetag () '(unsigned-byte 64))
-
-(defun timetagp (object)
-  (typep object 'timetag))
-
-(defun unix-secs+usecs->timetag (secs usecs)
-  (let ((sec-offset (+ secs +unix-epoch+))) ; Seconds from 1900.
-    (setf sec-offset (ash sec-offset 32))   ; Make seconds the top 32
-                                            ; bits.
-    (let ((usec-offset
-           (round (* usecs +2^32/MILLION+)))) ; Fractional part.
-      (the timetag (+ sec-offset usec-offset)))))
-
-(defun get-current-timetag ()
-  "Returns a fixed-point 64 bit NTP-style timetag, where the top 32
-bits represent seconds since midnight 19000101, and the bottom 32 bits
-represent the fractional parts of a second."
-  (multiple-value-bind (secs usecs)
-      (sb-ext:get-time-of-day)
-    (the timetag (unix-secs+usecs->timetag secs usecs))))
-
-(defun timetag+ (original seconds-offset)
-  (declare (type timetag original))
-  (let ((offset (round (* seconds-offset +2^32+))))
-    (the timetag (+ original offset))))
-
-
-;;;=====================================================================
-;;; Functions for using double-float unix timestamps.
-;;;=====================================================================
-
-(defun get-unix-time ()
-  "Returns a a double-float representing real-time now in seconds,
-with microsecond precision, relative to 19700101."
-  #+sbcl (multiple-value-bind (secs usecs)
-             (sb-ext:get-time-of-day)
-           (the double-float (+ secs (microseconds->subsecs usecs))))
-  #-sbcl (error "Can't encode timetags using this implementation."))
-
-(defun unix-time->timetag (unix-time)
-  (multiple-value-bind (secs subsecs)
-      (floor unix-time)
-    (the timetag
-         (unix-secs+usecs->timetag secs
-                                   (subsecs->microseconds subsecs)))))
-
-(defun timetag->unix-time (timetag)
-  (if (= timetag 1)
-      1                                 ; immediate timetag
-      (let* ((secs (ash timetag -32))
-             (subsec-int32 (- timetag (ash secs 32))))
-        (the double-float (+ (- secs +unix-epoch+)
-                             (int32->subsecs subsec-int32))))))
-
-(defun microseconds->subsecs (usecs)
-  (declare (type (integer 0 1000000) usecs))
-  (coerce (/ usecs  +usecs+) 'double-float))
-
-(defun subsecs->microseconds (subsecs)
-  (declare (type (float 0.0 1.0) subsecs))
-  (round (* subsecs +usecs+)))
-
-(defun int32->subsecs (int32)
-  "This maps a 32 bit integer, representing subsecond time, to a
-double float in the range 0-1."
-  (declare (type (unsigned-byte 32) int32))
-  (coerce (/ int32 +2^32+) 'double-float))
-
-(defun print-as-double (time)
-  (format t "~%~F" (coerce time 'double-float))
-  time)
 
 (defgeneric encode-osc-data (data))
 
@@ -188,7 +109,7 @@ double float in the range 0-1."
                  (encode-typetags args)
                  (encode-args args))))
 
-(defmethod encode-osc-data ((data bundle))
+(defmethod encode-osc-data ((data osc-bundle))
   "Encode an osc bundle. A bundle contains a timetag (symbol or 64bit
   int) and a list of message or nested bundle elements."
   (with-slots (timetag elements) data
@@ -204,12 +125,11 @@ double float in the range 0-1."
   (let ((bytes (encode-osc-data data)))
     (cat (encode-int32 (length bytes)) bytes)))
 
-(defmethod encode-bundle-elt ((data bundle))
+(defmethod encode-bundle-elt ((data osc-bundle))
   (let ((bytes (encode-osc-data data)))
     (cat (encode-int32 (length bytes)) bytes)))
 
 ;; Auxilary functions
-
 (defun encode-address (address)
   (cat (map 'vector #'char-code address)
        (string-padding address)))
@@ -257,13 +177,7 @@ double float in the range 0-1."
           (t (enc encode-blob))))
       lump)))
 
-
-;;;;;; ;    ;;    ;     ; ;     ; ; ;         ;
-;;
-;;    decoding OSC messages
-;;
-;;; ;;    ;;     ; ;     ;      ;      ; ;
-
+;;; Decode
 (defun bundle-p (buffer &optional (start 0))
   "A bundle begins with '#bundle' (8 bytes). The start argument should
 index the beginning of a bundle in the buffer."
@@ -305,7 +219,7 @@ pair in the buffer."
           (split-sequence-by-n buffer n)
           (length buffer)))
 
-(defun decode-bundle (buffer &key (start 0) end)
+(defun decode-osc-bundle (buffer &key (start 0) end)
   "Decodes an osc bundle/message into a bundle/message object. Bundles
   comprise an osc-timetag and a list of elements, which may be
   messages or bundles recursively. An optional end argument can be
@@ -329,21 +243,21 @@ pair in the buffer."
               do (incf start 4)            ; length bytes
               when *log-level*
               do (format t "~&Bundle element length: ~a~%" element-length)
-              collect (decode-bundle buffer
+              collect (decode-osc-bundle buffer
                                      :start start
                                      :end (+ start element-length))
               into elements
               do (incf start (+ element-length))
               finally (return
-                        (values (make-bundle timetag elements)
+                        (values (make-osc-bundle timetag elements)
                                 timetag))))
       ;; Message
       (let ((message
-             (decode-message
+             (decode-osc-message
               (subseq buffer start (+ start end)))))
         (make-osc-message (car message) (cdr message)))))
 
-(defun decode-message (message)
+(defun decode-osc-message (message)
   "reduces an osc message to an (address . data) pair. .."
   (declare (type (vector *) message))
   (let ((x (position (char-code #\,) message)))
@@ -404,24 +318,15 @@ pair in the buffer."
            tags)
       (nreverse result))))
 
-
-;;;;;; ;; ;; ; ; ;  ;  ; ;;     ;
-;;
-;; timetags
-;;
+;;; timetags
 ;; - timetags can be encoded using a value, or the :now and :time
 ;;   keywords. the keywords enable either a tag indicating 'immediate'
 ;;   execution, or a tag containing the current time (which will most
 ;;   likely be in the past of any receiver) to be created.
-;;
 ;; - see this c.l.l thread to sync universal-time and internal-time
 ;;   http://groups.google.com/group/comp.lang.lisp/browse_thread/thread/c207fef63a78d720/adc7442d2e4de5a0?lnk=gst&q=internal-real-time-sync&rnum=1#adc7442d2e4de5a0
-
 ;; - In SBCL, using sb-ext:get-time-of-day to get accurate seconds and
 ;;   microseconds from OS.
-;;
-;;;; ;; ; ;
-
 (defun encode-timetag (timetag)
   "From the spec: `Time tags are represented by a 64 bit fixed point
 number. The first 32 bits specify the number of seconds since midnight
@@ -449,15 +354,9 @@ with the current time use (encode-timetag :time)."
       1 ; A timetag of 1 is defined as immediately.
       (decode-uint64 timetag)))
 
-;;;;; ; ; ;;    ;; ; ;
-;;
-;; dataformat en- de- cetera.
-;;
-;;; ;; ;   ;  ;
-
+;;; dataformat
 ;; floats are encoded using implementation specific 'internals' which is not
 ;; particulaly portable, but 'works for now'.
-
 (defun enc-float32 (f)
   "encode an ieee754 float as a 4 byte vector. currently sbcl/cmucl specific"
   (encode-int32 (sb-kernel:single-float-bits f)))
@@ -523,7 +422,6 @@ with the current time use (encode-timetag :time)."
         i)))
 
 ;; osc-strings are unsigned bytes, padded to a 4 byte boundary
-
 (defun encode-string (string)
   "encodes a string as a vector of character-codes, padded to 4 byte boundary"
   (cat (map 'vector #'char-code string)
@@ -535,7 +433,6 @@ with the current time use (encode-timetag :time)."
 
 ;; blobs are binary data, consisting of a length (int32) and bytes which are
 ;; osc-padded to a 4 byte boundary.
-
 (defun encode-blob (blob)
   "encodes a blob from a given vector"
   (let ((bl (length blob)))
@@ -552,48 +449,43 @@ with the current time use (encode-timetag :time)."
   (make-hash-table :test 'equalp))
 
 
-;;; ;; ;;;;;;  ;        ;  ;  ;
-;;
-;; register/delete and dispatch. ..
-;;
-;;;;  ; ; ;   ;;
-
-(defun dp-register (tree address function)
+;;; Dispatch
+(defun osc-register (tree address function)
   "Registers a function to respond to incoming osc messages. Since
    only one function should be associated with an address, any
    previous registration will be overwritten."
   (setf (gethash address tree)
         function))
 
-(defun dp-remove (tree address)
+(defun osc-remove (tree address)
   "Removes the function associated with the given address."
   (remhash address tree))
 
-(defun dp-match (tree pattern)
+(defun osc-match (tree pattern)
   "Returns a list of functions which are registered for dispatch for a
 given address pattern."
   (list (gethash pattern tree)))
 
-(defgeneric dispatch (tree data device address port &optional timetag
+(defgeneric osc-dispatch (tree data device address port &optional timetag
                                                       parent-bundle))
 
-(defmethod dispatch (tree (data osc-message) device address port &optional
+(defmethod osc-dispatch (tree (data osc-message) device address port &optional
                                                                timetag
                                                                parent-bundle)
   "Calls the function(s) matching the address(pattern) in the osc
 message passing the message object, the recieving device, and
 optionally in the case where a message is part of a bundle, the
 timetag of the bundle and the enclosing bundle."
-  (let ((pattern (command data)))
-    (dolist (x (dp-match tree pattern))
+  (let ((pattern (osc-command data)))
+    (dolist (x (osc-match tree pattern))
       (unless (eq x NIL)
-        (funcall x (command data) (args data) device address port
+        (funcall x (osc-command data) (osc-args data) device address port
                  timetag parent-bundle)))))
 
-(defmethod dispatch (tree (data bundle) device address port &optional
+(defmethod osc-dispatch (tree (data osc-bundle) device address port &optional
                                                               timetag
                                                               parent-bundle)
   "Dispatches each bundle element in sequence."
   (declare (ignore timetag parent-bundle))
-  (dolist (element (elements data))
-    (dispatch tree element device address port (timetag data) data)))
+  (dolist (element (osc-elements data))
+    (dispatch tree element device address port (osc-timetag data) data)))
