@@ -90,7 +90,8 @@
    :with-dlist :within-dlist
    :topological-sort :match-lambda-lists
    :toposort
-   :reconsify :deconsify))
+   :reconsify :deconsify
+   :with-stack-list :with-stack-list*))
 
 (defpkg :std/prim
   (:use :cl :std/list)

@@ -716,3 +716,26 @@ be used with SETF."))
                (progn
                  (if right (setf (cdr (last left)) right)) 
                  (return left)))))
+
+;;; From CLX
+;; WITH-STACK-LIST is used by XLIB:WITH-STATE as a memory saving feature.  If
+;; your lisp doesn't have stack-lists, and you're worried about consing
+;; garbage, you may want to re-write this to allocate and initialize lists
+;; from a resource.
+(defmacro with-stack-list ((var &rest elements) &body body)
+  "Equivalent to (LET ((var (MAPCAR #'EVAL '(exp1 ... expN)))) body)
+except that the list produced by MAPCAR resides on the stack and therefore
+DISAPPEARS when WITH-STACK-LIST is exited."
+  `(let ((,var (list ,@elements)))
+     (declare (type cons ,var)
+              (dynamic-extent ,var))
+     ,@body))
+
+(defmacro with-stack-list* ((var &rest elements) &body body)
+"Equivalent to (LET ((var (APPLY #'LIST* (MAPCAR #'EVAL '(exp1 ... expN)))))
+body) except that the list produced by MAPCAR resides on the stack and
+therefore DISAPPEARS when WITH-STACK-LIST is exited."
+  `(let ((,var (list* ,@elements)))
+     (declare (type cons ,var)
+              (dynamic-extent ,var))
+     ,@body))

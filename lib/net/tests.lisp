@@ -32,12 +32,12 @@
   (isequalp (net/codec/osc::decode-string #(110 117 108 108 32 112 97 100 100 101 100 0))
             "null padded")
   (isequalp (net/codec/osc::encode-blob #(1 1 1 1)) #(0 0 0 4 1 1 1 1))
-  (isequalp (net/codec/osc::encode-timetag :now) #(0 0 0 0 0 0 0 1))
+  (isequalp (net/codec/osc::encode-osc-timetag :now) #(0 0 0 0 0 0 0 1))
   (isequalp (net/codec/osc::encode-int64 16843009) #(0 0 0 0 1 1 1 1))
   (isequalp (net/codec/osc::enc-float32 1.00001) #(63 128 0 84))
   (isequalp (net/codec/osc::decode-float64 (octets-to-integer (octets 64 55 25 153 153 153 153 154))) 23.1d0)
   (isequalp '("/test/int" -1)
-            (net/codec/osc:decode-message 
+            (net/codec/osc:decode-osc-message 
              #(47 116 101 115 116 47 105 110 116 0 0 0 44 105 0 0 255 255 255 255))))
 
 (deftest http ()
