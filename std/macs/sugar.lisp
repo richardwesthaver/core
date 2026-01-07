@@ -69,7 +69,7 @@ by `&once' are passed to a `once-only' call which surrounds `body'."
            ,@body)))))
 
 ;;; Constants
-(defun %reevaluate-constant (name value test)
+(defun %recall-constant (name value test)
   (if (not (boundp name))
       value
       (let ((old (symbol-value name))
@@ -102,9 +102,12 @@ Signals an error if NAME is already a bound non-constant variable.
 
 Signals an error if NAME is already a constant variable whose value is not
 equal under TEST to result of evaluating INITIAL-VALUE."
-  `(progn
-     (defconstant ,name (%reevaluate-constant ',name ,initial-value ,test)
-       ,@(when documentation `(,documentation)))))
+  `(defconstant ,name (%recall-constant ',name ,initial-value ,test)
+     ,@(when documentation `(,documentation))))
+
+;; from CLX
+(defmacro define-constant* (name value &optional doc)
+  `(define-constant ,name ,value :test #'equalp :documentation ,doc))
 
 ;;; Vars
 ;; from HUNCHENTOOT

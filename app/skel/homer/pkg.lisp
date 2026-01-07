@@ -40,5 +40,6 @@
   (:export :*homer-cli*))
 
 (pkg:defpkg :skel/homer
+  (:nicknames :homer)
   (:use :cl :std :log :cli)
   (:use-reexport :skel/homer/core :skel/homer/cli))

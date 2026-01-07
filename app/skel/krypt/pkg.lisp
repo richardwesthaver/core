@@ -20,6 +20,7 @@
 ;;; Code:
 
 (defpackage :skel/krypt
+  (:nicknames :krypt)
   (:use :cl :std :cry/crc64 :id :ast :config :secret :cli :clap :cry/ssh :cry/gpg)
   (:export :krypt-error :*user-kryptrc* :krypt-config 
    :load-kryptrc :*krypt-directory*

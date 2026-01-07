@@ -202,7 +202,6 @@ data size SIZE."
 (defgeneric write-row (row png &key start end))
 (defgeneric finish-png (png))
 (defgeneric rows-left (png))
-(defgeneric reset-streamed-png (png))
 
 (defgeneric write-pixel (pixel png))
 (defgeneric pixels-left-in-row (png))
@@ -359,13 +358,13 @@ data size SIZE."
         (io/flate:compress-octet-vector row compressor :start start :end end)
         (incf (rows-written png))))))
 
-(defmethod reset-streamed-png ((png streamed-png))
+(defmethod reset ((png streamed-png) &key)
   (setf (rows-written png) 0)
   (slot-makunbound png 'compressor)
   (slot-makunbound png 'output-stream)
   (fill (row-data png) 0))
 
-(defmethod reset-streamed-png ((png pixel-streamed-png))
+(defmethod reset ((png pixel-streamed-png) &key)
   (setf (current-offset png) 0)
   (call-next-method))
 
@@ -376,7 +375,7 @@ data size SIZE."
            :needed (height png)))
   (io/flate:finish-compression (compressor png))
   (write-iend png (output-stream png))
-  (reset-streamed-png png)
+  (reset png)
   png)
 
 (defmethod finish-png ((png pixel-streamed-png))

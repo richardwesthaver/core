@@ -574,6 +574,7 @@
    :if-let*
    :if*
    :define-constant
+   :define-constant*
    :defvar-unbound
    :def!
    :defonce
