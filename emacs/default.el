@@ -394,6 +394,7 @@ function: '(ql:quickload :clouseau)'."
   (make-simple-schema (as make-instance))
   (make-palette (as defpackage))
   (define-package (as defpackage))
+  (defhook (as defmacro))
   (walk-directory 1)
   (using-gensyms (as with-gensyms))
   (binding-gensyms (as with-gensyms))
