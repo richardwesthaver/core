@@ -1912,21 +1912,11 @@ You can see examples in +ISO-8601-FORMAT+, +ASCTIME-FORMAT+, and +RFC-1123-FORMA
   (set-dispatch-macro-character #\# #\@ '%read-universal-time)
   (values))
 
-(defvar *debug-timestamp* nil)
-
 (defmethod print-object ((object timestamp) stream)
   "Print the TIMESTAMP object using the standard reader notation"
-  (cond
-    (*debug-timestamp*
-       (print-unreadable-object (object stream :type t)
-         (format stream "~d/~d/~d"
-                 (day-of object)
-                 (sec-of object)
-                 (nsec-of object))))
-    (t
-     (when *print-escape*
-       (write-char #\@ stream))
-     (format-rfc3339-timestring stream object))))
+  (when *print-escape*
+    (write-char #\@ stream))
+  (format-rfc3339-timestring stream object))
 
 (defmethod print-object ((object timezone) stream)
   "Print the TIMEZONE object in a reader-rejected manner."

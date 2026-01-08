@@ -5,12 +5,14 @@
 ;;; Code:
 (in-package :obj/time)
 
-(defun get-unix-time ()
+(defun unix-time ()
   "Returns a a double-float representing real-time now in seconds,
 with microsecond precision, relative to 19700101."
   (multiple-value-bind (secs usecs)
       (sb-ext:get-time-of-day)
     (the double-float (+ secs (microseconds-to-subsecs usecs)))))
+
+(defun real-time () (floor (/ (get-internal-real-time) internal-time-units-per-second)))
 
 ;;; Timetags
 ;; from the OSC spec

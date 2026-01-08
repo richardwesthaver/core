@@ -396,6 +396,8 @@
   (:use :cl :std)
   (:export
    :iso-time
+   :unix-time
+   :real-time
    :rfc-1123-date
    :timestamp
    :date
