@@ -29,10 +29,6 @@
 (defclass connection () ()
   (:documentation "Base class of connection objects between network nodes."))
 
-(defgeneric open-connection (self &key))
-(defgeneric open-connection-with (conn self &key))
-(defgeneric close-connection (self))
-
 (defclass route (obj:edgex) ()
   (:documentation "Base class of route objects which may be spawned by a router. Compatible with
 the EDGE and ID protocols."))
@@ -123,3 +119,6 @@ servers, and peers as vertices and connections as edges."))
 
 (defgeneric make-server-response (self res &rest args &key &allow-other-keys)
   (:method ((self server) res &key) (nyi!)))
+
+(defgeneric send-request (self req &key))
+(defgeneric receive-response (self req &key))

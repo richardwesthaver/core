@@ -137,5 +137,5 @@
 (defun libpod-request-json (client path &optional (method :get) timeout)
   (dat/json:json-decode (libpod-request client path method timeout)))
 
-(defmethod net/req::send-request ((self libpod-client) req &rest args)
+(defmethod send-request ((self libpod-client) req &rest args)
   (apply (kernel self) self req args))

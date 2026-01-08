@@ -208,7 +208,6 @@
   (:install ()
    (flet ((el-write (in out)
            (let* ((fn (file-namestring in)))
-            (println (format nil "~A -> ~A" fn out))
             (std:with-open-files
              ((in in :direction :input)
               (out out :direction :output :if-exists :supersede))

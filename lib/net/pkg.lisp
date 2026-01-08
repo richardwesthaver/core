@@ -32,11 +32,7 @@
    :endpoint
    :route
    :proxy
-   :tunnel
    :connection
-   :open-connection
-   :open-connection-with
-   :close-connection
    :connect
    :disconnect
    :make-client
@@ -314,6 +310,7 @@
   (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
   (:export 
    #:*swank-connections*
+   #:*default-swank-port*
    #:swank-connection
    #:slime-connect
    #:slime-close
@@ -323,7 +320,7 @@
    #:slime-network-error
    #:slime-pending-evals-p
    #:with-slime-connection
-   :slime-connect-file))
+   #:slime-connect-file))
 
 (defpkg :net/proto/crew
   (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)
@@ -355,6 +352,7 @@
   (:import-from :io/stream :decoding-stream :needs-to-fill-buffer-p
    :+buffer-size+ :make-decoding-stream :dec-fill-buffer)
   (:import-from :log :trace-p)
+  (:import-from :obj/srv :send-request)
   (:shadow :get :delete :head)
   (:import-from :sb-ext :string-to-octets)
   (:use :cl :std :uri

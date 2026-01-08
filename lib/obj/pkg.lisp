@@ -859,7 +859,7 @@
   (:export :cache :cache-cleanup :cache-policy
    :cache-size :cache-count :make-cache
    :with-cache :cache-remove :cache-flush :cache-entry
-   :entry-weight :make-cache-table :remcache :get-cache))
+   :entry-weight :make-cache-table :get-cache))
 
 (defpkg :obj/store
   (:nicknames :store)

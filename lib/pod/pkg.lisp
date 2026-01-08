@@ -20,7 +20,7 @@
 
 ;;; Code:
 (defpackage :pod
-  (:use :cl :std :cli :clap :sb-bsd-sockets :net :dat/json :net/srv :config :ast :cli/tools/virt)
+  (:use :cl :std :cli :clap :sb-bsd-sockets :net :dat/json :net/srv :config :ast :cli/tools/virt :obj/srv)
   (:import-from :chunky :make-chunked-stream)
   (:export
    :*podman-api-version*

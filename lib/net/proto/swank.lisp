@@ -11,14 +11,14 @@
 ;;; Code:
 (in-package :net/proto/swank)
 
-(defconstant +maximum-thread-count+ 1000)
-
 ;;; Vars
+(defconstant +maximum-thread-count+ 1000)
 (defvar *swank-thread-offset* 0)
 (define-constant +abort+ (cons nil nil) :test 'equal
   :documentation "Unique object used to signal that a computation was aborted on the server.")
 (defvar *swank-connections* '() "List of all open Swank connections.")
 (defvar *swank-connections-lock* (make-mutex) "Lock protecting *SWANK-CONNECTIONS*.")
+(defvar *default-swank-port* 4005)
 
 ;;; Conditions
 (define-condition slime-network-error (error)
@@ -35,7 +35,7 @@
    (port :reader port
          :type net/core::unprivileged-port
          :initarg :port
-         :initform (required-argument :port)
+         :initform *default-swank-port*
          :documentation "Port number used to make a Swank server connection.")
    (socket :reader socket
            :type socket
@@ -455,7 +455,7 @@ closed."
   (slime-eval-async nil connection)
   (values))
 
-(defmethod close-connection ((self swank-connection))
+(defmethod disconnect ((self swank-connection) &key)
   (slime-close self))
 
 (defmacro with-slime-connection ((variable host-name port &optional connection-closed-hook)

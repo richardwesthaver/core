@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :net/core)
 
-;;;_* Variables
+;;; Variables
 (defvar *localhost* #(127 0 0 1))
 (defvar *wildcard-host* #(0 0 0 0))
 (defvar *wildcard-port* 0)
@@ -34,7 +34,7 @@ sizeof(struct udphdr) = 8,  /* netinet/udp.h */
 (But for UDP broadcast, the maximum message size is limited by the MTU size of
 the underlying link).")
 
-;;;_. Socket Utils
+;;; Socket Utils
 (definline %socket-operation-in-progress-p (condition)
   (typep condition 'sb-bsd-sockets:operation-in-progress)) ;; errno 36 
 
@@ -113,7 +113,7 @@ the underlying link).")
 ;; (find-port)
 ;; (get-address-by-name "localhost")
 
-;;;_* Macros
+;;; Macros
 (defmacro with-open-socket ((var socket) &body body)
   "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
   (once-only (socket)

@@ -44,16 +44,9 @@ history but less often recently.
 (defun (setf get-cache) (key cache value)
   "Set a value in a cache-table."
   (let ((w (sb-ext:make-weak-pointer value)))
-    (sb-ext:finalize value (make-finalizer key cache))
+    (sb-ext:finalize value (lambda () (remhash key cache)))
     (setf (gethash key cache) w)
     value))
-
-(defun make-finalizer (key cache)
-  (declare (ignorable key cache))
-  (lambda () (remhash key cache)))
-
-(defun remcache (key cache)
-  (remhash key cache))
 
 (defun map-cache (fn cache)
   (with-hash-table-iterator (nextfn cache)

@@ -5,13 +5,14 @@
 ;;; Code:
 (in-package :net/proto/crew)
 
-(defclass crew-connection-info ()
+(defclass crew-connection-info (connection)
   ((host :initarg :host
          :initform "localhost"
          :type string
          :documentation "Host this worker is running on."
          :accessor host)
    (port :initarg :port
+         :initform net/proto/swank::*default-swank-port*
          :type port
          :documentation "Port on which the worker's swank server is listening for connections."
          :accessor port)))
@@ -242,7 +243,6 @@ DISCONNECTED-WORKER to another idle connected worker in WORKER-POOL."
         (dolist (w disconnected-idle-workers) (free-worker w worker-pool))))
     ;; Allow the reconnector to see that DISCONNECTED-WORKER is dead.
     (setf (%connection disconnected-worker) nil)))
-
 
 (defun no-workers-p (worker-pool)
   "Returns T if WORKER-POOL is NIL or contains no workers."

@@ -21,7 +21,7 @@
    "Error signaled when a kernel object is invalid."))
 
 (defvar *kernel* nil
-  "The current kernel.")
+  "The current kernel - bound to a KERNEL-OBJECT inside of a kernel function.")
 
 (defclass kernel-class (sb-mop:funcallable-standard-class)
   ()
@@ -80,8 +80,14 @@ restarts is provided. *KERNEL* is returned."
   (let ((k (find :kernel opts :key #'car)))
     `(progn
        (defclass ,name ,(or supers '(kernel-object)) ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
-       (defmethod initialize-instance :before ((self ,name) &key &allow-other-keys)
-         (sb-mop:set-funcallable-instance-function self (compile nil (lambda ,(cadr k) ,@(cddr k))))))))
+       (defmethod initialize-instance :after ((self ,name) &key &allow-other-keys)
+         (sb-mop:set-funcallable-instance-function 
+          self 
+          (compile nil
+                   (lambda ,(cadr k) 
+                     (let ((*kernel* self))
+                       (declare (,name *kernel*))
+                       ,@(cddr k)))))))))
 
 (defkernel hook () ()
   (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
@@ -90,12 +96,12 @@ collection of functions at a pre-arranged point in time."))
 (defkernel value-hook (hook) 
   ((value :initform nil :initarg :value :accessor hook-value))
   (:kernel 
-   (self item &rest args)
+   (item &rest args)
    (case item
-     (:add (apply 'add-hook self args))
-     (:remove (apply 'remove-hook self args))
+     (:add (apply 'add-hook *kernel* args))
+     (:remove (apply 'remove-hook *kernel* args))
      (t
-      (let ((val (hook-value self)))
+      (let ((val (hook-value *kernel*)))
         (mapcar 
          (lambda (x) (apply 'funcall x args))
          (if item
@@ -105,13 +111,13 @@ collection of functions at a pre-arranged point in time."))
 
 (defkernel key-hook (value-hook) ()
   (:default-initargs :value (make-hash-table))
-  (:kernel 
-   (self item &rest args)   
+  (:kernel
+   (item &rest args)
    (case item
-     (:add (apply 'add-hook self args))
-     (:remove (apply 'remove-hook self args))
+     (:add (apply 'add-hook *kernel* args))
+     (:remove (apply 'remove-hook *kernel* args))
      (t
-      (let ((val (hook-value self)))
+      (let ((val (hook-value *kernel*)))
         (mapcar 
          (lambda (x) (apply 'funcall x args))
          (if item
@@ -121,6 +127,27 @@ collection of functions at a pre-arranged point in time."))
                vals)))))))
   (:documentation "A hook which stores separate categories of hook functions in a hash-table. The
 key of each record is a category name and the value is a list of functions."))
+
+(defkernel dynamic-hook (key-hook) ()
+  (:kernel 
+   (item &rest args)
+   (case item
+     (:add 
+      (if (< (length args) 2)
+          (apply 'add-hook *kernel* (cadr args) :name (car args) (cddr args))))
+     (:remove 
+      (if (= (length args) 1)
+          (remhash (car args) (hook-value *kernel*))
+          (apply 'remove-hook *kernel* (cadr args) :name (car args) (cddr args))))
+     (t ;; assumed to be the name of a dynamic var
+      (let ((item (if (keywordp item)
+                      (gethash item (hook-value *kernel*))
+                      (symbol-value item))))
+        (mapcar 
+         (lambda (x) (apply 'funcall x args))
+         item)))))
+  (:documentation "A hook which binds values to dynamic variables. The VALUE slot contains a
+hash-table mapping keywords to symbol names."))
 
 (defgeneric add-hook (hook function &key &allow-other-keys)
   (:documentation "Add a FUNCTION to HOOK. The hook is checked to see if FUNCTION is already
@@ -140,20 +167,24 @@ function which we can't check the name of.")
           (setf (gethash name (hook-value hook)) (list function)))))
   (:method ((hook key-hook) (function list) &key)
     (setf (gethash (car function) (hook-value hook)) (cdr function)))
+  (:method ((hook dynamic-hook) function &key append name)
+    (add-hook (gethash name (hook-value hook)) function :append append))
   (:method ((hook symbol) function &key append)
     (if append
         (unless (memq function (symbol-value hook))
           (appendf (symbol-value hook) (list function)))
         (pushnew function (symbol-value hook) :test #'eql))))
 
-(defgeneric remove-hook (hook function)
+(defgeneric remove-hook (hook function &key)
   (:documentation "Remove a FUNCTION from HOOK. This will only work on function symbols, not
 functions themselves.")
-  (:method ((hook value-hook) item)
+  (:method ((hook value-hook) item &key)
     (removef (hook-value hook) item))
-  (:method ((hook key-hook) item)
+  (:method ((hook key-hook) item &key)
     (remhash item (hook-value hook)))
-  (:method ((hook symbol) item)
+  (:method ((hook dynamic-hook) item &key name)
+    (apply 'remove-hook (gethash name (hook-value hook)) item))
+  (:method ((hook symbol) item &key)
     (removef (symbol-value hook) item)))
 
 (defmacro defhook (name forms &key (class ''key-hook) documentation)
@@ -162,7 +193,17 @@ functions themselves.")
   (with-gensyms (val)
     `(defparameter ,name 
        (let ((,val (make-instance ,class)))
-         (mapcar (lambda (x) (add-hook ,val x)) '(,@forms))
+         (mapcar (lambda (x) ,(if (subtypep (eval class) 'dynamic-hook)
+                                  `(prog1 (setf (gethash (car x) (hook-value ,val)) (cadr x))
+                                     (when (> (length x) 2)
+                                       (setf (symbol-value (cadr x)) (caddr x)))
+                                     (if (<= (length x) 4)
+                                       (setf (documentation (cadr x) 'variable) (cadddr x))
+                                       (error 'simple-error 
+                                              :format-control "too many arguments - expected at most 4 but got ~S" 
+                                              :format-arguments (list (length x)))))
+                                  `(add-hook ,val x)))
+                 ',forms)
          ,val)
        ,@(or documentation))))
 
