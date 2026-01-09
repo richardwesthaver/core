@@ -6,10 +6,10 @@
  (:std :cli :log :obj
   :net :nlp :dat :doc
   :q :dsp :math :parse 
-  :rdb :cry :io :pod
+  :rdb :cry :io :pod  
   :box :syn :vc :rt)
  :components ((:file "core"))
- ;; :hook ((:load (lambda () (mumble "loading core"))))
+ :hook ((:load (lambda () (mumble "loading core"))))
  :provide 
  ((:tests
    :require

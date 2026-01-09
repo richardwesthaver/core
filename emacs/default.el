@@ -124,7 +124,7 @@
 (require 'exec-path-from-shell)
 (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
                                       "SSH_AUTH_SOCK"
-                                      "PATH" 
+                                      "PATH"
                                       "CARGO_HOME"
                                       "CC"
                                       "LD"
@@ -137,10 +137,6 @@
                                       "STASH"
                                       "STORE"
                                       "LISP_HOME"))
-
-(add-to-list 'exec-path (expand-file-name "~/.cargo/bin/"))
-(add-to-list 'exec-path (expand-file-name "~/.local/bin/"))
-(add-to-list 'exec-path "/bin/")
 (add-to-list 'exec-path "/usr/local/sbin/")
 (add-to-list 'exec-path "/usr/local/bin/")
 (add-to-list 'exec-path "/usr/local/share/lisp/bin/")
@@ -149,9 +145,9 @@
 ;;;###autoload
 (defun edit-emacs-config (&optional src)
   (interactive (list current-prefix-arg))
-  (let ((file (if src 
-		  (expand-file-name "default.el" emacs-config-source) 
-		user-custom-file)))
+  (let ((file (if src
+                  (expand-file-name "default.el" emacs-config-source)
+                user-custom-file)))
     (find-file file)))
 
 ;;; Completions
@@ -257,11 +253,16 @@
 ;;; Tabs
 (add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
 
+;;; Whitespace
+(setq-default
+ whitespace-style '(face tabs trailing lines-tail indentation::space)
+ whitespace-line-column 88)
+
 ;;; Lisp
 (use-package company :ensure t)
 (require 'slime "slime")
 (defvar core-lisp-program "/usr/local/bin/core")
-(defun default-lisp () 
+(defun default-lisp ()
   (if (file-exists-p core-lisp-program)
       core-lisp-program
     "sbcl"))
@@ -290,16 +291,16 @@ buffer should appear."
   (interactive)
   (let ((buffer (slime-output-buffer)))
     (if same-window
-	(pop-to-buffer-same-window buffer)
+        (pop-to-buffer-same-window buffer)
       (pop-to-buffer buffer))))
 
 (defun slime-toggle ()
   "Toggle between current buffer and slime-repl."
   (interactive)
   (if (eq major-mode 'slime-repl-mode)
-      (setq slime-toggle 
-	    (pop-to-buffer-same-window 
-	     (or slime-toggle (read-buffer "lisp buffer: "))))
+      (setq slime-toggle
+            (pop-to-buffer-same-window
+             (or slime-toggle (read-buffer "lisp buffer: "))))
     (if (slime-connected-p)
         (progn
           (setq slime-toggle (current-buffer))
@@ -312,12 +313,12 @@ buffer should appear."
   "Toggle between current buffer and inferior-lisp process buffer."
   (interactive)
   (if (eq major-mode 'inferior-lisp-mode)
-      (pop-to-buffer-same-window 
+      (pop-to-buffer-same-window
        (or lisp-toggle (read-buffer "lisp buffer: ")))
     (if inferior-lisp-buffer
         (progn
-	  (setq lisp-toggle (current-buffer))
-	  (inferior-lisp (or cmd inferior-lisp-program)))
+          (setq lisp-toggle (current-buffer))
+          (inferior-lisp (or cmd inferior-lisp-program)))
       (setq lisp-toggle (current-buffer))
       (inferior-lisp (or cmd inferior-lisp-program)))))
 
@@ -371,8 +372,8 @@ function: '(ql:quickload :clouseau)'."
 (setq slime-defpackage-regexp
       "^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*")
 
-(define-common-lisp-style 
- "core" 
+(define-common-lisp-style
+ "core"
  "Core Common Lisp Indentation Style"
  (:inherit "sbcl")
  (:indentation
@@ -413,10 +414,10 @@ function: '(ql:quickload :clouseau)'."
   "Connect to the port number stored in FILE which should be the same value
 as the first argument to SWANK:START-SERVER on the Lisp side."
   (interactive "fswank file: ")
-  (slime-connect 
+  (slime-connect
    (or host "localhost")
    (string-to-number
-    (with-temp-buffer 
+    (with-temp-buffer
       (insert-file-contents file)
       (buffer-string)))))
 
@@ -961,7 +962,7 @@ Add this function to appropriate major mode hooks such as
 
 (setq org-babel-default-header-args
       '((:session . "none") (:results . "replace") (:eval . "no-export") (:exports . "both")
-	(:cache . "no") (:noweb . "no") (:hlines . "no") (:tangle . "no")))
+        (:cache . "no") (:noweb . "no") (:hlines . "no") (:tangle . "no")))
 
 ;; org-sbx [[https://list.orgmode.org/d429d29b-42fa-7d7b-6f3a-9fe692fd6dc7@grinta.net/T/]]
 (defun %org-sbx (name header args)
@@ -979,7 +980,7 @@ Add this function to appropriate major mode hooks such as
 
 (defmacro org-sbx (name &rest args)
   (let* ((header (if (stringp (car args)) (car args) nil))
-	 (args (if (stringp (car args)) (cdr args) args)))
+         (args (if (stringp (car args)) (cdr args) args)))
     (unless (stringp name)
       (setq name (symbol-name name)))
     (let ((result (%org-sbx name header args)))
@@ -1025,7 +1026,7 @@ Add this function to appropriate major mode hooks such as
                          effort)) )))
 
 (with-eval-after-load "preview"
-    '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
+  '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
 (setopt org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
         org-latex-image-default-width "8cm"
@@ -1332,8 +1333,8 @@ inherited by a parent headline."
                                        :utf-8 translation-utf-8)))))))
 
 (defun org-word-count (beg end
-			   &optional count-latex-macro-args?
-			   count-footnotes?)
+                           &optional count-latex-macro-args?
+                           count-footnotes?)
   "Report the number of words in the Org mode buffer or selected region.
 Ignores:
 - comments
@@ -1353,70 +1354,70 @@ of its arguments."
   (interactive "r")
   (unless mark-active
     (setf beg (point-min)
-	  end (point-max)))
+          end (point-max)))
   (let ((wc 0)
-	(latex-macro-regexp "\\\\[A-Za-z]+\\(\\[[^]]*\\]\\|\\){\\([^}]*\\)}"))
+        (latex-macro-regexp "\\\\[A-Za-z]+\\(\\[[^]]*\\]\\|\\){\\([^}]*\\)}"))
     (save-excursion
       (goto-char beg)
       (while (< (point) end)
-	(cond
-	 ;; Ignore comments.
-	 ((or (org-at-comment-p) (org-at-table-p))
-	  nil)
-	 ;; Ignore hyperlinks. But if link has a description, count
-	 ;; the words within the description.
-	 ((looking-at org-bracket-link-analytic-regexp)
-	  (when (match-string-no-properties 5)
-	    (let ((desc (match-string-no-properties 5)))
-	      (save-match-data
-		(cl-incf wc (length (remove "" (org-split-string
-						desc "\\W")))))))
-	  (goto-char (match-end 0)))
-	 ((looking-at org-any-link-re)
-	  (goto-char (match-end 0)))
-	 ;; Ignore source code blocks.
-	 ((org-between-regexps-p "^#\\+BEGIN_SRC\\W" "^#\\+END_SRC\\W")
-	  nil)
-	 ;; Ignore inline source blocks, counting them as 1 word.
-	 ((save-excursion
-	    (backward-char)
-	    (looking-at org-babel-inline-src-block-regexp))
-	  (goto-char (match-end 0))
-	  (setf wc (+ 2 wc)))
-	 ;; Count latex macros as 1 word, ignoring their arguments.
-	 ((save-excursion
-	    (backward-char)
-	    (looking-at latex-macro-regexp))
-	  (goto-char (if count-latex-macro-args?
-			 (match-beginning 2)
-		       (match-end 0)))
-	  (setf wc (+ 2 wc)))
-	 ;; Ignore footnotes.
-	 ((and (not count-footnotes?)
-	       (or (org-footnote-at-definition-p)
-		   (org-footnote-at-reference-p)))
-	  nil)
-	 (t
-	  (let ((contexts (org-context)))
-	    (cond
-	     ;; Ignore tags and TODO keywords, etc.
-	     ((or (assoc :todo-keyword contexts)
-		  (assoc :priority contexts)
-		  (assoc :keyword contexts)
-		  (assoc :checkbox contexts))
-	      nil)
-	     ;; Ignore sections marked with tags that are
-	     ;; excluded from export.
-	     ((assoc :tags contexts)
-	      (if (intersection (org-get-tags-at) org-export-exclude-tags
-				:test 'equal)
-		  (org-forward-same-level 1)
-		nil))
-	     (t
-	      (cl-incf wc))))))
-	(re-search-forward "\\w+\\W*")))
+        (cond
+         ;; Ignore comments.
+         ((or (org-at-comment-p) (org-at-table-p))
+          nil)
+         ;; Ignore hyperlinks. But if link has a description, count
+         ;; the words within the description.
+         ((looking-at org-bracket-link-analytic-regexp)
+          (when (match-string-no-properties 5)
+            (let ((desc (match-string-no-properties 5)))
+              (save-match-data
+                (cl-incf wc (length (remove "" (org-split-string
+                                                desc "\\W")))))))
+          (goto-char (match-end 0)))
+         ((looking-at org-any-link-re)
+          (goto-char (match-end 0)))
+         ;; Ignore source code blocks.
+         ((org-between-regexps-p "^#\\+BEGIN_SRC\\W" "^#\\+END_SRC\\W")
+          nil)
+         ;; Ignore inline source blocks, counting them as 1 word.
+         ((save-excursion
+            (backward-char)
+            (looking-at org-babel-inline-src-block-regexp))
+          (goto-char (match-end 0))
+          (setf wc (+ 2 wc)))
+         ;; Count latex macros as 1 word, ignoring their arguments.
+         ((save-excursion
+            (backward-char)
+            (looking-at latex-macro-regexp))
+          (goto-char (if count-latex-macro-args?
+                         (match-beginning 2)
+                       (match-end 0)))
+          (setf wc (+ 2 wc)))
+         ;; Ignore footnotes.
+         ((and (not count-footnotes?)
+               (or (org-footnote-at-definition-p)
+                   (org-footnote-at-reference-p)))
+          nil)
+         (t
+          (let ((contexts (org-context)))
+            (cond
+             ;; Ignore tags and TODO keywords, etc.
+             ((or (assoc :todo-keyword contexts)
+                  (assoc :priority contexts)
+                  (assoc :keyword contexts)
+                  (assoc :checkbox contexts))
+              nil)
+             ;; Ignore sections marked with tags that are
+             ;; excluded from export.
+             ((assoc :tags contexts)
+              (if (intersection (org-get-tags-at) org-export-exclude-tags
+                                :test 'equal)
+                  (org-forward-same-level 1)
+                nil))
+             (t
+              (cl-incf wc))))))
+        (re-search-forward "\\w+\\W*")))
     (format "%d words in %s." wc
-	    (if mark-active "region" "buffer"))))
+            (if mark-active "region" "buffer"))))
 
 (defun org-check-misformatted-subtree ()
   "Check misformatted entries in the current buffer."
@@ -1425,15 +1426,15 @@ of its arguments."
   (org-map-entries
    (lambda ()
      (when (and (move-beginning-of-line 2)
-		(not (looking-at org-heading-regexp)))
+                (not (looking-at org-heading-regexp)))
        (if (or (and (org-get-scheduled-time (point))
-		    (not (looking-at (concat "^.*" org-scheduled-regexp))))
-	       (and (org-get-deadline-time (point))
-		    (not (looking-at (concat "^.*" org-deadline-regexp)))))
-	   (when (y-or-n-p "Fix this subtree? ")
-	     (message "Call the function again when you're done fixing this subtree.")
-	     (recursive-edit))
-	 (message "All subtrees checked."))))))
+                    (not (looking-at (concat "^.*" org-scheduled-regexp))))
+               (and (org-get-deadline-time (point))
+                    (not (looking-at (concat "^.*" org-deadline-regexp)))))
+           (when (y-or-n-p "Fix this subtree? ")
+             (message "Call the function again when you're done fixing this subtree.")
+             (recursive-edit))
+         (message "All subtrees checked."))))))
 
 (defun org-sort-list-by-checkbox-type ()
   "Sort list items according to Checkbox state."
@@ -1442,23 +1443,23 @@ of its arguments."
    nil ?f
    (lambda ()
      (if (looking-at org-list-full-item-re)
-	 (cdr (assoc (match-string 3)
-		     '(("[X]" . 1) ("[-]" . 2) ("[ ]" . 3) (nil . 4))))
+         (cdr (assoc (match-string 3)
+                     '(("[X]" . 1) ("[-]" . 2) ("[ ]" . 3) (nil . 4))))
        4))))
 
 (defun org-time-string-to-seconds (s)
   "Convert a string HH:MM:SS to a number of seconds."
   (cond
    ((and (stringp s)
-	 (string-match "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\)" s))
+         (string-match "\\([0-9]+\\):\\([0-9]+\\):\\([0-9]+\\)" s))
     (let ((hour (string-to-number (match-string 1 s)))
-	  (min (string-to-number (match-string 2 s)))
-	  (sec (string-to-number (match-string 3 s))))
+          (min (string-to-number (match-string 2 s)))
+          (sec (string-to-number (match-string 3 s))))
       (+ (* hour 3600) (* min 60) sec)))
    ((and (stringp s)
-	 (string-match "\\([0-9]+\\):\\([0-9]+\\)" s))
+         (string-match "\\([0-9]+\\):\\([0-9]+\\)" s))
     (let ((min (string-to-number (match-string 1 s)))
-	  (sec (string-to-number (match-string 2 s))))
+          (sec (string-to-number (match-string 2 s))))
       (+ (* min 60) sec)))
    ((stringp s) (string-to-number s))
    (t s)))
@@ -1466,8 +1467,8 @@ of its arguments."
 (defun org-time-seconds-to-string (secs)
   "Convert a number of seconds to a time string."
   (cond ((>= secs 3600) (format-seconds "%h:%.2m:%.2s" secs))
-	((>= secs 60) (format-seconds "%m:%.2s" secs))
-	(t (format-seconds "%s" secs))))
+        ((>= secs 60) (format-seconds "%m:%.2s" secs))
+        (t (format-seconds "%s" secs))))
 
 (defmacro with-time (time-output-p &rest exprs)
   "Evaluate an org-table formula, converting all fields that look
@@ -1476,16 +1477,16 @@ the result as a time value."
   (list
    (if time-output-p 'org-time-seconds-to-string 'identity)
    (cons 'progn
-	 (mapcar
-	  (lambda (expr)
-	    `,(cons (car expr)
-		    (mapcar
-		     (lambda (el)
-		       (if (listp el)
-			   (list 'with-time nil el)
-			 (org-time-string-to-seconds el)))
-		     (cdr expr))))
-	  `,@exprs))))
+         (mapcar
+          (lambda (expr)
+            `,(cons (car expr)
+                    (mapcar
+                     (lambda (el)
+                       (if (listp el)
+                           (list 'with-time nil el)
+                         (org-time-string-to-seconds el)))
+                     (cdr expr))))
+          `,@exprs))))
 
 (defun org-hex-strip-lead (str)
   (if (and (> (length str) 2) (string= (substring str 0 2) "0x"))
@@ -1497,12 +1498,12 @@ the result as a time value."
 (defun org-hex-to-dec (str)
   (cond
    ((and (stringp str)
-	 (string-match "\\([0-9a-f]+\\)" (setf str (org-hex-strip-lead str))))
+         (string-match "\\([0-9a-f]+\\)" (setf str (org-hex-strip-lead str))))
     (let ((out 0))
       (mapc
        (lambda (ch)
-	 (setf out (+ (* out 16)
-		      (if (and (>= ch 48) (<= ch 57)) (- ch 48) (- ch 87)))))
+         (setf out (+ (* out 16)
+                      (if (and (>= ch 48) (<= ch 57)) (- ch 48) (- ch 87)))))
        (coerce (match-string 1 str) 'list))
       out))
    ((stringp str) (string-to-number str))
@@ -1515,23 +1516,23 @@ the result as a time value."
   (list
    (if hex-output-p 'org-hex-to-hex 'identity)
    (cons 'progn
-	 (mapcar
-	  (lambda (expr)
-	    `,(cons (car expr)
-		    (mapcar (lambda (el)
-			      (if (listp el)
-				  (list 'with-hex nil el)
-				(org-hex-to-dec el)))
-			    (cdr expr))))
-	  `,@exprs))))
+         (mapcar
+          (lambda (expr)
+            `,(cons (car expr)
+                    (mapcar (lambda (el)
+                              (if (listp el)
+                                  (list 'with-hex nil el)
+                                (org-hex-to-dec el)))
+                            (cdr expr))))
+          `,@exprs))))
 
 (require 'mm-url) ; to include mm-url-decode-entities-string
 
 (cl-defun get-first-url (&optional (match (rx bol "http" (optional "s") "://")))
   "Return URL in clipboard, or first URL in the `kill-ring' matching MATCH."
   (cl-loop for item in (cons (current-kill 0) kill-ring)
-	   when (and item (string-match-p match item))
-	   return item))
+           when (and item (string-match-p match item))
+           return item))
 
 (defun get-html-title-from-url (url)
   "Return content in <title> tag."
@@ -1565,7 +1566,7 @@ the result as a time value."
     (goto-char (point-min))
     (while (re-search-forward ":PROPERTIES:" nil t)
       (save-excursion
-	(org-remove-empty-drawer-at "PROPERTIES" (match-beginning 0))))))
+        (org-remove-empty-drawer-at "PROPERTIES" (match-beginning 0))))))
 
 (defun check-for-clock-out-note ()
   (interactive)
@@ -1573,8 +1574,8 @@ the result as a time value."
     (org-back-to-heading)
     (let ((tags (org-get-tags)))
       (and tags (message "tags: %s " tags)
-	   (when (member "clocknote" tags)
-	     (org-add-note))))))
+           (when (member "clocknote" tags)
+             (org-add-note))))))
 
 (add-hook 'org-clock-out-hook 'check-for-clock-out-note)
 
@@ -1587,27 +1588,27 @@ DIRS is a list of directories.
 
 EXT is a list of the extensions of files to be included."
   (let ((dirs (if (listp dirs)
-		  dirs
-		(list dirs)))
-	(ext (if (listp ext)
-		 ext
-	       (list ext)))
-	files)
+                  dirs
+                (list dirs)))
+        (ext (if (listp ext)
+                 ext
+               (list ext)))
+        files)
     (mapc
      (lambda (x)
        (mapc
-	(lambda (y)
-	  (setq files
-		(append files
-			(file-expand-wildcards
-			 (concat (file-name-as-directory x) "*" y)))))
-	ext))
+        (lambda (y)
+          (setq files
+                (append files
+                        (file-expand-wildcards
+                         (concat (file-name-as-directory x) "*" y)))))
+        ext))
      dirs)
     (mapc
      (lambda (x)
        (when (or (string-match "/.#" x)
-		 (string-match "#$" x))
-	 (setq files (delete x files))))
+                 (string-match "#$" x))
+         (setq files (delete x files))))
      files)
     files))
 

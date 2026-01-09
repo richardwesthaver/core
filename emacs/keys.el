@@ -49,7 +49,8 @@
   "x" #'org-clock-toggle-auto-clockout
   "s" #'slime-toggle
   "l" #'lisp-toggle
-  "w" #'which-key-mode)
+  "w" #'which-key-mode
+  "W" #'global-whitespace-toggle-options)
 
 (defvar-keymap status-map
   :doc
