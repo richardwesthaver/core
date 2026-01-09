@@ -13,9 +13,9 @@
 | skel-id     | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS C                               |
-| updated     | Thu Jan 08 20:08:26 2026 -0500                  |
+| updated     | Thu Jan 08 20:53:34 2026 -0500                  |
 | langs       | c elisp lisp org text                           |
-| lines       | 163444 :code 130805 :comment 14199 :blank 18440 |
+| lines       | 163482 :code 130836 :comment 14202 :blank 18444 |
 |-------------+-------------------------------------------------|
 
 #+END:

@@ -396,7 +396,14 @@
    :nconcatf
    :char-range
    :ascii-ichar=
-   :ascii-istring=))
+   :ascii-istring=
+   :*annotations*
+   :*annotation-table*
+   :*default-annotator-class*
+   :annotator
+   :define-annotator
+   :with-annotations
+   :annotate))
 
 (defpkg :std/num
   (:use :cl)

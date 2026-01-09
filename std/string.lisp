@@ -213,13 +213,12 @@ of a string."
         (setf cur-list '()
               counter   0)))))
 
-;;; The string matching compiler per se
+;;;; The string matching compiler per se
 
 ;; I use special variables here because I find that
 ;; preferable to introducing noise everywhere to thread
 ;; these values through all the calls, especially
 ;; when `*no-match-form*' is only used at the very end.
-
 (defparameter *input-string* nil
   "Symbol of the variable holding the input string")
 
@@ -295,7 +294,6 @@ of a string."
               (setf best-split Z
                     best-posn  i
                     best-char  char))))))))
-
 ;; We sometimes have to execute sequences of checks for
 ;; equality. The natural way to express this is via a
 ;; sequence of checks, wrapped in an `and'. However, that
@@ -351,7 +349,6 @@ of a string."
 ;;     (:generator 1
 ;;       (move r x)
 ;;       (sb-vm::inst #:xor r (char-code y)))))
-
 (defun numeric-char= (x y)
   "Return Non-nil if X and Y are equal numeric characters."
   (declare (type character x y))
@@ -481,9 +478,9 @@ of a string."
 
 ;; Just wrapping the previous function in a macro, and adding some error
 ;; checking (the rest of the code just assumes there won't be duplicate
-;; patterns).  Note how we use a local function instead of passing the
-;; default form directly. This can save a lot on code size, especially when
-;; the default form is large.
+;; patterns). Note how we use a local function instead of passing the default
+;; form directly. This can save a lot on code size, especially when the
+;; default form is large.
 (defmacro string-case ((string &key (default '(error "No match")))
                        &body cases)
   "(string-case (string &key default)
@@ -597,3 +594,37 @@ at the end."
 (defun ascii-istring= (string1 string2)
   "ASCII case-insensitive string="
   (every #'ascii-ichar= string1 string2))
+
+;;; String Annotations
+;; Note that SBCL has a notion of 'Type Annotations' - not to be confused with
+;; this protocol.
+(defvar *annotation-table* (make-hash-table))
+(defvar *default-annotator-class* 'annotator)
+(defvar *annotations* nil
+  "The currently active mapping of annotations.")
+(declaim (base-char *annotation-prefix*))
+(defvar *annotation-prefix* #\%)
+
+(defun annotate (control-string &rest args)
+  "Annotate the CONTROL-STRING, returning a new string with all annotations
+substituted with their relevant expansions given ARGS.")
+
+(defclass annotator ()
+  ((directives :initarg :directives :initform nil)))
+
+(defmacro with-annotations (name &body body)
+  "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
+  `(let ((*annotations* (gethash ,name *annotation-table*)))
+     ,@body))
+
+(defmacro define-annotator (name form &key (class '*default-annotator-class*))
+  `(setf (gethash ,name *annotation-table*)
+         (make-instance ,class :directives ,form)))
+
+(defmacro defannotation (opts args &body body)
+  "Define a new annotation function. OPTS may be a BASE-CHAR in which case it is
+bound in the current ANNOTATOR, or it can be a list of two arguments where the
+car is the name of the annotator to bind the associated character in.
+
+ARGS and BODY are identical to DEFUN, the lambda-list is the same as for
+formatter functions and the return-type must be a format string or function.")

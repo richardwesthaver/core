@@ -203,7 +203,7 @@
 
 (defpkg :cli/progress
   (:use :cl :std)
-  (:nicknames :progress)
+  (:nicknames :progress :pbar)
   (:export
    :update-progress
    :update-progress-display
