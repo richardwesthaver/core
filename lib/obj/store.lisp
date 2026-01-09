@@ -213,10 +213,7 @@ equal comparison"))
 (defun get-foreign-slot (fclass slot-def)
   (find-slot-def-by-name fclass (foreign-slotname slot-def)))
 
-;; =============================
 ;;  Late-binding Initialization
-;; =============================
-
 (defun get-association-index (slot-def sc)
   (ifret (get-association-slot-index slot-def sc)
     (aif (get-store-association-index slot-def sc)
@@ -227,15 +224,12 @@ equal comparison"))
            new-idx))))
 
 (defun get-store-association-index (slot-def sc)
-  (let* ((master (index-table sc))
+  (let* ((master (index-root sc))
          (base (association-slot-base slot-def))
          (slotname (slot-definition-name slot-def)))
     (get-value (cons base slotname) master)))
 
-;; ===============================
 ;;  Association-specific slot API
-;; ===============================
-
 (defun add-association (instance slot associated)
   (let* ((sc (get-store instance))
          (class (class-of instance))
@@ -293,7 +287,7 @@ equal comparison"))
     (incf %next-cid)))
 
 (defun unindex-slot-value (sc key value old-name old-base)
-  (let* ((master (index-table sc))
+  (let* ((master (index-root sc))
          (index (get-value (cons old-base old-name) master)))
     (remove-kv key value index)))
 
@@ -439,7 +433,7 @@ different objects with the same oid."
 ;; TODO
 ;;   (print recs)
 ;;   (dump-btree (instance-table sc))
-;;   (dump-index (index-table sc))
+;;   (dump-index (index-root sc))
   (destructuring-bind (old-rec new-rec) recs
     (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
       (with-slots ((new-type type) (new-name name) (new-args args)) new-rec
@@ -538,7 +532,7 @@ different objects with the same oid."
     ;; Deal with new stored slot, cached and transient initialization
     (let* ((diff-entries (schema-diff current-schema previous-schema))
            (add-entries (remove-if-not (lambda (entry) (eq :add (diff-type entry))) diff-entries))
-           (add-names (when add-entries (mapcar #'field-name (mapcan #'diff-recs add-entries)))))
+           (add-names (when add-entries (mapcar #'name (mapcan #'diff-recs add-entries)))))
       (apply #'shared-initialize current add-names initargs))))
 
 ;;; Store
@@ -548,8 +542,7 @@ different objects with the same oid."
          :initform nil
          :initarg :spec
          :documentation "Data store initialization functions are
-         expected to initialize :spec on the call to
-         make-instance")
+         expected to initialize :spec on the call to make-instance")
    ;; Generic support for the object, indexing and root protocols
    (root 
     :reader store-root 
@@ -572,11 +565,11 @@ something like 0, 1 or -1")
     :accessor schema-cache-lock :initform (make-mutex :name "cache-lock")
     :documentation "Protection for updates to the cache from multiple threads. Do not override.")
    ;; Instance storage
-   (instance-table 
-    :reader instance-table
+   (instance-index
+    :reader instance-index
     :documentation "Contains map of oid to class ids")
-   (instance-class-index 
-    :reader instance-class-index
+   (class-index 
+    :reader class-index
     :documentation "A reverse map of class id to oid")
    (instance-cache 
     :accessor instance-cache :initform (make-cache-table :test 'eql)
@@ -587,8 +580,8 @@ should not override the default behavior.")
     :accessor instance-cache-lock :initform (make-mutex :name "instance-cache")
     :documentation "Protection for updates to the cache from multiple threads. Do not override.")
    ;; Root table for all indices
-   (index-table 
-    :reader index-table
+   (index-root
+    :reader index-root
     :documentation 
     "This is another root for class indexing that is also a data store specific
 stored btree instance with a unique OID that persists between sessions. No
@@ -761,7 +754,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 (defmethod drop-instance ((inst stored))
   (let ((sc (get-store inst)))
     (with-mutex ((instance-cache-lock sc))
-      (remcache (oid inst) (instance-cache sc)))
+      (remhash (oid inst) (instance-cache sc)))
     (delete-key (oid inst) (instance-table sc))))
 
 (defun drop-instance-slots (instance)
@@ -880,7 +873,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (handler-case
       (progn
         (with-mutex ((schema-cache-lock st))
-          (remcache schema-id (schema-cache st)))
+          (remhash schema-id (schema-cache st)))
         (remove-class-store-schema st (get-schema-id-class st schema-id)))
     (program-error (e) ;; in case the class is gone for some reason
       (warn "Error ~A in uncache-store-schema , ignoring" e)
@@ -934,7 +927,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 
 (defun get-store-index (slot-def sc)
   "Get the slot-def's index from the store"
-  (let* ((master (index-table sc))
+  (let* ((master (index-root sc))
          (base (indexed-slot-base slot-def))
          (name (slot-definition-name slot-def)))
     (get-value (cons base name) master)))
@@ -950,12 +943,12 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 
 (defmethod add-slot-index ((sc store) new-index class-name index-name)
   "Add it to the index table and the class slot def"
-  (setf (get-value (cons class-name index-name) (index-table sc))
+  (setf (get-value (cons class-name index-name) (index-root sc))
         new-index))
 
 (defmethod drop-slot-index ((sc store) class-name index-name)
   (clear-slot-def-index (find-slot-def-by-name (find-class class-name) index-name) sc)
-  (delete-key (cons class-name index-name) (index-table sc)))
+  (delete-key (cons class-name index-name) (index-root sc)))
 
 (defmethod rebuild-slot-index ((sc store) class-name index-name)
   (drop-slot-index sc class-name index-name)

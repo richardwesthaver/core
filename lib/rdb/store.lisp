@@ -12,23 +12,25 @@
 (defclass rdb-store (store rdb-database)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
-   (logger :initform (default-logger) :initarg :logger :accessor logger))
-   (:default-initargs
-    :spec '(:rdb)
-    :db (make-db :rocksdb :opts (default-rdb-opts))
-    :columns (make-array 0 :element-type 'rdb-column-family
-                           :adjustable t
-                           :fill-pointer t)
-    :instance-table (make-instance 'rdb-column-family :type '(oid . cid))
-    :instance-class-index (make-instance 'rdb-column-family :type '(cid . oid))
-    ;; :root
-    :schema-table (make-hash-table :size 100 :weakness :value)
-    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
-    ;; :index-table
-    ;; :instance-table
-    ;; :instance-class-index
-    )
-   (:documentation "A RocksDB STORE. Note that the default column family is used to store
+   (logger :initform (default-logger) :initarg :logger :accessor logger)
+   (metadata :type (or null pointer-void) :accessor controller-metadata)
+   (btrees :type (or null pointer-void) :accessor controller-btrees)
+   (dup-btrees :type (or null pointer-void) :accessor controller-dup-btrees)
+   (index :accessor index)
+   (rindex :accessor rindex))
+  (:default-initargs
+   :spec '(:rdb)
+   :db (make-db :rocksdb :opts (default-rdb-opts))
+   :columns (make-array 0 :element-type 'rdb-column-family
+                          :adjustable t
+                          :fill-pointer t)
+   :instance-index (make-instance 'rdb-column-family :type '(oid . cid))
+   :class-index (make-instance 'rdb-column-family :type '(cid . oid))
+   ;; :root
+   :schema-table (make-hash-table :size 100 :weakness :value)
+   :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
+   )
+  (:documentation "A RocksDB STORE. Note that the default column family is used to store
 serialized object schemas."))
 
 (defmethod build-btree ((st rdb-store))
@@ -47,46 +49,53 @@ serialized object schemas."))
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB *STORE*)."
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
-      (with-static-stream (key-buf)
+      (with-static-streams ((key-buf) (value-buf))
         (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (let ((buf (db-get-key-buffered
+        (serialize key sc :buffer key-buf)
+        (let ((buf (get-key
                     (btree sc)
+                    key-buf
+                    :buffer value-buf
                     :transaction (current-transaction sc))))
-          (if buf (values (deserialize buf sc) t)
+          (if buf 
+              (values (deserialize buf sc) t)
               (values nil nil)))))))
 
 (defmethod existsp (key (bt rdb-btree))
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
-      (with-static-stream (key-buf)
-      (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (let ((buf (db-get-key-buffered 
-                  (btree sc)
-                  :transaction (current-transaction sc))))
+      (with-static-streams ((key-buf) (value-buf))
+        (write-oid (oid bt) key-buf)
+        (serialize key sc :buffer key-buf)
+        (let ((buf (get-key 
+                    (btree sc)
+                    key-buf 
+                    :buffer value-buf
+                    :transaction (current-transaction sc))))
           (if buf t
               nil))))))
 
 (defmethod (setf get-value) (value key (bt rdb-btree))
-    (let ((sc (get-store bt)))
-      (ensure-transaction (:store sc)
-        (with-static-streams ((key-buf) (value-buf))
-          (write-oid (oid bt) key-buf)
-          (ser key key-buf sc)
-          (ser value value-buf sc)
-          (db-put-buffered (btree sc)
-                           :transaction (current-transaction sc))))
-      value))
+  (let ((sc (get-store bt)))
+    (ensure-transaction (:store sc)
+      (with-static-streams ((key-buf) (value-buf))
+        (write-oid (oid bt) key-buf)
+        (serialize key sc :buffer key-buf)
+        (serialize value sc :buffer value-buf)
+        (insert-key (btree sc)
+                    key-buf value-buf
+                    :transaction (current-transaction sc))))
+    value))
 
 (defmethod delete-key (key (bt rdb-btree) &key)
   (let ((sc (get-store bt)) )
     (with-static-stream (key-buf)
       (ensure-transaction (:store sc)
         (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (db-delete-buffered (btree sc)
-                            :transaction (current-transaction sc))))))
+        (serialize key sc :buffer key-buf)
+        (delete-key (btree sc)
+                    key-buf
+                    :transaction (current-transaction sc))))))
 
 (defmethod optimize-layout ((bt rdb-btree) &key (freelist-only t) (free-space nil) &allow-other-keys)
   (optimize-layout (get-store bt)
@@ -95,26 +104,25 @@ serialized object schemas."))
                    :freelist-only freelist-only
                    :free-space free-space))
 
-(defclass rdb-indexed-btree (indexed-btree rdb-btree)
-  ((index-table :accessor index-table :initarg :index-table :initform (make-hash-table))
-   (index-cache-table :accessor index-cache-table :transient t))
-  (:metaclass stored-class)
+(defsclass rdb-indexed-btree (indexed-btree rdb-btree)
+  ((index :accessor index :initarg :index :initform (make-hash-table))
+   (index-cache :accessor index-cache :transient t))
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
-(defmethod index-cache-table ((instance rdb-indexed-btree))
-  ;; Lazily load the index-cache-table to avoid bootstrapping issues: If
+(defmethod index-cache ((instance rdb-indexed-btree))
+  ;; Lazily load the index-cache to avoid bootstrapping issues: If
   ;; we do not lazy-load the index-table cache, it we attempt to
   ;; initialize it before the instance-table is available (thus we
   ;; cannot map oids to classes -- deserialize does not really work
   ;; for complex objects).  -- Red Daly 07/10/2010
-  (aif (slot-value instance 'index-cache-table)
+  (aif (slot-value instance 'index-cache)
        it
-       (setf (index-cache-table instance) (index-table instance))))
+       (setf (index-cache instance) (index instance))))
 
 (defmethod shared-initialize :after ((instance rdb-indexed-btree) slot-names
                                      &rest rest)
   (declare (ignore slot-names rest))
-  (setf (index-cache-table instance) nil))
+  (setf (index-cache instance) nil))
 
 (defmethod build-indexed-btree ((sc rdb-store))
   (make-instance 'rdb-indexed-btree :store sc))
@@ -124,24 +132,24 @@ serialized object schemas."))
 
 (defmethod add-index ((bt rdb-indexed-btree) &key index-name key-form (populate t))
   (let ((sc (get-store bt)))
-;; Setting the value of *store* is unfortunately
-;; absolutely required at present, I think because the copying 
-;; of objects is calling "make-instance" without an argument.
-;; I am sure I can find a way to make this cleaner, somehow.
+    ;; Setting the value of *store* is unfortunately
+    ;; absolutely required at present, I think because the copying 
+    ;; of objects is calling "make-instance" without an argument.
+    ;; I am sure I can find a way to make this cleaner, somehow.
     (if (and (not (null index-name))
              (symbolp index-name)
              (or (symbolp key-form) (listp key-form)))
         ;; Can it be that this fails?
         (let ((index
-               (ensure-transaction (:store sc)
-                 (let ((ht (index-table bt))
-                       (index (build-btree-index sc 
-                                                 :primary bt 
-                                                 :key-form key-form)))
-                   (setf (gethash index-name (index-cache-table bt)) index)
-                   (setf (gethash index-name ht) index)
-                   (setf (index-table bt) ht)
-                   index))))
+                (ensure-transaction (:store sc)
+                  (let ((ht (index bt))
+                        (index (build-btree-index sc 
+                                                  :primary bt 
+                                                  :key-form key-form)))
+                    (setf (gethash index-name (index-cache bt)) index)
+                    (setf (gethash index-name ht) index)
+                    (setf (index bt) ht)
+                    index))))
           (when populate (populate bt index))
           index)
         (error "Invalid index initargs!"))))
@@ -151,13 +159,13 @@ serialized object schemas."))
     (with-static-streams ((primary-buf) (secondary-buf))
       (flet ((index (key skey)
                (write-oid (oid bt) primary-buf)
-               (ser key primary-buf sc)
+               (serialize key sc :buffer primary-buf)
                (write-oid (oid index) secondary-buf)
-               (ser skey secondary-buf sc)
+               (serialize skey sc :buffer secondary-buf)
                ;; should silently do nothing if
                ;; the key/value already exists
-               (db-put-buffered 
-                (index-table sc)
+               (insert-key
+                (index sc)
                 secondary-buf primary-buf
                 :transaction (current-transaction sc))
                (reset-static-stream primary-buf)
@@ -166,101 +174,100 @@ serialized object schemas."))
               (last-key nil)
               (continue t))
           (loop while continue
-             do
-             (ensure-transaction (:store sc)
-               (with-btree-cursor (cursor bt)
-                 (if last-key 
-                     (cursor-set cursor last-key)
-                     (cursor-first cursor))
-                 (loop for i from 0 upto 1000
-                    while continue
-                    do
-                      (multiple-value-bind (valid? k v) (cursor-current cursor)
-                        (unless valid? (return-from populate t))
-                        (multiple-value-bind (index? skey) (funcall key-fn index k v)
-                          (when index? (index k skey))))
-                      (multiple-value-bind (valid? k v) (cursor-next cursor)
-                        (declare (ignore v))
-                        (if valid? 
-                            (setf last-key k)
-                            (setf continue nil))))))))))))
+                do
+                   (ensure-transaction (:store sc)
+                     (with-btree-cursor (cursor bt)
+                       (if last-key 
+                           (cursor-set cursor last-key)
+                           (cursor-first cursor))
+                       (loop for i from 0 upto 1000
+                             while continue
+                             do
+                                (multiple-value-bind (valid? k v) (cursor-current cursor)
+                                  (unless valid? (return-from populate t))
+                                  (multiple-value-bind (index? skey) (funcall key-fn index k v)
+                                    (when index? (index k skey))))
+                                (multiple-value-bind (valid? k v) (cursor-next cursor)
+                                  (declare (ignore v))
+                                  (if valid? 
+                                      (setf last-key k)
+                                      (setf continue nil))))))))))))
 
 
-(defmethod map-index-table (fn (bt rdb-indexed-btree))
-  (maphash fn (index-cache-table bt)))
+(defmethod map-index (fn (bt rdb-indexed-btree) &key)
+  (maphash fn (index-cache bt)))
 
 (defmethod get-index ((bt rdb-indexed-btree) index-name)
-  (gethash index-name (index-cache-table bt)))
+  (gethash index-name (index-cache bt)))
 
 (defmethod remove-index ((bt rdb-indexed-btree) index-name)
-  (remhash index-name (index-cache-table bt))
-  (let ((index-table (index-table bt)))
-    (remhash index-name index-table)
-    (setf (index-table bt) index-table)))
+  (remhash index-name (index-cache bt))
+  (let ((index (index bt)))
+    (remhash index-name index)
+    (setf (index bt) index)))
 
 (defmethod (setf get-value) (value key (bt rdb-indexed-btree))
-  "Set a key / value pair, and update secondary index-table."
+  "Set a key / value pair, and update secondary index."
   (let ((sc (get-store bt)))
-    (let ((index-table (index-cache-table bt)))
+    (let ((index (index-cache bt)))
       (with-static-streams ((key-buf) (value-buf) (secondary-buf))
         (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (ser value value-buf sc)
+        (serialize key sc :buffer key-buf)
+        (serialize value sc :buffer value-buf)
         (ensure-transaction (:store sc)
-          (db-put-buffered (btree sc)
-                           key-buf value-buf
-                           :transaction (current-transaction sc))
+          (insert-key (btree sc)
+                      key-buf value-buf
+                      :transaction (current-transaction sc))
           ;; Manually write value into secondary index
-          (loop for index being the hash-value of index-table
-             do
-             (multiple-value-bind (index? secondary-key)
-                 (funcall (key-fn index) index key value)
-               (when index?
-                 ;; Insert
-                 (write-oid (oid index) secondary-buf)
-                 (ser secondary-key secondary-buf sc)
-                 (db-put-buffered (index-table sc)
-                                  secondary-buf key-buf
-                                  :no-dup t
-                                  :transaction (current-transaction sc))
-                 (reset-static-stream secondary-buf))))
+          (loop for idx being the hash-value of index
+                do
+                   (multiple-value-bind (index? secondary-key)
+                       (funcall (key-fn idx) idx key value)
+                     (when index?
+                       ;; Insert
+                       (write-oid (oid idx) secondary-buf)
+                       (serialize secondary-key sc :buffer secondary-buf)
+                       (insert-key (index sc)
+                                   secondary-buf key-buf
+                                   :no-dup t
+                                   :transaction (current-transaction sc))
+                       (reset-static-stream secondary-buf))))
           value)))))
 
 (defmethod delete-key (key (bt rdb-indexed-btree) &key)
   "Remove a key / value pair, and update secondary index-table."
   (let ((sc (get-store bt)))
-      (with-static-streams ((key-buf) (secondary-buf))
-        (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (ensure-transaction (:store sc)
-          (let ((value (get-value key bt)))
-            (when value
-              (let ((index-table (index-cache-table bt)))
-                (loop 
-                   for index being the hash-value of index-table
-                   do
+    (with-static-streams ((key-buf) (secondary-buf))
+      (write-oid (oid bt) key-buf)
+      (serialize key sc :buffer key-buf)
+      (ensure-transaction (:store sc)
+        (let ((value (get-value key bt)))
+          (when value
+            (let ((index-table (index-cache bt)))
+              (loop 
+                for index being the hash-value of index-table
+                do
                    (multiple-value-bind (index? secondary-key)
                        (funcall (key-fn index) index key value)
                      (when index?
                        (write-oid (oid index) secondary-buf)
-                       (ser secondary-key secondary-buf sc)
+                       (serialize secondary-key sc :buffer secondary-buf)
                        ;; need to remove kv pairs with a cursor! --
                        ;; this is a C performance hack
-                       (db-delete-kv-buffered 
-                        (index-table (get-store bt))
-                        secondary-buf key-buf
+                       (delete-key
+                        (index (get-store bt))
+                        key-buf
+                        :buffer secondary-buf
                         :transaction (current-transaction sc))
                        (reset-static-stream secondary-buf))))
-                (db-delete-buffered (btree (get-store bt))
-                                    key-buf
-                                    :transaction (current-transaction sc)))))))))
+              (delete-key (btree (get-store bt))
+                          key-buf
+                          :transaction (current-transaction sc)))))))))
 
 ;; This also needs to build the correct kind of index, and 
 ;; be the correct kind of btree...
-
-(defclass rdb-btree-index (btree-index rdb-btree)
+(defsclass rdb-btree-index (btree-index rdb-btree)
   ()
-  (:metaclass stored-class)
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
 (defmethod get-value (key (bt rdb-btree-index))
@@ -268,10 +275,11 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (let ((buf (db-get-key-buffered 
-                  (index-table-assoc sc)
-                  key-buf value-buf
+      (serialize key sc :buffer key-buf)
+      (let ((buf (get-key
+                  (rindex sc)
+                  key-buf 
+                  :buffer value-buf
                   :transaction (current-transaction sc))))
         (if buf (values (deserialize buf sc) T)
             (values nil nil))))))
@@ -280,10 +288,11 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (let ((buf (db-get-key-buffered 
-                  (index-table sc)
-                  key-buf value-buf
+      (serialize key sc :buffer key-buf)
+      (let ((buf (get-key
+                  (index sc)
+                  key-buf 
+                  :buffer value-buf
                   :transaction (current-transaction sc))))
         (if buf 
             (let ((oid (read-oid buf)))
@@ -298,10 +307,10 @@ serialized object schemas."))
   "Make a cursor from a btree."
   (let ((sc (get-store bt)))
     (make-instance 'rdb-cursor 
-                   :btree bt
-                   :handle (db-cursor (btree sc)
-                                      :transaction (current-transaction sc))
-                   :oid (oid bt))))
+      :btree bt
+      :handle (db-cursor (btree sc)
+                         :transaction (current-transaction sc))
+      :oid (oid bt))))
 
 (defmethod cursor-close ((cursor rdb-cursor))
   (cursor-close (cursor-handle cursor))
@@ -309,11 +318,11 @@ serialized object schemas."))
 
 (defmethod cursor-duplicate ((cursor rdb-cursor))
   (make-instance (type-of cursor)
-                 :initialized-p (cursor-initialized-p cursor)
-                 :oid (cursor-oid cursor)
-                 :handle (cursor-duplicate 
-                          (cursor-handle cursor) 
-                          :position (cursor-initialized-p cursor))))
+    :initialized-p (cursor-initialized-p cursor)
+    :oid (cursor-oid cursor)
+    :handle (cursor-duplicate 
+             (cursor-handle cursor) 
+             :position (cursor-initialized-p cursor))))
 
 (defmethod cursor-current ((cursor rdb-cursor))
   (when (cursor-initialized-p cursor)
@@ -321,7 +330,7 @@ serialized object schemas."))
       (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (cursor-move-buffered (cursor-handle cursor) key-buf value-buf
-                                     :current t)
+                                  :current t)
           (if (and key (= (read-oid key) (cursor-oid cursor)))
               (progn (setf (cursor-initialized-p cursor) t)
                      (values t (deserialize key sc)
@@ -334,7 +343,7 @@ serialized object schemas."))
       (write-oid (cursor-oid cursor) key-buf)
       (multiple-value-bind (key val)
           (cursor-set-buffered (cursor-handle cursor) 
-                                  key-buf value-buf :set-range t)
+                               key-buf value-buf :set-range t)
         (if (and key (= (read-oid key) (cursor-oid cursor)))
             (progn (setf (cursor-initialized-p cursor) t)
                    (values t 
@@ -343,33 +352,33 @@ serialized object schemas."))
             (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-last ((cursor rdb-cursor))
-  "A fast cursor last, but a bit 'hackish' by exploiting oid ordering"
+  "A fast cursor last, but a bit 'hackish' by exploiting oid ordering."
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (value-buf))
-    ;; Go to the first element of the next btree
-    (write-oid (+ (cursor-oid cursor) 1) key-buf)
-    (if (cursor-set-buffered (cursor-handle cursor)
-                                key-buf value-buf :set-range t)
-        (progn (reset-static-stream key-buf)
-               (reset-static-stream value-buf)
-               (multiple-value-bind (key val)
-                   (cursor-move-buffered (cursor-handle cursor) 
-                                            key-buf value-buf :prev t)
-                 (if (and key (= (read-oid key) (cursor-oid cursor)))
-                     (progn
-                       (setf (cursor-initialized-p cursor) t)
-                       (values t (deserialize key sc)
+    (with-static-streams ((key-buf) (value-buf))
+      ;; Go to the first element of the next btree
+      (write-oid (+ (cursor-oid cursor) 1) key-buf)
+      (if (cursor-set-buffered (cursor-handle cursor)
+                               key-buf value-buf :set-range t)
+          (progn (reset-static-stream key-buf)
+                 (reset-static-stream value-buf)
+                 (multiple-value-bind (key val)
+                     (cursor-move-buffered (cursor-handle cursor) 
+                                           key-buf value-buf :prev t)
+                   (if (and key (= (read-oid key) (cursor-oid cursor)))
+                       (progn
+                         (setf (cursor-initialized-p cursor) t)
+                         (values t (deserialize key sc)
                                  (deserialize val sc)))
-                     (setf (cursor-initialized-p cursor) nil))))
-        (multiple-value-bind (key val)
-            (cursor-move-buffered (cursor-handle cursor) key-buf
-                                     value-buf :last t)
-          (if (and key (= (read-oid key) (cursor-oid cursor)))
-              (progn
-                (setf (cursor-initialized-p cursor) t)
-                (values t (deserialize key sc)
-                        (deserialize val sc )))
-              (setf (cursor-initialized-p cursor) nil)))))))
+                       (setf (cursor-initialized-p cursor) nil))))
+          (multiple-value-bind (key val)
+              (cursor-move-buffered (cursor-handle cursor) key-buf
+                                    value-buf :last t)
+            (if (and key (= (read-oid key) (cursor-oid cursor)))
+                (progn
+                  (setf (cursor-initialized-p cursor) t)
+                  (values t (deserialize key sc)
+                          (deserialize val sc )))
+                (setf (cursor-initialized-p cursor) nil)))))))
 
 (defmethod cursor-next ((cursor rdb-cursor))
   (if (cursor-initialized-p cursor)
@@ -378,12 +387,12 @@ serialized object schemas."))
           (multiple-value-bind (key val)
               (the (values (or null static-stream)
                            (or null static-stream))
-                (cursor-move-buffered (cursor-handle cursor) 
+                   (cursor-move-buffered (cursor-handle cursor) 
                                          key-buf value-buf :next t))
             (if (and key (= (read-oid key) (cursor-oid cursor)))
                 (the (values t t t)
-                  (values t (deserialize key sc)
-                          (deserialize val sc)))
+                     (values t (deserialize key sc)
+                             (deserialize val sc)))
                 (the null (setf (cursor-initialized-p cursor) nil))))))
       (the t (cursor-first cursor))))
 
@@ -393,7 +402,7 @@ serialized object schemas."))
         (with-static-streams ((key-buf) (value-buf))
           (multiple-value-bind (key val)
               (cursor-move-buffered (cursor-handle cursor)
-                                       key-buf value-buf :prev t)
+                                    key-buf value-buf :prev t)
             (if (and key (= (read-oid key) (cursor-oid cursor)))
                 (values t (deserialize key sc)
                         (deserialize val sc))
@@ -402,73 +411,73 @@ serialized object schemas."))
 
 (defmethod cursor-set ((cursor rdb-cursor) key)
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (value-buf))
-    (write-oid (cursor-oid cursor) key-buf)
-    (ser key key-buf sc)
-    (multiple-value-bind (k val)
-        (cursor-set-buffered (cursor-handle cursor)
-                             key-buf value-buf :set t)
-      (if k
-          (progn
-            (setf (cursor-initialized-p cursor) t)
-            (values t key (deserialize val sc)))
-          (setf (cursor-initialized-p cursor) nil))))))
+    (with-static-streams ((key-buf) (value-buf))
+      (write-oid (cursor-oid cursor) key-buf)
+      (serialize key sc :buffer key-buf)
+      (multiple-value-bind (k val)
+          (cursor-set-buffered (cursor-handle cursor)
+                               key-buf value-buf :set t)
+        (if k
+            (progn
+              (setf (cursor-initialized-p cursor) t)
+              (values t key (deserialize val sc)))
+            (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-set-range ((cursor rdb-cursor) key)
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (value-buf))
-    (write-oid (cursor-oid cursor) key-buf)
-    (ser key key-buf sc)
-    (multiple-value-bind (k val)
-        (cursor-set-buffered (cursor-handle cursor)
-                                key-buf value-buf :set-range t)
-      (if (and k (= (read-oid k) (cursor-oid cursor)))
-          (progn (setf (cursor-initialized-p cursor) t)
-                 (values t (deserialize k sc)
-                         (deserialize val sc)))
-          (setf (cursor-initialized-p cursor) nil))))))
+    (with-static-streams ((key-buf) (value-buf))
+      (write-oid (cursor-oid cursor) key-buf)
+      (serialize key sc :buffer key-buf)
+      (multiple-value-bind (k val)
+          (cursor-set-buffered (cursor-handle cursor)
+                               key-buf value-buf :set-range t)
+        (if (and k (= (read-oid k) (cursor-oid cursor)))
+            (progn (setf (cursor-initialized-p cursor) t)
+                   (values t (deserialize k sc)
+                           (deserialize val sc)))
+            (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-get-both ((cursor rdb-cursor) key value)
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (value-buf))
-    (write-oid (cursor-oid cursor) key-buf)
-    (ser key key-buf sc)
-    (ser value value-buf sc)
-    (multiple-value-bind (k v)
-        (cursor-get-both-buffered (cursor-handle cursor)
-                                     key-buf value-buf :get-both t)
-      (declare (ignore v))
-      (if k
-          (progn (setf (cursor-initialized-p cursor) t)
-                 (values t key value))
-          (setf (cursor-initialized-p cursor) nil))))))
+    (with-static-streams ((key-buf) (value-buf))
+      (write-oid (cursor-oid cursor) key-buf)
+      (serialize key sc :buffer key-buf)
+      (serialize value sc :buffer value-buf)
+      (multiple-value-bind (k v)
+          (cursor-get-both-buffered (cursor-handle cursor)
+                                    key-buf value-buf :get-both t)
+        (declare (ignore v))
+        (if k
+            (progn (setf (cursor-initialized-p cursor) t)
+                   (values t key value))
+            (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-get-both-range ((cursor rdb-cursor) key value)
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (value-buf))
-    (write-oid (cursor-oid cursor) key-buf)
-    (ser key key-buf sc)
-    (ser value value-buf sc)
-    (multiple-value-bind (k v)
-        (cursor-get-both-buffered (cursor-handle cursor)
-                                     key-buf value-buf :get-both-range t)
-      (if k
-          (progn (setf (cursor-initialized-p cursor) t)
-                 (values t key (deserialize v sc)))
-          (setf (cursor-initialized-p cursor) nil))))))
+    (with-static-streams ((key-buf) (value-buf))
+      (write-oid (cursor-oid cursor) key-buf)
+      (serialize key sc :buffer key-buf)
+      (serialize value sc :buffer value-buf)
+      (multiple-value-bind (k v)
+          (cursor-get-both-buffered (cursor-handle cursor)
+                                    key-buf value-buf :get-both-range t)
+        (if k
+            (progn (setf (cursor-initialized-p cursor) t)
+                   (values t key (deserialize v sc)))
+            (setf (cursor-initialized-p cursor) nil))))))
 
 (defmethod cursor-delete ((cursor rdb-cursor))
   (if (cursor-initialized-p cursor)
       (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
             (cursor-move-buffered (cursor-handle cursor) key-buf value-buf
-                                     :current t)
+                                  :current t)
           (declare (ignore val))
           (when (and key (= (read-oid key) (cursor-oid cursor)))
             ;; in case of a secondary index this should delete everything
             ;; as specified by the RDB docs.
             (delete-key (deserialize key (get-store (btree cursor)))
-                       (btree cursor)))
+                        (btree cursor)))
           (setf (cursor-initialized-p cursor) nil)))
       (error "Can't delete with uninitialized cursor!")))
 
@@ -482,7 +491,7 @@ serialized object schemas."))
             (with-static-streams ((key-buf) (value-buf))
               (multiple-value-bind (k v)
                   (cursor-move-buffered (cursor-handle cursor) key-buf 
-                                           value-buf :current t)
+                                        value-buf :current t)
                 (declare (ignore v))
                 (if (and k (= (read-oid k) (cursor-oid cursor)))
                     (progn
@@ -491,7 +500,7 @@ serialized object schemas."))
                       (reset-static-stream key-buf) (reset-static-stream value-buf)
                       (multiple-value-bind (k v)
                           (cursor-move-buffered (cursor-handle cursor) key-buf
-                                                   value-buf :next t)
+                                                value-buf :next t)
                         (if (and key (= (read-oid k) (cursor-oid cursor)))
                             (values t (deserialize k sc) (deserialize v sc))
                             (setf (cursor-initialized-p cursor) nil))))
@@ -499,7 +508,6 @@ serialized object schemas."))
           (error "Can't put with uninitialized cursor!"))))
 
 ;; Secondary cursors
-
 (defclass rdb-secondary-cursor (secondary-cursor rdb-cursor) ()
   (:documentation "Cursor for traversing rdb secondary index-table."))
 
@@ -507,10 +515,10 @@ serialized object schemas."))
   "Make a secondary-cursor from a secondary index."
   (let ((sc (get-store bt)))
     (make-instance 'rdb-secondary-cursor 
-                   :btree bt
-                   :handle (db-cursor (index-table-assoc sc)
-                                      :transaction (current-transaction sc))
-                   :oid (oid bt))))
+      :btree bt
+      :handle (db-cursor (rindex sc)
+                         :transaction (current-transaction sc))
+      :oid (oid bt))))
 
 (defmethod cursor-pcurrent ((cursor rdb-secondary-cursor))
   (when (cursor-initialized-p cursor)
@@ -537,50 +545,50 @@ serialized object schemas."))
       (if (and key (= (read-oid key) (cursor-oid cursor)))
           (progn (setf (cursor-initialized-p cursor) t)
                  (let ((sc (get-store (btree cursor))))
-                 (values t 
-                         (deserialize key sc)
-                         (deserialize val sc)
-                         (progn (read-oid pkey) (deserialize pkey sc)))))
+                   (values t 
+                           (deserialize key sc)
+                           (deserialize val sc)
+                           (progn (read-oid pkey) (deserialize pkey sc)))))
           (setf (cursor-initialized-p cursor) nil)))))
 
 ;; A bit of a hack.....
 (defmethod cursor-plast ((cursor rdb-secondary-cursor))
   (let ((sc (get-store (btree cursor))))
-  (with-static-streams ((key-buf) (pkey-buf) (value-buf))
-    (write-oid (+ (cursor-oid cursor) 1) key-buf)
-    (if (db-cursor-set-buffered (cursor-handle cursor) 
-                                key-buf value-buf :set-range t)    
-        (progn (reset-static-stream key-buf)
-               (reset-static-stream value-buf)
-               (multiple-value-bind (key pkey val)
-                   (db-cursor-pmove-buffered (cursor-handle cursor) key-buf 
-                                             pkey-buf value-buf :prev t)
-                 (if (and key (= (read-oid key) (cursor-oid cursor)))
-                     (progn
-                       (setf (cursor-initialized-p cursor) t)
-                       (values t 
-                               (deserialize key sc)
-                               (deserialize val sc)
-                               (progn (read-oid pkey) 
-                                      (deserialize pkey sc))))
-                     (setf (cursor-initialized-p cursor) nil))))
-        (multiple-value-bind (key pkey val)
-            (db-cursor-pmove-buffered (cursor-handle cursor) key-buf
-                                      pkey-buf value-buf :last t)
-          (if (and key (= (read-oid key) (cursor-oid cursor)))
-              (progn
-                (setf (cursor-initialized-p cursor) t)
-                (values t (deserialize key sc)
-                        (deserialize val sc)
-                        (progn (read-oid pkey) (deserialize pkey sc))))
-              (setf (cursor-initialized-p cursor) nil)))))))
+    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
+      (write-oid (+ (cursor-oid cursor) 1) key-buf)
+      (if (db-cursor-set-buffered (cursor-handle cursor) 
+                                  key-buf value-buf :set-range t)    
+          (progn (reset-static-stream key-buf)
+                 (reset-static-stream value-buf)
+                 (multiple-value-bind (key pkey val)
+                     (db-cursor-pmove-buffered (cursor-handle cursor) key-buf 
+                                               pkey-buf value-buf :prev t)
+                   (if (and key (= (read-oid key) (cursor-oid cursor)))
+                       (progn
+                         (setf (cursor-initialized-p cursor) t)
+                         (values t 
+                                 (deserialize key sc)
+                                 (deserialize val sc)
+                                 (progn (read-oid pkey) 
+                                        (deserialize pkey sc))))
+                       (setf (cursor-initialized-p cursor) nil))))
+          (multiple-value-bind (key pkey val)
+              (db-cursor-pmove-buffered (cursor-handle cursor) key-buf
+                                        pkey-buf value-buf :last t)
+            (if (and key (= (read-oid key) (cursor-oid cursor)))
+                (progn
+                  (setf (cursor-initialized-p cursor) t)
+                  (values t (deserialize key sc)
+                          (deserialize val sc)
+                          (progn (read-oid pkey) (deserialize pkey sc))))
+                (setf (cursor-initialized-p cursor) nil)))))))
 
 (defmethod cursor-pnext ((cursor rdb-secondary-cursor))
   (if (cursor-initialized-p cursor)
       (with-static-streams ((key-buf) (pkey-buf) (value-buf))
         (multiple-value-bind (key pkey val)
             (db-cursor-pmove-buffered (cursor-handle cursor) 
-                                     key-buf pkey-buf value-buf :next t)
+                                      key-buf pkey-buf value-buf :next t)
           (if (and key (= (read-oid key) (cursor-oid cursor)))
               (let ((sc (get-store (btree cursor))))
                 (values t (deserialize key sc)
@@ -607,7 +615,7 @@ serialized object schemas."))
   (let ((sc (get-store (btree cursor))))
     (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (write-oid (cursor-oid cursor) key-buf)
-      (ser key key-buf sc)
+      (serialize key sc :buffer key-buf)
       (multiple-value-bind (k pkey val)
           (db-cursor-pset-buffered (cursor-handle cursor)
                                    key-buf pkey-buf value-buf :set t)
@@ -623,7 +631,7 @@ serialized object schemas."))
   (let ((sc (get-store (btree cursor))))
     (with-static-streams ((key-buf) (pkey-buf) (value-buf))
       (write-oid (cursor-oid cursor) key-buf)
-      (ser key key-buf sc)
+      (serialize key sc :buffer key-buf)
       (multiple-value-bind (k pkey val)
           (db-cursor-pset-buffered (cursor-handle cursor)
                                    key-buf pkey-buf value-buf :set-range t)
@@ -639,9 +647,9 @@ serialized object schemas."))
     (let ((primary-oid (oid (primary (btree cursor))))
           (sc (get-store (btree cursor))))
       (write-oid (cursor-oid cursor) key-buf)
-      (ser key key-buf sc)
+      (serialize key sc :buffer key-buf)
       (write-oid primary-oid pkey-buf)
-      (ser pkey pkey-buf sc)
+      (serialize pkey sc :buffer pkey-buf)
       (multiple-value-bind (k p val)
           (db-cursor-pget-both-buffered (cursor-handle cursor)
                                         key-buf pkey-buf value-buf :get-both t)
@@ -656,9 +664,9 @@ serialized object schemas."))
     (let ((primary-oid (oid (primary (btree cursor))))
           (sc (get-store (btree cursor))))
       (write-oid (cursor-oid cursor) key-buf)
-      (ser key key-buf sc)
+      (serialize key sc :buffer key-buf)
       (write-oid primary-oid pkey-buf)
-      (ser pkey pkey-buf sc)
+      (serialize pkey sc :buffer pkey-buf)
       (multiple-value-bind (k p val)
           (db-cursor-pget-both-buffered (cursor-handle cursor) key-buf 
                                         pkey-buf value-buf :get-both-range t)
@@ -678,9 +686,9 @@ serialized object schemas."))
           (declare (ignore val))
           (when (and key (= (read-oid key) (cursor-oid cursor))
                      (= (read-oid pkey) (oid (primary
-                                                     (btree cursor)))))
+                                              (btree cursor)))))
             (delete-key (deserialize pkey (get-store (btree cursor)))
-                       (primary (btree cursor))))
+                        (primary (btree cursor))))
           (setf (cursor-initialized-p cursor) nil)))
       (error "Can't delete with uninitialized cursor!")))
 
@@ -711,10 +719,10 @@ serialized object schemas."))
   (if (cursor-initialized-p cursor)
       (with-static-streams ((key-buf) (value-buf))
         (multiple-value-bind (key val)
-          (the (values (or null static-stream) 
-                       (or null static-stream))
-            (db-cursor-move-buffered (cursor-handle cursor)
-                                     key-buf value-buf :prev-nodup t))
+            (the (values (or null static-stream) 
+                         (or null static-stream))
+                 (db-cursor-move-buffered (cursor-handle cursor)
+                                          key-buf value-buf :prev-nodup t))
           (if (and key (= (read-oid key) (cursor-oid cursor)))
               (values t (deserialize key (get-store (btree cursor))) 
                       (deserialize val (get-store (btree cursor))))
@@ -728,13 +736,13 @@ serialized object schemas."))
           (the (values (or null static-stream) 
                        (or null static-stream)
                        (or null static-stream))
-            (db-cursor-pmove-buffered (cursor-handle cursor)
-                                    key-buf pkey-buf value-buf :next-dup t))
+               (db-cursor-pmove-buffered (cursor-handle cursor)
+                                         key-buf pkey-buf value-buf :next-dup t))
         (if (and key (= (read-oid key) (cursor-oid cursor)))
             (the (values t t t t)
-              (values t (deserialize key (get-store (btree cursor)))
-                      (deserialize val (get-store (btree cursor)))
-                      (progn (read-oid pkey) (deserialize pkey (get-store (btree cursor))))))
+                 (values t (deserialize key (get-store (btree cursor)))
+                         (deserialize val (get-store (btree cursor)))
+                         (progn (read-oid pkey) (deserialize pkey (get-store (btree cursor))))))
             (the null (setf (cursor-initialized-p cursor) nil)))))))
 
 (defmethod cursor-pnext-nodup ((cursor rdb-secondary-cursor))
@@ -768,7 +776,7 @@ serialized object schemas."))
 ;; Duplicated btrees
 
 (defclass rdb-dup-btree (dup-btree rdb-btree) ()
-;;  (:metaclass persistent-metaclass)
+  ;;  (:metaclass persistent-metaclass)
   (:documentation "A RocksDB implementation of the duplicate btree"))
 
 (defmethod build-dup-btree ((sc rdb-store))
@@ -778,10 +786,11 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (let ((buf (db-get-key-buffered (dup-btrees sc)
-                                      key-buf value-buf
-                                      :transaction (current-transaction sc))))
+      (serialize key sc :buffer key-buf)
+      (let ((buf (get-key (btree sc)
+                          key-buf 
+                          :buffer value-buf
+                          :transaction (current-transaction sc))))
         (if buf (values (deserialize buf sc) T)
             (values nil nil))))))
 
@@ -789,10 +798,11 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (with-static-streams ((key-buf) (value-buf))
       (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (let ((buf (db-get-key-buffered 
-                  (dup-btrees sc)
-                  key-buf value-buf
+      (serialize key sc :buffer key-buf)
+      (let ((buf (get-key
+                  (btree sc)
+                  key-buf 
+                  :buffer value-buf
                   :transaction (current-transaction sc))))
         (if buf t
             nil)))))
@@ -800,23 +810,23 @@ serialized object schemas."))
 ;; This is the only difference with the rdb-btree -- I think that means 
 ;; the other methods can be removed.
 (defmethod (setf get-value) (value key (bt rdb-dup-btree))
-    (let ((sc (get-store bt)))
-      (with-static-streams ((key-buf) (value-buf))
-        (write-oid (oid bt) key-buf)
-        (ser key key-buf sc)
-        (ser value value-buf sc)
-        (db-put-buffered (dup-btrees sc)
-                         key-buf value-buf
-                         :transaction (current-transaction sc)
-                         :no-dup t)))
-    value)
+  (let ((sc (get-store bt)))
+    (with-static-streams ((key-buf) (value-buf))
+      (write-oid (oid bt) key-buf)
+      (serialize key sc :buffer key-buf)
+      (serialize value sc :buffer value-buf)
+      (db-put-buffered (btree sc)
+                       key-buf value-buf
+                       :transaction (current-transaction sc)
+                       :no-dup t)))
+  value)
 
 (defmethod delete-key (key (bt rdb-dup-btree) &key)
   (let ((sc (get-store bt)) )
     (with-static-stream (key-buf)
       (write-oid (oid bt) key-buf)
-      (ser key key-buf sc)
-      (db-delete-buffered (dup-btrees sc) key-buf 
+      (serialize key sc :buffer key-buf)
+      (db-delete-buffered (btree sc) key-buf 
                           :transaction (current-transaction sc)))))
 
 (defclass rdb-dup-cursor (rdb-cursor) ()
@@ -826,10 +836,9 @@ serialized object schemas."))
   "Make a secondary-cursor from a secondary index."
   (let ((sc (get-store bt)))
     (make-instance 'rdb-dup-cursor
-                   :btree bt
-                   :handle (db-cursor (dup-btrees sc)
-                                      :transaction (current-transaction sc))
-                   :oid (oid bt))))
+      :btree bt
+      :handle (db-cursor (btree sc) :transaction (current-transaction sc))
+      :oid (oid bt))))
 
 (defmethod cursor-next-nodup ((cursor rdb-dup-cursor))
   (if (cursor-initialized-p cursor)

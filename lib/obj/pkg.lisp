@@ -757,6 +757,7 @@
    #:drop-btree
    #:make-indexed-btree
    #:make-btree
+   #:dup-btree
    #:build-indexed-btree
    #:indexed-btree
    #:build-btree
@@ -807,7 +808,8 @@
    #:print-btree-key-and-type
    #:dump-btree
    #:print-btree-entry
-   #:with-btree-cursor))
+   #:with-btree-cursor
+   #:make-dup-btree))
 
 (defpkg :obj/secret
   (:nicknames :secret)
@@ -865,7 +867,7 @@
 
 (defpkg :obj/store
   (:nicknames :store)
-  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor)
+  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor :cache)
   (:export
    #:store
    #:next-oid

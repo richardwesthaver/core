@@ -7,8 +7,6 @@
    :box :vc :syn
    :rt)
   :components ((:file "core"))
-  :build-pathname "core-source"
-  :build-operation monolithic-concatenate-source-op
   :in-order-to ((test-op (test-op "core/tests"))))
 
 (defsystem :core/tests
@@ -22,17 +20,3 @@
                :dsp/tests :cry/tests :io/tests :net/tests 
                :vc/tests :cli/tests :q/tests)
   :perform (test-op (o c) (symbol-call :rt :run-all-tests)))
-
-(defsystem :core/bench
-  :depends-on (:core)
-  :components ((:module "bench"
-                :components ((:file "pkg")
-                             (:file "lan-party")
-                             (:module "tpc-h"
-                              :components
-                              ((:file "pkg")
-                               (:file "dbgen")
-                               (:file "tpc-h")))
-                             (:file "bench"))))
-  :build-pathname "bench"
-  :build-operation monolithic-compile-bundle-op)

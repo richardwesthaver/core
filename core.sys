@@ -21,16 +21,4 @@
     :zstd/tests :uring/tests :blake3/tests
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
-    :vc/tests :cli/tests :q/tests))
-  (:bench
-   :components
-   ((:mod "bench"
-     :components 
-     ((:pkg "pkg")
-      (:file "lan-party")
-      (:mod "tpc-h"
-       :components
-       ((:pkg "pkg")
-        (:file "dbgen")
-        (:file "tpc-h")))
-      (:file "bench")))))))
+    :vc/tests :cli/tests :q/tests))))

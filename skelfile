@@ -207,11 +207,10 @@
  (emacs ()
   (:install ()
    (flet ((el-write (in out)
-           (let* ((fn (file-namestring in)))
-            (std:with-open-files
-             ((in in :direction :input)
-              (out out :direction :output :if-exists :supersede))
-             (std:copy-stream in out :finish-output t)))))
+           (std:with-open-files
+            ((in in :direction :input)
+             (out out :direction :output :if-exists :supersede))
+            (std:copy-stream in out :finish-output t))))
     (let ((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
           (config (directory "emacs/*.el"))
           (lib (directory "emacs/lib/*.el")))
@@ -288,7 +287,7 @@
     do (sb-ext:run-program (find-exe "install") `("-C" "-m" "755" ,f ,d) :output t))))
  (syms.sxp () 
   (with-open-file (f "syms.sxp" 
-                   :direction :output 
+                   :direction :output
                    :if-exists :supersede
                    :if-does-not-exist :create)
    (dolist (s (list-all-symbols))
