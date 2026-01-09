@@ -139,11 +139,11 @@
     :initarg :units-per-char
     :accessor units-per-char))
   (:default-initargs
-   :total nil
+   :total 0
    :progress-char-index 1
    :units-per-char (floor (expt 1024 2) 50)))
 
-(defmethod update-progress :after ((progress-bar uncertain-size-progress-bar)
+(defmethod update-progress :before ((progress-bar uncertain-size-progress-bar)
                                    unit-count)
   (incf (total progress-bar) unit-count))
 
@@ -191,8 +191,7 @@
   (let ((!old-bar (gensym)))
     `(let* ((,!old-bar *progress-bar*)
             (*progress-bar* (or ,!old-bar
-                                (when *progress-bar-enabled*
-                                  (make-progress-bar ,steps-count)))))
+                                (make-progress-bar ,steps-count))))
        (unless (eq ,!old-bar *progress-bar*)
          (fresh-line)
          (format t ,description ,@desc-args)
@@ -206,3 +205,6 @@
   `(if ,enabled 
        (with-progress-bar (,steps-count ,description ,@desc-args) ,@body)
        (progn ,@body)))
+
+(defmethod init ((self (eql :progress-bar)) &key)
+  (setq *progress-bar-enabled* t))

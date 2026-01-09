@@ -206,6 +206,7 @@
   (:nicknames :progress)
   (:export
    :update-progress
+   :update-progress-display
    :update!
    :with-progress-bar
    :*progress-bar*
