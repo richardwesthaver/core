@@ -599,32 +599,81 @@ at the end."
 ;; Note that SBCL has a notion of 'Type Annotations' - not to be confused with
 ;; this protocol.
 (defvar *annotation-table* (make-hash-table))
-(defvar *default-annotator-class* 'annotator)
 (defvar *annotations* nil
   "The currently active mapping of annotations.")
 (declaim (base-char *annotation-prefix*))
-(defvar *annotation-prefix* #\%)
+(defvar +annotation-prefix+ #\%)
+;; Note that these may be rebound by denotation functions
+(defvar *annotation-mod-left* #\()
+(defvar *annotation-mod-right* #\))
 
-(defun annotate (control-string &rest args)
-  "Annotate the CONTROL-STRING, returning a new string with all annotations
-substituted with their relevant expansions given ARGS.")
+(defun denotate (string &rest args)
+  "Denote the STRING, returning a new string with all annotations
+substituted with their relevant expansions given ARGS."
+    (with-output-to-string (output)
+      (with-input-from-string (input string)
 
-(defclass annotator ()
-  ((directives :initarg :directives :initform nil)))
+        ;; single pass on input
+        (loop for i below (length string)
+              for c = (read-char input nil)
+              while c
+              if (char= c +annotation-prefix+)
+              ;; check last 2 chars (TODO: fix at origin)
+              do (let ((l1 (char string (1- i)))
+                       (l2 (char string (- i 2))))
+                   (if (or (= i (length string))
+                           (and (char= #\~ l1) (not (char= #\~ l2)))) ; ~%
+                       (write-char c output)
+                       (let ((ch (read-char input nil)))
+                         (when ch
+                           (incf i)
+                           (cond
+                             ;; this is a default case
+                             ((char= ch +annotation-prefix+) (write-char ch output)) ;; %% = literal %
+                             ((char= ch *annotation-mod-left*) ;; mods
+                              (write-char ch output) 
+                              (incf i))
+                             (t (let ((fn (std/list:assoc-value *annotations* ch)))
+                                  (if fn 
+                                      (funcall fn *standard-output* (pop args) nil)
+                                      (error "No annotations found matching ~S" ch)))))))))
+              else do (write-char c output)))))
 
 (defmacro with-annotations (name &body body)
   "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
   `(let ((*annotations* (gethash ,name *annotation-table*)))
      ,@body))
 
-(defmacro define-annotator (name form &key (class '*default-annotator-class*))
-  `(setf (gethash ,name *annotation-table*)
-         (make-instance ,class :directives ,form)))
+(defun make-annotations (name form)
+  (setf (gethash name *annotation-table*) form))
 
-(defmacro defannotation (opts args &body body)
-  "Define a new annotation function. OPTS may be a BASE-CHAR in which case it is
-bound in the current ANNOTATOR, or it can be a list of two arguments where the
+(defmacro defnotation (opts (stream arg mods) &body body)
+  "Define a new denotation function. OPTS may be a BASE-CHAR in which case it is
+bound in the current alist of ANNOTATIONS, or it can be a list of two arguments where the
 car is the name of the annotator to bind the associated character in.
 
-ARGS and BODY are identical to DEFUN, the lambda-list is the same as for
-formatter functions and the return-type must be a format string or function.")
+The lambda-list is similar to formatter functions and the return-type must be
+a string.
+
+The following three arguments are required:
+
+- STREAM: the string output stream being printed to.
+
+- ARG: the next argument to be annotated or nil.
+
+- MODS: the list of modifiers applied to the input annotations or
+  nil. Modifiers are always specified after the +ANNOTATION-PREFIX+ as a list
+  starting with *ANNOTATION-MOD-LEFT* where the car is the associated notation
+  character and the cdr are the mods passed directly to the notation function,
+  followed by *ANNOTATION-MOD-RIGHT*."
+  (check-type opts (or character cons))
+  (with-gensyms (ann char)
+    `(let ((,ann ,(if (listp opts) (gethash (car opts) *annotation-table* *annotations*)
+                      *annotations*))
+           (,char ,(if (listp opts) (second opts) (character opts))))
+       (setf (std/list:assoc-value ,ann ,char :test 'eq)
+             (lambda (,stream ,arg ,mods) ,@body)))))
+                                        
+;; (defnotation #\c (a b c) nil)
+
+;; (defun dformat (output string &rest args))
