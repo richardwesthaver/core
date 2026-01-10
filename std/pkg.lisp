@@ -371,7 +371,7 @@
    :type-id :simple-type-id))
 
 (defpkg :std/string
-  (:use :cl :std/sym)
+  (:use :cl :std/sym :std/list)
   (:use-reexport :sb-unicode)
   (:import-from :std/named-readtables :parse-body)
   (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
@@ -400,11 +400,12 @@
    :ascii-istring=
    :*annotations*
    :*annotation-table*
-   :*default-annotator-class*
-   :annotator
-   :define-annotator
+   :make-annotations
    :with-annotations
-   :annotate))
+   :defnotation
+   :aformat
+   :expand-annotated-string
+   :expand-annotation))
 
 (defpkg :std/num
   (:use :cl)

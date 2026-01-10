@@ -607,37 +607,48 @@ at the end."
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))
 
-(defun denotate (string &rest args)
-  "Denote the STRING, returning a new string with all annotations
-substituted with their relevant expansions given ARGS."
-    (with-output-to-string (output)
-      (with-input-from-string (input string)
+(defun expand-annotation (char output args mods)
+  (let ((fn (assoc-value *annotations* char)))
+    (if fn
+        (funcall fn output args mods)
+        (error "No annotations found matching ~S" char))))
 
-        ;; single pass on input
-        (loop for i below (length string)
-              for c = (read-char input nil)
-              while c
-              if (char= c +annotation-prefix+)
-              ;; check last 2 chars (TODO: fix at origin)
-              do (let ((l1 (char string (1- i)))
-                       (l2 (char string (- i 2))))
-                   (if (or (= i (length string))
-                           (and (char= #\~ l1) (not (char= #\~ l2)))) ; ~%
-                       (write-char c output)
-                       (let ((ch (read-char input nil)))
-                         (when ch
-                           (incf i)
-                           (cond
-                             ;; this is a default case
-                             ((char= ch +annotation-prefix+) (write-char ch output)) ;; %% = literal %
-                             ((char= ch *annotation-mod-left*) ;; mods
-                              (write-char ch output) 
-                              (incf i))
-                             (t (let ((fn (std/list:assoc-value *annotations* ch)))
-                                  (if fn 
-                                      (funcall fn *standard-output* (pop args) nil)
-                                      (error "No annotations found matching ~S" ch)))))))))
-              else do (write-char c output)))))
+;; going with the sane name suggestion by wohonajax
+
+(defun expand-annotated-string (string &rest args)
+  "Expand the annotated STRING, returning a new string with all annotations
+substituted with their relevant expansions given ARGS."
+  (let ((rargs args))
+    (values
+     (with-output-to-string (output)
+       ;; single pass on input
+       (loop for i below (length string)
+             for c = (char string i)
+             if (char= c +annotation-prefix+)
+             ;; check last 2 chars
+             do (if (or (= i (length string)) ; EOS
+                        (and (>= i 2) ; ~%
+                             (char= #\~ (char string (1- i))) 
+                             (not (char= #\~ (char string (- i 2))))))
+                    (write-char c output)
+                    ;; read the dispatch character
+                    (let ((ch (char string (incf i))))
+                      (when ch
+                        (cond
+                          ((char= ch +annotation-prefix+) (write-char ch output)) ; literal %
+                          ((char= ch *annotation-mod-left*) ; mods
+                           (let ((ri (position *annotation-mod-right* string :start i :test 'char=)))
+                             (assert (and ri (> ri (1+ i))))
+                             (setf rargs
+                                   (expand-annotation ; dispatch
+                                    (char string (1+ i)) 
+                                    output rargs
+                                    (cdr (read-from-string (subseq string i (1+ ri)))))
+                                   i ri)))
+                          ;; default dispatch
+                          (t (setf rargs (expand-annotation ch output rargs nil)))))))
+             else do (write-char c output)))
+     rargs)))
 
 (defmacro with-annotations (name &body body)
   "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
@@ -647,19 +658,18 @@ substituted with their relevant expansions given ARGS."
 (defun make-annotations (name form)
   (setf (gethash name *annotation-table*) form))
 
-(defmacro defnotation (opts (stream arg mods) &body body)
-  "Define a new denotation function. OPTS may be a BASE-CHAR in which case it is
+(defmacro defnotation (opts (stream args mods) &body body)
+  "Define a new 'notation function'. OPTS may be a BASE-CHAR in which case it is
 bound in the current alist of ANNOTATIONS, or it can be a list of two arguments where the
 car is the name of the annotator to bind the associated character in.
-
-The lambda-list is similar to formatter functions and the return-type must be
-a string.
 
 The following three arguments are required:
 
 - STREAM: the string output stream being printed to.
 
-- ARG: the next argument to be annotated or nil.
+- ARGS: A list containing the remaining arguments to be processed. This list
+  is intended to be modified in BODY and is implicitly returned as the only
+  return value.
 
 - MODS: the list of modifiers applied to the input annotations or
   nil. Modifiers are always specified after the +ANNOTATION-PREFIX+ as a list
@@ -667,13 +677,20 @@ The following three arguments are required:
   character and the cdr are the mods passed directly to the notation function,
   followed by *ANNOTATION-MOD-RIGHT*."
   (check-type opts (or character cons))
-  (with-gensyms (ann char)
-    `(let ((,ann ,(if (listp opts) (gethash (car opts) *annotation-table* *annotations*)
-                      *annotations*))
-           (,char ,(if (listp opts) (second opts) (character opts))))
-       (setf (std/list:assoc-value ,ann ,char :test 'eq)
-             (lambda (,stream ,arg ,mods) ,@body)))))
-                                        
-;; (defnotation #\c (a b c) nil)
+  `(setf (assoc-value 
+          ,(if (listp opts) 
+               `(gethash ,(car opts) *annotation-table* *annotations*)
+               '*annotations*)
+          ,(if (listp opts) (second opts) (character opts))
+          :test 'eq)
+         (lambda (,stream ,args ,mods)
+           (declare (ignorable ,stream ,mods))
+           ,@body
+           ,args)))
 
-;; (defun dformat (output string &rest args))
+(defun aformat (output string &rest args)
+  "Like FORMAT but expand all annotations in STRING before expanding format
+  designators. Annotations consume arguments from ARGS and the remaining
+  elements are passed to FORMAT."
+  (multiple-value-bind (str fargs) (apply 'expand-annotated-string string args)
+    (apply 'format output str fargs)))
