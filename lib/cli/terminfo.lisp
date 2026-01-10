@@ -3,7 +3,7 @@
 ;; 
 
 ;; Copyright 2001 Paul Foley (mycroft@actrix.gen.nz)
-;;
+
 ;; Permission is hereby granted, free of charge, to any person obtaining
 ;; a copy of this Software to deal in the Software without restriction,
 ;; including without limitation the rights to use, copy, modify, merge,
@@ -11,7 +11,7 @@
 ;; and to permit persons to whom the Software is furnished to do so,
 ;; provided that the above copyright notice and this permission notice
 ;; are included in all copies or substantial portions of the Software.
-;;
+
 ;; THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
 ;; OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
 ;; WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -24,6 +24,8 @@
 ;; (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
 ;; USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 ;; DAMAGE.
+
+;;; Code:
 (in-package :cli/term)
 
 (defvar *terminfo-directories* '("/etc/terminfo/"
@@ -40,19 +42,17 @@ is set any time set-terminal is called.")
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *capabilities* (make-hash-table :size 494)))
 
-(flet ((required-argument ()
-	 (error "A required argument was not supplied.")))
-  (defstruct (terminfo
-	       (:print-function
-		(lambda (object stream depth)
-		  (declare (ignore depth))
-		  (print-unreadable-object (object stream :type t :identity t)
-		    (format stream "~A" (first (terminfo-names object)))))))
-    (number-format (required-argument) :type (member :16-bit :32-bit))
-    (names (required-argument) :type list :read-only t)
-    (booleans (required-argument) :type (simple-array (member t nil) (*)))
-    (numbers (required-argument) :type (simple-array (signed-byte 32) (*)))
-    (strings (required-argument) :type (simple-array t (*)))))
+(defstruct (terminfo
+	    (:print-function
+	     (lambda (object stream depth)
+	       (declare (ignore depth))
+	       (print-unreadable-object (object stream :type t :identity t)
+		 (format stream "~A" (first (terminfo-names object)))))))
+  (number-format (required-argument :number-format) :type (member :16-bit :32-bit))
+  (names (required-argument :names) :type list :read-only t)
+  (booleans (required-argument :booleans) :type (simple-array (member t nil) (*)))
+  (numbers (required-argument :numbers) :type (simple-array (signed-byte 32) (*)))
+  (strings (required-argument :strings) :type (simple-array t (*))))
 
 (defun %capability (name terminfo)
   (let ((whatsit (gethash name *capabilities*)))
@@ -652,8 +652,8 @@ that calls the capability from *terminfo*."
 
 (defun load-terminfo (name)
   (let ((name (concatenate 'string #-darwin (string (char name 0))
-                           #+darwin (format nil "~X" (char-code (char name 0)))
-			   "/" name))
+                                   #+darwin (format nil "~X" (char-code (char name 0)))
+			           "/" name))
         (number-format nil))
     (dolist (path (list* (merge-pathnames
                           (make-pathname :directory '(:relative ".terminfo"))
@@ -718,7 +718,7 @@ that calls the capability from *terminfo*."
 
 (defun xform (value format flags width precision)
   (let ((temp (make-array 8 :element-type 'character :fill-pointer 0
-			  :adjustable t)))
+			    :adjustable t)))
     (flet ((shift (n c sign)
 	     (let ((len (length temp)) (s 0))
 	       (when (and sign (> len 0) (char= (char temp 0) #\-))
@@ -764,6 +764,7 @@ that calls the capability from *terminfo*."
 	    ((char= c #\;) (when (minusp (decf level)) (return t)))
 	    ((and flag (char= c #\e) (= level 0)) (return t))))))
 
+;; ref: https://linux.die.net/man/3/tparm
 (defun tparm (string &rest args)
   "Return the string representing the command and arguments."
   (when (null string) (return-from tparm ""))
@@ -771,10 +772,10 @@ that calls the capability from *terminfo*."
     (with-input-from-string (in string)
       (do ((stack '()) (flags 0) (width 0) (precision 0) (number 0)
 	   (dvars (make-array 26 :element-type '(unsigned-byte 8)
-			      :initial-element 0))
+			         :initial-element 0))
 	   (svars (load-time-value
 		   (make-array 26 :element-type '(unsigned-byte 8)
-			       :initial-element 0)))
+			          :initial-element 0)))
 	   (c (read-char in nil) (read-char in nil)))
 	  ((null c))
 	(cond ((char= c #\%)
@@ -801,45 +802,45 @@ that calls the capability from *terminfo*."
 		    (#\{ (go state13))
 		    (#\l (push (length (pop stack)) stack) (go terminal))
 		    (#\* (push (* (pop stack) (pop stack)) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\/ (push (let ((n (pop stack))) (truncate (pop stack) n)) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\m (push (let ((n (pop stack))) (mod (pop stack) n))
 			       stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\& (push (logand (pop stack) (pop stack)) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\| (push (logior (pop stack) (pop stack)) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\^ (push (logxor (pop stack) (pop stack)) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\= (push (if (= (pop stack) (pop stack)) 1 0) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\> (push (if (<= (pop stack) (pop stack)) 1 0) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\< (push (if (>= (pop stack) (pop stack)) 1 0) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\A (push (if (or (zerop (pop stack))
 				       (zerop (pop stack)))
 				   0
 				   1)
 			       stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\O (push (if (and (zerop (pop stack))
 					(zerop (pop stack)))
 				   0
 				   1)
 			       stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\! (push (if (zerop (pop stack)) 1 0) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\~ (push (logand #xFF (lognot (pop stack))) stack)
-			 (go terminal))
+		     (go terminal))
 		    (#\i (when args
 			   (incf (first args))
 			   (when (cdr args)
 			     (incf (second args))))
-			 (go terminal))
+		     (go terminal))
 		    (#\? (go state14))
 		    (#\t (go state15))
 		    (#\e (go state16))
@@ -1062,6 +1063,7 @@ and t or nil for * which indicates a multiplier for lines affected."
               (incf start (1+ end))))
           (return (append (nreverse strings-and-delays)
                           (list (subseq string start))))))))
+
 ;; TI> (ti::strings-and-delays "A{3}$<10.5*>B{2}")
 ;; ("A{3}" #S(PADDING :TIME 10.5 :FORCE NIL :LINE-MULTIPLIER T) "B{2}")
 ;; TI> (ti::strings-and-delays "A{3}$<10.5*>B{2}$<5>c")
@@ -1074,9 +1076,9 @@ and t or nil for * which indicates a multiplier for lines affected."
 ;; ("A{3}")
 
 (defun print-padding (padding &key
-                                stream
-                                baud-rate (affected-lines 1)
-                                (terminfo *terminfo*))
+                              stream
+                              baud-rate (affected-lines 1)
+                              (terminfo *terminfo*))
   "Print a padding definition to the stream depending
 on the capability of the terminfo data. 
 
@@ -1123,22 +1125,22 @@ Keyword arguments are passed on to the executing function, and include:
              ,@keywords)))
 
 (defun %tputs (string &key
-                        (terminfo *terminfo*)
-                        (stream *terminal-io*)
-                        baud-rate
-                        (affected-lines 1))
-  "Print the control string to an output stream.  If stream is nil,
-a list of strings and delay times is returned.
-String must already have been operated upon by tparm if necessary."
+                      (terminfo *terminfo*)
+                      (stream *terminal-io*)
+                      baud-rate
+                      (affected-lines 1))
+  "Print the control string to an output stream. If stream is nil, a list of
+strings and delay times is returned. String must already have been operated
+upon by tparm if necessary."
   (declare (type fixnum affected-lines))
   (when string
     (let ((strings-and-delays (strings-and-delays string))
           (result ()))
       (dolist (item strings-and-delays (and (not stream) (nreverse result)))
         (let ((printed
-               (typecase item
-                 (padding (print-padding item :baud-rate baud-rate :stream stream :terminfo terminfo :affected-lines affected-lines))
-                 (string (if stream (princ item stream) item)))))
+                (typecase item
+                  (padding (print-padding item :baud-rate baud-rate :stream stream :terminfo terminfo :affected-lines affected-lines))
+                  (string (if stream (princ item stream) item)))))
           (unless stream
             (push printed result)))))))
 
@@ -1148,3 +1150,7 @@ the TERM environment variable."
   (setf *terminfo* (load-terminfo (or name
 				      (sb-ext:posix-getenv "TERM")
 				      "dumb"))))
+
+(defmethod init ((self (eql :terminfo)) &key name (color t))
+  (set-terminal name)
+  (when color (setq std:*print-color* (capability :max-colors))))

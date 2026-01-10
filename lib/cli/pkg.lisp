@@ -161,7 +161,7 @@
 
 (defpkg :cli/term
   (:nicknames :ti :terminfo :term)
-  (:use :cl :config)
+  (:use :cl :config :std)
   (:shadow :columns)
   (:import-from :std :winsize :+tiocgwinsz+)
   (:export

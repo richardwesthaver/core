@@ -130,15 +130,16 @@
    (info-stack :initform nil)
    (stream :initform t :initarg :stream :accessor stream-of)))
 
-;;; Printer
+;;; Code Printer
 
 ;; The PRINT-CODE and WRITE-CODE functions are defined here in addition to
 ;; several macros which may be used to define new lang-specific dispatch
 ;; tables, printer methods, and printer dispatch entries.
-(defvar *code-dispatch-table* (copy-pprint-dispatch *ast-dispatch-table*))
+(copy-printer :ast :code)
 
 (defun write-code (expr &rest args)
-  (apply 'write expr :pprint-dispatch *code-dispatch-table* args))
+  (with-printer :code
+    (apply 'write expr args)))
 
 (defun print-code (tree)
   (let ((pp (make-instance 'code-printer))

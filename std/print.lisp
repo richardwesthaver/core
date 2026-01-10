@@ -672,12 +672,8 @@ STYLE indicates the level of decoration to apply to the output:
        (setf (find-printer ,name) ,printer))))
 
 (defmacro with-printer (name &body body)
-  (let ((%previous-print-table *print-pprint-dispatch*))
-    `(progn
-       (setq *print-pprint-dispatch* (find-printer ,name))
-       ,@body
-       (unwind-protect (progn ,@body)
-         (setq *print-pprint-dispatch* ,%previous-print-table)))))
+  `(let ((*print-pprint-dispatch* (find-printer ,name)))
+     ,@body))
 
 (defun use-printer (name)
   (setq *print-pprint-dispatch* 
@@ -688,6 +684,10 @@ STYLE indicates the level of decoration to apply to the output:
 
 (defmacro in-printer (name)
   `(setf *print-pprint-dispatch* ,(or (find-printer name) (unknown-printer name))))
+
+(defun copy-printer (name1 name2)
+  "Copy the PPRINT-DISPATCH-TABLE designated by NAME1 to NAME2."
+  (setf (find-printer name2) (find-printer name1)))
 
 ;;; String Annotations
 ;; Note that SBCL has a notion of 'Type Annotations' - not to be confused with
@@ -730,19 +730,17 @@ substituted with their relevant expansions given ARGS."
                     ;; read the dispatch character
                     (let ((ch (char string (incf i))))
                       (when ch
-                        (cond
-                          ((char= ch +annotation-prefix+) (write-char ch output)) ; literal %
-                          ((char= ch *annotation-mod-left*) ; mods
-                           (let ((ri (position *annotation-mod-right* string :start i :test 'char=)))
-                             (assert (and ri (> ri (1+ i))))
-                             (setf rargs
-                                   (expand-annotation ; dispatch
-                                    (char string (1+ i)) 
-                                    output rargs
-                                    (cdr (read-from-string (subseq string i (1+ ri)))))
-                                   i ri)))
-                          ;; default dispatch
-                          (t (setf rargs (expand-annotation ch output rargs nil)))))))
+                        (if (char= ch *annotation-mod-left*) ;mods
+                            (let ((ri (position *annotation-mod-right* string :start i :test 'char=)))
+                              (assert (and ri (> ri (1+ i))))
+                              (setf rargs
+                                    (expand-annotation ; dispatch
+                                     (char string (1+ i)) 
+                                     output rargs
+                                     (cdr (read-from-string (subseq string i (1+ ri)))))
+                                    i ri))
+                            ;; default dispatch
+                            (setf rargs (expand-annotation ch output rargs nil))))))
              else do (write-char c output)))
      rargs)))
 
@@ -758,7 +756,7 @@ substituted with their relevant expansions given ARGS."
 (defun copy-annotations (name1 name2)
   (with-annotations name1 (save-annotations name2)))
 
-(defmacro defnotation (opts (stream args mods) &body body)
+(defmacro defnotation (opts (&optional stream args mods) &body body)
   "Define a new 'notation function'. OPTS may be a BASE-CHAR in which case it is
 bound in the current alist of ANNOTATIONS, or it can be a list of two arguments where the
 car is the name of the annotator to bind the associated character in.
@@ -777,16 +775,19 @@ The following three arguments are required:
   character and the cdr are the mods passed directly to the notation function,
   followed by *ANNOTATION-MOD-RIGHT*."
   (check-type opts (or character cons))
-  `(setf (assoc-value 
-          ,(if (listp opts) 
-               `(gethash ,(car opts) *annotation-table* *annotations*)
-               '*annotations*)
-          ,(if (listp opts) (second opts) (character opts))
-          :test 'eq)
-         (lambda (,stream ,args ,mods)
-           (declare (ignorable ,stream ,mods))
-           ,@body
-           ,args)))
+  (let ((%stream (or stream (gensym "STREAM")))
+        (%args (or args (gensym "ARGS")))
+        (%mods (or mods (gensym "MODS"))))
+    `(setf (assoc-value 
+            ,(if (listp opts) 
+                 `(gethash ,(car opts) *annotation-table* (save-annotations ,(car opts)))
+                 '*annotations*)
+            ,(eval (if (listp opts) (second opts) opts))
+            :test 'eq)
+           (lambda (,%stream ,%args ,%mods)
+             (declare (ignorable ,%stream ,%mods))
+             ,@body
+             ,%args))))
 
 (defun aformat (output string &rest args)
   "Like FORMAT but expand all annotations in STRING before expanding format
@@ -795,3 +796,12 @@ The following three arguments are required:
   (multiple-value-bind (str fargs) (apply 'expand-annotated-string string args)
     (apply 'format output str fargs)))
 
+;; Standard Annotations
+(defnotation (:std #\") (stream) (write-char #\" stream))
+(defnotation (:std +annotation-prefix+) (stream) (write-char +annotation-prefix+ stream))
+
+(defmethod init ((self (eql :annotations)) &key (name :std))
+  (setq *annotations* (gethash name *annotation-table*)))
+
+(defmethod reset ((self (eql :annotations)) &key)
+  (setq *annotations* nil))

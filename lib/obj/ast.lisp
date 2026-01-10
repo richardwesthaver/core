@@ -283,9 +283,10 @@ slot.")
 ;; ref: https://dl.acm.org/doi/pdf/10.1145/1039991.1039996
 
 ;;; Write
-(defvar *ast-dispatch-table* (copy-pprint-dispatch))
+(define-printer :ast)
+
 (defun pprint-ast (sexpr &rest args)
-  (apply 'write sexpr :pretty t :pprint-dispatch *ast-dispatch-table* args))
+  (with-printer :ast (apply 'write sexpr :pretty t args)))
 
 (defwith ast (self) (*ast* (ast (eval self))))
 
