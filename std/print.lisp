@@ -689,4 +689,109 @@ STYLE indicates the level of decoration to apply to the output:
 (defmacro in-printer (name)
   `(setf *print-pprint-dispatch* ,(or (find-printer name) (unknown-printer name))))
 
-;;; Annotations..?
+;;; String Annotations
+;; Note that SBCL has a notion of 'Type Annotations' - not to be confused with
+;; this protocol.
+(defvar *annotation-table* (make-hash-table))
+(defvar *annotations* nil
+  "The currently active mapping of annotations.")
+(declaim (base-char *annotation-prefix*))
+(defvar +annotation-prefix+ #\%)
+;; REVIEW 2026-01-10: should these be constant? may want to rebind in notation functions..
+(defvar *annotation-mod-left* #\()
+(defvar *annotation-mod-right* #\))
+
+(defun expand-annotation (char output args mods)
+  "Expand an annotation by looking up CHAR in *ANNOTATIONS* and calling it
+with OUTPUT ARGS MODS as the only arguments. A list which less than or equal
+to the length of ARGS is returned consisting of the remaining unconsumed
+arguments."
+  (let ((fn (assoc-value *annotations* char)))
+    (if fn
+        (funcall fn output args mods)
+        (error "No annotations found matching ~S" char))))
+
+(defun expand-annotated-string (string &rest args)
+  "Expand the annotated STRING, returning a new string with all annotations
+substituted with their relevant expansions given ARGS."
+  (let ((rargs args))
+    (values
+     (with-output-to-string (output)
+       ;; single pass on input
+       (loop for i below (length string)
+             for c = (char string i)
+             if (char= c +annotation-prefix+)
+             ;; check last 2 chars
+             do (if (or (= i (length string)) ; EOS
+                        (and (>= i 2) ; ~%
+                             (char= #\~ (char string (1- i))) 
+                             (not (char= #\~ (char string (- i 2))))))
+                    (write-char c output)
+                    ;; read the dispatch character
+                    (let ((ch (char string (incf i))))
+                      (when ch
+                        (cond
+                          ((char= ch +annotation-prefix+) (write-char ch output)) ; literal %
+                          ((char= ch *annotation-mod-left*) ; mods
+                           (let ((ri (position *annotation-mod-right* string :start i :test 'char=)))
+                             (assert (and ri (> ri (1+ i))))
+                             (setf rargs
+                                   (expand-annotation ; dispatch
+                                    (char string (1+ i)) 
+                                    output rargs
+                                    (cdr (read-from-string (subseq string i (1+ ri)))))
+                                   i ri)))
+                          ;; default dispatch
+                          (t (setf rargs (expand-annotation ch output rargs nil)))))))
+             else do (write-char c output)))
+     rargs)))
+
+(defmacro with-annotations (name &body body)
+  "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
+  `(let ((*annotations* (gethash ,name *annotation-table*)))
+     ,@body))
+
+(defun save-annotations (name)
+  "Set the value of NAME to *ANNOTATIONS* in *ANNOTATION-TABLE*."
+  (setf (gethash name *annotation-table*) *annotations*))
+
+(defun copy-annotations (name1 name2)
+  (with-annotations name1 (save-annotations name2)))
+
+(defmacro defnotation (opts (stream args mods) &body body)
+  "Define a new 'notation function'. OPTS may be a BASE-CHAR in which case it is
+bound in the current alist of ANNOTATIONS, or it can be a list of two arguments where the
+car is the name of the annotator to bind the associated character in.
+
+The following three arguments are required:
+
+- STREAM: the string output stream being printed to.
+
+- ARGS: A list containing the remaining arguments to be processed. This list
+  is intended to be modified in BODY and is implicitly returned as the only
+  return value.
+
+- MODS: the list of modifiers applied to the input annotations or
+  nil. Modifiers are always specified after the +ANNOTATION-PREFIX+ as a list
+  starting with *ANNOTATION-MOD-LEFT* where the car is the associated notation
+  character and the cdr are the mods passed directly to the notation function,
+  followed by *ANNOTATION-MOD-RIGHT*."
+  (check-type opts (or character cons))
+  `(setf (assoc-value 
+          ,(if (listp opts) 
+               `(gethash ,(car opts) *annotation-table* *annotations*)
+               '*annotations*)
+          ,(if (listp opts) (second opts) (character opts))
+          :test 'eq)
+         (lambda (,stream ,args ,mods)
+           (declare (ignorable ,stream ,mods))
+           ,@body
+           ,args)))
+
+(defun aformat (output string &rest args)
+  "Like FORMAT but expand all annotations in STRING before expanding format
+  designators. Annotations consume arguments from ARGS and the remaining
+  elements are passed to FORMAT."
+  (multiple-value-bind (str fargs) (apply 'expand-annotated-string string args)
+    (apply 'format output str fargs)))
+

@@ -397,15 +397,7 @@
    :nconcatf
    :char-range
    :ascii-ichar=
-   :ascii-istring=
-   :*annotations*
-   :*annotation-table*
-   :make-annotations
-   :with-annotations
-   :defnotation
-   :aformat
-   :expand-annotated-string
-   :expand-annotation))
+   :ascii-istring=))
 
 (defpkg :std/num
   (:use :cl)
@@ -1393,7 +1385,7 @@
 
 (defpkg :std/print
   (:use :cl :std/stream)
-  (:import-from :std/list :group :ensure-cons)
+  (:import-from :std/list :group :ensure-cons :assoc-value)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/rand :random-booleans)
   (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
@@ -1411,7 +1403,16 @@
    :smile :draw-one-in-chance :draw-chance :mumble
    :*mumble-timestamp* :deffmt :defprint :define-printer
    :*printer-table* :find-printer :with-printer :use-printer
-   :in-printer :*default-printer* :*print-color*))
+   :in-printer :*default-printer* :*print-color*
+   :*annotations*
+   :*annotation-table*
+   :with-annotations
+   :save-annotations
+   :copy-annotations
+   :defnotation
+   :aformat
+   :expand-annotated-string
+   :expand-annotation))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)
