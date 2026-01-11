@@ -696,7 +696,7 @@ STYLE indicates the level of decoration to apply to the output:
 (defvar *annotations* nil
   "The currently active mapping of annotations.")
 (declaim (base-char *annotation-prefix*))
-(defvar +annotation-prefix+ #\%)
+(defconstant +annotation-prefix+ #\%)
 ;; REVIEW 2026-01-10: should these be constant? may want to rebind in notation functions..
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))

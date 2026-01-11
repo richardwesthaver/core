@@ -1150,7 +1150,3 @@ the TERM environment variable."
   (setf *terminfo* (load-terminfo (or name
 				      (sb-ext:posix-getenv "TERM")
 				      "dumb"))))
-
-(defmethod init ((self (eql :terminfo)) &key name (color t))
-  (set-terminal name)
-  (when color (setq std:*print-color* (capability :max-colors))))

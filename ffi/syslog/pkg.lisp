@@ -5,6 +5,8 @@
 ;;; Code:
 (defpackage :syslog
   (:use :cl :std :sb-alien)
-  (:export :closelog :openlog :setlogmask :syslog))
-
-(in-package :syslog)
+  (:export 
+   :closelog :openlog :setlogmask :syslog 
+   :syslog-option :syslog-option*
+   :syslog-facility :syslog-facility*
+   :syslog-priority :syslog-priority*))

@@ -135,7 +135,8 @@
    :defhook
    :hook-value
    :add-hook
-   :remove-hook))
+   :remove-hook
+   :concat))
 
 (defpkg :std/condition
   (:use :cl)

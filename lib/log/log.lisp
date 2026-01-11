@@ -4,7 +4,7 @@
 (in-package :log)
 
 (eval-always
-  (defparameter *log-levels* (vector t :trace :debug :info :warn :error :fatal nil)))
+  (defparameter *log-levels* (vector :fatal :error :warn :info :debug :trace)))
 
 (defun ilevel (name)
   (position name *log-levels*))
@@ -59,6 +59,9 @@ function in which case it is used as the function value of
     (number (/ (get-real-time-since *log-timestamp*) #.internal-time-units-per-second))
     (t (/ (get-internal-real-time) #.internal-time-units-per-second))))
 
+(defun format-log-timestamp (ts)
+  (format-timestring nil ts :format *log-timestamp-format*))
+  
 (defmacro define-log-level (name pred &optional backtrace)
   "Define a log-level of NAME with PRED being the body of the predicate
 function 'NAME-P'."
@@ -134,15 +137,11 @@ function 'NAME-P'."
   (unless (typep level 'log-level-designator)
     (error "Level must be one of ~a" *log-levels*)))
 
-(defmethod initialize-instance :before ((message simple-log-message) &key tags)
-  (unless (every #'keywordp tags)
-    (error "Tags must be keywords")))
-
 (defvar *log-message-format* "~a [~4,a] ~{<~a>~}: ~a")
 
 (defmethod format-message (stream (message simple-log-message))
   (format stream *log-message-format*
-          (format-timestring nil (timestamp message) :format *log-timestamp-format*)
+          (format-log-timestamp (timestamp message))
           (level message)
           (tags message)
           (format-message nil (content message))))
@@ -161,7 +160,8 @@ function 'NAME-P'."
 (defun log-message* (level content &rest args)
   (%log-object (make-instance 'log-message 
                  :level level 
-                 :content (apply 'format nil content args))))
+                 ;; note use of aformat here
+                 :content (apply 'aformat nil content args))))
 
 (defgeneric log-object (level tags datum &rest args)
   (:method (level tags (datum string) &rest args)
@@ -178,7 +178,7 @@ function 'NAME-P'."
     (log-message level tags datum))
   (:method (level tags (datum condition) &rest args)
     (declare (ignore args))
-    (log-message level tags (princ-to-string datum) 
+    (log-message level tags (princ-to-string datum)
                  'condition-message :condition datum)))
 
 (defclass rotating-file-sink (file-sink)
@@ -246,7 +246,7 @@ function 'NAME-P'."
 
 (defmethod msg ((filter level-filter) (message message))
   (let ((level (level filter)))
-    (when (<= (ilevel level)
+    (when (>= (ilevel level)
               (ilevel (level message)))
       message)))
 
@@ -298,7 +298,7 @@ function 'NAME-P'."
    (queue :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue)
    (queue-back :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue-back)
    (queue-condition :initform (make-waitqueue :name "message-condition") :reader queue-condition)
-   (queue-lock :initform (make-mutex :name "message-lock") :reader queue-lock))
+   (lock :initform (make-mutex :name "message-lock") :reader lock))
   (:documentation "A class which implements logging functionality. An instance of this class may
 be designated as the 'global' logger by setting the value of *LOGGER*, or may
 be implemented for a specific application. Loggers are async-friendly and will
@@ -345,7 +345,7 @@ create their own dedicated thread when started."))
   self)
 
 (defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
-  `(with-mutex ((queue-lock ,logger))
+  `(with-mutex ((lock ,logger))
      ,@body))
 
 (defmacro with-logger (logger &body body)
@@ -355,7 +355,7 @@ create their own dedicated thread when started."))
 
 (defun logger-loop (self)
   (declare (logger self))
-  (let* ((lock (queue-lock self))
+  (let* ((lock (lock self))
          (condition (queue-condition self))
          (pipe (pipe self)))
     (grab-mutex lock)
@@ -432,5 +432,16 @@ first element is of type LOGGER, insert into that object instead."
               (log-message* :warn "Warning signalled: ~A" c))))
        ,@body)))
 
+;;; Utils
+;; levels used in WM: 1-5,7[1],10
+(defun dformat (ilevel fmt &rest args)
+  (let ((lvls #.(1- (length *log-levels*)))
+        (level (+ ilevel 2))) ;; always force the range to (:WARN[0] :INFO :DEBUG :TRACE)
+    (log-message (svref *log-levels* (if (> level lvls) lvls level)) `(:wm ,ilevel)
+                 (apply 'aformat nil fmt args))))
+
 ;;; DEFSYS Providers
 ;; (defprovider :logger (name &rest args))
+
+;;; Annotations
+(defnotation (:log #\t) (stream))

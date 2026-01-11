@@ -25,7 +25,6 @@
   (istype 'logger-fixture fx)
   (log-message :info '(:foo :bar) "this is a test"))
 
-;; TODO 2024-10-29: fix file loggers
 (deftest file-logger ()
   "Test a file-backed LOGGER."
   (with-fixture (tmp :tmp :file (tmpize-pathname "test.log"))
@@ -33,13 +32,15 @@
     (unwind-protect
          (with-logger fx
            (let ((tmpfile (path tmp)))
-             ;; (is *logger*)
+             (is *logger*)
              (log-pipe (make-instance 'file-sink :file tmpfile))
              (unless (started-p fx)
                (start fx))
-             (log-message :info '(:file :log) "test")
-             (sleep 1)
-             (is> 0 (file-size tmpfile))))
+             (log-message t '(:file :log) "test")
+             (grab-mutex (lock fx))
+             (condition-wait (log::queue-condition fx) (lock fx) :timeout 1)
+             (is> (file-size tmpfile) 0)
+             (release-mutex (lock fx))))
       (delete-file (path tmp))))))
 
 (deftest rotating-file-logger ()
@@ -52,9 +53,9 @@
           (log-pipe (make-instance 'rotating-file-sink :path tmpfile))
           (is (probe-file (file (aref (aref (pipe *logger*) 0) 0))))
           (log-message :info nil "rotating log test")
-          (log::rotate-file-sink (aref (aref (pipe *logger*) 0) 0))
+          (rotate-file-sink (aref (aref (pipe *logger*) 0) 0))
           (log-message :info nil "rotating test2")
-          (is> 0 (file-size (print (file (aref (aref (pipe *logger*) 0) 0)))))
+          (is< 0 (file-size (file (aref (aref (pipe *logger*) 0) 0))))
           (is (delete-file (file (aref (aref (pipe *logger*) 0) 0)))))))))
 
 (deftest simple-log ()
@@ -103,4 +104,4 @@
 
 (defmethod schema:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
 
-(deftest db-logger ())
+(deftest db-logger (:skip t))

@@ -49,6 +49,9 @@
   ((output :initarg :output :initform (make-synonym-stream '*standard-output*) :accessor output))
   (:documentation "A sink which outputs to a stream."))
 
+(defmethod sink ((self stream-sink))
+  (output self))
+
 (defclass file-sink (stream-sink)
   ((file :accessor file))
   (:default-initargs

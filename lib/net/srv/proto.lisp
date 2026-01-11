@@ -422,7 +422,7 @@ is called on the service in a separate supervisor thread."
    (request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type engine :accessor engine :initarg :engine)
-   ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed
+   ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed (probably)
    (timeout :type fixnum :initarg :timeout :accessor service-timeout)
    (logger :type service-logger :initarg :logger :reader logger)
    (socket :type (or null socket) :accessor socket :initarg :socket :initform nil)
