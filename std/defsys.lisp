@@ -709,6 +709,36 @@ to be a system which is pushed to the session queue before BODY."
      (unwind-protect (progn ,@body)
        (push-queue ,sym (system-session-tasks *system-session*)))))
 
+(defgeneric needed-in-image-p (task component)
+  (:documentation "Is the action of TASK on COMPONENT needed in the current image
+to be meaningful, or could it just as well have been done in another Lisp
+image?"))
+
+(defmethod needed-in-image-p ((o task) (c component))
+  ;; We presume that actions that modify the filesystem don't need be run
+  ;; in the current image if they have already been done in another,
+  ;; and can be run in another process (e.g. a fork),
+  ;; whereas those that don't are meant to side-effect the current image and can't.
+  (not (output-files o c)))
+
+(defgeneric output-files (task component)
+  (:documentation "Methods for this function return two values: a list of output files
+corresponding to this action, and a boolean indicating if they have already been subjected
+to relevant output translations and should not be further translated.
+
+Methods on PERFORM *must* call this function to determine where their outputs
+are to be located. They may rely on the order of the files to discriminate
+between outputs."))
+
+(defgeneric input-files (operation component)
+  (:documentation "A list of input files corresponding to this action.
+
+Methods on PERFORM *must* call this function to determine where their inputs
+are located. They may rely on the order of the files to discriminate between
+inputs."))
+
+;; mark-component-preloaded
+
 ;;; Jobs
 ;; System Jobs are effectively plans composed of system tasks
 (defkernel system-job (job system-task) ())
@@ -926,6 +956,7 @@ underlying object SELF remains unmodified."
       (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
             (slot-value self 'provide))
       self)))
+
 ;; (typecase x
 ;;   ;; symbols and strings use PROVIDE
 ;;   ((or symbol simple-string) (provide x) x)

@@ -13,19 +13,3 @@
 ;;; Code:
 (in-package :cli/clap/ast)
 
-;;  TODO 2023-09-12: Parsing restarts at the *cli-group-separator*
-;; if present, or stops at EOI.
-(defstruct (cli-node (:constructor make-cli-node (type form))) type form)
-
-(defstruct (cli-ast (:constructor make-cli-ast (ast))) ast)
-
-(defmethod ast ((self cli-ast))
-  (cli-ast-ast self))
-
-(defgeneric proc-args (self args))
-
-(defgeneric parse-args (self args &key &allow-other-keys)
-  (:documentation "Parse list of strings ARGS using SELF.
-
-A list of the same length as ARGS is returned containing 'cli-ast'
-objects: (OPT . (or char string)) (CMD . string) NIL"))

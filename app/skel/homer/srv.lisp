@@ -91,7 +91,7 @@ obj/srv:engine
     (:systemd (systemd-stop self args))
     (t)))
 
-(defmethod status ((self homer-service) &key)
+(defmethod state ((self homer-service))
   (case (slot-value self 'engine)
     (:systemd (systemd-status self))
     (t (describe self))))

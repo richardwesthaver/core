@@ -43,10 +43,10 @@
     (is (eq (make-shorty "test") #\t))
     (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
                 (make-cli-ast 
-                 (list (make-cli-node 'opt (find-short-opts #\f *cli*))
-                       (make-cli-node 'cmd (find-cmd "baz" *cli*))
-                       (make-cli-node 'opt (find-opts "bar" *cli*))
-                       (make-cli-node 'arg "fax")))))
+                 (list (cli-node 'opt (find-short-opts #\f *cli*))
+                       (cli-node 'cmd (find-cmd "baz" *cli*))
+                       (cli-node 'opt (find-opts "bar" *cli*))
+                       (cli-node 'arg "fax")))))
     (parse-args *cli* '("--bar" "baz" "-f" "yaks"))
     (is (stringp
          (with-output-to-string (s)

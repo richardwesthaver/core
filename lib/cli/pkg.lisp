@@ -54,7 +54,7 @@
    :parse-cli-lambda-list))
 
 (defpkg :cli/clap/proto
-  (:use :cl :std :log :sb-ext)
+  (:use :cl :std :log :sb-ext :ast)
   (:import-from :cli/clap/util :args)
   (:export :proc-args :clap-error :find-short-opts
    :find-cmd :find-opts :parse-args :print-help
@@ -67,17 +67,13 @@
    :clap-invalid-argument :activate-cmd
    :activate-opt :find-opt
    :cli-args :opts
-   :cmds))
-
-(defpkg :cli/clap/ast
-  (:use :cl :std :log :obj/ast)
-  (:export :cli-node :make-cli-node :cli-ast
-   :make-cli-ast :cli-node-type :cli-node-form))
+   :cmds :cli-node
+   :cli-node-type))
 
 (defpkg :cli/clap/obj
   (:use :cl :std :log
    :sb-ext :cli/clap/proto :cli/clap/macs :cli/clap/util
-   :cli/clap/vars :cli/clap/ast :cli/clap/util)
+   :cli/clap/vars :cli/clap/util)
   (:import-from :equiv :equiv)
   (:import-from :obj/ast :ast :form :*ast*)
   (:export :make-cli :define-cli

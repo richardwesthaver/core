@@ -51,7 +51,7 @@
 (defun %compose-flag-opt (o)
   (activate-opt o)
   (setf (cli-opt-val o) t)
-  (make-cli-node 'opt o))
+  (cli-node 'opt o))
 
 (defun %compose-flag-opts (&rest os)
   (let ((ret))
@@ -61,12 +61,12 @@
 (defun %compose-value-opt (o &optional val)
   (activate-opt o)
   (setf (cli-opt-val o) val)
-  (make-cli-node 'opt o))
+  (cli-node 'opt o))
 
 (defun %compose-keyword-opt (o val)
   (activate-opt o)
   (setf (cli-opt-val o) val)
-  (make-cli-node 'opt o))
+  (cli-node 'opt o))
 
 (defmethod initialize-instance :after ((self cli-opt) &key)
   (with-slots (name thunk) self
@@ -165,5 +165,5 @@
 (defmacro with-opt-restart-case (arg expression)
   "Bind restarts 'use-as-arg' and 'discard-arg' for duration of EXPRESSION."
   `(restart-case ,expression
-     (use-as-arg () () (make-cli-node 'arg ,arg))
+     (use-as-arg () () (cli-node 'arg ,arg))
      (discard-arg () () (setf ,arg nil))))

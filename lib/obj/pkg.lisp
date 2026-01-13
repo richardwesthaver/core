@@ -345,8 +345,7 @@
   (:nicknames :ast)
   (:use :cl :std :std/seq)
   (:export :ast 
-   :build-ast :load-ast 
-   :load-ast* :*ast*
+   :build-ast :load-ast
    :wrap :unwrap
    :unwrap-or :form
    :formp :unwrap-object
@@ -362,7 +361,8 @@
    :read-ast :with-ast :call-with-ast :invalid-ast
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error
-   :syntax-warning :syntax-condition))
+   :syntax-warning :syntax-condition
+   :*ast*))
 
 (defpkg :obj/config
   (:nicknames :config)

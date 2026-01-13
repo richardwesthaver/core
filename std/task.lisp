@@ -36,7 +36,9 @@
   (:documentation "Return the result associated with SELF."))
 
 (defgeneric tasks (self)
-  (:documentation "Return the tasks associated with SELF."))
+  (:documentation "Return the tasks associated with SELF.")
+  (:method ((self list)) self))
+
 (defgeneric results (self)
   (:documentation "Return the results associated with SELF."))
 
@@ -163,21 +165,48 @@ are scheduled and executed with the current *THREAD-POOL*."))
 (defclass plan () ()
   (:documentation "Base class for plan objects."))
 
-(defclass simple-plan (plan)
-  ((tasks :initform nil :accessor tasks))
-  (:documentation "A simple plan is a list of tasks executed sequentially."))
+(defgeneric record-dependency (plan task context)
+  (:documentation "Record a TASK on CONTEXT as a dependency in the current PLAN."))
 
-;; record-dependency
-;; needed-in-image-p
+(defgeneric task-done-p (task context)
+  (:documentation "Return a boolean which is NIL if the action must be performed (again)."))
 
 ;;;; conditions
 
+;;;; pressure
+;; inspired by ASDF:FORCING
+(defstruct pressure (performable t) parameters forced forced-not)
+
+(defgeneric pressure (self)
+  (:documentation "Return the pressure assigned to SELF.")
+  (:method ((self null)) (make-pressure)))
+
+(defgeneric task-forced-p (pressure task context)
+  (:documentation "Return non-nil if TASK is being forced given PRESSURE and CONTEXT.")
+  (:method ((pressure null) task context) nil))
+
+(defgeneric task-prevented-p (pressure task context)
+  (:documentation "Return non-nil if TASK is being forced to NOT happen given PRESSURE and
+CONTEXT. Takes precedence over TASK-FORCED-P.")
+  (:method ((pressure null) task context) nil))
+
+;;;; plan traversal
+(defclass plan-traversal (plan)
+  ((pressure :initform (make-pressure) :initarg :pressure :reader pressure)))
+(defclass simple-plan (plan-traversal)
+  ((tasks :initform nil :accessor tasks))
+  (:documentation "A simple plan is a list of tasks executed sequentially."))
+
+;; No need to record a dependency to build a full graph, just accumulate nodes in order.
+(defmethod record-dependency ((plan simple-plan) task component)
+  (values))
+
+(defgeneric mark-task-done (task context)
+  (:documentation "Mark a TASK on CONTEXT as having just been done."))
+
+;; compute-task-stamp?
+
 ;;;; status
-(defstruct status
-  (bits)
-  (stamp)
-  (group)
-  (index))
 
 ;; status bits
 (std:define-bitfield status-bits
@@ -185,6 +214,69 @@ are scheduled and executed with the current *THREAD-POOL*."))
   (keep boolean)
   (done boolean)
   (need boolean))
+
+(defstruct status
+  (bits 0 :type status-bits)
+  (stamp nil :type (or integer boolean))
+  (level 0 :type fixnum)
+  (index nil :type (or integer null)))
+
+;; taskstamp?
+(deftype timestamp () '(or real boolean))
+(defun timestamp< (x y)
+  (etypecase x
+    ((eql t) (not (eql y t)))
+    (real (etypecase y
+            ((eql t) nil)
+            (real (< x y))
+            (null t)))
+    (null nil)))
+(defun timestamps< (list) (loop :for y :in list :for x = nil :then y :always (timestamp< x y)))
+(defun timestamp*< (&rest list) (timestamps< list))
+(defun timestamp<= (x y) (not (timestamp< y x)))
+(defun earlier-timestamp (x y) (if (timestamp< x y) x y))
+(defun timestamps-earliest (list) (reduce 'earlier-timestamp list :initial-value nil))
+(defun earliest-timestamp (&rest list) (timestamps-earliest list))
+(defun later-timestamp (x y) (if (timestamp< x y) y x))
+(defun timestamps-latest (list) (reduce 'later-timestamp list :initial-value t))
+(defun latest-timestamp (&rest list) (timestamps-latest list))
+(define-modify-macro latest-timestamp-f (&rest timestamps) latest-timestamp)
+
+(defun status-keep-p (status)
+  (status-bits-keep (status-bits status)))
+(defun status-done-p (status)
+  (status-bits-done (status-bits status)))
+(defun status-need-p (status)
+  (status-bits-need (status-bits status)))
+
+(defun merge-status (status1 status2) ;; status-and
+  "Return the earliest status later than both status1 and status2"
+  (make-status
+   :bits (logand (status-bits status1) (status-bits status2))
+   :stamp (latest-timestamp (status-stamp status1) (status-stamp status2))
+   :level (min (status-level status1) (status-level status2))
+   :index (or (status-index status1) (status-index status2))))
+
+(defun mark-status-needed (status &optional (level 0))
+  "Return the same status but with the need bit set, for the given level"
+  (if (and (status-need-p status)
+           (>= (status-level status) level))
+      status
+      (progn
+        (make-status
+         :bits (make-status-bits :keep (status-bits-keep (status-bits status)) 
+                                 :done (status-bits-done (status-bits status))
+                                 :need t)
+         :level (max level (status-level status))
+         :stamp (status-stamp status)
+         :index (status-index status)))))
+
+(defgeneric status (plan task context)
+  (:documentation "Return the STATUS associated with TASK on CONTEXT in PLAN, or NIL if the task
+wasn't visited yet."))
+
+(defgeneric (setf status) (new plan task context)
+  (:documentation "Sets the STATUS associated with TASK on CONTEXT in PLAN."))
 
 ;;;; planner
 (defclass planner (scheduler) ())

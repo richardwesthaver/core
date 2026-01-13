@@ -121,11 +121,11 @@
    :skel-db-sink))
 
 (defpackage :skel/core/util
-  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :obj/ast)
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/int :ast)
   (:import-from :uiop/pathname :pathname-parent-directory-pathname)
   (:import-from :cli :find-exe)
   (:export
-   :init-skelrc :load-skelrc
+   :load-skelrc
    :init-skel
    :init-user-skelrc :load-user-skelrc
    :init-system-skelrc :load-system-skelrc

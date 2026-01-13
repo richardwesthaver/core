@@ -155,7 +155,7 @@ class and is used as a specialized EQL for DEFINE-CONSTANT."
 - INSTALL defaults to T which implies that the AST will be consumed before
   BODY. A nil value indicates that the AST will not be consumed and it is up
   to the user to provide a binding for the AST slot so that they may call
-  INSTALL-AST manually. Alternatively a special value :AFTER may be supplied
+  WRAP manually. Alternatively a special value :AFTER may be supplied
   which will delay installation until after BODY is evaluated.
 
  - RUN with a non-nil value will call DO-CMD on the CLI after evaluating BODY.
@@ -172,10 +172,10 @@ is bound to the parsed result of PROC-ARGS."
        (let ((*args* ,args)
              (*ast* (proc-args ,cli ,args)))
          ,@(when (eql install t)
-             `((install-ast *cli* *ast*)))
+             `((wrap *cli* *ast*)))
          (with-slots ,slots *cli*
            ,@body
-           ,@(when (eql install :after) '((install-ast *cli*)))
+           ,@(when (eql install :after) '((wrap *cli* *ast*)))
            ,@(when run '((do-cmd *cli*)))
            ,@(when exit '((sb-ext:exit))))))))
 
@@ -186,7 +186,6 @@ is bound to the parsed result of PROC-ARGS."
      ,@body))
 
 ;;; CLI Package Helpers
-
 (defun %package-cli (&optional (package *package*))
   (gethash (package-name package) *cli-package-table*))
 (defun (setf %package-cli) (new &optional (package *package*))

@@ -119,6 +119,7 @@ example."
 (defclass ast (node)
   ((ast :initarg :ast :accessor ast)))
 
+;;; AST Protocol
 (defgeneric build-ast (self &key &allow-other-keys)
   (:documentation "Build an AST of SELF and store it in the :ast
 slot.")
@@ -138,9 +139,6 @@ slot.")
       (sb-int:doplist (k v) ast
         (setf (slot-value self (symbolicate k)) v)))))
 
-(defgeneric load-ast* (self context)
-  (:documentation "load the object SELF from the :ast slot with additional CONTEXT."))
-
 (defgeneric wrap (self form)
   (:documentation "Wrap object FORM using SELF, usually sets the AST slot.")
   (:method ((self ast) form) (setf (slot-value self 'ast) form)))
@@ -157,6 +155,8 @@ slot.")
    (result :initform nil)))
 
 (defgeneric traverse (self node level)
+  (:documentation "Traverse NODE using the given traverser object SELF and a starting
+LEVEL (usually 0).")
   (:method ((self t) (node node) level)
     (if (slot-exists-p node 'ast)
         (loop for i in (ast node)
@@ -178,22 +178,24 @@ slot.")
   (:method :after ((copy copy-traverser) (item node) level)
     (with-slots (stack result) copy
       (with-slots (values subnodes) item
-        (let ((node-type (class-of item)))
+        (let ((node-type (if (consp item) 'cons (class-of item))))
           (let ((node-copy nil)
                 (subnodes subnodes) ; changes can occur
                 (subnode-copies (reverse (pop stack))))
-            (if (eq node-type (find-class 'nodelist))
-                (setf node-copy (make-instance 'nodelist
-                                  :nodes subnode-copies
-                                  :values '()
-                                  :subnodes '(nodes)))
+            (if (eq node-type 'cons)
+                (setf node-copy subnode-copies 
+                      #+nil
+                      (make-instance 'ast
+                        :nodes subnode-copies
+                        :values '()
+                        :subnodes '(nodes)))
                 (progn
                   (setf node-copy (allocate-instance node-type))
                   (dolist (slot (mapcar #'sb-pcl::slot-definition-name 
                                         (sb-pcl::class-slots node-type)))
                     (when (slot-boundp item slot)
                       (when (eq (slot-value item slot) nil)
-                        (setf subnodes (remove slot subnodes))) 
+                        (setf subnodes (remove slot subnodes)))
                       (let ((position (position slot subnodes)))
                         (setf (slot-value node-copy slot)
                               (if position
@@ -211,7 +213,8 @@ slot.")
 (defgeneric (setf rhs) (new self))
 
 (defclass expr (node) ()
-  (:documentation "Base Expression Object."))
+  (:documentation "Base expression class inherited by all expression objects. Expressions are
+used extensively in the SYN and Q systems."))
 
 (defmacro defexpr (name supers slots &rest opts)
   `(defclass! ,name ,(safe-superclasses 'expr supers) ,slots ,@opts))

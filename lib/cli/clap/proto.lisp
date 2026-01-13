@@ -5,7 +5,9 @@
 ;;; Code:
 (in-package :cli/clap/proto)
 
+;;; Conditions
 (define-condition clap-condition () ())
+
 (eval-always
   (deferror clap-error (clap-condition) ())
   (defwarning clap-warning (clap-condition) ())
@@ -25,6 +27,7 @@
 (defun clap-invalid-argument (arg &key reason type)
   (error 'clap-invalid-argument :name arg :type type :reason reason))
 
+;;; Protocol
 (defgeneric cmds (self))
 (defgeneric opts (self))
 
@@ -76,3 +79,17 @@
 
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format cli SELF as a useful string."))
+
+(defgeneric proc-args (self args))
+
+(defgeneric parse-args (self args &key &allow-other-keys)
+  (:documentation "Parse list of strings ARGS using SELF.
+
+A list of the same length as ARGS is returned containing cli-node objects:
+objects: (OPT . (or char string)) (CMD . string)"))
+
+;;; Nodes
+(defnode cli-node (ast)
+    ((type :reader cli-node-type)))
+
+(definline cli-node (type form) (make-instance 'cli-node :type type :ast form))

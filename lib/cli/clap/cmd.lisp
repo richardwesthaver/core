@@ -1,18 +1,18 @@
 ;;; cli/clap/cmd.lisp --- Clap Commands
 
-;; Command Objects used to build CLI Applications.
+;; CLI Command Classes.
 
 ;;; Commentary:
 
 ;; The main entry is PARSE-ARGS which is called with a CLI object and a list
 ;; of args. This in turns calls PROC-ARGS which does all of the parsing and
 ;; will recursively call PARSE-ARGS as needed on nested CLI objects. It also
-;; sets the :LOCK slot on resulting objects, and returns a CLI-AST object. The
-;; ast is installed into the CLI object at which point it can be executed with
+;; sets the :LOCK slot on resulting objects, and returns a list. The ast is
+;; installed into the CLI object at which point it can be executed with
 ;; DO-CMD.
 
-;; DO-OPTS is called for each active (LOCK) CLI-OPT attached to a
-;; CLI-CMD followed by a DO-CMD call in turn on each active CLI-CMD.
+;; DO-OPTS is called for each active (LOCK) CLI-OPT attached to a CLI-CMD
+;; followed by a DO-CMD call in turn on each active CLI-CMD.
 
 ;;; Code:
 (in-package :cli/clap/obj)
@@ -201,86 +201,85 @@ are only OPTS and ARGS which should be used with the default command."
 
 (defmethod proc-args ((self cli-cmd) args)
   "Process ARGS into an ast. Each element of the ast is a node with a
-:type slot, indicating the type of node and a :form slot which stores
+:type slot, indicating the type of node and an AST slot which stores
 an object."
-  (make-cli-ast
-   (flatten
-    (loop
-      with skip
-      with exit
-      for (a . args) on args
-      if skip
-      do (setq skip nil)
-      else if exit
-      do (loop-finish)
-      else if (short-opt-p a) ;; SHORT OPT
-      
-      ;; TODO 2025-01-01: handle opt-group-p
-      collect
-         (let* ((has-eq (short-opt-has-eq-p a))
-                (names (or (car has-eq) (string-left-trim "-" a)))
-                (opts (find-short-opts names self :recurse nil)))
-           (cond
-             ((and (= (length opts) 1) (not has-eq))
-              (let ((o (car opts)))
-                (if (eql (cli-opt-type o) 'boolean)
-                    (%compose-flag-opt o)
-                    (prog1
-                        (%compose-value-opt o (pop args))
-                      (setq skip t)))))
-             ((and has-eq opts)
-              (loop for o in opts
-                    do (activate-opt o)
-                    do (setf (cli-opt-val o) (cdr has-eq))
-                    collect (make-cli-node 'opt o)))
-             ((and (not has-eq) opts)
-              (loop for o in opts
-                    collect (%compose-flag-opt o)))
-             (t ;; if nothing else, we usually want to pass it as an arg, but
-                ;; it may also be useful to enable the debugger and handle
-                ;; with restarts.
-              (sb-ext:enable-debugger)
-              ;; (with-opt-restart-case a
-              ;; (clap-unknown-argument a 'cli-opt))
-              a)))
-      else if (long-opt-p a) ;; LONG OPT
-      collect           
-         (let* ((has-eq (long-opt-has-eq-p a))
-                (name (or (car has-eq) (string-left-trim "-" a)))
-                (o (car (find-opts name self :recurse nil))))
-           (cond
-             ((and has-eq o)
-              (activate-opt o)
-              (setf (cli-opt-val o) (cdr has-eq))
-              (make-cli-node 'opt o))
-             ((and (not has-eq) o)
-              (prog1
-                  (%compose-value-opt o (pop args))
-                (setq skip t)))
-             (t ;; (not o) (not has-eq)
-              (with-opt-restart-case a
-                (clap-unknown-argument a 'cli-opt)))))
-      ;; OPT GROUP
-      else if (group-opt-p a)
-      collect 
-         (make-cli-node 'group nil)
-      ;; OPT KEYWORD (experimental)
-      else if (opt-keyword-p a)
-      collect (if-let ((o (car (find-opts (string-left-trim ":" a) self :recurse t))))
-                (prog1 (%compose-keyword-opt o (pop args))
-                  (setq exit t))
-                (make-cli-node 'arg a))
-      else ;; CMD or ARG
-      collect
-         (if-let ((cmd (find-cmd a self)))
-           (progn (setq exit t)
-                  ;; command forms are another AST
-                  (setf cmd (parse-args cmd args))
-                  (make-cli-node 'cmd cmd))
-           ;; just a plain arg - move to next
-           (make-cli-node 'arg a))))))
+  (flatten
+   (loop
+     with skip
+     with exit
+     for (a . args) on args
+     if skip
+     do (setq skip nil)
+     else if exit
+     do (loop-finish)
+     else if (short-opt-p a) ;; SHORT OPT
+     
+                             ;; TODO 2025-01-01: handle opt-group-p
+     collect
+        (let* ((has-eq (short-opt-has-eq-p a))
+               (names (or (car has-eq) (string-left-trim "-" a)))
+               (opts (find-short-opts names self :recurse nil)))
+          (cond
+            ((and (= (length opts) 1) (not has-eq))
+             (let ((o (car opts)))
+               (if (eql (cli-opt-type o) 'boolean)
+                   (%compose-flag-opt o)
+                   (prog1
+                       (%compose-value-opt o (pop args))
+                     (setq skip t)))))
+            ((and has-eq opts)
+             (loop for o in opts
+                   do (activate-opt o)
+                   do (setf (cli-opt-val o) (cdr has-eq))
+                   collect (cli-node 'opt o)))
+            ((and (not has-eq) opts)
+             (loop for o in opts
+                   collect (%compose-flag-opt o)))
+            (t ;; if nothing else, we usually want to pass it as an arg, but
+             ;; it may also be useful to enable the debugger and handle
+             ;; with restarts.
+             (sb-ext:enable-debugger)
+             ;; (with-opt-restart-case a
+             ;; (clap-unknown-argument a 'cli-opt))
+             a)))
+     else if (long-opt-p a) ;; LONG OPT
+     collect           
+        (let* ((has-eq (long-opt-has-eq-p a))
+               (name (or (car has-eq) (string-left-trim "-" a)))
+               (o (car (find-opts name self :recurse nil))))
+          (cond
+            ((and has-eq o)
+             (activate-opt o)
+             (setf (cli-opt-val o) (cdr has-eq))
+             (cli-node 'opt o))
+            ((and (not has-eq) o)
+             (prog1
+                 (%compose-value-opt o (pop args))
+               (setq skip t)))
+            (t ;; (not o) (not has-eq)
+             (with-opt-restart-case a
+               (clap-unknown-argument a 'cli-opt)))))
+     ;; OPT GROUP
+     else if (group-opt-p a)
+     collect 
+        (cli-node 'group nil)
+     ;; OPT KEYWORD (experimental)
+     else if (opt-keyword-p a)
+     collect (if-let ((o (car (find-opts (string-left-trim ":" a) self :recurse t))))
+               (prog1 (%compose-keyword-opt o (pop args))
+                 (setq exit t))
+               (cli-node 'arg a))
+     else ;; CMD or ARG
+     collect
+        (if-let ((cmd (find-cmd a self)))
+          (progn (setq exit t)
+                 ;; command forms are another AST
+                 (setf cmd (parse-args cmd args))
+                 (cli-node 'cmd cmd))
+          ;; just a plain arg - move to next
+          (cli-node 'arg a)))))
 
-(defmethod install-ast ((self cli-cmd) (ast cli-ast))
+(defmethod wrap ((self cli-cmd) ast)
   "Install the given AST, recursively filling in value slots."
     ;; we assume all nodes in the ast have been validated and the ast
     ;; itself is consumed. validation is performed in proc-args.
@@ -289,11 +288,11 @@ an object."
     ;; locked until all subcommands have completed
     (activate-cmd self)
     (loop named install
-          for (node . tail) on (ast ast)
+          for (node . tail) on ast
           while node
           do 
              (let ((type (cli-node-type node))
-                   (form (cli-node-form node)))
+                   (form (ast node)))
                (case type
                  ;; opts
                  (opt
@@ -316,12 +315,12 @@ an object."
 
 (defmethod parse-args ((self cli-cmd) args &key (install t))
   "Parse ARGS and return the updated object SELF.
-ARGS is assumed to be a valid cli-ast (list of cli-nodes), unless COMPILE is
+ARGS is assumed to be a list of CLI-NODEs, unless COMPILE is
 t, in which case a list of strings is assumed. INSTALL always implies COMPILE
-and calls INSTALL-AST on SELF with ARGS."
+and calls WRAP on SELF with ARGS."
   (let ((ast (proc-args self args)))
     (if install 
-        (install-ast self ast)
+        (wrap self ast)
         ast)
     self))
 

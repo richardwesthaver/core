@@ -50,7 +50,7 @@
 
 (defparameter *jack-sounds* nil)
 
-;;; control: open, play, stop, pause, unpause, seek, loop, close, clenaup...
+;;; control: open, play, stop, pause, unpause, seek, loop, close, cleanup...
 
 (defun jack-seek (sf frame)
   (sf-seek sf frame 0))

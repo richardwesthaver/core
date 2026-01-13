@@ -6,13 +6,12 @@
    (:module "clap"
     :depends-on ("pkg")
     :components
-    ((:file "ast")
-     (:file "vars")
+    ((:file "vars")
      (:file "util" :depends-on ("vars"))
-     (:file "macs" :depends-on ("util"))
      (:file "proto" :depends-on ("util"))
-     (:file "opt" :depends-on ("macs" "proto" "ast"))
-     (:file "cmd" :depends-on ("macs" "proto" "ast"))
+     (:file "macs")
+     (:file "opt" :depends-on ("macs" "proto"))
+     (:file "cmd" :depends-on ("macs" "proto"))
      (:file "cli" :depends-on ("opt" "cmd"))))
    (:file "ansi" :depends-on ("pkg"))
    (:file "env" :depends-on ("pkg"))

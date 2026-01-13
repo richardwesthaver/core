@@ -1029,7 +1029,7 @@
   (:shadow :reset)
   (:export :list-slot-values-using-class
    :defverb :*verbs*
-   :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start 
+   :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
@@ -1037,7 +1037,7 @@
    :slot-boundp* :slot-values
    :explore :with-fslots
    :upgrade :version
-   :status :validate
+   :validate :resume
    :deadline :sync
    :lock :bind
    :head :tail
@@ -1046,7 +1046,7 @@
    :assignee :started-p
    :verbp :init
    :reset :state
-   :init*
+   :init* :pause
    :install :uninstall
    :class-equalp
    :slots-boundp
@@ -1369,7 +1369,11 @@
    :run-job
    :jobp :taskp :task :task-worker
    :plan :status :planner :plan-bits
-   :task-pool :task-scheduler))
+   :task-pool :task-scheduler
+   :task-done-p :record-dependency
+   :simple-task :simple-plan
+   :pressure :task-forced-p :task-prevented-p :pressure-parameters
+   :mark-task-done))
 
 (defpkg :std/rand
   (:use :cl)
