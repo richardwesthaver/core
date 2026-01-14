@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar)
+  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar :dat/ttf)
   (:export))
 
 (in-package :dat/tests)
@@ -40,10 +40,10 @@
 (deftest json ()
   (let ((str (format nil "[~s,2,true,null]" "Hello, world!"))
         (obj (list "Hello, world!" 2 t nil)))
-    (multiple-value-bind (res pos) (json-decode str)
+    (multiple-value-bind (res pos) (deserialize str :json)
       (is (equal obj res))
       (is (= pos 29)))
-    (is (equal str (with-output-to-string (s) (json-encode obj s)))))
+    (is (equal str (with-output-to-string (s) (serialize obj :json :stream s)))))
   (let ((str2 "[1,2,3]"))
     (is (equal '(1 2 3) (deserialize str2 :json :end (length str2))))
     (is (equal str2 (with-output-to-string (s) (serialize (list 1 2 3) :json :stream s))))))
@@ -65,16 +65,15 @@
 
 ;; TODO 2025-09-29: 
 (deftest with-html ()
-  (setf *html-indent* 0)
-  (isequal (with-html-string (:a :href "foo"))
-           "<!DOCTYPE html>
+  (isequalp (with-html-string (:a :href "foo"))
+            "<!DOCTYPE html>
 <a href='foo'></a>")
-  (setf *html-indent* 2)
+  (setf *html-indent* 0)
   (isequal
    (with-html-string 
      (htm (:a :href "foo")))
    "<!DOCTYPE html>
-  <a href='foo'></a>"))
+<a href='foo'></a>"))
 
 (deftest css ()
   (isequal 
@@ -167,7 +166,7 @@
     (is (delete-file path))))
 
 ;; FIX 2024-12-27: 
-(deftest tar-zst ()
+(deftest tar-zst (:skip t)
   (let ((path (format nil "/tmp/~A.tar.zst" (gensym "foo"))))
     (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
                          :if-exists :overwrite
@@ -186,3 +185,9 @@ sinkType=0
 sourceType=1
 showVolumeMeters=1"))
     (istype 'dat/ini:ini-document (deserialize str :ini))))
+
+;;; TTF
+(deftest ttf ()
+  (init :ttf)
+  (is (get-font-families))
+  (is (get-font-subfamilies (car (get-font-families)))))

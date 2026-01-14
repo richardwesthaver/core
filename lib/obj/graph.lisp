@@ -71,7 +71,7 @@ that a vertex always carries an ID slot."))
   (:documentation "An edge with an implicit direction from IN to OUT."))
 
 (defclass weighted-edge (edge)
-  ((weight :initform 1d0 :initarg :weight :accessor weight-of)))
+  ((weight :initform 1d0 :initarg :weight :accessor weight)))
 
 ;;; Hashing
 ;; despite preferring vectors, we provide support for custom hashers for
@@ -141,7 +141,7 @@ Delete and return the old edges of NODE in GRAPH."))
 
 (defgeneric edge-weight (edge &key &allow-other-keys)
   (:method ((edge t) &key) (values 1.0))
-  (:method ((edge weighted-edge) &key) (weight-of edge)))
+  (:method ((edge weighted-edge) &key) (weight edge)))
 
 (defgeneric edge-value (graph edge)
   (:method ((graph t) (edge t)) nil))

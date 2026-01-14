@@ -53,7 +53,7 @@ compatible element-types."
 ;; from SBCL manual
 ;;; Wrapped Streams
 (defclass wrapped-stream (fundamental-stream)
-  ((stream :initarg :stream :reader stream-of))
+  ((stream :initform nil :initarg :stream :reader stream-of))
   (:documentation "A stream which wraps another stream accessible via STREAM-OF."))
 
 (defmethod open-stream-p ((stream wrapped-stream))

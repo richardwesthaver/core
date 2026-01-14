@@ -1903,7 +1903,8 @@ to :data because that's what's needed after a token has been emitted."
    (parent :initform nil :reader node-parent)
    (value :initform nil :initarg :value
           :accessor node-value)
-   (last-child :initform nil :accessor last-child)))
+   (last-child :initform nil :accessor last-child))
+  (:default-initargs :ast nil))
 
 (defmethod (setf ast) :after (value (node node))
   (setf (last-child node) (last value)))

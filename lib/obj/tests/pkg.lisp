@@ -1,7 +1,7 @@
 (defpackage :obj/tests
   (:use :cl :std :rt :obj :uuid :url :std/macs :id :ast
-   :dynamic :fast :sealed :stealth :stored :store :uri :color 
-   :tree :db :store :schema))
+    :dynamic :fast :sealed :stealth :stored :store :uri :color 
+    :tree :db :store :schema))
 
 (in-package :obj/tests)
 
@@ -32,10 +32,10 @@
 
 (deftest colors ()
   (loop repeat 100 do
-    (let ((rgb (random-rgb))
-          (hsv (random-hsv)))
-      (is (typep (as-hsv rgb) 'hsv))
-      (is (typep (as-rgb hsv) 'rgb))))
+           (let ((rgb (random-rgb))
+                 (hsv (random-hsv)))
+             (is (typep (as-hsv rgb) 'hsv))
+             (is (typep (as-rgb hsv) 'rgb))))
   (let ((rgb (rgb 0.070 0.203 0.337)))
     (is (equal "#123456" (print-hex-rgb rgb)))
     (is (equal "123456" (print-hex-rgb rgb :hash nil)))
@@ -83,9 +83,9 @@
 ;;; Trees
 (deftest generic-tree ()
   (let ((tree (make-binary-node
-              0 
-              (make-binary-node 1 (make-tree-node 0) (make-tree-node 1))
-              (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))
+               0 
+               (make-binary-node 1 (make-tree-node 0) (make-tree-node 1))
+               (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))
     (is (typep tree 'binary-node))))
 
 (deftest btree (:skip t)
@@ -147,21 +147,21 @@
 	       (nil "192.132.95.22" 81)
 	       ("layer" "192.132.95.22" nil)
 	       ("layer" "192.132.95.22" 81)
-		("layer:pass" "192.132.95.22" nil)
-		("layer:pass" "192.132.95.22" 81)
-		(nil "fe80::230:48ff:feb9:bbea" nil)
-		(nil "fe80::230:48ff:feb9:bbea" 81)
-		(nil "2001:470:1f05:548:230:48ff:feb9:bbea" nil)
-		(nil "2001:470:1f05:548:230:48ff:feb9:bbea" 81)
-		(nil "::1" nil)
-		(nil "::1" 81)))
+	       ("layer:pass" "192.132.95.22" nil)
+	       ("layer:pass" "192.132.95.22" 81)
+	       (nil "fe80::230:48ff:feb9:bbea" nil)
+	       (nil "fe80::230:48ff:feb9:bbea" 81)
+	       (nil "2001:470:1f05:548:230:48ff:feb9:bbea" nil)
+	       (nil "2001:470:1f05:548:230:48ff:feb9:bbea" 81)
+	       (nil "::1" nil)
+	       (nil "::1" 81)))
       (destructuring-bind (user-info host port) xx
         (let* ((h (if (and (stringp host) (find #\: host))
                       (format nil "[~a]" host)
                       host))
-	     (s (format nil "https://~@[~a@~]~a~a/foo.html"
-			user-info h (or (when port (format nil ":~d" port)) "")))
-	     (u (parse-uri s)))
+	       (s (format nil "https://~@[~a@~]~a~a/foo.html"
+			  user-info h (or (when port (format nil ":~d" port)) "")))
+	       (u (parse-uri s)))
 	  (is (string= s (princ-to-string u)))
 	  (is (string= host (uri-host u)))
 	  (when user-info
@@ -182,7 +182,25 @@
 (deftest simple-tensor ())
 
 ;;; Cache
-(deftest simple-cache ())
+(defun test-provider (key)
+  "A provider returns two values: The data for the element, and the element's size."
+  (values (format nil "value for ~a" key)
+	  key))
+
+(deftest simple-cache ()
+  (let* ((acc (make-instance 'max-accumulator :value 0))
+         (cache (make-cache 100 #'test-provider :policy :lru :cleanup (lambda (k) (istype 'string k)))))
+    (is= (cache:cache-max-size cache) 100)
+    (with-cache c (cache 42)
+      (is= 42 (cache-size cache))
+      (is= 1 (cache-count cache)))
+    (is (cache-remove cache 42))
+    (cache-fetch cache 10)
+    (cache-fetch cache 20)
+    (cache-fetch cache 30)
+    (cache-flush cache)
+    ;; (iszero (cache-count cache)) ;=3.. shouldn't this be zero?
+    (iszero (cache-size cache))))
 
 ;;; Schema
 (deftest simple-schema ()

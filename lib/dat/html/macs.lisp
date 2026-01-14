@@ -507,4 +507,4 @@ should either hold a stream or which'll be bound to STREAM if supplied."
 (defmacro with-html-string (&body body)
   (with-gensyms (out stream)
     `(with-output-to-string (,stream)
-       (with-html (,out :stream ,stream) ,@body))))
+       (with-html (,out :stream ,stream :indent ,*html-indent*) ,@body))))

@@ -736,6 +736,7 @@
    :directed-graph
    :simple-directed-graph
    :class-graph
+   :weight
    :indegree :outdegree
    :shortest-path :min-cut))
 
@@ -860,10 +861,15 @@
   (:nicknames :cache)
   (:use :cl :std :stored :id :db :schema :config :val)
   (:import-from :std :queue :make-queue)
-  (:export :cache :cache-cleanup :cache-policy
-   :cache-size :cache-count :make-cache
-   :with-cache :cache-remove :cache-flush :cache-entry
-   :entry-weight :make-cache-table :get-cache))
+  (:import-from :graph :weight)
+  (:export :cache 
+   :cache-cleanup :cache-policy
+   :cache-size :cache-count 
+   :make-cache :cache-fetch
+   :with-cache :cache-remove 
+   :cache-flush :cache-entry
+   :make-cache-table :get-cache 
+   :cache-release :cache-max-size))
 
 (defpkg :obj/store
   (:nicknames :store)
