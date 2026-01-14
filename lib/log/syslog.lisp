@@ -22,15 +22,15 @@
 
 (defclass sys-logger (logger) 
   ((id :initarg :id :initform (file-namestring (car sb-ext:*posix-argv*)) :accessor id)
-   (options)
-   (facility))
+   (options :accessor syslog-options)
+   (facility :accessor syslog-facility))
   (:documentation "A LOGGER which outputs to a system log."))
 
 (defmethod start :before ((self sys-logger))
   (with-slots (options id facility) self
     (syslog:openlog
      id
-     (reduce (lambda (x y) (logand (syslog-option x) (syslog-option y))) options)
+     (reduce (lambda (x y) (logand (syslog-options x) (syslog-options y))) options)
      (syslog-facility facility))))
 
 (defmethod stop :after ((self sys-logger) &key)

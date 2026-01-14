@@ -127,6 +127,13 @@
   (:use :cl :std :cli/tools/proto :cli/env :uri :config :ast :ini)
   (:import-from :std/os :with-umask)
   (:export
+   :default-network-device
+   :net-sys-stat-read
+   :*net-last-rx* :*net-last-tx*
+   :*net-last-time* :*net-time*
+   :*net-rx* :*net-tx*
+   :net-usage
+   :fmt-net-usage
    :*browser*
    :run-browser
    :browse-url

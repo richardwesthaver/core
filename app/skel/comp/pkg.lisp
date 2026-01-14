@@ -5,7 +5,7 @@
 ;;; Code:
 
 (defpackage :skel/comp/makefile
-  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/header :skel/core/util)
+  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/header :skel/core/util :project)
   (:export
    :*default-makefile* :*makefile-extension* 
    :*mk-magic-vars* :*mk-command-prefixes*

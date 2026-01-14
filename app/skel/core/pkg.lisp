@@ -137,7 +137,6 @@
    :sk-project-slot
    :find-project-root
    :setf-skel-vars
-   :list-all-projects
    :sk-search-project
    :project-root
    :merge-project-pathnames))

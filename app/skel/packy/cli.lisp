@@ -6,7 +6,7 @@
 (in-package :skel/packy/cli)
 
 (defvar *pk-target* nil)
-(defopt pk-version (print-version *cli*))
+(defopt pk-version (cli:print-version *cli*))
 (defopt pk-log-level 
   (setq log:*log-level* (if *arg* (if (stringp *arg*)
                                   (sb-int:keywordicate (string-upcase *arg*))

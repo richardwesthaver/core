@@ -47,7 +47,7 @@
 (defmethod print-object ((self sk-meta) stream)
   (print-unreadable-object (self stream)
     (format stream "~A ~A :path ~A" (sk-class-name self t) (name self) (path self))
-    (unless (sequence:emptyp (sk-version self))
+    (unless (sequence:emptyp (version self))
       (format stream " :version ~A" (version self)))
     (format stream " :id ~A" (format-sxhash (id self)))))
 

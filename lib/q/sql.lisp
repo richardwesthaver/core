@@ -731,7 +731,7 @@
       (when (slot-value select 'selection)
         (let ((filter-expr (make-sql-logical-expression (slot-value select 'selection) table)))
           (visit filter-expr accum)
-          (let ((valid-cols (map 'list (lambda (x) (field-name x)) (fields (schema table)))))
+          (let ((valid-cols (map 'list (lambda (x) (name x)) (fields (schema table)))))
             (remove-if (lambda (x) (not (member x valid-cols :test 'string-equal))) accum)))))))
 
 (defun plan-non-aggregate-query (select df projection-expr column-names-in-selection column-names-in-projection)
@@ -764,7 +764,7 @@
                         (coerce
                          (loop for i below n
                                collect (make-instance 'column-expression
-                                         :name (field-name (field (schema plan) i))))
+                                         :name (name (field (schema plan) i))))
                          'vector))))
       plan)))
 

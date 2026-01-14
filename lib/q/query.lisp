@@ -42,7 +42,7 @@
                                             :initial-element (make-field))))
       (make-instance 'schema
         :fields (dolist (n names ret)
-                  (if-let ((found (find n fields :test 'equal :key 'field-name)))
+                  (if-let ((found (find n fields :test 'equal :key 'name)))
                     (vector-push found ret)
                     (error 'invalid-argument :item n :reason "Invalid column name"))))))
   (:method ((self schema) (names vector))
@@ -51,7 +51,7 @@
                                             :initial-element (make-field))))
       (make-instance 'schema
         :fields (loop for n across names
-                      do (if-let ((found (find n fields :test 'equal :key 'field-name)))
+                      do (if-let ((found (find n fields :test 'equal :key 'name)))
                            (vector-push found ret)
                            (error 'invalid-argument :item n :reason "Invalid column name"))
                       finally (return ret))))))
@@ -91,7 +91,7 @@
   ((name :type string :initarg :name :accessor name)))
 
 (defmethod to-field ((self column-expression) (input logical-query-plan))
-  (or (find (name self) (fields (schema input)) :test 'equal :key 'field-name)
+  (or (find (name self) (fields (schema input)) :test 'equal :key 'name)
       (error 'invalid-argument :item (name self) :reason "Invalid column name")))
 
 (defmethod df-col ((self string))
@@ -107,7 +107,7 @@
    (data-type :type form :initarg :data-type)))
 
 (defmethod to-field ((self cast-expression) (input logical-query-plan))
-  (make-field :name (field-name (to-field (expr self) input)) :type (slot-value self 'data-type)))
+  (make-field :name (name (to-field (expr self) input)) :type (slot-value self 'data-type)))
 
 ;;;_  . Unary
 (defclass unary-expression (logical-expr unary-expr)
@@ -605,7 +605,7 @@
     (declare (ignore input))
     expr)
   (:method ((expr column-expression) (input logical-query-plan))
-    (let ((i (position (name expr) (fields (schema input)) :key 'field-name :test 'equal)))
+    (let ((i (position (name expr) (fields (schema input)) :key 'name :test 'equal)))
       (make-instance 'column-physical-expression :val i)))
   (:method ((expr binary-expression) (input logical-query-plan))
     (let ((l (make-physical-expression (lhs expr) input))

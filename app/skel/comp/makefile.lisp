@@ -95,7 +95,7 @@
 		    (name self)
 		    :cchar #\#
 		    :timestamp t
-		    :description (sk-description self)
+		    :description (description self)
 		    :opts '("mode: makefile-gmake;"))
 		   out))
     (sk-compile self :stream out)))

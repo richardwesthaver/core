@@ -95,11 +95,8 @@
         (t (skel-simple-error "skel not installed")))))
 
 (defcmd skc-list ()
-  (if (zerop *argc*)
-      (list-all-projects)
-      (string-case ((subseq (pop *args*) 0 3))
-        ("pro" (list-all-projects))
-        ("log" (apply 'sk-log-list *args*)))))
+  (string-case ((subseq (pop *args*) 0 3))
+    ("log" (apply 'sk-log-list *args*))))
 
 (defcmd skc-id ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))

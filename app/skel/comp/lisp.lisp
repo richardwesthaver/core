@@ -15,7 +15,7 @@
   (make-instance 'sk-lisp-file 
     :path (path self)
     :name (name self)
-    :properties (component-properties self)))
+    :type "lisp"))
 
 (defmethod sk-compile ((self sk-lisp-file) &rest args)
   (apply 'compile-file (path self) args))

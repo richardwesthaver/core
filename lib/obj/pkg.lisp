@@ -318,7 +318,8 @@
    #:*default-stride-ordering*
    #:tensor-vector #:tensor-matrix #:tensor-square-matrix
    #:complexified-tensor #:realified-tensor
-   #:real-subtypep
+   #:real-subtypep #:tensor-vectorp
+   #:field-realp
    #:indices #:fence #:δ-I #:strides #:head #:store
    #:idxv #:pick-random #:shuffle! #:permutation #:permutation-action #:permutation-cycle
    #:permutation-pivot-flip #:permute! #:permute #:permutation/ #:permutation* #:permutation-size
@@ -537,7 +538,6 @@
    #:make-field
    #:field-p
    #:copy-field
-   #:field-name
    #:field-type
    #:defschema
    #:list-to-fields

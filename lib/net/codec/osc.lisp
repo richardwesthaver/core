@@ -341,8 +341,8 @@ with the current time use (encode-timetag :time)."
      #(0 0 0 0 0 0 0 1))
     ((equalp timetag :time)
      ;; encode timetag with current real time
-     (encode-int64 (get-current-timetag)))
-    ((timetagp timetag)
+     (encode-int64 (time::get-current-timetag)))
+    ((time::timetagp timetag)
      ;; encode osc timetag
      (encode-int64 timetag))
     (t (error "Argument given is not one of :now, :time, or timetagp."))))
@@ -488,4 +488,4 @@ timetag of the bundle and the enclosing bundle."
   "Dispatches each bundle element in sequence."
   (declare (ignore timetag parent-bundle))
   (dolist (element (osc-elements data))
-    (dispatch tree element device address port (osc-timetag data) data)))
+    (osc-dispatch tree element device address port (osc-timetag data) data)))

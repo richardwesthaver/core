@@ -1042,7 +1042,7 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
                                  `(:password ,pw))))))
 
 (defun get-peer-ssl-certificate ()
-  (ssl-stream-x509-certificate *service-stream*))
+  (ssl::ssl-stream-x509-certificate *service-stream*))
 
 (defclass https-service (http-service ssl-service) ()
   (:default-initargs

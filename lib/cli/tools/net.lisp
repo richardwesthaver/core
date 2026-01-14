@@ -5,6 +5,76 @@
 ;;; Code:
 (in-package :cli/tools/net)
 
+;;; Linux Utils
+(defvar *net-last-rx* 0)
+(defvar *net-last-tx* 0)
+(defvar *net-last-time* nil)
+(defvar *net-rx* nil)
+(defvar *net-tx* nil)
+(defvar *net-time* nil)
+
+(define-constant +ipv4-zero+ "00000000" :test 'equal)
+
+(defun default-network-device ()
+  "Tries to found device with default route. NIL if none."
+  (declare (optimize (speed 3) (safety 0)))
+  (with-open-file (file #P"/proc/net/route" :if-does-not-exist nil)
+    (when file
+      (read-line file nil) ; skip desc
+      (loop :as line = (read-line file nil)
+         :when (null line) :return nil
+         :do
+         (let ((split (ppcre:split "\\s+" line)))
+           (when (and (string= (sb-ext:truly-the base-string (second split)) +ipv4-zero+)
+                      (string= (sb-ext:truly-the base-string (nth 7 split)) +ipv4-zero+)
+                      (logand (parse-integer (third split) :junk-allowed t) 2))
+             (return (car split))))))))
+
+(defun net-sys-stat-read (device stat-file)
+  (declare (optimize (speed 3) (safety 0)))
+  (with-open-file (file (concatenate 'string "/sys/class/net/"
+                                     device
+                                     "/statistics/"
+                                     stat-file) :if-does-not-exist nil)
+    (when file
+      (parse-integer (read-line file) :junk-allowed t))))
+
+(defun net-usage ()
+  "Return two values: rx and tx bytes/second respectively."
+  (let ((now (time:real-time))
+        (rx-s 0.0)
+        (tx-s 0.0)
+        (t-s 0.1) ; don't want division by zero
+        (rx (net-sys-stat-read (default-network-device) "rx_bytes"))
+        (tx (net-sys-stat-read (default-network-device) "tx_bytes")))
+    (when (and *net-last-time* (> (- now *net-last-time*) 0.0))
+      (let ((drx (/ (- rx *net-last-rx*)
+                    (- now *net-last-time*)))
+            (dtx (/ (- tx *net-last-tx*)
+                    (- now *net-last-time*))))
+        (push drx *net-rx*)
+        (push dtx *net-tx*)
+        (push now *net-time*)
+        (when (> (length *net-time*) 1)
+          (dotimes (i (1- (length *net-time*)))
+            (let ((dt (- (nth (1+ i) *net-time*)
+                         (nth i *net-time*)))
+                  (rx (nth i *net-rx*))
+                  (tx (nth i *net-tx*)))
+              (incf rx-s (* rx dt))
+              (incf tx-s (* tx dt))
+              (incf t-s dt)))
+          ;; cut off old values
+          (when (> (length *net-time*) 5)
+            (pop *net-rx*)
+            (pop *net-tx*)
+            (pop *net-time*)))))
+      (setq *net-last-rx* rx
+            *net-last-tx* tx
+            *net-last-time* now)
+      (values (round (/ rx-s t-s))
+              (round (/ tx-s t-s)))))
+
 ;;; Browser
 (deferror simple-browser-error (simple-error) () (:auto t))
 
