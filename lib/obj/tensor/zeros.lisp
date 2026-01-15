@@ -37,7 +37,7 @@
              (,nnz (cl:max (cl:ceiling (* *default-sparsity* (vector-foldr #'* ,dimsv))) (or ,size 0))))
        (make-instance ',class :dimensions ,dimsv
                       :fence (t.store-allocator index-store-vector (1+ (aref ,dimsv 1))) ;;Compressed Columns by default
-                      :neighbours (t.store-allocator index-store-vector ,nnz)
+                      :neighbors (t.store-allocator index-store-vector ,nnz)
                       ,@(when (subtypep class 'tensor) `(:store (t.store-allocator ,class ,nnz)))))))
 
 (deft/method t.zeros (class coordinate-accessor) (dims &optional size)

@@ -35,6 +35,7 @@
 
 ;;; Objects
 (defconfig udp-config (socket-config) 
+  ;; checksum (udplite), anycast/multicast
   ((broadcast)))
 
 (defclass udp-socket (socket) 

@@ -6,6 +6,7 @@
 (in-package :obj/tensor)
 
 ;; FIX 2025-12-20: 
+;; LOOP for G being the gidx of ROOT (from order col par visited)
 (defun loop-graph-iteration-path (v data-type prep-phrases)
   (declare (ignore data-type))
   (destructuring-bind (%g &optional root from order col par visited-array) prep-phrases

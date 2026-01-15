@@ -164,7 +164,8 @@ Example
     (error 'tensor-error :message "Can't find slice-increment in tensor's attributes" :tensor x)))
 
 ;; FOR x BEING THE SLICE OF y ALONG axis (FROM BELOW TO DOWNTO) (WITH-INDEX) (BY)
-;; TODO
+
+;; FIX 2026-01-14: 
 (defun loop-slice-iteration-path (xa data-type prep-phrases)
   (declare (ignore data-type))
   (destructuring-bind (%x %axis &optional start oend cend dend index step) prep-phrases

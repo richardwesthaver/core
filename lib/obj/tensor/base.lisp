@@ -47,8 +47,8 @@
    (tail :initform 0 :initarg :boundary :type index-type :documentation "Row bound for indices"))
   (:documentation "Bi-partite graph/Hypergraph/Factor/Co-ordinate store"))
 (defclass graph-accessor (base-accessor)
-  ((fence :initarg :fence :type index-store-vector :documentation "Start index for neighbourhood.")
-   (neighbours :initarg :neighbours :type index-store-vector :documentation "Neighbour ids.")
+  ((fence :initarg :fence :type index-store-vector :documentation "Start index for neighborhood.")
+   (neighbors :initarg :neighbors :type index-store-vector :documentation "Neighbor ids.")
    (transposep :initarg :transposep :initform nil :type boolean :documentation "Choose between row-column compressed forms."))
   (:documentation "Graph store via Adjacency lists; only works for matrices."))
 

@@ -204,7 +204,7 @@
                          (push (cons ,ii (t.strict-coerce (,(field-type clx) ,(field-type cly)) ,value)) (aref ,rdat ,jj))
                          (error "strides of the tensor are not canonical."))))
          (when (< (store-size ,y) (total-size ,x))
-           (setf (slot-value ,y 'neighbours) (t.store-allocator index-store-vector (total-size ,x))
+           (setf (slot-value ,y 'neighbors) (t.store-allocator index-store-vector (total-size ,x))
                  (slot-value ,y 'store) (t.store-allocator ,cly (total-size ,x))))
          (lety ((,vi (fence ,y) :type index-store-vector)
                      (,vr (δ-i ,y) :type index-store-vector)
