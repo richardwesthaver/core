@@ -50,10 +50,11 @@
 (defclass udp-source (udp-server source) ())
 (defclass udp-connection (udp-socket connection) ())
 
-;;; MTU Discovery
+;; MTU Discovery handled in CLI/TOOLS/NET via /sys/class/net/*/mtu
 ;; ref: https://www.rfc-editor.org/rfc/rfc9000.html#section-14.3
 ;; ref: https://github.com/quinn-rs/quinn/blob/main/quinn-proto/src/config/transport.rs (MtuDiscoveryConfig)
 
 ;;; Multicast
 ;; range 224.0.0.0 to 239.255.255.255
 ;; don't use .1,2,22
+

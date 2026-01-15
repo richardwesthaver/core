@@ -105,7 +105,7 @@ contextual information."
 <button accesskey=\"x\" class=hide onclick=close_all_sections()>hide</button></nav>")
       
 (setq org-publish-project-alist
-      `(("compiler.company" :components ("index" "meta" "blog" "docs" "graph" "plan" "notes" "archive"))
+      `(("compiler.company" :components ("index" "meta" "docs" "graph" "plan" "notes" "archive"))
         ("index"
          :base-directory ,project-dir
          :base-extension "org"
@@ -143,16 +143,6 @@ contextual information."
 	 :footnote-section-p t
 	 :html-doctype "<!doctype html>"
 	 :publishing-directory ,(expand-file-name "archive" publish-dir)
-	 :publishing-function org-html-publish-to-html
-	 :htmlized-source t
-	 :html-postamble ,html-foot)
-        ("blog"
-         :base-directory ,(expand-file-name "blog" project-dir)
-         :recursive t
-         :base-extension "org"
-         :footnote-section-p t
-         :html-doctype "<!doctype html>"
-	 :publishing-directory ,(expand-file-name "blog" publish-dir)
 	 :publishing-function org-html-publish-to-html
 	 :htmlized-source t
 	 :html-postamble ,html-foot)
@@ -304,8 +294,7 @@ targets and targets."
   "Update compiler.company sitemaps."
   (interactive)
   (save-excursion
-    (let ((dirs '("blog/draft" 
-		  "graph/app" "graph/comp" "graph/lang" "graph/hw" "graph/math" "graph/os" 
+    (let ((dirs '("graph/app" "graph/comp" "graph/lang" "graph/hw" "graph/math" "graph/os" 
 		  "graph/proto" "graph/sys" "graph/theory" "graph/web"
 		  "plan/tasks"
 		  "docs/core/app" "docs/core/lib")))
@@ -370,7 +359,7 @@ If given a prefix (C-u), set all args to t"
   (org-publish-project "index" force t)
   (org-publish-project "meta" force t)
   (update-sitemap)
-  (dolist (p '("plan" "blog" "docs" "graph" "notes"))
+  (dolist (p '("plan" "docs" "graph" "notes"))
     (org-publish-project p force t))
   (org-export-stack))
 

@@ -18,5 +18,5 @@
                :zstd/tests :uring/tests :blake3/tests
                :parse/tests :pod/tests :rt/tests :rdb/tests
                :dsp/tests :cry/tests :io/tests :net/tests 
-               :vc/tests :cli/tests :q/tests)
+               :vc/tests :cli/tests :q/tests :blas/tests)
   :perform (test-op (o c) (symbol-call :rt :run-all-tests)))

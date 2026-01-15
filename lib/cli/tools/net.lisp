@@ -30,14 +30,28 @@
                       (logand (parse-integer (third split) :junk-allowed t) 2))
              (return (car split))))))))
 
+(defun net-sys-read (device file)
+  (declare (optimize (speed 3) (safety 0)))
+  (with-open-file (file (concatenate 'string "/sys/class/net/"
+                                     device
+                                     "/"
+                                     file)
+                        :if-does-not-exist nil)
+    (when file
+      (parse-integer (read-line file) :junk-allowed t))))
+
 (defun net-sys-stat-read (device stat-file)
   (declare (optimize (speed 3) (safety 0)))
   (with-open-file (file (concatenate 'string "/sys/class/net/"
                                      device
                                      "/statistics/"
-                                     stat-file) :if-does-not-exist nil)
+                                     stat-file) 
+                        :if-does-not-exist nil)
     (when file
       (parse-integer (read-line file) :junk-allowed t))))
+
+(defun network-mtu (&optional (device (default-network-device)))
+  (net-sys-read device "mtu"))
 
 (defun net-usage ()
   "Return two values: rx and tx bytes/second respectively."
@@ -45,8 +59,8 @@
         (rx-s 0.0)
         (tx-s 0.0)
         (t-s 0.1) ; don't want division by zero
-        (rx (net-sys-stat-read (default-network-device) "rx_bytes"))
-        (tx (net-sys-stat-read (default-network-device) "tx_bytes")))
+        (rx (or (net-sys-stat-read (default-network-device) "rx_bytes") 0))
+        (tx (or (net-sys-stat-read (default-network-device) "tx_bytes") 0)))
     (when (and *net-last-time* (> (- now *net-last-time*) 0.0))
       (let ((drx (/ (- rx *net-last-rx*)
                     (- now *net-last-time*)))
@@ -74,6 +88,8 @@
             *net-last-time* now)
       (values (round (/ rx-s t-s))
               (round (/ tx-s t-s)))))
+
+;; IGMP
 
 ;;; Browser
 (deferror simple-browser-error (simple-error) () (:auto t))

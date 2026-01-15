@@ -3,7 +3,7 @@
 ;; Core Emacs Defaults
 
 ;;; Code:
-;;;_ Settings
+;;; Settings
 (require 'util)
 (put 'upcase-region 'disabled nil)
 (put 'list-threads 'disabled nil)

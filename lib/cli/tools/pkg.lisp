@@ -129,6 +129,8 @@
   (:export
    :default-network-device
    :net-sys-stat-read
+   :net-sys-read
+   :network-mtu
    :*net-last-rx* :*net-last-tx*
    :*net-last-time* :*net-time*
    :*net-rx* :*net-tx*
