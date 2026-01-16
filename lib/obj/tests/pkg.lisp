@@ -217,5 +217,5 @@
 
 (deftest interactive ()
   (locally (declare (interactive foo))
-    (isequal '(interactive foo) (ct (declaration-information 'interactive lexenv)))
-    (isequal '(interactive foo) (cmd::%with-interactive i i)))
+    (isequal '(foo) (ct (declaration-information 'interactive lexenv)))
+    (isequal '(foo) (cmd::%with-interactive i i))))

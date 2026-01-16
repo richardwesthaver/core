@@ -15,16 +15,18 @@
 ;; requires.
 
 ;; Instead of 'code letters' we support COMMAND-TYPEs which can be defined
-;; dynamically and are represented by simple symbols.
+;; dynamically and are represented by simple symbols. Command types are
+;; functions which take a variable number of arguments which are passed to the
+;; function from an interactive declaration.
 
 ;; TODO:
-;; - INTERACTIVE declaration
 ;; - DEFCOMMAND
-;; - *COMMAND-TABLE*
 ;; - compile-command
-;; - COMMAND type (class?)
 ;; - prefix-arg?
 ;; - READ-COMMAND/WRITE-COMMAND
+;; - caching? should certainly cache command-types..
+;; - explore posibilities with &aux extension..
+
 #| emacs help
 Code letters available are:
 a -- Function name: symbol with a function definition.
@@ -35,8 +37,8 @@ C -- Command name: symbol with interactive function definition.
 d -- Value of point as number.  Does not do I/O.
 D -- Directory name.
 e -- Parameterized event (i.e., one that’s a list) that invoked this command.
-     If used more than once, the Nth ‘e’ returns the Nth parameterized event.
-     This skips events that are integers or symbols.
+If used more than once, the Nth ‘e’ returns the Nth parameterized event.
+This skips events that are integers or symbols.
 f -- Existing file name.
 F -- Possibly nonexistent file name.
 G -- Possibly nonexistent file name, defaulting to just directory name.
@@ -64,8 +66,8 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Code:
 (in-package :obj/cmd)
 
-(defvar *commands*)
-(defvar *command-types*)
+(defvar *commands* (make-hash-table))
+(defvar *command-types* (make-hash-table))
 (defvar *command-table* (make-hash-table))
 
 ;; Set the interactive declaration information for this function. Each form in
@@ -73,7 +75,7 @@ Z -- Coding system, nil if no prefix arg.
 ;; CAR (or the form itself if an atom) is a COMMAND-TYPE designator.
 (define-declaration interactive (spec env)
   (declare (ignore env))
-  (values :declare (cons 'interactive spec)))
+  (values :declare spec))
 
 (defmacro %with-interactive (sym &body body &environment env)
   `(let ((,sym (declaration-information 'interactive ,env)))
@@ -94,16 +96,46 @@ Z -- Coding system, nil if no prefix arg.
 
 (defun (setf command-type) (new name) (setf (gethash name *command-types*) new))
 
-(defmacro define-command-type (name (input prompt) &body body)
+(defmacro define-command-type (name args &body body)
+  "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES*. ARGS is a
+lambda-list which destructures the cdr of INTERACTIVE declaration forms.
+
+Example:
+
+(define-command-type :symbol (input prompt)
+ (or (find-symbol
+       (string-upcase
+         (or (argument-pop input)
+             ;; Whitespace messes up find-symbol.
+             (string-trim \" \"
+                          (completing-read (current-screen)
+                                           prompt
+                                           (let (acc)
+                                             (do-symbols (s (find-package \"STD\"))
+                                               (push (string-downcase (symbol-name s)) acc))
+                                             acc)))
+             (throw 'error \"Abort.\")))
+       \"STD\")
+     (throw 'error \"Symbol not in STD package\")))
+
+(defcommand \"symbol\" (sym) 
+ (declare (interactive (:symbol \"Pick a symbol: \")))
+ (describe sym s))"
   `(setf (command-type ,name)
-         (lambda (,input ,prompt)
+         (lambda ,args
            ,@body)))
 
 (defun call-interactively (command &optional (input ""))
   "Parse COMMAND's arguments from input according to its command spec then
 execute it."
   (declare ((or string symbol) command)
-           (string input)))
+           (string input))
+  (catch 'cmd
+    (let* ((cmd (command command))
+           (arglist (sb-introspect:function-lambda-list cmd))
+          (in input))
+      ;; TODO 2026-01-15: 
+      (apply cmd in arglist))))
 
 ;; (defmethod call)
 
@@ -111,14 +143,44 @@ execute it."
 
 (defmacro with-commands (name &body body)
   "Eval BODY with *COMMANDS* bound to the value of (GETHASH NAME *COMMAND-TABLE*)."
-  `(destructuring-bind (*commands* . *command-types*) (command-table ,name)
+  `(let ((*commands* (command-table ,name)))
      ,@body))
 
 (defun save-commands (name)
-  "Set the value of NAME in *COMMAND-TABLE* using *COMMANDS* and *COMMAND-TYPES*."
-  (setf (command-table name) (cons *commands* *command-types*)))
+  "Set the value of NAME in *COMMAND-TABLE* using *COMMANDS*."
+  (setf (command-table name) *commands*))
 
 (defun copy-commands (name1 name2)
+  "Copy all commands and types from NAME1 to NAME2."
   (with-commands name1 (save-commands name2)))
 
-(defmacro defcommand (name args &body body &environment env))
+;; future use
+#+nil(defkernel command () ())
+
+;; (defun command-info (name))
+
+(defun compile-command (name &rest interactive)
+  "Compile NAME as a COMMAND with the provided INTERACTIVE declaration
+information. If NAME already designates a command it is re-compiled with the
+new INTERACTIVE form in place.")
+
+(defmacro defcommand (name args &body body &environment env)
+  "Define a new COMMAND given NAME and ARGS which evaluates BODY. NAME may be
+an atom which is added to *COMMANDS* or a list where the car is the name of
+the *COMMAND-TABLE* entry to add this command to. ARGS is a typical lambda
+list. A default command wrapper is provided in the case that BODY doesn't
+include an INTERACTIVE declaration, else the DECLARATION-INFORMATION is
+parsed from the environment and used to inform the wrapper.
+
+INTERACTIVE declarations should match the lambda-list of ARGS with each form
+being a COMMAND-TYPE or a cons where the car is a COMMAND-TYPE and the cdr is
+the args to it."
+  (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
+    `(setf (command ',name) (symbol-function (defun ,name ,args ,@(when doc `(,doc)) ,decl ,@forms)))))
+
+;;; Init
+(defmethod init ((self (eql :commands)) &key name)
+  (setq *commands* (command-table name)))
+
+(defmethod reset ((self (eql :commands)) &key name)
+  (setq *commands* nil))
