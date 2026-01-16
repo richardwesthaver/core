@@ -602,6 +602,15 @@
    #:schema-from-columns
    #:df-plan))
 
+(defpkg :obj/cmd
+  (:nicknames :cmd)
+  (:use :cl :std :ast)
+  (:export :defcommand
+   :interactive :define-command-type
+   :*commands* :*command-table* 
+   :*command-types* :command-type
+   :command-table :command))
+
 (defpkg :obj/project
   (:nicknames :project)
   (:use :cl :std :id :schema :config :ast)

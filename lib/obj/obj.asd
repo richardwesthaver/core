@@ -79,6 +79,7 @@
    (:file "config")
    (:file "schema")
    (:file "project")
+   (:file "cmd")
    (:file "db")
    (:file "graph")
    (:file "secret")

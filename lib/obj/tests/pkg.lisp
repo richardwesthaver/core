@@ -1,7 +1,7 @@
 (defpackage :obj/tests
   (:use :cl :std :rt :obj :uuid :url :std/macs :id :ast
     :dynamic :fast :sealed :stealth :stored :store :uri :color 
-    :tree :db :store :schema))
+    :tree :db :store :schema :cmd))
 
 (in-package :obj/tests)
 
@@ -141,7 +141,6 @@
 	 (render-uri (parse-uri "/test/foo%25bar.lisp") nil)))
     (is (equal "http://franz.com/foo?val=a%2b%3d%26b+is+c"
                (render-uri (parse-uri "http://franz.com/foo?val=a%2b%3d%26b+is+c") nil)))
-
     (dolist (xx ;; (list user-info ipaddr port)
 	     '((nil "192.132.95.22" nil)
 	       (nil "192.132.95.22" 81)
@@ -209,3 +208,14 @@
              (make-field :name :bar :type 'octet-vector))))
     (istype 'simple-schema s)
     (is= 2 (length (fields s)))))
+
+;;; Cmd
+(defmacro ct (form &environment env)
+  (let ((toeval `(let ((lexenv (quote ,env)))
+                   ,form)))
+    `(quote ,(eval toeval))))
+
+(deftest interactive ()
+  (locally (declare (interactive foo))
+    (isequal '(interactive foo) (ct (declaration-information 'interactive lexenv)))
+    (isequal '(interactive foo) (cmd::%with-interactive i i)))

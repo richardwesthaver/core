@@ -706,6 +706,7 @@
   (:import-from :sb-vm :primitive-type-of)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
+   :*interactive*
    :*backend-primitive-type-names* 
    :*backend-primitive-type-aliases* 
    :*backend-predicate-types* 
