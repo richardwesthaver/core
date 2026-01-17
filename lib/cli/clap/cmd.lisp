@@ -15,19 +15,14 @@
 ;; followed by a DO-CMD call in turn on each active CLI-CMD.
 
 ;;; Code:
-(in-package :cli/clap/obj)
+(in-package :cli/clap)
 
-(defclass cli-cmd ()
+(defkernel cli-command (command ast)
   ;; name slot is required and must be a string
   ((name :initarg :name :initform (required-argument :name) :accessor name :type string)
-   (opts :initarg :opts :initform (make-array 0 :element-type 'cli-opt :adjustable t)
-         :accessor opts :type (vector cli-opt))
-   (cmds :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
-         :accessor cmds :type (vector cli-cmd))
-   (thunk :initform 'default-cmd-thunk :initarg :thunk :accessor cli-thunk :type symbol)
-   (lock :initform nil :initarg :lock :accessor lock :type boolean)
-   (description :initarg :description :accessor cli-description :type string)
-   (args :initform nil :initarg :args :accessor cli-args))
+   (ast :initarg :cmds :initform (make-array 0 :element-type 'cli-cmd :adjustable t)
+         :accessor ast :type (vector cli-cmd))
+   (description :initarg :description :accessor description :type string))
   (:documentation "CLI command class inherited by both the 'main' command which is executed when
 a CLI is called without arguments, and all subcommands."))
 
@@ -59,7 +54,7 @@ a CLI is called without arguments, and all subcommands."))
             (name self)
             (when *cli*
               (equal (string (cli-thunk *cli*)) (string (cli-thunk self))))
-            (and (slot-boundp self 'description) (cli-description self))
+            (and (slot-boundp self 'description) (description self))
             (when (fboundp (cli-thunk self))
               (documentation (symbol-function (cli-thunk self)) 'function))
             (unless (sequence:emptyp opts)
@@ -164,9 +159,6 @@ a CLI is called without arguments, and all subcommands."))
     (activate-opt new)
     (setf (opts self)
           (substitute new match (opts self) :test 'equiv))))
-
-(defmethod active-opts ((self cli-cmd))
-  (remove-if-not 'cli-opt-lock (opts self)))
 
 (defun find-short-opts (flag cmd &key recurse)
   "Find and return all CLI-OPTs matching character or string FLAG in CMD.
@@ -324,27 +316,5 @@ and calls WRAP on SELF with ARGS."
         ast)
     self))
 
-;; WARNING: make sure to fill in the opt and cmd slots with values
-;; from the top-level args before calling a command.
-(defmethod call-cmd ((self cli-cmd) args opts)
-  (log:trace! "calling command: ~A~%:args ~A~%:opts ~A~%" self args opts)
-  (funcall (cli-thunk self) args opts))
-
-(defmethod do-opts ((self cli-cmd))
-  (do-opts (active-opts self)))
-
-(defmethod do-cmd ((self cli-cmd))
-  "Perform the active command or subcommand, recursively calling DO-CMD on
-subcommands until a level is reached which satisfies SOLOP. active OPTS are
-evaluated with DO-OPTS along the way."
-  (do-opts self)
-  (if (solop self)
-      (call-cmd self (cli-args self) (active-opts self))
-      ;; release opts
-      ;; (loop for o across (active-opts self)
-      ;;       do (setf (cli-opt-lock o) nil)))
-      (loop for c across (active-cmds self)
-            do (do-opts c)
-            do (call-cmd c (cli-args c) (active-opts c))
-            do (setf (lock c) nil)))
-  (setf (lock self) nil))
+(defmethod call :before ((self cli-command) &rest args)
+  (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))

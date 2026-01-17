@@ -218,4 +218,20 @@
 (deftest interactive ()
   (locally (declare (interactive foo))
     (isequal '(foo) (ct (declaration-information 'interactive lexenv)))
-    (isequal '(foo) (cmd::%with-interactive i i))))
+    (isequal '(foo) (cmd::%with-interactive i i)))
+  (define-command-type (:test test1) (a) a)
+  (define-command-type (:test test2) (b) (declare (ignore b)) "FOO")
+  (is (command-types :test))
+  (defcommand (:test foo) (a b &optional c)
+      (declare (interactive test1 test2)) ; unspecified optional C
+    (is a) (is b) (isnt c))
+  (is (commands :test))
+  (with-commands :test 
+    (let ((foo (command 'foo)))
+      (istype 'function foo)
+      (is (commandp 'foo))
+      (funcall foo 1 2 nil)
+      (function-lambda-list foo))))
+      ;; TODO
+      ;; (call-interactively 'foo "1 2")
+

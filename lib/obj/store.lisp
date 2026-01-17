@@ -432,7 +432,7 @@ different objects with the same oid."
   "Handle changes in class type"
 ;; TODO
 ;;   (print recs)
-;;   (dump-btree (instance-table sc))
+;;   (dump-btree (instance-index sc))
 ;;   (dump-index (index-root sc))
   (destructuring-bind (old-rec new-rec) recs
     (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
@@ -626,7 +626,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (set-instance-schema-id st (oid instance) (class-schema-id st cl)))
 
 (defmethod set-instance-schema-id ((st store) oid cid)
-  (let ((table (instance-table st)))
+  (let ((table (instance-index st)))
     (delete-key oid table)
     (setf (get-value oid table) cid)))
 
@@ -755,7 +755,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (let ((sc (get-store inst)))
     (with-mutex ((instance-cache-lock sc))
       (remhash (oid inst) (instance-cache sc)))
-    (delete-key (oid inst) (instance-table sc))))
+    (delete-key (oid inst) (instance-index sc))))
 
 (defun drop-instance-slots (instance)
   "A helper function for drop-instance, that deletes the storage of 
@@ -769,11 +769,11 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   "An instance has not been dropped if it is in the instance
    table and has a valid class id"
   (multiple-value-bind (cid found?)
-      (get-value oid (instance-table st))
+      (get-value oid (instance-index st))
     (and cid found?)))
 
 (defmethod oid->schema-id (oid (st store))
-  (get-value oid (instance-table st)))
+  (get-value oid (instance-index st)))
 
 (defgeneric default-class-id (base-type sc)
   (:documentation "A method implemented by the store for providing
@@ -1015,7 +1015,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 ;;      (dump-schema-status sc classname)
       (loop for schema-id in schema-ids appending
            (map-index (if oids #'map-oid-fn #'map-fn)
-                      (instance-class-index sc)
+                      (class-index sc)
                       :value schema-id
                       :collect collect)))))
 

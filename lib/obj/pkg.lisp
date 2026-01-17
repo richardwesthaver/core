@@ -603,13 +603,18 @@
    #:df-plan))
 
 (defpkg :obj/cmd
-  (:nicknames :cmd)
+  (:nicknames :cmd :command)
   (:use :cl :std :ast)
   (:export :defcommand
    :interactive :define-command-type
    :*commands* :*command-table* 
    :*command-types* :command-type
-   :command-table :command))
+   :command-table :command
+   :with-commands :read-command
+   :write-command :parse-command
+   :fmt-command :call-interactively
+   :commandp :commands
+   :command-types))
 
 (defpkg :obj/project
   (:nicknames :project)

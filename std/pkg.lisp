@@ -97,7 +97,9 @@
   (:use :cl :std/list)
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :std/named-readtables :parse-body)
+  (:import-from :sb-introspect :function-lambda-list)
   (:export 
+   :function-lambda-list
    :pswap
    :read-until-end
    :read-lisp-until-end
@@ -113,6 +115,8 @@
    :kernel
    :check-kernel
    :make-kernel
+   :kernel-expression
+   :kernel-info
    :kernel-init-error
    :no-kernel-error
    :g!-symbol-p
@@ -159,6 +163,7 @@
    :deferror
    :car-eql
    :nyi!
+   :get-backtrace
    :required-argument
    :out-of-bounds-error
    :ignore-some-conditions

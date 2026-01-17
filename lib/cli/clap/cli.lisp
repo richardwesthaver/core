@@ -3,7 +3,7 @@
 ;; Top-level command object of a CLI App
 
 ;;; Code:
-(in-package :cli/clap/obj)
+(in-package :cli/clap)
 
 (defun make-cli (type &rest slots)
   "Creates a new CLI object of the given cli type."
@@ -104,7 +104,7 @@ and MAKE-CLI :CMD respectively."
            (t (make-cli :cmd :name (format nil "~(~A~)" x)))))
        cmds))
 
-(defclass cli (cli-cmd)
+(defkernel cli (cli-command)
   ;; name slot defaults to *package*, must be string
   ((name :initarg :name :initform (string-downcase (package-name *package*)) :accessor name :type string)
    (version :initarg :version :initform "0.1.0" :accessor version :type string)
@@ -115,13 +115,14 @@ and MAKE-CLI :CMD respectively."
   (:documentation "CLI"))
 
 (defmethod print-usage ((self cli) &optional stream)
-  (iprintln (format nil "usage: ~A [opts] <command> [<arg>]~%" (name self)) 2 stream))
+  (println (format nil "usage: ~A [opts] <command> [<arg>]~%" (name self)) stream))
 
 (defmethod print-version ((self cli) &optional stream)
   (println (version self) stream))
 
+(deffmt fmt-cli-header "~A v~A --- ~A~%" "Given a NAME VERSION and DESCRIPTION, print a basic cli header.")
 (defmethod print-help :before ((self cli) &optional (stream t))
-  (println (format nil "~A v~A --- ~A~%" (name self) (version self) (cli-description self)) stream))
+  (fmt-cli-header stream (name self) (version self) (description self)) stream)
 
 (defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.

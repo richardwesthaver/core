@@ -26,7 +26,7 @@
 ;; - READ-COMMAND/WRITE-COMMAND
 ;; - caching? should certainly cache command-types..
 ;; - explore posibilities with &aux extension..
-
+;; - command environment?
 #| emacs help
 Code letters available are:
 a -- Function name: symbol with a function definition.
@@ -66,13 +66,52 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Code:
 (in-package :obj/cmd)
 
+;;; Variables
+(defvar *command* nil)
+(defvar *default-command-class* 'command)
 (defvar *commands* (make-hash-table))
 (defvar *command-types* (make-hash-table))
 (defvar *command-table* (make-hash-table))
+(defvar *command-delimiter* #\;
+  "A character used to indicate the start of a new command within the same line.")
 
+;;; Conditions
+(define-condition command-condition () ())
+(define-condition command-error (command-condition)
+  ((name :initarg :name :reader error-name)))
+(define-condition undefined-command (command-error)
+  ((args :initarg :args :reader error-args :initform nil))
+  (:report (lambda (c s) 
+             (format s "Undefined command ~A~@[ with args ~{~S~^ ~}~]" 
+                     (error-name c) (error-args c)))))
+
+(define-condition undefined-command-type (command-error)
+  ((args :initarg :args :reader error-args :initform nil))
+  (:report (lambda (c s) 
+             (format s "Undefined command type: ~A~@[ with args ~{~S~^ ~}~]" 
+                     (error-name c) (error-args c)))))
+
+(define-condition invalid-itype (command-error syntax-error) 
+  ((args :initarg :args :reader error-args :initform nil))
+  (:default-initargs 
+   :ast (declaration-information 'interactive))
+  (:report (lambda (c s) (format s "Invalid INTERACTIVE declaration: ~S~@[ given args ~{~S~^ ~}~]" (ast c) (error-args c)))))
+
+(definline undefined-command (name &optional args) (error 'undefined-command :name name :args args))
+(definline undefined-command-type (name &optional args) (error 'undefined-command-type :name name :args args))
+(definline invalid-itype (&optional form) (error 'invalid-itype :ast form))
+
+;;; Declarations
 ;; Set the interactive declaration information for this function. Each form in
 ;; ARGS corresponds with an element of the function's lambda list where the
 ;; CAR (or the form itself if an atom) is a COMMAND-TYPE designator.
+(defun check-itype (form &optional lambda-list)
+  "Validate the INTERACTIVE typespec FORM, optionally against a COMMAND's
+LAMBDA-LIST."
+  (assert (listp form) nil 'invalid-itype :ast form :args lambda-list)
+  (when (and lambda-list form)
+    (assert (match-lambda-lists form lambda-list) nil 'invalid-itype :ast form :args lambda-list)))
+
 (define-declaration interactive (spec env)
   (declare (ignore env))
   (values :declare spec))
@@ -81,24 +120,45 @@ Z -- Coding system, nil if no prefix arg.
   `(let ((,sym (declaration-information 'interactive ,env)))
      ,@body))
 
+#+nil
+(locally (declare (interactive (file "file: ") (symbol "symbol: ")))
+  (%with-interactive i i))
+#+nil
+(defun foo (a b)
+  (declare (interactive (file "file: ") (symbol "symbol: ")))
+  (values a b (%with-interactive i i)))
+
+;;; Accessors
+(defun make-commands (name &optional (commands (make-hash-table)) (types (make-hash-table)))
+  (setf (command-table name) (cons commands types)))
+
 (defun command-table (name)
   (gethash name *command-table*))
 
 (defun (setf command-table) (new name) (setf (gethash name *command-table*) new))
 
-(defun command (name)
-  (gethash name *commands*))
+(defun command (name &optional (commands *commands*))
+  (gethash name commands))
 
-(defun (setf command) (new name) (setf (gethash name *commands*) new))
+(defun (setf command) (new name &optional (commands *commands*)) (setf (gethash name commands) new))
 
-(defun command-type (name)
-  (gethash name *command-types*))
+(defun command-type (name &optional (types *command-types*))
+  (gethash name types))
 
-(defun (setf command-type) (new name) (setf (gethash name *command-types*) new))
+(defun (setf command-type) (new name &optional (command-types *command-types*)) 
+  (setf (gethash name command-types) new))
 
+(defun commands (&optional name)
+  (hash-table-alist (if name (car (command-table name)) *commands*)))
+
+(defun command-types (&optional name)
+  (hash-table-alist (if name (cdr (command-table name)) *command-types*)))
+
+;;; Command Types
 (defmacro define-command-type (name args &body body)
-  "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES*. ARGS is a
-lambda-list which destructures the cdr of INTERACTIVE declaration forms.
+  "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES* if NAME is an atom,
+else the car of NAME designates the value of *COMMAND-TABLE* to modify. ARGS
+is a lambda-list which destructures the cdr of INTERACTIVE declaration forms.
 
 Example:
 
@@ -121,66 +181,147 @@ Example:
 (defcommand \"symbol\" (sym) 
  (declare (interactive (:symbol \"Pick a symbol: \")))
  (describe sym s))"
-  `(setf (command-type ,name)
+  `(setf ,(if (atom name) 
+              `(command-type ',name)
+              `(command-type ',(second name) (cdr (or (command-table ',(car name)) (make-commands ',(car name))))))
          (lambda ,args
            ,@body)))
 
-(defun call-interactively (command &optional (input ""))
+;; IO
+(deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
+
+(defun read-command (&optional (stream *standard-input*))
+  (with-input-from-string (s (read-line stream))
+    (let* ((form (read-lisp-until-end s))
+           (cmd (or (command (car form)) (undefined-command (car form) (cdr form))))
+           (ll (function-lambda-list cmd)))
+      (values form cmd ll))))
+
+(defun write-command (cmd &optional args (stream *standard-output*))
+  (fmt-command stream cmd args)
+  (fresh-line stream))
+
+(defun parse-command (str)
+  "Parse a COMMAND from STR."
+  (with-input-from-string (s str)
+    (read-command s)))
+
+(defun call-interactively (command &optional input)
   "Parse COMMAND's arguments from input according to its command spec then
 execute it."
   (declare ((or string symbol) command)
-           (string input))
+           ((or null string) input))
   (catch 'cmd
-    (let* ((cmd (command command))
-           (arglist (sb-introspect:function-lambda-list cmd))
+    (let* ((cmd (or (command command) (undefined-command command)))
+           (ll (function-lambda-list cmd))
           (in input))
-      ;; TODO 2026-01-15: 
-      (apply cmd in arglist))))
+      ;; TODO 2026-01-15:
+      (if ll
+          (apply cmd in ll)
+          (progn
+            (when input (warn "too many args to command ~A from input: ~S" command input))
+            (funcall command))))))
 
 ;; (defmethod call)
 
 ;; (defmethod exec ((self command)))
 
 (defmacro with-commands (name &body body)
-  "Eval BODY with *COMMANDS* bound to the value of (GETHASH NAME *COMMAND-TABLE*)."
-  `(let ((*commands* (command-table ,name)))
+  "Eval BODY with (*COMMANDS* . *COMMAND-TYPES*) bound to the value of (GETHASH
+NAME *COMMAND-TABLE*)."
+  `(destructuring-bind (*commands* . *command-types*) (command-table ,name)
      ,@body))
 
 (defun save-commands (name)
   "Set the value of NAME in *COMMAND-TABLE* using *COMMANDS*."
-  (setf (command-table name) *commands*))
+  (setf (command-table name) (cons *commands* *command-types*)))
 
 (defun copy-commands (name1 name2)
   "Copy all commands and types from NAME1 to NAME2."
   (with-commands name1 (save-commands name2)))
 
 ;; future use
-#+nil(defkernel command () ())
+(deftype interactive-function () `function)
+
+(defkernel command ()
+  ((interactive :initarg :interactive :initform nil :reader interactive))
+  (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.
+
+The INTERACTIVE declaration corresponds to the slot of the same name in this
+class - both may be used to specify the ITYPE (interaction typespec) of the
+command."))
+
+(defmethod initialize-instance :after ((self command) &key kernel)
+  (when kernel
+    (setf (kernel self) kernel)))
+
+(definline commandp (cmd) 
+  (declare (values boolean))
+  (and (or (typep cmd 'command)
+           (command cmd))
+       t))
 
 ;; (defun command-info (name))
 
-(defun compile-command (name &rest interactive)
-  "Compile NAME as a COMMAND with the provided INTERACTIVE declaration
-information. If NAME already designates a command it is re-compiled with the
-new INTERACTIVE form in place.")
+#+nil
+(defun compile-command (function interactive &optional env)
+  "Compile FUNCTION as a COMMAND NAME with the provided INTERACTIVE declaration
+information."
+  (let ((expr (etypecase function
+                (function (function-lambda-expression function))
+                (symbol (function-lambda-expression (symbol-function function)))
+                (list function))))
+    (sb-cltl2:enclose expr (augment-environment env :declare `((interactive ,@interactive))))))
 
-(defmacro defcommand (name args &body body &environment env)
+(defmacro defcommand (name args &body body)
   "Define a new COMMAND given NAME and ARGS which evaluates BODY. NAME may be
 an atom which is added to *COMMANDS* or a list where the car is the name of
 the *COMMAND-TABLE* entry to add this command to. ARGS is a typical lambda
 list. A default command wrapper is provided in the case that BODY doesn't
-include an INTERACTIVE declaration, else the DECLARATION-INFORMATION is
-parsed from the environment and used to inform the wrapper.
+include an INTERACTIVE declaration, else the ITYPE is parsed and used to
+inform the wrapper.
 
 INTERACTIVE declarations should match the lambda-list of ARGS with each form
-being a COMMAND-TYPE or a cons where the car is a COMMAND-TYPE and the cdr is
+being a COMMAND-TYPE or a cons where the car is a COMMAND-TYPE and the cdr contains
 the args to it."
-  (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
-    `(setf (command ',name) (symbol-function (defun ,name ,args ,@(when doc `(,doc)) ,decl ,@forms)))))
+  (let ((%name (if (atom name) name (second name)))
+        (%cmd* (if (atom name) `(command ',name) 
+                  `(command ',(second name) (car (or (command-table ',(car name)) (make-commands ',(car name))))))))
+    (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
+      (let ((%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
+        (check-itype %int args) ; validate
+        (with-gensyms (%cmd)
+          `(let ((,%cmd (make-instance *default-command-class* 
+                          :interactive ,(collecting
+                                          (mapc
+                                           (lambda (x)
+                                             (unless (member x lambda-list-keywords)
+                                               (let ((name (if (atom x) x (car x))))
+                                                 (collect (or (command-type name)
+                                                              (undefined-command-type name))))))
+                                           %int)))))
+             (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
+                   ;; currently we compile a function in the current package
+                   ;; with the same name - not strictly necessary and prone to
+                   ;; name conflicts (user beware).
+                   (symbol-function 
+                    (defun ,%name ,args
+                      ,@(when doc `(,doc))
+                      ,@decl
+                      ,@forms))
+                   ,%cmd* ,%cmd)))))))
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name)
-  (setq *commands* (command-table name)))
+  (if name
+      (let ((cons (command-table name)))
+        (if cons
+            (setq *commands* (car cons)
+                  *command-types* (cdr cons))
+            (make-commands name)))
+      (reset :commands)))
 
 (defmethod reset ((self (eql :commands)) &key name)
-  (setq *commands* nil))
+  (if name (remhash name *command-table*)
+      (setq *commands* (make-hash-table)
+            *command-types* (make-hash-table))))

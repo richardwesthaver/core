@@ -19,14 +19,14 @@
 (defparameter *test-cli* (make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli"))
 
 (deftest mixed-args ()
-  (with-cli (*test-cli* :exit nil) '("--foo" "bar" "flub") 
-    (is (string= "bar" (cli-opt-val (aref (opts *test-cli*) 0))))
+  (with-cli (*test-cli* :exit nil) '("--foo" "bar" "flub")
+    (is (string= "bar" (aref (opts *test-cli*) 0)))
     (is (null (cli-args *test-cli*)))
     (do-cmd *test-cli*)))
 
 (deftest cli-ast ()
   "Validate the CLI/CLAP/AST parser."
-  (is (string= (cli-opt-name (cli-node-form (car (ast:ast (proc-args *test-cli* '("--foo" "1"))))))
+  (is (string= (cli-opt-name (ast (car (proc-args *test-cli* '("--foo" "1")))))
                "foo"))
   (signals clap-unknown-argument
     (proc-args *test-cli* '("--log" "default" "--foo=11"))))
@@ -40,13 +40,11 @@
 (deftest clap-basic ()
   "test basic CLAP functionality."
   (with-cli ((make-cli :cli :opts *test-opts* :cmds *cmds* :description "test cli") :exit nil) *args*
-    (is (eq (make-shorty "test") #\t))
-    (is (equalp (proc-args *cli* '("-f" "baz" "--bar=fax")) ;; not eql
-                (make-cli-ast 
-                 (list (cli-node 'opt (find-short-opts #\f *cli*))
-                       (cli-node 'cmd (find-cmd "baz" *cli*))
-                       (cli-node 'opt (find-opts "bar" *cli*))
-                       (cli-node 'arg "fax")))))
+    (is (eq (cli/clap/macs::schar0 "test") #\t))
+    (let ((ast (proc-args *cli* '("-f" "baz" "--bar=fax")))) ;; not eql
+      (is= 2 (length ast))
+      (is (cli-node 'opt (find-short-opts #\f *cli*)))
+      (is (cli-node 'opt (find-opts "bar" *cli*))))
     (parse-args *cli* '("--bar" "baz" "-f" "yaks"))
     (is (stringp
          (with-output-to-string (s)

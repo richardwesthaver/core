@@ -3,29 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :cli/clap/proto)
-
-;;; Conditions
-(define-condition clap-condition () ())
-
-(eval-always
-  (deferror clap-error (clap-condition) ())
-  (defwarning clap-warning (clap-condition) ())
-  (deferror clap-simple-error (simple-error clap-error) () (:auto t))
-  (deferror clap-unknown-argument (clap-error unknown-argument) ())
-  (deferror clap-missing-argument (clap-error missing-argument)
-      ((type :initarg :type :initform nil)))
-  (deferror clap-invalid-argument (clap-error invalid-argument) ())
-  (defwarning clap-simple-warning (simple-warning clap-warning) () (:auto t)))
-
-(defun clap-unknown-argument (arg type)
-  (error 'clap-unknown-argument :name arg :type type))
-
-(defun clap-missing-argument (arg type)
-  (error 'clap-missing-argument :item arg :type type))
-
-(defun clap-invalid-argument (arg &key reason type)
-  (error 'clap-invalid-argument :name arg :type type :reason reason))
+(in-package :cli/clap)
 
 ;;; Protocol
 (defgeneric cmds (self))

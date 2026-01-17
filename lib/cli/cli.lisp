@@ -26,7 +26,7 @@
    :load-package-cli :package-cli
    :package-cmds :package-opts
    :defcmd :defopt
-   :defopts :argp
+   :defopts
    :cmds :opts
    :help-opt :version-opt :level-opt :keep-ast-opt)
   (:use-reexport . #.cli-int:*cli-clap-packages*))

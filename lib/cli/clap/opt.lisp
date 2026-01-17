@@ -3,7 +3,7 @@
 ;; CLI Opt Objects
 
 ;;; Code:
-(in-package :cli/clap/obj)
+(in-package :cli/clap)
 
 ;;; Parsers
 (make-opt-parser string *arg*)
@@ -96,7 +96,7 @@
   (format stream "-~(~{~A~^/--~}~)~@[ :value ~A~]~24t~@[~A~]~@[~%~4t:doc ~A~]"
           (let ((n (cli-opt-name self)))
             (declare (simple-string n))
-            (list (make-shorty n) n))
+            (list (schar0 n) n))
           (and (slot-boundp self 'val) (cli-opt-val self))
           (and (slot-boundp self 'description) (cli-opt-description self))
           (when (fboundp (cli-thunk self))

@@ -40,15 +40,23 @@
   (:metaclass kernel-class)
   (:documentation "Standard kernel object."))
 
-(defmethod kernel ((self kernel-object))
+(defmethod kernel ((self sb-mop:funcallable-standard-object))
   (sb-pcl::%funcallable-instance-fun self))
+(defmethod (setf kernel) (new (self sb-mop:funcallable-standard-object))
+  (setf (sb-pcl::%funcallable-instance-fun self) new))
+(defmethod kernel-info ((self sb-mop:funcallable-standard-object) i)
+  (sb-pcl::%funcallable-instance-info self i))
+(defmethod (setf kernel-info) (new (self sb-mop:funcallable-standard-object) i)
+  (setf (sb-pcl::%funcallable-instance-info self i) new))
 
-(defmethod print-object ((self kernel-object) stream)
+(defmethod kernel-expression (self sb-mop:funcallable-standard-object)
+  (function-lambda-expression self))
+
+(defmethod print-object ((self sb-mop:funcallable-standard-object) stream)
   (multiple-value-bind (expr closure-p name) (function-lambda-expression self)
-    (declare (ignore expr))
     (print-unreadable-object (self stream :type t)
-      (format stream "~@[~A~]~@[ :closure ~A~]" name closure-p))))
-            
+      (format stream "~@[~A~]~@[ :closure ~A~]~@[ :expr ~A~]" name closure-p expr))))
+
 (definline make-kernel (fn)
   "Return a new KERNEL-OBJECT and set the instance function to FN."
   (declare (function fn))
@@ -79,17 +87,18 @@ restarts is provided. *KERNEL* is returned."
   "Like DEFCLASS but for the KERNEL-CLASS metaclass."
   (let ((k (find :kernel opts :key #'car)))
     `(progn
-       (defclass ,name ,(or supers '(kernel-object)) ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
-       (defmethod initialize-instance :after ((self ,name) &key &allow-other-keys)
-         (sb-mop:set-funcallable-instance-function 
-          self 
-          (compile nil
-                   (lambda ,(cadr k) 
-                     (let ((*kernel* self))
-                       (declare (,name *kernel*))
-                       ,@(cddr k)))))))))
+       (defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
+       . ,(when (or (memq 'kernel-object supers) (some (lambda (s) (subtypep s 'kernel-object)) supers))
+            `((defmethod initialize-instance :before ((self ,name) &key &allow-other-keys)
+                (sb-mop:set-funcallable-instance-function 
+                 self 
+                 (compile nil
+                          (lambda ,(cadr k) 
+                            (let ((*kernel* self))
+                              (declare (,name *kernel*))
+                              ,@(cddr k)))))))))))
 
-(defkernel hook () ()
+(defkernel hook (kernel-object) ()
   (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
@@ -198,10 +207,10 @@ functions themselves.")
                                      (when (> (length x) 2)
                                        (setf (symbol-value (cadr x)) (caddr x)))
                                      (if (<= (length x) 4)
-                                       (setf (documentation (cadr x) 'variable) (cadddr x))
-                                       (error 'simple-error 
-                                              :format-control "too many arguments - expected at most 4 but got ~S" 
-                                              :format-arguments (list (length x)))))
+                                         (setf (documentation (cadr x) 'variable) (cadddr x))
+                                         (error 'simple-error 
+                                                :format-control "too many arguments - expected at most 4 but got ~S" 
+                                                :format-arguments (list (length x)))))
                                   `(add-hook ,val x)))
                  ',forms)
          ,val)
@@ -225,9 +234,9 @@ for each key in the HOOK-VALUE table."
                 (push
                  `(defvar ,(intern (format nil "*~A-~A-HOOK*"
                                            (concatenate 'string
-                                            (loop for c across (string-left-trim "*" (string symbol))
-                                                  while (and c (not (char= c #\-)))
-                                                  collect c))
+                                                        (loop for c across (string-left-trim "*" (string symbol))
+                                                              while (and c (not (char= c #\-)))
+                                                              collect c))
                                            k))
                     ,v)
                  ret))
