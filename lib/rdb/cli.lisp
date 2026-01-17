@@ -6,19 +6,17 @@
 (in-package :rdb/cli)
 ;; (rocksdb:load-rocksdb t)
 
-(defopt rdb-config-opt (init-rdbrc (cli/clap/obj::parse-file-opt *arg*)))
+;; (defopt rdb-config-opt (init-rdbrc (cli/clap/obj::parse-file-opt *arg*)))
+;; (defopt rdb-path-opt (or *arg* "/tmp/rdb"))
 
-(defopt rdb-path-opt (or *arg* "/tmp/rdb"))
-
-(defcmd rdb-new ()
+(defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)
   (open-db *db*)
   (println (name *db*)))
 
-(defcmd rdb-show ()
-  (let* ((db-path (cli-opt-val (car (find-opts "db" *cli*))))
-	 (*db* (create-rdb db-path :open nil)))
-    (if (and (null db-path) (zerop *argc*))
+(defcommand (:rdb show) (db-path)
+  (let ((*db* (create-rdb db-path :open nil)))
+    (if (null db-path)
 	(mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
 	      (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
 	(with-rdb (db (create-rdb db-path :open t))
@@ -32,14 +30,14 @@
 			       val)
 		       next)))))))
 
-(defcmd rdb-set ()
+(defcommand (:rdb set) ()
   (if (> 2 *argc*)
       (rdb-error "missing args: KEY VAL")
       (with-rdb (db *db*)
 	(open-db db)
 	(insert-key  db (pop *args*) (pop *args*)))))
 
-(defcmd rdb-get ()
+(defcommand (:rdb get) ()
   (if (> 1 *argc*)
       (rdb-error "missing arg: KEY")
       (with-rdb (db *db*)
@@ -47,10 +45,10 @@
 	(when-let ((val (get-key db (car *args*))))
 	  (println val)))))
 
-(defcmd rdb-destroy ()
+(defcommand (:rdb destroy) ()
   (destroy-db *db*))
 
-(defcmd rdb-fuzz ()
+(defcommand (:rdb fuzz) ()
   (with-rdb (db *db*)
     (open-db db)
     (let ((val (make-array 32 :element-type 'octet)))
@@ -64,7 +62,7 @@
 		 (sb-ext:string-to-octets (string (gensym "foo")))
 		 val)))))
 
-(define-cli *rdb-cli*
+(clap::define-cli *rdb-cli*
   :name "rdb"
   :package :rdb
   :help t

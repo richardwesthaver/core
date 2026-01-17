@@ -6,13 +6,9 @@
    (:module "clap"
     :depends-on ("pkg")
     :components
-    ((:file "vars")
-     (:file "util" :depends-on ("vars"))
-     (:file "proto" :depends-on ("util"))
-     (:file "macs")
-     (:file "opt" :depends-on ("macs" "proto"))
-     (:file "cmd" :depends-on ("macs" "proto"))
-     (:file "cli" :depends-on ("opt" "cmd"))))
+    ((:file "var")
+     (:file "util" :depends-on ("var"))
+     (:file "proto" :depends-on ("util"))))
    (:file "ansi" :depends-on ("pkg"))
    (:file "env" :depends-on ("pkg"))
    (:file "progress" :depends-on ("pkg"))

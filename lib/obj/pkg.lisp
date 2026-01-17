@@ -607,14 +607,15 @@
   (:use :cl :std :ast)
   (:export :defcommand
    :interactive :define-command-type
-   :*commands* :*command-table* 
+   :*commands* :*command-table*
+   :*command*
    :*command-types* :command-type
    :command-table :command
    :with-commands :read-command
    :write-command :parse-command
    :fmt-command :call-interactively
    :commandp :commands
-   :command-types))
+   :command-types :make-commands))
 
 (defpkg :obj/project
   (:nicknames :project)

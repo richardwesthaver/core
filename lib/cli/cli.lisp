@@ -10,27 +10,6 @@
   (:use :cl :std)
   (:use-reexport . #.cli-int:*cli-tool-packages*))
 
-(defpkg :cli/clap
-  (:nicknames :clap)
-  (:use-reexport :cli/main)
-  (:prelude :clap*
-   :defcmd :defopt
-   :*argc* :*args* :*optc* :*opts* 
-   :args :arg0
-   :getopt :setopt
-   :defmain
-   :find-opt
-   :*cli* :define-cli
-   :with-cli
-   :do-cmd :do-opt
-   :load-package-cli :package-cli
-   :package-cmds :package-opts
-   :defcmd :defopt
-   :defopts
-   :cmds :opts
-   :help-opt :version-opt :level-opt :keep-ast-opt)
-  (:use-reexport . #.cli-int:*cli-clap-packages*))
-
 (defpkg :cli
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)

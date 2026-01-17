@@ -29,7 +29,7 @@
 ;;; Code:
 (in-package :cli/main)
 
-;;;_. Main
+;;; Main
 (defmacro defmain (name (&key (exit t) (debug t)) &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
@@ -40,7 +40,7 @@
          ,@decls
          (with-cli-handlers ,@body)))))
 
-;;;_. Multi-main
+;;; Multi-main
 (defmacro define-multi-main (name default &rest mains)
   "Define a MAIN function for the current package which dispatches
   based on the value of '(ARG0)' at runtime to one of the pairs in
@@ -55,7 +55,7 @@ arrange for symlinks for each handled value of (ARG0) to be generated
 ."
   `(progn
      (defun ,name ()
-       (case (keywordicate (string-upcase (pathname-name (cli/clap/util:arg0))))
+       (case (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))
          ,@mains
          (t ,default)))))
 

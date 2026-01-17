@@ -117,6 +117,7 @@
    :make-kernel
    :kernel-expression
    :kernel-info
+   :kernel-documentation
    :kernel-init-error
    :no-kernel-error
    :g!-symbol-p

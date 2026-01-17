@@ -158,7 +158,7 @@ LAMBDA-LIST."
 (defmacro define-command-type (name args &body body)
   "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES* if NAME is an atom,
 else the car of NAME designates the value of *COMMAND-TABLE* to modify. ARGS
-is a lambda-list which destructures the cdr of INTERACTIVE declaration forms.
+is a lambda-list which destructures the cdr of INTERACTIVE argtype forms.
 
 Example:
 
@@ -214,7 +214,7 @@ execute it."
   (catch 'cmd
     (let* ((cmd (or (command command) (undefined-command command)))
            (ll (function-lambda-list cmd))
-          (in input))
+           (in input))
       ;; TODO 2026-01-15:
       (if ll
           (apply cmd in ll)
@@ -264,14 +264,10 @@ command."))
 ;; (defun command-info (name))
 
 #+nil
-(defun compile-command (function interactive &optional env)
-  "Compile FUNCTION as a COMMAND NAME with the provided INTERACTIVE declaration
+(defun compile-command (name command &optional env)
+  "Compile COMMAND as a FUNCTION given ENV with optional INTERACTIVE declaration
 information."
-  (let ((expr (etypecase function
-                (function (function-lambda-expression function))
-                (symbol (function-lambda-expression (symbol-function function)))
-                (list function))))
-    (sb-cltl2:enclose expr (augment-environment env :declare `((interactive ,@interactive))))))
+  (compile name (sb-cltl2:enclose (kernel-expression command) env)))
 
 (defmacro defcommand (name args &body body)
   "Define a new COMMAND given NAME and ARGS which evaluates BODY. NAME may be
@@ -284,32 +280,39 @@ inform the wrapper.
 INTERACTIVE declarations should match the lambda-list of ARGS with each form
 being a COMMAND-TYPE or a cons where the car is a COMMAND-TYPE and the cdr contains
 the args to it."
-  (let ((%name (if (atom name) name (second name)))
-        (%cmd* (if (atom name) `(command ',name) 
-                  `(command ',(second name) (car (or (command-table ',(car name)) (make-commands ',(car name))))))))
+  (let ((%cmd* (if (atom name) `(command ',name) 
+                   `(command ',(second name) (car (or (command-table ',(car name)) (make-commands ',(car name))))))))
     (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
       (let ((%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
         (check-itype %int args) ; validate
         (with-gensyms (%cmd)
           `(let ((,%cmd (make-instance *default-command-class* 
-                          :interactive ,(collecting
-                                          (mapc
-                                           (lambda (x)
-                                             (unless (member x lambda-list-keywords)
-                                               (let ((name (if (atom x) x (car x))))
-                                                 (collect (or (command-type name)
-                                                              (undefined-command-type name))))))
-                                           %int)))))
+                          :interactive 
+                          ',(collecting
+                              (mapc
+                               (lambda (x)
+                                 (unless (member x lambda-list-keywords)
+                                   (let ((name x)
+                                         (args)) 
+                                     (unless (atom x)
+                                       (setf name (car x)
+                                             args (cdr x)))
+                                     (collect `(funcall (command-type ,name) ,@args)))))
+                               %int)))))
              (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
                    ;; currently we compile a function in the current package
                    ;; with the same name - not strictly necessary and prone to
                    ;; name conflicts (user beware).
-                   (symbol-function 
-                    (defun ,%name ,args
-                      ,@(when doc `(,doc))
-                      ,@decl
-                      ,@forms))
+                   (lambda ,args                     
+                     ,@decl
+                     ,@forms)
+                   ,@(when doc `((kernel-documentation ,%cmd) ,doc))
                    ,%cmd* ,%cmd)))))))
+
+#+nil
+(progn
+  (define-command-type :test ())
+  (defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c)))
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name)

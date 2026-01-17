@@ -48,8 +48,12 @@
   (sb-pcl::%funcallable-instance-info self i))
 (defmethod (setf kernel-info) (new (self sb-mop:funcallable-standard-object) i)
   (setf (sb-pcl::%funcallable-instance-info self i) new))
+(defmethod kernel-documentation ((self sb-mop:funcallable-standard-object))
+  (documentation (kernel self) 'function))
+(defmethod (setf kernel-documentation) (new (self sb-mop:funcallable-standard-object))
+  (setf (documentation (kernel self) 'function) new))
 
-(defmethod kernel-expression (self sb-mop:funcallable-standard-object)
+(defmethod kernel-expression ((self sb-mop:funcallable-standard-object))
   (function-lambda-expression self))
 
 (defmethod print-object ((self sb-mop:funcallable-standard-object) stream)

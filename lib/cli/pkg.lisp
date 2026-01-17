@@ -21,15 +21,18 @@
 (in-package :std-user)
 (defpkg :cli-int 
   (:use :cl :std) 
-  (:export :*cli-packages* :*cli-tool-packages* :*cli-clap-packages*))
+  (:export :*cli-packages* :*cli-tool-packages*))
 
 (in-package :cli-int)
 
-(defparameter *cli-clap-packages* nil)
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cli-clap-packages* :test 'string=)))
+(defparameter *cli-packages* nil)
+
+(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=))))
 
 (defpkg :cli/clap
+  (:nicknames :clap)
   (:use :cl :std :log :cmd :ast :equiv)
+  (:use-reexport :log :cmd :ast)
   ;; vars
   (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
    :*default-cli-class* :*cli*
@@ -38,27 +41,16 @@
    ;; macs
    :schar0 :with-cli-handlers 
    ;; proto
-   :proc-args
-   :find-cmd :find-opts :parse-args :print-help
-   :print-usage :print-version :do-cmds :do-cmd
-   :active-cmds :active-opts :call-opt :do-opt
-   :push-cmd :push-opt
-   :do-opts :clap-simple-error
-   :activate-cmd
-   :activate-opt :find-opt
-   :cli-args :opts
-   :cmds :cli-node
-   :cli-node-type
+   :print-help :print-usage :print-version
+   :cli-command :cli
    ;; obj
    :make-cli :define-cli
    :make-opts :make-cmds :parse-boolean-opt :parse-string-opt
    :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
-   :pasre-num-op :parse-file-op :parse-dir-op :cli
+   :pasre-num-op :parse-file-op :parse-dir-op
    :cli-cd :with-cli :debug-opts
-   :cli-opt :cli-cmd :cli-opt-val :cli-opt-lock :cli-opt-name
    :active-cmds
    :%compose-keyword-opt
-   :cli-cmd-args
    :getopt
    :setopt
    :add-package-cmd
@@ -74,10 +66,6 @@
    :version-opt
    :level-opt
    :keep-ast-opt))
-
-(defparameter *cli-packages* nil)
-
-(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=))))
 
 (defpkg :cli/shell
   (:use :cl :std)
@@ -213,8 +201,7 @@
 
 (defpkg :cli/main
   (:use :cl :std)
-  (:import-from :cli/clap/vars :*no-exit* :*no-debug*)
-  (:import-from :cli/clap/macs :with-cli-handlers)
+  (:import-from :cli/clap :*no-exit* :*no-debug* :with-cli-handlers)
   (:export
    #:defmain
    #:define-multi-main
