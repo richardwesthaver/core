@@ -24,17 +24,6 @@
 
 (pushnew :skel *features*)
 
-(progn
-  (clap:defcmd skc-db ())
-  (clap:defcmd skc-net ())
-  (clap:defcmd skc-serve ())
-  (clap:load-package-cli 
-   *skel-cli*
-   :cmds 
-   ((:name db :description "interact with the skel database" :thunk skc-db)
-    (:name net :description "communicate with skel clients and servers"
-           :thunk skc-net))))
-
 ;; db is locked while skel is running, prevents multiple instances
 ;; #+rdb
 ;; (pushnew 'init-skel-logger *skel-init-hook*)

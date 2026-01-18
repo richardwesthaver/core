@@ -398,6 +398,7 @@ function: '(ql:quickload :clouseau)'."
   (defkernel (as defclass))
   (defhook (as defmacro))
   (defcommand (as defun))
+  (define-cli (as make-instance))
   (walk-directory 1)
   (using-gensyms (as with-gensyms))
   (binding-gensyms (as with-gensyms))

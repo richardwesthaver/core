@@ -3,12 +3,7 @@
   :depends-on (:std :log :dat :obj :io)
   :components 
   ((:file "pkg")
-   (:module "clap"
-    :depends-on ("pkg")
-    :components
-    ((:file "var")
-     (:file "util" :depends-on ("var"))
-     (:file "proto" :depends-on ("util"))))
+   (:file "clap")
    (:file "ansi" :depends-on ("pkg"))
    (:file "env" :depends-on ("pkg"))
    (:file "progress" :depends-on ("pkg"))
@@ -47,6 +42,5 @@
   ((:module "tests"
     :components
     ((:file "pkg")
-     (:file "ansi")
-     (:file "clap"))))
+     (:file "ansi"))))
   :perform (test-op (o c) (symbol-call :rt :do-tests :cli)))

@@ -69,7 +69,7 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Variables
 (defvar *command* nil)
 (defvar *default-command-class* 'command)
-(defvar *commands* (make-hash-table))
+(defvar *commands* (make-hash-table :test 'equal))
 (defvar *command-types* (make-hash-table))
 (defvar *command-table* (make-hash-table))
 (defvar *command-delimiter* #\;
@@ -255,6 +255,9 @@ command."))
   (when kernel
     (setf (kernel self) kernel)))
 
+(defmethod make-load-form ((self command) &optional env)
+  (make-load-form-saving-slots self :slot-names '(interactive) :environment env))
+
 (definline commandp (cmd) 
   (declare (values boolean))
   (and (or (typep cmd 'command)
@@ -263,7 +266,9 @@ command."))
 
 ;; (defun command-info (name))
 
-#+nil
+(defgeneric command-parser (self input)
+  (:documentation "Return a function which supplies the arguments for command SELF given INPUT."))
+
 (defun compile-command (name command &optional env)
   "Compile COMMAND as a FUNCTION given ENV with optional INTERACTIVE declaration
 information."
@@ -300,9 +305,6 @@ the args to it."
                                      (collect `(funcall (command-type ,name) ,@args)))))
                                %int)))))
              (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
-                   ;; currently we compile a function in the current package
-                   ;; with the same name - not strictly necessary and prone to
-                   ;; name conflicts (user beware).
                    (lambda ,args                     
                      ,@decl
                      ,@forms)
@@ -315,7 +317,8 @@ the args to it."
   (defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c)))
 
 ;;; Init
-(defmethod init ((self (eql :commands)) &key name)
+(defmethod init ((self (eql :commands)) &key name class)
+  (when class (setq *default-command-class* class))
   (if name
       (let ((cons (command-table name)))
         (if cons
@@ -327,4 +330,5 @@ the args to it."
 (defmethod reset ((self (eql :commands)) &key name)
   (if name (remhash name *command-table*)
       (setq *commands* (make-hash-table)
-            *command-types* (make-hash-table))))
+            *command-types* (make-hash-table)
+            *default-command-class* 'command)))

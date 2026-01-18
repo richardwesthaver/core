@@ -36,10 +36,9 @@
    #:systemd-status))
 
 (defpackage :skel/homer/cli
-  (:use :cl :std :log :skel/homer/core :cli :ast :clap)
-  (:export :*homer-cli*))
+  (:use :cl :std :log :skel/homer/core :cli :ast :clap))
 
 (pkg:defpkg :skel/homer
   (:nicknames :homer)
   (:use :cl :std :log :cli)
-  (:use-reexport :skel/homer/core :skel/homer/cli))
+  (:use-reexport :skel/homer/core))

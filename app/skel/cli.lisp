@@ -6,7 +6,7 @@
 (in-package :skel/cli)
 
 ;; *SKEL-CLI* exposes access to the SKEL system from the CLI.
-(defcmd skc-init ()
+(defcommand (:skel init) ()
   (let ((file (when *args* (pop *args*)))
         (name (when (> *argc* 1) (pop *args*))))
     ;; TODO: test, may need to be sequential for side-effect of pop
@@ -21,13 +21,13 @@
                      (use-value f2 s))))))
       (init-skelfile file name))))
 
-(defcmd skc-describe ()
+(defcommand (:skel describe) ()
   (describe
    (if (> *argc* 0)
        (find-skelfile (pathname (car *args*)) :load t)
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
-(defcmd skc-inspect ()
+(defcommand (:skel inspect) ()
   (sb-ext:enable-debugger)
   (setq *no-exit* t)
   (inspect (or *skel-project* *skel-user-config*)))
@@ -42,35 +42,35 @@
                   (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
                 args)))))
 
-(defcmd skc-compile ()
+(defcommand (:skel compile) ()
   (call-with-args :compile *args*))
-(defcmd skc-build ()
+(defcommand (:skel build) ()
   (call-with-args :build *args*))
-(defcmd skc-update ()
+(defcommand (:skel update) ()
   (call-with-args :update *args*))
-(defcmd skc-dist ()
+(defcommand (:skel dist) ()
   (call-with-args :dist *args*))
-(defcmd skc-install ()
+(defcommand (:skel install) ()
   (call-with-args :install *args*))
-(defcmd skc-pack ()
+(defcommand (:skel pack) ()
   (call-with-args :pack *args*))
-(defcmd skc-unpack ()
+(defcommand (:skel unpack) ()
   (call-with-args :unpack *args*))
-(defcmd skc-bundle ()
+(defcommand (:skel bundle) ()
   (call-with-args :bundle *args*))
-(defcmd skc-unbundle ()
+(defcommand (:skel unbundle) ()
   (call-with-args :unbundle *args*))
-(defcmd skc-clean ()
+(defcommand (:skel clean) ()
   (call-with-args :clean *args*))
-(defcmd skc-test ()
+(defcommand (:skel test) ()
   (call-with-args :test *args*))
-(defcmd skc-bench ()
+(defcommand (:skel bench) ()
   (call-with-args :bench *args*))
-(defcmd skc-save ()
+(defcommand (:skel save) ()
   (call-with-args :save *args*))
 
-(defcmd skc-show ()
-  (if *args*
+(defcommand (:skel show) (&rest args)
+  (if args
       (mapc (lambda (x) 
               (lety ((y (string-left-trim ":" x) :type base-string))
                 (if (sk-project-slot y nil)
@@ -86,7 +86,7 @@
                           (apply 'fmt-column t (coerce val 'list))
                           (sk-print val)))
                     (log:fatal! "unknown argument: ~A~%" x))))
-            *args*)
+            args)
       (cond
         ((boundp '*skel-project*)
          (sk-print *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
@@ -94,20 +94,20 @@
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))
 
-(defcmd skc-list ()
+(defcommand (:skel list) ()
   (string-case ((subseq (pop *args*) 0 3))
     ("log" (apply 'sk-log-list *args*))))
 
-(defcmd skc-id ()
+(defcommand (:skel id) ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
-(defopt skc-config (load-user-skelrc (or *arg* (user-skelrc)) nil))
+(define-command-type skc-config (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
 
-(defcmd skc-edit ()
+(defcommand (:skel edit) ()
   (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
-(defcmd skc-make ()
+(defcommand (:skel make) ()
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
       (sb-ext:enable-debugger)
@@ -120,10 +120,10 @@
                       (skel-simple-error "rule not found: ~A" a))))
           (sk-make sk (aref (skel/core/obj::rules sk) 0))))))
 
-(defcmd skc-status ()
+(defcommand (:skel status) ()
   (vc:vc-status (vc:vc *skel-project*)))
 
-(defcmd skc-run ()
+(defcommand (:skel run) ()
   (sb-ext:enable-debugger)
   (if *args*
       (mapc (lambda (script)
@@ -137,11 +137,11 @@
             *args*)
       (required-argument 'name)))
 
-(defcmd skc-new ()
+(defcommand (:skel new) ()
   (println *args*)
   (println *opts*))
 
-(defcmd skc-search ()
+(defcommand (:skel search) ()
   (dolist (a *args*)
     (println (sk-search-project a))))
 
@@ -160,102 +160,9 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
-(defcmd skc-shell () (sk-shell))
+(defcommand skc-shell () (sk-shell))
 
-(define-cli *skel-cli*
-  :help t
+(define-cli "skel"
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool."
-  :thunk skc-show
-  :name "skel"
-  :opts 
-  ((:name "version" 
-    :description "print version"
-    :type boolean
-    :thunk version-opt)
-   (:name "ast" :description "save the intermediate skel AST" 
-    :thunk keep-ast-opt :type boolean)
-   (:name "level" :description "set log level (warn,info,debug,trace)"
-    :thunk level-opt)
-   (:name "config" :description "set a custom skel user config" 
-    :type file 
-    :thunk skc-config))
-  :cmds 
-  ((:name init
-    :description "initialize a project"
-    :opts ((:name "name" :description "project name" :type string))
-    :thunk skc-init)
-   (:name id
-    :description "print the current project id"
-    :thunk skc-id)
-   (:name inspect
-    :description "inspect the project skelfile"
-    :opts ((:name "file" :description "path to skelfile" :type file))
-    :thunk skc-inspect)
-   (:name new
-    :description "make a new skel project"
-    :opts ((:name "name" :description "project name" :type string))
-    :thunk skc-new)
-   (:name describe
-    :description "describe a skelfile"
-    :thunk skc-describe)
-   (:name edit
-    :description "edit a project file in emacs."
-    :thunk skc-edit)
-   (:name status
-    :description "show the current project status"
-    :thunk skc-status)
-   (:name list
-    :description "list skel objects"
-    :thunk skc-list)
-   (:name make
-    :description "build project targets"
-    :thunk skc-make)
-   (:name search
-    :description "search the current project"
-    :thunk skc-search)
-   (:name run
-    :description "run a script or command"
-    :thunk skc-run)
-   (:name compile
-    :description "compile source code"
-    :thunk skc-compile)
-   (:name build
-    :description "build programs and libraries"
-    :thunk skc-build)
-   (:name update
-    :description "update components"
-    :thunk skc-update)
-   (:name save
-    :description "save a file"
-    :thunk skc-save)
-   (:name dist
-    :description "distribute build artifacts"
-    :thunk skc-dist)
-   (:name install
-    :description "install stuff"
-    :thunk skc-install)
-   (:name pack
-    :description "pack stuff"
-    :thunk skc-pack)
-   (:name unpack
-    :description "unpack stuff"
-    :thunk skc-unpack)
-   (:name bundle
-    :description "bundle source code"
-    :thunk skc-bundle)
-   (:name unbundle
-    :description "unbundle source code"
-    :thunk skc-unbundle)
-   (:name clean
-    :description "clean up the project"
-    :thunk skc-clean)
-   (:name test
-    :description "run tests"
-    :thunk skc-test)
-   (:name bench
-    :description "run benchmark"
-    :thunk skc-bench)
-   (:name shell
-    :description "open the sk-shell interpreter"
-    :thunk skc-shell)))
+  :kernel (with-commands :skel (command 'show)))

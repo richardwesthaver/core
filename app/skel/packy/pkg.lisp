@@ -52,5 +52,4 @@
   (:export))
 
 (defpackage :skel/packy/cli
-  (:use :cl :std :clap* :skel/packy)
-  (:export :*packy-cli*))
+  (:use :cl :std :clap :cmd :skel/packy :cli/main))

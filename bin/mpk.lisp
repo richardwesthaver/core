@@ -8,13 +8,10 @@
   (:export
    #:start-mpk))
 (in-package :bin/mpk)
-(in-readtable :core)
-(load-package-cli :mpk)
-
 (defmain start-mpk ()
   (mpk-ensure-directories)
   (load-mpkrc)
-  (with-cli (mpk/cli:*mpk-cli* :args (args))
-    (do-cmd *cli*)))
+  (with-cli ((cli :mpk))
+    (funcall (kernel *cli*))))
 
   

@@ -6,15 +6,12 @@
 
 (in-package :bin/homer)
 
-(load-package-cli :skel/homer)
-
 (defun run ()
   (in-package :skel/homer)
   (init* :xdg :homer)
   (load-homerc)
-  (with-cli (*homer-cli* :args (args))
-    (do-cmd *cli*)
-    (debug-opts *cli*)))
+  (with-cli (*homer-cli*)
+    (funcall (kernel *cli*))))
 
 (defmain start-homer ()
   (in-readtable :shell)

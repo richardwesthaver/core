@@ -48,8 +48,7 @@
      (:file "client")
      (:file "srv")
      (:file "cfg")
-     (:file "cli")
-     (:file "packy")))
+     (:file "cli")))
    (:module "krypt"
     :components 
     ((:file "pkg")
@@ -66,8 +65,7 @@
      (:file "task")
      (:file "cfg")
      (:file "srv")
-     (:file "cli")
-     (:file "homer")))
+     (:file "cli")))
    (:module "net"
     :components
     ((:file "var")

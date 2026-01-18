@@ -59,7 +59,7 @@
    :package-cmds
    :package-opts
    :with-cli-args
-   :load-package-cli
+   :load-cli
    :add-package-cmds
    :add-package-opts
    :help-opt

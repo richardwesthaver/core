@@ -608,14 +608,15 @@
   (:export :defcommand
    :interactive :define-command-type
    :*commands* :*command-table*
-   :*command*
+   :*command* :*default-command-class*
    :*command-types* :command-type
    :command-table :command
    :with-commands :read-command
    :write-command :parse-command
    :fmt-command :call-interactively
    :commandp :commands
-   :command-types :make-commands))
+   :command-types :make-commands
+   :command-parser))
 
 (defpkg :obj/project
   (:nicknames :project)

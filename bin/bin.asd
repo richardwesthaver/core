@@ -21,13 +21,6 @@
   :components ((:file "skel"))
   :depends-on (:std :cli :skel :swank))
 
-(defsystem :bin/sk
-  :build-operation program-op
-  :build-pathname "sk"
-  :entry-point "bin/sk::start-skc"
-  :components ((:file "sk"))
-  :depends-on (:std :skel))
-
 (defsystem :bin/core
   :build-operation program-op
   :build-pathname "core"

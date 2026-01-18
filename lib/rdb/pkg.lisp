@@ -161,8 +161,7 @@
    :rdb-service))
 
 (defpackage :rdb/cli
-  (:use :cl :std :cli :clap :rdb :db :std/seq)
-  (:export :*rdb-cli*))
+  (:use :cl :std :cli :clap :rdb :db :std/seq))
 
 (in-package :rdb)
 (load-rocksdb)

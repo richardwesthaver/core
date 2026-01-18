@@ -8,10 +8,6 @@
 
 (in-package :bin/core)
 
-(add-hook '*init-hooks* 'init-xdg-dirs)
-
-;; (add-hook '*init-hooks* 'std/os::init-xdg-logical-pathnames :append t)
-
 (define-multi-main dispatch-core
     (make-toplevel-init
      :package :user

@@ -52,8 +52,7 @@
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)
-  (:use :cl :std :log :skel/core :sb-ext :cli/clap)
-  (:export :*skel-cli* :sk-shell))
+  (:use :cl :std :log :skel/core :sb-ext :cli/clap))
 
 (defpackage :skel/net/core
   (:nicknames :sk-net-core)

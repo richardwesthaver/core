@@ -4,36 +4,23 @@
 
 ;;; Code:
 (in-package :syn/cli)
-(defcmd gen-cmd () (println syn/gen:*gen*))
 
-(defcmd gen-print-cmd ()
-  (when *args*
-    (let ((f (car *args*)))
+(defcommand (:syn print) (&rest args)
+  (when args
+    (let ((f (car args)))
       (if (probe-file f)
 	  (print-code (syn/gen/c::read-c-file f))
 	  (print-code (syn/gen/c::read-c-string f)))
       (terpri))))
 
-(defopt gen-syntax-opt ()
-  (let ((syn (keywordicate (string-upcase *arg*))))
+(define-command-type (:syn :syntax) (arg)
+  (let ((syn (keywordicate (string-upcase arg))))
     (syn/gen:load-gen syn)
     (setq *package* (syn/gen:gen-package syn))
     syn))
 
-(define-cli *gen-cli*
-  :name "gen"
-  :package :syn/gen
-  :description "code generator"
+(define-cli "gen"
+  :package :syn/gen 
   :version 0
-  :help t
-  :opts ((:name "output" :type file)
-	 (:name "syntax" :type string :default "c" :thunk gen-syntax-opt)
-	 (:name "level" :thunk level-opt))
-  :cmds ((:name "print" :description "Read GEN-C S expressions from a file or string." :thunk gen-print-cmd))
-  :thunk gen-cmd)
-
-(load-package-cli *gen-cli* :package :syn)
-
-(defun run-gen-cli ()
-  (with-cli (*gen-cli* :args (args))
-    (nyi!)))
+  :kernel (with-commands :syn (command 'print))
+  :description "Syntax GENerator")

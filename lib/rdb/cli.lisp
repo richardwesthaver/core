@@ -4,10 +4,6 @@
 
 ;;; Code:
 (in-package :rdb/cli)
-;; (rocksdb:load-rocksdb t)
-
-;; (defopt rdb-config-opt (init-rdbrc (cli/clap/obj::parse-file-opt *arg*)))
-;; (defopt rdb-path-opt (or *arg* "/tmp/rdb"))
 
 (defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)
@@ -62,15 +58,4 @@
 		 (sb-ext:string-to-octets (string (gensym "foo")))
 		 val)))))
 
-(clap::define-cli *rdb-cli*
-  :name "rdb"
-  :package :rdb
-  :help t
-  :version "0.1.0"
-  :description "Richard's Database"
-  :thunk rdb-show
-  :opts ((:name "level" :description "set log level" :thunk level-opt)
-         (:name "version" :description "print version" :thunk version-opt)
-         (:name "path" :description "database path" :thunk rdb-path-opt :type dir)
-         (:name "config" :description "database configuration" :thunk rdb-config-opt :type file))
-  :cmds ((:name new :thunk rdb-new)))
+(define-cli "rdb" :package :rdb :version 0 :kernel (with-commands :rdb (command 'show)))
