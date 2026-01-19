@@ -6,8 +6,9 @@
 (in-package :std/sys)
 (std-int:in-readtable :std)
 
-;;;_. System Paths
+;;; System Paths
 (defun user-config-path () (funcall sb-ext:*userinit-pathname-function*))
+
 (defmethod std/meta:init ((self (eql :user)) &key (load t))
   (when load (load (user-config-path))))
 
@@ -354,7 +355,7 @@ long as ASDF is non-nil)."
   #+quicklisp (pushnew path ql:*local-project-directories*)
   (when asdf (pushnew path asdf:*central-registry*)))
 
-;;;_. Time
+;;; Time
 (definline get-real-time-seconds ()
   "Call GET-INTERNAL-REAL-TIME and convert the result to seconds."
   (/ (get-internal-real-time) internal-time-units-per-second))
@@ -371,7 +372,7 @@ long as ASDF is non-nil)."
          (declare (inline time-remaining))
          ,@body))))
 
-;;;_. Logical Pathnames
+;;; Logical Pathnames
 (defun list-all-logical-host-names ()
   "Return a list of currently available logical hosts."
   (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
@@ -433,7 +434,7 @@ accessible."
    (translate-logical-pathname "STASH:CACHE;lisp;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))
 
-;;;_. Hexdump
+;;; Hexdump
 ;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565
 (defun hexdump-object (obj)
   "Try to hexdump an object, including immediate objects. All the
@@ -473,7 +474,7 @@ work is done by sb-vm:hexdump in the interesting cases."
    :prim-type (primitive-type-name-of obj)
    :alloc (sb-ext:heap-allocated-p obj)))
 
-;;;_. FASLs
+;;; FASLs
 (definline check-fasl-file-header (path)
   "Return the fasl-header of file at PATH."
   (with-open-file (f path :element-type 'unsigned-byte) (sb-fasl::check-fasl-header f)))
@@ -482,7 +483,7 @@ work is done by sb-vm:hexdump in the interesting cases."
   "Return T if A and B are paths to fasl files with equivalent headers."
   (equal (check-fasl-file-header a) (check-fasl-file-header b)))
 
-;;;_. Tags
+;;; Tags
 (eval-always
   (defun %sbcl-tagp (sfx)
     (lambda (x) 

@@ -1548,6 +1548,8 @@
    :grovel-component
    :component-type
    :find-system
+   :save-system
+   :make-system
    :find-module
    :*module*
    :*core-module-table*

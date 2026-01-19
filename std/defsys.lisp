@@ -72,7 +72,7 @@ ASDF:DEFSYSTEM.")
   (:auto t))
 
 (deferror defsys-load-error (system-error file-error)
-  ((system-name :initarg :name :accessor error-system-name))
+  ((name :initarg :name :accessor error-name))
   (:report (lambda (c s) 
              (format s "System ~A not found after loading file ~A" 
                      (error-system-name c) (file-error-pathname c)))))
@@ -1027,6 +1027,10 @@ underlying object SELF remains unmodified."
 
 (defgeneric save-system (self &key &allow-other-keys)
   (:documentation "Save the system SELF."))
+
+(defmethod save-system ((self system) &rest args)
+  (let ((name (or (getf args :name) (name self))))
+    (apply 'std:save-lisp name (std/list:remove-from-plist args :name))))
 
 (defgeneric make-system (self &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving

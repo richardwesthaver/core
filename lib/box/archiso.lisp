@@ -18,7 +18,7 @@ profile/
 ├── pacman.conf
 └── profiledef.sh
 |#
-;;;_. Types
+;;; Types
 (deftype airootfs-image-type () '(member :squashfs :ext4+squashfs :erofs))
 (deftype archiso-buildmode () '(member :bootstrap :iso :netboot))
 (deftype archiso-bootmode () 
@@ -34,11 +34,11 @@ profile/
     :uefi-x64.systemd-boot.esp
     :uefi-x64.systemd-boot.eltorito))
 
-;;;_. Variables
+;;; Variables
 (defvar *archiso-baseline-directory* #P"/usr/share/archiso/configs/baseline/")
 (defvar *archiso-releng-directory* #P"/usr/share/archiso/configs/releng/")
 
-;;;_. Config
+;;; Config
 (defconfig archiso-config (box-config)
   ((arch :initform "x86_64" :type string)
    (hostname :initform "box" :type string :accessor name)
@@ -146,7 +146,7 @@ profile/
           (format profiledef "bootstrap_tarball_compression=~S~%" bootstrap-tarball-compression)
           (format profiledef "file_permissions=~A" (format-archiso-file-permissions file-permissions)))))))
 
-;;;_. CLI
+;;; CLI
 (defun mkarchiso (profile-dir 
                   &key config install-dir out-dir work-dir
                        name label publisher cert gpg mbox modes packages

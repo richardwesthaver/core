@@ -34,7 +34,7 @@
 (declaim (optimize (debug 3)))
 (defvar *query* nil)
 
-;;;_* Protocol
+;;; Protocol
 (defgeneric select (self names)
   (:method ((self schema) (names list))
     (let* ((fields (fields self))
@@ -67,7 +67,7 @@
                      collect (aref (fields self) i))
                'field-vector))))
 
-;;;_. Expressions
+;;; Expressions
 (defclass query-expr (expr) ())
 
 (defclass query-plan (ast plan)
@@ -78,7 +78,7 @@
 
 (defclass physical-query-plan (query-plan) ())
 
-;;;_ . Logical Expressions
+;;; Logical Expressions
 (defgeneric to-field (self input)
   (:method ((self string) (input logical-query-plan))
     (declare (ignore input))
@@ -97,7 +97,7 @@
 (defmethod df-col ((self string))
   (make-instance 'column-expression :name self))
 
-;;;_  . Alias
+;;; Alias
 (defclass alias-expression (logical-expr)
   ((expr :type logical-expr :initarg :expr :accessor expr)
    (alias :type string :initarg :alias)))
@@ -109,11 +109,11 @@
 (defmethod to-field ((self cast-expression) (input logical-query-plan))
   (make-field :name (name (to-field (expr self) input)) :type (slot-value self 'data-type)))
 
-;;;_  . Unary
+;;; Unary
 (defclass unary-expression (logical-expr unary-expr)
   ((expr :type logical-expr :accessor expr)))
 
-;;;_  . Binary
+;;; Binary
 (defclass binary-expression (logical-expr binary-expr) ())
 
 (defclass boolean-binary-expression (binary-expression)
@@ -124,7 +124,7 @@
   (declare (ignore input))
   (make-field :name (name self) :type 'boolean))
 
-;;;_   . Equiv Expr
+;;; Equiv Expr
 (defclass eq-expression (boolean-binary-expression) ()
   (:default-initargs
    :name "eq"
@@ -155,7 +155,7 @@
    :name "lteq"
    :op '<=))
 
-;;;_   . Bool Expr
+;;; Bool Expr
 (defclass and-expression (boolean-binary-expression) ()
   (:default-initargs
    :name "and"
@@ -166,7 +166,7 @@
    :name "or"
    :op 'or))
 
-;;;_   . Math Expr
+;;; Math Expr
 (defclass math-expression (binary-expression)
   ((name :initarg :name :type string :accessor name)
    (op :initarg :op :type symbol :accessor expr-op)))
@@ -201,7 +201,7 @@
    :name "mod"
    :op 'mod))
 
-;;;_  . Agg Expr
+;;; Agg Expr
 (deftype aggregate-function () `(function ((input logical-expr)) query-expr))
 
 (deftype aggregate-function-designator () `(or aggregate-function symbol))
@@ -243,9 +243,9 @@
   (declare (ignore input))
   (make-field :name "COUNT" :type 'number))
 
-;;;_. Logical Plan
+;;; Logical Plan
 
-;;;_ . Scan
+;;; Scan
 (defclass scan-data (logical-query-plan)
   ((path :type string :initarg :path)
    (data-source :type data-source :initarg :data-source)
@@ -260,7 +260,7 @@
 (defmethod schema ((self scan-data))
   (derive-schema self))
 
-;;;_ . Projection
+;;; Projection
 (defclass projection (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (expr :type (vector logical-expr) :initarg :expr)))
@@ -268,7 +268,7 @@
 (defmethod schema ((self projection))
   (schema (slot-value self 'input)))
 
-;;;_ . Selection
+;;; Selection
 (defclass selection (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (expr :type logical-expr :initarg :expr)))
@@ -276,7 +276,7 @@
 (defmethod schema ((self selection))
   (schema (slot-value self 'input)))
 
-;;;_ . Aggregate
+;;; Aggregate
 (defclass aggregate (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (group-expr :type (vector logical-expr) :initarg :group-expr)
@@ -291,7 +291,7 @@
           do (push (to-field a input) ret))
     (apply 'make-simple-schema ret)))
 
-;;;_ . Limit
+;;; Limit
 (defclass limit (logical-query-plan)
   ((input :type logical-query-plan :initarg :input)
    (limit :type integer)))
@@ -304,7 +304,7 @@
   (setf (slot-value self 'ast)
         (ast (slot-value self 'input))))
 
-;;;_ . Joins
+;;; Joins
 (defclass join (logical-query-plan)
   ((left :accessor lhs)
    (right :accessor rhs)
@@ -340,7 +340,7 @@
 (defmethod ast ((self join))
   (vector (lhs self) (rhs self))) 
 
-;;;_ . Subqueries
+;;; Subqueries
 
 ;;  TODO 2024-08-02: 
 
@@ -358,7 +358,7 @@
 
 ;; NOTE 2024-08-02: EXISTS, IN, NOT EXISTS, and NOT IN are also subqueries
 
-;;;_. Dataframes
+;;; Dataframes
 (defgeneric df-proj (df exprs)
   (:method ((df data-frame) (expr list))
     (df-proj df (coerce expr 'vector)))
@@ -385,7 +385,7 @@
   (:method ((df data-frame) (group-by list) (agg-expr list))
     (df-aggregate df (coerce group-by 'vector) (coerce agg-expr 'vector))))
 
-;;;_. Physical Expression
+;;; Physical Expression
 (defclass literal-physical-expression (physical-expr literal-expr) ())
 
 (defgeneric evaluate (self input)
@@ -404,7 +404,7 @@
 (defmethod evaluate ((self column-physical-expression) (input record-batch))
   (field input (slot-value self 'val)))
 
-;;;_ , Binary
+;;; Binary
 (defclass binary-physical-expression (physical-expr)
   ((lhs :type physical-expr :accessor lhs :initarg :lhs)
    (rhs :type physical-expr :accessor rhs :initarg :rhs)))
@@ -419,7 +419,7 @@
         (evaluate2 self ll rr)
         (error "invalid state: lhs != rhs"))))
 
-;;;_  . Equiv
+;;; Equiv
 (defclass eq-physical-expression (binary-physical-expression) ())
 
 (defmethod evaluate2 ((self eq-physical-expression) lhs rhs)
@@ -444,7 +444,7 @@
 
 (defclass or-physical-expression (binary-physical-expression) ())
 
-;;;_  . Math
+;;; Math
 (defclass math-physical-expression (binary-physical-expression) ())
 
 (defmethod evaluate2 ((self math-physical-expression) (lhs column-vector) (rhs column-vector))
@@ -476,7 +476,7 @@
   (declare (ignore self))
   (/ lhs rhs))
 
-;;;_  . Aggregate
+;;; Aggregate
 (defclass aggregate-physical-expression (physical-expr)
   ((input :type physical-expression)))
 
@@ -485,7 +485,7 @@
 (defmethod make-accumulator ((self max-physical-expression))
   (make-instance 'max-accumulator))
 
-;;;_. Physical Plan
+;;; Physical Plan
 (defmethod exec ((self data-frame))
   (exec (df-plan self)))
 
@@ -588,7 +588,7 @@
                   collect ret))
    '(vector record-batch)))
 
-;;;_. Planner
+;;; Planner
 
 ;; The Query Planner is effectively a compiler which translates logical
 ;; expressions and plans into their physical counterparts.
@@ -650,7 +650,7 @@
 ;;                  :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
 ;;                  :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input))))))
 
-;;;_. Optimizer
+;;; Optimizer
 
 ;; The Query Optimizer is responsible for walking a QUERY-PLAN and returning a
 ;; modified version of the same object. Usually we want to run optimization on
@@ -726,7 +726,7 @@ accumulator."
 (defmethod optimize-query ((self projection-pushdown-optimizer) (plan logical-query-plan))
   (%pushdown plan))
 
-;;;_. Query
+;;; Query
 (defclass query () ()
   (:documentation "Base class of query objects."))
 
@@ -739,7 +739,7 @@ accumulator."
   (:method ((self (eql :simple)) &rest initargs &key &allow-other-keys)
     (apply 'make-instance 'simple-query initargs)))
 
-;;;_. Execution Context
+;;; Execution Context
 (defclass execution-context () ()
   (:documentation "Base class for objects which provide enough context to a QUERY-ENGINE to
 EXECUTE a DATA-FRAME."))
@@ -764,7 +764,7 @@ EXECUTE a DATA-FRAME."))
    (make-physical-plan
     (optimize-query (make-instance 'projection-pushdown-optimizer) self))))
 
-;;;_. Engine                                                                 
+;;; Engine                                                                 
 ;; (sb-mop:class-slots (find-class 'query-engine)) ;; service schema       
 (defclass query-engine (query-planner execution-context data-source engine)
   ((sources :initarg :sources)                                             

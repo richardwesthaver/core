@@ -32,7 +32,7 @@
 ;;  	       '(:with-pinned-objects :with-pinned-object-iterator :with-code-pages-pinned
 ;;  		 :sanctify-for-execution))
 
-;;;_* Types
+;;; Types
 (deftype alien-or-lisp-octets () '(or array 
                                    (alien (* char)) 
                                    (alien (array char))
@@ -191,7 +191,7 @@
 ;; TODO: translate-into-alien-memory translate-to-alien
 ;; expand-into-alien-memory expand-to-alien bare-alien-struct-p expand-from-alien
 
-;;;_* Utils
+;;; Utils
 (defun shared-object-name (name &optional path)
   "Return a filename with the correct extension for a shared library."
   (unless (string= (subseq name 0 3) "lib") 
@@ -872,11 +872,11 @@ newly allocated memory."
         (t form))
       form))
 
-;;;_. Macro Accessors
+;;; Macro Accessors
 ;; TODO
 ;; (defmacro @ (obj index))
 ;; (defmacro & (obj))
-;;;_. Alien Stack/Heap
+;;; Alien Stack/Heap
 ;; (defmacro with-alien-stack (decl &rest body))
 ;; (defmacro with-alien-heap (decl &rest body))
 
@@ -889,7 +889,7 @@ newly allocated memory."
 (sb-ext:defglobal *cpus* (num-cpus)
   "The number of unique processors (cores) reported by the OS.")
 
-;;;_. C Standard
+;;; C Standard
 ;; types
 (define-alien-type pid-t int)
 (define-alien-type uid-t unsigned-int)
@@ -910,7 +910,7 @@ newly allocated memory."
           (tv-sec (signed 64))
           (tv-nsec (signed 64))))
 
-;;;_. Fortran
+;;; Fortran
 (defmacro with-fortran-float-modes (&body body)
   "Execute the body with the IEEE FP modes appropriately set for Fortran"
   `(with-float-traps-masked (:underflow :overflow :inexact :divide-by-zero :invalid)
@@ -948,7 +948,7 @@ handle stored in another slot of the same object."))
 (defgeneric pull-sap* (self)
   (:documentation "Implicitly pull foreign values from the sap associated with SELF."))
 
-;;;_. Foreign Vector
+;;; Foreign Vector
 ;; from MATLISP
 (defclass foreign-vector-class (standard-class)
   ((element-type :reader element-type)))

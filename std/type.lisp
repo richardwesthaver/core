@@ -216,7 +216,7 @@ types are not equivalent."
   "Primitive objects are defined by SBCL and will not change. Convenient as a
 non-unique ID prefix.")
 
-;;;_. Type IDs
+;;; Type IDs
 ;; would CART-TYPECASE be useful here?
 
 (eval-when (:compile-toplevel :load-toplevel :execute)

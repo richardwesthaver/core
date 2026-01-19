@@ -27,5 +27,5 @@
 (asdf:load-system :std)
 (in-package :std-user)
 (init :sys :sysdefs (sysdefs *default-pathname-defaults*))
-
 (setq *asdf-compatibility* t)
+(make-system :core)

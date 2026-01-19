@@ -38,7 +38,8 @@
        (defun ,name ()
          ,(or docs (format nil "Run the top-level function in package ~A." (package-name *package*)))
          ,@decls
-         (with-cli-handlers ,@body)))))
+         (with-cli-handlers ,@body)
+         (values)))))
 
 ;;; Multi-main
 (defmacro define-multi-main (name default &rest mains)

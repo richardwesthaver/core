@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :openssl)
 
-;;;_. ASN1/X509
+;;; ASN1/X509
 ;; TODO
 (defar ("ASN1_STRING_data" asn1-string-data) (* char)
   (str (* t)))
@@ -117,7 +117,7 @@
 (defar ("ERR_print_errors" err-print-errors) void
   (bio (* t)))
 
-;;;_. SSL
+;;; SSL
 (defar ("SSL_set_cipher_list" ssl-set-cipher-list) int
   (ssl (* ssl))
   (str c-string))
@@ -321,7 +321,7 @@
 (defar ("RSA_free" rsa-free) void
   (rsa (* t)))
 
-;;;_. BIO
+;;; BIO
 (defar ("BIO_ctrl" bio-ctrl) long
   (bio (* t))
   (cmd int)

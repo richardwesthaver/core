@@ -157,7 +157,8 @@
     (in-readtable :shell)
     (let ((sb-debug:*backtrace-frame-count* 8))
       (init :skel)
-      (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*)))))
+      (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))
+      (values))))
 
 (define-cli "skel"
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))

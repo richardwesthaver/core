@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :ssh2)
-;;;_* Types
+;;; Types
 (define-alien-type libssh2-socket int)
 (define-opaque libssh2-session %libssh2-session)
 (define-opaque libssh2-channel %libssh2-channel)
@@ -140,7 +140,7 @@
   :sha1 2
   :sha256 3)
 
-;;;_. Sessions
+;;; Sessions
 (defar libssh2-init int (flags int))
 
 (defar libssh2-exit void)
@@ -264,7 +264,7 @@
     (libssh2-session-supported-algs sesh 0 (addr arr))
     (c-strings-to-string-list (print arr))))
 
-;;;_. Channels
+;;; Channels
 (defar libssh2-channel-open-ex (* libssh2-channel)
   (sesh (* libssh2-session))
   (channel-type c-string)
@@ -448,7 +448,7 @@
 
 (defar libssh2-crypto-engine int)
 
-;;;_. Knownhosts
+;;; Knownhosts
 (define-alien-type libssh2-knownhost
     (struct libssh2-knownhost
       (magic unsigned-int)
@@ -460,7 +460,7 @@
 (defar libssh2-knownhost-init (* libssh2-knownhosts)
   (sesh (* libssh2-session)))
 
-;;;_. Agent
+;;; Agent
 (define-alien-type libssh2-agent-publickey
     (struct libssh2-agent-publickey
       (magic unsigned-int)

@@ -80,7 +80,7 @@ arrange for FVAR to be closed after BODY."
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
 
-;;;_. Linux
+;;; Linux
 ;; https://man7.org/linux/man-pages/man3/statvfs.3.html
 (defar statvfs int
   (path c-string)
@@ -128,7 +128,7 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;;_. IOCTLs
+;;; IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV
 ;; TODO 2025-04-27: 
 (defun ioctl (fd cmd)
@@ -154,7 +154,7 @@ arrange for FVAR to be closed after BODY."
 
 ;; (defmacro define-ioctl (name fd cmd))
 
-;;;_. XDG
+;;; XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
 (eval-always
@@ -319,7 +319,7 @@ match."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
-;;;_. user-add
+;;; user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
   (let ((useradd (probe-file "/bin/useradd")))
     (if useradd
@@ -337,7 +337,7 @@ match."
          :output output)
         (error "unable to find USERADD program (/bin/useradd)"))))
 
-;;;_. group-add
+;;; group-add
 (defun group-add (name &key force id users (output t))
   (let ((groupadd (probe-file "/bin/groupadd")))
     (if groupadd
@@ -349,7 +349,7 @@ match."
          :output output)
         (error "unable to find GROUPADD program (/bin/groupadd)"))))
 
-;;;_. with-directory-iterator
+;;; with-directory-iterator
 (defun %get-file-kind (namestring follow-p)
   (handler-case
       (let ((mode (sb-posix:stat-mode
@@ -383,7 +383,7 @@ match."
 (defun get-file-kind (file follow-p)
   (%get-file-kind (sb-ext:native-namestring file) follow-p))
 
-;;;_. Ambitiously portable pathname manipulations
+;;; Ambitiously portable pathname manipulations
 (defun absolute-pathname-p (pathspec)
   "Returns T if the PATHSPEC designates an absolute pathname, NIL otherwise."
   (eq :absolute (car (pathname-directory pathspec))))
@@ -506,7 +506,7 @@ Signals an error if PATHSPEC is wild."
     (merge-pathnames path (namestring (directory-path %default)))
     path))
 
-;;;_. Exec Utils
+;;; Exec Utils
 ;; from stumpwm/wrappers.lisp
 (defun execv (program &rest arguments)
   "Call the system execv() function, replacing the current process image with a

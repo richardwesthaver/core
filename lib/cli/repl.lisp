@@ -3,11 +3,11 @@
 ;;; Code:
 (in-package :cli/repl)
 
-;;;_* Config
+;;; Config
 (defconfig repl-config (ast) 
   (sysinit userinit package))
 
-;;;_. Toplevel
+;;; Toplevel
 (defun make-toplevel-init (&key (package *package*)
                                 (userinit #'sb-impl::userinit-pathname)
                                 (sysinit #'sb-impl::sysinit-pathname)
@@ -18,7 +18,7 @@
         sb-ext:*sysinit-pathname-function* sysinit)
   (when default (funcall default)))
 
-;;;_* Init
+;;; Init
 (defmethod init ((self (eql :editor)) &rest args) 
   ;; performs :TERM init internally (set-terminal)
   (setq cli/linedit::*editor* (apply 'cli/linedit::make-editor args)))
