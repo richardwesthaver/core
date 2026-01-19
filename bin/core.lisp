@@ -12,6 +12,6 @@
     (make-toplevel-init
      :package :user
      :userinit (constantly (xdg-config-file "corerc")))
-  (:skel (bin/skel::start-skel))
-  (:homer (bin/homer::start-homer))
-  (:mpk (bin/mpk:start-mpk)))
+  (:skel (skel/cli::start-skel))
+  (:homer (skel/homer/cli::start-homer))
+  (:mpk (mpk/cli::start-mpk)))

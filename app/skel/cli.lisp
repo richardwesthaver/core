@@ -5,26 +5,22 @@
 ;;; Code:
 (in-package :skel/cli)
 
-;; *SKEL-CLI* exposes access to the SKEL system from the CLI.
-(defcommand (:skel init) ()
-  (let ((file (when *args* (pop *args*)))
-        (name (when (> *argc* 1) (pop *args*))))
-    ;; TODO: test, may need to be sequential for side-effect of pop
-    (handler-bind
-        ((sb-ext:file-exists
-           #'(lambda (s)
-               (std:println (format nil "file already exists: ~A" 
-                                    (or file *default-skelfile*)))
-               (let ((f2 (read-line)))
-                 (if (string= f2 "") 
-                     (error s)
-                     (use-value f2 s))))))
-      (init-skelfile file name))))
+(defcommand (:skel init) (&optional file name)
+  (handler-bind
+      ((sb-ext:file-exists
+         #'(lambda (s)
+             (std:println (format nil "file already exists: ~A" 
+                                  (or file *default-skelfile*)))
+             (let ((f2 (read-line)))
+               (if (string= f2 "") 
+                   (error s)
+                   (use-value f2 s))))))
+    (init-skelfile file name)))
 
-(defcommand (:skel describe) ()
+(defcommand (:skel describe) (&optional arg)
   (describe
-   (if (> *argc* 0)
-       (find-skelfile (pathname (car *args*)) :load t)
+   (if arg
+       (find-skelfile (pathname arg) :load t)
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
 (defcommand (:skel inspect) ()
@@ -42,37 +38,38 @@
                   (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
                 args)))))
 
-(defcommand (:skel compile) ()
-  (call-with-args :compile *args*))
-(defcommand (:skel build) ()
-  (call-with-args :build *args*))
-(defcommand (:skel update) ()
-  (call-with-args :update *args*))
-(defcommand (:skel dist) ()
-  (call-with-args :dist *args*))
-(defcommand (:skel install) ()
-  (call-with-args :install *args*))
-(defcommand (:skel pack) ()
-  (call-with-args :pack *args*))
-(defcommand (:skel unpack) ()
-  (call-with-args :unpack *args*))
-(defcommand (:skel bundle) ()
-  (call-with-args :bundle *args*))
-(defcommand (:skel unbundle) ()
-  (call-with-args :unbundle *args*))
-(defcommand (:skel clean) ()
-  (call-with-args :clean *args*))
-(defcommand (:skel test) ()
-  (call-with-args :test *args*))
-(defcommand (:skel bench) ()
-  (call-with-args :bench *args*))
-(defcommand (:skel save) ()
-  (call-with-args :save *args*))
+(defcommand (:skel compile) (&rest args)
+  (call-with-args :compile args))
+(defcommand (:skel build) (&rest args)
+  (call-with-args :build args))
+(defcommand (:skel update) (&rest args)
+  (call-with-args :update args))
+(defcommand (:skel dist) (&rest args)
+  (call-with-args :dist args))
+(defcommand (:skel install) (&rest args)
+  (call-with-args :install args))
+(defcommand (:skel pack) (&rest args)
+  (call-with-args :pack args))
+(defcommand (:skel unpack) (&rest args)
+  (call-with-args :unpack args))
+(defcommand (:skel bundle) (&rest args)
+  (call-with-args :bundle args))
+(defcommand (:skel unbundle) (&rest args)
+  (call-with-args :unbundle args))
+(defcommand (:skel clean) (&rest args)
+  (call-with-args :clean args))
+(defcommand (:skel test) (&rest args)
+  (call-with-args :test args))
+(defcommand (:skel bench) (&rest args)
+  (call-with-args :bench args))
+(defcommand (:skel save) (&rest args)
+  (call-with-args :save args))
 
 (defcommand (:skel show) (&rest args)
+  (declare (interactive &rest rest))
   (if args
       (mapc (lambda (x) 
-              (lety ((y (string-left-trim ":" x) :type base-string))
+              (let ((y (string-left-trim ":" x)))
                 (if (sk-project-slot y nil)
                     (let ((val
                             (slot-value
@@ -94,25 +91,21 @@
         ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))
 
-(defcommand (:skel list) ()
-  (string-case ((subseq (pop *args*) 0 3))
-    ("log" (apply 'sk-log-list *args*))))
-
 (defcommand (:skel id) ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
-(define-command-type skc-config (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
+(define-command-type (:skel config) (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
 
-(defcommand (:skel edit) ()
-  (let ((file (or (when *args* (pop *args*)) (path *skel-project*))))
+(defcommand (:skel edit) (&optional arg)
+  (let ((file (or arg (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
 
-(defcommand (:skel make) ()
+(defcommand (:skel make) (&rest args)
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
       (sb-ext:enable-debugger)
-      (if *args*
-          (loop for a in *args*
+      (if args
+          (loop for a in args
                 do (debug!
                     (if-let ((rule (sk-find a sk)))
                       (sk-make sk rule)
@@ -123,9 +116,9 @@
 (defcommand (:skel status) ()
   (vc:vc-status (vc:vc *skel-project*)))
 
-(defcommand (:skel run) ()
+(defcommand (:skel run) (&rest args)
   (sb-ext:enable-debugger)
-  (if *args*
+  (if args
       (mapc (lambda (script)
               ;; first check if a script with the same name exists, else check
               ;; for a rule definition
@@ -134,15 +127,11 @@
                                 *skel-user-config*)))
                 (sk-run script)
                 (call-with-args :run (list script))))
-            *args*)
+            args)
       (required-argument 'name)))
 
-(defcommand (:skel new) ()
-  (println *args*)
-  (println *opts*))
-
-(defcommand (:skel search) ()
-  (dolist (a *args*)
+(defcommand (:skel search) (&rest args)
+  (dolist (a args)
     (println (sk-search-project a))))
 
 (defun sk-shell ()
@@ -160,9 +149,17 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
-(defcommand skc-shell () (sk-shell))
+(defcommand (:skel shell) () (sk-shell))
+
+(defmain start-skel (:debug nil)
+  (with-commands :skel
+    (in-package :sk-user)
+    (in-readtable :shell)
+    (let ((sb-debug:*backtrace-frame-count* 8))
+      (init :skel)
+      (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*)))))
 
 (define-cli "skel"
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool."
-  :kernel (with-commands :skel (command 'show)))
+  :kernel #'start-skel)

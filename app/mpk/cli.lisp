@@ -11,12 +11,12 @@
     (case state
       (:play (describe (mpd:mpc-playing *mpc*))))))
 
-(defcommand (:mpk play) ()
-  (if (zerop *argc*)
-      (mpk-play nil)
-      (if-let ((path (and #1=(car *args*) (probe-file #1#))))
+(defcommand (:mpk play) (&rest args)
+  (if args
+      (if-let ((path (and #1=(car args) (probe-file #1#))))
         (mpk-play path)
-        (apply 'mpk-play *args*))))
+        (apply 'mpk-play args))
+      (mpk-play nil)))
 
 (defcommand (:mpk toggle) ()
   (mpk-toggle :mpd))
@@ -54,13 +54,14 @@
 	(print-slots (mpd:mpc-stats *mpc*)))
       (terpri))))
 
-(define-cli "mpk"
-  :version "0.1.0"
-  :description "Media Production Kit"
-  :package :mpk
-  :kernel (with-commands :mpk (command 'stats)))
-
 (defmain start-mpk ()
+  (mpk-ensure-directories)
+  (load-mpkrc)
   (with-cli ((cli :mpk))
     (with-package :mpk-user
       (funcall (kernel *cli*)))))
+
+(define-cli "mpk"
+  :version "0.1.0"
+  :description "Media Production Kit"
+  :kernel #'start-mpk)

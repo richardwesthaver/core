@@ -34,4 +34,4 @@
 (defcommand (:vc unbundle) (input)
   (vc-unbundle (make-repo *default-pathname-defaults*) input))
 
-(define-cli "vc" :package :vc :kernel (with-commands :cli (command :help)))
+(define-cli "vc" :kernel (with-commands :cli (command :help)))

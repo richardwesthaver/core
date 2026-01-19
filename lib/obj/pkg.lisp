@@ -613,6 +613,7 @@
    :command-table :command
    :with-commands :read-command
    :write-command :parse-command
+   :save-commands :copy-commands
    :fmt-command :call-interactively
    :commandp :commands
    :command-types :make-commands

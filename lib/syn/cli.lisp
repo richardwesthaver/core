@@ -20,7 +20,6 @@
     syn))
 
 (define-cli "gen"
-  :package :syn/gen 
   :version 0
   :kernel (with-commands :syn (command 'print))
   :description "Syntax GENerator")

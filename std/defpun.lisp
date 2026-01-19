@@ -935,7 +935,7 @@ Default is (kernel-worker-count)."
 (defun pfind (item sequence
               &rest args
               &key from-end test test-not start end key parts)
-  "Parallel version of `pfind'.
+  "Parallel version of FIND.
 
 The `parts' option divides `sequence' into `parts' number of parts.
 Default is (kernel-worker-count)."

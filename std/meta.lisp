@@ -131,7 +131,7 @@ function NAME and be skipped for (setf NAME)."
     to))
 (defverb swap (from to)
   (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
-(defverb call (self &rest args)
+(defverb call (self args)
   (:documentation "Call SELF with ARGS."))
 (defverb install (self &key)
   (:documentation "Install object SELF."))

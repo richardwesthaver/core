@@ -52,7 +52,7 @@
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)
-  (:use :cl :std :log :skel/core :sb-ext :cli/clap))
+  (:use :cl :std :log :skel/core :sb-ext :clap :cli/main))
 
 (defpackage :skel/net/core
   (:nicknames :sk-net-core)
@@ -90,3 +90,20 @@
   (:nicknames :sk-net)
   (:use :cl :std :net/srv/udp :skel/core/log :srv :log :skel/srv)
   (:use-reexport :skel/net/client :skel/net/server))
+
+(pkg:defpkg :skel
+  (:nicknames :sk)
+  (:use :cl :std)
+  (:use-reexport 
+   :skel/core :skel/comp 
+   :skel/net)
+  (:export :with-project))
+
+(pkg:defpkg :sk-user
+  (:use :cl :std :cli :clap :tools
+   :cl-user :log :sb-debug :sb-ext
+   :net/proto/dns :obj/ast :vc :rdb 
+   :io :net :pod)
+  (:import-from :uri :uri)
+  (:use :skel :skel/core :skel/comp :skel/net))
+

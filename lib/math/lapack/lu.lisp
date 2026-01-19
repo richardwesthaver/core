@@ -22,10 +22,9 @@
           0)))))
 
 ;;
-(eval-always
-  (defgeneric getrf! (A)
-    (:documentation
-     "
+(define-tensor-generic getrf! (A)
+  (:documentation
+   "
   Syntax
   ======
   (GETRF! a)
@@ -54,8 +53,7 @@
   [3] INFO = T: successful
              i:  U(i,i) is exactly zero.
 ")
-    (:method :before ((A tensor)) (assert (tensor-matrixp A) nil 'tensor-dimension-mismatch))
-    (:generic-function-class tensor-method-generator)))
+  (:method :before ((A tensor)) (assert (tensor-matrixp A) nil 'tensor-dimension-mismatch)))
 
 (define-tensor-method getrf! ((A blas-mixin :x))
   `(let ((upiv (make-array (vector-min (the index-store-vector (dimensions A))) :element-type ',(element-type-to-alien :int))))
@@ -153,14 +151,12 @@ Return Values
               ,lwork
               (addr info))))))))
 
-(eval-always
-  (defgeneric getri! (A &optional perm)
-    (:documentation
-     "Compute the inverse of A using the LU factorization returned by GETRF!")
-    (:method :before ((A tensor) &optional ipiv)
-      (declare (type (or null permutation) ipiv))
-      (assert (and (typep A 'tensor-square-matrix) (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0)))) nil 'tensor-dimension-mismatch))
-    (:generic-function-class tensor-method-generator)))
+(define-tensor-generic getri! (A &optional perm)
+  (:documentation
+   "Compute the inverse of A using the LU factorization returned by GETRF!")
+  (:method :before ((A tensor) &optional ipiv)
+    (declare (type (or null permutation) ipiv))
+    (assert (and (typep A 'tensor-square-matrix) (or (not ipiv) (<= (permutation-size ipiv) (dimensions A 0)))) nil 'tensor-dimension-mismatch)))
 
 (define-tensor-method getri! ((a blas-mixin :x) &optional ipiv)
   `(let ((upiv (if ipiv (pflip.l->f (store (tensor-copy ipiv 'permutation-action)))

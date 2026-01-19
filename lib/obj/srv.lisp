@@ -62,13 +62,6 @@
 (deferror bad-request (service-error) ())
 
 ;;; Objects
-(defclass service (id)
-  ((request-class :type symbol :initarg :request-class :accessor service-request-class)
-   (response-class :type symbol :initarg :response-class :accessor service-response-class)
-   (engine :type engine :accessor engine :initarg :engine))
-  (:documentation "Base Class shared by all services. A service must specify the request and
-response classes it uses for communication as well as the engine which drives it."))
-
 (defclass engine ()
   ((service :accessor service :initarg :service 
             :documentation "A link to the SERVICE which owns this instance."))
@@ -77,6 +70,13 @@ for managing the work done by a service and distributing work to compute
 resources. Different engines may use the main thread for execution, a
 dedicated thread, their own THREAD-POOL, or a combination of threading
 strategies."))
+
+(defclass service (id)
+  ((request-class :type symbol :initarg :request-class :accessor service-request-class)
+   (response-class :type symbol :initarg :response-class :accessor service-response-class)
+   (engine :type engine :accessor engine :initarg :engine))
+  (:documentation "Base Class shared by all services. A service must specify the request and
+response classes it uses for communication as well as the engine which drives it."))
 
 (defclass response () ()
   (:documentation "Base class for response objects, usually generated in reply to a REQUEST."))

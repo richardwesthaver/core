@@ -13,6 +13,7 @@
 (defvar *org-graph* nil)
 (defvar *org-graph-nodes* nil)
 (defvar *org-graph-edges* nil)
+(defvar *org-graph-files* nil)
 
 (defclass org-graph (directed-graph) ()
   (:default-initargs 
@@ -193,8 +194,6 @@ expansion. See EXPAND-FILES.")
     (expand-files *org-graph-files* (expand-edges *org-graph-edges*) *org-graph-edges*)))
 
 ;;; Files
-(defvar *org-graph-files* nil)
-
 (defun org-graph-extract-files (&optional (nodes *org-graph-nodes*))
   (let ((ret))
     (dosequence (n (remove-duplicates nodes :test 'string= :key 'path) ret)

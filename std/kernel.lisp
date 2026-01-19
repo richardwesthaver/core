@@ -57,9 +57,8 @@
   (function-lambda-expression self))
 
 (defmethod print-object ((self sb-mop:funcallable-standard-object) stream)
-  (multiple-value-bind (expr closure-p name) (function-lambda-expression self)
-    (print-unreadable-object (self stream :type t)
-      (format stream "~@[~A~]~@[ :closure ~A~]~@[ :expr ~A~]" name closure-p expr))))
+  (print-unreadable-object (self stream :type t)
+    (format stream "~@[~A~]" (sb-impl::%fun-name (kernel self)))))
 
 (definline make-kernel (fn)
   "Return a new KERNEL-OBJECT and set the instance function to FN."

@@ -6,7 +6,7 @@
 (in-package :skel/homer/cli)
 
 ;;; CLI
-(define-command-type homer-force (&optional val) (when val (setq *homer-force* t)))
+(define-command-type (:homer force) (&optional val) (when val (setq *homer-force* t)))
 
 (defcommand (:homer show) (&rest args)
   (if args
@@ -80,7 +80,21 @@
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
+(eval-always
+  (defun run ()
+    (in-package :skel/homer)
+    (init* :xdg :homer)
+    (load-homerc)
+    (with-cli ((cli :homer))
+      (funcall (kernel *cli*)))))
+
+(defmain start-homer ()
+  (in-readtable :shell)
+  (let ((*print-readably* t))
+    (run)
+    (sb-ext:exit :code 0)))
+
 (define-cli "homer"
   :version "0.1.0"
   :description "user home manager"
-  :kernel (with-commands :homer (command 'check)))
+  :kernel #'start-homer)

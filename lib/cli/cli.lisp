@@ -53,4 +53,5 @@ only."
     `((cons ,sys (:bin ,@args)))
     args))
 
+(cmd:save-commands :cli)
 ;; (defprovider :keymap (name &key package))

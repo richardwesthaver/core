@@ -15,5 +15,5 @@
   :kernel (with-commands :packy (command 'show)))
 
 (defmain start-packy ()
-  (with-cli (*packy-cli*)
-    (funcall (kernel *packy-cli*))))
+  (with-cli ((cli :packy))
+    (funcall (kernel *cli*))))

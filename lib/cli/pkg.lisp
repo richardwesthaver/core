@@ -34,10 +34,9 @@
   (:use :cl :std :log :cmd :ast :equiv)
   (:use-reexport :log :cmd :ast)
   ;; vars
-  (:export :*cli-group-separator* :*no-exit* :*default-cli-def*
+  (:export :*no-exit*
    :*default-cli-class* :*cli*
-   :*cli-package-table*
-   :*no-debug*
+   :*cli-table* :*no-debug*
    ;; macs
    :schar0 :with-cli-handlers 
    ;; proto
@@ -45,27 +44,8 @@
    :cli-command :cli
    ;; obj
    :make-cli :define-cli
-   :make-opts :make-cmds :parse-boolean-opt :parse-string-opt
-   :parse-form-opt :parse-list-op :parse-sym-op :parse-key-op
-   :pasre-num-op :parse-file-op :parse-dir-op
-   :cli-cd :with-cli :debug-opts
-   :active-cmds
-   :%compose-keyword-opt
-   :getopt
-   :setopt
-   :add-package-cmd
-   :add-package-opt
-   :package-cli
-   :package-cmds
-   :package-opts
-   :with-cli-args
-   :load-cli
-   :add-package-cmds
-   :add-package-opts
-   :help-opt
-   :version-opt
-   :level-opt
-   :keep-ast-opt))
+   :cli-cd :with-cli
+   :load-cli))
 
 (defpkg :cli/shell
   (:use :cl :std)

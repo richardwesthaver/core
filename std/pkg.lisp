@@ -548,7 +548,9 @@
 (defpkg :std/macs
   (:use :cl :std/prim)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
-  (:import-from :sb-int :make-macro-lambda :parse-lambda-list)
+  (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
+  (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
+                :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform :remove-from-plist)
@@ -560,6 +562,11 @@
    :this :self
    :make-macro-lambda
    :parse-lambda-list
+   :lambda-list-keyword-mask
+   :check-lambda-list-names
+   :parse-optional-arg-spec :parse-key-arg-spec 
+   :ds-lambda-list-matcher :parse-ds-lambda-list
+   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
    :once-only
    :define-class
    :defclass*

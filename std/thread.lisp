@@ -758,7 +758,7 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defun find-thread-pool (name) (gethash name *thread-pool-table*))
 
-(defmethod call ((self thread-pool) &rest args)
+(defmethod call ((self thread-pool) args)
   (if (sb-int:singleton-p args)
       (funcall (kernel self) (car args) self)
       (apply (kernel self) args)))

@@ -663,11 +663,12 @@ be used with SETF."))
       (mapcar #'(lambda (x) (car (aref graph x))) ordering))))
 
 (defun match-lambda-lists (lsta lstb)
-  (let ((optional? nil))
-    (labels ((optp? (a b)
-	       (if (and (consp a) (atom b)) (optp? b a)
+  "Compare lambda-list LSTA to lambda-list LSTB and return T if they match."
+  (let ((optionalp nil))
+    (labels ((optp (a b)
+	       (if (and (consp a) (atom b)) (optp b a)
 		   (progn
-		     (if (or (member a lambda-list-keywords) (not optional?)) nil
+		     (if (or (member a lambda-list-keywords) (not optionalp)) nil
 			 (if (null (cddr b)) t nil)))))
 	     (lst-walker (a b)
 	       (cond
@@ -675,11 +676,11 @@ be used with SETF."))
 		  (if (eq a b)
 		      (progn
 			(when (member a lambda-list-keywords)
-			  (setq optional? (if (member a '(&optional &key)) t nil)))
+			  (setq optionalp (if (member a '(&optional &key)) t nil)))
 			t)
 		      (if (or (member a lambda-list-keywords) (member b lambda-list-keywords)) nil t)))
 		 ((or (atom a) (atom b))
-		  (if (optp? a b) t nil))
+		  (if (optp a b) t nil))
 		 ((and (consp a) (consp b))
 		  (and (lst-walker (car a) (car b))
 		       (lst-walker (cdr a) (cdr b)))))))
@@ -718,7 +719,7 @@ be used with SETF."))
                  (return left)))))
 
 ;;; From CLX
-;; WITH-STACK-LIST is used by XLIB:WITH-STATE as a memory saving feature.  If
+;; WITH-STACK-LIST is used by XLIB:WITH-STATE as a memory saving feature. If
 ;; your lisp doesn't have stack-lists, and you're worried about consing
 ;; garbage, you may want to re-write this to allocate and initialize lists
 ;; from a resource.

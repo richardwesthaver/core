@@ -13,6 +13,5 @@
     (inspect (libpod-request-json c "info"))))
 
 (define-cli "pod"
-  :package :pod
   :description "container tools/libpod API client"
   :kernel (with-commands :pod (command 'info)))

@@ -16,7 +16,7 @@
   "The current CLI object.
 This symbol is bound in the body of the WITH-CLI macro.")
 
-(defvar *cli-table* (make-hash-table)
+(defvar *cli-table* (make-hash-table :test 'equal)
   "A hash table containing a mapping of names to CLI objects.")
 
 (defvar *default-cli-class* 'cli)
@@ -124,13 +124,11 @@ evaluation of BODY."
 #+todo
 (defmethod print-usage ((self cli-command) &optional stream)
   (with-slots (opts cmds) self
-    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~%~4t:doc ~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]~&"
+    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]~&"
             (name self)
             (when *cli*
               (equal (string (kernel *cli*)) (string (kernel self))))
-            (and (slot-boundp self 'description) (description self))
-            (when (fboundp (kernel self))
-              (documentation (symbol-function (kernel self)) 'function))
+            (kernel-documentation self)
             (unless (sequence:emptyp opts)
               (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
             (unless (sequence:emptyp cmds)
@@ -152,7 +150,7 @@ evaluation of BODY."
       (loop for c across cmds
             do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))
 
-(defmethod call :before ((self cli-command) &rest args)
+(defmethod call :before ((self cli-command) args)
   (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))
 
 ;;; CLI
@@ -186,8 +184,7 @@ evaluation of BODY."
   description
   (cd *default-pathname-defaults*)
   (hook (make-instance 'key-hook))
-  (kernel (with-commands :cli (command 'help)))
-  (package *package*))
+  (kernel (with-commands :cli (command 'help))))
 
 (defmethod version ((self cli)) (cli-version self))
 (defmethod name ((self cli)) (cli-name self))
@@ -195,7 +192,6 @@ evaluation of BODY."
 
 (defmacro define-cli (name 
                       &key (version "0.1.0") 
-                           (package *package*)
                            (kernel (with-commands :cli (command :help)))
                            hook
                            (cd *default-pathname-defaults*)
@@ -205,11 +201,9 @@ evaluation of BODY."
 NAME is assigned to the CLI and assumed to be the default binary name which
 uses this object.
 
-VERSION, DESCRIPTION, KERNEL, and PACKAGE are assigned to the associated slot
+VERSION, DESCRIPTION, and KERNEL are assigned to the associated slot
 value of the CLI."
-  `(let* ((*cli* (make-cli :name ,name :version ,version 
-                           :package ,package :hook ,hook 
-                           :cd ,cd :description ,description)))
+  `(let* ((*cli* (make-cli :name ,name :version ,version :hook ,hook :cd ,cd :description ,description)))
      (setf (cli-kernel *cli*) ,kernel)
      (load-cli *cli* ,name)
      *cli*))
@@ -226,7 +220,7 @@ value of the CLI."
 (deffmt fmt-cli-header "~A v~A --- ~A~%" "Given a NAME VERSION and DESCRIPTION, print a basic cli header.")
 
 (defmethod print-help :before ((self cli) &optional (stream t))
-  (fmt-cli-header stream (name self) (version self) (description self)) stream)
+  (fmt-cli-header stream (name self) (version self) (cli-description self)) stream)
 
 (defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.
