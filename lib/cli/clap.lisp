@@ -121,22 +121,14 @@ evaluation of BODY."
 
 (init :commands :name :cli :class 'cli-command)
 
-#+todo
 (defmethod print-usage ((self cli-command) &optional stream)
-  (with-slots (opts cmds) self
-    (format stream "~(~A~)~:[~;*~]~24t~@[~A~]~@[~{~%~4t~A~^~}~]~@[~{~A~}~]~&"
-            (name self)
-            (when *cli*
-              (equal (string (kernel *cli*)) (string (kernel self))))
-            (kernel-documentation self)
-            (unless (sequence:emptyp opts)
-              (loop for o across opts collect (with-output-to-string (s) (print-usage o s))))
-            (unless (sequence:emptyp cmds)
-              (loop for c across cmds collect (with-output-to-string (s) (print-usage c s)))))))
+  (format stream "~@[~<~A~>~%~]"
+          (kernel-documentation self)))
 
 (defmethod print-help ((self cli-command) &optional stream)
   (print-usage self stream)
-  (print (kernel-documentation self) stream))
+  (when-let ((doc (kernel-documentation self)))
+    (print doc stream)))
 
 (defmethod call :before ((self cli-command) args)
   (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))
@@ -216,10 +208,10 @@ value of the CLI."
   (print-usage self stream)
   (format stream "~A~%" (cli-description self))
   (let ((k (kernel self)))
-    (print (if (kernelp k)
-               (kernel-documentation k)
-               (documentation k 'function))
-           stream)))
+    (format stream "~A~%" 
+            (if (kernelp k)
+                (kernel-documentation k)
+                (documentation k 'function)))))
 
 (defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.
