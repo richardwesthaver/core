@@ -94,7 +94,7 @@
 ;; inherited. The 'PROJECT' property itself can be inherited.
 
 ;; project-info
-(defcustom org-project-info-order '(details status churn files html tasks log vc)
+(defcustom org-project-info-order '(details status churn files html tasks log vc links)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
   :group 'scrum)
@@ -132,12 +132,15 @@ The following keyword parameters can be passed to the info dynamic block:
 :details when nil don't include the project details section.
 :vc      when non-nil include the vc files table.
 :files   when non-nil include the local files table.
-:html    when non-nil include the html files table."
+:html    when non-nil include the html files table.
+:links   when non-nil include the links list."
   (with-dblock-defaults
    (let ((html (when-let* ((val (plist-member params :html)))
 		 (cadr val)))
          (vc (when-let* ((val (plist-member params :vc)))
                (cadr val)))
+	 (links (when-let* ((val (plist-member params :links)))
+	       (cadr val)))
 	 (files (when-let* ((val (plist-member params :files)))
 		  (cadr val)))
          (churn (if-let* ((val (plist-member params :churn)))
@@ -187,7 +190,10 @@ The following keyword parameters can be passed to the info dynamic block:
                   (insert "#+CALL: project-vc-files() :dir " project-root "\n")))
 	   ('files (when files
 		     (message "building project local files...")
-		     (insert "#+CALL: project-files() :dir " project-root "\n")))))
+		     (insert "#+CALL: project-files() :dir " project-root "\n")))
+	   ('links (when links
+		     (message "building project links...")
+		     (insert "#+CALL: project-links() :dir " project-root "\n")))))
        (org-babel-execute-region point (point))))))
 
 (defun org-project-info ()

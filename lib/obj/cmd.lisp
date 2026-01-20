@@ -214,7 +214,7 @@ Example:
   "Parse a COMMAND from STR."
   (with-input-from-string (s (if args 
                                  (with-output-to-string (v) 
-                                   (print (fmt-command v (string str) args)))
+                                   (fmt-command v (string str) args))
                                  str))
     (read-command s)))
 
@@ -224,7 +224,7 @@ then execute it."
   (declare ((or string symbol) command))
   (catch 'cmd
     (if-let ((cmd (command command)))
-      (call cmd (print (parse-args cmd input)))
+      (call cmd (parse-args cmd input))
       (multiple-value-bind (cmd args ll) (apply 'parse-command
                                                 command
                                                 (with-input-from-string (s input) 
@@ -246,7 +246,7 @@ NAME *COMMAND-TABLE*)."
   "Copy all commands and types from NAME1 to NAME2."
   (with-commands name1 (save-commands name2)))
 
-(defkernel command ()
+(defkernel command (kernel-object)
   ((interactive :initarg :interactive :initform nil :reader interactive))
   (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.
 
@@ -327,7 +327,9 @@ the args to it."
              (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
                    (lambda ,args                     
                      ,@decl
-                     ,@forms)
+                     ,@forms
+                     ;; commands never return a value
+                     (values))
                    ,@(when doc `((kernel-documentation ,%cmd) ,doc))
                    ,%cmd* ,%cmd)))))))
 

@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :skel/cli)
 
+(init :commands :name :skel :copy :cli)
+
 (defcommand (:skel init) (&optional file name)
   (handler-bind
       ((sb-ext:file-exists

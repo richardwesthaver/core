@@ -16,7 +16,7 @@
 (defparameter *default-skel-extension* "sk")
 (defparameter *default-skelrc* ".skelrc")
 
-(defvar *skel-hook* (make-instance 'std:key-hook))
+(defparameter *skel-hook* (make-instance 'std:key-hook))
 
 (defvar *skel-project* nil)
 (defvar *skel-registry* nil)

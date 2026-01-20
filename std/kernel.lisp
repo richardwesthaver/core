@@ -67,10 +67,8 @@
     (sb-mop:set-funcallable-instance-function fin (compile nil fn))
     fin))
 
-(deftype kernel () 
-  "A type which specifies kernels. A kernel may be a list which is interpreted as
-a lambda expression, a symbol which names a function, or a compiled-function."
-  '(or cons symbol function kernel-object))
+(defun kernelp (obj)
+  (typep obj 'kernel-object))
 
 (defun check-kernel ()
   "Check the current value of *KERNEL*, ensuring it is bound appropriately
@@ -82,84 +80,87 @@ restarts is provided. *KERNEL* is returned."
         (store-value (value)
           :report "Assign a value to *KERNEL*."
           :interactive (lambda () (print "Kernel: ") (read *query-io*))
-          (check-type value kernel)
+          (check-type value function)
           (setf *kernel* value))))
   *kernel*)
 
 (defmacro defkernel (name supers slots &rest opts)
   "Like DEFCLASS but for the KERNEL-CLASS metaclass."
   (let ((k (find :kernel opts :key #'car)))
-    `(progn
-       (defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))
-       . ,(when (or (memq 'kernel-object supers) (some (lambda (s) (subtypep s 'kernel-object)) supers))
-            `((defmethod initialize-instance :before ((self ,name) &key &allow-other-keys)
-                (sb-mop:set-funcallable-instance-function 
-                 self 
-                 (compile nil
-                          (lambda ,(cadr k) 
-                            (let ((*kernel* self))
-                              (declare (,name *kernel*))
-                              ,@(cddr k)))))))))))
+    `(defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))))
 
 (defkernel hook (kernel-object) ()
   (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 
-(defkernel value-hook (hook) 
-  ((value :initform nil :initarg :value :accessor hook-value))
-  (:kernel 
-   (item &rest args)
-   (case item
-     (:add (apply 'add-hook *kernel* args))
-     (:remove (apply 'remove-hook *kernel* args))
-     (t
-      (let ((val (hook-value *kernel*)))
-        (mapcar 
-         (lambda (x) (apply 'funcall x args))
-         (if item
-             (getf val item)
-             val))))))
-  (:documentation "A hook which pushes and pops functions from a VALUE slot."))
+(macrolet ((%defhook (name supers slots &rest opts)
+             (let ((k (copy-list (find :kernel opts :key #'car))))
+               `(progn 
+                  (defkernel ,name ,supers ,slots ,@opts)
+                  (defmethod initialize-instance ((self ,name) &key value &allow-other-keys)
+                    (sb-mop:set-funcallable-instance-function 
+                     self 
+                     (compile nil
+                              (lambda ,(second k)
+                                (let ((*kernel* self))
+                                  ,@(cddr k)))))
+                    (setf (hook-value self) value)
+                    self)))))
+  (%defhook value-hook (hook)
+            ((value :initform nil :initarg :value :accessor hook-value))
+            (:kernel 
+             (&optional item &rest args)
+             (case item
+               (:add (apply 'add-hook *kernel* args))
+               (:remove (apply 'remove-hook *kernel* args))
+               (t
+                (let ((val (hook-value *kernel*)))
+                  (mapcar 
+                   (lambda (x) (apply 'funcall x args))
+                   (if item
+                       (getf val item)
+                       val))))))
+            (:documentation "A hook which pushes and pops functions from a VALUE slot."))
 
-(defkernel key-hook (value-hook) ()
-  (:default-initargs :value (make-hash-table))
-  (:kernel
-   (item &rest args)
-   (case item
-     (:add (apply 'add-hook *kernel* args))
-     (:remove (apply 'remove-hook *kernel* args))
-     (t
-      (let ((val (hook-value *kernel*)))
-        (mapcar 
-         (lambda (x) (apply 'funcall x args))
-         (if item
-             (gethash item val)
-             (let ((vals))
-               (maphash (lambda (k v) (declare (ignore k)) (push v vals)) val)
-               vals)))))))
-  (:documentation "A hook which stores separate categories of hook functions in a hash-table. The
+  (%defhook key-hook (value-hook) ()
+            (:default-initargs :value (make-hash-table))
+            (:kernel
+             (&optional item &rest args)
+             (case item
+               (:add (apply 'add-hook *kernel* args))
+               (:remove (apply 'remove-hook *kernel* args))
+               (t
+                (let ((val (hook-value *kernel*)))
+                  (mapcar 
+                   (lambda (x) (apply 'funcall x args))
+                   (if item
+                       (gethash item val)
+                       (let ((vals))
+                         (maphash (lambda (k v) (declare (ignore k)) (push v vals)) val)
+                         vals)))))))
+            (:documentation "A hook which stores separate categories of hook functions in a hash-table. The
 key of each record is a category name and the value is a list of functions."))
 
-(defkernel dynamic-hook (key-hook) ()
-  (:kernel 
-   (item &rest args)
-   (case item
-     (:add 
-      (if (< (length args) 2)
-          (apply 'add-hook *kernel* (cadr args) :name (car args) (cddr args))))
-     (:remove 
-      (if (= (length args) 1)
-          (remhash (car args) (hook-value *kernel*))
-          (apply 'remove-hook *kernel* (cadr args) :name (car args) (cddr args))))
-     (t ;; assumed to be the name of a dynamic var
-      (let ((item (if (keywordp item)
-                      (gethash item (hook-value *kernel*))
-                      (symbol-value item))))
-        (mapcar 
-         (lambda (x) (apply 'funcall x args))
-         item)))))
-  (:documentation "A hook which binds values to dynamic variables. The VALUE slot contains a
-hash-table mapping keywords to symbol names."))
+  (%defhook dynamic-hook (key-hook) ()
+            (:kernel 
+             (&optional item &rest args)
+             (case item
+               (:add 
+                (if (< (length args) 2)
+                    (apply 'add-hook *kernel* (cadr args) :name (car args) (cddr args))))
+               (:remove 
+                (if (= (length args) 1)
+                    (remhash (car args) (hook-value *kernel*))
+                    (apply 'remove-hook *kernel* (cadr args) :name (car args) (cddr args))))
+               (t ;; assumed to be the name of a dynamic var
+                (let ((item (if (keywordp item)
+                                (gethash item (hook-value *kernel*))
+                                (symbol-value item))))
+                  (mapcar 
+                   (lambda (x) (apply 'funcall x args))
+                   item)))))
+            (:documentation "A hook which binds values to dynamic variables. The VALUE slot contains a
+hash-table mapping keywords to symbol names.")))
 
 (defgeneric add-hook (hook function &key &allow-other-keys)
   (:documentation "Add a FUNCTION to HOOK. The hook is checked to see if FUNCTION is already

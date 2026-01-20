@@ -113,6 +113,7 @@
    :kernel-object
    :*kernel*
    :kernel
+   :kernelp
    :check-kernel
    :make-kernel
    :kernel-expression

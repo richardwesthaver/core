@@ -218,7 +218,6 @@ non-unique ID prefix.")
 
 ;;; Type IDs
 ;; would CART-TYPECASE be useful here?
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *simple-type-table* (make-hash-table :test 'equal)
     "A hash-table mapping simple type names to integers.")

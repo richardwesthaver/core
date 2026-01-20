@@ -134,26 +134,16 @@ evaluation of BODY."
             (unless (sequence:emptyp cmds)
               (loop for c across cmds collect (with-output-to-string (s) (print-usage c s)))))))
 
-#+todo
 (defmethod print-help ((self cli-command) &optional stream)
-  (unless (typep self 'cli)
-    (print-usage self stream))
-  (let ((opts (opts self))
-        (cmds (cmds self)))
-    (unless (sequence:emptyp opts)
-      (println "options:" stream)
-      (loop for o across opts
-            do (iprintln (with-output-to-string (s) (print-usage o s)) 2 stream)))
-    (terpri stream)
-    (unless (sequence:emptyp cmds)
-      (println "commands:" stream)
-      (loop for c across cmds
-            do (iprintln (with-output-to-string (s) (print-usage c s)) 2 stream)))))
+  (print-usage self stream)
+  (print (kernel-documentation self) stream))
 
 (defmethod call :before ((self cli-command) args)
   (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))
 
 ;;; CLI
+(init :commands :name :cli)
+
 (defcommand (:cli :help) (&optional arg)
   "Print help and exit."
   (print-help (if arg (command arg) *cli*) t)
@@ -222,6 +212,15 @@ value of the CLI."
 (defmethod print-help :before ((self cli) &optional (stream t))
   (fmt-cli-header stream (name self) (version self) (cli-description self)) stream)
 
+(defmethod print-help ((self cli) &optional stream)
+  (print-usage self stream)
+  (format stream "~A~%" (cli-description self))
+  (let ((k (kernel self)))
+    (print (if (kernelp k)
+               (kernel-documentation k)
+               (documentation k 'function))
+           stream)))
+
 (defmethod equiv :before ((a cli) (b cli))
   "Return T if A is the same cli object as B.
 
@@ -257,6 +256,10 @@ runtime if nil."
          ,@body
          ,@(when run '((call *cli*)))
          ,@(when exit '((sb-ext:exit)))))))
+
+(defmethod exec ((self cli))
+  (with-cli (self)
+    (exec (kernel self))))
 
 ;;; CLI Package Helpers
 (defun cli (&optional (name (package-name *package*)))

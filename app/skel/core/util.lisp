@@ -168,7 +168,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
                   *skel-path* (skel/core/obj::src *skel-project*)
                   *skel-cache* (skel/core/obj::cache *skel-project*)))
           (when-let ((hook *skel-hook*))
-            (funcall hook))
+            (funcall hook :init))
           (values))))
   (defun init-skel ()
     "Initialize the global SKEL environment:

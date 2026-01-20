@@ -2,7 +2,7 @@
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
-#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :html nil
+#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :links t
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
@@ -10,30 +10,24 @@
 | name        | core                                            |
 | version     | 0.1.1                                           |
 | description | The Compiler Company Core                       |
-| skel-id     | 4611004031049662566                             |
+| id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS C                               |
-| updated     | Wed Jan 14 20:55:42 2026 -0500                  |
+| updated     | Sun Jan 18 22:08:12 2026 -0500                  |
 | langs       | c elisp lisp org text                           |
-| lines       | 164205 :code 131347 :comment 14286 :blank 18572 |
+| lines       | 162981 :code 130396 :comment 14189 :blank 18396 |
 |-------------+-------------------------------------------------|
 
-#+END:
-
-#+call: project-links()
+#+CALL: project-links() :dir ~/comp/core/
 
 #+RESULTS:
 - [[https://otom8.dev/docs/core/index.html][Docs]]
 - [[https://otom8.dev/plan/tasks/core.html][Tasks]]
 
+#+END:
+
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-The core is a deeply opinionated development environment built for
-Lisp hackers. It is bootstrapped from SBCL and no guarantees are made
-with respect to compatibility with other packages or ANSI Lisp
-implementations.
-
-To bootstrap the core you must have the following dependencies
-accessible to ASDF:
-- shed/ppcre
-- shed/ironclad
+The core is a Lisp hacking environment. It is bootstrapped from SBCL
+and no guarantees are made with respect to compatibility with other
+packages or ANSI Lisp implementations.
