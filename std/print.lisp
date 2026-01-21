@@ -697,7 +697,6 @@ STYLE indicates the level of decoration to apply to the output:
   "The currently active mapping of annotations.")
 (declaim (base-char *annotation-prefix*))
 (defconstant +annotation-prefix+ #\%)
-;; REVIEW 2026-01-10: should these be constant? may want to rebind in notation functions..
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))
 
@@ -807,8 +806,10 @@ The following three arguments are required:
 (defnotation (:std #\") (stream) (write-char #\" stream))
 (defnotation (:std +annotation-prefix+) (stream) (write-char +annotation-prefix+ stream))
 
-(defmethod init ((self (eql :annotations)) &key (name :std))
-  (load-annotations name))
+(defmethod init ((self (eql :annotations)) &key (name :std) copy)
+  (when copy (copy-annotations copy name))
+  (load-annotations name)
+  *annotations*)
 
 (defmethod reset ((self (eql :annotations)) &key)
   (setq *annotations* nil))

@@ -44,7 +44,7 @@
    (:file "array")
    (:file "pipe")
    (:file "sys")
-   (:file "serde")
+   (:file "io")
    (:file "alien")
    (:file "comp")
    (:file "meta")

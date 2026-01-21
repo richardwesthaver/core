@@ -176,7 +176,7 @@
 
 (defpkg :dat/html
   (:nicknames :html)
-  (:use :cl :dat/proto :std/macs :std/string :std/serde :std/condition :std/stream)
+  (:use :cl :dat/proto :std/macs :std/string :std/io :std/condition :std/stream)
   (:import-from :std :with-gensyms)
   (:import-from :sb-ext :defglobal)
   (:import-from :ast :ast)

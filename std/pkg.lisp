@@ -859,7 +859,7 @@
    :make-octets
    :octets))
 
-(defpkg :std/serde
+(defpkg :std/io
   (:use :cl :std/sys)
   (:import-from :std/named-readtables :parse-body)
   (:import-from :std/prim :definline)
@@ -883,7 +883,7 @@
   (:import-from :std/macs :with-memoization :memoizing :destructuring-case :once-only :compile-and-eval)
   (:import-from :std/type :octet-vector :octet :array-index)
   (:import-from :sb-int :with-float-traps-masked)
-  (:import-from :std/serde :define-io)
+  (:import-from :std/io :define-io)
   (:import-from :sb-posix :lisp-for-c-symbol)
   (:import-from :sb-alien :%alien-value :sap+ 
    :*linkage-info* :*shared-objects* :*alien-type-classes* :alien-type-class 
@@ -1400,7 +1400,7 @@
 (pkg:defpkg :std/defsys
   (:nicknames :sys)
   (:use :cl :std/prim :std/meta 
-    :std/macs :std/thread :std/task :std/serde 
+    :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition
     :std/print :std/meta :std/path :std/sym
     :std/macs)
@@ -1470,7 +1470,7 @@
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/print :std/path
    :std/os :std/file :std/string :std/sys 
-   :std/readtable :std/pipe :std/serde :std/rand 
+   :std/readtable :std/pipe :std/io :std/rand 
    :std/async :std/seq :std/prim :std/comp 
    :std/defsys))
 

@@ -1,7 +1,7 @@
 ;;; rt.asd --- standard library
 (require 'sb-sprof)
 (defsystem :rt
-  :depends-on (:std :log :dat)
+  :depends-on (:std :log :dat :obj)
   :components ((:file "pkg")
                (:file "var" :depends-on ("pkg"))
                (:file "condition" :depends-on ("pkg"))

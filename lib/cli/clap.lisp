@@ -114,7 +114,8 @@ evaluation of BODY."
   (:documentation "Format command SELF as a useful string."))
 
 ;;; CLI Command
-(defkernel cli-command (command) ())
+(defkernel cli-command (command) ()
+  (:documentation "Class of COMMANDs which may be executed directly from the command line."))
 
 (defmethod make-load-form ((self cli-command) &optional env)
   (make-load-form-saving-slots self :environment env))
@@ -182,7 +183,7 @@ evaluation of BODY."
 NAME is assigned to the CLI and assumed to be the default binary name which
 uses this object.
 
-VERSION, DESCRIPTION, and KERNEL are assigned to the associated slot
+VERSION, DESCRIPTION, HOOK, CD, and MAIN are assigned to the associated slot
 value of the CLI."
   `(let* ((*cli* (make-cli :name ',(string-downcase name) :version ,version :hook ,hook :cd ,cd :description ,description
                            :main (symbol-function ',main))))

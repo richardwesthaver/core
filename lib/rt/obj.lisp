@@ -46,6 +46,7 @@
             (name self))))
 
 ;;; Fixtures
+;; TODO 2026-01-20: 
 ;; Our fixtures are objects which can be inherited to build different fixture
 ;; classes. Fixtures inherit from TEST-OBJECT and have a NAME which usually
 ;; indicates the key used to initialize this object with MAKE-FIXTURE.

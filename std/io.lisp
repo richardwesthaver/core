@@ -1,4 +1,4 @@
-;;; std/serde.lisp --- Basic Lisp Serializer API
+;;; std/io.lisp --- Lisp Serialization and IO Tables
 
 ;; Read/Write Lisp Objects. Binary object de/serialization.
 
@@ -14,7 +14,7 @@
 ;; need to portably serialize lisp objects as octet vectors.
 
 ;;; Code:
-(in-package :std/serde)
+(in-package :std/io)
 
 (eval-always
   (define-condition serde-condition () ()
