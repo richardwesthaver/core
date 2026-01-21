@@ -232,30 +232,19 @@
    :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
-   :primitive-object-size :find-saetp :find-saetp-by-ctype
-   :deep-size :get-simple-fun-instruction-model :asm
-   :print-form-and-optimize :print-signaled-conditions
-   :print-arguments
+   :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
+   :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
+   :print-arguments :ea
    :checked-compile :runtime :asm-search :inspect-ir
-   :ea
-   :compile-condition
-   :compile-condition-context-format
-   :compile-condition-context-arguments
-   :compile-condition-description
-   :compile-file-error
-   :compile-warned-warning
-   :compile-warned-error
-   :compile-failed-warning
-   :compile-failed-error
-   :*compile-file-failure-action*
-   :*compile-file-warning-action*
-   :check-lisp-compile-warnings
-   :check-lisp-compile-results
-   :reset-deferred-warnings
-   :save-deferred-warnings
-   :check-deferred-warnings
-   :call-with-saved-deferred-warnings
-   :with-saved-deferred-warnings
+   :compile-condition :compile-condition-context-format
+   :compile-condition-context-arguments :compile-condition-description
+   :compile-file-error :compile-warned-warning
+   :compile-warned-error :compile-failed-warning
+   :compile-failed-error :*compile-file-failure-action*
+   :*compile-file-warning-action* :check-lisp-compile-warnings
+   :check-lisp-compile-results :reset-deferred-warnings
+   :save-deferred-warnings :check-deferred-warnings
+   :call-with-saved-deferred-warnings :with-saved-deferred-warnings
    :checked-compile-file)
   (:recycle :sb-c))
 
@@ -270,23 +259,16 @@
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-c :integer-type-length :ctype-of :ctype :widetag-of :lowtag-of)
   (:import-from :sb-kernel :*type-classes* :type-class 
-   :*type-cache-nonce* :type-class-name :type-class-id
-   :classoid :type-id->type-class
-   :type-hash-value :*ctype-hashsets*
-   :find-classoid :classoid-of
-   :ctype-of :ctype
-   :layout-of :function-designator)
+   :*type-cache-nonce* :type-class-name :type-class-id :classoid
+   :type-id->type-class :type-hash-value :*ctype-hashsets* :find-classoid 
+   :classoid-of :ctype-of :ctype :layout-of 
+   :function-designator)
   (:shadowing-import-from :sb-ext :word)
-  (:export :+default-element-type+
-   :function-designator
-   :type-class-of :unsigned-byte*
-   :type-class-id :find-classoid
-   :classoid :type-class-id-of
-   :classoid-of :layout-of
-   :type-id<= :type-id< :type-id= :array-type=
-   :type-id->type-class :type-hash-value
-   :type-class-name-of :type-class-name
-   :*type-cache-nonce*
+  (:export :+default-element-type+ :function-designator :type-class-of 
+   :unsigned-byte* :type-class-id :find-classoid :classoid 
+   :type-class-id-of :classoid-of :layout-of :type-id<= 
+   :type-id< :type-id= :array-type= :type-id->type-class 
+   :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
    #:negative-double-float :*ctype-hashsets*
@@ -495,19 +477,18 @@
    :make-so-set/string :make-so-set/fixnum :make-so-map/addr :make-marked-ref
    :make-so-set/addr :unbound-marker-p)
   (:export :hash-table-alist
-   :hash-table-list
-   :copy-hash
+   :hash-table-list :copy-hash
    :maphash-keys :hash-table-keys
    :maphash-values :hash-table-values
    :alist-hash-table :plist-hash-table 
-   :plist-string-hash-table
+   :plist-string-hash-table :make-hashset
    :hash-table-plist :ensure-gethash
    :pophash :*global-hasher*
    :*global-hash* :djb
    :hash-object :hash-object-address
    :dumb-string-hash :table
-   :map-hashset :hashset-find :hashset-remove :hashset-insert :hashset-count :psxhash
-   :make-hashset))
+   :map-hashset :hashset-find :hashset-remove :hashset-insert 
+   :hashset-count :psxhash))
 
 (defpkg :std/curry
   (:use :cl)
@@ -551,7 +532,7 @@
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
   (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
-                :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
+   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform :remove-from-plist)
@@ -656,18 +637,15 @@
   (:import-from :std/macs :eval-every :lety* :destructuring-case)
   (:import-from :sb-c :check-bound)
   (:export :copy-array :signed-array-length :array-shift 
-   :check-bound
-   :vector-push-extend-position :vector-pop-position
+   :check-bound :vector-push-extend-position :vector-pop-position :vector-copy
    :vectorify :make-array-allocator
    :vector-foldl :vector-foldr
    :vector-map-foldl :vector-map-foldr
    :vector-max :vector-min
-   :vector-copy
    :vector-eq :with-array-data
    :vector-to-list :copy-vector-to-list
-   :modproj :simplify-array :array-rank-limit
-   :sort-index :binary-search
-   :element-type))
+   :modproj :simplify-array :array-rank-limit :sort-index 
+   :binary-search :element-type))
 
 (defpkg :std/sys
   (:use :cl :sb-int)
@@ -693,8 +671,7 @@
    :switch-to-arena :rewind-arena
    :unuse-arena :in-same-arena
    :dump-arena-objects :arena-contents
-   :points-to-arena
-   :show-heap->arena)
+   :points-to-arena :show-heap->arena)
   (:import-from :sb-sys :int-sap :find-foreign-symbol-address)
   (:import-from :sb-fasl :*assembler-routines* :+fasl-file-version+ 
    :*fasl-file-type* :get-asm-routine :asm-routine-index-from-addr :check-fasl-header 
@@ -908,15 +885,12 @@
   (:import-from :sb-int :with-float-traps-masked)
   (:import-from :std/serde :define-io)
   (:import-from :sb-posix :lisp-for-c-symbol)
-  (:import-from :sb-alien 
-   :%alien-value
-   :sap+ :*linkage-info* 
-   :*shared-objects* :*alien-type-classes* 
+  (:import-from :sb-alien :%alien-value :sap+ 
+   :*linkage-info* :*shared-objects* :*alien-type-classes* :alien-type-class 
    :unparse-alien-type :parse-alien-type :pick-lisp-and-alien-names :alien-type-bits
-   :alien-type-class :alien-value-type
    :alien-type-p :alien-value-p :alien-callback-p :alien-void-type-p
+   :alien-pointer-type-p :int-sap :alien-value :alien-value-type 
    :alien-typep :alien-size
-   :alien-pointer-type-p :int-sap :alien-value
    ;; alien types
    :c-string :int :enum :short
    :long :slot :void :cast :char :addr
@@ -1063,21 +1037,14 @@
    :reset :state
    :init* :pause
    :install :uninstall
-   :class-equalp
-   :slots-boundp
-   :*standard-metaobjects*
-   :find-slot-def-by-name
-   :find-direct-slot-def-by-name
-   :find-slot-defs-by-type
-   :find-slot-def-names-by-type
-   :struct-slots-and-values
-   :slots-and-values
-   :struct-constructor
+   :class-equalp :slots-boundp
+   :*standard-metaobjects* :find-slot-def-by-name
+   :find-direct-slot-def-by-name :find-slot-defs-by-type
+   :find-slot-def-names-by-type :struct-slots-and-values
+   :slots-and-values :struct-constructor
    :remove-template-method :define-template-method
-   :define-template-generic
-   :*template-table*
-   :template-function-p
-   :*sham-classes*
+   :define-template-generic :*template-table*
+   :template-function-p :*sham-classes*
    :defsham))
 
 (defpkg :std/seq
@@ -1098,8 +1065,7 @@
   (:export :sequencep :take :starts-with-subseq 
    :take* :starts-with
    :unsplice :item-predicate
-   :dosequence
-   :ends-with
+   :dosequence :ends-with
    :ends-with-subseq :nth-value-or
    :split-sequence :split-sequence-if :split-sequence-if-not :starts-with-p
    :starts-with-one-of-p :copy-n
@@ -1116,31 +1082,31 @@
    :push-priority-queue :pop-priority-queue
    ;; spin queue
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
-   :with-spin-lock
-   :pop-spin-queue :peek-spin-queue :spin-queue-count :spin-queue-empty-p
-   ;; fib heap
-   :make-heap :fib-insert :extract-min :fib-delete :fib-heap
+   :with-spin-lock :pop-spin-queue :peek-spin-queue :spin-queue-count 
+   :spin-queue-empty-p :make-heap :fib-insert :extract-min 
+   :fib-delete :fib-heap
    ;; accumulator
-   :accumulated :accumulate :accumulator :max-accumulator :min-accumulator
-   :counter :make-counter :counter-value :inc-counter 
-   :dec-counter
+   :accumulated :accumulate :accumulator :max-accumulator 
+   :min-accumulator :counter :make-counter :counter-value 
+   :inc-counter :dec-counter
    ;; iterator protocol
-   :iter
-   :iterator :next
+   :iter :iterator :next :prev
    :key :val
-   :prev
    :seek :seek-to-first
    :seek-to-last :seek-for-prev
    :iter-valid-p :*iter*
    :idx :with-iter
-   :make-priority-queue
-   :do-indexes :repeat
-   :mod-incf :mod-decf))
+   :make-priority-queue :do-indexes
+   :mod-incf :mod-decf
+   :repeat))
 
 (defpkg :std/path
   (:use :cl)
-  (:import-from :uiop :directory-files :subdirectories :absolute-pathname-p)
+  (:import-from :uiop :directory-files :subdirectories :absolute-pathname-p :pathname-equal
+   :pathname-parent-directory-pathname)
   (:export
+   :pathname-equal
+   :pathname-parent-directory-pathname
    :directory-files
    :subdirectories
    :path
@@ -1242,105 +1208,61 @@
   (:import-from :std/macs :if-let :eval-always)
   (:import-from :std/list :deletef)
   (:export
-   :with-timeout*
+   :with-timeout* :update-limiter-count
    :limiter-lock :limiter-count
-   :update-limiter-count
-   :exit-thread-pools
-   :alive
-   :*default-spint-count*
-   :make-ephemeral-thread
-   :*all-threads*
-   :*worker-class*
-   :*worker*
-   :+work-tag+
-   :work
-   :scheduler
-   :make-scheduler
-   :schedule-work
-   :submit-raw-work
-   :worker-kernel-function
-   :pool-kernel-function
-   :channel-kernel-function
-   :*worker-kernel*
-   :*pool-kernel*
-   :*thread-pool*
-   :*thread-pool-table*
-   :find-work
-   :do-workers
-   :submit-work
-   :submit-indexed
-   :with-temp-pool
-   :call-with-temp-pool
-   :with-thread-pool
-   :with-channel
-   :receive-indexed
-   :with-submit-indexed
-   :submit-with-cancel
-   :with-submit-counted
-   :submit-counted
-   :receive-counted
-   :submit-cancelable
-   :receive-cancelables
-   :receive-result
-   :try-receive-result
-   :shutdown-channel
-   :broadcast-work
-   :find-thread-pool
-   :run-thread
-   :thread-support-p
+   :exit-thread-pools :*default-spint-count*
+   :make-ephemeral-thread :*all-threads*
+   :*worker-class* :*worker*
+   :+work-tag+ :work
+   :scheduler :make-scheduler
+   :schedule-work :submit-raw-work
+   :worker-kernel-function :pool-kernel-function
+   :channel-kernel-function :*worker-kernel*
+   :*pool-kernel* :*thread-pool*
+   :*thread-pool-table* :find-work
+   :do-workers :submit-work
+   :submit-indexed :with-temp-pool
+   :call-with-temp-pool :with-thread-pool
+   :with-channel :receive-indexed
+   :with-submit-indexed :submit-with-cancel
+   :with-submit-counted :submit-counted
+   :receive-counted :submit-cancelable
+   :receive-cancelables :receive-result
+   :try-receive-result :shutdown-channel
+   :broadcast-work :find-thread-pool
+   :run-thread :thread-support-p
    :print-top-level :println-top-level
    :find-thread-by-id :thread-id-list
    :timed-join-thread :kill-thread
    :wait-for-threads :worker
-   :wait-for-worker
+   :wait-for-worker :make-oracle
    :hang :finish-threads
-   :make-oracle
-   :kill-worker
-   :kill-workers
-   :kill
-   :join-worker
-   :start-worker
-   :start-workers
-   :start-workers*
-   :workers*
-   :scheduler*
-   :biased-scheduler
-   :make-channel
-   :run-worker
-   :with-default-special-bindings
-   :worker-thread
-   :*worker-restarts*
-   :worker-count
-   :worker-count*
-   :worker-index*
-   :oracle 
-   :oracle-id :find-thread
+   :kill-worker :kill-workers
+   :kill :join-worker
+   :start-worker :start-workers
+   :start-workers* :workers*
+   :scheduler* :biased-scheduler
+   :make-channel :run-worker
+   :with-default-special-bindings :worker-thread
+   :*worker-restarts* :worker-count
+   :worker-count* :worker-index*
+   :oracle :oracle-id :find-thread
    :make-threads :with-threads 
-   :with-thread
-   :with-temp-pool
-   :thread-count
-   :channel
-   :channel-pool
-   :channel-queue
+   :with-thread :with-temp-pool
+   :thread-count :channel
+   :channel-pool :channel-queue
    :thread-pool :workers
    :make-thread-pool :end-thread-pool
-   :pop-worker
-   :make-worker*
+   :pop-worker :make-worker*
    :make-worker :designate-oracle
-   :make-workers
-   :unwrap-result
-   :condition-wait*
-   :sync-message
-   :with-sync-message
-   :schedule
+   :make-workers :unwrap-result
+   :condition-wait* :sync-message
+   :with-sync-message :schedule
    :supervisor :supervisor-thread
    :domain :scope
-   :+standard-io-bindings+
-   :*default-special-bindings*
-   :check-thread-pool 
-   :*oracle-table*
-   :*worker-threads*
-   :*super-threads*
+   :+standard-io-bindings+ :*default-special-bindings*
+   :check-thread-pool :*oracle-table*
+   :*worker-threads* :*super-threads*
    :compute-special-bindings
    :thread-pipe :source-worker
    :sink-worker :filter-worker
@@ -1351,7 +1273,7 @@
   (:import-from :std/meta :state)
   (:import-from :std/macs :with-gensyms :when-let)
   (:export :future :promise :await
-   :future-kernel :fulfill :fulfilledp
+   :future-kernel :fulfill :fulfilledp :declaim-defpun
    :speculate :defpun :defptyped :plet 
    :plet-if :pcount :pcount-if :pcount-if-not
    :pdotimes :por :pand :pnotany
@@ -1359,7 +1281,7 @@
    :pmapcon :pmapcan :pmapc :pmapl
    :pmaplist :pmaplist-into :pmapcar :pmap
    :pmap-into :preduce-partial :preduce :pfind
-   :pfind-if :pfind-if-not :*defpuns* :declaim-defpun))
+   :pfind-if :pfind-if-not :*defpuns* ))
 
 (defpkg :std/task
   (:use :cl :std/thread :std/meta :std/seq :std/prim :std/async)
@@ -1416,7 +1338,7 @@
   (:import-from :sb-impl :prin1-to-line)
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
-   :fmt-column
+   :fmt-column :*annotations*
    :iprintln :fmt-tree :println :human-readable-size 
    :print-slots :format-slots :*print-slot-indent* :make-bitmap
    :with-bitmap :set-pixel :outside-bounds :draw
@@ -1428,15 +1350,10 @@
    :*mumble-timestamp* :deffmt :defprint :define-printer
    :*printer-table* :find-printer :with-printer :use-printer
    :in-printer :*default-printer* :*print-color* :copy-printer
-   :*annotations*
-   :*annotation-table*
-   :with-annotations
-   :save-annotations
-   :copy-annotations
-   :load-annotations
-   :defnotation
-   :aformat
-   :expand-annotated-string
+   :*annotation-table* :with-annotations
+   :save-annotations :copy-annotations
+   :load-annotations :defnotation
+   :aformat :expand-annotated-string
    :expand-annotation))
 
 (defpkg :std/os
@@ -1453,71 +1370,40 @@
   (:import-from :std/alien :defar)
   (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
-   :find-a-pty
-   :open-pty
-   :sudo-p
-   :forkable-p
-   :user-info
-   :user-add
-   :group-add
-   :get-host-name
-   :list-all-users
-   :list-all-groups
-   :with-umask
-   :with-fd
-   :cfmakeraw
-   :ioctl
-   :termios-iflag
-   :termios-oflag
-   :termios-lflag
-   :termios-cflag
-   :pathname-executable-p
-   :set-signal-handler
+   :find-a-pty :open-pty :sudo-p :forkable-p
+   :user-info :user-add
+   :group-add :get-host-name
+   :list-all-users :list-all-groups
+   :with-umask :with-fd
+   :cfmakeraw :ioctl
+   :termios-iflag :termios-oflag :termios-lflag :termios-cflag
+   :pathname-executable-p :set-signal-handler
    :open-pipe
-   :+tiocgwinsz+
-   :+tiocswinsz+
-   :+tiocnotty+
-   :+tcsanow+
-   :+tcsaflush+
-   :+tcsadrain+
-   :+opost+
-   :current-user
-   :*xdg-dir-table*
-   :xdg-dir
-   :init-xdg-dirs
-   :xdg-config-file
-   :xdg-config-directory
-   :xdg-config-dir
-   :xdg-data-directory
-   :xdg-data-dir
-   :xdg-cache-directory
-   :xdg-cache-dir
-   :xdg-runtime-directory
-   :xdg-runtime-dir
-   :xdg-state-directory
-   :xdg-state-dir
-   :termios
-   :winsize
+   :+tiocgwinsz+ :+tiocswinsz+ :+tiocnotty+ :+tcsanow+
+   :+tcsaflush+ :+tcsadrain+
+   :+opost+ :current-user
+   :*xdg-dir-table* :xdg-dir
+   :init-xdg-dirs :xdg-config-file
+   :xdg-config-directory :xdg-config-dir
+   :xdg-data-directory :xdg-data-dir
+   :xdg-cache-directory :xdg-cache-dir
+   :xdg-runtime-directory :xdg-runtime-dir
+   :xdg-state-directory :xdg-state-dir
+   :termios :winsize
    :isatty
-   :tcgetattr
-   :tcsetattr
-   :tcgetattr*
-   :tcsetattr*
-   :relative-pathname-p
-   :absolute-pathname-p
-   :unmerge-pathnames
-   :current-directory
-   :with-directory-iterator
-   :file-kind
+   :tcgetattr :tcsetattr :tcgetattr* :tcsetattr*
+   :relative-pathname-p :absolute-pathname-p
+   :unmerge-pathnames :current-directory
+   :with-directory-iterator :file-kind
    :merge-env-pathnames))
 
 (pkg:defpkg :std/defsys
   (:nicknames :sys)
   (:use :cl :std/prim :std/meta 
-   :std/macs :std/thread :std/task :std/serde 
-   :std/seq :std/pipe :std/prim :std/condition
-   :std/print :std/meta :std/path :std/sym
-   :std/macs)
+    :std/macs :std/thread :std/task :std/serde 
+    :std/seq :std/pipe :std/prim :std/condition
+    :std/print :std/meta :std/path :std/sym
+    :std/macs)
   (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
@@ -1592,8 +1478,8 @@
 
 (defpkg :std-user
   (:use :std-lisp :sb-ext :sb-alien 
-   :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
-   :sb-debug :std/defsys)
+    :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
+    :sb-debug :std/defsys)
   (:shadowing-import-from :std/meta :reset)
   (:shadowing-import-from :cl-user :path))
 

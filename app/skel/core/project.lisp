@@ -103,7 +103,7 @@ directory."))
      (unless (null val)
        (let ((val (if (listp val) (eval val) val))
 	     (_sym (substitute #\_ #\- (string sym))))
-	 (setf (uiop:getenv _sym) (format nil "~A" val))
+	 (sb-posix:setenv _sym (format nil "~A" val) 1)
 	 (log:trace! "env: ~A=~A~%" _sym val))))))
 
 ;; ast -> obj

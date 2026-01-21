@@ -65,7 +65,7 @@ overwritten with the AUTO flag."
       (if (probe-merge-file path name)
           path
           (let ((next (pathname-parent-directory-pathname path)))
-            (unless (uiop:pathname-equal next path)
+            (unless (pathname-equal next path)
 	      (find-sk-project-root next name)))))
 
   (defun find-sk-file (path ext)
@@ -99,7 +99,7 @@ skelfile if found."
            (%walk (dir)
              (or (%check dir)
                  (let ((next (pathname-parent-directory-pathname dir)))
-                   (if (uiop:pathname-equal next dir)
+                   (if (pathname-equal next dir)
                        (when error (skel-simple-error "failed to find root skelfile"))
                        (%walk next)))))
            (%load? (file) (if load (load-skelfile file) file)))
