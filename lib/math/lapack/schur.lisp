@@ -6,8 +6,8 @@
 (in-package :math/lapack)
 ;; (permute!  '(jobvs sort select n a lda sdim w rwork vs ldvs work lwork bwork info) )
 ;;
-(deft/generic (t.lapack-gees! #'subtypep) sym (A lda vs ldvs wr wi))
-(deft/method t.lapack-gees! (sym blas-mixin) (A lda vs ldvs wr wi)
+(define-template-generic (t.lapack-gees! #'subtypep) sym (A lda vs ldvs wr wi))
+(define-template-method t.lapack-gees! (sym blas-mixin) (A lda vs ldvs wr wi)
   (let* ((ftype (field-type sym)))
     (using-gensyms (decl (A lda vs ldvs wr wi) (lwork xxx))
       `(let (,@decl)

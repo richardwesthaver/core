@@ -8,14 +8,14 @@
 (defclass cuda-vector-store-mixin () ()
   (:documentation "Mixin which indicates that this type supports CUDA alien routines."))
 
-(deft/method t.store-type (type cuda-vector-store-mixin) (&optional (size '*))
+(define-template-method t.store-type (type cuda-vector-store-mixin) (&optional (size '*))
   (cuda-vector (or (real-subtypep (field-type type)) (field-type type))))
-(deft/method t.compute-store-size (cl cuda-vector-store-mixin) (size)
+(define-template-method t.compute-store-size (cl cuda-vector-store-mixin) (size)
   (if (real-subtypep (field-type cl)) `(* 2 ,size) size))
-(deft/method t.store-size (cl cuda-vector-store-mixin) (vec)
+(define-template-method t.store-size (cl cuda-vector-store-mixin) (vec)
   (if (real-subtypep (field-type cl)) `(/ (slot-value (the ,(store-type cl) ,vec) 'length) 2) `(slot-value (the ,(store-type cl) ,vec) 'length)))
 
-(deft/method t.store-ref (class cuda-vector-store-mixin) (store &rest idx)
+(define-template-method t.store-ref (class cuda-vector-store-mixin) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   (let ((idx (car idx)))
     (if (real-subtypep (field-type class))
@@ -27,7 +27,7 @@
                (values (complex (fvref (the ,(store-type class) ,store) ,2idx) (fvref (the ,(store-type class) ,store) (1+ ,2idx))) t))))
         `(values (fvref (the ,(store-type class) ,store) (the index-type ,idx)) t))))
 
-(deft/method t.store-set (class cuda-vector-store-mixin) (value store &rest idx)
+(define-template-method t.store-set (class cuda-vector-store-mixin) (value store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   (let ((idx (car idx)))
     (if-let ((real-type (real-subtypep (field-type class))))
@@ -42,7 +42,7 @@
              ,value))
         `(funcall #'(setf fvref) (the ,(field-type class) ,value) (the ,(store-type class) ,store) (the index-type ,idx)))))
 
-(deft/method t.store-allocator (type cuda-vector-store-mixin) (size &rest initargs)
+(define-template-method t.store-allocator (type cuda-vector-store-mixin) (size &rest initargs)
   (letv* (((&key (initial-element (coerce 0 (field-type type)))) initargs)
           (element-type (or (real-subtypep (field-type type)) (field-type type))))
     (with-gensyms (sitm len vec idx init sap)
@@ -62,7 +62,7 @@
                        :do (setf (t.store-ref ,type (the ,(cuda-vector element-type) ,vec) ,idx) (the ,(field-type type) ,init))))))
          ,vec))))
 
-(deft/method with-field-element (cl cuda-vector-store-mixin) (decl &rest body)
+(define-template-method with-field-element (cl cuda-vector-store-mixin) (decl &rest body)
   (destructuring-bind (var init &optional (count 1)) decl
     (with-gensyms (idx size point init_)
       (let ((type (element-type (store-type cl))))
@@ -96,5 +96,5 @@
         (setf (slot-value (find-class ',cl-name) 'field-type) ',field)))
     cl-name))
 
-(deft/method t.total-size (sym cuda-dense-tensor) (ele)
+(define-template-method t.total-size (sym cuda-dense-tensor) (ele)
   `(vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))

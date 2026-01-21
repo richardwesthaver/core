@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-gesvd! #'subtypep) sym (A lda u ldu v ldv s))
-(deft/method t.lapack-gesvd! (sym blas-mixin) (A lda u ldu v ldv s)
+(define-template-generic (t.lapack-gesvd! #'subtypep) sym (A lda u ldu v ldv s))
+(define-template-method t.lapack-gesvd! (sym blas-mixin) (A lda u ldu v ldv s)
   (let* ((ftype (field-type sym)) (rtype (field-type (realified-tensor sym)))
          (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (A lda u ldu v ldv s) (lwork xxx xxr))

@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/blas)
 
-(deft/generic (t.blas-gemv! #'subtypep) sym (alpha A lda x st-x beta y st-y transp))
-(deft/method t.blas-gemv! (sym blas-mixin) (alpha A lda x st-x beta y st-y transp)
+(define-template-generic (t.blas-gemv! #'subtypep) sym (alpha A lda x st-x beta y st-y transp))
+(define-template-method t.blas-gemv! (sym blas-mixin) (alpha A lda x st-x beta y st-y transp)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (alpha A lda x st-x beta y st-y transp) (m n))
       `(let* (,@decl
@@ -28,8 +28,8 @@
           ,st-y)
          ,y))))
 
-(deft/generic (t.blas-gemm! #'subtypep) sym (alpha A lda B ldb beta C ldc transa opa opb))
-(deft/method t.blas-gemm! (sym blas-mixin) (alpha A lda B ldb beta C ldc transa opa opb)
+(define-template-generic (t.blas-gemm! #'subtypep) sym (alpha A lda B ldb beta C ldc transa opa opb))
+(define-template-method t.blas-gemm! (sym blas-mixin) (alpha A lda B ldb beta C ldc transa opa opb)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (alpha A lda B ldb beta C ldc transa opa opb) (m n k))   
       `(let* (,@decl
@@ -52,8 +52,8 @@
           ,ldc)
          ,C))))
 ;;
-(deft/generic (t.gemv! #'subtypep) sym (alpha A x beta y transp))
-(deft/method t.gemv! (sym dense-tensor) (alpha A x beta y transp)
+(define-template-generic (t.gemv! #'subtypep) sym (alpha A x beta y transp))
+(define-template-method t.gemv! (sym dense-tensor) (alpha A x beta y transp)
   (using-gensyms (decl (alpha A x beta y transp))
    `(let (,@decl)
       (declare (type ,sym ,A ,x ,y)
@@ -70,8 +70,8 @@
                  `((#\C (einstein-sum ,sym (i j) (ref ,y i) (* ,alpha (t.fc ,(field-type sym) (ref ,A j i)) (ref ,x j)) nil)))))
       ,y)))
 
-(deft/generic (t.gemm! #'subtypep) sym (alpha A B beta C transa transb))
-(deft/method t.gemm! (sym dense-tensor) (alpha A B beta C transa transb)
+(define-template-generic (t.gemm! #'subtypep) sym (alpha A B beta C transa transb))
+(define-template-method t.gemm! (sym dense-tensor) (alpha A B beta C transa transb)
   (using-gensyms (decl (alpha A B beta C transa transb))
    `(let (,@decl)
       (declare (type ,sym ,A ,B ,C)

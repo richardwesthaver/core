@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-geqp! #'subtypep) sym (A lda jpvt tau))
-(deft/method t.lapack-geqp! (sym blas-mixin) (A lda jpvt tau)
+(define-template-generic (t.lapack-geqp! #'subtypep) sym (A lda jpvt tau))
+(define-template-method t.lapack-geqp! (sym blas-mixin) (A lda jpvt tau)
   (let* ((ftype (field-type sym)) (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (A lda jpvt tau) (xxx xxr lwork))
       `(let (,@decl)
@@ -27,8 +27,8 @@
                 ,@(when complex? `((the ,(store-type sym) ,xxr)))
                 (addr info)))))))))
 
-(deft/generic (t.lapack-gehr! #'subtypep) sym (A lda tau))
-(deft/method t.lapack-gehr! (sym blas-mixin) (A lda tau)
+(define-template-generic (t.lapack-gehr! #'subtypep) sym (A lda tau))
+(define-template-method t.lapack-gehr! (sym blas-mixin) (A lda tau)
   (let* ((ftype (field-type sym)))
     (using-gensyms (decl (A lda tau) (xxx lwork))
       `(let (,@decl)
@@ -71,8 +71,8 @@
            (values A tau)))))
 
 
-(deft/generic (t.lapack-orgqr! #'subtypep) sym (rank A lda tau))
-(deft/method t.lapack-orgqr! (sym blas-mixin) (rank A lda tau)
+(define-template-generic (t.lapack-orgqr! #'subtypep) sym (rank A lda tau))
+(define-template-method t.lapack-orgqr! (sym blas-mixin) (rank A lda tau)
   (let* ((ftype (field-type sym)) (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (A lda tau rank) (xxx lwork))
       `(let (,@decl)
@@ -114,8 +114,8 @@
                     do (axpy! (- (dot qj qi)) qj qi))
         do (normalize! qi 2)))
 
-(deft/generic (t.lapack-ormqr! #'subtypep) sym (side trans rank A lda tau c ldc))
-(deft/method t.lapack-ormqr! (sym blas-mixin) (side trans rank A lda tau c ldc)
+(define-template-generic (t.lapack-ormqr! #'subtypep) sym (side trans rank A lda tau c ldc))
+(define-template-method t.lapack-ormqr! (sym blas-mixin) (side trans rank A lda tau c ldc)
   (let* ((ftype (field-type sym)) (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (side trans A lda tau c ldc rank) (xxx lwork))
       `(let (,@decl)

@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/blas)
 
-(deft/generic (t.sum #'subtypep) sym (x ret &optional axis))
-(deft/method t.sum (sym dense-tensor) (x ret &optional (axis 0))
+(define-template-generic (t.sum #'subtypep) sym (x ret &optional axis))
+(define-template-method t.sum (sym dense-tensor) (x ret &optional (axis 0))
   (if (null ret)
       (using-gensyms (decl (x) (ret idx ref))
         `(let (,@decl

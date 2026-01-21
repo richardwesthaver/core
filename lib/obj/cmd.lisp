@@ -327,6 +327,7 @@ the args to it."
                                      (unless (atom x)
                                        (setf name (car x)
                                              args (cdr x)))
+                                     ;; TODO 2026-01-20: input stream to command-type
                                      (collect `(funcall (command-type ,name) ,@args)))))
                                %int)))))
              (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance

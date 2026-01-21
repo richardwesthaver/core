@@ -6,14 +6,14 @@
 (in-package :obj/tensor)
 
 ;;Field templates
-(deft/generic (t.f+ #'subtypep) ty (&rest nums))
-(deft/generic (t.f- #'subtypep) ty (&rest nums))
-(deft/generic (t.f* #'subtypep) ty (&rest nums))
-(deft/generic (t.f/ #'subtypep) ty (&rest nums))
-(deft/generic (t.f= #'subtypep) ty (&rest nums))
+(define-template-generic (t.f+ #'subtypep) ty (&rest nums))
+(define-template-generic (t.f- #'subtypep) ty (&rest nums))
+(define-template-generic (t.f* #'subtypep) ty (&rest nums))
+(define-template-generic (t.f/ #'subtypep) ty (&rest nums))
+(define-template-generic (t.f= #'subtypep) ty (&rest nums))
 
 (macrolet ((def-marith (tname clop)
-             `(deft/method ,tname (ty number) (&rest nums)
+             `(define-template-method ,tname (ty number) (&rest nums)
                 (if (and (consp ty) (eql (first ty) 'mod))
                     `(mod (,',clop ,@(mapcar #'(lambda (x) `(the ,ty ,x)) nums)) ,(second ty))
                     `(,', clop ,@(mapcar #'(lambda (x) `(the ,ty ,x)) nums)))))
@@ -23,10 +23,10 @@
              (t.f- cl:-)
              (t.f* cl:*))))
 
-(deft/method t.f= (ty number) (&rest nums)
+(define-template-method t.f= (ty number) (&rest nums)
   `(cl:= ,@(mapcar #'(lambda (x) `(the ,ty ,x)) nums)))
 
-(deft/method t.f= (ty t) (&rest nums)
+(define-template-method t.f= (ty t) (&rest nums)
   (let ((zg (zipsym nums)))
     `(let (,@zg)
        (ziprm (and eql) (,@(mapcar #'car zg)) (,@(mapcar #'car (cdr zg)) ,(caar zg))))))
@@ -53,7 +53,7 @@
                      t.pr tmp))))
     (values s.pr t.pr r.pr)))
 
-(deft/method t.f/ (ty number) (&rest nums)
+(define-template-method t.f/ (ty number) (&rest nums)
   (if (and (consp ty) (eql (car ty) 'mod))
       (cond
         ((cddr nums) `(t.f/ ,ty ,(car nums) (t.f* ,ty ,@(cdr nums))))
@@ -69,21 +69,21 @@
                     (error "Cannot solve equation ~a * x = ~a mod ~a" ,a ,b ,(second ty))))))))
       `(cl:/ ,@(mapcar #'(lambda (x) `(the ,ty ,x)) nums))))
 
-(deft/generic (t.fid+ #'subtypep) ty ())
-(deft/method t.fid+ (ty t) ()
+(define-template-generic (t.fid+ #'subtypep) ty ())
+(define-template-method t.fid+ (ty t) ()
   nil)
-(deft/method t.fid+ (ty number) ()
+(define-template-method t.fid+ (ty number) ()
   (coerce 0 ty))
 
-(deft/generic (t.fid* #'subtypep) ty ())
-(deft/method t.fid* (ty number) ()
+(define-template-generic (t.fid* #'subtypep) ty ())
+(define-template-method t.fid* (ty number) ()
   (coerce 1 ty))
 
-(deft/generic (t.fc #'subtypep) ty (num))
-(deft/method t.fc (ty number) (num)
+(define-template-generic (t.fc #'subtypep) ty (num))
+(define-template-method t.fc (ty number) (num)
  `(cl:conjugate ,num))
 
-(deft/method t.fc (ty real) (num)
+(define-template-method t.fc (ty real) (num)
   num)
 
 (defgeneric fc (x)
@@ -101,27 +101,27 @@
 (defun field-realp (fil)
   (eql (macroexpand-1 `(t.fc ,fil phi)) 'phi))
 
-(deft/generic (t.frealpart #'subtypep) ty (num))
-(deft/method t.frealpart (ty number) (num)
+(define-template-generic (t.frealpart #'subtypep) ty (num))
+(define-template-method t.frealpart (ty number) (num)
   `(cl:realpart ,num))
-(deft/method t.frealpart (ty real) (num)
+(define-template-method t.frealpart (ty real) (num)
   num)
 
-(deft/generic (t.fimagpart #'subtypep) ty (num))
-(deft/method t.fimagpart (ty number) (num)
+(define-template-generic (t.fimagpart #'subtypep) ty (num))
+(define-template-method t.fimagpart (ty number) (num)
   `(cl:imagpart ,num))
-(deft/method t.fimagpart (ty real) (num)
+(define-template-method t.fimagpart (ty real) (num)
   `(t.fid+ ,ty))
 
-;; (deft/generic (t.random #'subtypep) ty (num &optional random-state))
-;; (deft/method t.random (sym real) (num &optional random-state)
+;; (define-template-generic (t.random #'subtypep) ty (num &optional random-state))
+;; (define-template-method t.random (sym real) (num &optional random-state)
 ;;   (if random-state
 ;;       `(random ,num ,random-state)
 ;;       `(random ,num)))
 
-(deft/generic (t.coerce #'subtypep) ty (val))
-(deft/method t.coerce (ty t) (val) val)
-(deft/method t.coerce (ty number) (val)
+(define-template-generic (t.coerce #'subtypep) ty (val))
+(define-template-method t.coerce (ty t) (val) val)
+(define-template-method t.coerce (ty number) (val)
   (if (and (consp ty) (eql (first ty) 'mod))
       `(mod (coerce ,val 'fixnum) ,(second ty))
       `(coerce ,val ',ty)))
@@ -143,37 +143,37 @@
              (return t)))))
 
 ;;This one is hard to get one's brain around.
-(deft/generic (t.strict-coerce
+(define-template-generic (t.strict-coerce
                #'(lambda (a b) (strict-compare (list #'subtypep #'(lambda (x y) (subtypep y x))) a b))
                #'(lambda (a b) (dict-compare (list #'subtypep #'subtypep) b a))
                sort)
     (from to) (val))
 
 ;;Anything can be coerced into type "t"
-(deft/method t.strict-coerce ((from t) (to t)) (val)
+(define-template-method t.strict-coerce ((from t) (to t)) (val)
   val)
 
 ;;Any number can be coerced into 'double-float (with loss of precision of course)
-(deft/method t.strict-coerce ((from real) (to double-float)) (val)
+(define-template-method t.strict-coerce ((from real) (to double-float)) (val)
  `(coerce ,val ',to))
 
 ;;-do-
-(deft/method t.strict-coerce ((from real) (to single-float)) (val)
+(define-template-method t.strict-coerce ((from real) (to single-float)) (val)
  `(coerce ,val ',to))
 
 ;;Any number can be coerced into '(complex double-float) (with loss of precision of course)
-(deft/method t.strict-coerce ((from number) (to (complex double-float))) (val)
+(define-template-method t.strict-coerce ((from number) (to (complex double-float))) (val)
  `(coerce ,val ',to))
 
 ;;-do-
-(deft/method t.strict-coerce ((from number) (to (complex single-float))) (val)
+(define-template-method t.strict-coerce ((from number) (to (complex single-float))) (val)
  `(coerce ,val ',to))
 
-(deft/method t.strict-coerce ((from rational) (to rational)) (val)
+(define-template-method t.strict-coerce ((from rational) (to rational)) (val)
   `(the rational ,val))
 
-(deft/method t.strict-coerce ((from boolean) (to boolean)) (val)
+(define-template-method t.strict-coerce ((from boolean) (to boolean)) (val)
   `(the boolean ,val))
 
-(deft/method t.strict-coerce ((from index-type) (to index-type)) (val)
+(define-template-method t.strict-coerce ((from index-type) (to index-type)) (val)
   `(the index-type ,val))

@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/blas)
 
-(deft/generic (t.blas-ger! #'subtypep) sym (alpha x st-x y st-y A lda &optional conjp))
-(deft/method t.blas-ger! (sym blas-mixin) (alpha x st-x y st-y A lda &optional (conjp t))
+(define-template-generic (t.blas-ger! #'subtypep) sym (alpha x st-x y st-y A lda &optional conjp))
+(define-template-method t.blas-ger! (sym blas-mixin) (alpha x st-x y st-y A lda &optional (conjp t))
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (alpha x st-x y st-y A lda) (m n))
       `(let* (,@decl
@@ -25,8 +25,8 @@
           ,lda)
          ,A))))
 
-(deft/generic (t.ger! #'subtypep) sym (alpha x y A &optional conjp))
-(deft/method t.ger! (sym dense-tensor) (alpha x y A &optional (conjp t))
+(define-template-generic (t.ger! #'subtypep) sym (alpha x y A &optional conjp))
+(define-template-method t.ger! (sym dense-tensor) (alpha x y A &optional (conjp t))
   (using-gensyms (decl (alpha A x y))
    `(let (,@decl)
       (declare (type ,sym ,A ,x ,y)

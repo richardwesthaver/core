@@ -56,9 +56,8 @@ ASDF:DEFSYSTEM.")
   :documentation "The default file extension used in system definitions.")
 
 (defvar *module* nil "The name of the current module or NIL.")
-(defparameter *module-table* (make-hash-table :test 'equal)
+(defvar *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
-
 
 ;;; Conditions
 (define-condition system-condition () ())
@@ -75,7 +74,7 @@ ASDF:DEFSYSTEM.")
   ((name :initarg :name :accessor error-name))
   (:report (lambda (c s) 
              (format s "System ~A not found after loading file ~A" 
-                     (error-system-name c) (file-error-pathname c)))))
+                     (error-name c) (file-error-pathname c)))))
 
 ;;; Sysdef Utils
 ;; system definitions are files ending with +SYS-EXTENSION+ containing lisp
@@ -913,12 +912,12 @@ internally. On success the path is added to the *SYSDEFS* list."
             t)))))
 
 ;;; Templates
-(deft/generic (s.load #'subtypep) sym (&key))
-(deft/generic (s.compile #'subtypep) sym (&key))
-(deft/generic (s.save #'subtypep) sym (&key))
-(deft/generic (c.load #'subtypep) sym (&key))
-(deft/generic (c.compile #'subtypep) sym (&key))
-(deft/generic (c.save #'subtypep) sym (&key))
+(define-template-generic (s.load #'subtypep) sym (&key))
+(define-template-generic (s.compile #'subtypep) sym (&key))
+(define-template-generic (s.save #'subtypep) sym (&key))
+(define-template-generic (c.load #'subtypep) sym (&key))
+(define-template-generic (c.compile #'subtypep) sym (&key))
+(define-template-generic (c.save #'subtypep) sym (&key))
 
 (defmacro define-system-method ())
 (defmacro define-component-method ())

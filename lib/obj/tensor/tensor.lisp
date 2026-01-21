@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(deft/generic (t.store-type #'subtypep) sym (&optional size))
+(define-template-generic (t.store-type #'subtypep) sym (&optional size))
 (eval-every
   (defun store-type (cl &optional (size '*)) (macroexpand-1 `(t.store-type ,cl ,size)))
   (defun store-element-type (x &aux (ftype (field-type x)))
@@ -21,67 +21,67 @@
   (defun clinear-storep (x) (and (subtypep x 'tensor) (linear-storep x) (real-subtypep (field-type x))))
   (defun float-tensorp (type) (member (field-type type) '(single-float double-float (complex single-float) (complex double-float)) :test #'equal)))
 
-(deft/method t.store-type (type simple-vector-store-mixin) (&optional (size '*))
+(define-template-method t.store-type (type simple-vector-store-mixin) (&optional (size '*))
   `(simple-array ,(or (real-subtypep (field-type type)) (field-type type)) (,size)))
-(deft/method t.store-type (type hash-table-store-mixin) (&optional (size '*))
+(define-template-method t.store-type (type hash-table-store-mixin) (&optional (size '*))
   'hash-table)
 
-(deft/generic (t.store #'subtypep) sym (x))
-(deft/method t.store (sym tensor) (x) `(the ,(store-type sym) (slot-value ,x 'store)))
+(define-template-generic (t.store #'subtypep) sym (x))
+(define-template-method t.store (sym tensor) (x) `(the ,(store-type sym) (slot-value ,x 'store)))
 
 ;;tensor specializations
-(deft/generic (t.field-type #'subtypep) sym ())
-(deft/method t.field-type (sym tensor) () (field-type sym))
+(define-template-generic (t.field-type #'subtypep) sym ())
+(define-template-method t.field-type (sym tensor) () (field-type sym))
 (eval-every
   (defun coerceable? (clx cly)
     (handler-case (progn (macroexpand-1 `(t.strict-coerce ((t.field-type ,clx) (t.field-type ,cly)) x)) t)
       (error () nil))))
 
-(deft/generic (t.complexified-tensor #'subtypep) sym ())
-(deft/method t.complexified-tensor (class tensor) () (complexified-tensor class))
+(define-template-generic (t.complexified-tensor #'subtypep) sym ())
+(define-template-method t.complexified-tensor (class tensor) () (complexified-tensor class))
 
-(deft/generic (t.realified-tensor #'subtypep) sym ())
-(deft/method t.realified-tensor (class tensor) () (realified-tensor class))
+(define-template-generic (t.realified-tensor #'subtypep) sym ())
+(define-template-method t.realified-tensor (class tensor) () (realified-tensor class))
 
-(deft/generic (t.compute-store-size #'subtypep) sym (size))
-(deft/generic (t.store-size #'subtypep) sym (ele))
-(deft/generic (t.store-allocator #'subtypep) sym (size &rest initargs))
-(deft/generic (t.total-size #'subtypep) sym (ele))
+(define-template-generic (t.compute-store-size #'subtypep) sym (size))
+(define-template-generic (t.store-size #'subtypep) sym (ele))
+(define-template-generic (t.store-allocator #'subtypep) sym (size &rest initargs))
+(define-template-generic (t.total-size #'subtypep) sym (ele))
 
-(deft/method t.compute-store-size (cl simple-vector-store-mixin) (size)
+(define-template-method t.compute-store-size (cl simple-vector-store-mixin) (size)
   (if (real-subtypep (field-type cl)) `(* 2 ,size) size))
 
-(deft/method (t.store-size #'linear-storep) (sym tensor) (ele)
+(define-template-method (t.store-size #'linear-storep) (sym tensor) (ele)
   (if (clinear-storep sym) `(/ (length ,ele) 2) `(length ,ele)))
 
-(deft/method (t.store-size #'hash-table-storep) (sym stride-accessor) (ele)
+(define-template-method (t.store-size #'hash-table-storep) (sym stride-accessor) (ele)
   `(hash-table-size ,ele))
 
-(deft/method t.total-size (sym dense-tensor) (ele)
+(define-template-method t.total-size (sym dense-tensor) (ele)
   `(vector-foldr #'(lambda (x y) (declare (type index-type x y)) (the index-type (* x y))) (the index-store-vector (dimensions ,ele))))
 
-(deft/method (t.total-size #'hash-table-storep) (sym tensor) (ele)
+(define-template-method (t.total-size #'hash-table-storep) (sym tensor) (ele)
   `(hash-table-count (t.store ,sym ,ele)))
 
-(deft/method t.total-size (sym graph-accessor) (ele)
+(define-template-method t.total-size (sym graph-accessor) (ele)
   `(nth-value 1 (fence ,ele -1)))
 
-(deft/method t.total-size (sym coordinate-accessor) (ele)
+(define-template-method t.total-size (sym coordinate-accessor) (ele)
   `(slot-value ,ele 'tail))
 
-(deft/method t.store-allocator (sym index-store) (size &rest initargs)
+(define-template-method t.store-allocator (sym index-store) (size &rest initargs)
   (letv* ((() initargs))
     `(the index-store (make-array ,size :element-type 'index-type))))
-(deft/method t.store-allocator (sym index-store-vector) (size &rest initargs)
+(define-template-method t.store-allocator (sym index-store-vector) (size &rest initargs)
   (letv* (((&key initial-element initial-contents) initargs))
     `(the index-store-vector (make-array ,size :element-type 'index-type
                                          ,@(when initial-element `(:initial-element ,initial-element))
                                          ,@(when initial-contents `(:initial-element ,initial-contents))))))
-(deft/method t.store-allocator (sym index-store-matrix) (size &rest initargs)
+(define-template-method t.store-allocator (sym index-store-matrix) (size &rest initargs)
   (letv* ((() initargs))
     `(the index-store-matrix (make-array ,size :element-type 'index-type))))
 
-(deft/method (t.store-allocator #'linear-storep) (sym tensor) (size &rest initargs)
+(define-template-method (t.store-allocator #'linear-storep) (sym tensor) (size &rest initargs)
   (letv* (((&key initial-element) initargs))
     (with-gensyms (sitm size-sym arr idx init)
       (let ((type (cond
@@ -99,12 +99,12 @@
                `((with-optimization (:speed 3 :safety 0) (loop for ,idx from 0 below ,size-sym do (t.store-set ,sym ,init ,arr ,idx)))))
            ,arr)))))
 
-(deft/method (t.store-allocator #'hash-table-storep) (sym stride-accessor) (size &rest initargs)
+(define-template-method (t.store-allocator #'hash-table-storep) (sym stride-accessor) (size &rest initargs)
   (letv* (((&key size) initargs))
     `(make-hash-table :size ,size)))
 
-(deft/generic (t.store-ref #'subtypep) sym (store &rest idx))
-(deft/generic (t.store-set #'subtypep) sym (value store &rest idx))
+(define-template-generic (t.store-ref #'subtypep) sym (store &rest idx))
+(define-template-generic (t.store-set #'subtypep) sym (value store &rest idx))
 
 (define-setf-expander t.store-ref (sym store &rest idx &environment env)
   (multiple-value-bind (dummies vals newval setter getter)
@@ -115,7 +115,7 @@
               `(t.store-set ,sym ,nval ,getter ,@idx)
               `(t.store-ref ,sym ,getter ,@idx)))))
 
-(deft/method t.store-ref (sym simple-vector-store-mixin) (store &rest idx)
+(define-template-method t.store-ref (sym simple-vector-store-mixin) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   (let ((idx (car idx)))
     (if (clinear-storep sym)
@@ -127,7 +127,7 @@
                (values (complex (aref ,store ,2idx) (aref ,store (1+ ,2idx))) t))))
         `(values (aref (the ,(store-type sym) ,store) (the index-type ,idx)) t))))
 
-(deft/method t.store-set (sym simple-vector-store-mixin) (value store &rest idx)
+(define-template-method t.store-set (sym simple-vector-store-mixin) (value store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   (let ((idx (car idx)))
     (if (clinear-storep sym)
@@ -142,11 +142,11 @@
              ,value))
         `(setf (aref (the ,(store-type sym) ,store) (the index-type ,idx)) ,value))))
 
-(deft/method (t.store-ref #'hash-table-storep) (sym stride-accessor) (store &rest idx)
+(define-template-method (t.store-ref #'hash-table-storep) (sym stride-accessor) (store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   `(the (values ,(field-type sym) boolean) (gethash (the index-type ,(car idx)) (the hash-table ,store) (t.fid+ ,(field-type sym)))))
 
-(deft/method (t.store-set #'hash-table-storep) (sym stride-accessor) (value store &rest idx)
+(define-template-method (t.store-set #'hash-table-storep) (sym stride-accessor) (value store &rest idx)
   (assert (null (cdr idx)) nil "given more than one index for linear-store")
   (let ((fty (field-type sym))
         (idx (car idx)))
@@ -158,20 +158,20 @@
                   (progn (remhash ,idx (the hash-table ,store)) (t.fid+ ,fty))
                   )))))
 
-(deft/generic (with-field-element #'subtypep) sym (decl &rest body))
+(define-template-generic (with-field-element #'subtypep) sym (decl &rest body))
 (defmacro with-field-elements (sym decls &rest body)
   (if (null decls) `(progn ,@body)
       `(with-field-element ,sym ,(first decls)
          (with-field-elements ,sym ,(cdr decls) ,@body))))
 
-(deft/method with-field-element (sym tensor) (decl &rest body)
+(define-template-method with-field-element (sym tensor) (decl &rest body)
   (destructuring-bind (var init &optional (count 1)) decl
     `(lety ((,var (t.store-allocator ,sym ,count :initial-element ,init) :type ,(store-type sym)))
        (locally ,@body))))
 
 ;;Blas
-(deft/generic (t.blas-threshold #'subtypep) sym (i))
-(deft/method t.blas-threshold (sym blas-mixin) (i)
+(define-template-generic (t.blas-threshold #'subtypep) sym (i))
+(define-template-method t.blas-threshold (sym blas-mixin) (i)
   (if (clinear-storep sym)
       (ecase i
         (1 '*complex-l1-alien-threshold*)

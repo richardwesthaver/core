@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-trsyl! #'subtypep) sym (op.A op.B sgn A ld.a B ld.b C ld.c))
-(deft/method t.lapack-trsyl! (sym blas-mixin) (op.A op.B sgn A ld.a B ld.b C ld.c)
+(define-template-generic (t.lapack-trsyl! #'subtypep) sym (op.A op.B sgn A ld.a B ld.b C ld.c))
+(define-template-method t.lapack-trsyl! (sym blas-mixin) (op.A op.B sgn A ld.a B ld.b C ld.c)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (op.A op.B sgn A ld.a B ld.b C ld.c))
       `(let (,@decl)

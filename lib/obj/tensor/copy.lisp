@@ -140,8 +140,8 @@
           'tensor-dimension-mismatch))
 
 ;;; BLAS
-(deft/generic (t.blas-copy! #'subtypep) sym (x st-x y st-y))
-(deft/method t.blas-copy! (sym blas-mixin) (x st-x y st-y)
+(define-template-generic (t.blas-copy! #'subtypep) sym (x st-x y st-y))
+(define-template-method t.blas-copy! (sym blas-mixin) (x st-x y st-y)
   (let ((ncp? (null st-x)) 
         (ftype (field-type sym)))
     (using-gensyms (decl (x y) (sto-x))
@@ -159,8 +159,8 @@
              (the index-type ,st-y)))
          ,y))))
 
-(deft/generic (t.copy! #'(lambda (a b) (strict-compare (list #'subtypep #'subtypep) a b))) (clx cly) (x y))
-(deft/method t.copy! ((clx dense-tensor) (cly dense-tensor)) (x y)
+(define-template-generic (t.copy! #'(lambda (a b) (strict-compare (list #'subtypep #'subtypep) a b))) (clx cly) (x y))
+(define-template-method t.copy! ((clx dense-tensor) (cly dense-tensor)) (x y)
   (using-gensyms (decl (x y) (ref-x ref-y idx))
     `(let* (,@decl)
        (declare (type ,clx ,x)
@@ -174,7 +174,7 @@
                               (if (eql clx cly) ref-x `(t.strict-coerce (,(field-type clx) ,(field-type cly)) ,ref-x))))))
        ,y)))
 
-(deft/method t.copy! ((clx t) (cly dense-tensor)) (x y)
+(define-template-method t.copy! ((clx t) (cly dense-tensor)) (x y)
   (using-gensyms (decl (x y) (ref-y idx cx))
     `(let* (,@decl
                (,cx (t.coerce ,(field-type cly) ,x)))
@@ -188,7 +188,7 @@
        ,y)))
 
 ;;
-(deft/method (t.copy! #'(lambda (x) (hash-table-storep (first x)))) ((clx stride-accessor) (cly graph-accessor)) (x y)
+(define-template-method (t.copy! #'(lambda (x) (hash-table-storep (first x)))) ((clx stride-accessor) (cly graph-accessor)) (x y)
   (using-gensyms (decl (x y) (rstd cstd rdat key value r c ii jj s? v vi vr vd i col-stop row))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -224,7 +224,7 @@
                                  (setf (aref ,vi (1+ ,i)) ,col-stop)))))
          ,y))))
 
-(deft/method (t.copy! #'(lambda (x) (hash-table-storep (first x)))) ((clx stride-accessor) (cly dense-tensor)) (x y)
+(define-template-method (t.copy! #'(lambda (x) (hash-table-storep (first x)))) ((clx stride-accessor) (cly dense-tensor)) (x y)
   (using-gensyms (decl (x y) (rstd cstd key value r c s?))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -240,7 +240,7 @@
                          (error "strides of the tensor are not canonical."))))
          ,y))))
 
-(deft/method (t.copy! #'(lambda (x) (hash-table-storep (second x)))) ((clx graph-accessor) (cly stride-accessor)) (x y)
+(define-template-method (t.copy! #'(lambda (x) (hash-table-storep (second x)))) ((clx graph-accessor) (cly stride-accessor)) (x y)
   (using-gensyms (decl (x y) (key vi vr vd i j))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -260,7 +260,7 @@
                                        :do (setf (ref ,y (aref ,vr ,i) ,j) (t.strict-coerce (,(field-type clx) ,(field-type cly)) (aref ,vd ,i))))))))
        ,y)))
 
-(deft/method t.copy! ((clx graph-accessor) (cly dense-tensor)) (x y)
+(define-template-method t.copy! ((clx graph-accessor) (cly dense-tensor)) (x y)
   (using-gensyms (decl (x y) (vi vr vd i j))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -279,7 +279,7 @@
                                        :do (setf (ref ,y (aref ,vr ,i) ,j) (t.strict-coerce (,(field-type clx) ,(field-type cly)) (t.store-ref ,clx ,vd ,i))))))))
        ,y)))
 
-(deft/method t.copy! ((clx graph-tensor) (cly coordinate-tensor)) (x y)
+(define-template-method t.copy! ((clx graph-tensor) (cly coordinate-tensor)) (x y)
   (using-gensyms (decl (x y) (idx i j m))
     (flet ((macro-expander (transpose-p)
              `((loop :for ,j :of-type index-type :from 0 :below (1- (length (memoizing (fence ,x))))
@@ -301,7 +301,7 @@
                       (setf (slot-value ,y 'tail) (total-size ,x))))
          ,y))))
 
-(deft/method t.copy! ((clx hash-tensor) (cly coordinate-tensor)) (x y)
+(define-template-method t.copy! ((clx hash-tensor) (cly coordinate-tensor)) (x y)
   (using-gensyms (decl (x y) (idx ii k v))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -323,7 +323,7 @@
                         (t.strict-coerce (,(field-type clx) ,(field-type cly)) (t.store-ref ,clx (memoizing (slot-value ,x 'store) :type ,(store-type clx)) ,k)))))
        ,y)))
 
-(deft/method t.copy! ((clx coordinate-tensor) (cly dense-tensor)) (x y)
+(define-template-method t.copy! ((clx coordinate-tensor) (cly dense-tensor)) (x y)
   (using-gensyms (decl (x y) (idx ii))
     `(let (,@decl)
        (declare (type ,clx ,x) (type ,cly ,y))
@@ -440,8 +440,8 @@
                          :do (setf (t.store-ref ,(cl :x) sto.b of.b) a)))))
      b))
 
-(deft/generic (t.blas-swap! #'subtypep) sym (x st-x y st-y))
-(deft/method t.blas-swap! (sym blas-mixin) (x st-x y st-y)
+(define-template-generic (t.blas-swap! #'subtypep) sym (x st-x y st-y))
+(define-template-method t.blas-swap! (sym blas-mixin) (x st-x y st-y)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (x y))
       `(let (,@decl)
@@ -452,8 +452,8 @@
           (the ,(store-type sym) (store ,y)) ,st-y)
          ,y))))
 
-(deft/generic (t.swap! #'subtypep) sym (x y))
-(deft/method t.swap! (sym dense-tensor) (x y)
+(define-template-generic (t.swap! #'subtypep) sym (x y))
+(define-template-method t.swap! (sym dense-tensor) (x y)
   (using-gensyms (decl (x y) (idx ref-x ref-y))
     `(let* (,@decl)
        (declare (type ,sym ,x ,y))

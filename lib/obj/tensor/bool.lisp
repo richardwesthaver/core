@@ -8,15 +8,15 @@
 ;;Define boolean tensor
 (eval-every
   (tensor 'boolean)
-  (deft/method (t.store-allocator #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (size &rest initargs)
+  (define-template-method (t.store-allocator #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (size &rest initargs)
     `(t.store-allocator ,(tensor 'bit) ,size ,@initargs))
-  (deft/method (t.store-type #'(lambda (x) (member (field-type x) '(bit boolean)))) (type simple-vector-store-mixin) (&optional (size '*))
+  (define-template-method (t.store-type #'(lambda (x) (member (field-type x) '(bit boolean)))) (type simple-vector-store-mixin) (&optional (size '*))
     `(simple-bit-vector ,size))
-  (deft/method (t.store-ref #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (store &rest idx)
+  (define-template-method (t.store-ref #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (store &rest idx)
     (with-gensyms (out)
       `(lety ((,out (t.store-ref ,(tensor 'bit) ,store ,@idx) :type bit))
          (the boolean (case ,out (1 t))))))
-  (deft/method (t.store-set #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (value store &rest idx)
+  (define-template-method (t.store-set #'(lambda (x) (eql (field-type x) 'boolean))) (type simple-vector-store-mixin) (value store &rest idx)
     `(setf (t.store-ref ,(tensor 'bit) ,store ,@idx) (the bit (if ,value 1 0)))))
 
 (eval-always

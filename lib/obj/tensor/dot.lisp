@@ -4,9 +4,9 @@
 
 ;;; Code:
 (in-package :obj/tensor)
-(deft/generic (t.dot #'subtypep) sym (x y &optional conjp num-y?))
+(define-template-generic (t.dot #'subtypep) sym (x y &optional conjp num-y?))
 
-(deft/method t.dot (sym dense-tensor) (x y &optional (conjp t) (num-y? nil))
+(define-template-method t.dot (sym dense-tensor) (x y &optional (conjp t) (num-y? nil))
   (using-gensyms (decl (x y) (sto-x sto-y of-x of-y stp-x stp-y dot))
     `(let (,@decl)
        (declare (type ,sym ,x ,@(unless num-y? `(,y)))

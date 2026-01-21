@@ -456,7 +456,7 @@ subclass of SUPER."
       classes
       (push super classes)))
 
-;;; Templates
+;;; Template Functions
 (defvar *template-table* (make-hash-table)
   "Global hash-table containing a mapping of template-function names to 'specs' (plists).")
 
@@ -467,7 +467,7 @@ plist containing the template-function spec (plist)."
   (multiple-value-bind (val found) (gethash name *template-table*)
     (when found (or val t))))
 
-(defgeneric compute-t/dispatch (name args)
+(defgeneric compute-template-dispatch (name args)
   (:documentation "compute the dispatch return value of the template function NAME given lambda-list ARGS.")
   (:method ((name symbol) args)
     (let* ((data (or (gethash name *template-table*)
@@ -493,13 +493,14 @@ Also returns a second value of the lambda-list itself."
          (ll (getf data :lambda-list)))
     (values (not (consp (first ll))) ll)))
 
-(defgeneric preprocess-t/dispatch (name args)
-  (:documentation "Preprocess the template-function NAME by calling it with ARGS, which are macroexpanded.")
+(defgeneric preprocess-template-dispatch (name args)
+  (:documentation "Preprocess the template-function NAME by calling it with ARGS, which are
+macroexpanded.")
   (:method ((name symbol) args)
     (funcall (if (single-arg-template-function-p name) #'funcall #'mapcar)
              #'macroexpand-1 args)))
 ;;
-(defmacro deft/generic ((name predicate &optional sorter (sort-function 'toposort)) disp args)
+(defmacro define-template-generic ((name predicate &optional sorter (sort-function 'toposort)) disp args)
   "Define a template generic function stored in *TEMPLATE-TABLE*."
   (when (consp disp)
     (assert (null (remove-if-not #'(lambda (x) (member x cl:lambda-list-keywords)) disp)) nil "dispatch list contains keywords."))
@@ -512,11 +513,11 @@ Also returns a second value of the lambda-list itself."
          (setf (gethash ',name *template-table*) (list :lambda-list (list ',disp ',args) :predicate ,predicate :sorter ,(or sorter predicate) :methods nil :sort-function ',sort-function))
          (defmacro ,name (&whole ,warg-sym ,disp-arg ,@args)
            (declare (ignore ,@(remove-if #'(lambda (x) (member x cl:lambda-list-keywords)) args) ,@(when (consp disp) disp)))
-           (let* ((,pred-sym (preprocess-t/dispatch ',name ,disp-far))
-                  (,meth-sym (compute-t/dispatch ',name ,pred-sym)))
+           (let* ((,pred-sym (preprocess-template-dispatch ',name ,disp-far))
+                  (,meth-sym (compute-template-dispatch ',name ,pred-sym)))
              (apply ,meth-sym (cons ,pred-sym (cddr ,warg-sym)))))))))
 
-(defmacro deft/method (name disp args &rest body)
+(defmacro define-template-method (name disp args &rest body)
   "Define a template method for one of the pre-defined templates in *TEMPLATE-TABLE*."
   (with-gensyms (data-sym meth-sym afun-sym disp-sym sort-sym)
     (std/macs:letv* (((name &optional filter) (std/list:ensure-list name))
@@ -550,8 +551,9 @@ Also returns a second value of the lambda-list itself."
            (setf (getf ,data-sym :methods) ,meth-sym)
            ,afun-sym)))))
 
-(defun remt/method (name spls)
-  "Remove a template method for a gf stored in *TEMPLATE-TABLE*, given the name and specializer."
+(defun remove-template-method (name spls)
+  "Remove a template method for a generic function stored in *TEMPLATE-TABLE*,
+given the name and specializer."
   (std/macs:letv* (((name &optional (filter '*)) (std/list:ensure-list name))
                    (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
                    (meth (getf data :methods)))
@@ -560,3 +562,10 @@ Also returns a second value of the lambda-list itself."
         (when-let ((lst (find spls meth :test #'(lambda (a b) (equal a (first b))))))
           (rplacd lst (remove filter (cdr lst) :test #'(lambda (a b) (eql a (cdr b)))))))
     nil))
+
+;;; Sham Classes
+;; inspired by CLX::DEF-CLX-CLASS (pseudo-class mechanism)
+(defvar *sham-classes* nil
+  "Control the behavior of the DEFSHAM macro.")
+
+(defmacro defsham ((name &rest opts) &body slots))

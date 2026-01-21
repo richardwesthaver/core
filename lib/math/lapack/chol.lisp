@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-potrf! #'subtypep) sym (A lda uplo))
-(deft/method t.lapack-potrf! (sym blas-mixin) (A lda uplo)
+(define-template-generic (t.lapack-potrf! #'subtypep) sym (A lda uplo))
+(define-template-method t.lapack-potrf! (sym blas-mixin) (A lda uplo)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda uplo))
       `(let* (,@decl)
@@ -60,8 +60,8 @@
 (definline chol! (a &optional (uplo *default-uplo*))
   (tricopy! 0 (potrf! a uplo) (ecase uplo (:l :uo) (:u :lo))))
 
-(deft/generic (t.lapack-potrs! #'subtypep) sym (A lda B ldb uplo))
-(deft/method t.lapack-potrs! (sym blas-mixin) (A lda B ldb uplo)
+(define-template-generic (t.lapack-potrs! #'subtypep) sym (A lda B ldb uplo))
+(define-template-method t.lapack-potrs! (sym blas-mixin) (A lda B ldb uplo)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda B ldb uplo))
       `(let* (,@decl)
@@ -122,8 +122,8 @@
            (unless (= info 0) (error "POTRS returned ~a. the ~:*~a'th argument had an illegal value." (- info))))))
   'B)
 ;;
-(deft/generic (t.lapack-potri! #'subtypep) sym (A lda uplo))
-(deft/method t.lapack-potri! (sym blas-mixin) (A lda uplo)
+(define-template-generic (t.lapack-potri! #'subtypep) sym (A lda uplo))
+(define-template-method t.lapack-potri! (sym blas-mixin) (A lda uplo)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda uplo))
       `(let* (,@decl)
@@ -173,8 +173,8 @@
 ;;
 
 ;;
-(deft/generic (t.lapack-ldl! #'subtypep) sym (A lda uplo ipiv &optional het?))
-(deft/method t.lapack-ldl! (sym blas-mixin) (A lda uplo ipiv &optional het?)
+(define-template-generic (t.lapack-ldl! #'subtypep) sym (A lda uplo ipiv &optional het?))
+(define-template-method t.lapack-ldl! (sym blas-mixin) (A lda uplo ipiv &optional het?)
   (let* ((ftype (field-type sym)) (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (A lda uplo ipiv) (xxx lwork))
       `(let* (,@decl)

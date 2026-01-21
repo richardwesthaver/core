@@ -5,9 +5,9 @@
 ;;; Code:
 (in-package :obj/tensor)
 
-(deft/generic (t.zeros #'subtypep) sym (dims &optional initarg))
+(define-template-generic (t.zeros #'subtypep) sym (dims &optional initarg))
 
-(deft/method t.zeros (class stride-accessor) (dims &optional initial-element)
+(define-template-method t.zeros (class stride-accessor) (dims &optional initial-element)
   (with-gensyms (dimsv strdv tsize init ret)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type index-store-vector)
              (,strdv ,tsize (make-stride ,dimsv) :type index-store-vector index-type)
@@ -24,14 +24,14 @@
              (slot-value ,ret 'memos) nil)
        ,ret)))
 
-(deft/method (t.zeros #'hash-table-storep) (class stride-accessor) (dims &optional size)
+(define-template-method (t.zeros #'hash-table-storep) (class stride-accessor) (dims &optional size)
   (with-gensyms (dimsv strdv tsize)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type index-store-vector)
              (,strdv ,tsize (make-stride-cmj ,dimsv) :type index-store-vector index-type))
        (make-instance ',class :dimensions ,dimsv :head 0 :strides ,strdv :stride-pivot (stride-pivot ,strdv)
                       :store (t.store-allocator ,class ,tsize :size (cl:max (cl:ceiling (cl:* *default-sparsity* ,tsize)) (or ,size 0)))))))
 
-(deft/method t.zeros (class graph-accessor) (dims &optional size)
+(define-template-method t.zeros (class graph-accessor) (dims &optional size)
   (with-gensyms (dimsv nnz)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type (index-store-vector 2))
              (,nnz (cl:max (cl:ceiling (* *default-sparsity* (vector-foldr #'* ,dimsv))) (or ,size 0))))
@@ -40,7 +40,7 @@
                       :neighbors (t.store-allocator index-store-vector ,nnz)
                       ,@(when (subtypep class 'tensor) `(:store (t.store-allocator ,class ,nnz)))))))
 
-(deft/method t.zeros (class coordinate-accessor) (dims &optional size)
+(define-template-method t.zeros (class coordinate-accessor) (dims &optional size)
   (with-gensyms (dimsv nnz)
     `(letv* ((,dimsv (coerce ,dims 'index-store-vector) :type index-store-vector)
              (,nnz (max (ceiling (* *default-sparsity* (vector-foldr #'* ,dimsv))) (or ,size 0))))

@@ -4,8 +4,8 @@
 
 ;;; Code:
 (in-package :obj/tensor)
-(deft/generic (t.scdi! #'subtypep) sym (x y &key scal? numx?))
-(deft/method t.scdi! (sym dense-tensor) (x y &key (scal? t) (numx? nil))
+(define-template-generic (t.scdi! #'subtypep) sym (x y &key scal? numx?))
+(define-template-method t.scdi! (sym dense-tensor) (x y &key (scal? t) (numx? nil))
   (using-gensyms (decl (x y) (ref-x ref-y))
     (with-gensyms (idx)
       `(let (,@decl)

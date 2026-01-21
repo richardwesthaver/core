@@ -1073,10 +1073,12 @@
    :struct-slots-and-values
    :slots-and-values
    :struct-constructor
-   :remt/method :deft/method
-   :deft/generic
+   :remove-template-method :define-template-method
+   :define-template-generic
    :*template-table*
-   :template-function-p))
+   :template-function-p
+   :*sham-classes*
+   :defsham))
 
 (defpkg :std/seq
   (:use :cl)

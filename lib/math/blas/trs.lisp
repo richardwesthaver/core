@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/blas)
 
-(deft/generic (t.blas-trsm! #'subtypep) sym (side uplo transA diagA alpha A lda B ldb))
-(deft/method t.blas-trsm! (sym blas-mixin) (side uplo transA diagA alpha A lda B ldb)
+(define-template-generic (t.blas-trsm! #'subtypep) sym (side uplo transA diagA alpha A lda B ldb))
+(define-template-method t.blas-trsm! (sym blas-mixin) (side uplo transA diagA alpha A lda B ldb)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (side uplo transA diagA alpha A lda B ldb))
       `(let* (,@decl)
@@ -23,8 +23,8 @@
           ,ldb)
          ,B))))
 
-(deft/generic (t.blas-trsv! #'subtypep) sym (uplo transA diagA A lda b st-b))
-(deft/method t.blas-trsv! (sym blas-mixin) (uplo transA diagA A lda b st-b)
+(define-template-generic (t.blas-trsv! #'subtypep) sym (uplo transA diagA A lda b st-b))
+(define-template-method t.blas-trsv! (sym blas-mixin) (uplo transA diagA A lda b st-b)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (uplo transA diagA A lda b st-b))
       `(let* (,@decl)

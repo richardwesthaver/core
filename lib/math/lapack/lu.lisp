@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-getrf! #'subtypep) sym (A lda ipiv))
-(deft/method t.lapack-getrf! (sym blas-mixin) (A lda ipiv)
+(define-template-generic (t.lapack-getrf! #'subtypep) sym (A lda ipiv))
+(define-template-method t.lapack-getrf! (sym blas-mixin) (A lda ipiv)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda ipiv))
       `(let* (,@decl)
@@ -67,8 +67,8 @@
      (setf (gethash 'getrf (memos A)) upiv)
      (values A (with-no-init-checks (make-instance 'permutation-pivot-flip :store (pflip.f->l upiv) :size (dimensions A 0))))))
 
-(deft/generic (t.lapack-getrs! #'subtypep) sym (A lda B ldb ipiv transp))
-(deft/method t.lapack-getrs! (sym blas-mixin) (A lda B ldb ipiv transp)
+(define-template-generic (t.lapack-getrs! #'subtypep) sym (A lda B ldb ipiv transp))
+(define-template-method t.lapack-getrs! (sym blas-mixin) (A lda B ldb ipiv transp)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda B ldb ipiv transp))
       `(let* (,@decl)
@@ -132,8 +132,8 @@ Return Values
                (error "getrs returned ~a. the ~:*~a'th argument had an illegal value." (- info)))))))
   'B)
 ;;
-(deft/generic (t.lapack-getri! #'subtypep) sym (A lda ipiv))
-(deft/method t.lapack-getri! (sym blas-mixin) (A lda ipiv)
+(define-template-generic (t.lapack-getri! #'subtypep) sym (A lda ipiv))
+(define-template-method t.lapack-getri! (sym blas-mixin) (A lda ipiv)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda ipiv) (lwork xxx))
       `(let* (,@decl)

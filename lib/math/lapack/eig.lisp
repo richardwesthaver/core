@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-geev! #'subtypep) sym (A lda vl ldvl vr ldvr wr wi))
-(deft/method t.lapack-geev! (sym blas-mixin) (A lda vl ldvl vr ldvr wr wi)
+(define-template-generic (t.lapack-geev! #'subtypep) sym (A lda vl ldvl vr ldvr wr wi))
+(define-template-method t.lapack-geev! (sym blas-mixin) (A lda vl ldvl vr ldvr wr wi)
   (let ((ftype (field-type sym)))
     (using-gensyms (decl (A lda vl ldvl vr ldvr wr wi) (lwork xxx))
       `(let (,@decl)
@@ -34,8 +34,8 @@
                       (apply #'append (permute (pair args) (make-instance 'permutation-cycle :store (list (idxv 12 11 10 9 8 7 6)))))
                       args)))))))))
 ;;
-(deft/generic (t.lapack-heev! #'subtypep) sym (jobz uplo A lda w))
-(deft/method t.lapack-heev! (sym blas-mixin) (jobz uplo A lda w)
+(define-template-generic (t.lapack-heev! #'subtypep) sym (jobz uplo A lda w))
+(define-template-method t.lapack-heev! (sym blas-mixin) (jobz uplo A lda w)
   (using-gensyms (decl (jobz A lda w uplo) (lwork xxx xxr))
     (let ((complex? (subtypep (field-type sym) 'complex))
           (ftype (field-type sym)))
@@ -59,8 +59,8 @@
                ret)))))))
 
 ;;
-(deft/generic (t.geev-output-fix #'subtypep) sym (wr wi))
-(deft/method t.geev-output-fix (sym blas-mixin) (wr wi)
+(define-template-generic (t.geev-output-fix #'subtypep) sym (wr wi))
+(define-template-method t.geev-output-fix (sym blas-mixin) (wr wi)
   (if (clinear-storep sym)
       (using-gensyms (decl (wr))
         `(let (,@decl)

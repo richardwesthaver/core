@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/lapack)
 
-(deft/generic (t.lapack-gelsy! #'subtypep) sym (A lda B ldb rcond))
-(deft/method t.lapack-gelsy! (sym blas-mixin) (A lda B ldb rcond)
+(define-template-generic (t.lapack-gelsy! #'subtypep) sym (A lda B ldb rcond))
+(define-template-method t.lapack-gelsy! (sym blas-mixin) (A lda B ldb rcond)
   (let* ((ftype (field-type sym)) (complex? (subtypep ftype 'cl:complex)))
     (using-gensyms (decl (A lda B ldb rcond) (lwork xxx xxr jpvt))
       `(let* (,@decl

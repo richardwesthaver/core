@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :math/blas)
 
-(deft/generic (t.blas-axpy! #'subtypep) sym (a x st-x y st-y))
-(deft/method t.blas-axpy! (sym blas-mixin) (a x st-x y st-y)
+(define-template-generic (t.blas-axpy! #'subtypep) sym (a x st-x y st-y))
+(define-template-method t.blas-axpy! (sym blas-mixin) (a x st-x y st-y)
   (let ((apy? (null x)) (ftype (field-type sym)))
     (using-gensyms (decl (a x y) (sto-x))
       `(let (,@decl)
@@ -23,8 +23,8 @@
               (the index-type ,st-y)))
          ,y))))
 
-(deft/generic (t.axpy! #'subtypep) sym (a x y))
-(deft/method t.axpy! (sym dense-tensor) (a x y)
+(define-template-generic (t.axpy! #'subtypep) sym (a x y))
+(define-template-method t.axpy! (sym dense-tensor) (a x y)
   (let ((apy? (null x)))
     (using-gensyms (decl (a x y) (idx ref-x ref-y))
       `(let (,@decl)
