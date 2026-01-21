@@ -30,16 +30,25 @@
 (in-package :cli/main)
 
 ;;; Main
-(defmacro defmain (name (&key (exit t) (debug t)) &body body)
+(defmacro defmain (name (&key (exit t) (debug t) (package *package*) 
+                              commands readtable printer annotations)
+                   &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
-    `(let ((*no-exit* ,(not exit))
-           (*no-debug* ,(not debug)))
-       (defun ,name ()
-         ,(or docs (format nil "Run the top-level function in package ~A." (package-name *package*)))
+    (let ((*no-exit* (not exit))
+          (*no-debug* (not debug))
+          (*package* (find-package package)))
+      `(defun ,name ()
+         ,(or docs (format nil "~A toplevel." (package-name *package*)))
          ,@decls
-         (with-cli-handlers ,@body)
-         (values)))))
+         (in-package ,(package-name *package*))
+         ,@(when readtable `((in-readtable ,readtable)))
+         ,@(when annotations `((load-annotations ,annotations)))
+         ,@(when printer `((in-printer ,printer)))
+         ,@(if commands
+               `((with-commands ,commands
+                   (with-cli-handlers ,@body)))
+               `((with-cli-handlers ,@body)))))))
 
 ;;; Multi-main
 (defmacro define-multi-main (name default &rest mains)

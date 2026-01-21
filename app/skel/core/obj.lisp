@@ -3,7 +3,7 @@
 ;; SKEL classes and methods
 
 ;;; Code:
-(in-package :skel/core/obj)
+(in-package :skel/core)
 
 (defclass skel (id)
   ()

@@ -27,7 +27,6 @@
   (let ((input (or doc #P"readme.org")))
     (describe (org-parse :document input))))
 
-(define-cli "organ"
-  :version "0.0.1"
-  :description "org-mode toolbox"
-  :kernel (with-commands :organ (command 'describe)))
+#+todo
+(define-cli "organ" :description "org-mode toolbox")
+  

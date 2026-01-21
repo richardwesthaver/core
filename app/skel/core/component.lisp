@@ -13,7 +13,7 @@
 ;; unlike in ASDF where systems are subclasses of components.
 
 ;;; Code:
-(in-package :skel/core/obj)
+(in-package :skel/core)
 
 (defclass sk-component (skel component ast)
   ((parent :initarg :parent :accessor parent)))

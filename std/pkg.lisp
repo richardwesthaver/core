@@ -1404,7 +1404,7 @@
    :random-do))
 
 (defpkg :std/print
-  (:use :cl :std/stream)
+  (:use :cl :std/stream :std/string)
   (:import-from :std/list :group :ensure-cons :assoc-value)
   (:import-from :std/meta :init)
   (:import-from :std/sym :with-gensyms)
@@ -1430,6 +1430,7 @@
    :with-annotations
    :save-annotations
    :copy-annotations
+   :load-annotations
    :defnotation
    :aformat
    :expand-annotated-string

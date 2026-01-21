@@ -12,6 +12,7 @@
     (log:info! "~A" (libpod-request c "_ping" :get))
     (inspect (libpod-request-json c "info"))))
 
-(define-cli "pod"
-  :description "container tools/libpod API client"
-  :kernel (with-commands :pod (command 'info)))
+#+todo
+(define-cli "pod" :description "container tools/libpod API client")
+  
+

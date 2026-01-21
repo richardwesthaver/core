@@ -80,21 +80,12 @@
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(eval-always
-  (defun run ()
-    (in-package :skel/homer)
+(defmain start-homer (:readtable :shell :package :homer :commands :homer)
+  (let ((*print-readably* t))
     (init* :xdg :homer)
     (load-homerc)
-    (with-cli ((cli :homer))
-      (funcall (kernel *cli*)))))
+    (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))))
 
-(defmain start-homer ()
-  (in-readtable :shell)
-  (let ((*print-readably* t))
-    (run)
-    (sb-ext:exit :code 0)))
-
-(define-cli "homer"
+(define-cli "homer" start-homer
   :version "0.1.0"
-  :description "user home manager"
-  :kernel #'start-homer)
+  :description "user home manager")

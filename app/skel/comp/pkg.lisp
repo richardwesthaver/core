@@ -5,7 +5,7 @@
 ;;; Code:
 
 (defpackage :skel/comp/makefile
-  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/header :skel/core/util :project)
+  (:use :cl :std :skel/core :project)
   (:export
    :*default-makefile* :*makefile-extension* 
    :*mk-magic-vars* :*mk-command-prefixes*
@@ -15,16 +15,16 @@
    :makefile))
 
 (defpackage :skel/comp/cargo
-  (:use :cl :std :skel/core/obj :skel/core/proto :toml :build :config :cli/tools/rust :skel/core/util)
+  (:use :cl :std :skel/core :toml :build :config :cli/tools/rust)
   (:export :sk-rust-system :parse-sk-rust-system))
 
 (defpackage :skel/comp/sys
-  (:use :cl :skel/core/obj :skel/core/proto :skel/core/util :std/defsys))
+  (:use :cl :skel/core :std/defsys))
 
 (pkg:defpkg :skel/comp/asd
   (:shadowing-import-from :std :version)
   (:import-from :std :defmethods :when-let)
-  (:use :cl :skel/core/obj :skel/core/proto :skel/core/util :std/macs :asdf)
+  (:use :cl :skel/core :std/macs :asdf)
   (:import-from :asdf :system :coerce-name 
    :system-source-file :parse-component-form :file-component :component-relative-pathname
    :component-if-feature :component-depends-on :module-components :component-name
@@ -35,28 +35,28 @@
   (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
 (defpackage :skel/comp/lisp
-  (:import-from :skel/core/int :*skel-project*)
+  (:import-from :skel/core :*skel-project*)
   (:shadowing-import-from :std :version)
-  (:use :cl :std :skel/core/obj :skel/core/proto :id :skel/core/util)
+  (:use :cl :std :skel/core :id)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
   (:export :sk-lisp-file))
 
 (defpackage :skel/comp/container
-  (:use :cl :std :pod :skel/core/obj :skel/core/proto :dat/proto :obj/id :skel/core/util)
+  (:use :cl :std :pod :skel/core :dat/proto :obj/id)
   (:export :sk-containerfile))
 
 (defpackage :skel/comp/dir-locals
-  (:use :cl :std :skel/core/obj :skel/core/proto :skel/core/util)
+  (:use :cl :std :skel/core)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))
 
 (defpackage :skel/comp/org
-  (:use :cl :std :skel/core/obj :skel/core/proto :organ :obj/id :skel/core/int :skel/core/util)
+  (:use :cl :std :skel/core :organ :obj/id)
   (:export :sk-org-file))
 
 (defpackage :skel/comp/box
-  (:use :cl :std :skel/core/obj :skel/core/proto :box :obj/id :skel/core/int :skel/core/util)
+  (:use :cl :std :skel/core :box :obj/id)
   (:export :sk-box-file))
 
 (defpackage :skel/comp/infer
-  (:use :cl :std :skel/core/obj :srv :skel/core/proto :id :ast :skel/core/int :skel/core/util :dat :config :vc :nlp)
+  (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :nlp)
   (:export :sk-infer))

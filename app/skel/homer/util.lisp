@@ -7,6 +7,7 @@
 
 (defmethod init ((self (eql :homer)) &key)
   (init* :skel :krypt)
+  (init :commands :name :homer)
   (setq *user-homerc* (xdg-config-file "homerc")))
 
 (defun mtime (path) (sb-posix:stat-mtime (sb-posix:stat path)))

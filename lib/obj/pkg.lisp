@@ -617,7 +617,7 @@
    :fmt-command :call-interactively
    :commandp :commands
    :command-types :make-commands
-   :command-parser))
+   :load-commands))
 
 (defpkg :obj/project
   (:nicknames :project)

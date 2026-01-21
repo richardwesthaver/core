@@ -9,11 +9,12 @@
 
 (defcommand (:packy show) ())
 
+#+todo
 (define-cli "packy"
   :version "0.1.0"
-  :description "Universal Package Manager"
-  :kernel (with-commands :packy (command 'show)))
+  :description "Universal Package Manager")
 
+#+todo
 (defmain start-packy ()
   (with-cli ((cli :packy))
     (funcall (kernel *cli*))))

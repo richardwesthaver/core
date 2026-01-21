@@ -54,4 +54,5 @@
 		 (sb-ext:string-to-octets (string (gensym "foo")))
 		 val)))))
 
-(define-cli "rdb" :version 0 :kernel (with-commands :rdb (command 'show)))
+#+todo
+(define-cli "rdb" :version 0)

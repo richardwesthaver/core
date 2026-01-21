@@ -180,7 +180,7 @@
    :emacs-find-file))
 
 (defpkg :cli/main
-  (:use :cl :std)
+  (:use :cl :std :cmd)
   (:import-from :cli/clap :*no-exit* :*no-debug* :with-cli-handlers)
   (:export
    #:defmain

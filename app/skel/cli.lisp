@@ -7,6 +7,8 @@
 
 (init :commands :name :skel :copy :cli)
 
+(define-command-type (:skel config) (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
+
 (defcommand (:skel init) (&optional file name)
   (handler-bind
       ((sb-ext:file-exists
@@ -30,42 +32,41 @@
   (setq *no-exit* t)
   (inspect (or *skel-project* *skel-user-config*)))
 
-(defun call-with-args (action args)
-  (with-directory (project-root *skel-project*)
-    (if (null args)
-        (sk-call *skel-project* action)
-        (if-let ((comp (find (car args) (components *skel-project*) :key 'name :test 'string-equal)))
-          (apply (symbolicate "SK-" (symbol-name action)) comp (cdr args))
-          (mapc (lambda (x)
-                  (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
-                args)))))
-
-(defcommand (:skel compile) (&rest args)
-  (call-with-args :compile args))
-(defcommand (:skel build) (&rest args)
-  (call-with-args :build args))
-(defcommand (:skel update) (&rest args)
-  (call-with-args :update args))
-(defcommand (:skel dist) (&rest args)
-  (call-with-args :dist args))
-(defcommand (:skel install) (&rest args)
-  (call-with-args :install args))
-(defcommand (:skel pack) (&rest args)
-  (call-with-args :pack args))
-(defcommand (:skel unpack) (&rest args)
-  (call-with-args :unpack args))
-(defcommand (:skel bundle) (&rest args)
-  (call-with-args :bundle args))
-(defcommand (:skel unbundle) (&rest args)
-  (call-with-args :unbundle args))
-(defcommand (:skel clean) (&rest args)
-  (call-with-args :clean args))
-(defcommand (:skel test) (&rest args)
-  (call-with-args :test args))
-(defcommand (:skel bench) (&rest args)
-  (call-with-args :bench args))
-(defcommand (:skel save) (&rest args)
-  (call-with-args :save args))
+(flet ((call-with-args (action args)
+         (with-directory (project-root *skel-project*)
+           (if (null args)
+               (sk-call *skel-project* action)
+               (if-let ((comp (find (car args) (components *skel-project*) :key 'name :test 'string-equal)))
+                 (apply (symbolicate "SK-" (symbol-name action)) comp (cdr args))
+                 (mapc (lambda (x)
+                         (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
+                       args))))))
+  (defcommand (:skel compile) (&rest args)
+    (call-with-args :compile args))
+  (defcommand (:skel build) (&rest args)
+    (call-with-args :build args))
+  (defcommand (:skel update) (&rest args)
+    (call-with-args :update args))
+  (defcommand (:skel dist) (&rest args)
+    (call-with-args :dist args))
+  (defcommand (:skel install) (&rest args)
+    (call-with-args :install args))
+  (defcommand (:skel pack) (&rest args)
+    (call-with-args :pack args))
+  (defcommand (:skel unpack) (&rest args)
+    (call-with-args :unpack args))
+  (defcommand (:skel bundle) (&rest args)
+    (call-with-args :bundle args))
+  (defcommand (:skel unbundle) (&rest args)
+    (call-with-args :unbundle args))
+  (defcommand (:skel clean) (&rest args)
+    (call-with-args :clean args))
+  (defcommand (:skel test) (&rest args)
+    (call-with-args :test args))
+  (defcommand (:skel bench) (&rest args)
+    (call-with-args :bench args))
+  (defcommand (:skel save) (&rest args)
+    (call-with-args :save args)))
 
 (defcommand (:skel show) (&rest args)
   (declare (interactive &rest rest))
@@ -96,8 +97,6 @@
 (defcommand (:skel id) ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
-(define-command-type (:skel config) (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
-
 (defcommand (:skel edit) (&optional arg)
   (let ((file (or arg (path *skel-project*))))
     (cli/ed:run-emacsclient (namestring file))))
@@ -113,7 +112,7 @@
                       (sk-make sk rule)
                       ;;  TODO 2024-08-23: restart condition here
                       (skel-simple-error "rule not found: ~A" a))))
-          (sk-make sk (aref (skel/core/obj::rules sk) 0))))))
+          (sk-make sk (aref (skel/core::rules sk) 0))))))
 
 (defcommand (:skel status) ()
   (vc:vc-status (vc:vc *skel-project*)))
@@ -136,7 +135,7 @@
   (dolist (a args)
     (println (sk-search-project a))))
 
-(defun sk-shell ()
+(defcommand (:skel shell) ()
   (trace! "starting skel shell")
   ;; TODO 2025-11-16: consolidate usage of *no-exit* vs *interactive* etc
   (setq *no-exit* t)
@@ -151,18 +150,12 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
-(defcommand (:skel shell) () (sk-shell))
 
-(defmain start-skel (:debug nil)
-  (with-commands :skel
-    (in-package :sk-user)
-    (in-readtable :shell)
-    (let ((sb-debug:*backtrace-frame-count* 8))
-      (init :skel)
-      (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))
-      (values))))
+(defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel)
+  (let ((sb-debug:*backtrace-frame-count* 8))
+    (init :skel)
+    (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))))
 
-(define-cli "skel"
+(define-cli "skel" start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
-  :description "The hackable devtool."
-  :kernel #'start-skel)
+  :description "The hackable devtool.")

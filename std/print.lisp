@@ -683,7 +683,7 @@ STYLE indicates the level of decoration to apply to the output:
             (unknown-printer name))))
 
 (defmacro in-printer (name)
-  `(setf *print-pprint-dispatch* ,(or (find-printer name) (unknown-printer name))))
+  `(setq *print-pprint-dispatch* ,(or (find-printer name) (unknown-printer name))))
 
 (defun copy-printer (name1 name2)
   "Copy the PPRINT-DISPATCH-TABLE designated by NAME1 to NAME2."
@@ -746,15 +746,22 @@ substituted with their relevant expansions given ARGS."
 
 (defmacro with-annotations (name &body body)
   "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
+  (declare (string-designator name))
   `(let ((*annotations* (gethash ,name *annotation-table*)))
      ,@body))
 
 (defun save-annotations (name)
   "Set the value of NAME to *ANNOTATIONS* in *ANNOTATION-TABLE*."
+  (declare (string-designator name))
   (setf (gethash name *annotation-table*) *annotations*))
 
 (defun copy-annotations (name1 name2)
+  (declare (string-designator name1 name2))
   (with-annotations name1 (save-annotations name2)))
+
+(defun load-annotations (name)
+  (declare (string-designator name))
+  (setq *annotations* (gethash name *annotation-table*)))
 
 (defmacro defnotation (opts (&optional stream args mods) &body body)
   "Define a new 'notation function'. OPTS may be a BASE-CHAR in which case it is
@@ -801,7 +808,7 @@ The following three arguments are required:
 (defnotation (:std +annotation-prefix+) (stream) (write-char +annotation-prefix+ stream))
 
 (defmethod init ((self (eql :annotations)) &key (name :std))
-  (setq *annotations* (gethash name *annotation-table*)))
+  (load-annotations name))
 
 (defmethod reset ((self (eql :annotations)) &key)
   (setq *annotations* nil))

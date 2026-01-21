@@ -6,7 +6,7 @@
 
 ;; SK-PRINT is the top-level interface, and dispatches on all sorts of SKEL
 ;; objects. The output is different than the PRINT-OBJECT methods, which are
-;; implemented in the SKEL/CORE/OBJ package.
+;; implemented in the SKEL/CORE package.
 
 ;; SK-PRINT is the 'external print' representation, which is structured, akin
 ;; to PPRINT - while PRINT-OBJECT is the 'internal print' and unstructured
@@ -17,7 +17,7 @@
 ;; future.
 
 ;;; Code:
-(in-package :skel/core/print)
+(in-package :skel/core)
 (declaim (optimize (speed 3)))
 ;; sb-pretty::*standard-pprint-dispatch-table*
 ;; *readtable*
@@ -62,7 +62,7 @@
 
 (defmethod sk-print ((self skel) &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
   (declare (stream stream) (positive-fixnum limit))
-  (let ((name (skel/core/obj::sk-slot-name self (when (eql :downcase case))))
+  (let ((name (skel/core::sk-slot-name self (when (eql :downcase case))))
         (*print-case* case))
     (if id
         (format stream "~S ~A~%" 

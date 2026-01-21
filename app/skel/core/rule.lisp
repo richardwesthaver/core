@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/core/obj)
+(in-package :skel/core)
 
 ;;; Rule
 (declaim (inline %make-sk-rule))

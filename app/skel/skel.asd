@@ -6,11 +6,11 @@
   :depends-on (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn (:feature :mpk :mpk))
   :serial t
   :components 
-  ((:module "core"
+  ((:file "pkg")
+   (:module "core"
     :serial t
     :components 
-    ((:file "pkg")
-     (:file "condition")
+    ((:file "condition")
      (:file "proto")
      (:file "header")
      (:file "var")
@@ -55,7 +55,6 @@
      (:file "condition")
      (:file "krypt")
      (:file "cli")))
-   (:file "pkg")
    (:module "homer"
     :components 
     ((:file "pkg")

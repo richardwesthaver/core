@@ -1,5 +1,5 @@
 ;;; Utils
-(in-package :skel/core/util)
+(in-package :skel/core)
 ;;; Configs
 (defun user-skelrc () (std:xdg-config-file :skel))
 ;; init-*,load-*
@@ -82,7 +82,7 @@ overwritten with the AUTO flag."
     (let ((sk (make-instance 'sk-project 
 		:name (or name (pathname-name (sb-posix:getcwd)))))
 	  (path (or file *default-skelfile*)))
-      (when config (setf sk (sk-install-user-config sk config)))
+      (when config (setf sk (wrap sk config)))
       (sk-write-file sk :path path :pretty t))))
 
 (defun find-skelfile (start &key (load nil) (name *default-skelfile*) (ext "sk") (walk t) error)
@@ -122,7 +122,7 @@ skelfile if found."
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
-  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
+  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core)))
     (if (or (null *skel-user-config*) (not (slot-boundp* *skel-user-config* slot)))
         (if (or (null *skel-system-config*) (not (slot-boundp* *skel-system-config* slot)))
             (if (eql default :error)
@@ -132,7 +132,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
         (slot-value *skel-user-config* slot))))
 
 (defun sk-project-slot (slot &optional (default :error))
-  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core/obj)))
+  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core)))
     (if (or (null *skel-project*) (not (slot-boundp* *skel-project* slot)))
         ;; Not found in project, search config files instead
         (sk-config-slot slot default)
@@ -165,8 +165,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
             (,set *skel-stash* (ensure-directory-truename stash)))
           (when-let ((project (find-skelfile *default-pathname-defaults*)))
             (,set *skel-project* (load-skelfile project)
-                  *skel-path* (skel/core/obj::src *skel-project*)
-                  *skel-cache* (skel/core/obj::cache *skel-project*)))
+                  *skel-path* (skel/core::src *skel-project*)
+                  *skel-cache* (skel/core::cache *skel-project*)))
           (when-let ((hook *skel-hook*))
             (funcall hook :init))
           (values))))
@@ -190,7 +190,7 @@ ASDF:*USER-CACHE*"
 (defmethod init ((self (eql :skel)) &key) (init-skel))
 
 (defun project-root (&optional (project *skel-project*))
-  (or (when project (skel/core/obj::src project)) *default-pathname-defaults*))
+  (or (when project (skel/core::src project)) *default-pathname-defaults*))
 
 (defun merge-project-pathnames (path &optional (project *skel-project*))
   (merge-pathnames path (project-root project)))

@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/core/obj)
+(in-package :skel/core)
 
 ;;; Project
 (defclass sk-project (skel sk-meta simple-project)
@@ -52,7 +52,7 @@ directory."))
   (apply #'sk-new 'sk-project args))
 
 (defun find-sk-symbol (s)
-  (find-symbol* (symbol-name s) :skel/core/obj t))
+  (find-symbol* (symbol-name s) :skel/core t))
 
 (defun %recipe-phase-p (form)
   "Return non-nil if FORM looks like (:PHASE &BODY BODY)."
@@ -278,7 +278,7 @@ directory."))
 	(write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod sk-install-user-config ((self sk-project) (config sk-user-config))
+(defmethod wrap ((self sk-project) (config sk-user-config))
   (with-slots (vc store stash license author) (debug! config) ;; log-level, custom, fmt
     (setf (vc self) vc)
     (setf (stash self) stash)
@@ -317,7 +317,7 @@ directory."))
 (defmethod sk-call ((self sk-project) (arg (eql :clean)))
   (if-let ((x (sk-find arg self)))
     (sk-make self x)
-    (funcall skel/core/util::*default-clean-function* self)))
+    (funcall skel/core::*default-clean-function* self)))
 
 (defmethod sk-build ((self sk-project) &key)
   (loop for c across (components self)

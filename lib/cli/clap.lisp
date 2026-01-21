@@ -88,7 +88,7 @@ evaluation of BODY."
             (abort ()
               :report (lambda (s)
                         (write-string
-                         "Skip to toplevel READ/EVAL/PRINT loop."
+                         "Skip to toplevel REPL."
                          s)
                         (log:debug! "CONTINUEing from pre-REPL RESTART-CASE")
                         (values)))
@@ -166,15 +166,14 @@ evaluation of BODY."
   description
   (cd *default-pathname-defaults*)
   (hook (make-instance 'key-hook))
-  (kernel (with-commands :cli (command 'help))))
+  (main (required-argument :main) :type function))
 
 (defmethod version ((self cli)) (cli-version self))
 (defmethod name ((self cli)) (cli-name self))
-(defaccessor kernel ((self cli)) (cli-kernel self))
+(defaccessor kernel ((self cli)) (cli-main self))
 
-(defmacro define-cli (name 
+(defmacro define-cli (name main
                       &key (version "0.1.0") 
-                           (kernel (with-commands :cli (command :help)))
                            hook
                            (cd *default-pathname-defaults*)
                            description)
@@ -185,8 +184,8 @@ uses this object.
 
 VERSION, DESCRIPTION, and KERNEL are assigned to the associated slot
 value of the CLI."
-  `(let* ((*cli* (make-cli :name ,name :version ,version :hook ,hook :cd ,cd :description ,description)))
-     (setf (cli-kernel *cli*) ,kernel)
+  `(let* ((*cli* (make-cli :name ',(string-downcase name) :version ,version :hook ,hook :cd ,cd :description ,description
+                           :main (symbol-function ',main))))
      (load-cli *cli* ,name)
      *cli*))
 

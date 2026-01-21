@@ -37,12 +37,104 @@
 ;;; Code:
 (in-package :std-user)
 
-(defpkg :skel/core
-  (:nicknames :sk-core)
-  (:use :cl :std)
-  (:import-from :ast :*keep-ast*)
-  (:use-reexport :skel/core/proto :skel/core/int
-   :skel/core/header :skel/core/obj :skel/core/util :skel/core/db :skel/core/log))
+(defpackage :skel/core
+  (:use :cl :std :ast :doc :log :config :project :schema :rdb :db :store :stored :build :id)
+  (:import-from :sb-unix :uid-username :unix-getuid)
+  (:import-from :vc :vc-designator)
+  (:import-from :cli :find-exe)
+  (:export
+   ;; generics
+   :sk-run :sk-new 
+   :sk-call :sk-load
+   :sk-build
+   :sk-compile
+   :sk-write
+   :sk-write-file
+   :sk-read-file
+   :sk-find
+   :sk-convert :sk-load-component
+   ;; conditions
+   :skel-condition
+   :skel-error
+   :skel-simple-error
+   :skel-syntax-error
+   :skel-io-error
+   :skel-compile-error
+   ;; vars
+   :*skel-project* :*default-skelrc*
+   :*skel-env* :*skel-project*
+   :*default-skelfile* :*default-skel-user* 
+   :*default-skel-vc-kind*
+   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
+   :*skel-hook*
+   #:*skel-stash*
+   #:*skel-store*
+   #:*skel-cache*
+   #:*skel-path*
+   #:*system-skelrc*
+   #:*user-skelrc*
+   #:user-skelrc
+   #:*skel-data*
+   #:*default-skel-bindings*
+   #:*skel-project-functions*
+   #:*skel-project-symbol-macros*
+   #:*skel-project-macros*
+   #:*default-clean-function*
+   ;; header
+   :make-file-header 
+   :make-shebang-file-header 
+   :make-source-file-header 
+   :file-header-kind
+   :file-header
+   :make-source-header-comment 
+   :make-shebang-comment
+   ;; objects
+   :sk-stash :sk-data :user
+   :sk-push :sk-pull
+   :edit-skelrc :sk-target :skel
+   :sk-meta :def-sk-class :sk-project :sk-source
+   :sk-env :make-sk-rule
+   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
+   :sk-make :sk-kind
+   :sk-command :scripts :sk-script :sk-config
+   :sk-snippet :sk-abbrev
+   :sk-user-config :sk-system-config
+   :*skel-user-config* :*skel-system-config*
+   :sk-component :sk-mod
+   :sk-parent :skel-store :with-skel-ast :sk-pack
+   ;; schema
+   :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*
+   ;; db
+   :skel-db 
+   :skel-db-path
+   ;; log
+   :sk-log-schema
+   :*skel-log-schema*
+   :skel-db-logger
+   :*skel-logger-config*
+   :*skel-logger*
+   :init-skel-logger
+   :sk-log-shutdown
+   :sk-log-repair
+   :sk-log-close
+   :sk-log-list
+   :skel-db-sink
+   ;; util
+   :load-skelrc
+   :init-skel
+   :init-user-skelrc :load-user-skelrc
+   :init-system-skelrc :load-system-skelrc
+   :init-skelfile
+   :load-skelfile
+   :find-skelfile
+   :find-sk-file
+   :sk-config-slot
+   :sk-project-slot
+   :find-project-root
+   :setf-skel-vars
+   :sk-search-project
+   :project-root
+   :merge-project-pathnames))
 
 (defpkg :skel/comp
   (:nicknames :sk-comp)
@@ -57,10 +149,9 @@
 (defpackage :skel/net/core
   (:nicknames :sk-net-core)
   (:use :cl :log :std 
-   :net/core :net/proto/dns :net/codec/tlv :skel/core/proto 
-   :skel/core/obj :net/udp :net/tcp :obj/id 
-   :skel/core/db :net/srv/udp
-   :skel/core/log
+   :net/core :net/proto/dns :net/codec/tlv :skel/core
+   :skel/core :net/udp :net/tcp :obj/id 
+   :net/srv/udp
    :dat/proto :dat/json)
   (:export
    #:*skel-client-port-range*
@@ -70,25 +161,25 @@
 
 (defpackage :skel/srv
   (:use :cl :std :db 
-   :store :build :config :skel/core/db 
-   :skel/core :skel/core/log :net/srv/udp :net/srv/http :srv)
+   :store :build :config :skel/core
+   :net/srv/udp :net/srv/http :srv)
   (:export #:sk-service
            #:sk-request
            #:sk-response))
 
 (defpackage :skel/net/client
   (:nicknames :sk-client)
-  (:use :cl :std :net :skel/net/core :net/srv/udp :srv :skel/core/log :log :skel/srv)
+  (:use :cl :std :net :skel/net/core :net/srv/udp :srv :skel/core :log :skel/srv)
   (:export))
 
 (defpackage :skel/net/server
   (:nicknames :sk-server)
-  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core/log :srv :skel/srv)
+  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core :srv :skel/srv)
   (:export :sk-server))
 
 (defpkg :skel/net
   (:nicknames :sk-net)
-  (:use :cl :std :net/srv/udp :skel/core/log :srv :log :skel/srv)
+  (:use :cl :std :net/srv/udp :skel/core :srv :log :skel/srv)
   (:use-reexport :skel/net/client :skel/net/server))
 
 (pkg:defpkg :skel

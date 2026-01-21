@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/core/db)
+(in-package :skel/core)
 
 (load-database-backend :rdb)
 

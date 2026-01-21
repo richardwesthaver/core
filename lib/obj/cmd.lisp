@@ -246,6 +246,11 @@ NAME *COMMAND-TABLE*)."
   "Copy all commands and types from NAME1 to NAME2."
   (with-commands name1 (save-commands name2)))
 
+(defun load-commands (name)
+  (with-commands name
+    (setq *command-types* *command-types*
+          *commands* *commands*)))
+
 (defkernel command (kernel-object)
   ((interactive :initarg :interactive :initform nil :reader interactive))
   (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.

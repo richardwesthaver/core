@@ -54,14 +54,11 @@
 	(print-slots (mpd:mpc-stats *mpc*)))
       (terpri))))
 
-(defmain start-mpk ()
+(defmain start-mpk (:package :mpk-user :commands :mpk)
   (mpk-ensure-directories)
   (load-mpkrc)
-  (with-cli ((cli :mpk))
-    (with-package :mpk-user
-      (funcall (kernel *cli*)))))
+  (call-interactively (or (second *posix-argv*) "stats") (cddr *posix-argv*)))
 
-(define-cli "mpk"
+(define-cli "mpk" start-mpk
   :version "0.1.0"
-  :description "Media Production Kit"
-  :kernel #'start-mpk)
+  :description "Media Production Kit")

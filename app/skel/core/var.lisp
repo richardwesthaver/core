@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/core/int)
+(in-package :skel/core)
 
 (declaim (type vc-designator *default-skel-vc-kind*))
 (defparameter *default-skel-vc-kind* :hg)

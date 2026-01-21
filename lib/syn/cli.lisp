@@ -19,7 +19,6 @@
     (setq *package* (syn/gen:gen-package syn))
     syn))
 
-(define-cli "gen"
-  :version 0
-  :kernel (with-commands :syn (command 'print))
-  :description "Syntax GENerator")
+#+todo
+(define-cli "gen" :description "Syntax GENerator")
+  
