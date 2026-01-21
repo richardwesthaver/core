@@ -9,7 +9,7 @@
 (defclass sk-project (skel sk-meta simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
-   (vc :initarg :vc :initform (vc-init *default-skel-vc-kind*) 
+   (vc :initarg :vc :initform (vc-init *default-vc-kind*) 
        :type vc-repo :accessor vc)
    (src :initarg :src :type pathname :accessor src)
    (stash :initarg :stash :accessor stash :initform ".stash/")

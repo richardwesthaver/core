@@ -1137,7 +1137,7 @@
 
 (defpkg :std/path
   (:use :cl)
-  (:import-from :uiop :directory-files :subdirectories)
+  (:import-from :uiop :directory-files :subdirectories :absolute-pathname-p)
   (:export
    :directory-files
    :subdirectories
@@ -1157,6 +1157,7 @@
    :merge-homedir-pathnames
    :ensure-directory-truename
    :absolute-directory-pathname
+   :ensure-absolute-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
    :tmpize-pathname
    :with-directory

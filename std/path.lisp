@@ -83,6 +83,16 @@ pathname or a string, transform it into a directory pathname."
   (truename (ensure-directories-exist (directory-path path) :verbose verbose :mode mode)))
 
 ;; from UIOP
+(defun ensure-absolute-pathname (path &optional (defaults *default-pathname-defaults*))
+  "Given a pathname designator PATH, return an absolute pathname as specified by
+PATH considering DEFAULTS."
+  (cond
+    ((absolute-pathname-p path))
+    ((stringp path) (ensure-absolute-pathname (pathname path) defaults))
+    ((not (pathnamep path)))
+    ((when (absolute-pathname-p defaults)
+       (absolute-pathname-p (merge-pathnames path defaults))))))
+
 (defun set-pathname-suffix (path suffix &rest keys)
   "Return a pathname like PATH with a custom SUFFIX."
   (apply 'make-pathname :name (concatenate 'string (pathname-name path) suffix)

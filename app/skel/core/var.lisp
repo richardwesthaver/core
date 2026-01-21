@@ -5,8 +5,6 @@
 ;;; Code:
 (in-package :skel/core)
 
-(declaim (type vc-designator *default-skel-vc-kind*))
-(defparameter *default-skel-vc-kind* :hg)
 (defparameter *default-skel-license-kind* :mpl2)
 ;; TODO (defvar *skelfile-boundary* nil "Set an upper bounds on how
 ;; many times and how far to walk an arbitrary file directory.")

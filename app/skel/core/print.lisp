@@ -1,16 +1,8 @@
 ;;; print.lisp --- Skel Printer
 
-;; SK-PRINT
+;; Skel Printer and Annotations
 
 ;;; Commentary:
-
-;; SK-PRINT is the top-level interface, and dispatches on all sorts of SKEL
-;; objects. The output is different than the PRINT-OBJECT methods, which are
-;; implemented in the SKEL/CORE package.
-
-;; SK-PRINT is the 'external print' representation, which is structured, akin
-;; to PPRINT - while PRINT-OBJECT is the 'internal print' and unstructured
-;; representation.
 
 ;; All printer parameters are dynamic and dispatch occurs in the same manner
 ;; as the standard Lisp Printer. Additional parameters may be provided in the
@@ -60,7 +52,7 @@
 			       (format stream "}~%"))))
              (t (format stream ":~A ~A~%" name val)))))))
 
-(defmethod sk-print ((self skel) &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
+(defun print-skel-object (self &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
   (declare (stream stream) (positive-fixnum limit))
   (let ((name (skel/core::sk-slot-name self (when (eql :downcase case))))
         (*print-case* case))
@@ -76,6 +68,3 @@
                   (sb-mop:class-direct-slots (class-of self))
                   (sb-mop:class-slots (class-of self)))))
   self)
-
-(defmethod sk-print ((self t) &key (stream *standard-output*))
-  (println self stream))

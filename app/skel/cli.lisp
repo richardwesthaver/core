@@ -66,7 +66,20 @@
   (defcommand (:skel bench) (&rest args)
     (call-with-args :bench args))
   (defcommand (:skel save) (&rest args)
-    (call-with-args :save args)))
+    (call-with-args :save args))
+  (defcommand (:skel run) (&rest args)
+    (sb-ext:enable-debugger)
+    (if args
+        (mapc (lambda (script)
+                ;; first check if a script with the same name exists, else check
+                ;; for a rule definition
+                (if-let ((script (sk-find
+                                  (pathname-name script)
+                                  *skel-user-config*)))
+                  (sk-run script)
+                  (call-with-args :run (list script))))
+              args)
+        (required-argument 'name))))
 
 (defcommand (:skel show) (&rest args)
   (declare (interactive &rest rest))
@@ -84,14 +97,14 @@
                                     :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))))))
                       (if (and (sequencep val) (not (stringp val)))
                           (apply 'fmt-column t (coerce val 'list))
-                          (sk-print val)))
+                          (format t "~A~%" val)))
                     (log:fatal! "unknown argument: ~A~%" x))))
             args)
       (cond
         ((boundp '*skel-project*)
-         (sk-print *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
-        ((boundp '*skel-user-config*) (sk-print *skel-user-config*))
-        ((boundp '*skel-system-config*) (sk-print *skel-system-config*))
+         (print-skel-object *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
+        ((boundp '*skel-user-config*) (print-skel-object *skel-user-config*))
+        ((boundp '*skel-system-config*) (print-skel-object  *skel-system-config*))
         (t (skel-simple-error "skel not installed")))))
 
 (defcommand (:skel id) ()
@@ -116,20 +129,6 @@
 
 (defcommand (:skel status) ()
   (vc:vc-status (vc:vc *skel-project*)))
-
-(defcommand (:skel run) (&rest args)
-  (sb-ext:enable-debugger)
-  (if args
-      (mapc (lambda (script)
-              ;; first check if a script with the same name exists, else check
-              ;; for a rule definition
-              (if-let ((script (sk-find
-                                (pathname-name script)
-                                *skel-user-config*)))
-                (sk-run script)
-                (call-with-args :run (list script))))
-            args)
-      (required-argument 'name)))
 
 (defcommand (:skel search) (&rest args)
   (dolist (a args)

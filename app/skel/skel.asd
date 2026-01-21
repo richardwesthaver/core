@@ -26,8 +26,7 @@
      (:file "util")))
    (:module "comp"
     :components
-    ((:file "pkg")
-     (:file "lisp")
+    ((:file "lisp")
      (:file "asd")
      (:file "cargo")
      (:file "box")
