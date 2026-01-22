@@ -594,3 +594,13 @@ at the end."
 (defun ascii-istring= (string1 string2)
   "ASCII case-insensitive string="
   (every #'ascii-ichar= string1 string2))
+
+;; from StumpWM
+(defun utf8-to-string (octets)
+  "Convert the list of octets to a string."
+  (let ((octets (coerce octets '(vector (unsigned-byte 8)))))
+    (handler-bind
+        ((sb-impl::octet-decoding-error #'(lambda (c)
+                                            (declare (ignore c))
+                                            (invoke-restart 'use-value (string #\replacement_character)))))
+      (sb-ext:octets-to-string octets :external-format :utf-8))))

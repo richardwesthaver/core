@@ -75,6 +75,8 @@ Z -- Coding system, nil if no prefix arg.
 (defvar *command-delimiter* #\;
   "A character used to indicate the start of a new command within the same line.")
 
+(defhook *command-hook* ((:pre) (:post)))
+
 ;;; Conditions
 (define-condition command-condition () ())
 (define-condition command-error (command-condition)
@@ -111,7 +113,7 @@ destructuring lambda list.")
 LAMBDA-LIST."
   (assert (listp form) nil 'invalid-itype :ast form :args lambda-list)
   (when (and lambda-list form)
-    (assert (match-lambda-lists form lambda-list) nil 'invalid-itype :ast form :args lambda-list)))
+    (assert (match-lambda-lists (mapcar (lambda (x) (if (consp x) (car x) x)) form) lambda-list) nil 'invalid-itype :ast form :args lambda-list)))
 
 ;; Set the interactive declaration information for this function. Each form in
 ;; ARGS corresponds with an element of the function's lambda list where the
@@ -148,6 +150,9 @@ LAMBDA-LIST."
 
 (defun (setf command) (new name &optional (commands *commands*)) 
   (setf (gethash (cmd-intern name) commands) new))
+
+(definline command-alias (new old)
+  (setf (command new) (command old)))
 
 (defun command-type (name &optional (types *command-types*))
   (gethash (cmd-intern name) types))
@@ -286,8 +291,12 @@ command."))
   (apply self args))
 (defmethod call ((self command) (args string))
   (apply self (parse-args self args)))
+(defmethod call ((self string) (args list))
+  (multiple-value-bind (cmd args) (apply 'parse-command self args)
+    (call cmd args)))
 
 (defmethod exec ((self command)) (funcall (kernel self)))
+(defmethod exec ((self string)) (multiple-value-bind (cmd args) (parse-command self) (call cmd args)))
 
 #+nil
 (defgeneric command-parser (self input)
@@ -309,50 +318,62 @@ inform the wrapper.
 INTERACTIVE declarations should match the lambda-list of ARGS with each form
 being a COMMAND-TYPE or a cons where the car is a COMMAND-TYPE and the cdr contains
 the args to it."
-  (let ((%cmd* (if (atom name) `(command ,(keywordicate name))
-                   `(command ,(keywordicate (second name)) (car (or (command-table ,(keywordicate (car name)))
-                                                                    (make-commands ,(keywordicate (car name)))))))))
-    (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
-      (let ((%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
-        (check-itype %int args) ; validate
-        (with-gensyms (%cmd)
-          `(let ((,%cmd (make-instance *default-command-class* 
-                          :interactive 
-                          ',(collecting
-                              (mapc
-                               (lambda (x)
-                                 (unless (member x lambda-list-keywords)
-                                   (let ((name x)
-                                         (args)) 
-                                     (unless (atom x)
-                                       (setf name (car x)
-                                             args (cdr x)))
-                                     ;; TODO 2026-01-20: input stream to command-type
-                                     (collect `(funcall (command-type ,name) ,@args)))))
-                               %int)))))
-             (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
-                   (lambda ,args                     
-                     ,@decl
-                     ,@forms
-                     ;; commands never return a value
-                     (values))
-                   ,@(when doc `((kernel-documentation ,%cmd) ,doc))
-                   ,%cmd* ,%cmd)))))))
+  (check-type name (or symbol list))
+  (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
+    (let* ((%name (if (atom name) (keywordicate name) (keywordicate (second name))))
+           (%cmd* `(command ',%name ,@(unless (atom name)
+                                      `((car (or (command-table ,(keywordicate (car name)))
+                                                 (make-commands ,(keywordicate (car name)))))))))
+           (%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
+      (check-itype %int args) ; validate
+      (with-gensyms (%cmd)
+        `(let ((,%cmd (make-instance *default-command-class* 
+                        :interactive 
+                        ',(collecting
+                            (mapc
+                             (lambda (x)
+                               (unless (member x lambda-list-keywords)
+                                 (let ((name x)
+                                       (args)) 
+                                   (unless (atom x)
+                                     (setf name (car x)
+                                           args (cdr x)))
+                                   ;; TODO 2026-01-20: input stream to command-type
+                                   (collect `(funcall (command-type ,name) ,@args)))))
+                             %int)))))             
+           (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
+                 (lambda ,args
+                   ,@decl
+                   (let ((*interactive* ,*interactive*)
+                         (*command* ',%name))
+                     (funcall *command-hook* :pre *command*)
+                     (multiple-value-prog1 (progn ,@forms)
+                       (funcall *command-hook* :post *command*))))
+                 ,@(when doc `((kernel-documentation ,%cmd) ,doc))
+                 ,%cmd* ,%cmd)
+           ;; make aliases
+           ,@(when (and (consp name) (cddr name))
+               (mapcar (lambda (x) `(command-alias ',x ',(second name))) (cddr name))))))))
 
 #+nil
 (progn
   (define-command-type :test ())
   (defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c)))
 
+(defun run-commands (&rest commands)
+  "Run each command in COMMANDS sequentially."
+  (loop for c in commands do (exec c)))
+
 ;;; Init
-(defmethod init ((self (eql :commands)) &key name class copy)
+(defmethod init ((self (eql :commands)) &key name class copy (load t))
   (when class (setq *default-command-class* class))
   (when name
     (when copy (copy-commands copy name))
     (let ((cons (command-table name)))
       (if cons
-          (setq *commands* (car cons)
-                *command-types* (cdr cons))
+          (when load
+            (setq *commands* (car cons)
+                  *command-types* (cdr cons)))
           (make-commands name))))
   (values *commands* *command-types*))
 

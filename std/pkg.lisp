@@ -387,7 +387,8 @@
    :nconcatf
    :char-range
    :ascii-ichar=
-   :ascii-istring=))
+   :ascii-istring=
+   :utf8-to-string))
 
 (defpkg :std/num
   (:use :cl)
@@ -1354,7 +1355,7 @@
    :save-annotations :copy-annotations
    :load-annotations :defnotation
    :aformat :expand-annotated-string
-   :expand-annotation))
+   :expand-annotation :word-wrap))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)

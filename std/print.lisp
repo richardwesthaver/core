@@ -67,6 +67,20 @@ be produced by `sxhash'."
       (lambda (x) (format nil "~{~(~2,'0x~)~}" x))
       (group r 2)))))
 
+(defun word-wrap (words &optional (max-col (or *print-right-margin* 80)) stream)
+  "Word wrap at the MAX-COL."
+  ;; Format insanity edited from Gene Michael Stover's "Advanced Use of Lisp's
+  ;; FORMAT Function (2004)"
+
+  ;; Note that using format without a constant format string is not very
+  ;; efficient. Not doing so comes at the cost of *message-max-width* being
+  ;; available at compile time, so users would not be able to configure it at
+  ;; runtime.
+  (format stream (concatenate 'string "~{~<~%~1,"
+                              (with-output-to-string (s) (princ max-col s) s)
+                              ":;~A~> ~}")
+          (ssplit #\space words)))
+
 ;;; Trees
 
 ;; from https://gist.github.com/WetHat/9682b8f70f0241c37cd5d732784d1577
