@@ -501,6 +501,16 @@ returns :BROKEN as second value.
 Signals an error if PATHSPEC is wild."
   (get-file-kind (merge-pathnames pathspec) follow-symlinks))
 
+(defun make-symlinks (src &optional directory &rest names)
+  "Make a set of symlinks from SRC to NAMES.
+
+If DIRECTORY is non-nil each name in NAMES is considered relative to
+it."
+  (when directory
+    (setf names (mapcar (lambda (n) (merge-pathnames n directory)) names)))
+  (dolist (n names)
+    (sb-posix:symlink src n)))
+
 (defun merge-env-pathnames (path &optional default)
   (if-let ((%default (sb-posix:getenv default)))
     (merge-pathnames path (namestring (directory-path %default)))
@@ -541,7 +551,7 @@ stream, and the second value is the output stream."
          (sb-unix:unix-access filename sb-unix:x_ok))))
 
 ;; based on cffi version of set-signal-handler from Andrew Lyon at https://stackoverflow.com/a/10442062
-;; rewritten to use SBCL's Foreign Function Interface directly by Max-Gerd Retzlaff
+;; rewritten to use SBCL's Alien Interface directly by Max-Gerd Retzlaff
 (defmacro set-signal-handler (signo &body body)
   `(sb-alien:alien-funcall
     (sb-alien:extern-alien "signal" (function sb-alien:void
@@ -552,3 +562,16 @@ stream, and the second value is the output stream."
      (sb-alien::alien-lambda sb-alien:void ((signum sb-alien:int))
        ,@body
        signum))))
+
+;; from Vindarel's Medium blog post: 'Common Lisp: read password on a terminal (by hiding its input)'
+(eval-always
+  (defun enable-echo ()
+    (sb-ext:run-program "/bin/stty" '("echo") :input t :output t))
+  (defun disable-echo ()
+    (sb-ext:run-program "/bin/stty" '("-echo") :input t :output t)))
+
+(defmacro without-echo (&body body)
+  "Do BODY without printing output (/bin/stty -echo), then re-enable (/bin/stty echo)."
+  `(prog2 (disable-echo)
+       (progn ,@body)
+     (enable-echo)))

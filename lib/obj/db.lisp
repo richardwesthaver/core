@@ -359,34 +359,6 @@ column is already closed."))
   (key (make-octets *default-kv-size*) :type octet-vector) 
   (val (make-octets *default-kv-size*) :type octet-vector))
 
-(defgeneric make-val (val)
-  (:documentation "Coerce VAL into an OCTET-VECTOR.")
-  (:method ((val null))
-    #())
-  (:method ((val string))
-    (sb-ext:string-to-octets val))
-  (:method ((val vector))
-    (if (octet-vector-p val)
-        val
-        (call-next-method)))
-  (:method ((val t))
-    (coerce val 'octet-vector)))
-
-(defgeneric make-key (key)
-  (:documentation "Coerce KEY into an OCTET-VECTOR.")
-  (:method ((val null))
-    #())
-  (:method ((val string))
-    (sb-ext:string-to-octets val))
-  (:method ((val integer))
-    (integer-to-octets val))
-  (:method ((val vector))
-    (if (octet-vector-p val)
-        val
-        (call-next-method)))
-  (:method ((val t))
-    (coerce val 'octet-vector)))
-
 ;;; Transactions
 
 ;; In our system, transactions must be one of the following:

@@ -5,9 +5,7 @@
 ;;; Code:
 (in-package :skel/packy/cli)
 
-(define-command-type (:packy version) () (cli:print-version *cli*))
-
-(defcommand (:packy show) ())
+(defcommand (:packy show) (&optional version))
 
 #+todo
 (define-cli "packy"

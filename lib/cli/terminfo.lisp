@@ -981,7 +981,7 @@ that calls the capability from *terminfo*."
 (defun terminal-size (&optional (stream *standard-output*))
   (declare (type stream stream))
   (sb-alien:with-alien ((winsz winsize))
-    (if (zerop (sb-posix:ioctl (sb-sys:fd-stream-fd stream) +TIOCGWINSZ+ (sb-alien:cast winsz (* t))))
+    (if (zerop (sb-posix:ioctl (stream-fileno stream) +TIOCGWINSZ+ (sb-alien:cast winsz (* t))))
 	(values (sb-alien:slot winsz 'std/os::row)
 		(sb-alien:slot winsz 'std/os::col))
 	(values nil nil))))

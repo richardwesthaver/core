@@ -68,13 +68,3 @@ arrange for symlinks for each handled value of (ARG0) to be generated
        (case (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))
          ,@mains
          (t ,default)))))
-
-(defun make-symlinks (src &optional directory &rest names)
-  "Make a set of symlinks from SRC to NAMES.
-
-If DIRECTORY is non-nil each name in NAMES is considered relative to
-it."
-  (when directory
-    (setf names (mapcar (lambda (n) (merge-pathnames n directory)) names)))
-  (dolist (n names)
-    (sb-posix:symlink src n)))

@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :rdb/cli)
+(init :commands :name :rdb)
 
 (defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)

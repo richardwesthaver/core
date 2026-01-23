@@ -7,8 +7,6 @@
 
 (init :commands :name :skel :copy :cli)
 
-(define-command-type (:skel config) (&optional cfg) (load-user-skelrc (or cfg (user-skelrc)) nil))
-
 (defcommand (:skel init) (&optional file name)
   (handler-bind
       ((sb-ext:file-exists
@@ -82,7 +80,7 @@
         (required-argument 'name))))
 
 (defcommand (:skel show) (&rest args)
-  (declare (interactive &rest rest))
+  (declare (interactive rest))
   (if args
       (mapc (lambda (x) 
               (let ((y (string-left-trim ":" x)))
@@ -105,7 +103,8 @@
          (print-skel-object *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
         ((boundp '*skel-user-config*) (print-skel-object *skel-user-config*))
         ((boundp '*skel-system-config*) (print-skel-object  *skel-system-config*))
-        (t (skel-simple-error "skel not installed")))))
+        (t (skel-simple-error "skel not installed"))))
+  (values))
 
 (defcommand (:skel id) ()
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
@@ -115,6 +114,7 @@
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcommand (:skel make) (&rest args)
+  (declare (interactive (ustring "Make what? ")))
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
       (sb-ext:enable-debugger)

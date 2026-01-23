@@ -158,9 +158,19 @@ a generated label. At most one such atom may appear."
                         condition-transform
                         optimize)
   "Compile FORM capturing and muffling all [style-]warnings and notes and
-return six values: 1) the compiled function 2) a Boolean indicating whether
-compilation failed 3) a list of warnings 4) a list of style-warnings 5) a list
-of notes 6) a list of SB-C:COMPILER-ERROR conditions.
+return six values: 
+
+1) the compiled function 
+
+2) a Boolean indicating whether compilation failed 
+
+3) a list of warnings 
+
+4) a list of style-warnings 
+
+5) a list of notes 
+
+6) a list of SB-C:COMPILER-ERROR conditions.
 
 An error can be signaled when COMPILE indicates failure as well as in case
 [style-]warning or note conditions are signaled. The keyword parameters

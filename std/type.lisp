@@ -12,6 +12,10 @@
   "An 8-bit unsigned-byte."
   '(unsigned-byte 8))
 
+(deftype abstract-ds-lambda-list () '(simple vector 7)
+  "The SBCL type used internally for the abstract representation of a
+destructuring lambda list.")
+
 ;; these are already defined by SB-SIMD
 #+nil
 (macrolet ((def (name)

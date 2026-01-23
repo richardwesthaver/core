@@ -25,7 +25,9 @@
   
 (defmethod init ((self (eql :repl))
                  &key wrap (eof :quit)
-                      history killring)
+                      history killring
+                      acl)
+  (when acl (require 'sb-aclrepl))
   (cli/linedit:install-repl :wrap-current wrap :eof-quits eof :history history :killring killring))
 
 (defmethod init ((self (eql :term)) &key name (color t))

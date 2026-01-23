@@ -6,11 +6,8 @@
 (in-package :obj/tests)
 
 ;;;; Fast
-(defmethod %test-+ ((a number) (b number))
-  (+ a b))
 
 (seal-domain #'%test-+ '(number number))
-
 (deftest fast ()
   (is= 42 (%test-+ 2 40)))
 

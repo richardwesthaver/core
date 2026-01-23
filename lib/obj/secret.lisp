@@ -22,7 +22,7 @@ leakage of sensitive data."))
       (print-unreadable-object (self stream :type t :identity t))))
 
 (defgeneric conceal (self &key name class &allow-other-keys)
-  (:documentation"Conceals value into a SECRET object. An optional name can be
+  (:documentation "Conceal value into a SECRET object. An optional name can be
 provided to aid debugging.")
   (:method ((self t) &key name (class 'secret))
     (let ((secret (apply #'make-instance class `(,@(when name `(:name ,name))

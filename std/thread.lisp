@@ -202,6 +202,9 @@ that was created in `body'."
    "Error signaled when a kernel object is invalid."))
 
 ;;; Utils
+(defun timer-p (self)
+  (typep self 'sb-ext:timer))
+
 (defun thread-support-p () 
   "Return Non-nil if threads are supported on this system. (:THREAD-SUPPORT feature)"
   (member :thread-support *features*))

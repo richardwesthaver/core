@@ -104,14 +104,8 @@ evaluation of BODY."
      #+nil (.ris)))
 
 ;;; Protocol
-(defgeneric print-help (self &optional stream)
-  (:documentation "Format command SELF as a helpful string."))
-
 (defgeneric print-version (self &optional stream)
   (:documentation "Print the version of SELF."))
-
-(defgeneric print-usage (self &optional stream)
-  (:documentation "Format command SELF as a useful string."))
 
 ;;; CLI Command
 (defkernel cli-command (command) ()
@@ -120,44 +114,64 @@ evaluation of BODY."
 (defmethod make-load-form ((self cli-command) &optional env)
   (make-load-form-saving-slots self :environment env))
 
-(init :commands :name :cli :class 'cli-command)
-
-(defmethod print-usage ((self cli-command) &optional stream)
-  (format stream "~@[~<~A~>~%~]"
-          (kernel-documentation self)))
-
-(defmethod print-help ((self cli-command) &optional stream)
-  (print-usage self stream)
-  (when-let ((doc (kernel-documentation self)))
-    (print doc stream)))
-
 (defmethod call :before ((self cli-command) args)
   (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))
 
+(init :commands :name :cli :class 'cli-command)
+
+;;; CLI Command Types
+(define-command-type string (input &optional (prompt "Input: "))
+  (princ prompt *query-io*)
+  (string (read-arg input)))
+
+(define-command-type ustring (input &optional (prompt "INPUT: "))
+  (princ prompt *query-io*)
+  (string-upcase (read-arg input)))
+
+(define-command-type dstring (input &optional (prompt "input: "))
+  (princ prompt *query-io*)
+  (string-downcase (read-arg input)))
+
+(define-command-type * (input &optional (prompt "Input: "))
+  (princ prompt *query-io*)
+  (read-arg input))
+
+(define-command-type y/n (input &optional prompt)
+  (let ((*query-io* input))
+    (y-or-n-p prompt)))
+
+(define-command-type yes-or-no (input &optional prompt)
+  (let ((*query-io* input))
+    (yes-or-no-p prompt)))
+
+(define-command-type char (input &optional (prompt "Character: "))
+  (princ prompt *query-io*)
+  (read-char input))
+
+(define-command-type num (input &optional (prompt "Number: "))
+  (princ prompt *query-io*)
+  (parse-number (read-arg input)))
+
+(define-command-type password (input &optional (prompt "Password: "))
+  (format *query-io* prompt)
+  (force-output *query-io*)
+  (without-echo
+    (string (read-arg input))))
+
+(define-command-type command (input &optional (prompt "Command: ") (commands *commands*))
+  (format *query-io* prompt)
+  (command (read-arg input) commands))
+
 ;;; CLI
-(init :commands :name :cli)
-
-(defcommand (:cli :help) (&optional arg)
+(defcommand (:cli :help) (&optional (arg *cli*))
   "Print help and exit."
-  (print-help (if arg (command arg) *cli*) t)
-  (sb-ext:exit :code 0))
+  (declare (interactive (* "Command: ")))
+  (print-help (if (cli-p arg) arg (command arg))))
 
-(defcommand (:cli :version) (&optional arg)
+(defcommand (:cli :version) (&optional (arg *cli*))
   "Print version and exit." 
-  (print-version (if arg (command arg) *cli*) t)
-  (sb-ext:exit :code 0))
-
-(define-command-type (:cli :keep-ast) ()
-  "Set the *KEEP-AST* variable."
-  (setq ast:*keep-ast* t))
-
-(define-command-type (:cli :level) (&optional arg)
-  "Set the *LOG-LEVEL* for this CLI session."
-  (if arg
-      (setq *log-level* (if (stringp arg)
-                            (sb-int:keywordicate (string-upcase arg))
-                            arg))
-      *log-level*))
+  (declare (interactive *))
+  (print-version arg *standard-output*))
 
 ;; REVIEW 2026-01-16: should this be a struct containing a CLI-COMMAND? hmm..
 (defstruct cli
@@ -206,7 +220,6 @@ value of the CLI."
 
 (defmethod print-help ((self cli) &optional stream)
   (print-usage self stream)
-  (format stream "~A~%" (cli-description self))
   (let ((k (kernel self)))
     (format stream "~A~%" 
             (if (kernelp k)

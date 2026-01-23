@@ -608,7 +608,7 @@
   (:export :defcommand
    :interactive :define-command-type
    :*commands* :*command-table*
-   :*command* :*default-command-class*
+   :*command* :*command-class*
    :*command-types* :command-type
    :command-table :command
    :with-commands :read-command
@@ -617,9 +617,12 @@
    :fmt-command :call-interactively
    :commandp :commands
    :command-types :make-commands
-   :command-alias
-   :load-commands
-   :run-commands))
+   :command-alias :load-commands
+   :run-commands :print-help
+   :print-usage :call-command
+   :cmd :*command-hook*
+   :eval-command :parse-args
+   :read-arg :read-args))
 
 (defpkg :obj/project
   (:nicknames :project)
@@ -675,8 +678,6 @@
    :execute-transaction
    :abort-transaction
    :kv
-   :make-val
-   :make-key
    :open-db
    :kv-key
    :kv-val

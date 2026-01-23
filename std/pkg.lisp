@@ -272,6 +272,7 @@
    :*type-classes* :type-class
    :array-index :array-length
    #:negative-double-float :*ctype-hashsets*
+   #:abstract-ds-lambda-list
    #:negative-fixnum-p
    #:negative-float
    #:negative-float-p
@@ -1267,7 +1268,8 @@
    :compute-special-bindings
    :thread-pipe :source-worker
    :sink-worker :filter-worker
-   :worker-message :worker-event))
+   :worker-message :worker-event
+   :timer-p))
 
 (defpkg :std/async
   (:use :cl :std/thread :std/prim :std/seq :std/sym :std/list :std/macs)
@@ -1391,12 +1393,13 @@
    :xdg-runtime-directory :xdg-runtime-dir
    :xdg-state-directory :xdg-state-dir
    :termios :winsize
-   :isatty
+   :isatty :make-symlinks
    :tcgetattr :tcsetattr :tcgetattr* :tcsetattr*
    :relative-pathname-p :absolute-pathname-p
    :unmerge-pathnames :current-directory
    :with-directory-iterator :file-kind
-   :merge-env-pathnames))
+   :merge-env-pathnames :enable-echo
+   :disable-echo :without-echo))
 
 (pkg:defpkg :std/defsys
   (:nicknames :sys)

@@ -33,16 +33,12 @@
   (:nicknames :clap)
   (:use :cl :std :log :cmd :ast :equiv)
   (:use-reexport :log :cmd :ast)
-  ;; vars
   (:export :*no-exit*
    :*default-cli-class* :*cli*
    :*cli-table* :*no-debug*
-   ;; macs
    :schar0 :with-cli-handlers 
-   ;; proto
-   :print-help :print-usage :print-version
    :cli-command :cli
-   ;; obj
+   :print-version
    :make-cli :define-cli
    :cli-cd :with-cli
    :load-cli))
@@ -184,11 +180,10 @@
   (:import-from :cli/clap :*no-exit* :*no-debug* :with-cli-handlers)
   (:export
    #:defmain
-   #:define-multi-main
-   #:make-symlinks))
+   #:define-multi-main))
 
 (defpkg :cli/tui
-  (:use :cl :std :ansi :linedit :progress :spark :terminfo :env)
-  (:export :completing-read :completing-read-form :defprompt))
+  (:use :cl :std :ansi :linedit :progress :spark :terminfo :env :cmd :clap :secret)
+  (:export :completing-read :completing-read-form))
 
 (setq *defpkg-hook* nil)

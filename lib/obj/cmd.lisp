@@ -67,15 +67,16 @@ Z -- Coding system, nil if no prefix arg.
 (in-package :obj/cmd)
 
 ;;; Variables
-(defvar *command* nil)
-(defvar *default-command-class* 'command)
+(defvar *command*)
+(defvar *command-class* 'command)
 (defvar *commands* (make-hash-table))
 (defvar *command-types* (make-hash-table))
 (defvar *command-table* (make-hash-table))
 (defvar *command-delimiter* #\;
   "A character used to indicate the start of a new command within the same line.")
-
-(defhook *command-hook* ((:pre) (:post)))
+(defparameter *command-names-p* nil
+  "Indicates whether commands will be defined with LAMBDA (NIL) or DEFUN (T).")
+(defhook *command-hook* ((:pre) (:post) (:eval)))
 
 ;;; Conditions
 (define-condition command-condition () ())
@@ -93,6 +94,12 @@ Z -- Coding system, nil if no prefix arg.
              (format s "Undefined command type: ~A~@[ with args ~{~S~^ ~}~]" 
                      (error-name c) (error-args c)))))
 
+(define-condition invalid-command-type (command-error syntax-error)
+  ((args :initarg :args :reader error-args :initform nil))
+  (:report (lambda (c s) 
+             (format s "Invalid command-type ~A given args: ~S" 
+                     (error-name c) (error-args c)))))
+
 (define-condition invalid-itype (command-error syntax-error) 
   ((args :initarg :args :reader error-args :initform nil))
   (:default-initargs 
@@ -101,12 +108,11 @@ Z -- Coding system, nil if no prefix arg.
 
 (definline undefined-command (name &optional args) (error 'undefined-command :name name :args args))
 (definline undefined-command-type (name &optional args) (error 'undefined-command-type :name name :args args))
+(definline invalid-command-type (name &optional args) (error 'invalid-command-type :name name :args args))
 (definline invalid-itype (&optional form) (error 'invalid-itype :ast form))
 
 ;;; Interactive
-(deftype abstract-ds-lambda-list () '(simple vector 7)
-  "The SBCL type used internally for the abstract representation of a
-destructuring lambda list.")
+(deftype itype () '(list))
 
 (defun check-itype (form &optional lambda-list)
   "Validate the INTERACTIVE typespec FORM, optionally against a COMMAND's
@@ -170,7 +176,9 @@ LAMBDA-LIST."
 (defmacro define-command-type (name args &body body)
   "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES* if NAME is an atom,
 else the car of NAME designates the value of *COMMAND-TABLE* to modify. ARGS
-is a lambda-list which destructures the cdr of INTERACTIVE argtype forms.
+is a lambda-list where the car is a required argument designating the
+interactive input, and the cdr destructures the cdr of INTERACTIVE argtype
+forms.
 
 Example:
 
@@ -193,6 +201,7 @@ Example:
 (defcommand \"symbol\" (sym) 
  (declare (interactive (:symbol \"Pick a symbol: \")))
  (describe sym s))"
+  (assert (and (listp args) (< 0 (length args))) nil 'invalid-command-type :name name :args args)
   `(setf ,(if (atom name) 
               `(command-type ,(keywordicate name))
               `(command-type ,(keywordicate (second name)) (cdr (or (command-table ,(keywordicate (car name))) (make-commands ,(keywordicate (car name)))))))
@@ -201,6 +210,10 @@ Example:
 
 ;; IO
 (deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
+
+;; arg parsing
+(defun read-arg (input) (read (if (stringp input) (make-string-input-stream input) input) input nil))
+(defun read-args (input) (read-lisp-until-end (if (stringp input) (make-string-input-stream input) input)))
 
 (defgeneric parse-args (self input)
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
@@ -234,7 +247,8 @@ then execute it."
                                                 command
                                                 (with-input-from-string (s input) 
                                                   (read-lisp-until-end s)))
-        (check-itype args ll)
+        ;; TODO 2026-01-22: 
+        ;; (check-itype args ll)
         (call cmd args)))))
 
 (defmacro with-commands (name &body body)
@@ -301,6 +315,9 @@ command."))
 #+nil
 (defgeneric command-parser (self input)
   (:documentation "Return a function which supplies the arguments for command SELF given INPUT."))
+#+nil
+(defgeneric command-pipe (self output)
+  (:documentation "Pipe the output of command SELF to OUTPUT."))
 
 (defun compile-command (name command &optional env)
   "Compile COMMAND as a FUNCTION given ENV with optional INTERACTIVE declaration
@@ -325,9 +342,10 @@ the args to it."
                                       `((car (or (command-table ,(keywordicate (car name)))
                                                  (make-commands ,(keywordicate (car name)))))))))
            (%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
-      (check-itype %int args) ; validate
-      (with-gensyms (%cmd)
-        `(let ((,%cmd (make-instance *default-command-class* 
+      ;; TODO 2026-01-22: 
+      ;; (check-itype %int args) ; validate
+      (with-gensyms (%cmd %kernel)
+        `(let ((,%cmd (make-instance *command-class* 
                         :interactive 
                         ',(collecting
                             (mapc
@@ -340,15 +358,17 @@ the args to it."
                                            args (cdr x)))
                                    ;; TODO 2026-01-20: input stream to command-type
                                    (collect `(funcall (command-type ,name) ,@args)))))
-                             %int)))))             
+                             %int))))
+               (,%kernel (,@(if *command-names-p* `(defun ,(intern (string %name))) '(lambda))
+                          ,args
+                          ,@decl
+                          (let ((*interactive* ,*interactive*)
+                                (*command* ,%name))
+                            (funcall *command-hook* :pre *command*)
+                            (multiple-value-prog1 (progn ,@forms)
+                              (funcall *command-hook* :post *command*))))))
            (setf (kernel ,%cmd) ; set the kernel slot of this COMMAND instance
-                 (lambda ,args
-                   ,@decl
-                   (let ((*interactive* ,*interactive*)
-                         (*command* ',%name))
-                     (funcall *command-hook* :pre *command*)
-                     (multiple-value-prog1 (progn ,@forms)
-                       (funcall *command-hook* :post *command*))))
+                 ,(if *command-names-p* `(symbol-function ,%kernel) %kernel)
                  ,@(when doc `((kernel-documentation ,%cmd) ,doc))
                  ,%cmd* ,%cmd)
            ;; make aliases
@@ -357,16 +377,62 @@ the args to it."
 
 #+nil
 (progn
-  (define-command-type :test ())
+  (define-command-type :test (in))
   (defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c)))
 
 (defun run-commands (&rest commands)
   "Run each command in COMMANDS sequentially."
   (loop for c in commands do (exec c)))
 
+(defun call-command (cmd &rest args)
+  "Shorthand for (CALL (COMMAND CMD) ARGS). CMD is evaluated."
+  (call (command cmd) args))
+
+(defmacro cmd (cmd &rest args)
+  "Shorthand for (CALL (COMMAND CMD) ARGS). CMD is unevaluated."
+  `(call (command ',cmd) '(,@args)))
+
+(defun eval-command (cmd &optional interactive)
+  "Execute CMD and print the RESULT. When INTERACTIVE is non-nil then
+CALL-INTERACTIVELY is used. The :eval hook of the *COMMAND-HOOK* is called
+with each hook being passed the RESULT."
+    (let ((result
+            ;; this fancy footwork lets us grab the backtrace from where the
+            ;; error actually happened.
+            (restart-case
+                (handler-bind
+                    ((error (lambda (c)
+                              (invoke-restart 'eval-command-error
+                                              (format nil "Error In Command '~a': ~A"
+                                                      cmd c)))))
+                  (let ((*interactive* interactive))
+                    (exec cmd)))
+              (eval-command-error (err-text)
+                :interactive (lambda ()
+                               (list (format nil "^B^1*Error In Command '^b~a^B'"
+                                             cmd)))
+                :report (lambda (s)
+                          (format s "Exit command ~S" cmd))
+                err-text))))
+      (funcall *command-hook* :eval result)))
+  
+;;; Help Protocol
+(defgeneric print-help (self &optional stream)
+  (:documentation "Format command SELF as a helpful string.")
+  (:method ((self command) &optional stream)
+    (print-usage self stream)
+    (when-let ((doc (kernel-documentation self)))
+      (print doc stream))))
+
+(defgeneric print-usage (self &optional stream)
+  (:documentation "Format command SELF as a useful string.")
+  (:method ((self command) &optional stream)
+    (format stream "~@[~<~A~>~%~]" (kernel-documentation self))))
+
 ;;; Init
-(defmethod init ((self (eql :commands)) &key name class copy (load t))
-  (when class (setq *default-command-class* class))
+(defmethod init ((self (eql :commands)) &key name class copy (load t) names)
+  (when class (setq *command-class* class))
+  (setq *command-names-p* names)
   (when name
     (when copy (copy-commands copy name))
     (let ((cons (command-table name)))
@@ -381,4 +447,4 @@ the args to it."
   (if name (remhash name *command-table*)
       (setq *commands* (make-hash-table)
             *command-types* (make-hash-table)
-            *default-command-class* 'command)))
+            *command-class* 'command)))
