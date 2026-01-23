@@ -8,7 +8,7 @@
 (defcommand (:packy show) (&optional version))
 
 #+todo
-(define-cli "packy"
+(define-cli "packy" (with-commands :packy (command :show))
   :version "0.1.0"
   :description "Universal Package Manager")
 

@@ -59,6 +59,6 @@
   (load-mpkrc)
   (call-interactively (or (second *posix-argv*) "stats") (cddr *posix-argv*)))
 
-(define-cli "mpk" start-mpk
+(define-cli "mpk" #'start-mpk
   :version "0.1.0"
   :description "Media Production Kit")

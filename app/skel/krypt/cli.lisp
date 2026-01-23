@@ -16,5 +16,5 @@
   (println *krypt-user-config*))
 
 #+todo
-(define-cli "krypt"
+(define-cli "krypt" (with-commands :krypt (command :show))
   :description "Crypto Utils")

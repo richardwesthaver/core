@@ -200,7 +200,7 @@ uses this object.
 VERSION, DESCRIPTION, HOOK, CD, and MAIN are assigned to the associated slot
 value of the CLI."
   `(let* ((*cli* (make-cli :name ',(string-downcase name) :version ,version :hook ,hook :cd ,cd :description ,description
-                           :main (symbol-function ',main))))
+                           :main (if (symbolp ,main) (symbol-function ,main) ,main))))
      (load-cli *cli* ,name)
      *cli*))
 

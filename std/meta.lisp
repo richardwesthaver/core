@@ -42,7 +42,7 @@ function NAME and be skipped for (setf NAME)."
   "Return T if V is the name of a verb."
   (when (member v *verbs* :key 'generic-function-name :test 'equal) t))
 
-(defun setf-verbp (v)
+(defun verb-accessor-p (v)
   "Return T if V is a setf-able verb."
   (when (member `(setf ,v) *verbs* :key 'generic-function-name :test 'equal) t))
 

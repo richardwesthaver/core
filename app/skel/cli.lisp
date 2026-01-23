@@ -155,6 +155,6 @@
     (init :skel)
     (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))))
 
-(define-cli "skel" start-skel
+(define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool.")

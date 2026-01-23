@@ -247,9 +247,8 @@ then execute it."
                                                 command
                                                 (with-input-from-string (s input) 
                                                   (read-lisp-until-end s)))
-        ;; TODO 2026-01-22: 
-        ;; (check-itype args ll)
-        (call cmd args)))))
+        ;; TODO 2026-01-22:
+        (call cmd (parse-args cmd args))))))
 
 (defmacro with-commands (name &body body)
   "Eval BODY with (*COMMANDS* . *COMMAND-TYPES*) bound to the value of (GETHASH
@@ -294,6 +293,7 @@ command."))
 ;; internal method
 (defmethod sb-impl::object-type-string ((self command)) "command function")
 
+;; TODO 2026-01-22: apply-itype
 (defmethod parse-args ((self command) (input list)) input)
 (defmethod parse-args ((self command) (input string))
   (with-input-from-string (s input)

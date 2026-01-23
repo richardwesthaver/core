@@ -86,6 +86,6 @@
     (load-homerc)
     (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))))
 
-(define-cli "homer" start-homer
+(define-cli "homer" #'start-homer
   :version "0.1.0"
   :description "user home manager")
