@@ -7,6 +7,3 @@
 
 (defgeneric %test-+ (a b)
   (:generic-function-class fast-generic-function))
-
-(defmethod %test-+ ((a number) (b number))
-  (+ a b))
