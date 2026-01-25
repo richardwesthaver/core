@@ -213,6 +213,13 @@
    :load-kbd-libs
    :keyboard
    :keysym
+   :define-keysym
+   :define-keysym-sets
+   :keysym-set
+   :keysym-set-name
+   :load-xkb-keysyms
+   :keysym-name
+   :keysym-name-code
    :device-read-event
    :print-device-input-info
    :make-keyboard-from-dev
