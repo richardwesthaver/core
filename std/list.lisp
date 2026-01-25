@@ -274,8 +274,7 @@ Example:
 
 (cart (list 1 2) (list 3 4 5)) ;; ((1 3) (2 3) (1 4) (2 4) (1 5) (2 5))
 (cart (list 1 2 3) (list 4 5)) ;; ((1 4) (2 4) (3 4) (1 5) (2 5) (3 5))
-(cart (list 1 2 3) nil (list 4 5)) ;; nil
-"
+(cart (list 1 2 3) nil (list 4 5)) ;; nil"
   (if more-lists
       (mapcan #'(lambda (y) (mapcar #'(lambda (x) (cons x y)) list)) (apply #'cart more-lists))
       (mapcar #'list list)))
@@ -733,7 +732,7 @@ DISAPPEARS when WITH-STACK-LIST is exited."
      ,@body))
 
 (defmacro with-stack-list* ((var &rest elements) &body body)
-"Equivalent to (LET ((var (APPLY #'LIST* (MAPCAR #'EVAL '(exp1 ... expN)))))
+  "Equivalent to (LET ((var (APPLY #'LIST* (MAPCAR #'EVAL '(exp1 ... expN)))))
 body) except that the list produced by MAPCAR resides on the stack and
 therefore DISAPPEARS when WITH-STACK-LIST is exited."
   `(let ((,var (list* ,@elements)))

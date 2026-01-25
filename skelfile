@@ -31,13 +31,13 @@
   (:mod "skel" (:asd "skel")))
  (:mod "emacs"))
 :rules
-((default (%stash psl.dat x11.lisp parquet.json build-c build-core))
+((default (%stash psl.dat kbd.sxp x11.lisp parquet.json build-c build-core))
  (c ()
   (:build (build-zstd-alien build-tree-sitter-alien))
   (:install (install-zstd-alien install-tree-sitter-alien)))
  (all
   (%stash
-   psl.dat x11.lisp lapack-ffi.lisp parquet.thrift
+   psl.dat x11.lisp keysyms.sxp lapack-ffi.lisp parquet.thrift
    build-c build-core
    deploy))
  (upstream () 
@@ -79,6 +79,10 @@
   (init :ssl)
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"
    ".stash/psl.dat"
+   :if-exists nil))
+ (kbd.sxp (%stash)
+  (req:fetch "https://packy.otom8.dev/data/kbd.sxp"
+   ".stash/kbd.sxp"
    :if-exists nil))
  (ccadb.dat (%stash)
   (unless (probe-file ".stash/cert.csv")
@@ -245,6 +249,10 @@
     (let ((sb-ext:*block-compile-default* t))
      (pushnew 'asdf::clear-configuration *save-hooks*)
      (setf asdf:*central-registry* nil)
+     (asdf:load-system :core)
+     ;; post-load hooks
+     (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
+     (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
      (asdf:make :bin/core)))
    (move-file "bin/core" ".stash/core"))
   (:compile () (compile-lisp :core :force t :verbose t))

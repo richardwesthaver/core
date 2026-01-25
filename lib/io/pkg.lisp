@@ -212,6 +212,7 @@
   (:export :kbd-error
    :load-kbd-libs
    :keyboard
+   :keysym
    :device-read-event
    :print-device-input-info
    :make-keyboard-from-dev

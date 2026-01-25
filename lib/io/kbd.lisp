@@ -14,7 +14,6 @@
 
 ;;; Code:
 (in-package :io/kbd)
-(pushnew :kbd *features*)
 
 (defun load-kbd-libs ()
   (load-xkbcommon)
@@ -24,9 +23,83 @@
 (defconstant +evdev-offset+ 8)
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
 (defparameter *keyboards* nil)
+(defvar *keysym-sets* nil
+  "Alist of (NAME FIRST LAST).")
+(defvar *character-keysym-table* (make-hash-table :test 'eql)
+  "Table mapping Characters to KEYSYMs.")
+(defvar *keysym-name-table* (make-hash-table))
+(defvar *name-keysym-table* (make-hash-table :test #'equal))
+(defvar *dead-keysym-name-table* (make-hash-table))
+
 ;;; Conditions
 (define-condition kbd-error (error) ())
 (deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
+;;; Keysym
+(deftype keysym () '(unsigned-byte 32))
+
+(definline keysym-name (code)
+  (with-alien ((str (* unsigned-char) (make-alien unsigned-char 11)))
+    (xkb::xkb-keysym-get-name code str 11)
+    (cast str c-string)))
+
+(definline keysym-code-name (code)
+  (gethash code *keysym-name-table*))
+
+(definline keysym-name-code (name)
+  (gethash name *name-keysym-table*))
+
+(defun load-xkb-keysyms (&rest codes)
+  "Retrieve and map the names of the keysyms CODES which are all integers. Returns a table of INT->STRING."
+  (dolist (c codes (values *keysym-name-table* *name-keysym-table*))
+    (declare (fixnum c))
+    (lety ((n (keysym-name c) :type string))
+      (if (and (> (length n) 5) (string= "dead_" (subseq n 0 5)))
+          (setf (gethash c *dead-keysym-name-table*) (subseq n 5))
+          (setf (gethash c *keysym-name-table*) n
+                (gethash n *name-keysym-table*) c)))))
+
+(defun load-xkb-keysyms-file (file)
+  (apply 'load-xkb-keysyms (read-lisp-file file)))
+
+(defun keysym-set (name)
+  (cdr (assoc name *keysym-sets*)))
+
+(defun (setf keysym-set) (cons name)
+  (destructuring-bind (first last) cons
+    (declare (keyword name)
+             (keysym first last))
+    (when (> first last)
+      (rotatef first last))
+    (setq *keysym-sets* (delete name *keysym-sets* :key #'car))
+    (dolist (set *keysym-sets*)
+      (let ((first (second set))
+            (last (third set)))
+        (when (or (<= first first last)
+                  (<= first last last))
+          (error "Keysym range overlaps existing set ~s" set))))
+    (push (cons name cons) *keysym-sets*)))
+
+(defun keysym-set-name (code)
+  "Return the character code set name of keysym."
+  (declare (keysym code))
+  (dolist (set *keysym-sets*)
+    (let ((first (second set))
+          (last (third set)))
+      (when (<= first code last)
+        (return (first set))))))
+
+(defun keysym (key &rest bytes)
+  "Build a 32-bit keysym. KEY is an integer or character and BYTES optionally
+fill in the lower bytes."
+  (declare (dynamic-extent bytes))
+    (etypecase key
+      (keysym
+       (dolist (b bytes key) (setq key (+ (ash key 8) b))))
+      (character
+       (or (gethash key *character-keysym-table*)
+           (error "~s isn't a keysym" key)))))
+
+(defmacro define-keysym (obj keysym &key lower translate modifiers mask))
 
 ;;; Objects
 (defstruct keyboard 
@@ -55,12 +128,7 @@
             (simple-kbd-error (sb-unix::strerror (abs ret)))
             dev)))))
 
-(defun kbd-code-name (code)
-  (with-alien ((str (* unsigned-char) (make-alien unsigned-char 11)))
-    (xkb::xkb-keysym-get-name code str 11)
-    (cast str c-string)))
-
-;; (kbd-code-name 400) ; "0x00000190"
+;; (keysym-name 400) ; "0x00000190"
 ;; evdev::+ev-cnt+ evdev::+key-cnt+
 
 (defun keyboard-device-p (path)
