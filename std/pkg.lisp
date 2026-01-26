@@ -389,7 +389,8 @@
    :char-range
    :ascii-ichar=
    :ascii-istring=
-   :utf8-to-string))
+   :utf8-to-string
+   :split-whitespace))
 
 (defpkg :std/num
   (:use :cl)

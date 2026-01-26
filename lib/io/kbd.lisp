@@ -27,7 +27,7 @@
   "Alist of (NAME FIRST LAST).")
 (defvar *character-keysym-table* (make-hash-table :test 'eql)
   "Table mapping Characters to KEYSYMs.")
-(defvar *keysym-name-table* (make-hash-table))
+(defvar *keysym-name-table* (make-hash-table :test #'equal))
 (defvar *name-keysym-table* (make-hash-table :test #'equal))
 (defvar *dead-keysym-name-table* (make-hash-table))
 (defvar *keymaps* (make-hash-table))
@@ -36,6 +36,7 @@
   (logand #xff (lognot 2))
   ;; (make-state-mask :lock)
   "Default keysym state mask to use during keysym-translation.")
+(defhook *keymap-hook* (:define))
 
 ;;; Conditions
 (define-condition kbd-error (error) ())
@@ -57,14 +58,15 @@
     (xkb::xkb-keysym-get-name code str 11)
     (cast str c-string)))
 
-(definline name-keysym (name &optional case-insensitive)
-  (xkb-keysym-from-name name (if case-insensitive 1 0)))
+(definline name-keysym (name &optional (case-insensitive t))
+  (let ((k (xkb-keysym-from-name name (if case-insensitive 1 0))))
+    (unless (zerop k) k)))
 
-(definline keysym-code-name (code)
-  (gethash code *keysym-name-table*))
+(definline keysym-code-name (name)
+  (gethash name *keysym-name-table*))
 
-(defun (setf keysym-code-name) (new code)
-  (setf (gethash code *keysym-name-table*) new))
+(defun (setf keysym-code-name) (new name)
+  (setf (gethash name *keysym-name-table*) new))
 
 (definline keysym-name-code (name)
   (gethash name *name-keysym-table*))
@@ -80,10 +82,7 @@
 
 (defun name-from-keysym-name (name)
   ;; REVIEW 2026-01-25: linear search of hash-table
-  (maphash (lambda (k v)
-             (when (equal v name)
-               (return-from name-from-keysym-name k)))
-           *keysym-name-table*))
+  (gethash name *keysym-name-table*))
 
 (defun name-from-keysym (key)
   (let ((k (keysym-code-name key)))
@@ -92,8 +91,9 @@
 
 (defun keysym-from-name (name)
   "Return the keysym corresponding to NAME."
-  (let ((f (keysym-code-name name)))
-    (keysym-name-code (or f name))))
+  (let ((f (name-from-keysym-name name)))
+    (or (keysym-name-code (or f name))
+        (name-keysym (or f name)))))
 
 (defun load-xkb-keysyms (&rest codes)
   "Retrieve and map the names of the keysyms CODES which are all integers. Returns a table of INT->STRING."
@@ -458,11 +458,13 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
   (alt boolean) 
   (shift boolean) 
   (super boolean) 
-  (hyper boolean))
+  (hyper boolean)
+  (altgr boolean))
 
-(defstruct key 
-  sym 
-  (mod 0 :type keymod))
+(defstruct key sym (mod 0 :type keymod))
+(defgeneric key (self)
+  (:documentation "Return the KEY associated with SELF."))
+(defgeneric (setf key) (new self))
 
 (macrolet ((defkfn (name)
              (with-gensyms (key mod)
@@ -475,12 +477,20 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
   (defkfn alt)
   (defkfn shift)
   (defkfn hyper)
-  (defkfn super))
+  (defkfn super)
+  (defkfn altgr))
 
 (definline key-mods-p (key) (not (zerop (key-mod key))))
 
+(defun altgr-key (key)
+  (declare (key key))
+  (with-slots (mod) key
+    (setf (key-mod key) (+ mod 64)) ; altgr is (ash 1 6) in KEYMOD
+    key))
+
 (defstruct keybind key cmd)
 (deftype keymap () '(vector keybind))
+(definline keymap-p (obj) (typep obj 'keymap))
 
 (defun parse-mods (mods end)
   "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
@@ -502,6 +512,23 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
                                  :item mods
                                  :reason (format nil "Unknown modifer character ~A" (char mods i))))))))
 
+(defun print-key-mods (key)
+  (concatenate 'string
+               (when (key-control key) "C-")
+               (when (key-meta key) "M-")
+               (when (key-alt key) "A-")
+               (when (key-shift key) "S-")
+               (when (key-super key) "s-")
+               (when (key-hyper key) "H-")))
+
+(defun print-key (key)
+  (format nil "~a~a"
+          (print-key-mods key)
+          (name-from-keysym (key-sym key))))
+
+(defun print-key-seq (seq)
+  (format nil "*~{~a~^ ~}" (mapcar 'print-key seq)))
+
 (defun parse-key (string)
   "Parse STRING and return a KEY structure. Raise an error of type
 KBD-PARSE-ERROR if the key failed to parse."
@@ -515,7 +542,93 @@ KBD-PARSE-ERROR if the key failed to parse."
 
 (defun parse-key-seq (keys)
   "KEYS is a key sequence. Parse it and return the list of keys."
-  (mapcar 'parse-key (ssplit "\\s+" keys)))
+  (mapcar 'parse-key (split-whitespace keys)))
+
+;; XXX: define-key needs to be fixed to handle a list of keys
+(defun define-key (map key cmd)
+  "Add a keybinding mapping for the key, KEY to the command,
+COMMAND, in the specified keymap. If COMMAND is nil, remove an
+existing binding. For example,
+
+Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
+  (declare (keymap map) (type (or key (eql t)) key))
+  (let ((binding (find key map :key 'keybind-key :test 'equalp)))
+    (cond 
+      (cmd
+       (when binding (setf map (delete binding map)))
+       (vector-push-extend (make-keybind :key key :cmd cmd) map))
+       (t (setf map (delete binding map))))
+    (funcall *keymap-hook* :define map)))
+
+(definline sparse-keymap ()
+  (declare (values keymap))
+  (make-array 0 :element-type 'keybind :fill-pointer 0))
+
+(defun lookup-cmd (keymap cmd)
+  "Return a list of keys in KEYMAP that are bound to CMD."
+  (loop for i in keymap
+     when (equal cmd (keybind-cmd i))
+     collect (keybind-key i)))
+
+(defun lookup-key (keymap key &optional default)
+  (acond
+   ((find key keymap :key 'binding-key :test 'equalp) (keybind-key it))
+   ((and default (find t keymap :key 'binding-key)) (keybind-key it))))
+
+(defun kbd (keys)
+  "This compiles a key string into a key structure used by
+`define-key', `set-prefix-key' and others."
+  (first (parse-key-seq keys)))
+
+(defmethod copy ((from key) (to key))
+  (setf (key-sym to) (key-sym from)
+        (key-mod to) (key-mod from)))
+
+(defun lookup-key-sequence (map key-seq)
+  "Return the command bound to KEY-SEQ in keymap MAP."
+  (when (keymap-symbol-p map)
+    (setf map (symbol-value map)))
+  (check-type map keymap)
+  (let* ((key (car key-seq))
+         (cmd (lookup-key map key)))
+    (cond ((null (cdr key-seq))
+           cmd)
+          (cmd
+           (if (keymap-or-keymap-symbol-p cmd)
+               (lookup-key-sequence cmd (cdr key-seq))
+               cmd))
+          (t nil))))
+
+(defun keymap-symbol-p (x)
+  (and (symbolp x)
+       (boundp x)
+       (keymap-p (symbol-value x))))
+
+(defun keymap-or-keymap-symbol-p (x)
+  (or (keymap-p x)
+      (keymap-symbol-p x)))
+
+(defun deref-keymaps (maps)
+  (map nil 
+       (lambda (m)
+         (if (keymap-symbol-p m)
+             (symbol-value m)
+             m))
+       maps))
+
+(defun search-keymap (command keymap &key (test 'equal))
+  "Search the keymap for the specified binding. Return the key
+sequences that run binding."
+  (labels ((search-it (cmd kmap key-seq)
+             (when (keymap-symbol-p kmap)
+               (setf kmap (symbol-value kmap)))
+             (check-type kmap keymap)
+             (loop for i across kmap
+                   if (funcall test (keybind-cmd i) cmd)
+                collect (cons (keybind-key i) key-seq)
+                else if (keymap-or-keymap-symbol-p (keybind-cmd i))
+                append (search-it cmd (keybind-cmd i) (cons (keybind-key i) key-seq)))))
+    (mapcar 'reverse (search-it command keymap nil))))
 
 ;;; Keyboard
 (defstruct keyboard 

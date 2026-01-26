@@ -58,6 +58,9 @@ of a string."
   (when s
     (string-trim char-bag s)))
 
+(defun split-whitespace (s &optional omit-nulls)
+  (ssplit "\\s+" s :omit-nulls omit-nulls))
+
 ;;;  TODO 2023-08-27: camel snake kebab
 (defun make-template-parser (start-delimiter end-delimiter &key (ignore-case nil))
   "Returns a closure than can substitute variables

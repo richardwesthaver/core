@@ -231,7 +231,15 @@
    :right-meta-keysym :left-alt-keysym
    :right-alt-keysym :left-super-keysym
    :right-super-keysym :left-hyper-keysym
-   :right-hyper-keysym))
+   :right-hyper-keysym :altgr-key
+   :key-sym :key-mod
+   :*keymap-hook* :define-key
+   :sparse-keymap :keybind-cmd
+   :lookup-key :lookup-cmd
+   :keybind-key :kbd
+   :lookup-key-sequence :search-keymap
+   :deref-keymaps :keymap-symbol-p
+   :keymap-or-keymap-symbol-p))
 
 (defpkg io/xsubseq
   (:use :cl)
