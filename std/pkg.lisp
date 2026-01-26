@@ -1093,7 +1093,7 @@
    :inc-counter :dec-counter
    ;; iterator protocol
    :iter :iterator :next :prev
-   :key :val
+   :skey :sval
    :seek :seek-to-first
    :seek-to-last :seek-for-prev
    :iter-valid-p :*iter*

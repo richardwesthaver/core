@@ -108,3 +108,5 @@ hints.")
     (setf (elt obj elt) new))
   (:method (new elt (obj hash-table))
     (setf (gethash elt obj) new)))
+
+(defverb val (self) (:accessor t))

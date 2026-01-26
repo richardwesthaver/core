@@ -629,7 +629,7 @@
 ;;; Traverses the tree but checks only the identifier nodes.
 (defmethod traverse ((rn renamer) (item ident) level)
   (declare (ignore level))
-  (setf (std:val item)
+  (setf (val item)
         (check-and-get-name rn (val item))))
 
 ;;; This Traverser checks whether braces really are necessary.

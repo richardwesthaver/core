@@ -30,10 +30,25 @@
 (defvar *keysym-name-table* (make-hash-table))
 (defvar *name-keysym-table* (make-hash-table :test #'equal))
 (defvar *dead-keysym-name-table* (make-hash-table))
+(defvar *keymaps* (make-hash-table))
+(defvar *keymap* nil)
+(defvar *default-keysym-translate-mask*
+  (logand #xff (lognot 2))
+  ;; (make-state-mask :lock)
+  "Default keysym state mask to use during keysym-translation.")
 
 ;;; Conditions
 (define-condition kbd-error (error) ())
 (deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
+(define-condition kbd-parse-error (kbd-error invalid-item) ()
+  (:default-initargs :reason nil)
+  (:report 
+   (lambda (c s)
+     (format s "Failed to parse key string: ~s" (error-item c))
+     (when-let ((reason (error-reason c)))
+       (format s "~%Reason: ~A" reason)))))
+(definline kbd-parse-error (str &optional reason) (error 'kbd-parse-error :item str :reason reason))
+
 ;;; Keysym
 (deftype keysym () '(unsigned-byte 32))
 
@@ -42,11 +57,43 @@
     (xkb::xkb-keysym-get-name code str 11)
     (cast str c-string)))
 
+(definline name-keysym (name &optional case-insensitive)
+  (xkb-keysym-from-name name (if case-insensitive 1 0)))
+
 (definline keysym-code-name (code)
   (gethash code *keysym-name-table*))
 
+(defun (setf keysym-code-name) (new code)
+  (setf (gethash code *keysym-name-table*) new))
+
 (definline keysym-name-code (name)
   (gethash name *name-keysym-table*))
+
+(defun (setf keysym-name-code) (new name)
+  (setf (gethash name *name-keysym-table*) new))
+
+(defmacro define-keysym-names (&body body)
+  "Map the elements of each form to (SETF (KEYSYM-CODE-NAME 2) 1)."
+  `(setf ,@(mapcan (lambda (x) (destructuring-bind (a b) x
+                                 `((keysym-code-name ,a) ,b)))
+                   body)))
+
+(defun name-from-keysym-name (name)
+  ;; REVIEW 2026-01-25: linear search of hash-table
+  (maphash (lambda (k v)
+             (when (equal v name)
+               (return-from name-from-keysym-name k)))
+           *keysym-name-table*))
+
+(defun name-from-keysym (key)
+  (let ((k (keysym-code-name key)))
+    (or (name-from-keysym-name k)
+        k)))
+
+(defun keysym-from-name (name)
+  "Return the keysym corresponding to NAME."
+  (let ((f (keysym-code-name name)))
+    (keysym-name-code (or f name))))
 
 (defun load-xkb-keysyms (&rest codes)
   "Retrieve and map the names of the keysyms CODES which are all integers. Returns a table of INT->STRING."
@@ -60,6 +107,18 @@
 
 (defun load-xkb-keysyms-file (file)
   (apply 'load-xkb-keysyms (read-lisp-file file)))
+
+(eval-always
+  (defun keysym (key &rest bytes)
+    "Build a 32-bit keysym. KEY is an integer or character and BYTES optionally
+fill in the lower bytes."
+    (declare (dynamic-extent bytes))
+    (etypecase key
+      (keysym
+       (dolist (b bytes key) (setq key (+ (ash key 8) b))))
+      (character
+       (or (gethash key *character-keysym-table*)
+           (error "~s isn't a keysym" key))))))
 
 (defun keysym-set (name)
   (cdr (assoc name *keysym-sets*)))
@@ -86,18 +145,7 @@
   "Define a set of keysym-sets via (SETF (KEYSYM-SET NAME) (LIST FIRST LAST) ...)"
   `(setf ,@(mapcan (lambda (x) (destructuring-bind (name first last) x
                                  `((keysym-set ,name) (list ,first ,last))))
-                     body)))
-
-(defun keysym (key &rest bytes)
-  "Build a 32-bit keysym. KEY is an integer or character and BYTES optionally
-fill in the lower bytes."
-  (declare (dynamic-extent bytes))
-    (etypecase key
-      (keysym
-       (dolist (b bytes key) (setq key (+ (ash key 8) b))))
-      (character
-       (or (gethash key *character-keysym-table*)
-           (error "~s isn't a keysym" key)))))
+                   body)))
 
 (define-keysym-sets 
   (:latin-1 (keysym 0 0) (keysym 0 255))
@@ -125,145 +173,351 @@ fill in the lower bytes."
   (:xkb         (keysym 254 0) (keysym 254 255))
   (:keyboard (keysym 255 0) (keysym 255 255)))
 
-(defmacro define-keysym (obj keysym &key lower translate modifiers mask))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defconstant character-set-switch-keysym (keysym 255 126))
+  (defconstant left-shift-keysym (keysym 255 225))
+  (defconstant right-shift-keysym (keysym 255 226))
+  (defconstant left-control-keysym (keysym 255 227))
+  (defconstant right-control-keysym (keysym 255 228))
+  (defconstant caps-lock-keysym (keysym 255 229))
+  (defconstant shift-lock-keysym (keysym 255 230))
+  (defconstant left-meta-keysym (keysym 255 231))
+  (defconstant right-meta-keysym (keysym 255 232))
+  (defconstant left-alt-keysym (keysym 255 233))
+  (defconstant right-alt-keysym (keysym 255 234))
+  (defconstant left-super-keysym (keysym 255 235))
+  (defconstant right-super-keysym (keysym 255 236))
+  (defconstant left-hyper-keysym (keysym 255 237))
+  (defconstant right-hyper-keysym (keysym 255 238)))
 
-#+nil
+(defun define-keysym (obj keysym &key lower mods mask)
+"Define the translation from keysym/modifiers to a (usually
+character) object. Any previous keysym definition with KEYSYM
+and MODS is deleted before the new definition is added.
+
+MODS is either a modifier-mask or list containing intermixed
+keysyms and state-mask-keys specifying when to use this
+keysym-translation. The default is NIL.
+
+MASK is either a KEYMOD or list containing intermixed keysyms and
+state-mask-keys specifying which modifiers to look at
+(i.e. modifiers not specified are ignored).
+
+If mask is :MODIFIERS then the mask is the same as the modifiers
+(i.e. modifiers not specified by modifiers are don't cares)
+The default mask is *default-keysym-translate-mask*
+
+LOWER is used for uppercase alphabetic keysyms. The value is the associated
+lowercase keysym. This information is used by the
+predicate (for caps-lock computations) and by the keysym-downcase function."
+  (declare ((or character keyword) obj)
+           (keysym keysym)
+           ((or (unsigned-byte 16) list) mods)
+           ((or (member :modifiers) (unsigned-byte 16) list) mask)
+           ((or null keysym) lower))
+  (setf (gethash keysym *character-keysym-table*)
+        (cond
+          (mask
+           (when (or (null mods) (and (numberp mods) (zerop mods)))
+             (error "Mask with no modifiers"))
+           (list obj lower mods mask))
+          (mods (list obj lower mods))
+          (lower (list obj lower))
+          (t (list obj)))))
+
+(defun undefine-keysym (obj keysym &optional mods)
+  (declare ((or character t) obj)
+           (keysym keysym)
+           ((or (unsigned-byte 16) list) mods))
+  (flet ((match (key entry)
+           (let ((object (car key))
+                 (modifiers (cdr key)))
+             (or (eql object (car entry))
+                 (equal modifiers (fourth entry))))))
+    (let ((previous (gethash keysym *character-keysym-table*))
+          (key (cons obj mods)))
+      (when (and previous (find key previous :test #'match))
+        (setq previous (delete key previous :test #'match))
+        (setf (gethash keysym *character-keysym-table*) previous)))))
+
+(define-keysym :character-set-switch character-set-switch-keysym)
+(define-keysym :left-shift left-shift-keysym)
+(define-keysym :right-shift right-shift-keysym)
+(define-keysym :left-control left-control-keysym)
+(define-keysym :right-control right-control-keysym)
+(define-keysym :caps-lock caps-lock-keysym)
+(define-keysym :shift-lock shift-lock-keysym)
+(define-keysym :left-meta left-meta-keysym)
+(define-keysym :right-meta right-meta-keysym)
+(define-keysym :left-alt left-alt-keysym)
+(define-keysym :right-alt right-alt-keysym)
+(define-keysym :left-super left-super-keysym)
+(define-keysym :right-super right-super-keysym)
+(define-keysym :left-hyper left-hyper-keysym)
+(define-keysym :right-hyper right-hyper-keysym)
+
+(define-keysym #\space 032)
+(define-keysym #\! 033)
+(define-keysym #\" 034)
+(define-keysym #\# 035)
+(define-keysym #\$ 036)
+(define-keysym #\% 037)
+(define-keysym #\& 038)
+(define-keysym #\' 039)
+(define-keysym #\( 040)
+(define-keysym #\) 041)
+(define-keysym #\* 042)
+(define-keysym #\+ 043)
+(define-keysym #\, 044)
+(define-keysym #\- 045)
+(define-keysym #\. 046)
+(define-keysym #\/ 047)
+(define-keysym #\0 048)
+(define-keysym #\1 049)
+(define-keysym #\2 050)
+(define-keysym #\3 051)
+(define-keysym #\4 052)
+(define-keysym #\5 053)
+(define-keysym #\6 054)
+(define-keysym #\7 055)
+(define-keysym #\8 056)
+(define-keysym #\9 057)
+(define-keysym #\: 058)
+(define-keysym #\; 059)
+(define-keysym #\< 060)
+(define-keysym #\= 061)
+(define-keysym #\> 062)
+(define-keysym #\? 063)
+(define-keysym #\@ 064)
+(define-keysym #\A 065 :lower 097)
+(define-keysym #\B 066 :lower 098)
+(define-keysym #\C 067 :lower 099)
+(define-keysym #\D 068 :lower 100)
+(define-keysym #\E 069 :lower 101)
+(define-keysym #\F 070 :lower 102)
+(define-keysym #\G 071 :lower 103)
+(define-keysym #\H 072 :lower 104)
+(define-keysym #\I 073 :lower 105)
+(define-keysym #\J 074 :lower 106)
+(define-keysym #\K 075 :lower 107)
+(define-keysym #\L 076 :lower 108)
+(define-keysym #\M 077 :lower 109)
+(define-keysym #\N 078 :lower 110)
+(define-keysym #\O 079 :lower 111)
+(define-keysym #\P 080 :lower 112)
+(define-keysym #\Q 081 :lower 113)
+(define-keysym #\R 082 :lower 114)
+(define-keysym #\S 083 :lower 115)
+(define-keysym #\T 084 :lower 116)
+(define-keysym #\U 085 :lower 117)
+(define-keysym #\V 086 :lower 118)
+(define-keysym #\W 087 :lower 119)
+(define-keysym #\X 088 :lower 120)
+(define-keysym #\Y 089 :lower 121)
+(define-keysym #\Z 090 :lower 122)
+(define-keysym #\[ 091)
+(define-keysym #\\ 092)
+(define-keysym #\] 093)
+(define-keysym #\^ 094)
+(define-keysym #\_ 095)
+(define-keysym #\` 096)
+(define-keysym #\a 097)
+(define-keysym #\b 098)
+(define-keysym #\c 099)
+(define-keysym #\d 100)
+(define-keysym #\e 101)
+(define-keysym #\f 102)
+(define-keysym #\g 103)
+(define-keysym #\h 104)
+(define-keysym #\i 105)
+(define-keysym #\j 106)
+(define-keysym #\k 107)
+(define-keysym #\l 108)
+(define-keysym #\m 109)
+(define-keysym #\n 110)
+(define-keysym #\o 111)
+(define-keysym #\p 112)
+(define-keysym #\q 113)
+(define-keysym #\r 114)
+(define-keysym #\s 115)
+(define-keysym #\t 116)
+(define-keysym #\u 117)
+(define-keysym #\v 118)
+(define-keysym #\w 119)
+(define-keysym #\x 120)
+(define-keysym #\y 121)
+(define-keysym #\z 122)
+(define-keysym #\{ 123)
+(define-keysym #\| 124)
+(define-keysym #\} 125)
+(define-keysym #\~ 126)
+(progn   ;; Semi-standard characters
+  (define-keysym #\rubout (keysym 255 255))	; :tty
+  (define-keysym #\tab (keysym 255 009))	; :tty
+  (define-keysym #\linefeed (keysym 255 010))	; :tty
+  (define-keysym #\page (keysym 009 227))	; :special
+  (define-keysym #\return (keysym 255 013))	; :tty
+  (define-keysym #\backspace (keysym 255 008)))	; :tty
+
+;; these keysym definitions are only correct if the underlying lisp's
+;; definition of characters between 160 and 255 match latin1 exactly. If the
+;; characters are in some way locale-dependent (as, I believe, in Allegro8) or
+;; are treated as opaque without any notions of graphicness or case (as in
+;; cmucl and openmcl) then defining these keysyms are either not useful or
+;; wrong. -- CSR, 2006-03-14
+
+;; NOTE 2026-01-25: includes non-BASE-CHARs.
 (progn
-  (define-keysym :character-set-switch character-set-switch-keysym)
-  (define-keysym :left-shift left-shift-keysym)
-  (define-keysym :right-shift right-shift-keysym)
-  (define-keysym :left-control left-control-keysym)
-  (define-keysym :right-control right-control-keysym)
-  (define-keysym :caps-lock caps-lock-keysym)
-  (define-keysym :shift-lock shift-lock-keysym)
-  (define-keysym :left-meta left-meta-keysym)
-  (define-keysym :right-meta right-meta-keysym)
-  (define-keysym :left-alt left-alt-keysym)
-  (define-keysym :right-alt right-alt-keysym)
-  (define-keysym :left-super left-super-keysym)
-  (define-keysym :right-super right-super-keysym)
-  (define-keysym :left-hyper left-hyper-keysym)
-  (define-keysym :right-hyper right-hyper-keysym)
+  (do ((i 160 (+ i 1)))
+      ((>= i 256))
+    (if (or (<= #xc0 i #xd6)
+            (<= #xd8 i #xde))
+        (define-keysym (code-char i) i :lower (+ i 32))
+        (define-keysym (code-char i) i))))
 
-  (define-keysym #\space 032)
-  (define-keysym #\! 033)
-  (define-keysym #\" 034)
-  (define-keysym #\# 035)
-  (define-keysym #\$ 036)
-  (define-keysym #\% 037)
-  (define-keysym #\& 038)
-  (define-keysym #\' 039)
-  (define-keysym #\( 040)
-  (define-keysym #\) 041)
-  (define-keysym #\* 042)
-  (define-keysym #\+ 043)
-  (define-keysym #\, 044)
-  (define-keysym #\- 045)
-  (define-keysym #\. 046)
-  (define-keysym #\/ 047)
-  (define-keysym #\0 048)
-  (define-keysym #\1 049)
-  (define-keysym #\2 050)
-  (define-keysym #\3 051)
-  (define-keysym #\4 052)
-  (define-keysym #\5 053)
-  (define-keysym #\6 054)
-  (define-keysym #\7 055)
-  (define-keysym #\8 056)
-  (define-keysym #\9 057)
-  (define-keysym #\: 058)
-  (define-keysym #\; 059)
-  (define-keysym #\< 060)
-  (define-keysym #\= 061)
-  (define-keysym #\> 062)
-  (define-keysym #\? 063)
-  (define-keysym #\@ 064)
-  (define-keysym #\A 065 :lowercase 097)
-  (define-keysym #\B 066 :lowercase 098)
-  (define-keysym #\C 067 :lowercase 099)
-  (define-keysym #\D 068 :lowercase 100)
-  (define-keysym #\E 069 :lowercase 101)
-  (define-keysym #\F 070 :lowercase 102)
-  (define-keysym #\G 071 :lowercase 103)
-  (define-keysym #\H 072 :lowercase 104)
-  (define-keysym #\I 073 :lowercase 105)
-  (define-keysym #\J 074 :lowercase 106)
-  (define-keysym #\K 075 :lowercase 107)
-  (define-keysym #\L 076 :lowercase 108)
-  (define-keysym #\M 077 :lowercase 109)
-  (define-keysym #\N 078 :lowercase 110)
-  (define-keysym #\O 079 :lowercase 111)
-  (define-keysym #\P 080 :lowercase 112)
-  (define-keysym #\Q 081 :lowercase 113)
-  (define-keysym #\R 082 :lowercase 114)
-  (define-keysym #\S 083 :lowercase 115)
-  (define-keysym #\T 084 :lowercase 116)
-  (define-keysym #\U 085 :lowercase 117)
-  (define-keysym #\V 086 :lowercase 118)
-  (define-keysym #\W 087 :lowercase 119)
-  (define-keysym #\X 088 :lowercase 120)
-  (define-keysym #\Y 089 :lowercase 121)
-  (define-keysym #\Z 090 :lowercase 122)
-  (define-keysym #\[ 091)
-  (define-keysym #\\ 092)
-  (define-keysym #\] 093)
-  (define-keysym #\^ 094)
-  (define-keysym #\_ 095)
-  (define-keysym #\` 096)
-  (define-keysym #\a 097)
-  (define-keysym #\b 098)
-  (define-keysym #\c 099)
-  (define-keysym #\d 100)
-  (define-keysym #\e 101)
-  (define-keysym #\f 102)
-  (define-keysym #\g 103)
-  (define-keysym #\h 104)
-  (define-keysym #\i 105)
-  (define-keysym #\j 106)
-  (define-keysym #\k 107)
-  (define-keysym #\l 108)
-  (define-keysym #\m 109)
-  (define-keysym #\n 110)
-  (define-keysym #\o 111)
-  (define-keysym #\p 112)
-  (define-keysym #\q 113)
-  (define-keysym #\r 114)
-  (define-keysym #\s 115)
-  (define-keysym #\t 116)
-  (define-keysym #\u 117)
-  (define-keysym #\v 118)
-  (define-keysym #\w 119)
-  (define-keysym #\x 120)
-  (define-keysym #\y 121)
-  (define-keysym #\z 122)
-  (define-keysym #\{ 123)
-  (define-keysym #\| 124)
-  (define-keysym #\} 125)
-  (define-keysym #\~ 126)
+(define-keysym-names 
+  ("RET" "Return")
+  ("ESC" "Escape")
+  ("TAB" "Tab")
+  ("DEL" "BackSpace")
+  ("SPC" "space")
+  ("!" "exclam")
+  ("\"" "quotedbl")
+  ("$" "dollar")
+  ("£" "sterling")
+  ("%" "percent")
+  ("&" "ampersand")
+  ("'" "apostrophe")
+  ("`" "grave")
+  ("&" "ampersand")
+  ("(" "parenleft")
+  (")" "parenright")
+  ("*" "asterisk")
+  ("+" "plus")
+  ("," "comma")
+  ("-" "minus")
+  ("." "period")
+  ("/" "slash")
+  (":" "colon")
+  (";" "semicolon")
+  ("<" "less")
+  ("=" "equal")
+  (">" "greater")
+  ("?" "question")
+  ("@" "at")
+  ("[" "bracketleft")
+  ("\\" "backslash")
+  ("]" "bracketright")
+  ("^" "asciicircum")
+  ("_" "underscore")
+  ("#" "numbersign")
+  ("{" "braceleft")
+  ("|" "bar")
+  ("}" "braceright")
+  ("~" "asciitilde")
+  ("«" "guillemotleft")
+  ("»" "guillemotright")
+  ("À" "Agrave")
+  ("à" "agrave")
+  ("Ç" "Ccedilla")
+  ("ç" "ccedilla")
+  ("É" "Eacute")
+  ("é" "eacute")
+  ("È" "Egrave")
+  ("è" "egrave")
+  ("Ê" "Ecircumflex")
+  ("ê" "ecircumflex"))
 
-  (progn   ;; Semi-standard characters
-    (define-keysym #\rubout (keysym 255 255))	; :tty
-    (define-keysym #\tab (keysym 255 009))	; :tty
-    (define-keysym #\linefeed (keysym 255 010))	; :tty
-    (define-keysym #\page (keysym 009 227))	; :special
-    (define-keysym #\return (keysym 255 013))	; :tty
-    (define-keysym #\backspace (keysym 255 008)))	; :tty
+(defun keysym-downcase (keysym)
+  (declare (keysym keysym))
+  (let ((val (gethash keysym *character-keysym-table*)))
+    (or (and val (third (first val))) keysym)))
 
-  ;; these keysym definitions are only correct if the underlying lisp's
-  ;; definition of characters between 160 and 255 match latin1 exactly. If the
-  ;; characters are in some way locale-dependent (as, I believe, in Allegro8) or
-  ;; are treated as opaque without any notions of graphicness or case (as in
-  ;; cmucl and openmcl) then defining these keysyms is either not useful or
-  ;; wrong. -- CSR, 2006-03-14
-  (progn
-    (do ((i 160 (+ i 1)))
-        ((>= i 256))
-      (if (or (<= #xc0 i #xd6)
-              (<= #xd8 i #xde))
-          (define-keysym (code-char i) i :lowercase (+ i 32))
-          (define-keysym (code-char i) i)))))
+(defun keysym-cased-p (keysym)
+  ;; Returns T if keysym has a lowercase equivalent.
+  (declare (keysym keysym))
+  (declare (values (or null keysym)))
+  (let ((translations (gethash keysym *character-keysym-table*)))
+    (and translations
+         (third (first translations)))))
 
-;;; Objects
+(defun character-keysyms (char)
+  "Given a character, return a list of all matching keysyms."
+  (collecting
+    (maphash #'(lambda (keysym mappings)
+                 (dolist (mapping mappings)
+                   (when (eql (car mapping) char)
+                     (collect keysym))))
+             *character-keysym-table*)))
+
+;;; Key
+;; Note that the XLIB 'modifier-mask' type is (unsigned-byte 16).
+(define-bitfield keymod 
+  (control boolean) 
+  (meta boolean) 
+  (alt boolean) 
+  (shift boolean) 
+  (super boolean) 
+  (hyper boolean))
+
+(defstruct key 
+  sym 
+  (mod 0 :type keymod))
+
+(macrolet ((defkfn (name)
+             (with-gensyms (key mod)
+               `(definline ,(symbolicate "KEY-" name) (,key)
+                  (declare (key ,key))
+                  (lety ((,mod (key-mod ,key) :type keymod))
+                    (,(symbolicate "KEYMOD-" name) ,mod))))))
+  (defkfn control)
+  (defkfn meta)
+  (defkfn alt)
+  (defkfn shift)
+  (defkfn hyper)
+  (defkfn super))
+
+(definline key-mods-p (key) (not (zerop (key-mod key))))
+
+(defstruct keybind key cmd)
+(deftype keymap () '(vector keybind))
+
+(defun parse-mods (mods end)
+  "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
+  (unless (evenp end)
+    (error 'kbd-parse-error :item mods
+                            :reason "Did you forget to separate modifier characters with '-'?"))
+  (apply 'make-keymod
+         (loop for i from 0 below end by 2
+               when (char/= (char mods (1+ i)) #\-)
+               do (error 'kbd-parse-error :item mods)
+               nconc (case (char mods i)
+                       (#\M (list :meta t))
+                       (#\A (list :alt t))
+                       (#\C (list :control t))
+                       (#\H (list :hyper t))
+                       (#\s (list :super t))
+                       (#\S (list :shift t))
+                       (t (error 'kbd-parse-error 
+                                 :item mods
+                                 :reason (format nil "Unknown modifer character ~A" (char mods i))))))))
+
+(defun parse-key (string)
+  "Parse STRING and return a KEY structure. Raise an error of type
+KBD-PARSE-ERROR if the key failed to parse."
+  (let* ((p (when (> (length string) 2)
+              (position #\- string :from-end t :end (- (length string) 1))))
+         (mods (parse-mods string (if p (1+ p) 0)))
+         (keysym (keysym-from-name (subseq string (if p (1+ p) 0)))))
+    (if keysym
+        (make-key :sym keysym :mod mods)
+        (error 'kbd-parse-error :item string))))
+
+(defun parse-key-seq (keys)
+  "KEYS is a key sequence. Parse it and return the list of keys."
+  (mapcar 'parse-key (ssplit "\\s+" keys)))
+
+;;; Keyboard
 (defstruct keyboard 
   path 
   (sap nil :type (or null (alien (* libevdev)))) ;; device
@@ -306,7 +560,7 @@ device."
       (loop for i from evdev::+key-reserved+ upto evdev::+key-min-interesting+
             when (evdev-bit-p keybits i)
             return t))))
-      
+
 (defun make-keyboard-from-dev (dev &rest args)
   "Return a KEYBOARD given a device, keymap, and compose table. Keyword argument
 ERROR when non-nil (the default) causes an error to be signaled if the device
@@ -354,7 +608,7 @@ can't be opened, else returns nil."
     (dotimes (i count ret)
       (multiple-value-bind (s ms type code val) (device-read-event dev)
         (push (list type code val (cons s ms)) ret)))))
-        
+
 (defmethod init ((self (eql :kbd)) &key (directory "/dev/input/"))
   (load-kbd-libs)
   (when directory (setq *keyboards* (get-keyboards directory))))

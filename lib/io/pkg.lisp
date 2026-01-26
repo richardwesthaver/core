@@ -31,7 +31,7 @@
    :fill-buffer :header
    :header-type :header-length
    :offset
-   :snapshot))
+           :snapshot))
 
 (defpkg :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)
@@ -40,25 +40,25 @@
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked
    :peeked-count
-   :peeked-size
+           :peeked-size
    :make-flex-stream
-   :make-in-memory-output-stream
+           :make-in-memory-output-stream
    :make-in-memory-input-stream
-   :with-output-to-sequence
+           :with-output-to-sequence
    :with-input-from-sequence
-   :output-stream-sequence-length
+           :output-stream-sequence-length
    :get-output-stream-sequence
-   :peek-byte
+           :peek-byte
    :peeked
-   :flex-stream
+           :flex-stream
    :flex-input-stream
-   :flex-output-stream
+           :flex-output-stream
    :flex-io-stream
-   :make-decoding-stream
+           :make-decoding-stream
    :decoding-stream
-   :+buffer-size+
+           :+buffer-size+
    :dec-fill-buffer
-   :needs-to-fill-buffer-p))
+           :needs-to-fill-buffer-p))
 
 (defpkg :io/static
   (:use :cl :std :sb-alien :io/stream)
@@ -162,10 +162,8 @@
    :compress-with :decompress-with
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
-   :*compression-types*
-   :compress-octet-vector
-   :flush
-   :compress-octet
+   :*compression-types* :compress-octet-vector
+   :flush :compress-octet
    :with-compressor))
 
 (defpkg :io/zstd
@@ -202,32 +200,38 @@
    #:reserved-block-type-error
    #:invalid-stored-block-length-error
    #:bzip2-error
-   #:invalid-bzip2-data
-   :deflate-compressor
-   :zlib-compressor
-   :gzip-compressor))
+   #:invalid-bzip2-data :deflate-compressor
+   :zlib-compressor :gzip-compressor))
 
 (defpkg :io/kbd
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error
-   :load-kbd-libs
-   :keyboard
-   :keysym
-   :define-keysym
-   :define-keysym-sets
-   :keysym-set
-   :keysym-set-name
-   :load-xkb-keysyms
-   :keysym-name
-   :keysym-name-code
-   :device-read-event
-   :print-device-input-info
-   :make-keyboard-from-dev
-   :keyboard-device-p
-   :new-device-from-path
-   :evdev-bit-p
-   :kbd-code-name
-   :get-keyboards))
+   :load-kbd-libs :keyboard
+   :keysym :define-keysym
+   :define-keysym-sets :keysym-set
+   :keysym-set-name :load-xkb-keysyms
+   :define-keysym-names :keysym-name
+   :keysym-name-code :keysym-from-name
+   :name-from-keysym :device-read-event
+   :print-device-input-info :make-keyboard-from-dev
+   :keyboard-device-p :new-device-from-path
+   :evdev-bit-p :kbd-code-name
+   :get-keyboards :undefine-keysym
+   :key :keymap
+   :keybind :keymod
+   :key-control :key-meta
+   :key-alt :key-shift
+   :key-super :key-hyper
+   :key-mods-p :keysym-cased-p
+   :keysym-downcase :define-keysym
+   :character-set-switch-keysym :left-shift-keysym
+   :right-shift-keysym :left-control-keysym
+   :right-control-keysym :caps-lock-keysym
+   :shift-lock-keysym :left-meta-keysym
+   :right-meta-keysym :left-alt-keysym
+   :right-alt-keysym :left-super-keysym
+   :right-super-keysym :left-hyper-keysym
+   :right-hyper-keysym))
 
 (defpkg io/xsubseq
   (:use :cl)

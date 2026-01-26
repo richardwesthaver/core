@@ -16,7 +16,7 @@
 (defpkg :obj/val
   (:nicknames :val)
   (:use :cl :std)
-  (:export :get-val :rem-val :get-value))
+  (:export :get-val :rem-val :get-value :val))
 
 ;;; Meta Packages
 (defpkg :obj/meta/stealth

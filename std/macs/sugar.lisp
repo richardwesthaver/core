@@ -326,7 +326,7 @@ Examples:
 		      bindings)
 	      `((locally ,@body)))))))
 
-(flet ((let-typed-expansion (letsym bindings body)
+(flet ((lety-expansion (letsym bindings body)
          (multiple-value-bind (body decl) (parse-body body)
            `(,letsym (,@(mapcar #'(lambda (x) (subseq x 0 2)) bindings))
                      ,@(let ((types (remove nil (mapcar #'(lambda (x) (destructuring-bind (s e &key (type t)) x
@@ -346,12 +346,12 @@ Examples:
   Example:
 
   (macroexpand-1
-      `(let-typed ((x 1 :type fixnum))
+      `(lety ((x 1 :type fixnum))
           (+ 1 x)))
   => (LET ((X 1))
         (DECLARE (TYPE FIXNUM X))
         (+ 1 X))"
-    (let-typed-expansion 'let bindings body))
+    (lety-expansion 'let bindings body))
 
   (defmacro lety* (bindings &body body)
     "
@@ -361,9 +361,9 @@ Examples:
   Example:
 
   (macroexpand-1
-      `(let*-typed ((x 1 :type fixnum))
+      `(lety* ((x 1 :type fixnum))
           (+ 1 x)))
   => (LET* ((X 1))
         (DECLARE (TYPE FIXNUM X))
         (+ 1 X))"
-    (let-typed-expansion 'let* bindings body)))
+    (lety-expansion 'let* bindings body)))

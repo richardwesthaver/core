@@ -114,12 +114,19 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Interactive
 (deftype itype () '(list))
 
+;; Used in DEFCOMMAND for validation, not in CALL-INTERACTIVELY (currently).
 (defun check-itype (form &optional lambda-list)
   "Validate the INTERACTIVE typespec FORM, optionally against a COMMAND's
 LAMBDA-LIST."
   (assert (listp form) nil 'invalid-itype :ast form :args lambda-list)
   (when (and lambda-list form)
-    (assert (match-lambda-lists (mapcar (lambda (x) (if (consp x) (car x) x)) form) lambda-list) nil 'invalid-itype :ast form :args lambda-list)))
+    (multiple-value-bind (bits req opt rest key aux) ;; check total arg count
+        (parse-lambda-list lambda-list :context "an interactive lambda list" :condition-class 'invalid-itype)
+      (declare (ignore bits))
+      (assert (>= (length (nconc req opt rest key aux)) 
+                  (length form))
+              nil 
+              'invalid-itype :ast form :args lambda-list))))
 
 ;; Set the interactive declaration information for this function. Each form in
 ;; ARGS corresponds with an element of the function's lambda list where the
