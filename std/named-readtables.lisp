@@ -12,31 +12,6 @@
 ;; behavior (using standard) versus your source code (custom).
 
 ;;; Code:
-(defpackage :std/named-readtables
-  (:use :cl)
-  (:export
-   :defreadtable
-   :with-readtable
-   :in-readtable
-   :make-readtable
-   :merge-readtables-into
-   :find-readtable
-   :ensure-readtable
-   :rename-readtable
-   :readtable-name
-   :register-readtable
-   :unregister-readtable
-   :copy-named-readtable
-   :list-all-named-readtables
-   ;; Types
-   :named-readtable-designator
-   ;; Conditions
-   :readtable-error
-   :reader-macro-conflict
-   :readtable-does-already-exist
-   :readtable-does-not-exist
-   :parse-body))
-
 (in-package :std/named-readtables)
 
 ;;; Taken from SWANK (which is Public Domain.)
@@ -89,7 +64,7 @@ use as an initialization form for structure and class-slots, and
 a default value for required keyword arguments."
   (error "Required argument ~@[~S ~]missing." name))
 
-(defun ensure-list (list)
+(defun ensure-list* (list)
   "If LIST is a list, it is returned. Otherwise returns the list
 designated by LIST."
   (if (listp list)

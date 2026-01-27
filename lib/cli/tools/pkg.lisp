@@ -237,6 +237,8 @@
    :run-sbcl
    :sbcl-error
    :with-sbcl
+   :with-core
+   :run-core
    :*sbcl-runtime-options*
    :*sbcl-toplevel-options*))
 

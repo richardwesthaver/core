@@ -5,7 +5,7 @@
 ;;; Code:
 (pkg:defpkg :std-int
   (:use :cl)
-  (:use-reexport :std/named-readtables :std/defpkg)
+  (:use-reexport :std/defpkg)
   (:export :*std-packages*))
 
 (in-package :std-int)
@@ -38,7 +38,7 @@
 
 (defpkg :std/list
   (:use :cl)
-  (:shadowing-import-from :sb-int 
+  (:shadowing-import-from :sb-impl
    :ensure-list :recons :memq :assq
    :proper-list-of-length-p :proper-list-p :singleton-p)
   (:import-from :std/sym :with-gensyms)
@@ -142,7 +142,34 @@
    :hook-value
    :add-hook
    :remove-hook
-   :concat))
+   :concat
+   :parse-body
+   :define-api
+   :destructure-case))
+
+(defpackage :std/named-readtables
+  (:use :cl :std/prim)
+  (:export
+   :defreadtable
+   :with-readtable
+   :in-readtable
+   :make-readtable
+   :merge-readtables-into
+   :find-readtable
+   :ensure-readtable
+   :rename-readtable
+   :readtable-name
+   :register-readtable
+   :unregister-readtable
+   :copy-named-readtable
+   :list-all-named-readtables
+   ;; Types
+   :named-readtable-designator
+   ;; Conditions
+   :readtable-error
+   :reader-macro-conflict
+   :readtable-does-already-exist
+   :readtable-does-not-exist))
 
 (defpkg :std/condition
   (:use :cl)

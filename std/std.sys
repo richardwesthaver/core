@@ -14,14 +14,16 @@
  :version "0.1.0"
  :require (:ppcre)
  :components 
- ((:file "named-readtables") (:file "defpkg")
-  (:dir "num")
+ ((:file "defpkg")
   (:pkg "pkg")
   (:file "condition")
   (:file "sym")
   (:file "list")
   (:file "prim")
   (:file "kernel")
+  (:file "api")
+  (:file "named-readtables")
+  (:dir "num")
   (:file "type")
   (:file "string")
   (:file "stream")

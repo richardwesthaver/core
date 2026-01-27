@@ -79,7 +79,9 @@ evaluated once and bound to a G!-symbol for use in BODY."
 		syms)
 	   ,@body)))))
 
-;;; Util
+;;; Utils
+(defun concat (&rest strings)
+  (apply 'concatenate 'string strings))
 (defmacro pswap (a b)
   "Swap the values of A and B using PSETF."
   `(psetf ,a ,b
@@ -276,6 +278,3 @@ It must never be modified, though only good implementations will even enforce th
   "Read all forms in a lisp FILE."
   (with-open-file (f file :if-does-not-exist if-does-not-exist :external-format external-format)
     (read-lisp-until-end f)))
-
-(defun concat (&rest strings)
-  (apply 'concatenate 'string strings))

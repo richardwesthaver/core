@@ -6,6 +6,7 @@
 (in-package :cli/tools/sbcl)
 
 (define-cli-tool :sbcl)
+(define-cli-tool :core)
 
 ;; ref: section 3.3.1 of the manual
 (defvar *sbcl-runtime-options*
@@ -58,4 +59,17 @@
 keys are the same as those listed in `sbcl --help` and the BODY is wrapped in
 a PROGN and passed to the --eval flag."
   `(run-sbcl ,@(when keys (parse-sbcl-option-keys keys))
+             ,@(when body (list "--eval" (with-output-to-string (s) (prin1 `(progn ,@body) s))))))
+
+(defun run-core (&rest args)
+  (let ((proc (sb-ext:run-program *core* (or args nil) :output *sbcl-output* :input *sbcl-input*)))
+    (if (eq 0 (sb-ext:process-exit-code proc))
+        nil
+        (core-error "CORE command failed: ~A ~A" *core* (or args "")))))
+
+(defmacro with-core ((&rest keys) &body body)
+  "Convenience macro for running an external CORE process in its own shell. The
+keys are the same as those listed in `sbcl --help` and the BODY is wrapped in
+a PROGN and passed to the --eval flag."
+  `(run-core ,@(when keys (parse-sbcl-option-keys keys))
              ,@(when body (list "--eval" (with-output-to-string (s) (prin1 `(progn ,@body) s))))))

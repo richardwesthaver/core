@@ -309,7 +309,7 @@ create their own dedicated thread when started."))
 
 (defmethod print-object ((self logger) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~@[:threaded ~* ~]~@[:running ~* ~]:size ~d"
+    (format stream "~@[:threaded~*~]~@[/running~* ~]:size ~d"
             (log-thread self) (log-thread-continue self) (length (queue self)))))
 
 (defmethod start ((self logger))
@@ -413,6 +413,8 @@ first element is of type LOGGER, insert into that object instead."
   (when *logger*
     (stop *logger*)
     (setf *logger* nil)))
+
+(pushnew 'remove-logger sb-ext:*save-hooks*)
 
 (defun restart-logger (&optional (logger (default-logger)))
   "Restart *LOGGER* by removing it and then setting it to LOGGER."

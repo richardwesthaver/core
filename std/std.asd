@@ -12,8 +12,7 @@
   :depends-on (:ppcre)
   :serial t
   :components 
-  ((:file "named-readtables")
-   (:file "defpkg")
+  ((:file "defpkg")
    (:file "pkg")
    (:file "condition")
    (:file "sym")
@@ -22,6 +21,8 @@
    (:file "type")
    (:file "string")
    (:file "kernel")
+   (:file "api")
+   (:file "named-readtables")
    (:module "num"
     :components
     ((:file "float")
