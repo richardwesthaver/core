@@ -255,6 +255,8 @@
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :sfunction)
   (:import-from :sb-int :unsigned-byte*)
+  (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
+   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/comp :*primitive-objects* :primitive-object-size 
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-c :integer-type-length :ctype-of :ctype :widetag-of :lowtag-of)
@@ -271,6 +273,10 @@
    :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
+   :parse-optional-arg-spec :parse-key-arg-spec 
+   :ds-lambda-list-matcher :parse-ds-lambda-list
+   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
+   :parse-meta-ds-lambda-list
    #:negative-double-float :*ctype-hashsets*
    #:abstract-ds-lambda-list
    #:negative-fixnum-p
@@ -534,8 +540,6 @@
   (:use :cl :std/prim)
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
-  (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
-   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/curry :compose)
   (:import-from :std/named-readtables :in-readtable :parse-body)
   (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform :remove-from-plist)
@@ -549,9 +553,6 @@
    :parse-lambda-list
    :lambda-list-keyword-mask
    :check-lambda-list-names
-   :parse-optional-arg-spec :parse-key-arg-spec 
-   :ds-lambda-list-matcher :parse-ds-lambda-list
-   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
    :once-only
    :define-class
    :defclass*

@@ -2,13 +2,6 @@
 
 ;;
 
-;; see https://github.com/death/cl-tree-sitter for an alternative
-;; implementation - has functions for working on pointers instead of
-;; raw objects like below:
-
-;;(defar ts-node-start-point-pointer ts-point (self (* ts-node)))
-;;(defar ts-node-end-point-pointer ts-point (self (* ts-node)))
-
 ;;; Code:
 (in-package :tree-sitter)
 
@@ -145,9 +138,9 @@
 (defar ts-tree-cursor-current-depth unsigned-int (cursor (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-next-sibling boolean (self (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-first-child-for-byte long (self (* ts-tree-cursor)) (goal-byte unsigned-int))
-(defar ts-tree-cursor-goto-first-child-for-point-pointer long (self (* ts-tree-cursor)) (goal-point (* ts-point)))
+(defar ts-tree-cursor-goto-first-child-for-point long (self ts-tree-cursor) (goal-point ts-point))
 (defar ts-tree-cursor-goto-parent boolean (self (* ts-tree-cursor)))
-(defar ts-tree-cursor-copy-pointer (* ts-tree-cursor) (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-copy ts-tree-cursor (cursor ts-tree-cursor))
 (defar ts-tree-cursor-goto-first-child boolean (self (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-last-child boolean (self (* ts-tree-cursor)))
 (defar ts-tree-cursor-goto-descendant void (self (* ts-tree-cursor)) (goal-descendant-index unsigned-int))
@@ -188,16 +181,15 @@
 (defar ts-query-string-count unsigned-int
   (self (* ts-query)))
 
-;;; ALIEN.C
-(defar ts-query-cursor-exec-pointer void
+(defar ts-query-cursor-exec void
   (cursor (* ts-query-cursor))
   (query (* ts-query))
-  (node (* ts-node)))
+  (node ts-node))
 
-(defar ts-query-cursor-exec-with-options-pointer void
+(defar ts-query-cursor-exec-with-options void
   (cursor (* ts-query-cursor))
   (query (* ts-query))
-  (node (* ts-node))
+  (node ts-node)
   (options (* ts-query-cursor-options)))
 
 (defar ts-query-cursor-next-match boolean
@@ -217,39 +209,39 @@
   (cursor (* ts-query-cursor))
   (max-start-depth unsigned-int))
 
-(defar ts-tree-root-node-pointer (* ts-node)
+(defar ts-tree-root-node ts-node
   (tree (* ts-tree)))
 
-(defar ts-tree-cursor-new-pointer (* ts-tree-cursor)
-  (node (* ts-node)))
+(defar ts-tree-cursor-new ts-tree-cursor
+  (node ts-node))
 
-(defar ts-node-is-named-pointer boolean
-  (node (* ts-node)))
+(defar ts-node-is-named boolean
+  (node ts-node))
 
-(defar ts-tree-cursor-current-node-pointer (* ts-node)
-  (cursor (* ts-tree-cursor)))
+(defar ts-tree-cursor-current-node ts-node
+  (cursor ts-tree-cursor))
 
-(defar ts-node-start-point-pointer (* ts-point)
-  (node (* ts-node)))
+(defar ts-node-start-point ts-point
+  (node ts-node))
 
-(defar ts-node-end-point-pointer (* ts-point)
-  (node (* ts-node)))
+(defar ts-node-end-point ts-point
+  (node ts-node))
 
-(defar ts-node-type-pointer c-string
-  (node (* ts-node)))
+(defar ts-node-type c-string
+  (node ts-node))
 
-(defar ts-node-string-pointer c-string
-  (node (* ts-node)))
+(defar ts-node-string c-string
+  (node ts-node))
 
-(defar ts-node-start-byte-pointer unsigned-int
-  (node (* ts-node)))
+(defar ts-node-start-byte unsigned-int
+  (node ts-node))
 
-(defar ts-node-end-byte-pointer unsigned-int
-  (node (* ts-node)))
+(defar ts-node-end-byte unsigned-int
+  (node ts-node))
 
-(defar ts-node-child-count-pointer unsigned-int
-  (node (* ts-node)))
+(defar ts-node-child-count unsigned-int
+  (node ts-node))
 
-(defar ts-node-parent-pointer (* ts-node)
-  (node (* ts-node)))
+(defar ts-node-parent ts-node
+  (node ts-node))
 

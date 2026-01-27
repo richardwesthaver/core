@@ -622,7 +622,8 @@
    :print-usage :call-command
    :cmd :*command-hook*
    :eval-command :parse-args
-   :read-arg :read-args))
+   :read-arg :read-args
+   :parse-interactive-ds-lambda-list))
 
 (defpkg :obj/project
   (:nicknames :project)

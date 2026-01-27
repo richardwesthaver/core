@@ -12,10 +12,10 @@
 | description | The Compiler Company Core                       |
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
-| tags        | CORE LISP EMACS C                               |
-| updated     | Sun Jan 25 19:27:29 2026 -0500                  |
+| tags        | CORE LISP EMACS                                 |
+| updated     | Sun Jan 25 21:14:43 2026 -0500                  |
 | langs       | c elisp lisp org text                           |
-| lines       | 163532 :code 130850 :comment 14217 :blank 18465 |
+| lines       | 163328 :code 130719 :comment 14190 :blank 18419 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links() :dir ~/comp/core/

@@ -21,9 +21,4 @@
                                ((* t) dst "void*" "dst")
                                (size-t size "size_t" "size")
                                (size-t pos "size-t" "pos"))
-             nil t)
- (:structure zdict-params ("ZDICT_params_t"
-                           (int compression-level "int" "compressionLevel")
-                           (unsigned notification-level "unsigned" "notificationLevel")
-                           (unsigned dict-id "unsigned" "dictID"))
              nil t))

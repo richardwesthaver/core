@@ -40,5 +40,5 @@
     (with-ts-query lang (q query)
       (with-ts-query-cursor c
         (let ((tree (parse-string lang input :consume nil)))
-          (tree-sitter::ts-query-cursor-exec-pointer c q (tree-sitter::ts-tree-root-node-pointer tree))
+          (tree-sitter::ts-query-cursor-exec c q (tree-sitter::ts-tree-root-node tree))
           c)))))

@@ -66,7 +66,7 @@
    :ts-node-is-null
    :ts-node-eq
    :ts-node-named-child
-   :ts-tree-cursor-new-pointer
+   :ts-tree-cursor-new
    :ts-tree-cursor-delete
    :ts-tree-root-node
    :ts-language-version
@@ -79,12 +79,12 @@
    :ts-tree-cursor-goto-first-child
    :ts-query-new
    :ts-query-delete
-   :ts-tree-root-node-pointer
-   :ts-node-is-named-pointer
-   :ts-tree-cursor-current-node-pointer
-   :ts-node-start-point-pointer
-   :ts-node-end-point-pointer
-   :ts-node-type-pointer
+   :ts-tree-root-node
+   :ts-node-is-named
+   :ts-tree-cursor-current-node
+   :ts-node-start-point
+   :ts-node-end-point
+   :ts-node-type
    :with-ts-parser
    :with-ts-lang
    :language-module

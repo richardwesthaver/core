@@ -33,9 +33,9 @@
     (let ((new-tree (ts-parser-parse-string parser nil "
 pub fn main {} " 15)))
       (is (= (ts-language-version (ts-tree-language new-tree)) 14))
-      (let ((root-node (ts-tree-root-node-pointer new-tree)))
-        (is (string= "source_file" (ts-node-type-pointer root-node)))
-        (let ((cursor (ts-tree-cursor-new-pointer root-node)))
+      (let ((root-node (ts-tree-root-node new-tree)))
+        (is (string= "source_file" (ts-node-type root-node)))
+        (let ((cursor (ts-tree-cursor-new root-node)))
           (ts-tree-cursor-delete cursor)
           (ts-tree-delete new-tree))))))
 

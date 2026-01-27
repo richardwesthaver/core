@@ -113,19 +113,32 @@ Z -- Coding system, nil if no prefix arg.
 
 ;;; Interactive
 (deftype itype () '(list))
+;; REQ OPT REST KEYS
+(deftype interactive-ds-lambda-list () '(simple-vector 4))
 
-;; Used in DEFCOMMAND for validation, not in CALL-INTERACTIVELY (currently).
+(defun parse-interactive-ds-lambda-list (lambda-list &optional itype)
+  (flet ((%map (lst) (loop for l in lst collect (or (pop itype) t))))
+    (destructuring-bind (&optional req opt rest allowp &rest keys) (parse-meta-ds-lambda-list lambda-list)
+      (declare (ignore allowp))
+      `(,@(when req `(,(%map req)))
+        ,@(when opt `(,(%map opt))) 
+        ,@(when rest `(,(or (pop itype) t)))
+        ,@(when keys `(,(%map keys)))))))
+
+;; (defun interactive-ds-lambda-list-match-p (args ids))
+
 (defun check-itype (form &optional lambda-list)
   "Validate the INTERACTIVE typespec FORM, optionally against a COMMAND's
-LAMBDA-LIST."
+LAMBDA-LIST at compile-time."
   (assert (listp form) nil 'invalid-itype :ast form :args lambda-list)
   (when (and lambda-list form)
-    (multiple-value-bind (bits req opt rest key aux) ;; check total arg count
+    ;; FIX 2026-01-26: is there a faster way to iterate for sake of a count?
+    (multiple-value-bind (bits req opt rest key) ;; check total arg count
         (parse-lambda-list lambda-list :context "an interactive lambda list" :condition-class 'invalid-itype)
       (declare (ignore bits))
-      (assert (>= (length (nconc req opt rest key aux)) 
+      (assert (>= (length (nconc req opt rest key))
                   (length form))
-              nil 
+              nil
               'invalid-itype :ast form :args lambda-list))))
 
 ;; Set the interactive declaration information for this function. Each form in
@@ -219,13 +232,24 @@ Example:
 (deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
 
 ;; arg parsing
-(defun read-arg (input) (read (if (stringp input) (make-string-input-stream input) input) input nil))
-(defun read-args (input) (read-lisp-until-end (if (stringp input) (make-string-input-stream input) input)))
+(defun read-arg (input)
+  (read (if (stringp input) (make-string-input-stream input) input) input nil))
+
+(defun read-args (input)
+  (declare (values list))
+  (when (listp input) (setf input (apply 'concat input)))
+  (read-lisp-until-end (if (stringp input) (make-string-input-stream input) input)))
 
 (defgeneric parse-args (self input)
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
 
 (defun read-command (&optional (stream *standard-input*))
+  "Read a COMMAND from STREAM and return four values:
+
+1. the COMMAND object
+2. the arguments to that command
+3. the lambda-list of the COMMAND kernel
+4. the ITYPE of the COMMAND."
   (with-input-from-string (s (read-line stream))
     (destructuring-bind (c &rest args) (read-lisp-until-end s)
       (let ((cmd (or (command c) (undefined-command c args))))
@@ -238,7 +262,7 @@ Example:
 (defun parse-command (str &rest args)
   "Parse a COMMAND from STR."
   (with-input-from-string (s (if args 
-                                 (with-output-to-string (v) 
+                                 (with-output-to-string (v)
                                    (fmt-command v (string str) args))
                                  str))
     (read-command s)))
@@ -250,10 +274,11 @@ then execute it."
   (catch 'cmd
     (if-let ((cmd (command command)))
       (call cmd (parse-args cmd input))
-      (multiple-value-bind (cmd args ll) (apply 'parse-command
-                                                command
-                                                (with-input-from-string (s input) 
-                                                  (read-lisp-until-end s)))
+      (multiple-value-bind (cmd args ll itype) (apply 'parse-command
+                                                    command
+                                                    (with-input-from-string (s input)
+                                                      (read-lisp-until-end s)))
+        (parse-itype args ll itype)
         ;; TODO 2026-01-22:
         (call cmd (parse-args cmd args))))))
 
@@ -348,24 +373,20 @@ the args to it."
            (%cmd* `(command ',%name ,@(unless (atom name)
                                       `((car (or (command-table ,(keywordicate (car name)))
                                                  (make-commands ,(keywordicate (car name)))))))))
-           (%int (when decl (cdr (assoc 'interactive (cdar decl)))))) ;; interactive typespec
+           (%int (mapcar (lambda (x)
+                           (unless (member x lambda-list-keywords)
+                             (let ((name x)
+                                   (args)) 
+                               (unless (atom x)
+                                 (setf name (car x)
+                                       args (cdr x)))
+                               ;; TODO 2026-01-20: input stream to command-type
+                               (cons (keywordicate name) args))))
+                         (when decl (cdr (assoc 'interactive (cdar decl))))))) ;; interactive typespec
       ;; TODO 2026-01-22: 
-      ;; (check-itype %int args) ; validate
+      (check-itype %int args) ; validate
       (with-gensyms (%cmd %kernel)
-        `(let ((,%cmd (make-instance *command-class* 
-                        :interactive 
-                        ',(collecting
-                            (mapc
-                             (lambda (x)
-                               (unless (member x lambda-list-keywords)
-                                 (let ((name x)
-                                       (args)) 
-                                   (unless (atom x)
-                                     (setf name (car x)
-                                           args (cdr x)))
-                                   ;; TODO 2026-01-20: input stream to command-type
-                                   (collect `(funcall (command-type ,name) ,@args)))))
-                             %int))))
+        `(let ((,%cmd (make-instance *command-class* :interactive (parse-interactive-ds-lambda-list ',args ',%int)))
                (,%kernel (,@(if *command-names-p* `(defun ,(intern (string %name))) '(lambda))
                           ,args
                           ,@decl
@@ -429,7 +450,7 @@ with each hook being passed the RESULT."
   (:method ((self command) &optional stream)
     (print-usage self stream)
     (when-let ((doc (kernel-documentation self)))
-      (print doc stream))))
+      (println doc stream))))
 
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format command SELF as a useful string.")

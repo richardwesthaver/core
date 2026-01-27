@@ -609,7 +609,7 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
       (keymap-symbol-p x)))
 
 (defun deref-keymaps (maps)
-  (map nil 
+  (map 'list
        (lambda (m)
          (if (keymap-symbol-p m)
              (symbol-value m)

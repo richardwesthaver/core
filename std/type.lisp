@@ -12,9 +12,15 @@
   "An 8-bit unsigned-byte."
   '(unsigned-byte 8))
 
-(deftype abstract-ds-lambda-list () '(simple vector 7)
+(deftype abstract-ds-lambda-list () 
   "The SBCL type used internally for the abstract representation of a
-destructuring lambda list.")
+destructuring lambda list."
+  '(simple-vector 7))
+
+(defun parse-meta-ds-lambda-list (lambda-list)
+  (let ((ds-ll (parse-ds-lambda-list lambda-list)))
+    (declare (abstract-ds-lambda-list ds-ll))
+    (meta-abstractify-ds-lambda-list ds-ll)))
 
 ;; these are already defined by SB-SIMD
 #+nil

@@ -5,7 +5,7 @@
 :license mpl
 :stash ".stash"
 :description "The Compiler Company Core"
-:tags (core lisp emacs c)
+:tags (core lisp emacs)
 :vc (:hg "https://vc.compiler.company/core"
      (cb (:git "ssh://git@codeberg.org/c-c/core"))
      (gh (:git "ssh://git@github.com/richardwesthaver/core")))
@@ -31,14 +31,11 @@
   (:mod "skel" (:asd "skel")))
  (:mod "emacs"))
 :rules
-((default (%stash psl.dat kbd.sxp x11.lisp parquet.json build-c build-core))
- (c ()
-  (:build (build-zstd-alien build-tree-sitter-alien))
-  (:install (install-zstd-alien install-tree-sitter-alien)))
+((default (%stash psl.dat kbd.sxp x11.lisp parquet.json build-core))
  (all
   (%stash
    psl.dat x11.lisp keysyms.sxp lapack-ffi.lisp parquet.thrift
-   build-c build-core
+   build-core
    deploy))
  (upstream () 
   (let ((tmp "/tmp/core/"))
@@ -60,20 +57,6 @@
     (org-with-file-buffer (join-paths company-source-directory "core/readme.org")
      (org-babel-execute-buffer)
      (save-buffer)))))
- (tree-sitter-alien ()
-  (:build ()
-   (with-directory "ffi/tree-sitter"
-    (run-cc "-g" "-O2" "-Wall" 
-     "-Wno-ununsed-value" "-ltree-sitter" "-shared" "alien.c" 
-     "-o" "../../.stash/libtree-sitter-alien.so")))
-  (:install () (with-sudo "cp .stash/libtree-sitter-alien.so /usr/local/lib/")))
- (zstd-alien ()
-  (:build () 
-   (with-directory "ffi/zstd"
-    (run-cc "-g" "-O2" "-Wall" "-Wno-unused-value" "-lzstd" "-shared"
-     "alien.c" "-o" "../../.stash/libzstd-alien.so")))
-  (:install () 
-   (with-sudo "cp .stash/libzstd-alien.so /usr/local/lib/")))
  (psl.dat (%stash)
   (reset :ssl)
   (init :ssl)
@@ -102,7 +85,6 @@
    :output "lib/obj/color/x11.lisp"))
  (lapack-ffi.lisp ()
   (tree-sitter:load-tree-sitter)
-  (tree-sitter:load-tree-sitter-alien)
   (tree-sitter:load-tree-sitter-c)
   (let (lapack lapack.h code)
    (setf
