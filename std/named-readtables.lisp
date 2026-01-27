@@ -14,252 +14,6 @@
 ;;; Code:
 (in-package :std/named-readtables)
 
-;;; Taken from SWANK (which is Public Domain.)
-(defmacro destructure-case (value &body patterns)
-  "Dispatch VALUE to one of PATTERNS.
-A cross between `case' and `destructuring-bind'.
-The pattern syntax is:
-  ((HEAD . ARGS) . BODY)
-The list of patterns is searched for a HEAD `eq' to the car of
-VALUE. If one is found, the BODY is executed with ARGS bound to the
-corresponding values in the CDR of VALUE."
-  (let ((operator (gensym "op-"))
-        (operands (gensym "rand-"))
-        (tmp (gensym "tmp-")))
-    `(let* ((,tmp ,value)
-            (,operator (car ,tmp))
-            (,operands (cdr ,tmp)))
-       (case ,operator
-         ,@(loop for (pattern . body) in patterns collect
-                   (if (eq pattern t)
-                       `(t ,@body)
-                       (destructuring-bind (op &rest rands) pattern
-                         `(,op (destructuring-bind ,rands ,operands
-                                 ,@body)))))
-         ,@(if (eq (caar (last patterns)) t)
-               '()
-               `((t (error "destructure-case failed: ~S" ,tmp))))))))
-
-;;; Taken from Alexandria (which is Public Domain, or BSD.)
-
-(define-condition simple-style-warning (simple-warning style-warning)
-  ())
-
-(defun simple-style-warn (format-control &rest format-args)
-  (warn 'simple-style-warning
-	 :format-control format-control
-	 :format-arguments format-args))
-
-(define-condition simple-program-error (simple-error program-error)
-  ())
-
-(defun simple-program-error (message &rest args)
-  (error 'simple-program-error
-         :format-control message
-         :format-arguments args))
-
-(defun required-argument (&optional name)
-  "Signals an error for a missing argument of NAME. Intended for
-use as an initialization form for structure and class-slots, and
-a default value for required keyword arguments."
-  (error "Required argument ~@[~S ~]missing." name))
-
-(defun ensure-list* (list)
-  "If LIST is a list, it is returned. Otherwise returns the list
-designated by LIST."
-  (if (listp list)
-      list
-      (list list)))
-
-(declaim (inline ensure-function))	; to propagate return type.
-(declaim (ftype (function (t) (values function &optional))
-                ensure-function))
-(defun ensure-function (function-designator)
-  "Returns the function designated by FUNCTION-DESIGNATOR:
-if FUNCTION-DESIGNATOR is a function, it is returned, otherwise
-it must be a function name and its FDEFINITION is returned."
-  (if (functionp function-designator)
-      function-designator
-      (fdefinition function-designator)))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-(defun parse-body (body &key documentation whole)
-  "Parses BODY into (values remaining-forms declarations doc-string).
-Documentation strings are recognized only if DOCUMENTATION is true.
-Syntax errors in body are signalled and WHOLE is used in the signal
-arguments when given."
-  (let ((doc nil)
-        (decls nil)
-        (current nil))
-    (tagbody
-     :declarations
-       (setf current (car body))
-       (when (and documentation (stringp current) (cdr body))
-         (if doc
-             (error "Too many documentation strings in ~S." (or whole body))
-             (setf doc (pop body)))
-         (go :declarations))
-       (when (and (listp current) (eql (first current) 'declare))
-         (push (pop body) decls)
-         (go :declarations)))
-    (values body (nreverse decls) doc)))
-
-(defun parse-ordinary-lambda-list (lambda-list)
-  "Parses an ordinary lambda-list, returning as multiple values:
-
- 1. Required parameters.
- 2. Optional parameter specifications, normalized into form (NAME INIT SUPPLIEDP)
-    where SUPPLIEDP is NIL if not present.
- 3. Name of the rest parameter, or NIL.
- 4. Keyword parameter specifications, normalized into form ((KEYWORD-NAME NAME) INIT SUPPLIEDP)
-    where SUPPLIEDP is NIL if not present.
- 5. Boolean indicating &ALLOW-OTHER-KEYS presence.
- 6. &AUX parameter specifications, normalized into form (NAME INIT).
-
-Signals a PROGRAM-ERROR is the lambda-list is malformed."
-  (let ((state :required)
-        (allow-other-keys nil)
-        (auxp nil)
-        (required nil)
-        (optional nil)
-        (rest nil)
-        (keys nil)
-        (aux nil))
-    (labels ((simple-program-error (format-string &rest format-args)
-               (error 'simple-program-error
-                      :format-control format-string
-                      :format-arguments format-args))
-             (fail (elt)
-               (simple-program-error "Misplaced ~S in ordinary lambda-list:~%  ~S"
-                                     elt lambda-list))
-             (check-variable (elt what)
-               (unless (and (symbolp elt) (not (constantp elt)))
-                 (simple-program-error "Invalid ~A ~S in ordinary lambda-list:~%  ~S"
-                                       what elt lambda-list)))
-             (check-spec (spec what)
-               (destructuring-bind (init suppliedp) spec
-                 (declare (ignore init))
-                 (check-variable suppliedp what)))
-             (make-keyword (name)
-               "Interns the string designated by NAME in the KEYWORD package."
-               (intern (string name) :keyword)))
-      (dolist (elt lambda-list)
-        (case elt
-          (&optional
-           (if (eq state :required)
-               (setf state elt)
-               (fail elt)))
-          (&rest
-           (if (member state '(:required &optional))
-               (setf state elt)
-               (progn
-                 (break "state=~S" state)
-                 (fail elt))))
-          (&key
-           (if (member state '(:required &optional :after-rest))
-               (setf state elt)
-               (fail elt)))
-          (&allow-other-keys
-           (if (eq state '&key)
-               (setf allow-other-keys t
-                     state elt)
-               (fail elt)))
-          (&aux
-           (cond ((eq state '&rest)
-                  (fail elt))
-                 (auxp
-                  (simple-program-error "Multiple ~S in ordinary lambda-list:~%  ~S"
-                                        elt lambda-list))
-                 (t
-                  (setf auxp t
-                        state elt))
-                 ))
-          (otherwise
-           (when (member elt '#.(set-difference lambda-list-keywords
-                                                '(&optional &rest &key &allow-other-keys &aux)))
-             (simple-program-error
-              "Bad lambda-list keyword ~S in ordinary lambda-list:~%  ~S"
-              elt lambda-list))
-           (case state
-             (:required
-              (check-variable elt "required parameter")
-              (push elt required))
-             (&optional
-              (cond ((consp elt)
-                     (destructuring-bind (name &rest tail) elt
-                       (check-variable name "optional parameter")
-                       (if (cdr tail)
-                           (check-spec tail "optional-supplied-p parameter")
-                           (setf elt (append elt '(nil))))))
-                    (t
-                     (check-variable elt "optional parameter")
-                     (setf elt (cons elt '(nil nil)))))
-              (push elt optional))
-             (&rest
-              (check-variable elt "rest parameter")
-              (setf rest elt
-                    state :after-rest))
-             (&key
-              (cond ((consp elt)
-                     (destructuring-bind (var-or-kv &rest tail) elt
-                       (cond ((consp var-or-kv)
-                              (destructuring-bind (keyword var) var-or-kv
-                                (unless (symbolp keyword)
-                                  (simple-program-error "Invalid keyword name ~S in ordinary ~
-                                                         lambda-list:~%  ~S"
-                                                        keyword lambda-list))
-                                (check-variable var "keyword parameter")))
-                             (t
-                              (check-variable var-or-kv "keyword parameter")
-                              (setf var-or-kv (list (make-keyword var-or-kv) var-or-kv))))
-                       (if (cdr tail)
-                           (check-spec tail "keyword-supplied-p parameter")
-                           (setf tail (append tail '(nil))))
-                       (setf elt (cons var-or-kv tail))))
-                    (t
-                     (check-variable elt "keyword parameter")
-                     (setf elt (list (list (make-keyword elt) elt) nil nil))))
-              (push elt keys))
-             (&aux
-              (if (consp elt)
-                  (destructuring-bind (var &optional init) elt
-                    (declare (ignore init))
-                    (check-variable var "&aux parameter"))
-                  (check-variable elt "&aux parameter"))
-              (push elt aux))
-             (t
-              (simple-program-error "Invalid ordinary lambda-list:~%  ~S" lambda-list)))))))
-    (values (nreverse required) (nreverse optional) rest (nreverse keys)
-            allow-other-keys (nreverse aux)))))
-
-(defmacro define-api (name lambda-list type-list &body body)
-  (flet ((parse-type-list (type-list)
-           (let ((pos (position '=> type-list)))
-             (assert pos () "You forgot to specify return type (`=>' missing.)")
-             (values (subseq type-list 0 pos)
-                     `(values ,@(nthcdr (1+ pos) type-list) &optional)))))
-    (multiple-value-bind (body decls docstring)
-        (parse-body body :documentation t :whole `(define-api ,name))
-      (multiple-value-bind (arg-typespec value-typespec)
-          (parse-type-list type-list)
-        (multiple-value-bind (reqs opts rest keys)
-            (parse-ordinary-lambda-list lambda-list)
-          (declare (ignorable reqs opts rest keys))
-          `(progn
-             (declaim (ftype (function ,arg-typespec ,value-typespec) ,name))
-             (locally
-                 ;; Muffle the annoying "&OPTIONAL and &KEY found in
-                 ;; the same lambda list" style-warning
-                 #+sbcl (declare (sb-ext:muffle-conditions style-warning))
-               (defun ,name ,lambda-list
-                 ,docstring
-                 ,@decls
-                 (locally
-                     #+sbcl (declare (sb-ext:unmuffle-conditions style-warning))
-                     ;; SBCL will interpret the ftype declaration as
-                     ;; assertion and will insert type checks for us.
-                     ,@body)))))))))
-
 (defmacro define-cruft (name lambda-list &body (docstring . alternatives))
   (assert (typep docstring 'string) (docstring) "Docstring missing!")
   (assert (not (null alternatives)))
@@ -760,10 +514,11 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (declaim (special *standard-readtable* *empty-readtable*))
 
-(define-api make-readtable
-    (&optional (name nil name-supplied-p) &key merge)
-    (&optional named-readtable-designator &key (:merge list) => readtable)
-  "Creates and returns a new readtable under the specified
+(locally (declare (sb-ext:muffle-conditions style-warning))
+  (define-api make-readtable
+      (&optional (name nil name-supplied-p) &key merge)
+      (&optional named-readtable-designator &key (:merge list) readtable)
+    "Creates and returns a new readtable under the specified
   NAME.
 
   MERGE takes a list of NAMED-READTABLE-DESIGNATORs and specifies the
@@ -780,35 +535,35 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
   the same as in the _standard readtable_ except that each macro
   character has been made a constituent. Basically: whitespace stays
   whitespace, everything else is constituent."
-  (cond ((not name-supplied-p)
-         (copy-readtable *empty-readtable*))
-        ((reserved-readtable-name-p name)
-         (error "~A is the designator for a predefined readtable. ~
+    (cond ((not name-supplied-p)
+           (copy-readtable *empty-readtable*))
+          ((reserved-readtable-name-p name)
+           (error "~A is the designator for a predefined readtable. ~
                 Not acceptable as a user-specified readtable name." name))
-        ((let ((rt (find-readtable name)))
-           (and rt (prog1 nil
-                     (cerror "Overwrite existing entry."
-                             'readtable-does-already-exist :readtable-name name)
-                     ;; Explicitly unregister to make sure that we do
-                     ;; not hold on of any reference to RT.
-                     (unregister-readtable rt)))))
-        (t (let ((result (apply #'merge-readtables-into
-                                ;; The first readtable specified in
-                                ;; the :merge list is taken as the
-                                ;; basis for all subsequent
-                                ;; (destructive!) modifications (and
-                                ;; hence it's copied.)
-                                (copy-readtable (if merge
-                                                    (ensure-readtable
-                                                     (first merge))
-                                                    *empty-readtable*))
-                                (rest merge))))
+          ((let ((rt (find-readtable name)))
+             (and rt (prog1 nil
+                       (cerror "Overwrite existing entry."
+                               'readtable-does-already-exist :readtable-name name)
+                       ;; Explicitly unregister to make sure that we do
+                       ;; not hold on of any reference to RT.
+                       (unregister-readtable rt)))))
+          (t (let ((result (apply #'merge-readtables-into
+                                  ;; The first readtable specified in
+                                  ;; the :merge list is taken as the
+                                  ;; basis for all subsequent
+                                  ;; (destructive!) modifications (and
+                                  ;; hence it's copied.)
+                                  (copy-readtable (if merge
+                                                      (ensure-readtable
+                                                       (first merge))
+                                                      *empty-readtable*))
+                                  (rest merge))))
 
-             (register-readtable name result)))))
+               (register-readtable name result))))))
 
 (define-api rename-readtable
     (old-name new-name)
-    (named-readtable-designator symbol => readtable)
+    (named-readtable-designator symbol readtable)
   "Replaces the associated name of the readtable designated by
   OLD-NAME with NEW-NAME. If a readtable is already registered under
   NEW-NAME, an error of type READTABLE-DOES-ALREADY-EXIST is
@@ -830,7 +585,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api merge-readtables-into
     (result-readtable &rest named-readtables)
-    (named-readtable-designator &rest named-readtable-designator => readtable)
+    (named-readtable-designator &rest named-readtable-designator readtable)
   "Copy macro character definitions of each readtable in
   NAMED-READTABLES into RESULT-READTABLE.
 
@@ -865,11 +620,11 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api copy-named-readtable
     (named-readtable)
-    (named-readtable-designator => readtable)
+    (named-readtable-designator readtable)
   "Like COPY-READTABLE but takes a NAMED-READTABLE-DESIGNATOR as argument."
   (copy-readtable (ensure-readtable named-readtable)))
 
-(define-api list-all-named-readtables () (=> list)
+(define-api list-all-named-readtables () (list)
   "Returns a list of all registered readtables. The returned list is
   guaranteed to be fresh, but may contain duplicates."
   (mapcar #'ensure-readtable (%list-all-readtable-names)))
@@ -1001,7 +756,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api find-readtable
     (name)
-    (named-readtable-designator => (or readtable null))
+    (named-readtable-designator (or readtable null))
   "Looks for the readtable specified by NAME and returns it if it is
   found. Returns NIL otherwise."
   (cond ((readtablep name) name)
@@ -1017,7 +772,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 (define-api ensure-readtable
     (name &optional (default nil default-p))
     (named-readtable-designator &optional (or named-readtable-designator null)
-      => readtable)
+                                readtable)
   "Looks up the readtable specified by NAME and returns it if it's found.
   If it is not found, it registers the readtable designated by DEFAULT
   under the name represented by NAME; or if no default argument is
@@ -1030,7 +785,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api register-readtable
     (name readtable)
-    (symbol readtable => readtable)
+    (symbol readtable readtable)
   "Associate READTABLE with NAME. Returns the readtable."
   (assert (typep name '(not (satisfies reserved-readtable-name-p))))
   (%associate-readtable-with-name name readtable)
@@ -1039,7 +794,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api unregister-readtable
     (named-readtable)
-    (named-readtable-designator => boolean)
+    (named-readtable-designator boolean)
   "Remove the association of NAMED-READTABLE. Returns T if successfull,
   NIL otherwise."
   (let* ((readtable (find-readtable named-readtable))
@@ -1055,7 +810,7 @@ Signals a PROGRAM-ERROR is the lambda-list is malformed."
 
 (define-api readtable-name
     (named-readtable)
-    (named-readtable-designator => symbol)
+    (named-readtable-designator symbol)
   "Returns the name of the readtable designated by NAMED-READTABLE,
   or NIL."
    (let ((readtable (ensure-readtable named-readtable)))

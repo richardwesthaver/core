@@ -97,6 +97,7 @@
   (:use :cl :std/list)
   (:import-from :std/sym :symb :with-gensyms)
   (:import-from :sb-introspect :function-lambda-list)
+  (:import-from :sb-int :parse-lambda-list)
   (:export 
    :function-lambda-list
    :pswap
