@@ -670,7 +670,7 @@ for processing.")
 (defmacro with-system-session ((sym &optional sys) &body body)
   "Bind *SYSTEM-SESSION* to SYM around BODY. WHEN SYS is non-nil it is expected
 to be a system which is pushed to the session queue before BODY."
-  (multiple-value-bind (%body %decl) (std/named-readtables:parse-body body)
+  (multiple-value-bind (%body %decl) (std/prim:parse-body body)
     (with-gensyms (system)
       `(let ((,sym *system-session*)
              (,system (unless (pathnamep ,sys) ,sys))
@@ -851,7 +851,7 @@ the following extensions:
 - :PROVIDE    system-provided features, modules, readtables
 - :HOOK       hook specs
 - :REQUIRE    system/component required modules, features, and components"
-  (multiple-value-bind (%body dec doc) (std-int:parse-body body :documentation t)
+  (multiple-value-bind (%body dec doc) (std/prim:parse-body body :documentation t)
     (declare (ignore dec))
     (unless (symbolp name) (setq name (keywordicate (string-upcase name))))
     (let ((prov (%sys-get :provide %body)) (hooks (%sys-get :hook %body))

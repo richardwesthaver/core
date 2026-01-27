@@ -96,7 +96,6 @@
 (defpkg :std/prim
   (:use :cl :std/list)
   (:import-from :std/sym :symb :with-gensyms)
-  (:import-from :std/named-readtables :parse-body)
   (:import-from :sb-introspect :function-lambda-list)
   (:export 
    :function-lambda-list
@@ -397,7 +396,7 @@
 (defpkg :std/string
   (:use :cl :std/sym :std/list)
   (:use-reexport :sb-unicode)
-  (:import-from :std/named-readtables :parse-body)
+  (:import-from :std/prim :parse-body)
   (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
   (:import-from :sb-kernel :character-coding-error :character-encoding-error :character-decoding-error)
   (:export
@@ -568,9 +567,9 @@
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
   (:import-from :std/curry :compose)
-  (:import-from :std/named-readtables :in-readtable :parse-body)
+  (:import-from :std/named-readtables :in-readtable)
   (:import-from :std/list :flatten :recursive-append :zip-tree :group :let-binding-transform :remove-from-plist)
-  (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol)
+  (:import-from :std/prim :defmacro! :defun! :defmacro/g! :g!-symbol-p :o1-symbol-to-g!-symbol :parse-body)
   (:import-from :sb-loop :*loop-ansi-universe* :loop-standard-expansion)
   (:export
    :*loop-ansi-universe*
@@ -892,8 +891,7 @@
 
 (defpkg :std/io
   (:use :cl :std/sys)
-  (:import-from :std/named-readtables :parse-body)
-  (:import-from :std/prim :definline)
+  (:import-from :std/prim :definline :parse-body)
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)

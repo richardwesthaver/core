@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :std/sys)
-(std-int:in-readtable :std)
+(std/named-readtables:in-readtable :std)
 
 ;;; System Paths
 (defun user-config-path () (funcall sb-ext:*userinit-pathname-function*))
