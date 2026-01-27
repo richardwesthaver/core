@@ -50,7 +50,7 @@ they were given."
                                    (setf ,collector
                                          (setf ,tail (list thing))))))
         ,@body)
-      (values ,@collectors))))
+       (values-list ',collectors))))
 
 (defun %with-collectors-check-collectors (collectors)
   "Check that all of the COLLECTORS are symbols. If not, raise an error."

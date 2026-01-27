@@ -145,36 +145,15 @@
    :concat
    :parse-body
    :define-api
-   :destructure-case))
-
-(defpackage :std/named-readtables
-  (:use :cl :std/prim)
-  (:export
-   :defreadtable
-   :with-readtable
-   :in-readtable
-   :make-readtable
-   :merge-readtables-into
-   :find-readtable
-   :ensure-readtable
-   :rename-readtable
-   :readtable-name
-   :register-readtable
-   :unregister-readtable
-   :copy-named-readtable
-   :list-all-named-readtables
-   ;; Types
-   :named-readtable-designator
-   ;; Conditions
-   :readtable-error
-   :reader-macro-conflict
-   :readtable-does-already-exist
-   :readtable-does-not-exist))
+   :destructure-case
+   :ensure-function
+   :ensure-functionf))
 
 (defpkg :std/condition
   (:use :cl)
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)
+  (:import-from :sb-int :simple-style-warning)
   (:import-from :sb-impl :define-error-wrapper)
   (:export
    :define-error-wrapper
@@ -228,6 +207,30 @@
    :wrap-condition
    :wrapped-error
    :wrap-error))
+
+(defpackage :std/named-readtables
+  (:use :cl :std/prim :std/condition)
+  (:export
+   :defreadtable
+   :with-readtable
+   :in-readtable
+   :make-readtable
+   :merge-readtables-into
+   :find-readtable
+   :ensure-readtable
+   :rename-readtable
+   :readtable-name
+   :register-readtable
+   :unregister-readtable
+   :copy-named-readtable
+   :list-all-named-readtables
+   ;; Types
+   :named-readtable-designator
+   ;; Conditions
+   :readtable-error
+   :reader-macro-conflict
+   :readtable-does-already-exist
+   :readtable-does-not-exist))
 
 (defpkg :std/comp
   (:use :cl)
@@ -527,12 +530,10 @@
    :hashset-count :psxhash))
 
 (defpkg :std/curry
-  (:use :cl)
+  (:use :cl :std/prim)
   (:import-from :std/list :mappend)
   (:import-from :std/sym :make-gensym-list)
   (:export
-   :ensure-function
-   :ensure-functionf
    :disjoin
    :conjoin
    :compose
@@ -543,7 +544,7 @@
    :rec))
 
 (defpkg :std/readtable
-  (:use :cl)
+  (:use :cl :std/prim)
   (:import-from :std/named-readtables :defreadtable)
   (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
@@ -1078,7 +1079,7 @@
    :defsham))
 
 (defpkg :std/seq
-  (:use :cl)
+  (:use :cl :std/prim)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
   (:import-from :std/macs :once-only :when-let :defonce :unwind-protect-case :eval-always :letv*)
@@ -1232,7 +1233,7 @@
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)
   (:import-from :std/prim :defmacro!)
-  (:import-from :std/curry :ensure-function)
+  (:import-from :std/prim :ensure-function)
   (:import-from :std/macs :eval-always)
   (:use-reexport :sb-thread)
   (:import-from :std/macs :if-let :eval-always)

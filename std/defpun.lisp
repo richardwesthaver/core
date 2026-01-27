@@ -482,7 +482,7 @@ Returns the partial results as a vector."
 
 (defun maplist-into (result-list fn &rest lists)
   "A variation of map-into."
-  (let ((fn (std/curry:ensure-function fn)))
+  (let ((fn (std/prim:ensure-function fn)))
     (apply #'mapl
            (lambda (result &rest args)
              ;; This is an inner loop.
@@ -497,7 +497,7 @@ Returns the partial results as a vector."
 Without a result to delineate sublist boundaries, we must enforce them
 manually."
   (check-type size (integer 0))
-  (let ((fn (std/curry:ensure-function fn))
+  (let ((fn (std/prim:ensure-function fn))
         (index 0))
     (apply map
            (lambda (&rest args)
@@ -550,7 +550,7 @@ manually."
 
 (defun pmap-into/unparsed (map-into result-seq fn seqs)
   (multiple-value-bind (seqs size parts-hint) (%parse-options seqs)
-    (let* ((fn (std/curry:ensure-function fn))
+    (let* ((fn (std/prim:ensure-function fn))
            (initial-fill-pointer (and (arrayp result-seq)
                                       (array-has-fill-pointer-p result-seq)
                                       (fill-pointer result-seq)))
@@ -718,7 +718,7 @@ parallel, though not necessarily at the same time. Behavior is
 otherwise indistinguishable from `every'.
 
 Keyword arguments `parts' and `size' are also accepted (see `pmap')."
-  (pquantifier #'every (std/curry:ensure-function predicate) sequences nil))
+  (pquantifier #'every (std/prim:ensure-function predicate) sequences nil))
 
 (defun psome (predicate &rest sequences)
   "Parallel version of `some'. Calls to `predicate' are done in
@@ -727,7 +727,7 @@ otherwise indistinguishable from `some' except that any non-nil
 predicate comparison result may be returned.
 
 Keyword arguments `parts' and `size' are also accepted (see `pmap')."
-  (pquantifier #'some (std/curry:ensure-function predicate) sequences t))
+  (pquantifier #'some (std/prim:ensure-function predicate) sequences t))
 
 (defun pnotevery (predicate &rest sequences)
   "Parallel version of `notevery'. Calls to `predicate' are done in
@@ -787,7 +787,7 @@ Default is (kernel-worker-count)."
   (let ((subsize (subsize sequence (length sequence) start end)))
     (if (zerop subsize)
         0
-        (let ((predicate (std/curry:ensure-function predicate)))
+        (let ((predicate (std/prim:ensure-function predicate)))
           (flet ((maybe-inc (acc x)
                    (declare (fixnum acc))
                    (if (funcall predicate x)
@@ -813,7 +813,7 @@ The `parts' option divides `sequence' into `parts' number of parts.
 Default is (kernel-worker-count)."
   (declare (dynamic-extent args)
            (ignore from-end start end key parts))
-  (apply #'pcount-if (complement (std/curry:ensure-function predicate)) sequence args))
+  (apply #'pcount-if (complement (std/prim:ensure-function predicate)) sequence args))
 
 (defun pcount (item sequence
                &key from-end (start 0) end key test test-not parts)
@@ -827,7 +827,7 @@ Default is (kernel-worker-count)."
 (defun %pdotimes (size parts fn)
   (check-type size fixnum)
   (when (plusp size)
-    (let ((fn (std/curry:ensure-function fn)))
+    (let ((fn (std/prim:ensure-function fn)))
       (flet ((compute-part (part-offset part-size)
                (declare (type fixnum part-offset part-size))
                (let ((index part-offset)
@@ -914,7 +914,7 @@ The `parts' option divides `sequence' into `parts' number of parts.
 Default is (kernel-worker-count)."
   (declare (dynamic-extent args)
            (ignore from-end start end key parts))
-  (let ((predicate (std/curry:ensure-function predicate)))
+  (let ((predicate (std/prim:ensure-function predicate)))
     (typecase sequence
       (vector    (apply #'pfind-if/vector predicate sequence args))
       (list      (apply #'pfind-if/list   predicate sequence args))
@@ -930,7 +930,7 @@ The `parts' option divides `sequence' into `parts' number of parts.
 Default is (kernel-worker-count)."
   (declare (dynamic-extent args)
            (ignore from-end start end key parts))
-  (apply #'pfind-if (complement (std/curry:ensure-function predicate)) sequence args))
+  (apply #'pfind-if (complement (std/prim:ensure-function predicate)) sequence args))
 
 (defun pfind (item sequence
               &rest args

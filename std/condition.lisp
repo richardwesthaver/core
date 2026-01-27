@@ -194,14 +194,6 @@ a default value for required keyword arguments."
   (call-next-method))
 
 ;;;; Simple
-(define-condition simple-style-warning (simple-warning style-warning)
-  ()
-  (:documentation "Simple style warnings."))
-
-(defun simple-style-warning (message &rest args)
-  "Signal a SIMPLE-STYLE-WARNING using format-contorl MESSAGE and format-arguments ARGS."
-  (warn 'simple-style-warning :format-control message :format-arguments args))
-
 ;; We don't specify a :report for simple-reader-error to let the
 ;; underlying implementation report the line and column position for
 ;; us. Unfortunately this way the message from simple-error is not

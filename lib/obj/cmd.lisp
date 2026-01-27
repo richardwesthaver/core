@@ -120,10 +120,10 @@ Z -- Coding system, nil if no prefix arg.
   (flet ((%map (lst) (loop for l in lst collect (or (pop itype) t))))
     (destructuring-bind (&optional req opt rest allowp &rest keys) (parse-meta-ds-lambda-list lambda-list)
       (declare (ignore allowp))
-      `(,@(when req `(,(%map req)))
-        ,@(when opt `(,(%map opt))) 
-        ,@(when rest `(,(or (pop itype) t)))
-        ,@(when keys `(,(%map keys)))))))
+      `(,(%map req)
+        ,(%map opt)
+        ,(when rest (or (pop itype) t))
+        ,(%map keys)))))
 
 ;; (defun interactive-ds-lambda-list-match-p (args ids))
 

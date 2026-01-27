@@ -5,25 +5,6 @@
 ;;; Code:
 (in-package :std/curry)
 
-;;; Alexandria Functions
-(declaim (ftype (function (t) (values function &optional))
-                ensure-function)
-         (inline ensure-function))
-(defun ensure-function (function-designator)
-  "Returns the function designated by FUNCTION-DESIGNATOR:
-if FUNCTION-DESIGNATOR is a function, it is returned, otherwise
-it must be a function name and its FDEFINITION is returned."
-  (if (functionp function-designator)
-      function-designator
-      (fdefinition function-designator)))
-
-(define-modify-macro ensure-functionf/1 () ensure-function)
-
-(defmacro ensure-functionf (&rest places)
-  "Multiple-place modify macro for ENSURE-FUNCTION: ensures that each of
-PLACES contains a function."
-  `(progn ,@(mapcar (lambda (x) `(ensure-functionf/1 ,x)) places)))
-
 (defun disjoin (predicate &rest more-predicates)
   "Returns a function that applies each of PREDICATE and MORE-PREDICATE
 functions in turn to its arguments, returning the primary value of the first

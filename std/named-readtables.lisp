@@ -22,9 +22,9 @@
      (defun ,name ,lambda-list ,docstring ,(first alternatives))))
 
 (eval-when (:compile-toplevel :execute)
-  #+sbcl (when (find-symbol "ASSERT-NOT-STANDARD-READTABLE"
-                            (find-package "SB-IMPL"))
-           (pushnew :sbcl+safe-standard-readtable *features*)))
+  (when (find-symbol "ASSERT-NOT-STANDARD-READTABLE"
+                     (find-package "SB-IMPL"))
+    (pushnew :sbcl+safe-standard-readtable *features*)))
 
 ;;;; Mapping between a readtable object and its readtable-name.
 (defvar *readtable-names* (make-hash-table :test 'eq))
@@ -69,14 +69,14 @@
     (gethash readtable *readtable-to-docstring*))
 
   (defmethod (setf documentation) (docstring (name symbol)
-                                             (doc-type (eql 'readtable)))
+                                   (doc-type (eql 'readtable)))
     (let ((readtable (find-readtable name)))
       (unless readtable
         (error 'readtable-does-not-exist :readtable-name name))
       (setf (gethash readtable *readtable-to-docstring*) docstring)))
 
   (defmethod (setf documentation) (docstring (readtable readtable)
-                                             (doc-type (eql 'readtable)))
+                                   (doc-type (eql 'readtable)))
     (setf (gethash readtable *readtable-to-docstring*) docstring)))
 
 ;;;; Mapping between a readtable-name and the actual readtable object.
@@ -129,7 +129,7 @@
   "Is CHAR a dispatch macro character in RT?"
   #+ :common-lisp
   (handler-case (locally
-                  (get-dispatch-macro-character char #\x rt)
+                    (get-dispatch-macro-character char #\x rt)
                   t)
     (error () nil)))
 
@@ -420,9 +420,9 @@
                      (setq readtable (make-readtable ',name)))
                     (t
                      (setq readtable (%clear-readtable readtable))
-                     (simple-style-warn
-                      "Overwriting already existing readtable ~S."
-                      readtable)))
+                     (warn 'simple-style-warning
+                           :format-control "Overwriting already existing readtable ~S."
+                           :format-arguments (list readtable))))
               (setf (documentation readtable 'readtable) ,docstring)
               ,@(loop for option in merge-clauses
                       collect (process-option option 'readtable))
@@ -494,20 +494,21 @@
 
   (defun signal-suspicious-registration-warning (name-expr readtable-expr)
     (when (constant-standard-readtable-expression-p readtable-expr)
-      (simple-style-warn
-       "Caution: ~<You're trying to register the :STANDARD readtable ~
+      (warn 'simple-style-warning
+            :format-control
+            "Caution: ~<You're trying to register the :STANDARD readtable ~
     under a new name ~S. As modification of the :STANDARD readtable ~
     is not permitted, subsequent modification of ~S won't be ~
     permitted either. You probably want to wrap COPY-READTABLE ~
     around~@:>~%             ~S"
-       (list name-expr name-expr) readtable-expr))))
+            :format-args (list (list name-expr name-expr) readtable-expr)))))
 
 (define-compiler-macro register-readtable (&whole form name readtable)
   (signal-suspicious-registration-warning name readtable)
   form)
 
 (define-compiler-macro ensure-readtable (&whole form name &optional
-                                                (default nil default-p))
+                                                          (default nil default-p))
   (when default-p
     (signal-suspicious-registration-warning name default))
   form)
@@ -603,9 +604,9 @@
                    (t
                     (ensure-dispatch-macro-character char non-terminating-p to)
                     (loop for (subchar . subfn) in table do
-                      (check-reader-macro-conflict from to char subchar)
-                      (set-dispatch-macro-character char subchar
-                                                    subfn to)))))
+                             (check-reader-macro-conflict from to char subchar)
+                             (set-dispatch-macro-character char subchar
+                                                           subfn to)))))
 	   to))
     (let ((result-table (ensure-readtable result-readtable)))
       (dolist (table (mapcar #'ensure-readtable named-readtables))
@@ -691,7 +692,7 @@
 (defun check-reader-macro-conflict (from to char &optional subchar)
   (flet ((conflictp (from-fn to-fn)
            (assert from-fn ()
-           "Bug in readtable iterators or concurrent access?")
+                   "Bug in readtable iterators or concurrent access?")
            (and to-fn (not (function= to-fn from-fn)))))
     (when (if subchar
               (conflictp (%get-dispatch-macro-character char subchar from)
@@ -813,7 +814,7 @@
     (named-readtable-designator symbol)
   "Returns the name of the readtable designated by NAMED-READTABLE,
   or NIL."
-   (let ((readtable (ensure-readtable named-readtable)))
+  (let ((readtable (ensure-readtable named-readtable)))
     (cond ((%readtable-name readtable))
           ((eq readtable *readtable*) :current)
 	  ((eq readtable *standard-readtable*) :common-lisp)
@@ -823,8 +824,8 @@
 (defmacro with-readtable (rt &body body)
   (sb-int:with-unique-names (current)
     (setf current *readtable*)
-      `(unwind-protect
-            (progn
-              (in-readtable ,rt)
-              ,@body)
-         (in-readtable ,(readtable-name current)))))
+    `(unwind-protect
+          (progn
+            (in-readtable ,rt)
+            ,@body)
+       (in-readtable ,(readtable-name current)))))

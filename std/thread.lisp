@@ -1082,7 +1082,7 @@ assigned to the input state and then return two values."
   (check-type ch channel)
   (submit-raw-work
    (make-channeled-work ch
-                        (std/curry:ensure-function fn)
+                        (ensure-function fn)
                         args)
    (channel-pool ch)))
 

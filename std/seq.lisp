@@ -18,10 +18,10 @@
     (when (and test test-not)
       (error "Both :TEST and :TEST-NOT options given."))
     (when test-not
-      (setf test (complement (std/curry:ensure-function test-not)))
+      (setf test (complement (ensure-function test-not)))
       (setf test-not nil))
     (if test
-        (let ((test (std/curry:ensure-function test)))
+        (let ((test (ensure-function test)))
           (lambda (x)
             (funcall test item x)))
         (typecase item

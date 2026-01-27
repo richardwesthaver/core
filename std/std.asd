@@ -14,15 +14,15 @@
   :components 
   ((:file "defpkg")
    (:file "pkg")
-   (:file "condition")
    (:file "sym")
    (:file "list")
    (:file "prim")
+   (:file "api")
+   (:file "kernel")
+   (:file "condition")
+   (:file "named-readtables")
    (:file "type")
    (:file "string")
-   (:file "kernel")
-   (:file "api")
-   (:file "named-readtables")
    (:module "num"
     :components
     ((:file "float")
