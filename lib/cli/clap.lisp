@@ -107,7 +107,9 @@ evaluation of BODY."
 (defgeneric print-version (self &optional stream)
   (:documentation "Print the version of SELF."))
 
-;;; CLI Command
+;;; CLI Commands
+(init :commands :name :cli :class 'cli-command)
+
 (defkernel cli-command (command) ()
   (:documentation "Class of COMMANDs which may be executed directly from the command line."))
 
@@ -117,50 +119,55 @@ evaluation of BODY."
 (defmethod call :before ((self cli-command) args)
   (log:trace! "calling command: ~A~@[ with args ~A~]~%" self args))
 
-(init :commands :name :cli :class 'cli-command)
-
 ;;; CLI Command Types
-(define-command-type string (input &optional (prompt "Input: "))
+(define-command-type (:cli string) (&optional (prompt "Input: "))
   (princ prompt *query-io*)
-  (string (read-arg input)))
+  (force-output *query-io*)
+  (string (read-arg *query-io*)))
 
-(define-command-type ustring (input &optional (prompt "INPUT: "))
+(define-command-type (:cli ustring) (&optional (prompt "INPUT: "))
   (princ prompt *query-io*)
-  (string-upcase (read-arg input)))
+  (force-output *query-io*)
+  (string-upcase (read-arg *query-io*)))
 
-(define-command-type dstring (input &optional (prompt "input: "))
+(define-command-type (:cli dstring) (&optional (prompt "input: "))
   (princ prompt *query-io*)
-  (string-downcase (read-arg input)))
+  (force-output *query-io*)
+  (string-downcase (read-arg *query-io*)))
 
-(define-command-type * (input &optional (prompt "Input: "))
+(define-command-type (:cli *) (&optional (prompt "Input: "))
   (princ prompt *query-io*)
-  (read-arg input))
+  (force-output *query-io*)
+  (read-arg *query-io*))
 
-(define-command-type y/n (input &optional prompt)
-  (let ((*query-io* input))
+(define-command-type (:cli y/n) (&optional prompt)
+  (let ((*query-io* (if (streamp *command-input*) *command-input* *query-io*)))
     (y-or-n-p prompt)))
 
-(define-command-type yes-or-no (input &optional prompt)
-  (let ((*query-io* input))
+(define-command-type (:cli yes-or-no) (&optional prompt)
+  (let ((*query-io* (if (streamp *command-input*) *command-input* *query-io*)))
     (yes-or-no-p prompt)))
 
-(define-command-type char (input &optional (prompt "Character: "))
+(define-command-type (:cli char) (&optional (prompt "Character: "))
   (princ prompt *query-io*)
-  (read-char input))
+  (force-output *query-io*)
+  (read-char *query-io*))
 
-(define-command-type num (input &optional (prompt "Number: "))
+(define-command-type (:cli num) (&optional (prompt "Number: "))
   (princ prompt *query-io*)
-  (parse-number (read-arg input)))
+  (force-output *query-io*)
+  (parse-number (read-arg *query-io*)))
 
-(define-command-type password (input &optional (prompt "Password: "))
+(define-command-type (:cli password) (&optional (prompt "Password: "))
   (format *query-io* prompt)
   (force-output *query-io*)
   (without-echo
-    (string (read-arg input))))
+    (string (read-arg *query-io*))))
 
-(define-command-type command (input &optional (prompt "Command: ") (commands *commands*))
+(define-command-type (:cli command) (&optional (prompt "Command: ") (commands *commands*))
   (format *query-io* prompt)
-  (command (read-arg input) commands))
+  (force-output *query-io*)
+  (command (read-arg *query-io*) commands))
 
 ;;; CLI
 (defcommand (:cli :help) (&optional (arg *cli*))
@@ -172,6 +179,8 @@ evaluation of BODY."
   "Print version and exit." 
   (declare (interactive *))
   (print-version arg *standard-output*))
+
+(save :commands :cli)
 
 ;; REVIEW 2026-01-16: should this be a struct containing a CLI-COMMAND? hmm..
 (defstruct cli

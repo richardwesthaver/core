@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rdb/cli)
-(init :commands :name :rdb)
+(init :commands :name :rdb :copy :cli)
 
 (defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)
@@ -44,9 +44,9 @@
 (defcommand (:rdb fuzz) (&optional val)
   (with-rdb (db *db*)
     (open-db db)
-    (let ((val (make-array 32 :element-type 'octet)))
+    (let ((%val (make-array 32 :element-type 'octet)))
       (dotimes (i (or val 1000))
-	(nreversef val)
+	(nreversef %val)
 	(let ((seed (random 32)))
 	  (dotimes (ii seed)
 	    (setf (aref val ii) (random 256))))
@@ -54,6 +54,8 @@
 	(put-key db
 		 (sb-ext:string-to-octets (string (gensym "foo")))
 		 val)))))
+
+(save :commands :rdb)
 
 #+todo
 (define-cli "rdb" :version 0)

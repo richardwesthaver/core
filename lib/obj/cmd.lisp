@@ -68,6 +68,8 @@ Z -- Coding system, nil if no prefix arg.
 
 ;;; Variables
 (defvar *command*)
+(defvar *command-input* (make-synonym-stream '*query-io*)
+  "The input stream, string, or arglist of the current *COMMAND*.")
 (defvar *command-class* 'command)
 (defvar *commands* (make-hash-table))
 (defvar *command-types* (make-hash-table))
@@ -77,7 +79,7 @@ Z -- Coding system, nil if no prefix arg.
 (defparameter *command-names-p* nil
   "Indicates whether commands will be defined with LAMBDA (NIL) or DEFUN (T).")
 (defhook *command-hook* ((:pre) (:post) (:eval)))
-
+(defconstant +interactive-placeholder-tag+ '_)
 ;;; Conditions
 (define-condition command-condition () ())
 (define-condition command-error (command-condition)
@@ -112,34 +114,82 @@ Z -- Coding system, nil if no prefix arg.
 (definline invalid-itype (&optional form) (error 'invalid-itype :ast form))
 
 ;;; Interactive
-(deftype itype () '(list))
 ;; REQ OPT REST KEYS
 (deftype interactive-ds-lambda-list () '(simple-vector 4))
 
-(defun parse-interactive-ds-lambda-list (lambda-list &optional itype)
+(defun parse-interactive-lambda-list (lambda-list &optional itype)
+  (declare (values interactive-ds-lambda-list))
   (flet ((%map (lst) (loop for l in lst collect (or (pop itype) t))))
     (destructuring-bind (&optional req opt rest allowp &rest keys) (parse-meta-ds-lambda-list lambda-list)
       (declare (ignore allowp))
-      `(,(%map req)
-        ,(%map opt)
-        ,(when rest (or (pop itype) t))
-        ,(%map keys)))))
+      (vector (%map req)
+              (%map opt)
+              (when rest (or (pop itype) t))
+              (mapcar 'car keys)))))
 
-;; (defun interactive-ds-lambda-list-match-p (args ids))
+(definline interactive-total-count (ids) 
+  (+ (length (svref ids 0)) (length (svref ids 1))
+     (if (svref ids 2) 1 0) (length (svref ids 3))))
+
+(definline interactive-required-count (ids) (length (svref ids 0)))
+
+(definline placeholder-arg-p (arg) (eq +interactive-placeholder-tag+ arg))
+(definline interactive-arg-p (arg) (not (eq +interactive-placeholder-tag+ arg)))
+
+(defmacro with-interactive-ds-lambda-list-parts ((&rest parts-names) itype &body body)
+  (once-only ((parts `(the interactive-ds-lambda-list ,itype)))
+    `(let ,(loop for i from 0 for sym in parts-names
+                 when sym collect `(,sym (svref ,parts ,i)))
+       ,@body)))
 
 (defun check-itype (form &optional lambda-list)
   "Validate the INTERACTIVE typespec FORM, optionally against a COMMAND's
 LAMBDA-LIST at compile-time."
-  (assert (listp form) nil 'invalid-itype :ast form :args lambda-list)
-  (when (and lambda-list form)
-    ;; FIX 2026-01-26: is there a faster way to iterate for sake of a count?
-    (multiple-value-bind (bits req opt rest key) ;; check total arg count
-        (parse-lambda-list lambda-list :context "an interactive lambda list" :condition-class 'invalid-itype)
-      (declare (ignore bits))
-      (assert (>= (length (nconc req opt rest key))
-                  (length form))
-              nil
-              'invalid-itype :ast form :args lambda-list))))
+  (assert (typep form 'interactive-ds-lambda-list) nil 'invalid-itype :ast form :args lambda-list)
+  (when lambda-list
+    (assert (>= (length lambda-list) (interactive-total-count form))
+            nil
+            'invalid-itype :ast form :args lambda-list)))
+
+(defun unparse-ds-command-type (r)
+  (unless (placeholder-arg-p r)
+    (values (if (atom r) (command-type r) (command-type (car r)))
+            (unless (atom r) (cdr r)))))
+
+(defun call-ds-command-type (r)
+  (multiple-value-bind (fn args) (unparse-ds-command-type r)
+    (when fn (apply fn args))))
+
+(defun fill-args-interactively (args ids)
+  "Parse ARGS as the input to a function designated by the
+interactive-ds-lambda-list IDS. Return a list to be applied as the second
+argument of CALL."
+  (with-interactive-ds-lambda-list-parts (req opt rest key) ids
+    (collecting
+      (loop for r in req
+            for a = (pop args)
+            while r
+            if a do (collect a) else 
+            do (collect 
+                   (or (call-ds-command-type r)
+                       (error "Missing a required argument during an interactive call."))))
+      (loop while args
+            for o in opt
+            for a = (pop args)
+            do (call-ds-command-type o))
+      (when rest 
+        (if args
+            (dolist (a args)
+              (collect a))
+            (let ((rs (call-ds-command-type rest))) (if (atom rs) (list rs) rs)
+              (dolist (a rs)
+                (collect a)))))
+      ;; TODO 2026-01-27: 
+      (when key
+        (loop while args
+              for ak = (pop args)
+              for k in key
+              for av = (or (pop args) (call-ds-command-type k)))))))
 
 ;; Set the interactive declaration information for this function. Each form in
 ;; ARGS corresponds with an element of the function's lambda list where the
@@ -196,16 +246,14 @@ LAMBDA-LIST at compile-time."
 (defmacro define-command-type (name args &body body)
   "Define a new COMMAND-TYPE and store it in *COMMAND-TYPES* if NAME is an atom,
 else the car of NAME designates the value of *COMMAND-TABLE* to modify. ARGS
-is a lambda-list where the car is a required argument designating the
-interactive input, and the cdr destructures the cdr of INTERACTIVE argtype
-forms.
+is a lambda-list which destructures the INTERACTIVE argtype forms.
 
 Example:
 
-(define-command-type :symbol (input prompt)
+(define-command-type :symbol (prompt)
  (or (find-symbol
        (string-upcase
-         (or (argument-pop input)
+         (or (read-arg *command-input*)
              ;; Whitespace messes up find-symbol.
              (string-trim \" \"
                           (completing-read (current-screen)
@@ -221,11 +269,12 @@ Example:
 (defcommand \"symbol\" (sym) 
  (declare (interactive (:symbol \"Pick a symbol: \")))
  (describe sym s))"
-  (assert (and (listp args) (< 0 (length args))) nil 'invalid-command-type :name name :args args)
+  (assert (listp args) nil 'invalid-command-type :name name :args args)
   `(setf ,(if (atom name) 
               `(command-type ,(keywordicate name))
               `(command-type ,(keywordicate (second name)) (cdr (or (command-table ,(keywordicate (car name))) (make-commands ,(keywordicate (car name)))))))
          (lambda ,args
+           ;; use *COMMAND-INPUT*
            ,@body)))
 
 ;; IO
@@ -244,16 +293,15 @@ Example:
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
 
 (defun read-command (&optional (stream *standard-input*))
-  "Read a COMMAND from STREAM and return four values:
+  "Read a COMMAND from STREAM and return three values:
 
 1. the COMMAND object
 2. the arguments to that command
-3. the lambda-list of the COMMAND kernel
-4. the ITYPE of the COMMAND."
+3. the ITYPE of the COMMAND."
   (with-input-from-string (s (read-line stream))
     (destructuring-bind (c &rest args) (read-lisp-until-end s)
       (let ((cmd (or (command c) (undefined-command c args))))
-        (values cmd args (function-lambda-list cmd) (interactive cmd))))))
+        (values cmd args (interactive cmd))))))
 
 (defun write-command (cmd &optional args (stream *standard-output*))
   (fmt-command stream cmd args)
@@ -272,21 +320,19 @@ Example:
 then execute it."
   (declare ((or string symbol) command))
   (catch 'cmd
-    (if-let ((cmd (command command)))
-      (call cmd (parse-args cmd input))
-      (multiple-value-bind (cmd args ll itype) (apply 'parse-command
-                                                    command
-                                                    (with-input-from-string (s input)
-                                                      (read-lisp-until-end s)))
-        (parse-itype args ll itype)
-        ;; TODO 2026-01-22:
-        (call cmd (parse-args cmd args))))))
+    (let ((*command-input* input))
+      (multiple-value-bind (cmd args itype) (if (listp input)
+                                                (apply 'parse-command command input)
+                                                (parse-command command input))
+        (call cmd (fill-args-interactively args itype))))))
 
 (defmacro with-commands (name &body body)
   "Eval BODY with (*COMMANDS* . *COMMAND-TYPES*) bound to the value of (GETHASH
 NAME *COMMAND-TABLE*)."
   `(destructuring-bind (*commands* . *command-types*) (command-table ,name)
-     ,@body))
+     (let ((*commands* *commands*)
+            (*command-types* *command-types*))
+       ,@body)))
 
 (defun save-commands (name)
   "Set the value of NAME in *COMMAND-TABLE* using *COMMANDS*."
@@ -294,7 +340,7 @@ NAME *COMMAND-TABLE*)."
 
 (defun copy-commands (name1 name2)
   "Copy all commands and types from NAME1 to NAME2."
-  (with-commands name1 (save-commands name2)))
+  (setf (command-table name2) (command-table name1)))
 
 (defun load-commands (name)
   (with-commands name
@@ -302,7 +348,7 @@ NAME *COMMAND-TABLE*)."
           *commands* *commands*)))
 
 (defkernel command (kernel-object)
-  ((interactive :initarg :interactive :initform nil :reader interactive))
+  ((interactive :initarg :interactive :reader interactive))
   (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.
 
 The INTERACTIVE declaration corresponds to the slot of the same name in this
@@ -345,11 +391,11 @@ command."))
 (defmethod exec ((self string)) (multiple-value-bind (cmd args) (parse-command self) (call cmd args)))
 
 #+nil
-(defgeneric command-parser (self input)
-  (:documentation "Return a function which supplies the arguments for command SELF given INPUT."))
-#+nil
 (defgeneric command-pipe (self output)
   (:documentation "Pipe the output of command SELF to OUTPUT."))
+
+(defgeneric command-class (self)
+  (:documentation "Return the class indicator of command SELF."))
 
 (defun compile-command (name command &optional env)
   "Compile COMMAND as a FUNCTION given ENV with optional INTERACTIVE declaration
@@ -372,26 +418,26 @@ the args to it."
     (let* ((%name (if (atom name) (keywordicate name) (keywordicate (second name))))
            (%cmd* `(command ',%name ,@(unless (atom name)
                                       `((car (or (command-table ,(keywordicate (car name)))
-                                                 (make-commands ,(keywordicate (car name)))))))))
-           (%int (mapcar (lambda (x)
-                           (unless (member x lambda-list-keywords)
-                             (let ((name x)
-                                   (args)) 
-                               (unless (atom x)
-                                 (setf name (car x)
-                                       args (cdr x)))
-                               ;; TODO 2026-01-20: input stream to command-type
-                               (cons (keywordicate name) args))))
-                         (when decl (cdr (assoc 'interactive (cdar decl))))))) ;; interactive typespec
-      ;; TODO 2026-01-22: 
+                                                 (make-commands ,(keywordicate (car name)) *commands* *command-types*)))))))
+           (%int (parse-interactive-lambda-list 
+                  args
+                  (mapcar (lambda (x)
+                            (unless (member x lambda-list-keywords)
+                              (let ((name x)
+                                    (args)) 
+                                (unless (atom x)
+                                  (setf name (car x)
+                                        args (cdr x)))
+                                ;; TODO 2026-01-20: input stream to command-type
+                                (cons (keywordicate name) args))))
+                          (when decl (cdr (assoc 'interactive (cdar decl)))))))) ;; interactive typespec
       (check-itype %int args) ; validate
       (with-gensyms (%cmd %kernel)
-        `(let ((,%cmd (make-instance *command-class* :interactive (parse-interactive-ds-lambda-list ',args ',%int)))
+        `(let ((,%cmd (make-instance *command-class* :interactive ,%int))
                (,%kernel (,@(if *command-names-p* `(defun ,(intern (string %name))) '(lambda))
                           ,args
                           ,@decl
-                          (let ((*interactive* ,*interactive*)
-                                (*command* ,%name))
+                          (let ((*command* ,%name))
                             (funcall *command-hook* :pre *command*)
                             (multiple-value-prog1 (progn ,@forms)
                               (funcall *command-hook* :post *command*))))))
@@ -458,7 +504,8 @@ with each hook being passed the RESULT."
     (format stream "~@[~<~A~>~%~]" (kernel-documentation self))))
 
 ;;; Init
-(defmethod init ((self (eql :commands)) &key name class copy (load t) names)
+(defmethod init ((self (eql :commands)) &key name class copy (load t) names reset)
+  (when reset (reset :commands :name name))
   (when class (setq *command-class* class))
   (setq *command-names-p* names)
   (when name
@@ -471,8 +518,15 @@ with each hook being passed the RESULT."
           (make-commands name))))
   (values *commands* *command-types*))
 
-(defmethod reset ((self (eql :commands)) &key name)
-  (if name (remhash name *command-table*)
-      (setq *commands* (make-hash-table)
-            *command-types* (make-hash-table)
-            *command-class* 'command)))
+(defmethod reset ((self (eql :commands)) &key name full)
+  (clrhash *commands*)
+  (clrhash *command-types*)
+  (setq *command-class* 'command
+        *command-names-p* nil)
+  (cond
+    (full (clrhash *command-table*))
+    (name (remhash *command-table* name))))
+
+(defmethod save ((self (eql :commands)) &rest args)
+  (let ((name (pop args)))
+    (save-commands name)))

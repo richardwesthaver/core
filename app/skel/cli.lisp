@@ -80,7 +80,7 @@
         (required-argument 'name))))
 
 (defcommand (:skel show) (&rest args)
-  (declare (interactive rest))
+  (declare (interactive *))
   (if args
       (mapc (lambda (x) 
               (let ((y (string-left-trim ":" x)))
@@ -149,11 +149,14 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
+(save :commands :skel)
 
-(defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel)
+(defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel :cli :skel)
   (let ((sb-debug:*backtrace-frame-count* 8))
     (init :skel)
-    (call-interactively (or (second *posix-argv*) "show") (cddr *posix-argv*))))
+    (let ((cmd (or (second *posix-argv*) "show"))
+          (args (cddr *posix-argv*)))
+      (call-interactively cmd args))))
 
 (define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))

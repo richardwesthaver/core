@@ -623,7 +623,8 @@
    :cmd :*command-hook*
    :eval-command :parse-args
    :read-arg :read-args
-   :parse-interactive-ds-lambda-list))
+   :parse-interactive-ds-lambda-list :*command-input*
+   :command-class))
 
 (defpkg :obj/project
   (:nicknames :project)

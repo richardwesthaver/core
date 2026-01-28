@@ -204,6 +204,7 @@
    :zlib-compressor :gzip-compressor))
 
 (defpkg :io/kbd
+  (:nicknames :kbd)
   (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error
    :load-kbd-libs :keyboard
@@ -241,7 +242,7 @@
    :deref-keymaps :keymap-symbol-p
    :keymap-or-keymap-symbol-p))
 
-(defpkg io/xsubseq
+(defpkg :io/xsubseq
   (:use :cl)
   (:import-from :sb-cltl2 :variable-information)
   (:import-from :std/type :octet-vector)

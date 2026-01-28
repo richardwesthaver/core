@@ -34,7 +34,7 @@
 ((default (%stash psl.dat kbd.sxp x11.lisp parquet.json build-core))
  (all
   (%stash
-   psl.dat x11.lisp keysyms.sxp lapack-ffi.lisp parquet.thrift
+   psl.dat x11.lisp kbd.sxp lapack-ffi.lisp parquet.thrift
    build-core
    deploy))
  (upstream () 

@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :mpk/cli)
 
+(init :commands :mpk :skel :copy :skel)
+
 (defcommand (:mpk stats) ()
   (when-let* ((*mpc* (ignore-errors (mpd:mpc-connect)))
               (state (mpd::state (mpd:mpc-status *mpc*))))
@@ -54,10 +56,12 @@
 	(print-slots (mpd:mpc-stats *mpc*)))
       (terpri))))
 
-(defmain start-mpk (:package :mpk-user :commands :mpk)
+(save :commands :mpk)
+
+(defmain start-mpk (:package :mpk-user :commands :mpk :cli :mpk)
   (mpk-ensure-directories)
   (load-mpkrc)
-  (call-interactively (or (second *posix-argv*) "stats") (cddr *posix-argv*)))
+  (call-interactively (or (second sb-ext:*posix-argv*) "stats") (cddr sb-ext:*posix-argv*)))
 
 (define-cli "mpk" #'start-mpk
   :version "0.1.0"

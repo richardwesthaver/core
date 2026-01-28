@@ -1076,7 +1076,7 @@
    :remove-template-method :define-template-method
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
-   :defsham))
+   :defsham :save))
 
 (defpkg :std/seq
   (:use :cl :std/prim)

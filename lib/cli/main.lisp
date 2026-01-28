@@ -30,7 +30,7 @@
 (in-package :cli/main)
 
 ;;; Main
-(defmacro defmain (name (&key (exit t) (debug t) (package *package*) 
+(defmacro defmain (name (&key (exit t) (debug t) (package *package*) cli
                               commands readtable printer annotations)
                    &body body)
   "Define a CLI main function in the current package."
@@ -45,8 +45,9 @@
          ,@(when readtable `((in-readtable ,readtable)))
          ,@(when annotations `((load-annotations ,annotations)))
          ,@(when printer `((in-printer ,printer)))
-         ,@(if commands
-               `((with-commands ,commands
+         ,@(when commands `((load-commands ,commands)))
+         ,@(if cli
+               `((clap:with-cli ((clap:cli ,cli))
                    (with-cli-handlers ,@body)))
                `((with-cli-handlers ,@body)))))))
 

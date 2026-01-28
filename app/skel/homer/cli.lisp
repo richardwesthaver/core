@@ -6,6 +6,8 @@
 (in-package :skel/homer/cli)
 
 ;;; CLI
+(init :commands :name :homer :copy :skel)
+
 (define-command-type (:homer force) (&optional val) (when val (setq *homer-force* t)))
 
 (defcommand (:homer show) (&rest args)
@@ -80,7 +82,9 @@
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(defmain start-homer (:readtable :shell :package :homer :commands :homer)
+(save :commands :homer)
+
+(defmain start-homer (:readtable :shell :package :homer :commands :homer :cli :homer)
   (let ((*print-readably* t))
     (init* :xdg :homer)
     (load-homerc)

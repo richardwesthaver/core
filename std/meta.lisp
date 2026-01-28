@@ -56,6 +56,8 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Return non-nil if object SELF has been started."))
 (defverb stop (self &key &allow-other-keys)
   (:documentation "Stop object SELF."))
+(defverb save (self &rest args)
+  (:documentation "Save according to spec SELF."))
 (defverb stopped-p (self)
   (:documentation "Return non-nil if object SELF has been stopped."))
 (defverb pause (self)
