@@ -240,7 +240,8 @@
    :keybind-key :kbd
    :lookup-key-sequence :search-keymap
    :deref-keymaps :keymap-symbol-p
-   :keymap-or-keymap-symbol-p))
+   :keymap-or-keymap-symbol-p :print-key
+   :keymap-p))
 
 (defpkg :io/xsubseq
   (:use :cl)
