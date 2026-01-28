@@ -1374,9 +1374,9 @@
    :iprintln :fmt-tree :println :human-readable-size 
    :print-slots :format-slots :*print-slot-indent* :make-bitmap
    :with-bitmap :set-pixel :outside-bounds :draw
-   :pattern-to-bitmap :draw-border :draw-circle :bullseye
-   :moire :draw-line :sunbeam :fill-bitmap 
-   :draw-filled-circle :sun :peace :with-comic-strip
+   :pattern-to-bitmap :draw-border :circle :bullseye
+   :moire :line :sunbeam :fill-bitmap 
+   :filled-circle :sun :peace :with-comic-strip
    :plot-function :print-table :print-heading :print-in-box
    :smile :draw-one-in-chance :draw-chance :mumble
    :*mumble-timestamp* :deffmt :defprint :define-printer

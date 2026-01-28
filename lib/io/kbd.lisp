@@ -25,7 +25,7 @@
 (defparameter *keyboards* nil)
 (defvar *keysym-sets* nil
   "Alist of (NAME FIRST LAST).")
-(defvar *character-keysym-table* (make-hash-table :test 'eql)
+(defvar *keysym-character-table* (make-hash-table :test 'eql)
   "Table mapping Characters to KEYSYMs.")
 (defvar *keysym-name-table* (make-hash-table :test #'equal))
 (defvar *name-keysym-table* (make-hash-table :test #'equal))
@@ -117,7 +117,7 @@ fill in the lower bytes."
       (keysym
        (dolist (b bytes key) (setq key (+ (ash key 8) b))))
       (character
-       (or (gethash key *character-keysym-table*)
+       (or (gethash key *keysym-character-table*)
            (error "~s isn't a keysym" key))))))
 
 (defun keysym-set (name)
@@ -190,6 +190,8 @@ fill in the lower bytes."
   (defconstant left-hyper-keysym (keysym 255 237))
   (defconstant right-hyper-keysym (keysym 255 238)))
 
+(defstruct (char-map (:type list)) char lower mods mask)
+
 (defun define-keysym (obj keysym &key lower mods mask)
 "Define the translation from keysym/modifiers to a (usually
 character) object. Any previous keysym definition with KEYSYM
@@ -215,7 +217,7 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
            ((or (unsigned-byte 16) list) mods)
            ((or (member :modifiers) (unsigned-byte 16) list) mask)
            ((or null keysym) lower))
-  (setf (gethash keysym *character-keysym-table*)
+  (setf (gethash keysym *keysym-character-table*)
         (cond
           (mask
            (when (or (null mods) (and (numberp mods) (zerop mods)))
@@ -234,11 +236,11 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
                  (modifiers (cdr key)))
              (or (eql object (car entry))
                  (equal modifiers (fourth entry))))))
-    (let ((previous (gethash keysym *character-keysym-table*))
+    (let ((previous (gethash keysym *keysym-character-table*))
           (key (cons obj mods)))
       (when (and previous (find key previous :test #'match))
         (setq previous (delete key previous :test #'match))
-        (setf (gethash keysym *character-keysym-table*) previous)))))
+        (setf (gethash keysym *keysym-character-table*) previous)))))
 
 (define-keysym :character-set-switch character-set-switch-keysym)
 (define-keysym :left-shift left-shift-keysym)
@@ -430,48 +432,60 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
 
 (defun keysym-downcase (keysym)
   (declare (keysym keysym))
-  (let ((val (gethash keysym *character-keysym-table*)))
+  (let ((val (gethash keysym *keysym-character-table*)))
     (or (and val (third (first val))) keysym)))
 
 (defun keysym-cased-p (keysym)
   ;; Returns T if keysym has a lowercase equivalent.
   (declare (keysym keysym))
   (declare (values (or null keysym)))
-  (let ((translations (gethash keysym *character-keysym-table*)))
+  (let ((translations (gethash keysym *keysym-character-table*)))
     (and translations
          (third (first translations)))))
 
-(defun character-keysyms (char)
+(defun keysyms-from-character (char)
   "Given a character, return a list of all matching keysyms."
   (collecting
     (maphash #'(lambda (keysym mappings)
                  (dolist (mapping mappings)
                    (when (eql (car mapping) char)
                      (collect keysym))))
-             *character-keysym-table*)))
+             *keysym-character-table*)))
 
 ;;; Key
 ;; Note that the XLIB 'modifier-mask' type is (unsigned-byte 16).
-(define-bitfield keymod 
-  (control boolean) 
-  (meta boolean) 
-  (alt boolean) 
-  (shift boolean) 
-  (super boolean) 
-  (hyper boolean)
-  (altgr boolean))
+(eval-always
+  (define-bitfield keymod 
+    (control boolean) 
+    (meta boolean) 
+    (alt boolean) 
+    (shift boolean) 
+    (super boolean) 
+    (hyper boolean)
+    (altgr boolean)))
 
-(defstruct key sym (mod 0 :type keymod))
+(defstruct (key (:constructor %make-key)) sym (mod 0 :type keymod))
+
+(defun make-key (&rest args)
+  (let ((sym (getf args :sym)))
+    (remf args :sym)
+    (%make-key :sym sym :mod (or (getf args :mod) 
+                                 (apply 'make-keymod args)))))
+
 (defgeneric key (self)
   (:documentation "Return the KEY associated with SELF."))
 (defgeneric (setf key) (new self))
 
 (macrolet ((defkfn (name)
-             (with-gensyms (key mod)
-               `(definline ,(symbolicate "KEY-" name) (,key)
-                  (declare (key ,key))
-                  (lety ((,mod (key-mod ,key) :type keymod))
-                    (,(symbolicate "KEYMOD-" name) ,mod))))))
+             (with-gensyms (key mod val)
+               `(prog1 (defun ,(symbolicate "KEY-" name) (,key)
+                         (declare (key ,key) (optimize (speed 3) (safety 0)))
+                         (lety ((,mod (key-mod ,key) :type keymod))
+                           (,(symbolicate "KEYMOD-" name) ,mod)))
+                  (defun (setf ,(symbolicate "KEY-" name)) (,val ,key)
+                    (declare (key ,key) (boolean ,val))
+                    (lety ((,mod (key-mod ,key) :type keymod))
+                      (setf (key-mod ,key) (+ ,mod (make-keymod ,(keywordicate name) ,val)))))))))
   (defkfn control)
   (defkfn meta)
   (defkfn alt)
@@ -485,64 +499,72 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
 (defun altgr-key (key)
   (declare (key key))
   (with-slots (mod) key
-    (setf (key-mod key) (+ mod 64)) ; altgr is (ash 1 6) in KEYMOD
+    (setf (key-mod key) (+ mod #.(make-keymod :altgr t)))
     key))
 
 (defstruct keybind key cmd)
 (deftype keymap () '(vector keybind))
 (definline keymap-p (obj) (typep obj 'keymap))
 
-(defun parse-mods (mods end)
-  "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
-  (unless (evenp end)
-    (error 'kbd-parse-error :item mods
-                            :reason "Did you forget to separate modifier characters with '-'?"))
-  (apply 'make-keymod
-         (loop for i from 0 below end by 2
-               when (char/= (char mods (1+ i)) #\-)
-               do (error 'kbd-parse-error :item mods)
-               nconc (case (char mods i)
-                       (#\M (list :meta t))
-                       (#\A (list :alt t))
-                       (#\C (list :control t))
-                       (#\H (list :hyper t))
-                       (#\s (list :super t))
-                       (#\S (list :shift t))
-                       (t (error 'kbd-parse-error 
-                                 :item mods
-                                 :reason (format nil "Unknown modifer character ~A" (char mods i))))))))
+(with-memoization ()
+(memoizing
+ (defun parse-mods (mods end)
+   "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
+   (unless (evenp end)
+     (error 'kbd-parse-error :item mods
+                             :reason "Did you forget to separate modifier characters with '-'?"))
+   (apply 'make-keymod
+          (loop for i from 0 below end by 2
+                when (char/= (char mods (1+ i)) #\-)
+                do (error 'kbd-parse-error :item mods)
+                nconc (case (char mods i)
+                        (#\M (list :meta t))
+                        (#\A (list :alt t))
+                        (#\C (list :control t))
+                        (#\H (list :hyper t))
+                        (#\s (list :super t))
+                        (#\S (list :shift t))
+                        (t (error 'kbd-parse-error 
+                                  :item mods
+                                  :reason (format nil "Unknown modifer character ~A" (char mods i)))))))))
 
-(defun print-key-mods (key)
-  (concatenate 'string
-               (when (key-control key) "C-")
-               (when (key-meta key) "M-")
-               (when (key-alt key) "A-")
-               (when (key-shift key) "S-")
-               (when (key-super key) "s-")
-               (when (key-hyper key) "H-")))
-
-(defun print-key (key)
-  (format nil "~a~a"
-          (print-key-mods key)
-          (name-from-keysym (key-sym key))))
-
-(defun print-key-seq (seq)
-  (format nil "*~{~a~^ ~}" (mapcar 'print-key seq)))
-
-(defun parse-key (string)
-  "Parse STRING and return a KEY structure. Raise an error of type
+  (memoizing
+   (defun print-key-mods (key)
+     (concatenate 'string
+                  (when (key-control key) "C-")
+                  (when (key-meta key) "M-")
+                  (when (key-alt key) "A-")
+                  (when (key-shift key) "S-")
+                  (when (key-super key) "s-")
+                  (when (key-hyper key) "H-"))))
+  (memoizing
+   (defun print-key (key)
+     (format nil "~a~a"
+             (print-key-mods key)
+             (name-from-keysym (key-sym key)))))
+  (defun print-key-seq (seq)
+    (format nil "*~{~a~^ ~}" (mapcar 'print-key seq)))
+  (memoizing
+   (defun parse-key (string)
+     "Parse STRING and return a KEY structure. Raise an error of type
 KBD-PARSE-ERROR if the key failed to parse."
-  (let* ((p (when (> (length string) 2)
-              (position #\- string :from-end t :end (- (length string) 1))))
-         (mods (parse-mods string (if p (1+ p) 0)))
-         (keysym (keysym-from-name (subseq string (if p (1+ p) 0)))))
-    (if keysym
-        (make-key :sym keysym :mod mods)
-        (error 'kbd-parse-error :item string))))
-
-(defun parse-key-seq (keys)
-  "KEYS is a key sequence. Parse it and return the list of keys."
-  (mapcar 'parse-key (split-whitespace keys)))
+     (let* ((p (when (> (length string) 2)
+                 (position #\- string :from-end t :end (- (length string) 1))))
+            (mods (parse-mods string (if p (1+ p) 0)))
+            (keysym (keysym-from-name (subseq string (if p (1+ p) 0)))))
+       (if keysym
+           (make-key :sym keysym :mod mods)
+           (error 'kbd-parse-error :item string)))))
+  (memoizing
+   (defun parse-key-seq (keys)
+     "KEYS is a key sequence. Parse it and return the list of keys."
+     (mapcar 'parse-key (split-whitespace keys))))
+  (memoizing
+   (defun kbd (keys)
+     "This compiles a key string into a key structure used by
+`define-key', `set-prefix-key' and others."
+     (let ((seq (parse-key-seq keys)))
+       (values (car seq) (cdr seq))))))
 
 ;; XXX: define-key needs to be fixed to handle a list of keys
 (defun define-key (map key cmd)
@@ -574,11 +596,6 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (acond
    ((find key keymap :key 'binding-key :test 'equalp) (keybind-key it))
    ((and default (find t keymap :key 'binding-key)) (keybind-key it))))
-
-(defun kbd (keys)
-  "This compiles a key string into a key structure used by
-`define-key', `set-prefix-key' and others."
-  (first (parse-key-seq keys)))
 
 (defmethod copy ((from key) (to key))
   (setf (key-sym to) (key-sym from)

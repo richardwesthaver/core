@@ -204,21 +204,23 @@ functions themselves.")
   "Define a new hook with NAME bound to a hook specified by CLASS and FORMS
   being a list where each element is passed to ADD-HOOK."
   (with-gensyms (val)
-    `(defparameter ,name 
-       (let ((,val (make-instance ,class)))
-         (mapcar (lambda (x) ,(if (subtypep (eval class) 'dynamic-hook)
-                                  `(prog1 (setf (gethash (car x) (hook-value ,val)) (cadr x))
-                                     (when (> (length x) 2)
-                                       (setf (symbol-value (cadr x)) (caddr x)))
-                                     (if (<= (length x) 4)
-                                         (setf (documentation (cadr x) 'variable) (cadddr x))
-                                         (error 'simple-error 
-                                                :format-control "too many arguments - expected at most 4 but got ~S" 
-                                                :format-arguments (list (length x)))))
-                                  `(add-hook ,val x)))
-                 ',forms)
-         ,val)
-       ,@(or documentation))))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (defparameter ,name 
+         (let ((,val (make-instance ,class)))
+           (mapcar (lambda (x) ,(if (subtypep (eval class) 'dynamic-hook)
+                                    `(prog1 (setf (gethash (car x) (hook-value ,val)) (cadr x))
+                                       (when (> (length x) 2)
+                                         ;; WARN 2026-01-28: use of eval
+                                         (eval `(defparameter ,(cadr x) ,(caddr x))))
+                                       (if (<= (length x) 4)
+                                           (setf (documentation (cadr x) 'variable) (cadddr x))
+                                           (error 'simple-error 
+                                                  :format-control "too many arguments - expected at most 4 but got ~S" 
+                                                  :format-arguments (list (length x)))))
+                                    `(add-hook ,val x)))
+                   ',forms)
+           ,val)
+         ,@(or documentation)))))
 
 ;; TODO 2026-01-03: a few more things we could do here.. possibly redefine the
 ;; function slot to dispatch to the newly bound special vars instead of the

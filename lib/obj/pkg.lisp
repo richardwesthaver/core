@@ -624,7 +624,7 @@
    :eval-command :parse-args
    :read-arg :read-args
    :parse-interactive-ds-lambda-list :*command-input*
-   :command-class))
+   :command-class :*command-names-p*))
 
 (defpkg :obj/project
   (:nicknames :project)

@@ -241,7 +241,13 @@
    :lookup-key-sequence :search-keymap
    :deref-keymaps :keymap-symbol-p
    :keymap-or-keymap-symbol-p :print-key
-   :keymap-p))
+   :keymap-p :parse-key :parse-key-seq
+   :key-shift :*default-keysym-translate-mask*
+   :keysym-code-name :print-key-seq
+   :*dead-keysym-name-table* :*name-keysym-table*
+   :character-keysyms :*keysym-character-table*
+   :char-map :char-map-char :char-map-lower :char-map-mods 
+   :char-map-mask :make-key))
 
 (defpkg :io/xsubseq
   (:use :cl)

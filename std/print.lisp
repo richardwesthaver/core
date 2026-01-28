@@ -363,7 +363,7 @@ be produced by `sxhash'."
 
 ;;; Draw
 ;; Computer Graphics - Principles and Practice by Donald Hearn and M. Pauline Baker
-(defun draw-circle (x-center y-center radius &optional (bitmap *bitmap*))
+(defun circle (x-center y-center radius &optional (bitmap *bitmap*))
   (labels ((pixel (x y) (set-pixel (+ x-center x) (+ y-center y) bitmap))
            (draw-points (x y)
              (pixel x     y)
@@ -392,7 +392,7 @@ be produced by `sxhash'."
   (with-bitmap (size size)
     (let ((mid (floor size 2)))
       (loop for radius from 2 to mid by step
-            do (draw-circle mid mid radius))
+            do (circle mid mid radius))
       (when filled
         (loop for x from 2 to mid by (* 2 step)
               do (fill-bitmap (+ mid x 1) mid)))
@@ -408,7 +408,7 @@ be produced by `sxhash'."
     (copy-bitmap-onto-bitmap one *bitmap* offset 0)
     (draw *bitmap*)))
 
-(defun draw-line (xa ya xb yb &optional (bitmap *bitmap*))
+(defun line (xa ya xb yb &optional (bitmap *bitmap*))
   (let* ((dx (- xb xa))
          (dy (- yb ya))
          (steps (if (> (abs dx) (abs dy)) (abs dx) (abs dy)))
@@ -426,8 +426,8 @@ be produced by `sxhash'."
   "Draw a sunbeam."
   (with-bitmap (size size)
     (loop for x from 0 to size by step
-          do (draw-line 0 (1- size) x 0)
-             (draw-line 0 (1- size) (1- size) x))
+          do (line 0 (1- size) x 0)
+             (line 0 (1- size) (1- size) x))
     (draw)))
 
 (defun fill-bitmap (x y &optional (bitmap *bitmap*))
@@ -439,24 +439,24 @@ be produced by `sxhash'."
       (fill-bitmap x (+ y 1) bitmap)
       (fill-bitmap x (- y 1) bitmap))))
 
-(defun draw-filled-circle (x-center y-center radius &optional (bitmap *bitmap*))
-  (draw-circle x-center y-center radius bitmap)
+(defun filled-circle (x-center y-center radius &optional (bitmap *bitmap*))
+  (circle x-center y-center radius bitmap)
   (fill-bitmap x-center y-center bitmap))
 
 (defun sun (&key (size 64))
   "Draw a sun."
   (with-bitmap (size size)
     (let ((mid (floor size 2)))
-      (draw-filled-circle mid mid (1- mid))
+      (filled-circle mid mid (1- mid))
       (draw))))
 
 (defun peace ()
   "Peace on Earth."
   (with-bitmap (12 12)
-    (draw-circle 6 6 5)
-    (draw-line 6 10 6 1)
-    (draw-line 6 6 3 9)
-    (draw-line 6 6 9 9)
+    (circle 6 6 5)
+    (line 6 10 6 1)
+    (line 6 6 3 9)
+    (line 6 6 9 9)
     (draw)))
 
 (defun copy-bitmap-onto-bitmap (from-bitmap to-bitmap x y &key (fn (lambda (a b) (or a b))))
