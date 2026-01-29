@@ -7,7 +7,7 @@
 
 (defconfig logger-config (ast)
   ((size :initform 10 :initarg :size)
-   (level :initform t :initarg :level :accessor level)))
+   (level :initform *log-level* :initarg :level :accessor level)))
 
 (defmethod pipe ((self logger-config))
   (ast self))
@@ -22,7 +22,11 @@
   (make-instance 'logger-config :ast (or ast pipe) :size size :level level))
 
 (defun build-logger-config (cfg)
-  (apply 'defpipe* (make-instance 'logger) (pipe cfg)))
+  (setf *log-level* (level cfg))
+  (apply 'defpipe* (make-instance 'logger 
+                     :queue (make-array (slot-value cfg 'size) :fill-pointer 0)
+                     :queue-back (make-array (slot-value cfg 'size) :fill-pointer 0))
+                     (pipe cfg)))
 
 (defmethod build ((self logger-config) &key)
   (build-logger-config self))

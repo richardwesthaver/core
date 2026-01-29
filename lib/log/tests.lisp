@@ -1,5 +1,5 @@
 (defpackage :log/tests
-  (:use :cl :std :rt :log))
+  (:use :cl :std :rt :log :config :build))
 
 (in-package :log/tests)
 
@@ -36,7 +36,7 @@
              (log-pipe (make-instance 'file-sink :file tmpfile))
              (unless (started-p fx)
                (start fx))
-             (log-message t '(:file :log) "test")
+             (log-message :trace '(:file :log) "test")
              (grab-mutex (lock fx))
              (condition-wait (log::queue-condition fx) (lock fx) :timeout 1)
              (is> (file-size tmpfile) 0)
@@ -105,3 +105,10 @@
 (defmethod schema:column ((self faux-db-sink) (col integer)) (faux-level (* 100 col)))
 
 (deftest db-logger (:skip t))
+
+(deftest logger-config ()
+  (let ((cfg (make-config :logger :size 32 :level :trace)))
+    (istype 'logger-config (default-logger-config))
+    (istype 'logger-config cfg)
+    (let ((l (build cfg))) ; level does not propagate, size does
+      (is= 32 (array-total-size (queue l))))))

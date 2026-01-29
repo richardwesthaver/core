@@ -293,10 +293,10 @@ function 'NAME-P'."
 ;;; Logger
 ;; same as VERBOSE:CONTROLLER
 (defclass logger (pipe)
-  ((thread :initform nil :accessor log-thread)
+  ((thread :initarg :thread :initform nil :accessor log-thread)
    (thread-continue :initform nil :accessor log-thread-continue)
-   (queue :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue)
-   (queue-back :initform (make-array '(10) :adjustable T :fill-pointer 0) :accessor queue-back)
+   (queue :initarg :queue :initform (make-array 10 :adjustable T :fill-pointer 0) :accessor queue)
+   (queue-back :initarg :queue-back :initform (make-array 10 :adjustable T :fill-pointer 0) :accessor queue-back)
    (queue-condition :initform (make-waitqueue :name "message-condition") :reader queue-condition)
    (lock :initform (make-mutex :name "message-lock") :reader lock))
   (:documentation "A class which implements logging functionality. An instance of this class may
@@ -423,6 +423,7 @@ first element is of type LOGGER, insert into that object instead."
 
 ;;; Macros
 (defmacro with-conditions-logged (&body body)
+  "Eval BODY with errors and warnings sent to the current *LOGGER*."
   `(block nil
      (handler-bind
          ((error
@@ -446,4 +447,4 @@ first element is of type LOGGER, insert into that object instead."
 ;; (defprovider :logger (name &rest args))
 
 ;;; Annotations
-(defnotation (:log #\t) (stream))
+;; (defnotation (:log #\t) (stream))
