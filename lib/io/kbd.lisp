@@ -81,7 +81,6 @@
                    body)))
 
 (defun name-from-keysym-name (name)
-  ;; REVIEW 2026-01-25: linear search of hash-table
   (gethash name *keysym-name-table*))
 
 (defun name-from-keysym (key)
@@ -234,8 +233,8 @@ computations) and by the keysym-downcase function."
   (flet ((match (key entry)
            (let ((object (car key))
                  (modifiers (cdr key)))
-             (or (eql object (car entry))
-                 (equal modifiers (fourth entry))))))
+             (or (eql object (char-map-char entry))
+                 (equal modifiers (char-map-mods entry))))))
     (let ((previous (gethash keysym *keysym-character-table*))
           (key (cons obj mods)))
       (when (and previous (find key previous :test #'match))
@@ -432,9 +431,9 @@ computations) and by the keysym-downcase function."
 
 (defun keysym-downcase (keysym)
   (declare (keysym keysym))
-  (if-let ((val (gethash keysym *keysym-character-table*)))
-    (print (first val))
-    keysym))
+  (or (let ((val (gethash keysym *keysym-character-table*)))
+        (char-map-lower val))
+      keysym))
 
 (defun keysym-cased-p (keysym)
   ;; Returns T if keysym has a lowercase equivalent.
@@ -588,6 +587,15 @@ KBD-PARSE-ERROR if the key failed to parse."
      (let ((seq (parse-key-seq keys)))
        (values (car seq) (cdr seq))))))
 
+(defun key= (key1 key2)
+  (and (= (the keysym (key-sym key1)) (the keysym (key-sym key2)))
+       (= (the keymod (key-mod key1)) (the keymod (key-mod key2)))))
+
+(defun find-key (key map)
+  (if (eql key t)
+      (find t map :key 'keybind-key)
+      (find key map :key 'keybind-key :test 'key=)))
+
 ;; XXX: define-key needs to be fixed to handle a list of keys
 (defun define-key (map key cmd)
   "Add a keybinding mapping for the key, KEY to the command,
@@ -596,7 +604,7 @@ existing binding. For example,
 
 Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (declare (keymap map) (type (or key (eql t)) key))
-  (let ((binding (find key map :key 'keybind-key :test 'equalp)))
+  (let ((binding (find-key key map)))
     (cond 
       (cmd
        (when binding (setf map (delete binding map)))
@@ -615,9 +623,8 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
         collect (keybind-key i)))
 
 (defun lookup-key (keymap key &optional default)
-  (acond
-   ((find key keymap :key 'binding-key :test 'equalp) (keybind-key it))
-   ((and default (find t keymap :key 'binding-key)) (keybind-key it))))
+  (when-let ((kb (or (find-key key keymap) (when default (find-key t keymap)))))
+    (keybind-cmd kb)))
 
 (defmethod copy ((from key) (to key))
   (setf (key-sym to) (key-sym from)

@@ -83,24 +83,27 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Conditions
 (define-condition command-condition () ())
 (define-condition command-error (command-condition)
-  ((name :initarg :name :reader error-name)))
-(define-condition undefined-command (command-error)
-  ((args :initarg :args :reader error-args :initform nil))
+  ((name :initarg :name :reader error-name)
+   (args :initarg :args :reader error-args :initform nil)))
+
+(define-condition undefined-command (command-error) ()
   (:report (lambda (c s) 
              (format s "Undefined command ~A~@[ with args ~{~S~^ ~}~]" 
                      (error-name c) (error-args c)))))
 
-(define-condition undefined-command-type (command-error)
-  ((args :initarg :args :reader error-args :initform nil))
+(define-condition undefined-command-type (command-error) ()
   (:report (lambda (c s) 
              (format s "Undefined command type: ~A~@[ with args ~{~S~^ ~}~]" 
                      (error-name c) (error-args c)))))
 
-(define-condition invalid-command-type (command-error syntax-error)
-  ((args :initarg :args :reader error-args :initform nil))
+(define-condition invalid-command-type (command-error syntax-error) ()
   (:report (lambda (c s) 
              (format s "Invalid command-type ~A given args: ~S" 
                      (error-name c) (error-args c)))))
+
+(define-condition command-eval-error (command-error) ()
+  (:report (lambda (c s)
+             (format s "Error while executing command ~A" (fmt-command nil (error-name c) (error-args c))))))
 
 (define-condition invalid-itype (command-error syntax-error) 
   ((args :initarg :args :reader error-args :initform nil))
@@ -282,12 +285,17 @@ Example:
 
 ;; arg parsing
 (defun read-arg (input)
-  (read (if (stringp input) (make-string-input-stream input) input) input nil))
+  (etypecase input
+    (string (with-input-from-string (s input) (read s)))
+    (stream (read input))
+    (list (car input))))
 
 (defun read-args (input)
   (declare (values list))
-  (when (listp input) (setf input (apply 'concat input)))
-  (read-lisp-until-end (if (stringp input) (make-string-input-stream input) input)))
+  (etypecase input
+    (string (read-lisp-string input))
+    (stream (read-lisp-string (read-line input)))
+    (list input)))
 
 (defgeneric parse-args (self input)
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
@@ -298,10 +306,9 @@ Example:
 1. the COMMAND object
 2. the arguments to that command
 3. the ITYPE of the COMMAND."
-  (with-input-from-string (s (read-line stream))
-    (destructuring-bind (c &rest args) (read-lisp-until-end s)
-      (let ((cmd (or (command c) (undefined-command c args))))
-        (values cmd args (interactive cmd))))))
+  (destructuring-bind (c &rest args) (read-args stream)
+    (let ((cmd (or (command c) (undefined-command c args))))
+      (values cmd args (interactive cmd)))))
 
 (defun write-command (cmd &optional args (stream *standard-output*))
   (fmt-command stream cmd args)
@@ -310,8 +317,8 @@ Example:
 (defun parse-command (str &rest args)
   "Parse a COMMAND from STR."
   (with-input-from-string (s (if args 
-                                 (with-output-to-string (v)
-                                   (fmt-command v (string str) args))
+                                 (with-output-to-string (s)
+                                   (fmt-command s (string str) args))
                                  str))
     (read-command s)))
 
@@ -321,9 +328,9 @@ then execute it."
   (declare ((or string symbol) command))
   (catch 'cmd
     (let ((*command-input* input))
-      (multiple-value-bind (cmd args itype) (if (listp input)
+      (multiple-value-bind (cmd args itype) (if (and input (listp input))
                                                 (apply 'parse-command command input)
-                                                (parse-command command input))
+                                                (parse-command command))
         (call cmd (fill-args-interactively args itype))))))
 
 (defmacro with-commands (name &body body)
@@ -374,10 +381,10 @@ command."))
 ;; TODO 2026-01-22: apply-itype
 (defmethod parse-args ((self command) (input list)) input)
 (defmethod parse-args ((self command) (input string))
-  (with-input-from-string (s input)
-    (read-lisp-until-end s)))
+  (declare (ignore self))
+  (read-args input))
 (defmethod parse-args ((self command) (input stream))
-  (read-lisp-until-end input))
+  (read-args input))
 
 (defmethod call ((self command) (args list))
   (apply self args))
@@ -387,8 +394,16 @@ command."))
   (multiple-value-bind (cmd args) (apply 'parse-command self args)
     (call cmd args)))
 
-(defmethod exec ((self command)) (funcall (kernel self)))
-(defmethod exec ((self string)) (multiple-value-bind (cmd args) (parse-command self) (call cmd args)))
+(defmethod exec ((self command)) 
+  (if *interactive*
+      (call-interactively self)
+      (funcall self)))
+
+(defmethod exec ((self string)) 
+    (if *interactive*
+        (call-interactively self)
+        (multiple-value-bind (cmd args) (parse-command self)
+          (call cmd args))))
 
 #+nil
 (defgeneric command-pipe (self output)
@@ -476,12 +491,12 @@ with each hook being passed the RESULT."
             (restart-case
                 (handler-bind
                     ((error (lambda (c)
-                              (invoke-restart 'eval-command-error
+                              (invoke-restart 'command-eval-error
                                               (format nil "Error In Command '~a': ~A"
                                                       cmd c)))))
                   (let ((*interactive* interactive))
                     (exec cmd)))
-              (eval-command-error (err-text)
+              (command-eval-error (err-text)
                 :interactive (lambda ()
                                (list (format nil "^B^1*Error In Command '^b~a^B'"
                                              cmd)))

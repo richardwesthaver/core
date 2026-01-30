@@ -322,3 +322,7 @@ It must never be modified, though only good implementations will even enforce th
   "Read all forms in a lisp FILE."
   (with-open-file (f file :if-does-not-exist if-does-not-exist :external-format external-format)
     (read-lisp-until-end f)))
+
+(defun read-lisp-string (str)
+  (with-input-from-string (s str)
+    (read-lisp-until-end s)))

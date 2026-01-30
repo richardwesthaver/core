@@ -103,6 +103,7 @@
    :pswap
    :read-until-end
    :read-lisp-until-end
+   :read-lisp-string
    :read-lisp-file
    :*standard-readtable*
    :with-safe-io-syntax

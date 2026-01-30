@@ -252,7 +252,8 @@
    :char-map-mask :make-key
    :define-keymap :make-keymod
    :key-numlock :numlock-key
-   :key-altgr))
+   :key-altgr :key=
+   :find-key))
 
 (defpkg :io/xsubseq
   (:use :cl)
