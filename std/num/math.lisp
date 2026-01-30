@@ -19,6 +19,8 @@ MIN and MAX if NUMBER is greater then MAX, otherwise returns NUMBER."
           max
           number)))
 
+;; alt: (max min (min max value)))
+
 (defun gaussian-random (&optional min max)
   "Returns two gaussian random double floats as the primary and secondary value,
 optionally constrained by MIN and MAX. Gaussian random numbers form a standard

@@ -1,5 +1,5 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream :io/deflate))
+  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream :io/deflate :kbd))
 
 (in-package :io/tests)
 (defsuite :io)
@@ -142,3 +142,20 @@
     (issubclass 'disk (class-of disk)))
   ;; will return NIL on non-btrfs file systems
   (islist (btrfs-subvolumes "/tmp")))
+
+;;; KBD
+(deftest keys ()
+  (load-kbd-libs)
+  (is= 99 (key-sym (kbd "C-c")))
+  (isequalp '(99) (keysyms-from-character #\c))
+  (is (key-control (make-key :control t)))
+  (isnt (key-shift (make-key :sym 67)))
+  (is (key-shift (make-key :sym 99 :shift t :control t :altgr t)))
+  (is= 4 (length (apply 'cons (multiple-value-list (kbd "C-c t S-f z")))))
+  (is= 99 (key-sym (parse-key "C-c")))
+  (is= 5 (length (parse-key-seq "C-c f z S-1 C-u"))))
+
+(deftest keymaps ()
+  (istype 'keymap (sparse-keymap)))
+
+

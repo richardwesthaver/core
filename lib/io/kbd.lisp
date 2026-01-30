@@ -193,25 +193,25 @@ fill in the lower bytes."
 (defstruct (char-map (:type list)) char lower mods mask)
 
 (defun define-keysym (obj keysym &key lower mods mask)
-"Define the translation from keysym/modifiers to a (usually
-character) object. Any previous keysym definition with KEYSYM
-and MODS is deleted before the new definition is added.
+  "Define the translation from keysym/modifiers to a (usually
+character) object. Any previous keysym definition with KEYSYM and MODS is
+deleted before the new definition is added.
 
-MODS is either a modifier-mask or list containing intermixed
-keysyms and state-mask-keys specifying when to use this
-keysym-translation. The default is NIL.
+MODS is either a modifier-mask or list containing intermixed keysyms and
+state-mask-keys specifying when to use this keysym-translation. The default is
+NIL.
 
 MASK is either a KEYMOD or list containing intermixed keysyms and
 state-mask-keys specifying which modifiers to look at
 (i.e. modifiers not specified are ignored).
 
-If mask is :MODIFIERS then the mask is the same as the modifiers
-(i.e. modifiers not specified by modifiers are don't cares)
-The default mask is *default-keysym-translate-mask*
+If mask is :MODS then the mask is the same as the modifiers
+(i.e. modifiers not specified by modifiers are don't cares) The default mask
+is *default-keysym-translate-mask*
 
 LOWER is used for uppercase alphabetic keysyms. The value is the associated
-lowercase keysym. This information is used by the
-predicate (for caps-lock computations) and by the keysym-downcase function."
+lowercase keysym. This information is used by the predicate (for caps-lock
+computations) and by the keysym-downcase function."
   (declare ((or character keyword) obj)
            (keysym keysym)
            ((or (unsigned-byte 16) list) mods)
@@ -432,8 +432,9 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
 
 (defun keysym-downcase (keysym)
   (declare (keysym keysym))
-  (let ((val (gethash keysym *keysym-character-table*)))
-    (or (and val (third (first val))) keysym)))
+  (if-let ((val (gethash keysym *keysym-character-table*)))
+    (print (first val))
+    keysym))
 
 (defun keysym-cased-p (keysym)
   ;; Returns T if keysym has a lowercase equivalent.
@@ -448,21 +449,25 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
   (collecting
     (maphash #'(lambda (keysym mappings)
                  (dolist (mapping mappings)
-                   (when (eql (car mapping) char)
+                   (when (eql mapping char)
                      (collect keysym))))
              *keysym-character-table*)))
 
 ;;; Key
-;; Note that the XLIB 'modifier-mask' type is (unsigned-byte 16).
+;; Note that the XLIB 'modifier-mask' type is (unsigned-byte 8), but only
+;; contains CONTROL META ALT and MOD1-5. In this bitfield we preserve the
+;; Symbolics-era keysyms (SUPER HYPER META), and disregard the
+;; SCROLL-LOCK. Our WM is responsible for handling scroll-lock modifiers.
 (eval-always
   (define-bitfield keymod 
-    (control boolean) 
-    (meta boolean) 
-    (alt boolean) 
     (shift boolean) 
+    (control boolean) 
+    (meta boolean)
+    (alt boolean) 
     (super boolean) 
     (hyper boolean)
-    (altgr boolean)))
+    (altgr boolean)
+    (numlock boolean)))
 
 (defstruct (key (:constructor %make-key)) sym (mod 0 :type keymod))
 
@@ -482,6 +487,14 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
                          (declare (key ,key) (optimize (speed 3) (safety 0)))
                          (lety ((,mod (key-mod ,key) :type keymod))
                            (,(symbolicate "KEYMOD-" name) ,mod)))
+                  (defun (setf ,(symbolicate "KEYMOD-" name)) (,val ,key)
+                    (declare (keymod ,key) (boolean ,val))
+                    (cond
+                      ((and ,val (not (,(symbolicate "KEYMOD-" name) ,key)))
+                       (incf ,key (make-keymod ,(keywordicate name) t)))
+                      ((and (,(symbolicate "KEYMOD-" name) ,key) (not ,val))
+                       (decf ,key (make-keymod ,(keywordicate name) t)))
+                      (t ,key)))
                   (defun (setf ,(symbolicate "KEY-" name)) (,val ,key)
                     (declare (key ,key) (boolean ,val))
                     (lety ((,mod (key-mod ,key) :type keymod))
@@ -492,7 +505,8 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
   (defkfn shift)
   (defkfn hyper)
   (defkfn super)
-  (defkfn altgr))
+  (defkfn altgr)
+  (defkfn numlock))
 
 (definline key-mods-p (key) (not (zerop (key-mod key))))
 
@@ -502,31 +516,39 @@ predicate (for caps-lock computations) and by the keysym-downcase function."
     (setf (key-mod key) (+ mod #.(make-keymod :altgr t)))
     key))
 
+(defun numlock-key (key)
+  (declare (key key))
+  (with-slots (mod) key
+    (setf (key-mod key) (+ mod #.(make-keymod :numlock t)))
+    key))
+
 (defstruct keybind key cmd)
 (deftype keymap () '(vector keybind))
 (definline keymap-p (obj) (typep obj 'keymap))
+(defun keymap (&optional name) (if name (gethash name *keymaps*) *keymap*))
+(defun (setf keymap) (val name) (setf (gethash name *keymaps*) val))
 
 (with-memoization ()
-(memoizing
- (defun parse-mods (mods end)
-   "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
-   (unless (evenp end)
-     (error 'kbd-parse-error :item mods
-                             :reason "Did you forget to separate modifier characters with '-'?"))
-   (apply 'make-keymod
-          (loop for i from 0 below end by 2
-                when (char/= (char mods (1+ i)) #\-)
-                do (error 'kbd-parse-error :item mods)
-                nconc (case (char mods i)
-                        (#\M (list :meta t))
-                        (#\A (list :alt t))
-                        (#\C (list :control t))
-                        (#\H (list :hyper t))
-                        (#\s (list :super t))
-                        (#\S (list :shift t))
-                        (t (error 'kbd-parse-error 
-                                  :item mods
-                                  :reason (format nil "Unknown modifer character ~A" (char mods i)))))))))
+  (memoizing
+   (defun parse-mods (mods end)
+     "MODS is a sequence of <MOD CHAR> #\- pairs which is parsed into a KEYMOD."
+     (unless (evenp end)
+       (error 'kbd-parse-error :item mods
+                               :reason "Did you forget to separate modifier characters with '-'?"))
+     (apply 'make-keymod
+            (loop for i from 0 below end by 2
+                  when (char/= (char mods (1+ i)) #\-)
+                  do (error 'kbd-parse-error :item mods)
+                  nconc (case (char mods i)
+                          (#\M (list :meta t))
+                          (#\A (list :alt t))
+                          (#\C (list :control t))
+                          (#\H (list :hyper t))
+                          (#\s (list :super t))
+                          (#\S (list :shift t))
+                          (t (error 'kbd-parse-error 
+                                    :item mods
+                                    :reason (format nil "Unknown modifer character ~A" (char mods i)))))))))
 
   (memoizing
    (defun print-key-mods (key)
@@ -579,7 +601,7 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
       (cmd
        (when binding (setf map (delete binding map)))
        (vector-push-extend (make-keybind :key key :cmd cmd) map))
-       (t (setf map (delete binding map))))
+      (t (setf map (delete binding map))))
     (funcall *keymap-hook* :define map)))
 
 (definline sparse-keymap ()
@@ -589,8 +611,8 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
 (defun lookup-cmd (keymap cmd)
   "Return a list of keys in KEYMAP that are bound to CMD."
   (loop for i in keymap
-     when (equal cmd (keybind-cmd i))
-     collect (keybind-key i)))
+        when (equal cmd (keybind-cmd i))
+        collect (keybind-key i)))
 
 (defun lookup-key (keymap key &optional default)
   (acond
@@ -642,10 +664,18 @@ sequences that run binding."
              (check-type kmap keymap)
              (loop for i across kmap
                    if (funcall test (keybind-cmd i) cmd)
-                collect (cons (keybind-key i) key-seq)
-                else if (keymap-or-keymap-symbol-p (keybind-cmd i))
-                append (search-it cmd (keybind-cmd i) (cons (keybind-key i) key-seq)))))
+                   collect (cons (keybind-key i) key-seq)
+                   else if (keymap-or-keymap-symbol-p (keybind-cmd i))
+                   append (search-it cmd (keybind-cmd i) (cons (keybind-key i) key-seq)))))
     (mapcar 'reverse (search-it command keymap nil))))
+
+(defmacro define-keymap (name &key parent modify) ;; full:t=generate charvec,nil=sparse-keymap
+  "Define a new KEYMAP designated by NAME.
+
+PARENT is the keymap to inherit from."
+  (let ((km (or (when modify (keymap name)) (sparse-keymap))))
+    (when parent (copy (keymap parent) km))
+    `(setf (keymap ,name) ,km)))
 
 ;;; Keyboard
 (defstruct keyboard 
@@ -727,7 +757,7 @@ can't be opened, else returns nil."
       (evdev::libevdev-next-event dev (libevdev-read-flag :normal) (addr ev)))
     (with-alien-slots ((* time) type (code evdev/input::code) (value evdev/input::value)) ev
       (values 
-       (sb-posix::alien-timeval-sec time) 
+       (sb-posix::alien-timeval-sec time)
        (the fixnum (* 1000 (sb-posix::alien-timeval-usec time)))
        (evdev::libevdev-event-type-get-name type) 
        (evdev::libevdev-event-code-get-name type code) 

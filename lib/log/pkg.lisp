@@ -73,6 +73,7 @@
    :tag-tree-filter
    :*tag-separator*
    :matching-tree-tag
+   :with-conditions-logged
    :restart-logger
    :remove-logger
    :default-logger
@@ -95,4 +96,5 @@
    :db-source
    :logger-config
    :rotate-file-sink
-   :dformat))
+   :dformat
+   :dprint))

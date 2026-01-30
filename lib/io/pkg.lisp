@@ -220,6 +220,8 @@
    :get-keyboards :undefine-keysym
    :key :keymap
    :keybind :keymod
+   :keymod-control :keymod-meta :keymod-alt :keymod-shift
+   :keymod-super :keymod-hyper :keymod-altgr :keymod-numlock
    :key-control :key-meta
    :key-alt :key-shift
    :key-super :key-hyper
@@ -245,9 +247,12 @@
    :key-shift :*default-keysym-translate-mask*
    :keysym-code-name :print-key-seq
    :*dead-keysym-name-table* :*name-keysym-table*
-   :character-keysyms :*keysym-character-table*
+   :keysyms-from-character :*keysym-character-table*
    :char-map :char-map-char :char-map-lower :char-map-mods 
-   :char-map-mask :make-key))
+   :char-map-mask :make-key
+   :define-keymap :make-keymod
+   :key-numlock :numlock-key
+   :key-altgr))
 
 (defpkg :io/xsubseq
   (:use :cl)

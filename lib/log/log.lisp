@@ -428,7 +428,7 @@ first element is of type LOGGER, insert into that object instead."
      (handler-bind
          ((error
             (lambda (c)
-              (log-message* :error "Error signalled: ~A" cond)
+              (log-message* :error "Error signalled: ~A" c)
               (return)))
           (warning
             (lambda (c)
@@ -442,6 +442,11 @@ first element is of type LOGGER, insert into that object instead."
         (level (+ ilevel 2))) ;; always force the range to (:WARN[0] :INFO :DEBUG :TRACE)
     (log-message (svref *log-levels* (if (> level lvls) lvls level)) `(:wm ,ilevel)
                  (apply 'aformat nil fmt args))))
+
+(let ((dprint-count 0))
+  (defun dprint (arg)
+    (prog1 arg
+      (dformat 1 "~D: ~A" (incf dprint-count) arg))))
 
 ;;; DEFSYS Providers
 ;; (defprovider :logger (name &rest args))
