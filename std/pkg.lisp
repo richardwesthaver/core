@@ -1064,6 +1064,7 @@
    :head :tail
    :call :swap
    :copy :assign
+   :clean :purge
    :assignee :started-p
    :verbp :init
    :reset :state
@@ -1077,7 +1078,8 @@
    :remove-template-method :define-template-method
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
-   :defsham :save))
+   :defsham :save
+   :clone))
 
 (defpkg :std/seq
   (:use :cl :std/prim)

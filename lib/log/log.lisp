@@ -116,6 +116,15 @@ function 'NAME-P'."
 ;;     (map nil (lambda (x) (format t "~X~%" x)) args))
 ;;   args)
 
+(defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
+  `(with-mutex ((lock ,logger))
+     ,@body))
+
+(defmacro with-logger (logger &body body)
+  "Temporarily bind LOGGER to *LOGGER* for the duration of BODY."
+  `(let ((*logger* ,logger))
+     ,@body))
+
 ;;; Pipes
 (defclass log-message (message) 
   ((timestamp :initarg :timestamp :accessor timestamp)
@@ -181,8 +190,44 @@ function 'NAME-P'."
     (log-message level tags (princ-to-string datum)
                  'condition-message :condition datum)))
 
+(defclass backup-file-sink (file-sink)
+  ((count :initarg :count :initform 1)
+   (path :initarg :path :initform nil :accessor path))
+  (:default-initargs
+   :file nil
+   :count 1))
+
+(defun backup-file-sink (path count)
+  (let* ((type (print (or (pathname-type (pathname-name path)) (pathname-type path))))
+         (sym (pathname-name (pathname-name path)))
+         (file (make-pathname :name (format nil "~A.0" sym)
+                              :type type
+                              :defaults path)))
+    (mapc (lambda (f)
+            (let* ((name (last (ssplit #\. (pathname-name f)) 2))
+                   (i (parse-integer (cadr name) :junk-allowed t))
+                   (n (car name)))
+              (when i
+                (move-file f (make-pathname :name (format nil "~A.~A" n (1+ i))
+                                                 :type type
+                                                 :defaults path)))))
+          (print
+           (nreverse
+            (loop for i from 0 below count
+                  with p = (probe-file 
+                            (make-pathname 
+                             :name (format nil "~A.~A" sym i)
+                             :type type
+                             :defaults path))
+                  while p
+                  collect p))))
+    file))
+
+(defmethod initialize-instance :after ((obj backup-file-sink) &key path count)
+  (setf (file obj) (backup-file-sink path count)))
+
 (defclass rotating-file-sink (file-sink)
-  ((interval :accessor interval)
+  ((interval :initarg :interval :accessor interval)
    (last-rotation :initform 0 :accessor last-rotation)
    (path :initarg :path :initform nil :accessor path))
   (:default-initargs
@@ -201,8 +246,7 @@ function 'NAME-P'."
                                   :defaults (path obj))))))
     (setf (last-rotation obj) time)))
 
-(defmethod initialize-instance :after ((obj rotating-file-sink) &key interval)
-  (setf (interval obj) interval)
+(defmethod initialize-instance :after ((obj rotating-file-sink) &key)
   (rotate-file-sink obj))
 
 (defmethod (setf interval) (value (obj rotating-file-sink))
@@ -343,15 +387,6 @@ create their own dedicated thread when started."))
              (terminate-thread th)
              (return)))
   self)
-
-(defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
-  `(with-mutex ((lock ,logger))
-     ,@body))
-
-(defmacro with-logger (logger &body body)
-  "Temporarily bind LOGGER to *LOGGER* for the duration of BODY."
-  `(let ((*logger* ,logger))
-     ,@body))
 
 (defun logger-loop (self)
   (declare (logger self))

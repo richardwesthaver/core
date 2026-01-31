@@ -68,6 +68,7 @@
    :%log-object
    :log-object
    :rotating-file-sink
+   :backup-file-sink
    :level-filter
    :tag-filter
    :tag-tree-filter
@@ -96,5 +97,6 @@
    :db-source
    :logger-config
    :rotate-file-sink
+   :backup-file-sink
    :dformat
    :dprint))

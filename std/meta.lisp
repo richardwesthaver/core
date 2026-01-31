@@ -67,6 +67,10 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Resume the object SELF from a paused state."))
 (defverb shutdown (self)
   (:documentation "Shutdown object SELF."))
+(defverb clean (self &key)
+  (:documentation "Clean object SELF."))
+(defverb purge (self &key)
+  (:documentation "Purge object SELF."))
 (defverb reset (self &rest args &key &allow-other-keys)
   (:documentation "Reset object SELF."))
 (defverb data (self)
@@ -131,6 +135,8 @@ function NAME and be skipped for (setf NAME)."
   (:method ((from t) (to cons))
     (mapl #'(lambda (lst) (rplaca lst from)) to)
     to))
+(defverb clone (self)
+  (:documentation "Return a clone of SELF."))
 (defverb swap (from to)
   (:documentation "Swap the contents of FROM with the contents of TO, returning TO."))
 (defverb call (self args)
@@ -570,4 +576,4 @@ given the name and specializer."
 (defvar *sham-classes* nil
   "Control the behavior of the DEFSHAM macro.")
 
-(defmacro defsham ((name &rest opts) &body slots))
+;; (defmacro defsham ((name &rest opts) &body slots))

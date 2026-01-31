@@ -63,12 +63,11 @@
 
 (defmethod (setf file) (file (obj file-sink))
   (with-slots (output) obj
-    (when output
-      (close output))
+    (when output (close output :abort t))
     (when file
       (setf output (open file :direction :output
-                              :if-exists :append
                               :if-does-not-exist :create
+                              :if-exists :append
                               :external-format :utf-8))
       (setf (slot-value obj 'file) file))))
 
