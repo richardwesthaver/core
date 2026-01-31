@@ -350,9 +350,9 @@ NAME *COMMAND-TABLE*)."
   (setf (command-table name2) (command-table name1)))
 
 (defun load-commands (name)
-  (with-commands name
-    (setq *command-types* *command-types*
-          *commands* *commands*)))
+  (destructuring-bind (cmds . types) (gethash name *command-table*)
+    (setq *commands* cmds
+          *command-types* types)))
 
 (defkernel command (kernel-object)
   ((interactive :initarg :interactive :reader interactive))

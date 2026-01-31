@@ -15,9 +15,7 @@
 
 (declaim (log-level-designator *log-level*))
 (defparameter *log-level* :debug
-  "Logging is performed dynamically based on this variable. When NIL,
-logging is disabled, which is equivalent to a level of :FATAL. When T,
-Logging is enabled for all levels, which is equivalent to :TRACE.")
+  "Logging is performed dynamically based on this variable.")
 
 (defvar *log-message-class* 'simple-log-message
   "The class of messages sent to the logger. May be a subclass of LOG-MESSAGE or
@@ -198,7 +196,7 @@ function 'NAME-P'."
    :count 1))
 
 (defun backup-file-sink (path count)
-  (let* ((type (print (or (pathname-type (pathname-name path)) (pathname-type path))))
+  (let* ((type (or (pathname-type (pathname-name path)) (pathname-type path)))
          (sym (pathname-name (pathname-name path)))
          (file (make-pathname :name (format nil "~A.0" sym)
                               :type type
@@ -211,7 +209,6 @@ function 'NAME-P'."
                 (move-file f (make-pathname :name (format nil "~A.~A" n (1+ i))
                                                  :type type
                                                  :defaults path)))))
-          (print
            (nreverse
             (loop for i from 0 below count
                   with p = (probe-file 
@@ -220,7 +217,7 @@ function 'NAME-P'."
                              :type type
                              :defaults path))
                   while p
-                  collect p))))
+                  collect p)))
     file))
 
 (defmethod initialize-instance :after ((obj backup-file-sink) &key path count)
