@@ -156,14 +156,13 @@
  (core ()
   (:build (%stash)
    (with-sbcl (:noinform t :quit t :input t)
-    (let ((sb-ext:*block-compile-default* t))
-     (pushnew 'asdf::clear-configuration *save-hooks*)
-     (setf asdf:*central-registry* nil)
-     (asdf:load-system :core)
-     ;; post-load hooks
-     (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
-     (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
-     (asdf:make :bin/core)))
+    (pushnew 'asdf::clear-configuration *save-hooks*)
+    (setf asdf:*central-registry* nil)
+    (asdf:load-system :core)
+    ;; post-load hooks
+    (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
+    (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
+    (asdf:make :bin/core))
    (move-file "bin/core" ".stash/core"))
   (:compile () (compile-lisp :core :force t :verbose t))
   (:install (install-emacs)

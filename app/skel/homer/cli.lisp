@@ -6,7 +6,7 @@
 (in-package :skel/homer/cli)
 
 ;;; CLI
-(init :commands :name :homer :copy :skel :reset t)
+(init :commands :name :homer :copy :cli :clean t)
 
 (define-command-type (:homer force) (&optional val) (when val (setq *homer-force* t)))
 

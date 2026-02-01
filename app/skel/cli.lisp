@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/cli)
 
-(init :commands :name :skel :copy :cli :reset t)
+(eval-always (init :commands :name :skel :copy :cli :clean t))
 
 (defcommand (:skel init) (&optional file name)
   (handler-bind
@@ -160,4 +160,4 @@
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool.")
 
-(save :commands :skel)
+(eval-always (save :commands :skel))

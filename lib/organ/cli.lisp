@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :organ/cli)
-
+(init :commands :name :organ :copy :cli :clean t)
 ;; (defopt organ-output (when *arg* (trace! (or *arg* "output.organ"))))
 (defcommand (:organ describe) (&optional doc)
   (if doc
@@ -30,3 +30,4 @@
 #+todo
 (define-cli "organ" :description "org-mode toolbox")
   
+(save :commands :organ)

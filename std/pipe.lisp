@@ -346,7 +346,6 @@ Returns the segment.")
 
 (defclass message () ())
 (defclass event () ())
-(defclass buffer () ())
 (defclass bus () ())
 
 (defgeneric format-message (stream message)

@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :skel/krypt)
+(init :commands :name :krypt :copy :cli :clean t)
 
 (defcommand (:krypt hash) (input)
   "Return the CRC64 value of a file or string."
@@ -18,3 +19,5 @@
 #+todo
 (define-cli "krypt" (with-commands :krypt (command :show))
   :description "Crypto Utils")
+
+(save :commands :krypt)

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :vc/cli)
-(init :commands :name :vc :copy :cli :reset t)
+(init :commands :name :vc :copy :cli :clean t)
 
 (defcommand (:vc status) ()
   (vc-status *repo*))
@@ -35,6 +35,7 @@
 (defcommand (:vc unbundle) (input)
   (vc-unbundle (make-repo *default-pathname-defaults*) input))
 
-(save :commands :vc)
 #+todo
 (define-cli "vc")
+
+(save :commands :vc)

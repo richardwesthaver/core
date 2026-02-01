@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :cli/clap)
-(init :commands :name :cli :class 'cli-command :reset t)
+(init :commands :name :cli :class 'cli-command :clean t)
 
 ;;; Variables
 (defparameter *no-exit* nil

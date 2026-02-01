@@ -132,7 +132,7 @@
    #:make-editor
    #:editor
    #:*editor*
-   #:buffer
+   #:text-buffer
    #:*announce*))
 
 (defpkg :cli/progress

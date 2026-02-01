@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rdb/cli)
-(init :commands :name :rdb :copy :cli :reset t)
+(init :commands :name :rdb :copy :cli :clean t)
 
 (defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)

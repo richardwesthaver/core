@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :skel/packy/cli)
-
+(init :commands :name :packy :clean t :copy :cli)
 (defcommand (:packy show) (&optional version))
 
 #+todo

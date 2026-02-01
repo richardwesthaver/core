@@ -1219,12 +1219,11 @@
    :element-stream :value :index :resolve-element
    :find-element :find-parent-element :insert-element :withdraw-element
    :remove-element :set-element-id :move-element :message
-   :event :buffer :bus :format-message
    :condition-message :message-condition
    :stream-sink :stream-source :file-sink :file-source
    :add-element :insert-element*
    :defpipe :make-pipe :simple-message :message-content
-   :defpipe*))
+   :defpipe* :event :bus :format-message))
 
 (defpkg :std/thread
   (:use :cl :std/prim)

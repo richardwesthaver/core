@@ -74,6 +74,8 @@ Z -- Coding system, nil if no prefix arg.
 (defvar *commands* (make-hash-table))
 (defvar *command-types* (make-hash-table))
 (defvar *command-table* (make-hash-table))
+(defvar *commander* nil
+  "The name of the currently active set of commands - a key in *COMMAND-TABLE*.")
 (defvar *command-delimiter* #\;
   "A character used to indicate the start of a new command within the same line.")
 (defparameter *command-names-p* nil
@@ -519,11 +521,12 @@ with each hook being passed the RESULT."
     (format stream "~@[~<~A~>~%~]" (kernel-documentation self))))
 
 ;;; Init
-(defmethod init ((self (eql :commands)) &key name class copy (load t) names reset)
-  (when reset (reset :commands :name name))
+(defmethod init ((self (eql :commands)) &key name class copy (load t) names clean)
+  (when clean (clean :commands))
   (when class (setq *command-class* class))
   (setq *command-names-p* names)
   (when name
+    (setq *commander* name)
     (unless (command-table name) (make-commands name))
     (when copy (copy-commands copy name))
     (let ((cons (command-table name)))
@@ -536,16 +539,17 @@ with each hook being passed the RESULT."
   (clrhash *commands*)
   (clrhash *command-types*)
   (setq *command-class* 'command
-        *command-names-p* nil)
+        *command-names-p* nil
+        *commander* nil)
   (cond
     (full (clrhash *command-table*))
     (name (remhash name *command-table*))))
 
 (defmethod clean ((self (eql :commands)) &key)
   (setq *commands* (make-hash-table)
-        *command-types* (make-hash-table)))
+        *command-types* (make-hash-table)
+        *commander* nil
+        *command-names-p* nil))
 
 (defmethod save ((self (eql :commands)) &rest args)
-  (let ((name (pop args)))
-    (save-commands name)
-    (clean :commands)))
+  (save-commands (pop args)))

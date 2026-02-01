@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :pod)
 
-(init :commands :name :pod :copy :cli :reset t)
+(init :commands :name :pod :copy :cli :clean t)
 
 (defcommand (:pod info) ()
   (unless (probe-file (podman-local-user-socket))
