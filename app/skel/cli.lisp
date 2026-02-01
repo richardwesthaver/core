@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/cli)
 
-(init :commands :name :skel :copy :cli)
+(init :commands :name :skel :copy :cli :reset t)
 
 (defcommand (:skel init) (&optional file name)
   (handler-bind
@@ -114,7 +114,7 @@
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcommand (:skel make) (&rest args)
-  (declare (interactive (ustring "Make what? ")))
+  (declare (interactive (ustring* "Make what? ")))
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
       (sb-ext:enable-debugger)
@@ -149,8 +149,6 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
-(save :commands :skel)
-
 (defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel :cli :skel)
   (let ((sb-debug:*backtrace-frame-count* 8))
     (init :skel)
@@ -161,3 +159,5 @@
 (define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
   :description "The hackable devtool.")
+
+(save :commands :skel)

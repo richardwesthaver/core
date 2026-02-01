@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :cli/clap)
+(init :commands :name :cli :class 'cli-command :reset t)
 
 ;;; Variables
 (defparameter *no-exit* nil
@@ -108,8 +109,6 @@ evaluation of BODY."
   (:documentation "Print the version of SELF."))
 
 ;;; CLI Commands
-(init :commands :name :cli :class 'cli-command)
-
 (defkernel cli-command (command) ()
   (:documentation "Class of COMMANDs which may be executed directly from the command line."))
 
@@ -125,10 +124,20 @@ evaluation of BODY."
   (force-output *query-io*)
   (string (read-arg *query-io*)))
 
+(define-command-type (:cli string*) (&optional (prompt "Input: "))
+  (princ prompt *query-io*)
+  (force-output *query-io*)
+  (mapcar 'string (read-args *query-io*)))
+
 (define-command-type (:cli ustring) (&optional (prompt "INPUT: "))
   (princ prompt *query-io*)
   (force-output *query-io*)
   (string-upcase (read-arg *query-io*)))
+
+(define-command-type (:cli ustring*) (&optional (prompt "Input: "))
+  (princ prompt *query-io*)
+  (force-output *query-io*)
+  (mapcar 'string-upcase (read-args *query-io*)))
 
 (define-command-type (:cli dstring) (&optional (prompt "input: "))
   (princ prompt *query-io*)
@@ -138,7 +147,7 @@ evaluation of BODY."
 (define-command-type (:cli *) (&optional (prompt "Input: "))
   (princ prompt *query-io*)
   (force-output *query-io*)
-  (read-arg *query-io*))
+  (read-args *query-io*))
 
 (define-command-type (:cli y/n) (&optional prompt)
   (let ((*query-io* (if (streamp *command-input*) *command-input* *query-io*)))
@@ -172,15 +181,12 @@ evaluation of BODY."
 ;;; CLI
 (defcommand (:cli :help) (&optional (arg *cli*))
   "Print help and exit."
-  (declare (interactive (* "Command: ")))
+  (declare (interactive (ustring "Command: ")))
   (print-help (if (cli-p arg) arg (command arg))))
 
 (defcommand (:cli :version) (&optional (arg *cli*))
   "Print version and exit." 
-  (declare (interactive *))
   (print-version arg *standard-output*))
-
-(save :commands :cli)
 
 ;; REVIEW 2026-01-16: should this be a struct containing a CLI-COMMAND? hmm..
 (defstruct cli

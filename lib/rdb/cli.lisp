@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rdb/cli)
-(init :commands :name :rdb :copy :cli)
+(init :commands :name :rdb :copy :cli :reset t)
 
 (defcommand (:rdb new) ()
   (set-db-opt *db* :error-if-exists t)
@@ -23,8 +23,8 @@
 	    (loop while iter-valid-p
 		  do (progn
                        (format t "~A : ~A~%"
-			       (sb-ext:octets-to-string key :external-format '(:ascii :replacement #\_))
-			       val)
+			       (sb-ext:octets-to-string skey :external-format '(:ascii :replacement #\_))
+			       sval)
 		       next)))))))
 
 (defcommand (:rdb set) (k v)
@@ -56,6 +56,5 @@
 		 val)))))
 
 (save :commands :rdb)
-
 #+todo
 (define-cli "rdb" :version 0)

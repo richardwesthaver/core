@@ -524,13 +524,12 @@ with each hook being passed the RESULT."
   (when class (setq *command-class* class))
   (setq *command-names-p* names)
   (when name
+    (unless (command-table name) (make-commands name))
     (when copy (copy-commands copy name))
     (let ((cons (command-table name)))
-      (if cons
-          (when load
-            (setq *commands* (car cons)
-                  *command-types* (cdr cons)))
-          (make-commands name))))
+      (when load
+        (setq *commands* (car cons)
+              *command-types* (cdr cons)))))
   (values *commands* *command-types*))
 
 (defmethod reset ((self (eql :commands)) &key name full)
@@ -540,8 +539,13 @@ with each hook being passed the RESULT."
         *command-names-p* nil)
   (cond
     (full (clrhash *command-table*))
-    (name (remhash *command-table* name))))
+    (name (remhash name *command-table*))))
+
+(defmethod clean ((self (eql :commands)) &key)
+  (setq *commands* (make-hash-table)
+        *command-types* (make-hash-table)))
 
 (defmethod save ((self (eql :commands)) &rest args)
   (let ((name (pop args)))
-    (save-commands name)))
+    (save-commands name)
+    (clean :commands)))

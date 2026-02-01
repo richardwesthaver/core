@@ -276,12 +276,12 @@
 
 ;;; Macros
 (defmacro send (&rest commands)
-  "Macro for using inside `defcommand'."
+  "Macro for using inside `defmpc'."
   `(send-command connection
                  (format nil "~{~A~^ ~}"
                          (remove nil (list ,@commands)))))
 
-(defmacro defcommand (name parameters &body body)
+(defmacro defmpc (name parameters &body body)
   `(defun ,(symbolicate "MPC-" name) (connection ,@parameters)
      ,@body))
 
@@ -305,158 +305,158 @@
                  args))))
 
 ;;; Commands
-(defcommand password (password)
+(defmpc password (password)
   "Authentication."
   (check-args string password)
   (send "password" password))
 
-(defcommand disconnect ()
+(defmpc disconnect ()
   "Close connection."
   (socket-close connection))
 
-(defcommand playing ()
+(defmpc playing ()
   "Return instance of playlist with current song."
   (let ((track (send "currentsong")))
     (when track
       (make-class track 'track))))
 
-(defcommand disable-output (id)
+(defmpc disable-output (id)
   (check-args unsigned-byte id)
   (send "disableoutput" id))
 
-(defcommand enable-output (id)
+(defmpc enable-output (id)
   (check-args unsigned-byte id)
   (send "enableoutput" id))
 
-(defcommand ping ()
+(defmpc ping ()
   "Send ping to MPD."
   (send "ping"))
 
-(defcommand kill ()
+(defmpc kill ()
   "Stop MPD in a safe way."
   (send "kill"))
 
-(defcommand status ()
+(defmpc status ()
   "Return status of MPD."
   (make-class (send "status") 'mpd-status))
 
-(defcommand stats ()
+(defmpc stats ()
   "Return statisics."
   (make-class (send "stats") 'stats))
 
-(defcommand outputs ()
+(defmpc outputs ()
   "Return information about all outputs."
   (split-values (send "outputs")))
 
-(defcommand commands ()
+(defmpc commands ()
   "Return list of available commands."
   (filter-keys (send "commands")))
 
-(defcommand not-commands ()
+(defmpc not-commands ()
   "Return list of commands to which the current user does not have access."
   (filter-keys
    (send "notcommands")))
 
 ;;; Control
-(defcommand pause ()
+(defmpc pause ()
   "Toggle pause / resume playing."
   (send "pause"))
 
-(defcommand play (&optional song-number)
+(defmpc play (&optional song-number)
   ;; (check-args (or positive-fixnum null) song-number)
   "Begin playing the playlist starting from song-number, default is 0."
   (if song-number
       (send "play" (- song-number 1))
       (send "play")))
 
-(defcommand stop ()
+(defmpc stop ()
   "Stop playing."
   (send "stop"))
 
-(defcommand next ()
+(defmpc next ()
   "Play next track in the playlist."
   (send "next"))
 
-(defcommand previous ()
+(defmpc previous ()
   "Play previous track in the playlist."
   (send "previous"))
 
-(defcommand crossfade (seconds)
+(defmpc crossfade (seconds)
   (check-args unsigned-byte seconds)
   "Sets crossfading between songs."
   (send "crossfade" seconds))
 
 ;; Playlist
-(defcommand list-playlist (name)
+(defmpc list-playlist (name)
   "List files in the playlist `name'"
   (check-args string name)
   (filter-keys (send "listplaylist" name)))
 
-(defcommand list-playlist-info (name)
+(defmpc list-playlist-info (name)
   "List metadata of tracks in the playlist `name'"
   (check-args string name)
   (parse-list (send "listplaylistinfo" name) 'playlist))
 
-(defcommand clear ()
+(defmpc clear ()
   "Clear the current playlist."
   (send "clear"))
 
-(defcommand save-playlist (filename)
+(defmpc save-playlist (filename)
   "Save the current playlist to the file in the playlist directory."
   (check-args string filename)
   (send "save" filename))
 
-(defcommand load-playlist (filename)
+(defmpc load-playlist (filename)
   "Load playlist from file."
   (check-args string filename)
   (send "load" filename))
 
-(defcommand rename-playlist (name new-name)
+(defmpc rename-playlist (name new-name)
   "Rename playlist."
   (check-args string name new-name)
   (unless (equal name new-name)
     (send "rename" name new-name)))
 
-(defcommand playlist-info (&optional id)
+(defmpc playlist-info (&optional id)
   "Return content of the current playlist."
   (check-args (or positive-fixnum null) id)
   (if id
       (make-class (send "playlistinfo" id) 'playlist)
       (parse-list (send "playlistinfo") 'playlist)))
 
-(defcommand playlist-changes (version)
+(defmpc playlist-changes (version)
   "Return changed songs currently in the playlist since `version'."
   (check-args unsigned-byte version)
   (parse-list (send "plchanges" version) 'playlist))
 
-(defcommand add-to-playlist (name path)
+(defmpc add-to-playlist (name path)
   "Add `path' to the playlist `name'."
   (check-args string name path)
   (send "playlistadd" name path))
 
-(defcommand clear-playlist (name)
+(defmpc clear-playlist (name)
   "Clear playlist `name'."
   (check-args string name)
   (send "playlistclear"))
 
-(defcommand delete-from-playlist (name song-id)
+(defmpc delete-from-playlist (name song-id)
   "Delete `song-id' from playlist `name'."
   (check-args string name)
   (check-args positive-fixnum song-id)
   (send "playlistdelete" name song-id))
 
-(defcommand move-in-playlist (name song-id position)
+(defmpc move-in-playlist (name song-id position)
   "Move `song-id' in playlist `name' to `position'."
   (check-args string name)
   (check-args positive-fixnum song-id position)
   (send "playlistmove" name song-id position))
 
-(defcommand find-in-current-playlist (scope query)
+(defmpc find-in-current-playlist (scope query)
   "Search for songs in the current playlist with strict matching."
   (check-args string scope query)
   (send "playlistfind" scope query))
 
-(defcommand search-in-current-playlist (scope query)
+(defmpc search-in-current-playlist (scope query)
   "Search case-insensitively with partial matches for songs in the current playlist"
   (check-args string scope query)
   (send "playlistsearch" scope query))
@@ -479,7 +479,7 @@
 (defmethod-command add-id ((what string))
   (car (filter-keys (send "addid" what))))
 
-(defcommand move (from to)
+(defmpc move (from to)
   "Move track from `from' to `to' in the playlist."
   (check-args positive-fixnum from to)
   (unless (= from to)
@@ -495,7 +495,7 @@
   (check-args unsigned-byte id to)
   (send "moveid" id to))
 
-(defcommand swap (first second)
+(defmpc swap (first second)
   "Swap positions of two tracks."
   (check-args unsigned-byte first second)
   (unless (= first second)
@@ -511,7 +511,7 @@
   (check-args unsigned-byte first second)
   (send "swap" first second))
 
-(defcommand delete-track (number)
+(defmpc delete-track (number)
   "Delete track from playlist."
   (check-args unsigned-byte number)
   (send "delete" number))
@@ -526,64 +526,64 @@
   (check-args unsigned-byte id)
   (send "deleteid" id))
 
-(defcommand shuffle ()
+(defmpc shuffle ()
   "Shuffle the current playlist."
   (send "shuffle"))
 
 ;;; Database
-(defcommand update (&optional path)
+(defmpc update (&optional path)
   "Scan directory for music files and add them to the database."
   (check-args string path)
   (send "update" path))
 
-(defcommand rescan ()
+(defmpc rescan ()
   "Scan all music files and update the database."
   (send "rescan"))
 
-(defcommand find-tracks (type what)
+(defmpc find-tracks (type what)
   "Find tracks in the database with a case sensitive, exact match."
   (check-args tag-type type)
   (check-args string what)
   (parse-list (send "find" type what) 'track))
 
-(defcommand list-metadata (metadata-1 &optional metadata-2 search-term)
+(defmpc list-metadata (metadata-1 &optional metadata-2 search-term)
   "List all metadata of `metadata-1'.
 If `metadata-2' & `search-term' are supplied,
 then list all `metadata-1' in which `metadata-2' has value `search-term'."
   (check-args (or string null) search-term)
   (send "list" metadata-1 metadata-2 search-term))
 
-(defcommand search-tracks (type what)
+(defmpc search-tracks (type what)
   "Find tracks in the database with a case sensitive, inexact match."
   (check-args tag-type type)
   (check-args string what)
   (parse-list (send "search" type what) 'track))
 
-(defcommand list-all-info (&optional path)
+(defmpc list-all-info (&optional path)
   "Lists all information about files in `path' recursively. Default path is /."
   (parse-list (send "listallinfo" path) 'track))
 
-(defcommand list-all (&optional path)
+(defmpc list-all (&optional path)
   "Lists all files in `path' recursively. Default path is /."
   (check-args (or string null) path)
   (filter-keys (send "listall" path)))
 
-(defcommand list-info (&optional path)
+(defmpc list-info (&optional path)
   "Show contents of directory."
   (check-args (or string null) path)
   (parse-list (send "lsinfo" path) 'track))
 
-(defcommand count-tracks (scope query)
+(defmpc count-tracks (scope query)
   "Number of songs and their total playtime matching `query'.
 Return: (number playtime)."
   (check-args string query)
   (filter-keys (send "count" scope query)))
 
-(defcommand tag-types ()
+(defmpc tag-types ()
   "Get a list of available metadata types."
   (filter-keys (send "tagtypes")))
 
-(defcommand url-handlers ()
+(defmpc url-handlers ()
   "Get a list of available URL handlers."
   (filter-keys (send "urlhandlers")))
 
@@ -600,7 +600,7 @@ Return: (number playtime)."
   "NIL---turn off repeat mode, non-nil---turn on repeat mode."
   (send "repeat" (if value 1 0)))
 
-(defcommand seek (song time)
+(defmpc seek (song time)
   "Skip to a specified point in a song on the playlist."
   (send "seek" song time))
 

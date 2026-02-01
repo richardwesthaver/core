@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :mpk/cli)
 
-(init :commands :mpk :skel :copy :skel)
+(init :commands :mpk :skel :copy :skel :reset t)
 
 (defcommand (:mpk stats) ()
   (when-let* ((*mpc* (ignore-errors (mpd:mpc-connect)))
@@ -56,8 +56,6 @@
 	(print-slots (mpd:mpc-stats *mpc*)))
       (terpri))))
 
-(save :commands :mpk)
-
 (defmain start-mpk (:package :mpk-user :commands :mpk :cli :mpk)
   (mpk-ensure-directories)
   (load-mpkrc)
@@ -66,3 +64,5 @@
 (define-cli "mpk" #'start-mpk
   :version "0.1.0"
   :description "Media Production Kit")
+
+(save :commands :mpk)

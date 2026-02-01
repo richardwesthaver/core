@@ -6,7 +6,7 @@
 (in-package :skel/homer/cli)
 
 ;;; CLI
-(init :commands :name :homer :copy :skel)
+(init :commands :name :homer :copy :skel :reset t)
 
 (define-command-type (:homer force) (&optional val) (when val (setq *homer-force* t)))
 
@@ -82,8 +82,6 @@
               (find-files src *home-hidden-paths*)))
       (error 'file-error :pathname src))))
 
-(save :commands :homer)
-
 (defmain start-homer (:readtable :shell :package :homer :commands :homer :cli :homer)
   (let ((*print-readably* t))
     (init* :xdg :homer)
@@ -93,3 +91,5 @@
 (define-cli "homer" #'start-homer
   :version "0.1.0"
   :description "user home manager")
+
+(save :commands :homer)
