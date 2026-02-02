@@ -60,7 +60,7 @@
    :with-fast-log-stream
    :*log-timestamp-format*
    :*log-indent*
-   :log-message
+   :log-message :log-message*
    :level
    :simple-log-message
    :message-thread

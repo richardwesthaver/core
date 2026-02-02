@@ -140,6 +140,8 @@ function 'NAME-P'."
    :thread *current-thread*
    :tags nil))
 
+(defclass condition-log-message (condition-message simple-log-message) ())
+
 (defmethod initialize-instance :before ((message log-message) &key level)
   (unless (typep level 'log-level-designator)
     (error "Level must be one of ~a" *log-levels*)))
@@ -153,7 +155,6 @@ function 'NAME-P'."
           (tags message)
           (format-message nil (content message))))
 
-(declaim (inline %log-object))
 (defun %log-object (obj)
   (if *logger*
       (msg *logger* obj)
@@ -165,7 +166,7 @@ function 'NAME-P'."
   (%log-object (apply #'make-instance class :level level :tags tags :content content initargs)))
 
 (defun log-message* (level content &rest args)
-  (%log-object (make-instance 'log-message 
+  (%log-object (make-instance 'simple-log-message
                  :level level 
                  ;; note use of aformat here
                  :content (apply 'aformat nil content args))))
@@ -186,7 +187,7 @@ function 'NAME-P'."
   (:method (level tags (datum condition) &rest args)
     (declare (ignore args))
     (log-message level tags (princ-to-string datum)
-                 'condition-message :condition datum)))
+                 'condition-log-message :condition datum)))
 
 (defclass backup-file-sink (file-sink)
   ((count :initarg :count :initform 1)
@@ -456,17 +457,14 @@ first element is of type LOGGER, insert into that object instead."
 ;;; Macros
 (defmacro with-conditions-logged (&body body)
   "Eval BODY with errors and warnings sent to the current *LOGGER*."
-  `(progn
-     (handler-bind
-         ((error
-            (lambda (c)
-              (log-message* :error "Error signalled: ~A" c)
-              (signal c)))
-          (warning
-            (lambda (c)
-              (log-message* :warn "Warning signalled: ~A" c)
-              (signal c))))
-       ,@body)))
+  `(handler-bind
+       ((warning
+          (lambda (c)
+            (log-message :warn nil c)))
+        (condition
+          (lambda (c)
+            (log-message :error nil c))))
+     ,@body))
 
 ;;; Utils
 ;; levels used in WM: 1-5,7[1],10
