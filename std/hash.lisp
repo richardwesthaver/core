@@ -8,7 +8,7 @@
 (defun copy-hash (hash &optional test comb)
   "Return a copy of HASH.
 Optional argument TEST specifies a new equality test to use for the
-copy.  Second optional argument COMB specifies a function to use to
+copy. Second optional argument COMB specifies a function to use to
 combine the values of elements of HASH which collide in the copy due
 to a new equality test specified with TEST."
   (let ((comb (when comb (fdefinition comb)))

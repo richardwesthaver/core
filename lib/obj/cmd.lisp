@@ -224,7 +224,8 @@ argument of CALL."
 (defun command-table (name)
   (gethash (cmd-intern name) *command-table*))
 
-(defun (setf command-table) (new name) (setf (gethash (cmd-intern name) *command-table*) new))
+(defun (setf command-table) (new name) 
+  (setf (gethash (cmd-intern name) *command-table*) new))
 
 (defun command (name &optional (commands *commands*))
   (gethash (cmd-intern name) commands))
@@ -246,6 +247,13 @@ argument of CALL."
 
 (defun command-types (&optional name)
   (hash-table-alist (if name (cdr (command-table name)) *command-types*)))
+
+(defun list-all-commands ()
+  (let ((ret (hash-table-alist *command-table*)))
+    (mapcar 
+     (lambda (x)
+       (cons (car x) (list (hash-table-plist (cadr x)) (hash-table-plist (cddr x)))))
+     ret)))
 
 ;;; Command Types
 (defmacro define-command-type (name args &body body)
@@ -275,12 +283,13 @@ Example:
  (declare (interactive (:symbol \"Pick a symbol: \")))
  (describe sym s))"
   (assert (listp args) nil 'invalid-command-type :name name :args args)
-  `(setf ,(if (atom name) 
-              `(command-type ,(keywordicate name))
-              `(command-type ,(keywordicate (second name)) (cdr (or (command-table ,(keywordicate (car name))) (make-commands ,(keywordicate (car name)))))))
-         (lambda ,args
-           ;; use *COMMAND-INPUT*
-           ,@body)))
+  `(progn
+     (setf ,(if (atom name) 
+                `(command-type ,(keywordicate name))
+                `(command-type ,(keywordicate (second name)) (cdr (or (command-table ,(keywordicate (car name))) (make-commands ,(keywordicate (car name)))))))
+           (lambda ,args
+             ;; use *COMMAND-INPUT*
+             ,@body))))
 
 ;; IO
 (deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
@@ -349,12 +358,15 @@ NAME *COMMAND-TABLE*)."
 
 (defun copy-commands (name1 name2)
   "Copy all commands and types from NAME1 to NAME2."
-  (setf (command-table name2) (command-table name1)))
+  (setf (command-table name2) 
+        (destructuring-bind (cmds . types) (command-table name1)
+          (cons (copy-hash cmds) (copy-hash types)))))
 
 (defun load-commands (name)
   (destructuring-bind (cmds . types) (gethash name *command-table*)
     (setq *commands* cmds
-          *command-types* types)))
+          *command-types* types
+          *commander* name)))
 
 (defkernel command (kernel-object)
   ((interactive :initarg :interactive :reader interactive))
@@ -400,7 +412,6 @@ command."))
   (if *interactive*
       (call-interactively self)
       (funcall self)))
-
 (defmethod exec ((self string)) 
     (if *interactive*
         (call-interactively self)
@@ -434,8 +445,7 @@ the args to it."
   (multiple-value-bind (forms decl doc) (parse-body body :documentation t)
     (let* ((%name (if (atom name) (keywordicate name) (keywordicate (second name))))
            (%cmd* `(command ',%name ,@(unless (atom name)
-                                      `((car (or (command-table ,(keywordicate (car name)))
-                                                 (make-commands ,(keywordicate (car name)) *commands* *command-types*)))))))
+                                      `((car (command-table ,(keywordicate (car name))))))))
            (%int (parse-interactive-lambda-list 
                   args
                   (mapcar (lambda (x)
@@ -522,15 +532,15 @@ with each hook being passed the RESULT."
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name class copy (load t) names clean)
-  (when clean (clean :commands))
+  (when clean (clean :commands :name name))
   (when class (setq *command-class* class))
   (setq *command-names-p* names)
   (when name
     (setq *commander* name)
     (unless (command-table name) (make-commands name))
     (when copy (copy-commands copy name))
-    (let ((cons (command-table name)))
-      (when load
+    (when load
+      (let ((cons (command-table name)))
         (setq *commands* (car cons)
               *command-types* (cdr cons)))))
   (values *commands* *command-types*))
@@ -545,11 +555,12 @@ with each hook being passed the RESULT."
     (full (clrhash *command-table*))
     (name (remhash name *command-table*))))
 
-(defmethod clean ((self (eql :commands)) &key)
+(defmethod clean ((self (eql :commands)) &key name)
   (setq *commands* (make-hash-table)
         *command-types* (make-hash-table)
         *commander* nil
-        *command-names-p* nil))
+        *command-names-p* nil)
+  (when name (remhash name *command-table*)))
 
 (defmethod save ((self (eql :commands)) &rest args)
   (save-commands (pop args)))

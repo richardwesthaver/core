@@ -13,4 +13,5 @@
 (defclass sk-inferred-project (sk-project) ())
 
 (defun sk-infer (&optional (path *default-pathname-defaults*))
-  "Infer the type of a project or component given its PATH.")
+  "Infer the type of a project or component given its PATH."
+  (declare (ignore path)))

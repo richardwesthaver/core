@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :syn/cli)
-
+(init :commands :name :syn :copy :cli :clean t)
 (defcommand (:syn print) (&rest args)
   (when args
     (let ((f (car args)))
@@ -22,4 +22,4 @@
 
 #+todo
 (define-cli "gen" :description "Syntax GENerator")
-  
+(save :commands :syn)

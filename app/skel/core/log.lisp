@@ -47,8 +47,8 @@
     (with-iter (it (iter db :column (find-column level db)))
       seek-to-first
       (loop while iter-valid-p
-            collect (cons (time:octets-to-timestamp key) 
-                          (sb-ext:octets-to-string val))
+            collect (cons (time:octets-to-timestamp skey) 
+                          (sb-ext:octets-to-string sval))
             do (progn next)))))
 
 (defun sk-log-repair ()

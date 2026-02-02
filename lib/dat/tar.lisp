@@ -255,8 +255,8 @@ Does NOT close the underlying STREAM that backed the TAR-FILE."))
 (defgeneric gid (entry)
   (:documentation "Return the gid of the ENTRY (an integer)."))
 
-(defgeneric size (entry)
-  (:documentation "Return the size of the ENTRY (an integer)."))
+;; (defgeneric size (entry)
+;;   (:documentation "Return the size of the ENTRY (an integer)."))
 
 (defgeneric mtime (entry)
   (:documentation "Return the mtime of the ENTRY (an integer)."))
@@ -285,8 +285,8 @@ Does NOT close the underlying STREAM that backed the TAR-FILE."))
 (defgeneric ctime (entry)
   (:documentation "Return the ctime of the ENTRY (an integer)."))
 
-(defgeneric offset (entry)
-  (:documentation "Return the offset of the ENTRY (an integer)."))
+;; (defgeneric offset (entry)
+;;   (:documentation "Return the offset of the ENTRY (an integer)."))
 
 (defgeneric offset-sparse-0 (entry)
   (:documentation "Return the offset of the first sparse block of the ENTRY (an integer)."))

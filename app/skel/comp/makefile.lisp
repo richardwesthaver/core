@@ -77,13 +77,13 @@
 		       (sk-rule-target exp)
 		       (sk-rule-source exp)
                        (when-let ((recipe (sk-rule-recipe exp)))
-		         (sk-write-string recipe))))
+		         (sk-write recipe nil))))
       ;; TODO implicit rules
       (loop for imp across implicit
 	    do (format s "~A:~A;~A~%" 
 		       (sk-rule-target imp)
 		       (sk-rule-source imp)
-		       (sk-write-string (sk-rule-recipe imp)))))))
+		       (sk-write (sk-rule-recipe imp) nil))))))
 
 (defmethod sk-write-file ((self makefile) &key (path *default-makefile*) (comment t) (if-exists :overwrite))
   (with-open-file (out path

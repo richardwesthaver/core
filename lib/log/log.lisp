@@ -456,15 +456,16 @@ first element is of type LOGGER, insert into that object instead."
 ;;; Macros
 (defmacro with-conditions-logged (&body body)
   "Eval BODY with errors and warnings sent to the current *LOGGER*."
-  `(block nil
+  `(progn
      (handler-bind
          ((error
             (lambda (c)
               (log-message* :error "Error signalled: ~A" c)
-              (return)))
+              (signal c)))
           (warning
             (lambda (c)
-              (log-message* :warn "Warning signalled: ~A" c))))
+              (log-message* :warn "Warning signalled: ~A" c)
+              (signal c))))
        ,@body)))
 
 ;;; Utils

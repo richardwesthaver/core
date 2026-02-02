@@ -38,4 +38,5 @@
   (setq *packy-db* (load-schema (make-db :packy) (make-instance 'packy-schema))))
 
 (defun insert-pack (pack)
+  (declare (ignore pack))
   (make-instance 'pack))

@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/packy/cli)
 (init :commands :name :packy :clean t :copy :cli)
-(defcommand (:packy show) (&optional version))
+(defcommand (:packy show) (&optional version) (declare (ignore version)))
 
 #+todo
 (define-cli "packy" (with-commands :packy (command :show))

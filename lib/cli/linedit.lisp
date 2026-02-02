@@ -1456,7 +1456,9 @@ completion."
 
 ;;; HISTORY
 (defun history-previous (chord editor)
-  (declare (ignore chord))
+  ;; (declare (ignore chord))
+  (print chord)
+  (print editor)
   (std:aif (buffer-previous (get-string editor) (editor-history editor))
            (setf (get-string editor) std:it)
            (beep editor)))

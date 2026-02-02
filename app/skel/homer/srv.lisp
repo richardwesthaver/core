@@ -42,7 +42,7 @@
 ;;; Request/Response
 (defclass homer-request (request) ())
 (defclass homer-response (response) ())
-obj/srv:engine
+
 ;;; Service
 (defclass homer-service (service ast id)
   ((engine :initarg :engine :initform nil)
