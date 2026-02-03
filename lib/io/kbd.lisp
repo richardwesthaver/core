@@ -654,11 +654,12 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (or (keymap-p x)
       (keymap-symbol-p x)))
 
+;; TODO: we don't want lists here - fix wm/xlib
 (defun deref-keymaps (maps)
   (map 'list
        (lambda (m)
          (if (keymap-symbol-p m)
-             (symbol-value m)
+             (vector-to-list (symbol-value m))
              m))
        maps))
 

@@ -246,7 +246,7 @@
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*buildah* :*podman* :*qemu*
    :run-buildah :run-podman :run-qemu :podman-machine-upgrade
-   :start-podman-service :find-qemu-exe :run-qemu-img))
+   :start-podman-service :find-qemu-exe :run-qemu-img :run-xvfb-run))
 
 (setq *defpkg-hook* nil)
 

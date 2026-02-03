@@ -744,10 +744,14 @@ defined."
     (let ((pkg `(apply 'ensure-package ',form))
           (prd (mapcar (lambda (x) `(%defpkg* ',(car form) ',x)) preludes)))
       `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (prog1 (if #1=*defpkg-hook*
-                    (funcall #1# ,pkg)
-                    ,pkg)
-           ,@(when prd `(,@prd)))))))
+         (locally
+             (declare (sb-ext:muffle-conditions sb-kernel::package-at-variance))
+           (handler-bind
+               ((sb-kernel::package-at-variance #'muffle-warning))
+             (prog1 (if #1=*defpkg-hook*
+                        (funcall #1# ,pkg)
+                        ,pkg)
+               ,@(when prd `(,@prd)))))))))
 
 (defmacro define-lisp-package (package)
   "Define a lisp package based on target PACKAGE which transparently exports all

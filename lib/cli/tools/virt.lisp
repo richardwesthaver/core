@@ -47,3 +47,8 @@
   (let ((proc (sb-ext:run-program #1=(find-exe "qemu-img") (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (qemu-error "QEMU-IMG command failed: ~A ~A" #1# (or args "")))))
+
+(define-cli-tool :xvfb-run (args &key (input t) (output t))
+  (let ((proc (sb-ext:run-program *xvfb-run* args :output output :input input)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (xvfb-run-error "BUILDAH command failed: ~A ~A" *xvfb-run* args))))
