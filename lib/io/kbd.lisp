@@ -613,8 +613,7 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
     (funcall *keymap-hook* :define map)))
 
 (definline sparse-keymap ()
-  (declare (values keymap))
-  (make-array 0 :element-type 'keybind :fill-pointer 0))
+  (make-array 0 :element-type 'keybind :fill-pointer t))
 
 (defun lookup-cmd (keymap cmd)
   "Return a list of keys in KEYMAP that are bound to CMD."
@@ -659,7 +658,7 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (map 'list
        (lambda (m)
          (if (keymap-symbol-p m)
-             (vector-to-list (symbol-value m))
+             (symbol-value m)
              m))
        maps))
 
@@ -677,13 +676,20 @@ sequences that run binding."
                    append (search-it cmd (keybind-cmd i) (cons (keybind-key i) key-seq)))))
     (mapcar 'reverse (search-it command keymap nil))))
 
-(defmacro define-keymap (name &key parent modify) ;; full:t=generate charvec,nil=sparse-keymap
+(defmacro define-keymap (name (&optional parent modify) &body bindings) ;; full:t=generate charvec,nil=sparse-keymap
   "Define a new KEYMAP designated by NAME.
 
-PARENT is the keymap to inherit from."
-  (let ((km (or (when modify (keymap name)) (sparse-keymap))))
+PARENT is the keymap to inherit from. If NAME is not a KEYWORD it is
+interpreted as the name of a KEYMAP-SYMBOL."
+  (let ((km (or (when modify (keymap name)) '(sparse-keymap)))
+        (n (if (keywordp name) `(keymap ,name) name)))
     (when parent (copy (keymap parent) km))
-    `(setf (keymap ,name) ,km)))
+    (unless (or modify (and (keymap-symbol-p n) (not (sequence:emptyp (symbol-value n)))))
+      (with-gensyms (k)
+        `(let ((,k ,km))
+           ,@(loop for i = bindings then (cddr i) while i
+                   collect `(define-key ,k ,(first i) ,(second i)))
+           (setf ,n ,k))))))
 
 ;;; Keyboard
 (defstruct keyboard 
