@@ -336,12 +336,16 @@ Example:
 (defun call-interactively (command &optional input)
   "Parse COMMAND's arguments from input according to its lambda-list and itype,
 then execute it."
-  (declare ((or string symbol) command))
+  (declare ((or string symbol command) command))
   (catch 'cmd
     (let ((*command-input* input))
-      (multiple-value-bind (cmd args itype) (if (and input (listp input))
-                                                (apply 'parse-command command input)
-                                                (parse-command command))
+      (multiple-value-bind (cmd args itype) 
+          (typecase command
+            ((or string symbol)
+             (if (and input (listp input))
+                 (apply 'parse-command command input)
+                 (parse-command command)))
+            (command (values command (parse-args command input) (interactive command))))
         (call cmd (fill-args-interactively args itype))))))
 
 (defmacro with-commands (name &body body)
@@ -400,6 +404,9 @@ command."))
 (defmethod parse-args ((self command) (input stream))
   (read-args input))
 
+(defmethod call ((self command) (args null))
+  (declare (ignore args))
+  (funcall self))
 (defmethod call ((self command) (args list))
   (apply self args))
 (defmethod call ((self command) (args string))
@@ -411,19 +418,22 @@ command."))
 (defmethod exec ((self command)) 
   (if *interactive*
       (call-interactively self)
-      (funcall self)))
+      (call self nil)))
 (defmethod exec ((self string)) 
     (if *interactive*
         (call-interactively self)
         (multiple-value-bind (cmd args) (parse-command self)
           (call cmd args))))
+(defmethod exec ((self symbol))
+  (call (command self) nil))
 
 #+nil
 (defgeneric command-pipe (self output)
   (:documentation "Pipe the output of command SELF to OUTPUT."))
 
 (defgeneric command-class (self)
-  (:documentation "Return the class indicator of command SELF."))
+  (:documentation "Return the class indicator of command SELF.")
+  (:method ((self command)) nil))
 
 (defun compile-command (name command &optional env)
   "Compile COMMAND as a FUNCTION given ENV with optional INTERACTIVE declaration

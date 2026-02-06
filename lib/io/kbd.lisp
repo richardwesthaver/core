@@ -605,12 +605,13 @@ existing binding. For example,
 Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (declare (keymap map) (type (or key (eql t)) key))
   (let ((binding (find-key key map)))
-    (cond 
-      (cmd
-       (when binding (setf map (delete binding map)))
-       (vector-push-extend (make-keybind :key key :cmd cmd) map))
-      (t (setf map (delete binding map))))
-    (funcall *keymap-hook* :define map)))
+    (prog1
+        (cond 
+          (cmd
+           (when binding (setf map (delete binding map)))
+           (vector-push-extend (make-keybind :key key :cmd cmd) map))
+          (t (setf map (delete binding map))))
+      (funcall *keymap-hook* :define map))))
 
 (definline sparse-keymap ()
   (make-array 0 :element-type 'keybind :fill-pointer t))

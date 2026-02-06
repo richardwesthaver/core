@@ -31,18 +31,18 @@
 (defmethod build ((self logger-config) &key)
   (build-logger-config self))
 
-(defun default-logger-config ()
+(defun default-logger-config (&optional (sink '(stream-sink :id :sink)))
   (let ((cfg (make-config :logger)))
     (setf (ast cfg)
           `((level-filter :id :level-filter :level ,(level cfg))
             (tag-tree-filter :id :tag-filter) 
-            (stream-sink :id :sink)))
+            ,sink))
     cfg))
 
-(defmethod init ((self (eql :log)) &rest args &key (start t) (timestamp *log-timestamp*) (indent *log-indent*) (level *log-level*) (timestamp-format *log-timestamp-format*) (backtrace *log-show-backtrace*) (message-class *log-message-class*) (message-format *log-message-format*))
+(defmethod init ((self (eql :log)) &rest args &key (start t) (timestamp *log-timestamp*) (indent *log-indent*) (level *log-level*) (timestamp-format *log-timestamp-format*) (backtrace *log-show-backtrace*) (message-class *log-message-class*) (message-format *log-message-format*) logger)
   "Initialize the global logger."
   ;; don't remove level, used by MAKE-CONFIG
-  (setf args (remove-from-plist args :start :timestamp :indent :timestamp-format :message-class :backtrace :message-format))
+  (setf args (remove-from-plist args :start :timestamp :indent :timestamp-format :message-class :backtrace :message-format :logger))
   (prog1
       (setq 
        *log-show-backtrace* backtrace
@@ -52,10 +52,11 @@
        *log-timestamp-format* timestamp-format
        *log-timestamp* timestamp
        *log-indent* indent
-       *logger* (build 
-                 (if (null args)
-                     (default-logger-config)
-                     (apply 'make-config :logger args))))
+       *logger* (or logger
+                    (build
+                     (if (null args)
+                         (default-logger-config)
+                         (apply 'make-config :logger args)))))
     (when start 
       (start *logger*)
       (info! "logger initialized"))))

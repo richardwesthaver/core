@@ -1388,7 +1388,8 @@
    :save-annotations :copy-annotations
    :load-annotations :defnotation
    :aformat :expand-annotated-string
-   :expand-annotation :word-wrap))
+   :expand-annotation :word-wrap
+   :annotations))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)

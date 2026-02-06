@@ -714,6 +714,11 @@ STYLE indicates the level of decoration to apply to the output:
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))
 
+(defun annotations (name)
+  (gethash name *annotation-table*))
+(defun (setf annotations) (new name)
+  (setf (gethash name *annotation-table*) new))
+
 (defun expand-annotation (char output args mods)
   "Expand an annotation by looking up CHAR in *ANNOTATIONS* and calling it
 with OUTPUT ARGS MODS as the only arguments. A list which less than or equal
@@ -760,13 +765,13 @@ substituted with their relevant expansions given ARGS."
 (defmacro with-annotations (name &body body)
   "Eval BODY with *ANNOTATIONS* bound to the value of (GETHASH NAME *ANNOTATION-TABLE*)."
   (declare (string-designator name))
-  `(let ((*annotations* (gethash ,name *annotation-table*)))
+  `(let ((*annotations* (annotations ,name)))
      ,@body))
 
 (defun save-annotations (name)
   "Set the value of NAME to *ANNOTATIONS* in *ANNOTATION-TABLE*."
   (declare (string-designator name))
-  (setf (gethash name *annotation-table*) *annotations*))
+  (setf (annotations name) *annotations*))
 
 (defun copy-annotations (name1 name2)
   (declare (string-designator name1 name2))
@@ -774,7 +779,7 @@ substituted with their relevant expansions given ARGS."
 
 (defun load-annotations (name)
   (declare (string-designator name))
-  (setq *annotations* (gethash name *annotation-table*)))
+  (setq *annotations* (annotations name)))
 
 (defmacro defnotation (opts (&optional stream args mods) &body body)
   "Define a new 'notation function'. OPTS may be a BASE-CHAR in which case it is
@@ -800,7 +805,7 @@ The following three arguments are required:
         (%mods (or mods (gensym "MODS"))))
     `(setf (assoc-value 
             ,(if (listp opts) 
-                 `(gethash ,(car opts) *annotation-table* (save-annotations ,(car opts)))
+                 `(gethash ,(car opts) *annotation-table*)
                  '*annotations*)
             ,(eval (if (listp opts) (second opts) opts))
             :test 'eq)
@@ -817,8 +822,8 @@ The following three arguments are required:
     (apply 'format output str fargs)))
 
 ;; Standard Annotations
-(defnotation (:std #\") (stream) (write-char #\" stream))
 (defnotation (:std +annotation-prefix+) (stream) (write-char +annotation-prefix+ stream))
+(defnotation (:std #\") (stream) (write-char #\" stream))
 
 (defmethod init ((self (eql :annotations)) &key (name :std) copy)
   (when copy (copy-annotations copy name))

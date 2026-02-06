@@ -21,20 +21,14 @@
   (:documentation "Length error"))
 
 (defun mntent-all-infos (&optional (mount-info-file "/etc/mtab"))
-  (let ((root-info (std/os::setmntent mount-info-file "ro"))
-        (infos))
-    (if (not (or (null root-info) (null-alien root-info)))
-        (labels ((get-info ()
-                   (let ((info (std/os::getmntent root-info)))
-                     (if (not (or (null info) (null-alien info)))
-                         (progn 
-                           (push info infos)
-                           (get-info))
-                         infos))))
-          (prog1
-              (get-info)
-            (std/os::endmntent root-info)))
-        (error 'open-file-failed :file-path mount-info-file))))
+  (let ((root-info (std/os::setmntent mount-info-file "ro")))
+    (collecting
+      (if (not (null-alien root-info))
+          (loop for info = (std/os::getmntent root-info)
+                while (not (or (null info) (null-alien info)))
+                do (collect info))          
+          (error 'open-file-failed :file-path mount-info-file))
+      (std/os::endmntent root-info))))
 
 (defun mntent-info (mtab plist-key looking-for-value)
   (let ((all-infos (mntent-all-infos mtab)))

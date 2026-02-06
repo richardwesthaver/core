@@ -96,13 +96,13 @@ arrange for FVAR to be closed after BODY."
       (freq int)
       (passno int)))
 
-(defar setmntent (* t) (filename c-string) (type c-string))
+(define-alien-routine setmntent (* t) (filename c-string) (type c-string))
 
-(defar getmntent (* mntent) (stream (* t)))
+(define-alien-routine getmntent (* mntent) (stream (* t)))
 
-(defar endmntent int (stream (* t)))
+(define-alien-routine endmntent int (stream (* t)))
 
-(defar hasmntopt c-string (mnt (* mntent)) (opt c-string))
+(define-alien-routine hasmntopt c-string (mnt (* mntent)) (opt c-string))
 
 ;; also defined in sb-unix
 (defar isatty int (fd int))
