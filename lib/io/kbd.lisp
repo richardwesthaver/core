@@ -628,7 +628,8 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
 
 (defmethod copy ((from key) (to key))
   (setf (key-sym to) (key-sym from)
-        (key-mod to) (key-mod from)))
+        (key-mod to) (key-mod from))
+  to)
 
 (defun lookup-key-sequence (map key-seq)
   "Return the command bound to KEY-SEQ in keymap MAP."
@@ -746,11 +747,8 @@ can't be opened, else returns nil."
   (let ((devices (directory-files dir))
         ret)
     (dolist (dev devices ret)
-      (handler-case
-          (progn
-            (print-device-input-info dev)
-            (push (make-keyboard-from-dev (new-device-from-path dev) :path dev)
-                  ret))
+      (handler-case (push (make-keyboard-from-dev (new-device-from-path dev) :path dev)
+                          ret)
         (sb-posix:syscall-error () nil)
         (simple-kbd-error () nil)))))
 

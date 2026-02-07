@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;; A template is defined as a list of items to be inserted in the current
-;; buffer at point.  Some of the items can be simple strings, while other can
+;; buffer at point. Some of the items can be simple strings, while other can
 ;; control formatting or define special points of interest in the inserted
 ;; text.
 
