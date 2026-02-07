@@ -462,9 +462,9 @@ computations) and by the keysym-downcase function."
     (shift boolean) 
     (control boolean) 
     (meta boolean)
-    (alt boolean) 
-    (super boolean) 
+    (alt boolean)
     (hyper boolean)
+    (super boolean)
     (altgr boolean)
     (numlock boolean)))
 
@@ -587,14 +587,19 @@ KBD-PARSE-ERROR if the key failed to parse."
      (let ((seq (parse-key-seq keys)))
        (values (car seq) (cdr seq))))))
 
-(defun key= (key1 key2)
+(definline key= (key1 key2)
   (and (= (the keysym (key-sym key1)) (the keysym (key-sym key2)))
        (= (the keymod (key-mod key1)) (the keymod (key-mod key2)))))
 
+(defun key-eq (key1 key2)
+  (or (and (typep key1 'key) (typep key2 'key) (key= key1 key2))
+      (eql key1 key2)))
+
 (defun find-key (key map)
-  (if (eql key t)
-      (find t map :key 'keybind-key)
-      (find key map :key 'keybind-key :test 'key=)))
+  ;; TODO 2026-02-07: designate an actual default key not T
+  ;; (if (eql key t)
+  ;; (find t map :key 'keybind-key :test 'key-eq)
+  (find key map :key 'keybind-key :test 'key-eq))
 
 ;; XXX: define-key needs to be fixed to handle a list of keys
 (defun define-key (map key cmd)

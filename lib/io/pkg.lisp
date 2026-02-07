@@ -253,7 +253,7 @@
    :define-keymap :make-keymod
    :key-numlock :numlock-key
    :key-altgr :key=
-   :find-key))
+   :find-key :key-eq))
 
 (defpkg :io/xsubseq
   (:use :cl)
