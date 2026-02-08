@@ -8,7 +8,8 @@
                :evdev
                :btrfs
                :sb-bsd-sockets
-               :zstd)
+               :zstd
+               :obj)
   :version "0.1.0"
   :serial t
   :components ((:file "pkg")

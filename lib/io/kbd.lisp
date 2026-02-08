@@ -787,6 +787,34 @@ can't be opened, else returns nil."
       (multiple-value-bind (s ms type code val) (device-read-event dev)
         (push (list type code val (cons s ms)) ret)))))
 
+(defconfig kbd-config ()
+  ((device)
+   (prefix-key :reader prefix-key)
+   (escape-key :reader escape-key)
+   (keymaps :reader keymaps)))
+
+(defmethod make-config ((self (eql :kbd)) &rest args) (apply 'make-instance 'kbd-config args))
+
+(defmethod load-ast ((self kbd-config))
+  (with-slots (ast) self
+    (sb-int:doplist (k v) ast
+      (when-let ((s (find-symbol k #.*package*)))
+        (unless (null v)
+          (setf v
+                (case k
+                  ((or :escape-key :prefix-key) (parse-key k))
+                  (t v)))
+          (setf (slot-value self s) v))))
+      (unless *keep-ast* (setf (ast self) nil))))
+
+(defmethod load-config ((self (eql :kbd)) (from pathname) &key)
+  (let ((c (make-config :kbd)))
+    (with-safe-io-syntax (:io/kbd)
+      (read-ast c from)
+      (load-ast c))
+    (setf (ast c) nil)
+    c))
+
 (defmethod init ((self (eql :kbd)) &key (directory "/dev/input/"))
   (load-kbd-libs)
   (when directory (setq *keyboards* (get-keyboards directory))))

@@ -205,7 +205,7 @@
 
 (defpkg :io/kbd
   (:nicknames :kbd)
-  (:use :cl :std :io/proto :xkb :evdev :sb-alien)
+  (:use :cl :std :io/proto :xkb :evdev :sb-alien :config :ast)
   (:export :kbd-error
    :load-kbd-libs :keyboard
    :keysym :define-keysym
@@ -253,7 +253,9 @@
    :define-keymap :make-keymod
    :key-numlock :numlock-key
    :key-altgr :key=
-   :find-key :key-eq))
+   :find-key :key-eq
+   :kbd-config :prefix-key
+   :escape-key :keymaps))
 
 (defpkg :io/xsubseq
   (:use :cl)
