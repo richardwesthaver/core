@@ -530,7 +530,7 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
     (:zstd
      (ecase direction
        (:input (io/flate:make-decompressing-stream :zstd stream))
-       (:output (io/flate:make-compressing-stream :zstd stream))))
+       (:output (inspect (io/flate:make-compressing-stream :zstd stream)))))
     (:auto
      (let ((file-name (ignore-errors (pathname stream))))
        (ecase direction

@@ -82,13 +82,14 @@
 (defmethod stream-finish-output ((stream zstd-compressing-stream))
   (zstd::zstd-endstream (cstream stream) (output stream)))
 
-(defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end))
+;; (defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end))
     
 (defmethod close ((stream zstd-compressing-stream) &key abort)
   (declare (ignore abort))
   (sb-alien:free-alien (input stream))
   (sb-alien:free-alien (output stream))
-  (zstd-freecstream (cstream stream)))
+  ;; (zstd-freecstream (cstream stream))
+  )
 
 (defclass zstd-decompressing-stream (decompressing-stream)
   ((input :initform (allocate-zstd-inbuffer) :reader input :type (alien zstd-inbuffer))
@@ -137,9 +138,11 @@
   (setf (zstd-outbuffer-pos (output self)) new))
 
 (defmacro with-zstd-stream (stream (zst in out) &body body)
-  `(let ((,zst (slot-value ,stream 'stream))
-         (,in (input ,stream))
-         (,out (output ,stream)))
+  `(let ((,zst (etypecase ,stream 
+                 (zstd-compressor (cstream (output ,stream)))
+                 (zstd-decompressor (dstream (input ,stream)))))
+         (,in (input (input ,stream)))
+         (,out (output (output ,stream))))
      ,@body))
 
 (defmethod initialize-instance :after ((self zstd-decompressing-stream)
@@ -147,14 +150,15 @@
                                             (output-size (zstd-dstreamoutsize)))
   (setf (input-size self) input-size
         (output-size self) output-size)
-  ;; returns recommended
-  (print (zstd-initdstream (dstream self))))
+  ;; TODO returns recommended next size?
+  (zstd-initdstream (dstream self)))
 
 (defmethod close ((stream zstd-decompressing-stream) &key abort)
   (declare (ignore abort))
-  (sb-alien:free-alien (input stream))
-  (sb-alien:free-alien (output stream))
-  (zstd-freedstream (dstream stream)))
+  ;; (sb-alien:free-alien (input stream))
+  ;; (sb-alien:free-alien (output stream))
+  ;; (zstd-freedstream (dstream stream))
+  )
 
 (defmethod sb-gray:stream-read-sequence ((self zstd-decompressing-stream) (seq vector) &optional start end)
   (declare (ignore start end))
@@ -169,59 +173,56 @@
   (:default-initargs
    :output (make-instance 'zstd-compressing-stream)))
 
-(defmethod cstream ((self zstd-compressor))
-  (cstream (stream-of self)))
+(defmethod stream-of ((self zstd-compressor))
+  (cstream (output self)))
 
 (defmethod input ((self zstd-compressor))
-  (input (stream-of self)))
-
-(defmethod output ((self zstd-compressor))
-  (output (stream-of self)))
+  (input (output self)))
 
 (defmethod input-size ((self zstd-compressor))
-  (input-size (stream-of self)))
+  (input-size (output self)))
 
 (defmethod output-size ((self zstd-compressor))
-  (output-size (stream-of self)))
+  (output-size (output self)))
 
 (defmethod (setf output-size) (new (self zstd-compressor))
-  (setf (output-size (stream-of self)) new))
+  (setf (output-size (output self)) new))
 
 (defmethod output-buffer ((self zstd-compressor))
-  (output-buffer (stream-of self)))
+  (output-buffer (output self)))
 
 (defmethod (setf output-buffer) (new (self zstd-compressor))
-  (setf (output-buffer (stream-of self)) new))
+  (setf (output-buffer (output self)) new))
 
 (defmethod (setf output-buffer) ((new vector) (self zstd-compressor))
   (memcpy (zstd-outbuffer-dst (output self)) (octets-to-alien new) (length new)))
 
 (defmethod input-buffer ((self zstd-compressor))
-  (input-buffer (stream-of self)))
+  (input-buffer (output self)))
 
 (defmethod (setf input-buffer) (new (self zstd-compressor))
-  (setf (input-buffer (stream-of self)) new))
+  (setf (input-buffer (output self)) new))
 
 (defmethod (setf input-buffer) ((new vector) (self zstd-compressor))
   (memcpy (zstd-inbuffer-src (input self)) (octets-to-alien new) (length new)))
 
 (defmethod input-position ((self zstd-compressor))
-  (input-position (stream-of self)))
+  (input-position (output self)))
 
 (defmethod (setf input-position) (new (self zstd-compressor))
-  (setf (input-position (stream-of self)) new))
+  (setf (input-position (output self)) new))
 
 (defmethod output-position ((self zstd-compressor))
-  (output-position (stream-of self)))
+  (output-position (output self)))
 
 (defmethod (setf output-position) (new (self zstd-compressor))
-  (setf (output-position (stream-of self)) new))
+  (setf (output-position (output self)) new))
 
 (defmethod compression-level ((self zstd-compressor))
-  (compression-level (stream-of self)))
+  (compression-level (output self)))
 
 (defmethod compress-with ((self zstd-compressor) (obj vector) &key (end-op :continue) &allow-other-keys)
-  (with-zstd-stream (stream-of self) (z i o)
+  (with-zstd-stream self (z i o)
     (setf 
      (zstd-inbuffer-src i)
      (octets-to-alien obj)
@@ -233,63 +234,60 @@
           (zstd-error (zstd::zstd-geterrorstring (zstd::zstd-geterrorcode code)))))))
 
 (defmethod stream-force-output ((stream zstd-compressor))
-  (force-output (stream-of stream)))
+  (force-output (output stream)))
 
 (defmethod stream-finish-output ((stream zstd-compressor))
-  (stream-finish-output (stream-of stream)))
+  (stream-finish-output (output stream)))
 
 (defclass zstd-decompressor (decompressor)
   ()
    (:default-initargs
     :input (make-instance 'zstd-decompressing-stream)))
 
-(defmethod dstream ((self zstd-decompressor))
-  (dstream (stream-of self)))
-
-(defmethod input ((self zstd-decompressor))
-  (input (stream-of self)))
-
 (defmethod output ((self zstd-decompressor))
-  (output (stream-of self)))
+  (output (input self)))
+
+(defmethod stream-of ((self zstd-decompressor))
+  (dstream (input self)))
 
 (defmethod input-buffer ((self zstd-decompressor))
-  (input-buffer (stream-of self)))
+  (input-buffer (input self)))
 
 (defmethod (setf input-buffer) (new (self zstd-decompressor))
-  (setf (input-buffer (stream-of self)) new))
+  (setf (input-buffer (input self)) new))
 
 (defmethod (setf input-buffer) ((new vector) (self zstd-decompressor))
   (memcpy (zstd-inbuffer-src (input self)) (octets-to-alien new) (length new)))
 
 (defmethod output-buffer ((self zstd-decompressor))
-  (output-buffer (stream-of self)))
+  (output-buffer (input self)))
 
 (defmethod (setf output-buffer) (new (self zstd-decompressor))
-  (setf (output-buffer (stream-of self)) new))
+  (setf (output-buffer (input self)) new))
 
 (defmethod (setf output-buffer) ((new vector) (self zstd-decompressor))
   (memcpy (zstd-outbuffer-dst (output self)) (octets-to-alien new) (length new)))
 
 (defmethod input-size ((self zstd-decompressor))
-  (input-size (stream-of self)))
+  (input-size (input self)))
 
 (defmethod output-size ((self zstd-decompressor))
-  (output-size (stream-of self)))
+  (output-size (input self)))
 
 (defmethod input-position ((self zstd-decompressor))
-  (input-position (stream-of self)))
+  (input-position (input self)))
 
 (defmethod (setf input-position) (new (self zstd-decompressor))
-  (setf (input-position (stream-of self)) new))
+  (setf (input-position (input self)) new))
 
 (defmethod output-position ((self zstd-decompressor))
-  (output-position (stream-of self)))
+  (output-position (input self)))
 
 (defmethod (setf output-position) (new (self zstd-decompressor))
-  (setf (output-position (stream-of self)) new))
+  (setf (output-position (input self)) new))
 
 (defmethod decompress-with ((self zstd-decompressor) (obj vector) &key &allow-other-keys)
-  (with-zstd-stream (stream-of self) (z i o)
+  (with-zstd-stream self (z i o)
     (setf 
      (zstd-inbuffer-src i)
      (octets-to-alien obj)
@@ -301,14 +299,15 @@
           (zstd-error (zstd::zstd-geterrorstring (zstd::zstd-geterrorcode code)))))))
 
 ;; (defmethod stream-force-output ((stream zstd-decompressor))
-;;   (force-output (stream-of stream)))
+;;   (force-output (input stream)))
 
 (defmethod stream-finish-output ((stream zstd-decompressor))
-  (stream-finish-output (stream-of stream)))
+  (stream-finish-output (input stream)))
 
 ;; (defmethod stream-force-output ((stream zstd-decompressing-stream))
 ;;   (zstd::zstd-flushstream (dstream stream) (output stream)))
 
+#+nil
 (defmethod stream-finish-output ((stream zstd-compressing-stream))
   (zstd::zstd-freedstream (dstream stream)))
        

@@ -138,8 +138,8 @@
 			do (png::write-pixel (list r g b a) png)))))
       (png:finish-png png))))
 
-(deftest png (:skip t)
-  (draw-rgb "/tmp/foo.png"))
+(deftest png ()
+  (is (draw-rgb "/tmp/foo.png")))
 
 ;;; SVG
 (defparameter *svg-circle* 

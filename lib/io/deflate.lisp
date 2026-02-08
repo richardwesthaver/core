@@ -181,6 +181,112 @@
 (deftype deflate-code-value () '(integer 0 (#.+max-codes+)))
 
 ;;;; Utils
+(deftype code-vector ()
+  '(simple-array (unsigned-byte 32) (*)))
+
+(deftype size-vector ()
+  '(simple-array (unsigned-byte 8) (*)))
+
+(defclass huffman-codes ()
+  ((codes
+    :initarg :codes
+    :accessor codes)
+   (sizes
+    :initarg :sizes
+    :accessor sizes)))
+
+(defun code-vector (length)
+  (make-array length :element-type '(unsigned-byte 32)))
+
+(defun size-vector (length)
+  (make-array length :element-type '(unsigned-byte 8)))
+
+;;;
+;;; Generate the fixed code/size vectors
+;;;
+
+(defun reverse-bits (word n)
+  (let ((j 0))
+    (dotimes (i n j)
+      (setf j (logior (ash j 1) (logand #x1 word)))
+      (setf word (ash word -1)))))
+
+(defun fixed-huffman-codes ()
+  "Generate the fixed Huffman codes specified by RFC1951."
+  (let ((codes (code-vector 288))
+        (sizes (size-vector 288))
+        (i 0))
+    (flet ((fill-range (length start end)
+             (loop for j from start to end do
+                   (setf (aref codes i) (reverse-bits j length)
+                         (aref sizes i) length)
+                   (incf i))))
+      (fill-range 8 #b00110000  #b10111111)
+      (fill-range 9 #b110010000 #b111111111)
+      (fill-range 7 #b0000000   #b0010111)
+      (fill-range 8 #b11000000  #b11000111)
+      (make-instance 'huffman-codes :codes codes :sizes sizes))))
+
+(defun length-codes (huffman-codes)
+  "Compute a table of the (Huffman + extra bits) values for all
+possible lengths for the given HUFFMAN-TABLE."
+  (let ((codes (code-vector 259))
+        (sizes (size-vector 259))
+        (code 257)
+        (length 3)
+        (extra-bit-counts '(0 0 0 0 0 0 0 0
+                            1 1 1 1
+                            2 2 2 2
+                            3 3 3 3
+                            4 4 4 4
+                            5 5 5 5
+                            0)))
+    (labels ((save-pair (i code size)
+               (setf (aref codes i) code
+                     (aref sizes i) size))
+             (save-value (extra-bit-count extra-value)
+               (let ((huffman-value (aref (codes huffman-codes) code))
+                     (huffman-count (aref (sizes huffman-codes) code)))
+                 (save-pair length 
+                            (logior huffman-value
+                                    (ash extra-value huffman-count))
+                            (+ huffman-count extra-bit-count)))))
+      (dolist (count extra-bit-counts)
+        (dotimes (i (expt 2 count))
+          (when (< length 258)
+            (save-value count i)
+            (incf length)))
+        (incf code))
+      (setf code 285)
+      (save-value 0 0))
+    (make-instance 'huffman-codes :codes codes :sizes sizes)))
+
+(defun distance-codes ()
+  "Compute a table of the (code + extra bits) values for all possible
+distances as specified by RFC1951."
+  (let ((codes (code-vector 32769))
+        (sizes (size-vector 32769))
+        (code 0)
+        (distance 1)
+        (extra-bit-counts '(0 0 0 0
+                            1 1 2 2 3 3 4 4 5 5 6 6 7 7 8 8 9 9
+                            10 10 11 11 12 12 13 13)))
+    (flet ((save-value (extra-bit-count extra-value)
+             (setf (aref codes distance)
+                   (logior (ash extra-value 5) (reverse-bits code 5))
+                   (aref sizes distance)
+                   (+ 5 extra-bit-count))))
+      (dolist (count extra-bit-counts)
+        (dotimes (i (expt 2 count))
+          (save-value count i)
+          (incf distance))
+        (incf code)))
+    (make-instance 'huffman-codes :codes codes :sizes sizes)))
+
+(defvar *fixed-huffman-codes* (fixed-huffman-codes))
+(defvar *length-codes* (length-codes *fixed-huffman-codes*))
+(defvar *distance-codes* (distance-codes))
+
 (defparameter *distance-code-extra-bits*
   ;; codes 30 and 31 will never actually appear, but we represent them
   ;; for completeness' sake
@@ -2629,14 +2735,11 @@ check if reached."
   (setf (bits bitstream) 0))
 
 (defun make-huffman-writer (table bitstream)
-  (let ((codes (hdt-symbols table))
-        (sizes (hdt-counts table))
+  (let ((codes (codes table))
+        (sizes (sizes table))
         (buffer (buffer bitstream))
         (callback (callback bitstream)))
     (lambda (value)
-      (print value)
-      (print codes)
-      (print sizes)
       (setf (bits bitstream)
             (merge-bits (aref codes value)
                         (aref sizes value)
@@ -2693,11 +2796,11 @@ with OUTPUT, a starting offset, and the count of pending data."
 
 (defun reinitialize-bitstream-funs (compressor bitstream)
   (setf (literal-fun compressor)
-        (make-huffman-writer *fixed-distance-table* bitstream)
+        (make-huffman-writer *fixed-huffman-codes* bitstream)
         (length-fun compressor)
-        (make-huffman-writer *fixed-literal/length-table* bitstream)
+        (make-huffman-writer *length-codes* bitstream)
         (distance-fun compressor)
-        (make-huffman-writer *fixed-distance-table* bitstream)
+        (make-huffman-writer *distance-codes* bitstream)
         (compress-fun compressor)
         (make-compress-fun compressor)))
 
@@ -2809,13 +2912,13 @@ with OUTPUT, a starting offset, and the count of pending data."
     (setf (callback bitstream)
           (or callback #'error-missing-callback))
     (setf (literal-fun compressor)
-          (or literal-fun (make-huffman-writer *fixed-literal/length-table*
+          (or literal-fun (make-huffman-writer *fixed-huffman-codes*
                                                bitstream)))
     (setf (length-fun compressor)
-          (or length-fun (make-huffman-writer *fixed-distance-table*
+          (or length-fun (make-huffman-writer *length-codes*
                                               bitstream)))
     (setf (distance-fun compressor)
-          (or distance-fun (make-huffman-writer *fixed-distance-table*
+          (or distance-fun (make-huffman-writer *distance-codes*
                                                 bitstream)))
     (setf (compress-fun compressor)
           (or compress-fun (make-compress-fun compressor)))
@@ -2898,7 +3001,7 @@ with OUTPUT, a starting offset, and the count of pending data."
     (lambda (input start count)
       (process-input compressor input start count)
       (let ((end (+ start count)))
-        (deflate input (chains compressor) 
+        (deflate input (chains compressor)
           start 
           (logand #xFFFF end)
           literal-fun
@@ -2933,7 +3036,7 @@ with OUTPUT, a starting offset, and the count of pending data."
     (update-digest checksum input :start start :end count)))
 
 (defmethod finish-data-format :after ((compressor zlib-compressor))
-  (dolist (octet (produce-digest (adler32 compressor)))
+  (sb-int:dovector (octet (produce-digest (adler32 compressor)))
     (write-octet octet compressor)))
 
 (defmethod reset :after ((compressor zlib-compressor) &key)

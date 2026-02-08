@@ -101,7 +101,7 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 ;;; Compression
 (defclass compressor () ((output :initarg :output :accessor output)))
 
-(defmethod stream-of ((self compressor))
+(defmethod std:stream-of ((self compressor))
   (output self))
 
 (defclass compressing-stream (fundamental-binary-output-stream)
@@ -123,7 +123,7 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 ;;; Decompression
 (defclass decompressor () ((input :initarg :input :accessor input)))
 
-(defmethod stream-of ((self decompressor))
+(defmethod std:stream-of ((self decompressor))
   (input self))
 
 (defclass decompressing-stream (fundamental-binary-input-stream)
