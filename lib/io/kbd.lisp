@@ -38,6 +38,8 @@
   "Default keysym state mask to use during keysym-translation.")
 (defhook *keymap-hook* (:define))
 
+(defconstant +unbound-keysym+ 0)
+
 ;;; Conditions
 (define-condition kbd-error (error) ())
 (deferror simple-kbd-error (simple-error kbd-error) () (:auto t))
@@ -591,6 +593,9 @@ KBD-PARSE-ERROR if the key failed to parse."
   (and (= (the keysym (key-sym key1)) (the keysym (key-sym key2)))
        (= (the keymod (key-mod key1)) (the keymod (key-mod key2)))))
 
+(define-constant +unbound-key+ (make-key :sym 0 :mod 255) :test 'key=)
+(define-constant +default-escape-key+ (parse-key "C-g") :test 'key=)
+
 (defun key-eq (key1 key2)
   (or (and (typep key1 'key) (typep key2 'key) (key= key1 key2))
       (eql key1 key2)))
@@ -789,20 +794,20 @@ can't be opened, else returns nil."
 
 (defconfig kbd-config ()
   ((device)
-   (prefix-key :reader prefix-key)
-   (escape-key :reader escape-key)
-   (keymaps :reader keymaps)))
+   (prefix-key :accessor prefix-key)
+   (escape-key :accessor escape-key)
+   (keymaps :accessor keymaps)))
 
 (defmethod make-config ((self (eql :kbd)) &rest args) (apply 'make-instance 'kbd-config args))
 
 (defmethod load-ast ((self kbd-config))
   (with-slots (ast) self
     (sb-int:doplist (k v) ast
-      (when-let ((s (find-symbol k #.*package*)))
+      (when-let ((s (find-symbol k :io/kbd)))
         (unless (null v)
           (setf v
                 (case k
-                  ((or :escape-key :prefix-key) (parse-key k))
+                  ((or :escape-key :prefix-key) (parse-key v))
                   (t v)))
           (setf (slot-value self s) v))))
       (unless *keep-ast* (setf (ast self) nil))))

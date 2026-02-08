@@ -255,7 +255,8 @@
    :key-altgr :key=
    :find-key :key-eq
    :kbd-config :prefix-key
-   :escape-key :keymaps))
+   :escape-key :keymaps
+   :+unbound-keysym+ :+unbound-key+))
 
 (defpkg :io/xsubseq
   (:use :cl)
