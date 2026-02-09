@@ -330,6 +330,7 @@
    #:t.fid+ #:t.f+ #:t.f* #:t.fc 
    #:t.blas-threshold #:t.store
    #:t.f= #:t.store-type #:t.store-allocator #:t.store-ref
+   #:t.strict-coerce
    ;;L1
    #:copy! #:tensor-copy #:swap! #:swap #:dot #:scal! #:scal #:div! #:div #:scald!
    #:tricopy!

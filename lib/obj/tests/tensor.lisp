@@ -12,20 +12,20 @@
   (isequalp '(simple-array real (*)) (tensor::store-type (tensor 'real)))
   (isequalp '(simple-bit-vector *) (tensor::store-type (tensor 'boolean)))
   ;; FIX 2026-01-16: 
-  ;; (go= (ones 2) (ones 2))
+  (is (go= (ones 2) (ones 2)))
   ;; (isnt (ref (tensor::ge= (ones 2) (zeros 2)) 1))
   (iseql 'hash-table (store-type (tensor 'double-float 'hash-tensor)))
   (is= 2 (array-rank (indices (zeros '(2 2) (tensor 'double-float 'coordinate-tensor) 4))))
   (is= 2 (length (store (zeros '(20 20) (tensor 'double-float 'coordinate-tensor) 2)))))
 
-(define-tensor-generic copy!-test (x y))
 
 (deftest tensor-method ()
+  (define-tensor-generic copy!-test (x y))
   (define-tensor-method copy!-test ((x dense-tensor :a) (y dense-tensor :b t))
     `(tensor::t.copy! (,(cl :a) ,(cl :b)) x y))
   ;; FIX 2025-12-31: 
-  #+nil(tensor::print-tensor (zeros 10) nil)
-  (is= 10 (total-size (copy!-test (zeros 100) (zeros 10)))))
+  #+nil (tensor::print-tensor (zeros 10) nil)
+  (is= 100 (total-size (copy!-test (zeros 10) (zeros 10)))))
 
 ;; (t.strict-coerce (number (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))
 ;; (t.strict-coerce (complex (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))

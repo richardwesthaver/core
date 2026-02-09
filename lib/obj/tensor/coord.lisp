@@ -87,18 +87,6 @@
 ;; (let ((ret (zeros '(2 2) (tensor 'double-float 'coordinate-tensor) 4)))
 ;;   ret)
 
-;; (let ((ret (zeros '(10 10) (tensor 'double-float 'coordinate-tensor) 4)))
-;;   (indices ret)
-;;   )
+;; (let ((ret (zeros '(10 10) (tensor 'double-float 'coordinate-tensor) 4))) (indices ret))
 
-;; (copy! (adlist->graph '((0) (1 0)) (tensor 'double-float 'graph-tensor)))
-
-#+nil
-(let ((ret (zeros '(4 4) (tensor 'double-float 'coordinate-tensor) 4))
-      (*sparse-tensor-realloc-on-setf* t))
-  (copy! (display-graph (primal-graph '((<- 1 0) (<- 2 1) (<- 3 2) (<- 0 3)) (tensor 'double-float 'graph-tensor))) ret)
-  #+nil
-  (t.copy! (#.(tensor 'double-float 'graph-tensor) #.(tensor 'double-float 'coordinate-tensor))
-           (primal-graph '((0 1) (1 2)) (tensor 'double-float 'graph-tensor)) ret)
-  (setf (ref ret 1 1) pi)
-  (indices ret))
+;; (copy! (graph '((0) (1 0)) (tensor 'double-float 'graph-tensor)))

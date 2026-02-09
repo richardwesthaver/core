@@ -240,6 +240,8 @@ Example
                         :preposition-groups '((:of :across :in) (:along) (:from) (:below) (:to) (:downto) (:with-index) (:by))
                         :inclusive-permitted nil)
 
+;; (print (macroexpand '(loop for (a b) being the slice of (list (ones 10) (ones 10)) along '((0) (-1)))))
+
 (defmacro with-coordinates ((&rest syms) vector &body code)
   (with-gensyms (vec)
     `(let ((,vec ,vector))

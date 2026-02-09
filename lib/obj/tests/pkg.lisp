@@ -180,9 +180,6 @@
 (defclass test-store (store) ())
 (deftest store ())
 
-;;; Tensors
-(deftest simple-tensor ())
-
 ;;; Cache
 (defun test-provider (key)
   "A provider returns two values: The data for the element, and the element's size."

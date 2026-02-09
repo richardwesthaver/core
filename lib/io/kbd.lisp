@@ -15,6 +15,9 @@
 ;;; Code:
 (in-package :io/kbd)
 
+;; always load xkbcommon - NAME-KEYSYM is used at compile-time
+(eval-when (:compile-toplevel) (load-xkbcommon t))
+
 (defun load-kbd-libs ()
   (load-xkbcommon)
   (load-evdev))
@@ -27,8 +30,9 @@
   "Alist of (NAME FIRST LAST).")
 (defvar *keysym-character-table* (make-hash-table :test 'eql)
   "Table mapping Characters to KEYSYMs.")
-(defvar *keysym-name-table* (make-hash-table :test #'equal))
-(defvar *name-keysym-table* (make-hash-table :test #'equal))
+(eval-always
+  (defvar *keysym-name-table* (make-hash-table :test #'equal))
+  (defvar *name-keysym-table* (make-hash-table :test #'equal)))
 (defvar *dead-keysym-name-table* (make-hash-table))
 (defvar *keymaps* (make-hash-table))
 (defvar *keymap* nil)
@@ -82,19 +86,19 @@
                                  `((keysym-code-name ,a) ,b)))
                    body)))
 
-(defun name-from-keysym-name (name)
-  (gethash name *keysym-name-table*))
+(eval-always
+  (defun name-from-keysym-name (name)
+    (gethash name *keysym-name-table*))
 
-(defun name-from-keysym (key)
-  (let ((k (keysym-code-name key)))
-    (or (name-from-keysym-name k)
-        k)))
-
-(defun keysym-from-name (name)
-  "Return the keysym corresponding to NAME."
-  (let ((f (name-from-keysym-name name)))
-    (or (keysym-name-code (or f name))
-        (name-keysym (or f name)))))
+  (defun name-from-keysym (key)
+    (let ((k (keysym-code-name key)))
+      (or (name-from-keysym-name k)
+          k)))
+  (defun keysym-from-name (name)
+    "Return the keysym corresponding to NAME."
+    (let ((f (name-from-keysym-name name)))
+      (or (keysym-name-code (or f name))
+          (name-keysym (or f name))))))
 
 (defun load-xkb-keysyms (&rest codes)
   "Retrieve and map the names of the keysyms CODES which are all integers. Returns a table of INT->STRING."
@@ -468,15 +472,13 @@ computations) and by the keysym-downcase function."
     (hyper boolean)
     (super boolean)
     (altgr boolean)
-    (numlock boolean)))
-
-(defstruct (key (:constructor %make-key)) sym (mod 0 :type keymod))
-
-(defun make-key (&rest args)
-  (let ((sym (getf args :sym)))
-    (remf args :sym)
-    (%make-key :sym sym :mod (or (getf args :mod) 
-                                 (apply 'make-keymod args)))))
+    (numlock boolean))
+  (defstruct (key (:constructor %make-key)) sym (mod 0 :type keymod))
+  (defun make-key (&rest args)
+    (let ((sym (getf args :sym)))
+      (remf args :sym)
+      (%make-key :sym sym :mod (or (getf args :mod) 
+                                   (apply 'make-keymod args))))))
 
 (defgeneric key (self)
   (:documentation "Return the KEY associated with SELF."))
@@ -529,6 +531,7 @@ computations) and by the keysym-downcase function."
 (defun keymap (&optional name) (if name (gethash name *keymaps*) *keymap*))
 (defun (setf keymap) (val name) (setf (gethash name *keymaps*) val))
 
+(eval-always
 (with-memoization ()
   (memoizing
    (defun parse-mods (mods end)
@@ -567,17 +570,17 @@ computations) and by the keysym-downcase function."
              (name-from-keysym (key-sym key)))))
   (defun print-key-seq (seq)
     (format nil "*~{~a~^ ~}" (mapcar 'print-key seq)))
-  (memoizing
-   (defun parse-key (string)
-     "Parse STRING and return a KEY structure. Raise an error of type
+    (memoizing
+     (defun parse-key (string)
+       "Parse STRING and return a KEY structure. Raise an error of type
 KBD-PARSE-ERROR if the key failed to parse."
-     (let* ((p (when (> (length string) 2)
-                 (position #\- string :from-end t :end (- (length string) 1))))
-            (mods (parse-mods string (if p (1+ p) 0)))
-            (keysym (keysym-from-name (subseq string (if p (1+ p) 0)))))
-       (if keysym
-           (make-key :sym keysym :mod mods)
-           (error 'kbd-parse-error :item string)))))
+       (let* ((p (when (> (length string) 2)
+                   (position #\- string :from-end t :end (- (length string) 1))))
+              (mods (parse-mods string (if p (1+ p) 0)))
+              (keysym (keysym-from-name (subseq string (if p (1+ p) 0)))))
+         (if keysym
+             (make-key :sym keysym :mod mods)
+             (error 'kbd-parse-error :item string)))))
   (memoizing
    (defun parse-key-seq (keys)
      "KEYS is a key sequence. Parse it and return the list of keys."
@@ -587,11 +590,12 @@ KBD-PARSE-ERROR if the key failed to parse."
      "This compiles a key string into a key structure used by
 `define-key', `set-prefix-key' and others."
      (let ((seq (parse-key-seq keys)))
-       (values (car seq) (cdr seq))))))
+       (values (car seq) (cdr seq)))))))
 
-(definline key= (key1 key2)
-  (and (= (the keysym (key-sym key1)) (the keysym (key-sym key2)))
-       (= (the keymod (key-mod key1)) (the keymod (key-mod key2)))))
+(eval-always
+  (definline key= (key1 key2)
+    (and (= (the keysym (key-sym key1)) (the keysym (key-sym key2)))
+         (= (the keymod (key-mod key1)) (the keymod (key-mod key2))))))
 
 (define-constant +unbound-key+ (make-key :sym 0 :mod 255) :test 'key=)
 (define-constant +default-escape-key+ (parse-key "C-g") :test 'key=)

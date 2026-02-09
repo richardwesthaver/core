@@ -92,10 +92,10 @@ ASDF:DEFSYSTEM.")
 
 (defun sysdef (&optional (dir *default-pathname-defaults*))
   "Return the 'default' system definition path of the current directory, if it exists."
-  (when-let ((defs (sysdefs dir)))
+  (when-let ((defs (sysdefs dir nil)))
     (if (= 1 (length defs))
         (car defs)
-        (find (last (pathname-directory dir)) defs :test 'string-equal :key 'pathname-name))))
+        (find (car (last (pathname-directory dir))) defs :test 'string-equal :key 'pathname-name))))
 
 (defun list-all-systems ()
   (std/hash:hash-table-values *system-table*))
@@ -175,8 +175,8 @@ directory recursively.")
   "Read a component from its PATH slot."
   (etypecase comp
     (mod-component (mapcar 'read-component (components comp)))
-    (component (read-lisp-file (path comp) :external-format external-format))
-    (pathname (read-lisp-file comp :external-format external-format))))
+    (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
+    ((or string pathname) (read-lisp-file comp :external-format external-format))))
 
 (defun compile-component (comp &rest args)
   "Compile a component."
@@ -193,8 +193,11 @@ directory recursively.")
     (grovel-component (if-let ((pkg (find-package (slot-value comp 'package))))
                         (setf (slot-value comp 'package) pkg)
                         (std-error "Missing package (~A) for grovel component ~A" (slot-value comp 'package) comp)))
-    (component (apply 'load (path comp) args))
-    (pathname (apply 'load comp args))))
+    (file-component 
+     (let ((f (path comp)))
+       (ensure-system-file-cached f)
+       (when (reload-p f)
+         (with-system-file (f :load t) (apply 'load f args)))))))
 
 (defun find-component (path self)
   "Find a component designated by PATH which is either an atom designating a
@@ -639,7 +642,7 @@ for processing.")
   (defstruct system-session
     "A reusable session in which SYSTEMs may be processed."
     ;; A queue of SYSTEMs to be processed, effectively a global stack.
-    (systems (make-queue :capacity *system-session-capacity* :element-type 'system))
+    (systems (make-queue :capacity *system-session-capacity* :element-type 'system :prioritize t))
     ;; A simple cache of TASK results
     (task-cache (make-hash-table))
     ;; A simple cache of file operation times (:read :write :load :compile)
@@ -660,6 +663,9 @@ for processing.")
 
 (defmethod tasks ((self system-session))
   (system-session-tasks self))
+
+(defmethod reset ((self system-session) &key)
+  (setf *system-session* (make-system-session)))
 
 (sb-ext:defglobal *system-session* (make-system-session)
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
@@ -683,15 +689,41 @@ to be a system which is pushed to the session queue before BODY."
          (when ,system (push-queue ,system (queue ,sym)))
          ,@%body))))
 
-(defmacro with-system-files (files (&key load compile) &body body)
+(eval-always
+  (defun cached-system-file (f)
+    (gethash f (system-session-file-cache *system-session*)))
+  (defun (setf cached-system-file) (new f)
+    (setf (gethash f (system-session-file-cache *system-session*)) new))
+  (defun update-cached-system-file (f &optional load compile)
+    (setf (cached-system-file f)
+          `(:read ,(get-universal-time)
+            :write ,(file-write-date f)
+            ,@(when load `(:load ,(the fixnum (get-universal-time))))
+            ,@(when compile `(:compile ,(the fixnum (get-universal-time))))))))
+
+(defmacro with-system-file ((file &key load compile) &body body)
   `(progn 
      ,@body
-     (loop for f in ,files 
-           do (setf (gethash f (system-session-file-cache *system-session*))
-                    `(:read ,(sb-ext:get-time-of-day)
-                      :write ,(file-write-date f)
-                      ,,@(when load `(:load ,(the fixnum (sb-ext:get-time-of-day))))
-                      ,,@(when compile `(:load ,(the fixnum (sb-ext:get-time-of-day)))))))))
+     (update-cached-system-file ,file ,load ,compile)))
+  
+(defun reload-p (file)
+  "Given a FILE, return T if it needs to be reloaded."
+  (if-let ((f (cached-system-file file)))
+    (let ((w (setf (getf f :write) (file-write-date file)))
+          (l (getf f :load)))
+      (or (not l) (> w l)))
+    t))
+
+(defun recompile-p (file)
+  "Given a FILE, return T if it needs to be recompiled."
+  (if-let ((f (cached-system-file file)))
+    (let ((c (getf f :compile))
+          (w (setf (getf f :write) (file-write-date file))))
+      (or (not c) (> w c)))
+    t))
+
+(defun ensure-system-file-cached (file)
+  (unless (cached-system-file file) (update-cached-system-file file)))
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
@@ -884,7 +916,8 @@ the following extensions:
   (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) (pathname path))))
   (checked-compile-file path
                         :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
-                        :entry-points '(load-sys)))
+                        :entry-points '(load-sys))
+  (update-cached-system-file path nil t))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
@@ -904,23 +937,22 @@ internally. On success the path is added to the *SYSDEFS* list."
               :interactive (lambda () 
                              (list (setf path (interact-line "File: "))))
               (load p)))
-        (setf (gethash path (system-session-file-cache s))
-              (sb-ext:get-time-of-day))
+        (update-cached-system-file path t)
         (pushnew path *sysdefs* :test 'equal)
         (if name 
             (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
             t)))))
 
 ;;; Templates
-(define-template-generic (s.load #'subtypep) sym (&key))
-(define-template-generic (s.compile #'subtypep) sym (&key))
-(define-template-generic (s.save #'subtypep) sym (&key))
-(define-template-generic (c.load #'subtypep) sym (&key))
-(define-template-generic (c.compile #'subtypep) sym (&key))
-(define-template-generic (c.save #'subtypep) sym (&key))
+;; (define-template-generic (s.load #'subtypep) sym (&key))
+;; (define-template-generic (s.compile #'subtypep) sym (&key))
+;; (define-template-generic (s.save #'subtypep) sym (&key))
+;; (define-template-generic (c.load #'subtypep) sym (&key))
+;; (define-template-generic (c.compile #'subtypep) sym (&key))
+;; (define-template-generic (c.save #'subtypep) sym (&key))
 
-(defmacro define-system-method ())
-(defmacro define-component-method ())
+;; (defmacro define-system-method ())
+;; (defmacro define-component-method ())
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))

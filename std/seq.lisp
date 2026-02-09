@@ -1120,7 +1120,7 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
                                      :prioritize prioritize 
                                      :initial-element initial-element 
                                      :element-type element-type
-                                     :extend (or extend capacity)))))
+                                     :extend (and (or extend capacity) t)))))
 
 (defun call-with-cons-queue-lock (fn queue)
   "Call FN with a lock on QUEUE."

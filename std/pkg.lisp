@@ -1494,7 +1494,8 @@
    :make-system-session
    :*system-session*
    :*system-table*
-   :+sys-extension+))
+   :+sys-extension+
+   :find-component))
 
 (setq *defpkg-hook* nil)
 
