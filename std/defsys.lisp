@@ -960,6 +960,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 (defun read-component (comp &key (external-format :default))
   "Read a component from its PATH slot."
+  (declare (ftype (sfunction (component &key (external-format t)) component)))
   (etypecase comp
     (mod-component (mapcar 'read-component (components comp)))
     (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
@@ -967,16 +968,19 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 (defun compile-component (comp &rest args)
   "Compile a component."
+  (declare (ftype (sfunction (component &rest list) component)))
   (when (component-recompile-p comp)
     (etypecase comp
       (mod-component (mapcar 'compile-component (components comp)))
       (file-component
        (let ((f (path comp)))
          (when (recompile-p f)
-           (with-system-file (f :compile t) (apply 'checked-compile-file f args))))))))
+           (with-system-file (f :compile t) (apply 'checked-compile-file f args)))))))
+  comp)
 
 (defun load-component (comp &rest args)
   "Load a component."
+  (declare (ftype (sfunction (component &rest list) component)))
   (when (component-reload-p comp)
     (etypecase comp
       (mod-component (mapcar 'load-component (components comp)))
@@ -1006,14 +1010,14 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
-(defun %load-system (sys)
+(definline %load-system (sys)
+  (declare (optimize (speed 3)))
   (let ((path (path sys)))
     (when (reload-p path)
       (with-system-file (path :load t)
         (mumble "Loading system ~A~@[ from ~A~]" (name sys) path)
         (load-component sys)))
     sys))
-
 
 (defmethod init ((self system) &key)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for

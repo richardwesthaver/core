@@ -309,6 +309,7 @@
    :ds-lambda-list-matcher :parse-ds-lambda-list
    :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
    :parse-meta-ds-lambda-list
+   #:sfunction
    #:negative-double-float :*ctype-hashsets*
    #:abstract-ds-lambda-list
    #:negative-fixnum-p
@@ -1440,7 +1441,7 @@
     :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition
     :std/print :std/meta :std/path :std/sym
-    :std/macs)
+    :std/macs :std/type)
   (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
