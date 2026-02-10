@@ -14,7 +14,8 @@
   "The default error message used in STD-ERROR conditions.")
 (defvar *handlers* nil
   "A list of condition handlers - often useful in asynchronous contexts.")
-
+(defvar *verbose* nil
+  "When T indicates that this Lisp should print verbose output unless advised otherwise.")
 (defvar *uninteresting-conditions*
    '(sb-c::simple-compiler-note
      "&OPTIONAL and &KEY found in the same lambda list: ~S"

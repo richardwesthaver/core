@@ -8,6 +8,4 @@
               (:file "dict")
               (:file "util"))
  :provide
- ((:tests :zstd/tests
-   :depends-on (:rt :zstd)
-   :components ((:file "tests")))))
+ ((:tests)))

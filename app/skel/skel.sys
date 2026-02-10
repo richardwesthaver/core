@@ -1,0 +1,74 @@
+;;; ~/comp/core/app/skel/skel.sys --- Skel Sytem Definitions
+(defsys :skel
+ :version "0.1.1"
+ :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
+ :components 
+ ((:file "pkg")
+  (:mod "core"
+   :components 
+   ((:file "condition")
+    (:file "proto")
+    (:file "header")
+    (:file "var")
+    (:file "obj")
+    (:file "component")
+    (:file "rule")
+    (:file "project")
+    (:file "pack")
+    (:file "print")
+    (:file "schema")
+    (:file "db")
+    (:file "log")
+    (:file "util")))
+  (:mod "comp"
+   :components
+   ((:file "lisp")
+    (:file "asd")
+    (:file "cargo")
+    (:file "box")
+    (:file "container")
+    (:file "org")
+    (:file "dir-locals")
+    (:file "makefile")
+    (:file "sys")
+    (:file "infer")))
+  (:mod "packy"
+   :components
+   ((:file "pkg")
+    (:file "var")
+    (:file "proto")
+    (:file "pkgbuild")
+    (:file "apkbuild")
+    (:file "db")
+    (:file "client")
+    (:file "srv")
+    (:file "cfg")
+    (:file "cli")))
+  (:mod "krypt"
+   :components 
+   ((:file "pkg")
+    (:file "condition")
+    (:file "krypt")
+    (:file "cli")))
+  (:mod "homer"
+   :components 
+   ((:file "pkg")
+    (:file "var")
+    (:file "log")
+    (:file "util")
+    (:file "task")
+    (:file "cfg")
+    (:file "srv")
+    (:file "cli")))
+  (:mod "net"
+   :components
+   ((:file "var")
+    (:file "server")
+    (:file "client")
+    (:file "endpoint")
+    (:file "srv")))
+  (:file "cli")
+  (:file "skel"))
+ :provide ((:tests)))
+
+

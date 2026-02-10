@@ -7,7 +7,7 @@
            :xkb
            :evdev
            :btrfs
-           :sb-bsd-sockets
+           ;; :sb-bsd-sockets
            :zstd)
  :version "0.1.0"
  :components ((:pkg "pkg")
@@ -32,8 +32,8 @@
               (:file "kbd")
               (:file "io"))
  :provide
- ((:tests :io/tests
-   :depends-on (:rt :io :uring :sb-bsd-sockets)
+ ((:tests
+   :require (:rt :io :uring :sb-bsd-sockets)
    :components ((:file "tests")))
   (:proto :chunky)
   (:proto :fast)

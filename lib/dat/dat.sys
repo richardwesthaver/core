@@ -1,0 +1,52 @@
+;;; ~/comp/core/lib/dat/dat.sys --- Dat Sytem Definitions
+(defsys :dat
+ "Data Systems"
+ :version "0.1.1"
+ :require (:std :log :obj :io :openssl)
+ :components 
+ ((:file "pkg")
+  (:file "condition")
+  (:file "sxp")
+  (:file "asn1")
+  (:file "dot")
+  (:file "csv")
+  (:file "json")
+  (:file "m3u")
+  (:file "id3")
+  (:file "css")
+  (:mod "parquet"
+   :components
+   ((:file "gen")
+    (:file "pkg")
+    (:file "obj")
+    (:file "thrift")
+    (:file "tcompact")
+    (:file "io")
+    (:file "rle")
+    (:file "proto")))
+  (:mod "xml"
+   :components
+   ((:file "xml")
+    (:file "svg")))
+  (:mod "html"
+   :components
+   ((:file "const")
+    (:file "entity")
+    (:file "parse")
+    (:file "macs")))
+  (:file "yaml")
+  (:file "mime")
+  (:file "ini")
+  (:file "toml")
+  (:file "arff")
+  (:file "bib")
+  (:file "tar")
+  (:file "midi")
+  (:file "png")
+  (:file "gif")
+  (:file "ttf")
+  (:file "base64")
+  (:file "qrcode"))
+ :provide ((:tests)))
+
+

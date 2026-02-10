@@ -9,8 +9,10 @@
                (:file "cfg")
                (:file "sys"))
  :provide
- ((:proto :log)
-  (:tests :log/tests
-   :depends-on (:rt :std :log :io)
+ (:log
+  (:asdf "log.asd")
+  (:proto log)
+  (:tests
+   :require (:rt :std :log :io)
    :components ((:file "tests")))))
 

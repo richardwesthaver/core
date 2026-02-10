@@ -76,6 +76,11 @@ ASDF:DEFSYSTEM.")
              (format s "System ~A not found after loading file ~A" 
                      (error-name c) (file-error-pathname c)))))
 
+;; (defmacro with-system-restarts (&body body))
+;; (retry)
+;; (reset-session)
+;; (init :sys)
+
 ;;; Sysdef Utils
 ;; system definitions are files ending with +SYS-EXTENSION+ containing lisp
 ;; code.
@@ -168,37 +173,6 @@ directory recursively.")
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
   (:keyword :grovel))
 
-;;; Component Ops
-;; Functions which are performed directly on instances of the COMPONENT class
-;; in the calling thread.
-(defun read-component (comp &key (external-format :default))
-  "Read a component from its PATH slot."
-  (etypecase comp
-    (mod-component (mapcar 'read-component (components comp)))
-    (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
-    ((or string pathname) (read-lisp-file comp :external-format external-format))))
-
-(defun compile-component (comp &rest args)
-  "Compile a component."
-  (etypecase comp
-    (mod-component (mapcar 'compile-component (components comp)))
-    (component (apply 'std/comp:checked-compile-file (path comp) args))
-    (pathname (apply 'std/comp:checked-compile-file comp args))))
-
-(defun load-component (comp &rest args)
-  "Load a component."
-  (etypecase comp
-    (mod-component (mapcar 'load-component (components comp)))
-    ;; TODO
-    (grovel-component (if-let ((pkg (find-package (slot-value comp 'package))))
-                        (setf (slot-value comp 'package) pkg)
-                        (std-error "Missing package (~A) for grovel component ~A" (slot-value comp 'package) comp)))
-    (file-component 
-     (let ((f (path comp)))
-       (ensure-system-file-cached f)
-       (when (reload-p f)
-         (with-system-file (f :load t) (apply 'load f args)))))))
-
 (defun find-component (path self)
   "Find a component designated by PATH which is either an atom designating a
 component name or a list indicating a sequence of module component names
@@ -218,6 +192,7 @@ ending with the target component name."
                   (push c parents)))
               finally (return c)))))
 
+#+nil
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
 absolute pathnames. Shouldn't be needed if all system components exist when
@@ -235,23 +210,22 @@ LOAD-SYS is called."
   "Walk the components of C, expanding REQUIRE slots along the way to
 objects of type COMPONENT."
   (with-optimization (:speed 3 :safety 0)
-    
-      (labels ((%expand (comp)
-                 (let ((ptr c))
-                   (when (component-require comp)
-                     (setf (component-require comp)
-                           (mapcar (lambda (x)
-                                     (etypecase x
-                                       ((or string symbol list)
-                                        (find-component x ptr))
-                                       (component x)))
-                                   (component-require comp))))
-                   (when (and (mod-component-p comp) (components comp))
-                     (setf ptr comp)
-                     (mapc #'%expand (components comp)))
-                   (values))))
-        (declare (dynamic-extent (function %expand)))
-        (mapc (the (function (t) (values)) #'%expand) (components c)))))
+    (labels ((%expand (comp)
+               (let ((ptr c))
+                 (when (component-require comp)
+                   (setf (component-require comp)
+                         (mapcar (lambda (x)
+                                   (etypecase x
+                                     ((or string symbol list)
+                                      (find-component x ptr))
+                                     (component x)))
+                                 (component-require comp))))
+                 (when (and (mod-component-p comp) (components comp))
+                   (setf ptr comp)
+                   (mapc #'%expand (components comp)))
+                 (values))))
+      (declare (dynamic-extent (function %expand)))
+      (mapc (the (function (t) (values)) #'%expand) (components c)))))
 
 ;;; Provider
 (eval-always
@@ -315,12 +289,12 @@ objects of type COMPONENT."
 (defprovider :printer (root name)
   (register-module :printer root (compile-and-eval `(find-printer ,name))))
 
-(defprovider :sys (root name &rest args)
+(defprovider :sys (name &rest args)
   (register-module
    :sys
-   root
+   name
    (compile-and-eval 
-    `(defsys ,name ,@args :path ,(or *compile-file-truename* *load-truename* (path (find-system name)))))))
+    `(defsys ,@args :path ,(or *compile-file-truename* *load-truename* (path (find-system name)))))))
 
 (defprovider :tests (name &rest args)
   (let ((req (getf args :require)))
@@ -426,6 +400,7 @@ objects of type COMPONENT."
     (:alien (funcall (gethash form std/alien:*alien-load-table*)))
     (:prelude (use-package form))
     (:tests (load-system form))
+    (:sys (load-system form))
     (:bench (load-system form))
     (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
     (t
@@ -686,7 +661,7 @@ to be a system which is pushed to the session queue before BODY."
                                 (pathname (directory-namestring (probe-file (path ,sys)))))))))
          
          ,@%decl
-         (when ,system (push-queue ,system (queue ,sym)))
+         (when ,system (push-priority-queue ,system (queue ,sym)))
          ,@%body))))
 
 (eval-always
@@ -703,9 +678,12 @@ to be a system which is pushed to the session queue before BODY."
 
 (defmacro with-system-file ((file &key load compile) &body body)
   `(progn 
+     (ensure-system-file-cached ,file)
      ,@body
      (update-cached-system-file ,file ,load ,compile)))
   
+;; (defmacro component-case ())
+
 (defun reload-p (file)
   "Given a FILE, return T if it needs to be reloaded."
   (if-let ((f (cached-system-file file)))
@@ -722,13 +700,29 @@ to be a system which is pushed to the session queue before BODY."
       (or (not c) (> w c)))
     t))
 
+(defun component-reload-p (comp)
+  "Return T when component COMP should be reloaded."
+  (declare (component comp))
+  (if (mod-component-p comp)
+      (some #'reload-p (components comp))
+      (reload-p (path comp))))
+
+(defun component-recompile-p (comp)
+  "Return T when component COMP should be recompiled."
+  (declare (component comp))
+  (if (mod-component-p comp)
+      (some #'recompile-p (components comp))
+      (recompile-p (path comp))))
+
 (defun ensure-system-file-cached (file)
-  (unless (cached-system-file file) (update-cached-system-file file)))
+  (unless (cached-system-file file) 
+    (setf (cached-system-file file)
+          `(:read 0 :write ,(file-write-date file) :load 0 :compile 0))))           
 
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
 (defkernel system-task (task)
-  ((name :reader name :initarg :name)))
+  ((name :reader name :initarg :name :initform (gensym "sys-task"))))
 
 (defmethod initialize-instance :after ((self system-task) &key)
   (check-system-session)
@@ -875,6 +869,15 @@ inputs."))
     (remf body n)
     v))
 
+
+;; (defun expand-module-provides (comp)
+;;   "Walk the PROVIDE slot of COMP, expanding provider results."
+;;   (with-optimization (:speed 3 :safety 0)
+;;     (when (module-provide comp)
+;;       (loop for (k . v) in (module-provide comp)
+;;             do (case k
+;;                  (:sys (setf (std/list:assoc-value (module-provide comp) k) `(defsys ,@v))))))))
+
 (defmacro defsys (name &body body)
   "Define a SYSTEM with NAME and BODY interpreted similar to ASDF:DEFSYSTEM.
 
@@ -909,6 +912,7 @@ the following extensions:
              (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
              (expand-component-requires ,sys)
              (register-system ,name ,sys)
+             ;; (expand-module-provides ,sys)
              ,sys))))))
 
 (defun compile-sys (path &optional output-file)
@@ -954,6 +958,38 @@ internally. On success the path is added to the *SYSDEFS* list."
 ;; (defmacro define-system-method ())
 ;; (defmacro define-component-method ())
 
+(defun read-component (comp &key (external-format :default))
+  "Read a component from its PATH slot."
+  (etypecase comp
+    (mod-component (mapcar 'read-component (components comp)))
+    (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
+    ((or string pathname) (read-lisp-file comp :external-format external-format))))
+
+(defun compile-component (comp &rest args)
+  "Compile a component."
+  (when (component-recompile-p comp)
+    (etypecase comp
+      (mod-component (mapcar 'compile-component (components comp)))
+      (file-component
+       (let ((f (path comp)))
+         (when (recompile-p f)
+           (with-system-file (f :compile t) (apply 'checked-compile-file f args))))))))
+
+(defun load-component (comp &rest args)
+  "Load a component."
+  (when (component-reload-p comp)
+    (etypecase comp
+      (mod-component (mapcar 'load-component (components comp)))
+      ;; TODO
+      (grovel-component (if-let ((pkg (find-package (slot-value comp 'package))))
+                          (setf (slot-value comp 'package) pkg)
+                          (std-error "Missing package (~A) for grovel component ~A" (slot-value comp 'package) comp)))
+      (file-component
+       (let ((f (path comp)))
+         (when (reload-p f)
+           (with-system-file (f :load t) (apply 'load f args)))))))
+  comp)
+
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
@@ -970,23 +1006,35 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
+(defun %load-system (sys)
+  (let ((path (path sys)))
+    (when (reload-p path)
+      (with-system-file (path :load t)
+        (mumble "Loading system ~A~@[ from ~A~]" (name sys) path)
+        (load-component sys)))
+    sys))
+
+
 (defmethod init ((self system) &key)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and some PROVIDE forms to be loaded. The
 underlying object SELF remains unmodified."
-  (with-system-session (s)
-    (let ((*module* (name self)))
-      ;; first process all requires
-      (mapc
-       (lambda (x)
-         (if (atom x)
-             (load-system x) ; default case, assumed to be a system
-             (apply 'load-module x)))
-       (slot-value self 'require))
-      ;; then we call providers
-      (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
-            (slot-value self 'provide))
-      self)))
+  (flet ((%load-system-symbol (sym)
+           (when-let ((sys (find-system sym)))
+             (%load-system sys))))
+    (with-system-session (s)
+      (let ((*module* (name self)))
+        ;; first process all requires
+        (mapc
+         (lambda (x)
+           (if (atom x)
+               (%load-system-symbol x) ; default case, assumed to be a system
+               (apply 'load-module x)))
+         (slot-value self 'require))
+        ;; then we call providers
+        (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
+              (slot-value self 'provide))
+        self))))
 
 ;; (typecase x
 ;;   ;; symbols and strings use PROVIDE
@@ -1025,17 +1073,15 @@ underlying object SELF remains unmodified."
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
   (:method ((self system) &key force (verbose t) (asdf *asdf-compatibility*) (init t))
-    (when init (init self))
-    (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name self) (path self)))
-    ;; TODO 2025-08-31:
-    ;; - build-plan
     (or
-     (with-system-session (s)
+     (with-system-session (s self)
+       (when init (init self))
+       ;; TODO 2025-08-31:
+       ;; - build-plan
        (case (plan self)
-         ((or :serial nil) (mapc 'load-component (components self)) self)
+         ((or :serial nil)  (%load-system self))
          (t (nyi! "Unrecognized PLAN keyword"))))
-     (when asdf
-       (asdf:load-system (name self) :verbose verbose :force force))))
+     (and asdf (asdf:load-system (name self) :verbose verbose :force force))))
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
     (remf args :default)
     (let ((sys (find-system self :default default :asdf asdf)))
@@ -1046,12 +1092,12 @@ underlying object SELF remains unmodified."
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
   (:method ((self system) &key (asdf *asdf-compatibility*) (verbose t) (init t))
-    (when init (init self))
-    (mumble "Compiling system ~A" (name self))
-    (if asdf
-        (asdf:compile-system (name self) :verbose verbose)
-        (with-system-session (s)
-          (mapc 'compile-component (components self)))))
+    (or         
+     (with-system-session (s)
+       (when init (init self))
+       (mumble "Compiling system ~A" (name self))
+       (compile-component self))
+     (and asdf (asdf:compile-system (name self) :verbose verbose))))
   (:method ((self symbol) &rest args &key (default :error))
     (remf args :default)
     (apply 'compile-system (find-system self :default default) args)))
@@ -1065,12 +1111,9 @@ underlying object SELF remains unmodified."
 
 (defgeneric make-system (self &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
-an image.")
-  (:method ((self system) &key (asdf *asdf-compatibility*))
-    (mumble "Making system ~A" (name self))
-    (if asdf (asdf:make self :verbose nil)
-        ;; else
-        ))
+an image. This function does not respect *ASDF-COMPATIBILITY*.")
+  (:method ((self system) &key)
+    (mumble "Making system ~A" (name self)))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
       (make-system sys))))

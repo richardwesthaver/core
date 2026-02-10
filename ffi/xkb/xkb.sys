@@ -1,0 +1,6 @@
+;;; ~/comp/core/ffi/xkb/xkb.sys --- Xkb Sytem Definitions
+(defsys :xkb
+ :require (:std)
+ :components ((:file "pkg")
+              (:grovel "constants" :package :xkb))
+ :provide ((:tests)))

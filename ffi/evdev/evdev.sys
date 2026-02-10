@@ -1,0 +1,8 @@
+;;; ~/comp/core/ffi/evdev/evdev.sys --- Evdev Sytem Definitions
+(defsys :evdev
+ :require (:std)
+ :components ((:file "pkg")
+              (:grovel "constants" :package :evdev)
+              (:file "input")
+              (:file "dev"))
+ :provide ((:tests :require (:rt :evdev :xkb))))

@@ -1,0 +1,18 @@
+;;; ~/comp/core/ffi/uring/uring.sys --- Uring Sytem Definitions
+(defsys :uring
+ :require (:std :obj)
+  :components ((:file "pkg")
+               (:grovel "constants"
+                :package :uring)
+               (:file "util")
+               (:file "macs")
+               (:file "alien")
+               (:file "opcode")
+               (:file "prim")
+               (:file "register")
+               (:file "submit")
+               (:file "sq")
+               (:file "cq")
+               (:file "uring"))
+ :provide
+ ((:tests)))

@@ -163,6 +163,7 @@
    :interact-line
    :*error-message*
    :*handlers*
+   :*verbose*
    :*uninteresting-conditions*
    :std-error :error-message
    :define-error-reporter
