@@ -184,12 +184,12 @@ debug or die."
           (sb-ext:exit :code (if (first results) 0 1))))))
 
 ;; TODO
-(defun save-lisp-tree-shake-and-die (path &rest args)
+(defun save-lisp-tree-shake-and-die (name &rest args)
   "A naive tree-shaker for lisp."
   ;; https://gist.github.com/burtonsamograd/f08f561264ff94391300
   (loop repeat 10
         do (sb-ext:gc :full t))
-  (apply #'sb-ext:save-lisp-and-die path args))
+  (apply #'sb-ext:save-lisp-and-die name args))
 
 (defparameter *gc-logfile* #P"gc.log")
 
@@ -213,25 +213,23 @@ debug or die."
   "Set the DONT-SAVE slot of OBJECTS to T."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
-(defun save-lisp (name &key force save make package compression verbose version callable-exports executable (toplevel #'sb-impl::toplevel-init) forget save-runtime-options root-structures (purify t))
+(defun save-lisp (name &key package compression callable-exports executable (toplevel #'sb-impl::toplevel-init) forget (save-runtime-options :accept-runtime-options) root-structures (purify t))
   "Process NAME and keyword arguments then pass options to the underlying build
 system - eventually terminating on SAVE-LISP-AND-DIE."
   (pkg:with-package (or package *package*)
-    (asdf:compile-system name :force force :verbose verbose :version version)
-    (when make
-      (apply 'asdf:make name (unless (eq t make) make)))
     (when forget
       (forget-shared-objects (unless (eq t forget) forget)))
-    (when save
-      (when (probe-file save)
-        (delete-file save))
-      (sb-ext:save-lisp-and-die save :executable executable
-                                     :toplevel toplevel
-                                     :callable-exports callable-exports
-                                     :save-runtime-options save-runtime-options
-                                     :root-structures root-structures
-                                     :purify purify
-                                     :compression compression))))
+    (when (probe-file name)
+      (delete-file name))
+    (sb-ext:save-lisp-and-die 
+     name
+     :executable executable
+     :toplevel toplevel
+     :callable-exports callable-exports
+     :save-runtime-options save-runtime-options
+     :root-structures root-structures
+     :purify purify
+     :compression compression)))
 
 (defmacro without-fp-traps (() &body body)
   "Eval BODY with float traps disabled - sometimes necessary when working with

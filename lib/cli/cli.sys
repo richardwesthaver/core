@@ -34,7 +34,8 @@
   (:file "tui" :require ("ansi" "progress" "spark" "linedit"))
   (:file "cli" :require ("pkg" "clap")))
  :provide
- ((:tests
+ ((:bin)
+  (:tests
    :require (:std :rt)
    :description "CLI Tests"
    :components

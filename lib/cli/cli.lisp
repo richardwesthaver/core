@@ -46,12 +46,7 @@ only."
 
 ;;; DEFSYS Providers
 (std/defsys::defprovider :cli (name &key package)
-  `(clap:load-cli ,name ,@(when package `(,package))))
-
-(defprovider :bin (&rest args)
-  (if-let ((sys *defsys*))
-    `((cons ,sys (:bin ,@args)))
-    args))
+  (register-module :cli name `(clap:load-cli ,name ,@(when package `(,package)))))
 
 (save :commands :cli)
   

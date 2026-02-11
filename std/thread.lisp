@@ -1243,7 +1243,9 @@ Calling `broadcast-work' from inside a worker is an error."
   (setf *lisp-exiting-p* t))
 
 (defun exit-thread-pools ()
-  (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait 2)) *thread-pool-table*))
+  (std/hash:maphash-values (lambda (x) (stop-thread-pool x :wait 2)) *thread-pool-table*)
+  ;; (setf *thread-pool-table* (make-hash-table))
+  )
 
 (pushnew 'exit-workers sb-ext:*exit-hooks*)
 (pushnew 'exit-workers sb-ext:*save-hooks*)

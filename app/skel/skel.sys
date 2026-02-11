@@ -69,6 +69,6 @@
     (:file "srv")))
   (:file "cli")
   (:file "skel"))
- :provide ((:tests)))
+ :provide ((:tests) (:bin)))
 
 

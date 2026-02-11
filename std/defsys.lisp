@@ -296,6 +296,31 @@ objects of type COMPONENT."
    (compile-and-eval 
     `(defsys ,@args :path ,(or *compile-file-truename* *load-truename* (path (find-system name)))))))
 
+(defprovider :bin (root &rest args)
+  (let* ((namep (oddp (length args)))
+         (name (if namep (car args) args))
+         (args (if namep (cdr args) args)))
+    (register-module
+     :bin root 
+     (compile nil
+              `(lambda ()
+                 (std/sys:save-lisp
+                  ,(if (pathnamep name) name
+                       `(std/sys:stash-pathname ,(string-downcase name)))
+                  :executable t
+                  ,@args))))))
+
+(defprovider :lib (root &rest args)
+  (let* ((namep (oddp (length args)))
+         (args (if namep (cdr args) args))
+         (name (if namep (car args) root)))
+    (register-module
+     :lib root 
+     (compile nil
+              `(lambda ()
+                 (save-lisp ,name
+                            ,@args))))))
+
 (defprovider :tests (name &rest args)
   (let ((req (getf args :require)))
     (remf args :require)
@@ -1010,19 +1035,19 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
-(definline %load-system (sys)
+(definline %load-system (sys &optional (verbose *verbose*))
   (declare (optimize (speed 3)))
-  (let ((path (path sys)))
-    (when (reload-p path)
+  (when (component-reload-p sys)
+    (let ((path (path sys)))
       (with-system-file (path :load t)
-        (mumble "Loading system ~A~@[ from ~A~]" (name sys) path)
+        (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
         (load-component sys)))
     sys))
 
 (defmethod init ((self system) &key)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
-REQUIRE forms, PKG components, and some PROVIDE forms to be loaded. The
-underlying object SELF remains unmodified."
+REQUIRE forms, PKG components, and PROVIDE forms to be loaded. The underlying
+object SELF remains unmodified."
   (flet ((%load-system-symbol (sym)
            (when-let ((sys (find-system sym)))
              (%load-system sys))))
@@ -1076,14 +1101,14 @@ underlying object SELF remains unmodified."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force (verbose t) (asdf *asdf-compatibility*) (init t))
+  (:method ((self system) &key force (verbose *verbose*) (asdf *asdf-compatibility*) (init t))
     (or
      (with-system-session (s self)
        (when init (init self))
        ;; TODO 2025-08-31:
        ;; - build-plan
        (case (plan self)
-         ((or :serial nil)  (%load-system self))
+         ((or :serial nil) (%load-system self verbose))
          (t (nyi! "Unrecognized PLAN keyword"))))
      (and asdf (asdf:load-system (name self) :verbose verbose :force force))))
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
@@ -1095,11 +1120,11 @@ underlying object SELF remains unmodified."
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose t) (init t))
+  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *verbose*) (init t))
     (or         
      (with-system-session (s)
        (when init (init self))
-       (mumble "Compiling system ~A" (name self))
+       (when verbose (mumble "Compiling system ~A" (name self)))
        (compile-component self))
      (and asdf (asdf:compile-system (name self) :verbose verbose))))
   (:method ((self symbol) &rest args &key (default :error))

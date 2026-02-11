@@ -1462,6 +1462,7 @@
    :list-all-systems
    :list-all-providers
    :list-all-modules
+   :register-module
    :module-provide
    :module-require
    :defprovider
@@ -1519,8 +1520,8 @@
   (:use :std-lisp :sb-ext :sb-alien 
     :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
     :sb-debug :std/defsys)
-  (:shadowing-import-from :std/meta :reset)
-  (:shadowing-import-from :cl-user :path))
+  (:shadowing-import-from :std/meta :reset))
+
 
 (eval-when (:load-toplevel)
   (pushnew :std *features*)
