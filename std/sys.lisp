@@ -389,7 +389,7 @@ long as ASDF is non-nil)."
 PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   (unless (null path)
     (setf translations 
-	  (append `((,(format nil "~A" host) ,path)) translations)))
+	  (append `((,(format nil "~A;" host host) ,path)) translations)))
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
 	 ',(mapcar (lambda (x)
@@ -414,32 +414,45 @@ accessible."
 accessible."
   (map nil #'check-logical-host hosts))
 
-(define-logical-pathname "STASH" "/opt/stash/"
+(define-logical-pathname "STASH" "/opt/stash/**/*.*"
   ("**;*.*.*" "/opt/stash/**/*.*"))
 
-(define-logical-pathname "USER" "~"
+(define-logical-pathname "USER" "~/**/*.*"
   ("ORG;**;*.*.*" "~/org/**/*.*")
   ("SRC;**;*.*.*" "~/src/**/*.*")
   ("STASH;**;*.*.*" "~/.stash/**/*.*")
   ("STORE;**;*.*.*" "~/.store/**/*.*")
   ("**;*.*.*" "~/**/*.*"))
 
-
-(define-logical-pathname "STORE" "/opt/store/"
+(define-logical-pathname "STORE" "/opt/store/**/*.*"
   ("**;*.*.*" "/opt/store/**/*.*"))
 
-(define-logical-pathname "SCRATCH" "/opt/scratch/"
+(define-logical-pathname "SCRATCH" "/opt/scratch/**/*.*"
   ("**;*.*.*" "/opt/scratch/**/*.*"))
 
-
 ;; redefine the sys table
-(define-logical-pathname "SYS" "/usr/local/lib/sbcl/"
+(define-logical-pathname "SYS" "/usr/local/lib/sbcl/**/*.*"
   ("SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
   ("CONTRIB;**;*.*.*"
    #P"/usr/local/src/sbcl/contrib/**/*.*")
   ("OUTPUT;**;*.*.*"
    (translate-logical-pathname "STASH:CACHE;lisp;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))
+
+(defun logical-pathname-translation (host name)
+  (car (std/list:assoc-value 
+        (logical-pathname-translations host) name 
+        :test 'string=)))
+
+(defun (setf logical-pathname-translation) (new host name)
+  (setf
+   (std/list:assoc-value 
+    (logical-pathname-translations host) name 
+    :test 'string=)
+   (list new)))
+
+(setf (logical-pathname-translation "SYS" "LIB;**;*.*")
+      (logical-pathname-translation "SYS" "SYS;"))
 
 ;;; Hexdump
 ;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565

@@ -30,8 +30,8 @@
 (defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
-(defvar *system-cache-directory* #l"user:stash;cache;lisp;sys;")
-(defvar *system-data-directory* #l"user:stash;data;lisp;sys;")
+(defvar *system-cache-directory* #l"user:cache;lisp;sys;")
+(defvar *system-data-directory* #l"user:data;lisp;sys;")
 
 (defvar *component-class-table* (make-hash-table))
 (defvar *test-system* :rt)
@@ -84,6 +84,9 @@ ASDF:DEFSYSTEM.")
 ;;; Sysdef Utils
 ;; system definitions are files ending with +SYS-EXTENSION+ containing lisp
 ;; code.
+(defun fsys-cache-file (path)
+  (merge-pathnames (make-pathname :type "fsys" :defaults path) *user-fasl-cache*))
+
 (defun sysdefs (&optional (dir *default-pathname-defaults*) (recurse t))
   "Return a list of system definition pathnames found in DIR."
   (collecting
@@ -1042,10 +1045,6 @@ internally. On success the path is added to the *SYSDEFS* list."
   (when (component-reload-p comp)
     (etypecase comp
       (mod-component (mapcar 'load-component (components comp)))
-      ;; TODO
-      (grovel-component (if-let ((pkg (find-package (slot-value comp 'package))))
-                          (setf (slot-value comp 'package) pkg)
-                          (std-error "Missing package (~A) for grovel component ~A" (slot-value comp 'package) comp)))
       (file-component
        (let ((f (path comp)))
          (when (reload-p f)
@@ -1064,6 +1063,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *module-table* (make-hash-table :test 'equal))
   (ensure-directories-exist *system-data-directory*)
   (ensure-directories-exist *system-cache-directory*)
+  (ensure-directories-exist std/os:*user-fasl-cache*)
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
@@ -1086,7 +1086,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
              (%load-system s))
            (simple-system-error "System not found: ~A" x))
          (apply 'load-module x)))
-   (slot-value sys 'require)))
+   (slot-value sys 'std/defsys::require)))
 
 (defun call-system-providers (sys)
   (let ((*module* (name sys)))

@@ -193,11 +193,11 @@ arrange for FVAR to be closed after BODY."
 (defun init-xdg-logical-pathnames ()
   ;; only the XDG_*_HOME paths we care about for user apps
   (define-logical-pathname "XDG" (user-homedir-pathname)
-    ("CONFIG;" (xdg-dir :config-home))
-    ("DATA;" (xdg-dir :data-home))
-    ("STATE;" (xdg-dir :state-home))
-    ("CACHE;" (xdg-dir :cache-home))
-    ("RUNTIME;" (xdg-dir :runtime-dir))))
+    ("CONFIG;**;*.*.*" (xdg-dir :config-home))
+    ("DATA;**;*.*.*" (xdg-dir :data-home))
+    ("STATE;**;*.*.*" (xdg-dir :state-home))
+    ("CACHE;**;*.*.*" (xdg-dir :cache-home))
+    ("RUNTIME;**;*.*.*" (xdg-dir :runtime-dir))))
 
 (defun init-xdg-dirs ()
   "Init *XDG-USER-DIRS* from environment."
@@ -218,6 +218,7 @@ arrange for FVAR to be closed after BODY."
 
 (defmethod std/meta:init ((self (eql :xdg)) &rest args)
   (prog1 (init-xdg-dirs)
+    (init-xdg-logical-pathnames)
     (unless (null args)
       (std/list:doplist (k v) args
         (setf (xdg-dir k) v)))))
@@ -295,6 +296,18 @@ match."
   (directory-path (xdg-cache-dir "lisp" id)))
 
 (sb-ext:define-load-time-global *user-fasl-cache* (user-fasl-cache))
+
+(setf (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
+
+(defun fasl-cache-file (path)
+  (merge-pathnames (make-pathname :type "fasl" :defaults path) *user-fasl-cache*))
+
+(defun resolve-fasl-cache-file (file)
+  (let ((dir (pathname-directory file))
+        (name (pathname-name file)))
+    (or (probe-file (fasl-cache-file file))
+        (probe-file (make-pathname :name name :type "fasl" :directory dir))
+        (probe-file file))))
 
 (defun xdg-runtime-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :runtime-dir))))

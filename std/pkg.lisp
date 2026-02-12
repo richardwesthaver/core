@@ -807,6 +807,7 @@
    :*logical-hosts*
    :save-shared-objects
    :make-logical-host
+   :logical-pathname-translation
    :logical-host :info 
    :show-info :*info-types*
    :sbcl-hooks
@@ -1400,7 +1401,7 @@
   (:use :cl :sb-alien :std/string)
   (:import-from :std/macs :with-gensyms :if-let :when-let :eval-always)
   (:import-from :std/prim :definline)
-  (:import-from :std/sys :define-logical-pathname)
+  (:import-from :std/sys :define-logical-pathname :add-logical-pathname-translation)
   (:import-from :std/file :probe-directory)
   (:import-from :std/path :directory-path :merge-homedir-pathnames)
   (:import-from :std/hash :hash-table-keys)
@@ -1412,6 +1413,8 @@
   (:export
    :*user-fasl-cache*
    :user-fasl-cache
+   :fasl-cache-file
+   :resolve-fasl-cache-file
    :find-a-pty :open-pty :sudo-p :forkable-p
    :user-info :user-add
    :group-add :get-host-name
@@ -1446,7 +1449,7 @@
     :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition
     :std/print :std/meta :std/path :std/sym
-    :std/macs :std/type)
+    :std/macs :std/type :std/os)
   (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
