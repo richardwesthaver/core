@@ -3,10 +3,10 @@
  "Core Systems"
  :version "0.1.0"
  :require
- (:std :cli :log :obj
+ (:std :io :obj :log :cli
   :net :nlp :dat :doc
   :q :dsp :math :parse 
-  :rdb :cry :io :pod  
+  :rdb :cry :pod  
   :box :syn :vc :rt)
  :components ((:file "core"))
  :hook ((:load (lambda () (mumble "loading core"))))

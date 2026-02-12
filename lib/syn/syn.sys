@@ -1,0 +1,72 @@
+;;; ~/comp/core/lib/syn/syn.sys --- Syn Sytem Definitions
+(defsys :syn
+ :require (:std :obj :parse :tree-sitter :doc :cli :io :dat :cuda)
+ :components 
+ ((:file "pkg")
+  (:file "ts")
+  (:mod "lang"
+   :components
+   ((:file "c")
+    (:file "js")
+    (:file "py")))
+  (:mod "gen"
+   :components
+   ((:file "condition")
+    (:file "var")
+    (:file "proto")
+    (:file "util")
+    (:file "read")
+    (:mod "c"
+     :components 
+     ((:file "pkg")
+      (:file "read")
+      (:file "ast")
+      (:file "sym")
+      (:file "print")))
+    (:mod "cpp"
+     :components 
+     ((:file "pkg")
+      (:file "ast")
+      (:file "sym")
+      (:file "print")
+      (:file "read")))
+    (:mod "cu"
+     :components 
+     ((:file "pkg")
+      (:file "ast")
+      (:file "print")
+      (:file "read")))
+    (:mod "py"
+     :components ((:file "pkg")))
+    (:mod "js"
+     :components 
+     ((:file "pkg")
+      (:file "read")
+      (:file "ast")
+      (:file "sym")
+      (:file "print")
+      (:file "macs")))))
+  (:file "fmt")
+  (:file "lint")
+  (:file "tempo")
+  (:file "grovel")
+  (:file "cli"))
+ :provide 
+ ((:tests 
+   :components 
+   ((:mod "tests"
+     :components 
+     ((:file "pkg")
+      (:mod "gen"
+       :components
+       ((:file "pkg")
+        (:file "c")
+        (:file "cpp")
+        (:file "cu")))
+      (:mod "lang"
+       :components
+       ((:file "pkg")
+        (:file "c")
+        (:file "js")
+        (:file "py")))))))))
+

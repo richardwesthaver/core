@@ -13,12 +13,12 @@
  (:integer +zstd-contentsize-error+ "ZSTD_CONTENTSIZE_ERROR" t t)
  (:integer +zstd-max-input-size+ "ZSTD_MAX_INPUT_SIZE" t t)
  (:structure zstd-inbuffer ("struct ZSTD_inBuffer_s"
-                              ((* t) src "const void*" "src")
-                              (size-t size "size_t" "size")
-                              (size-t pos "size-t" "pos"))
+                            ((* t) src "const void*" "src")
+                            (size-t size "size_t" "size")
+                            (size-t pos "size-t" "pos"))
              nil t)
  (:structure zstd-outbuffer ("struct ZSTD_outBuffer_s"
-                               ((* t) dst "void*" "dst")
-                               (size-t size "size_t" "size")
-                               (size-t pos "size-t" "pos"))
+                             ((* t) dst "void*" "dst")
+                             (size-t size "size_t" "size")
+                             (size-t pos "size-t" "pos"))
              nil t))

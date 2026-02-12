@@ -1,0 +1,38 @@
+;;; ~/comp/core/lib/cry/cry.sys --- Cry Sytem Definitions
+(defsys :cry
+ :require 
+ (:ironclad :sb-concurrency 
+  :sb-posix :sb-bsd-sockets 
+  :std :log :obj :dat
+  :blake3 :keyutils
+  :openssl :io)
+ :components 
+ ((:file "pkg")
+  (:file "condition" :require ("pkg"))
+  (:file "crc64" :require ("condition"))
+  (:mod "tls"
+   :components 
+   ((:file "pkg")
+    (:file "var")
+    (:file "bio")
+    (:file "condition")
+    (:file "funcall")
+    (:file "init")
+    (:file "stream")
+    (:file "x509")
+    (:file "ctx")
+    (:file "verify")))
+  (:file "b3" :require ("condition"))
+  (:file "password" :require ("condition"))
+  (:file "authinfo" :require ("condition"))
+  (:file "keyring" :require ("condition"))
+  (:file "jwt" :require ("condition"))
+  (:file "hotp" :require ("condition"))
+  (:file "totp" :require ("hotp"))
+  (:file "drm" :require ("condition"))
+  (:file "gpg" :require ("condition"))
+  (:file "ssh" :require ("condition"))
+  (:file "sign" :require ("condition"))
+  (:file "auth" :require ("password" "gpg" "jwt" "authinfo" "keyring" "hotp" "totp"))
+  (:file "cry" :require ("pkg")))
+ :provide ((:tests :require (:rt :cry :net))))

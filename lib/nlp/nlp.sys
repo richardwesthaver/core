@@ -1,0 +1,18 @@
+;;; ~/comp/core/lib/nlp/nlp.sys --- Nlp Sytem Definitions
+(defsys :nlp
+ :require (:std :rdb :ppcre :parse :obj)
+ :components 
+ ((:file "pkg")
+  (:file "data")
+  (:file "tokenize")
+  (:file "doc")
+  (:mod "stem"
+   :components
+   ((:file "porter")))
+  (:file "textrank")
+  (:file "dbscan")
+  (:file "section")
+  (:file "string")
+  (:file "fuzzy"))
+ :provide ((:tests)))
+

@@ -740,6 +740,8 @@
    :primitive-type-name 
    :primitive-type 
    :primitive-type-of
+   :lisp-implementation-id
+   :lisp-machine-id
    :+lowtags+ :+widetags+
    :open-fasl-output :close-fasl-output
    :check-fasl-header
@@ -1329,6 +1331,7 @@
    :jobs
    :tasks
    :results
+   :result
    :*task-class*
    :*task-priority*
    :*tasks*
@@ -1407,6 +1410,8 @@
   (:import-from :std/alien :defar)
   (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
+   :*user-fasl-cache*
+   :user-fasl-cache
    :find-a-pty :open-pty :sudo-p :forkable-p
    :user-info :user-add
    :group-add :get-host-name
@@ -1459,6 +1464,7 @@
    :sysdefs
    :sysdef
    :defsys
+   :system-relative-pathname
    :list-all-systems
    :list-all-providers
    :list-all-modules
@@ -1519,9 +1525,7 @@
 (defpkg :std-user
   (:use :std-lisp :sb-ext :sb-alien 
     :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
-    :sb-debug :std/defsys)
-  (:shadowing-import-from :std/meta :reset))
-
+    :sb-debug :std/defsys))
 
 (eval-when (:load-toplevel)
   (pushnew :std *features*)

@@ -1,0 +1,23 @@
+;;; ~/comp/core/ffi/rocksdb/rocksdb.sys --- Rocksdb Sytem Definitions
+(defsys :rocksdb
+ :require (:std :log)
+ :components 
+ ((:file "pkg")
+  (:file "prim")
+  (:file "types")
+  (:file "opts")
+  (:file "env")
+  (:file "sst")
+  (:file "db")
+  (:file "metadata")
+  (:file "merge")
+  (:file "compaction")
+  (:file "comparator")
+  (:file "slicetransform")
+  (:file "writebatch")
+  (:file "logger")
+  (:file "listener")
+  (:file "stats")
+  (:file "vars")
+  (:file "macs"))
+ :provide ((:tests)))

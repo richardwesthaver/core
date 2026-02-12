@@ -5,30 +5,28 @@
 ;;; Code:
 (in-package :obj/uri)
 
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defparameter *default-etld-names*
-    (probe-file #.(asdf:system-relative-pathname :core ".stash/psl.dat")))
+(defparameter *default-etld-names* (probe-file #.(stash-pathname "psl.dat")))
 
-  (defun load-etld-data (&optional (etld-names-file *default-etld-names*))
-    (when etld-names-file
-      (with-open-file (in etld-names-file
-                          :element-type #+lispworks :default #-lispworks 'character
-                          :external-format #+clisp charset:utf-8 #-clisp :utf-8)
-        (loop with special-tlds = nil
-              with normal-tlds = (make-hash-table :test 'equal)
-              with wildcard-tlds = (make-hash-table :test 'equal)
-              for line = (read-line in nil nil)
-              while line
-              unless (or (= 0 (length line))
-                         (starts-with-subseq "//" line))
-              do (cond
-                   ((starts-with-subseq "*" line)
-                    (setf (gethash (subseq line 2) wildcard-tlds) t))
-                   ((starts-with-subseq "!" line)
-                    (push (subseq line 1) special-tlds))
-                   (t
-                    (setf (gethash line normal-tlds) t)))
-              finally (return (list normal-tlds wildcard-tlds special-tlds)))))))
+(defun load-etld-data (&optional (etld-names-file *default-etld-names*))
+  (when etld-names-file
+    (with-open-file (in etld-names-file
+                        :element-type #+lispworks :default #-lispworks 'character
+                        :external-format #+clisp charset:utf-8 #-clisp :utf-8)
+      (loop with special-tlds = nil
+            with normal-tlds = (make-hash-table :test 'equal)
+            with wildcard-tlds = (make-hash-table :test 'equal)
+            for line = (read-line in nil nil)
+            while line
+            unless (or (= 0 (length line))
+                       (starts-with-subseq "//" line))
+            do (cond
+                 ((starts-with-subseq "*" line)
+                  (setf (gethash (subseq line 2) wildcard-tlds) t))
+                 ((starts-with-subseq "!" line)
+                  (push (subseq line 1) special-tlds))
+                 (t
+                  (setf (gethash line normal-tlds) t)))
+            finally (return (list normal-tlds wildcard-tlds special-tlds))))))
 
 (defvar *etlds* (load-etld-data))
 

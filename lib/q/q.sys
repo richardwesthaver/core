@@ -1,0 +1,17 @@
+;;; ~/comp/core/lib/q/q.sys --- Q Sytem Definitions
+(defsys :q
+ :require (:std :obj :log :dat :parse)
+ :components 
+ ((:file "pkg")
+  (:file "query")
+  (:file "parser")
+  (:file "engine")
+  (:file "sql")
+  (:file "dql"))
+ :provide 
+ ((:tests :require (:rt :q :log)
+   :components
+   ((:module "tests"
+     :components ((:file "pkg")
+                  (:file "fuzz")
+                  (:file "suite")))))))

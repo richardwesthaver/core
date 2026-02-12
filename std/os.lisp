@@ -291,6 +291,11 @@ match."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
+(defun user-fasl-cache (&optional (id (std/sys:lisp-implementation-id))) 
+  (directory-path (xdg-cache-dir "lisp" id)))
+
+(sb-ext:define-load-time-global *user-fasl-cache* (user-fasl-cache))
+
 (defun xdg-runtime-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :runtime-dir))))
 

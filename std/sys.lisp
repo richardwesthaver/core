@@ -19,7 +19,8 @@
 (defun find-stash-directory (&optional (path *default-pathname-defaults*))
   "Find the closest STASH directory - first check local, then user, then
 global."
-  (or (probe-file (make-pathname :name ".stash/" :defaults path))
+  (or (probe-file *stash*)
+      (probe-file (make-pathname :name ".stash/" :defaults path))
       (probe-file #l"USER:STASH;")
       (probe-file #l"STASH:")))
 
@@ -86,6 +87,12 @@ and we may query the user for input.")
    (lisp-implementation-version)
    *features*
    *modules*))
+
+(defun lisp-implementation-id ()
+  (format nil "~(~A-~A~)"  (lisp-implementation-type) (lisp-implementation-version)))
+
+(defun lisp-machine-id ()
+  (format nil "~(~A-lisp-linux-~A-~A~)" (substitute #\_ #\- (machine-type)) (lisp-implementation-type) (lisp-implementation-version)))
 
 (defun current-machine ()
   "Return the current machine spec as a list: (HOST TYPE VERSION)"
@@ -221,6 +228,8 @@ system - eventually terminating on SAVE-LISP-AND-DIE."
       (forget-shared-objects (unless (eq t forget) forget)))
     (when (probe-file name)
       (delete-file name))
+    (when (stringp toplevel)
+      (setf toplevel (find-symbol (string-upcase toplevel))))
     (sb-ext:save-lisp-and-die 
      name
      :executable executable

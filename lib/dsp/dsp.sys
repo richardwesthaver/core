@@ -1,0 +1,20 @@
+;;; ~/comp/core/lib/dsp/dsp.sys --- Dsp Sytem Definitions
+(defsys :dsp
+ :require (:ppcre :std :obj :dat :sndfile :net :math :gstreamer :log :io :jack :chromaprint :alsa :ffmpeg)
+ :components 
+ ((:file "pkg")
+  (:file "var")
+  (:file "proto")
+  (:file "av")
+  (:mod "aud"
+   :components 
+   ((:file "pkg")
+    (:file "snd")
+    (:file "chroma")))
+  (:mod "vid"
+   :components
+   ((:file "pkg")))
+  (:file "gst")
+  (:file "dsp"))
+ :provide ((:tests)))
+

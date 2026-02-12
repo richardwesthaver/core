@@ -1,0 +1,24 @@
+;;; ~/comp/core/lib/pod/pod.sys --- Pod Sytem Definitions
+(defsys :pod
+ :require (:std :cli :obj :dat :net :io)
+ :components 
+ ((:file "pkg")
+  (:file "condition")
+  (:mod "api"
+   :components 
+   ((:file "system")
+    (:file "secret")
+    (:file "network")
+    (:file "exec")
+    (:file "volume")
+    (:file "image")
+    (:file "container")
+    (:file "pod")))
+  (:file "containerfile")
+  (:file "podman")
+  (:file "buildah")
+  (:file "cfg")
+  (:file "client")
+  (:file "srv")
+  (:file "cli"))
+ :provide ((:tests)))

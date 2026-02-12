@@ -1,0 +1,12 @@
+;;; ~/comp/core/ffi/blas/blas.sys --- Blas Sytem Definitions
+(defsys :blas
+ :require (:std :log)
+ :components ((:file "blas"))
+ :provide ((:tests :require (:rt :blas :io) :components ((:file "tests/blas")))))
+
+(defsys :lapack
+ :require (:std :log)
+ :components ((:file "lapack")
+              (:file "lapack-ffi"))
+ :provide ((:tests :require (:blas/tests) :components ((:file "tests/lapack")))))
+ 

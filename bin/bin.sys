@@ -3,4 +3,4 @@
  :require (:core :skel)
  :components ((:file "core"))
  :provide
- ((:bin :core :toplevel 'bin/core::dispatch-core)))
+ ((:bin :core :package :bin/core :toplevel "dispatch-core")))

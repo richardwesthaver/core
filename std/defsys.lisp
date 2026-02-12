@@ -161,8 +161,8 @@ ASDF:DEFSYSTEM.")
               (mapcar 'name (components self))))))
 
 (defcomponent dir-component (mod-component) 
-  ((include :accessor component-include)
-   (exclude :accessor component-exclude))
+  ((include :accessor component-include :initform ".*[.]lisp")
+   (exclude :accessor component-exclude :initform ".*[.]fasl"))
   (:documentation "A MOD-COMPONENT which matches regexp patterns against all files in a
 directory recursively.")
   (:keyword :dir))
@@ -302,13 +302,13 @@ objects of type COMPONENT."
          (args (if namep (cdr args) args)))
     (register-module
      :bin root 
-     (compile nil
-              `(lambda ()
-                 (std/sys:save-lisp
-                  ,(if (pathnamep name) name
-                       `(std/sys:stash-pathname ,(string-downcase name)))
-                  :executable t
-                  ,@args))))))
+     (compile-and-eval
+      `(lambda ()
+         (std/sys:save-lisp
+          ,(if (pathnamep name) name
+               `(std/sys:stash-pathname ,(string-downcase name)))
+          :executable t
+          ,@args))))))
 
 (defprovider :lib (root &rest args)
   (let* ((namep (oddp (length args)))
@@ -512,6 +512,10 @@ system jobs to be executed in an async context."
   (print-unreadable-object (self stream :type t)
     (format stream "~A~@[ ~A~]" (name self) (version self))))
 
+(defun system-relative-pathname (self path)
+  (when-let ((sys (find-system self)))
+    (merge-pathnames path (path sys))))
+
 ;;; ASDF Compat
 (definline change-component-class (self)
   "Change class of SELF to its associated STD/DEFSYS class."
@@ -664,11 +668,11 @@ for processing.")
 (defmethod tasks ((self system-session))
   (system-session-tasks self))
 
-(defmethod reset ((self system-session) &key)
-  (setf *system-session* (make-system-session)))
-
 (sb-ext:defglobal *system-session* (make-system-session)
   "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
+
+(defmethod reset ((self system-session) &key)
+  (setf *system-session* (make-system-session)))
 
 (defun check-system-session ()
   (assert *system-session* (*system-session*) 'system-session-missing))
@@ -811,8 +815,10 @@ inputs."))
 (defun %parse-require-form (form)
   (mapc
    (lambda (x)
-     (when-let ((y (find-system (if (atom x) x (car x)))))
-       (init y)))
+     (let ((y (if (atom x) x (car x))))
+       (if-let ((z (find-system y)))
+         (init z)
+         (simple-system-error "System not found: ~A" y))))
    form)
   form)
 
@@ -840,7 +846,6 @@ inputs."))
   (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
       (if (directory-path-p form)
           (make-instance 'dir-component
-            :include ".*" 
             :name (last (pathname-directory form)))
           (make-instance 'file-component 
             :type (or (pathname-type form) "lisp")
@@ -991,12 +996,40 @@ internally. On success the path is added to the *SYSDEFS* list."
     (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
     ((or string pathname) (read-lisp-file comp :external-format external-format))))
 
+(defun compile-grovel-component (comp)
+  "Compile a GROVEL-COMPONENT."
+  (let* ((output (or std/sys:*stash* *default-pathname-defaults*))
+         (filename (path comp))
+         (output-file (make-pathname :directory (pathname-directory (path comp)) 
+                                     :name (pathname-name filename) :type "fasl"))
+         (tmp-c-source (merge-pathnames #p"foo.c" output))
+         (tmp-a-dot-out (merge-pathnames #-win32 #p"a.out" #+win32 #p"a.exe"
+                                         output))
+         (tmp-constants (merge-pathnames #p"constants.lisp-temp"
+                                         output)))
+    (sb-grovel::c-constants-extract filename tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
+    (let ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out)))
+      (unless (= code 0)
+        (error 'sb-grovel::c-compile-failed)))
+    (let ((code (sb-ext:process-exit-code
+                 (sb-ext:run-program (namestring tmp-a-dot-out)
+                                     (list (namestring tmp-constants))
+                                     :search nil
+                                     :input nil
+                                     :output *trace-output*))))
+      (unless (= code 0)
+        (error 'sb-grovel::a-dot-out-failed)))
+    (multiple-value-bind (out warnings-p failure-p)
+        (uiop:compile-file* tmp-constants :output-file output-file)
+      (uiop:check-lisp-compile-results out warnings-p failure-p))))
+
 (defun compile-component (comp &rest args)
   "Compile a component."
   (declare (ftype (sfunction (component &rest list) component)))
   (when (component-recompile-p comp)
     (etypecase comp
       (mod-component (mapcar 'compile-component (components comp)))
+      (grovel-component (with-system-file ((path comp) :compile t) (compile-grovel-component comp)))
       (file-component
        (let ((f (path comp)))
          (when (recompile-p f)
@@ -1044,26 +1077,31 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         (load-component sys)))
     sys))
 
+(defun load-system-requires (sys)
+  (mapc
+   (lambda (x)
+     (if (atom x)
+         (if-let ((s (find-system x)))
+           (when (component-reload-p s)
+             (%load-system s))
+           (simple-system-error "System not found: ~A" x))
+         (apply 'load-module x)))
+   (slot-value sys 'require)))
+
+(defun call-system-providers (sys)
+  (let ((*module* (name sys)))
+    (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
+          (slot-value sys 'provide))))
+
 (defmethod init ((self system) &key)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and PROVIDE forms to be loaded. The underlying
 object SELF remains unmodified."
-  (flet ((%load-system-symbol (sym)
-           (when-let ((sys (find-system sym)))
-             (%load-system sys))))
-    (with-system-session (s)
-      (let ((*module* (name self)))
-        ;; first process all requires
-        (mapc
-         (lambda (x)
-           (if (atom x)
-               (%load-system-symbol x) ; default case, assumed to be a system
-               (apply 'load-module x)))
-         (slot-value self 'require))
-        ;; then we call providers
-        (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
-              (slot-value self 'provide))
-        self))))
+  ;; first process all requires
+  (load-system-requires self)
+  ;; then we call providers
+  (call-system-providers self)
+  self)
 
 ;; (typecase x
 ;;   ;; symbols and strings use PROVIDE

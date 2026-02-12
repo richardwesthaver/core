@@ -1,0 +1,11 @@
+;;; ~/comp/core/lib/parse/parse.sys --- Parse Sytem Definitions
+(defsys :parse
+ :require (:std)
+ :components 
+ ((:file "pkg")
+  (:file "bytes")
+  (:file "lex")
+  (:file "pratt")
+  (:file "yacc"))
+ :provide ((:tests)))
+

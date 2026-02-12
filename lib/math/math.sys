@@ -1,0 +1,37 @@
+;;; ~/comp/core/lib/math/math.sys --- Math Sytem Definitions
+(defsys :math
+ :require (:std :obj :blas :lapack :cuda :syn)
+ :components 
+ ((:file "pkg")
+  (:file "util")
+  (:mod "blas"
+   :components 
+   ((:file "axpy")
+    (:file "sum")
+    (:file "gem")
+    (:file "ger")
+    (:file "trs")
+    (:file "norm")))
+  (:mod "lapack"
+   :components
+   ((:file "lu")
+    (:file "chol")
+    (:file "eig")
+    (:file "lstsq")
+    (:file "qr")
+    (:file "schur")
+    (:file "svd")
+    (:file "syl")
+    (:file "poly")))
+  (:mod "cuda" 
+   :components ((:file "tensor")
+                (:file "kernel")))
+  (:file "sym")
+  (:file "linfix")
+  (:file "syn")
+  (:file "readtable")
+  (:file "sfc")
+  (:file "auto")
+  (:file "graph")
+  (:file "math"))
+ :provide ((:tests :require (:rt :math :log :obj))))

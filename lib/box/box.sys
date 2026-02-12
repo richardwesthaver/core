@@ -1,0 +1,10 @@
+;;; ~/comp/core/lib/box/box.sys --- Box Sytem Definitions
+(defsys :box
+ :require (:std :cli :obj :dat :net :log)
+ :components 
+ ((:file "pkg")
+  (:file "proto")
+  (:file "archiso")
+  (:file "qemu")
+  (:file "qmp"))
+ :provide ((:tests :require (:rt :box :log))))

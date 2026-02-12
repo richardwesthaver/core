@@ -61,8 +61,8 @@
 (defwith palette (name) (*palette* (find-palette name)))
 
 (defun parse-x11-palette (&key
-                          (input #.(asdf:system-relative-pathname :core ".stash/rgb.txt"))
-                          (output #.(asdf:system-relative-pathname :core "lib/obj/color/x11.lisp")))
+                          (input #.(stash-pathname "rgb.txt"))
+                          (output #.(system-relative-pathname :core "lib/obj/color/x11.lisp")))
   "Parse X11 color definitions and write them into a file. Return the
 list of colors.
 

@@ -1,0 +1,13 @@
+;;; ~/comp/core/lib/doc/doc.sys --- Doc Sytem Definitions
+(defsys :doc
+ :require (:std :organ :parse :obj :rdb :log)
+  :components 
+ ((:file "pkg")
+  (:file "proto")
+  (:file "symbol")
+  (:file "file")
+  (:file "package")
+  (:file "asdf")
+  (:file "sys")
+  (:file "reprex"))
+ :provide ((:tests :require (:rt :doc :rdb :obj))))

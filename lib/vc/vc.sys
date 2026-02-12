@@ -1,0 +1,11 @@
+;;; ~/comp/core/lib/vc/vc.sys --- Vc Sytem Definitions
+(defsys :vc
+ :require (:std :cli :obj :net :log :parse)
+ :components 
+ ((:file "pkg")
+  (:file "proto")
+  (:file "git")
+  (:file "hg")
+  (:file "util")
+  (:file "cli"))
+ :provide ((:tests :require (:std :rt :vc :io))))
