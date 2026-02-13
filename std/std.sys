@@ -23,7 +23,7 @@
   (:file "kernel")
   (:file "api")
   (:file "named-readtables")
-  (:dir "num")
+  (:dir "num" :exclude ".*[.]fasl")
   (:file "type")
   (:file "string")
   (:file "stream")

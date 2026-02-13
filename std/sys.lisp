@@ -389,7 +389,7 @@ long as ASDF is non-nil)."
 PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   (unless (null path)
     (setf translations 
-	  (append `((,(format nil "~A;" host host) ,path)) translations)))
+	  (append `((,(format nil "~A;" host) ,path)) translations)))
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
 	 ',(mapcar (lambda (x)

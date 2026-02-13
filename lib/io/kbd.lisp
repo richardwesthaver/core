@@ -807,7 +807,7 @@ can't be opened, else returns nil."
 (defmethod load-ast ((self kbd-config))
   (with-slots (ast) self
     (sb-int:doplist (k v) ast
-      (when-let ((s (find-symbol k :io/kbd)))
+      (when-let ((s (find-symbol (format nil "~A" k) :io/kbd)))
         (unless (null v)
           (setf v
                 (case k
@@ -822,6 +822,15 @@ can't be opened, else returns nil."
       (read-ast c from)
       (load-ast c))
     (setf (ast c) nil)
+    c))
+
+(defmethod load-config ((self (eql :kbd)) (from list) &key)
+  (let ((c (make-config :kbd)))
+    (sb-int:doplist (k v) from
+      (when-let ((s (find-symbol (format nil "~A" k) :io/kbd)))
+        (unless (null v)
+          (case k
+            ((or :escape-key :prefix-key) (setf (slot-value c s) (parse-key v)))))))
     c))
 
 (defmethod init ((self (eql :kbd)) &key (directory "/dev/input/"))

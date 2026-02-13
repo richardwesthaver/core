@@ -515,6 +515,9 @@ system jobs to be executed in an async context."
   (print-unreadable-object (self stream :type t)
     (format stream "~A~@[ ~A~]" (name self) (version self))))
 
+(defun system-path (name)
+  (if (typep name 'system) (path name) (path (find-system name))))
+
 (defun system-relative-pathname (self path)
   (when-let ((sys (find-system self)))
     (merge-pathnames path (path sys))))
@@ -1026,7 +1029,7 @@ internally. On success the path is added to the *SYSDEFS* list."
         (uiop:compile-file* tmp-constants :output-file output-file)
       (uiop:check-lisp-compile-results out warnings-p failure-p))))
 
-(defun compile-component (comp &rest args)
+(defun compile-component (comp &key (verbose *verbose*))
   "Compile a component."
   (declare (ftype (sfunction (component &rest list) component)))
   (when (component-recompile-p comp)
@@ -1036,7 +1039,8 @@ internally. On success the path is added to the *SYSDEFS* list."
       (file-component
        (let ((f (path comp)))
          (when (recompile-p f)
-           (with-system-file (f :compile t) (apply 'checked-compile-file f args)))))))
+           (with-system-file (f :compile t) 
+             (checked-compile-file f :output-file (ensure-fasl-cache-file f) :verbose verbose)))))))
   comp)
 
 (defun load-component (comp &rest args)
@@ -1048,7 +1052,8 @@ internally. On success the path is added to the *SYSDEFS* list."
       (file-component
        (let ((f (path comp)))
          (when (reload-p f)
-           (with-system-file (f :load t) (apply 'load f args)))))))
+           ;; TODO: be smarter about which file to load
+           (with-system-file (f :load t) (apply 'load (resolve-fasl-cache-file f) args)))))))
   comp)
 
 ;;; Protocol

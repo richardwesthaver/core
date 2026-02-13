@@ -302,6 +302,9 @@ match."
 (defun fasl-cache-file (path)
   (merge-pathnames (make-pathname :type "fasl" :defaults path) *user-fasl-cache*))
 
+(defun ensure-fasl-cache-file (path)
+  (ensure-directories-exist (fasl-cache-file path) :verbose std/condition:*verbose*))
+
 (defun resolve-fasl-cache-file (file)
   (let ((dir (pathname-directory file))
         (name (pathname-name file)))

@@ -1413,6 +1413,7 @@
   (:export
    :*user-fasl-cache*
    :user-fasl-cache
+   :ensure-fasl-cache-file
    :fasl-cache-file
    :resolve-fasl-cache-file
    :find-a-pty :open-pty :sudo-p :forkable-p
@@ -1467,6 +1468,7 @@
    :sysdefs
    :sysdef
    :defsys
+   :system-path
    :system-relative-pathname
    :list-all-systems
    :list-all-providers
