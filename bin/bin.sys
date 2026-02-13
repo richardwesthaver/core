@@ -3,6 +3,6 @@
  :require (:core :skel)
  :components 
  ((:file "core")
-  (:dir "script"))
+  #+nil (:dir "script" :exclude ".*[.]fasl"))
  :provide
  ((:bin :core :package :bin/core :toplevel "dispatch-core")))
