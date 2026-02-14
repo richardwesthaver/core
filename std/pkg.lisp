@@ -1468,6 +1468,7 @@
    :sysdef
    :defsys
    :system-path
+   :system-home
    :system-relative-pathname
    :list-all-systems
    :list-all-providers

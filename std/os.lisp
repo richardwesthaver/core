@@ -293,12 +293,13 @@ match."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
-(defun user-fasl-cache (&optional (id (std/sys:lisp-implementation-id))) 
-  (directory-path (xdg-cache-dir "lisp" id)))
+(defun user-fasl-cache (&optional (id (std/sys:lisp-implementation-id)))
+  (directory-path
+   (if (xdg-dir :cache-home)
+       (xdg-cache-dir "lisp" id)
+       (merge-homedir-pathnames (format nil ".cache/lisp/~A" id)))))
 
 (sb-ext:define-load-time-global *user-fasl-cache* (user-fasl-cache))
-
-(setf (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
 
 (defun fasl-cache-file (path)
   (merge-pathnames (make-pathname :type "fasl" :defaults path) *user-fasl-cache*))

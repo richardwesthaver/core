@@ -517,11 +517,13 @@ system jobs to be executed in an async context."
     (format stream "~A~@[ ~A~]" (name self) (version self))))
 
 (defun system-path (name)
-  (if (typep name 'system) (path name) (path (find-system name))))
+  (if (typep name 'system) (path name) (path (find-system name :default :error))))
+
+(defun system-home (name)
+  (make-pathname :directory (pathname-directory (system-path name))))
 
 (defun system-relative-pathname (self path)
-  (when-let ((sys (find-system self)))
-    (merge-pathnames path (path sys))))
+  (merge-pathnames path (system-home self)))
 
 ;;; ASDF Compat
 (definline change-component-class (self)
@@ -1010,16 +1012,16 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 (defun compile-grovel-component (comp)
   "Compile a GROVEL-COMPONENT."
-  (let* ((output (or std/sys:*stash* *default-pathname-defaults*))
-         (filename (path comp))
-         (output-file (make-pathname :directory (pathname-directory (path comp)) 
-                                     :name (pathname-name filename) :type "fasl"))
+  (let* ((path (path comp))
+         (output (merge-pathnames (make-pathname :directory (pathname-directory path)) *user-fasl-cache*))
+         (output-file (make-pathname :defaults output
+                                     :name (pathname-name path) :type "fasl"))
          (tmp-c-source (merge-pathnames #p"foo.c" output))
          (tmp-a-dot-out (merge-pathnames #-win32 #p"a.out" #+win32 #p"a.exe"
                                          output))
          (tmp-constants (merge-pathnames #p"constants.lisp-temp"
                                          output)))
-    (sb-grovel::c-constants-extract filename tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
+    (sb-grovel::c-constants-extract path tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
     (let ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out)))
       (unless (= code 0)
         (error 'sb-grovel::c-compile-failed)))
@@ -1063,7 +1065,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   comp)
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t) (fasl-cache (std/os:user-fasl-cache)))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   ;; (init :xdg)
@@ -1072,10 +1074,11 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *system-session* (make-system-session 
                           :pool (when pool (make-thread-pool (std/alien:num-cpus) :name :sys)))
         *module* nil
-        *module-table* (make-hash-table :test 'equal))
+        *module-table* (make-hash-table :test 'equal)
+        *user-fasl-cache* (ensure-directories-exist fasl-cache))
+  (setf (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
   (ensure-directories-exist *system-data-directory*)
   (ensure-directories-exist *system-cache-directory*)
-  (ensure-directories-exist std/os:*user-fasl-cache*)
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))

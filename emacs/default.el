@@ -263,7 +263,7 @@
 ;;; Lisp
 (use-package company :ensure t)
 (require 'slime "slime")
-(defvar core-lisp-program "/usr/local/bin/core")
+(defvar core-lisp-program "/usr/bin/core")
 (defun default-lisp ()
   (if (file-exists-p core-lisp-program)
       core-lisp-program

@@ -32,7 +32,9 @@
   (asdf:load-system :std :force t))
 (shadowing-import '(reset) :std)
 (in-package :std-user)
-(init :sys)
+(setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))
+(setq *user-fasl-cache* (merge-pathnames (make-pathname :directory '(:relative "cache" "lisp")) *stash*))
+(init :sys :fasl-cache *user-fasl-cache*)
 (load-system :ironclad)
 ;; ffi
 (compile-system :uring)

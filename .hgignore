@@ -1,8 +1,9 @@
-.*[.](fasl|fsys|elc|core)$
-.*[.](o|so|dylib|dll|a)$
+.*[.](fasl|fsys|elc|core|lisp-temp)$
+.*[.](o|so|dylib|dll|a|out)$
 .*[.]zst$
 .*[.](html|css)$
 .*system-index.txt$
 .*perf[.].*data$
+foo.c
 [.]stash/.*
 lib/syn/tests/gen/.*[.](c|rs|cu|cpp|js|py|apl|fs)$
