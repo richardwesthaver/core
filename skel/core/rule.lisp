@@ -41,13 +41,14 @@ which is executed in order to fulfill the rule."
     (when-let ((source (sk-rule-source self)))
       (format stream " ~A" (mapcar 'string-downcase source)))))
 
-(defmacro with-sk-rule-env (binds &body body)
-  `(symbol-macrolet ,*skel-project-symbol-macros*
-     (macrolet ,*skel-project-macros*
-       (labels ,*skel-project-functions*
-         (progv (mapcar 'car ,binds)
-             (mapcar 'cdr ,binds)
-           ,@body)))))
+(eval-always
+  (defmacro with-sk-rule-env (binds &body body)
+    `(symbol-macrolet ,*skel-project-symbol-macros*
+       (macrolet ,*skel-project-macros*
+         (labels ,*skel-project-functions*
+           (progv (mapcar 'car ,binds)
+               (mapcar 'cdr ,binds)
+             ,@body))))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))

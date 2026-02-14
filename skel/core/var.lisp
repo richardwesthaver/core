@@ -32,9 +32,10 @@ uninitialized with non-nil :ast slots.")
 
 (defvar *default-skel-bindings* nil)
 
-(defvar *skel-project-macros* nil)
-(defvar *skel-project-symbol-macros* nil)
-(defvar *skel-project-functions* nil)
+(eval-always
+  (defvar *skel-project-macros* nil)
+  (defvar *skel-project-symbol-macros* nil)
+  (defvar *skel-project-functions* nil))
 
 (defun skel-config-directory () (merge-pathnames "skel/" (std:xdg-dir :config-home)))
   

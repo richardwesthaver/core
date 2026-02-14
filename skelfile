@@ -30,6 +30,7 @@
  (:mod "emacs"))
 :rules
 ((default (data rebuild-core))
+ (bootstrap (data build-core))
  (data (%stash psl.dat kbd.sxp x11.lisp parquet.json))
  (all
   (%stash
