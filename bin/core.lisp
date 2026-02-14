@@ -14,4 +14,4 @@
      :userinit (lambda () (init :xdg) (xdg-config-file "corerc")))
   (:skel (skel/cli::start-skel))
   (:homer (skel/homer/cli::start-homer))
-  (:mpk (mpk/cli::start-mpk)))
+  (:mpk (skel/mpk/cli::start-mpk)))

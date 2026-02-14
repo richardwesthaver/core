@@ -1,0 +1,12 @@
+;;; chromaprint.sys --- CHROMAPRINT SYSTEMS
+
+;; CHROMAPRINT for lisp.
+
+;;; Commentary:
+
+;;; Code:
+(defsys :chromaprint
+ "CHROMAPRINT C FFI"
+ :require (:std)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

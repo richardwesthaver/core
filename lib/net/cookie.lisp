@@ -184,7 +184,7 @@
                    (car tz)
                    (when (zerop (hash-table-count timezones))
                      (obj/time::reread-timezone-repository
-                       :timezone-repository (asdf:system-relative-pathname :local-time #P"zoneinfo/"))
+                       :timezone-repository (system-relative-pathname :local-time #P"zoneinfo/"))
                      (first (gethash tz-abbrev timezones nil))))))
       (when tz
         (loop for sub across (obj/time::timezone-subzones tz)

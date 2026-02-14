@@ -355,13 +355,6 @@ we can't determine endianness at compile-time.")
   #+x86 t
   #+x86-64 nil)
 
-#+nil
-(defun register-project-directory (path &optional (asdf t))
-  "Add PATH to QL:*LOCAL-PROJECT-DIRECTORIES* and ASDF:*CENTRAL-REGISTRY* (as
-long as ASDF is non-nil)."
-  #+quicklisp (pushnew path ql:*local-project-directories*)
-  (when asdf (pushnew path asdf:*central-registry*)))
-
 ;;; Time
 (definline get-real-time-seconds ()
   "Call GET-INTERNAL-REAL-TIME and convert the result to seconds."

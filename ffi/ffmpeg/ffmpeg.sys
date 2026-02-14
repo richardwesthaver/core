@@ -1,0 +1,5 @@
+;;; ffmpeg.sys --- FFMPEG FFI Sytem Definitions
+(defsys :ffmpeg
+ :require (:std :log)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

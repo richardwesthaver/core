@@ -104,9 +104,9 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (define-condition zstd-alien-condition () ()
   (:documentation "Superclass of all conditions triggered by the ZSTD FFI."))
 
-(deferror zstd-alien-error (error)
-    ((code :initarg :code :accessor zstd-error-code))
-    (:documentation "Error signaled from Zstd Alien."))
+(define-condition zstd-alien-error (error)
+  ((code :initarg :code :accessor zstd-error-code))
+  (:documentation "Error signaled from Zstd Alien."))
     
 ;; found in zstd_errors.h
 (define-alien-enum (zstd-errorcode)

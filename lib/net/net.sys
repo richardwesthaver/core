@@ -1,6 +1,6 @@
 ;;; ~/comp/core/lib/net/net.sys --- Net Sytem Definitions
 (defsys :net
- :require (:dat :obj :io :parse :rt :std :cli :log :cry)
+ :require (:dat :obj :io :parse :rt :cry :std :cli :log)
  :components 
  ((:file "pkg")
   (:file "obj")

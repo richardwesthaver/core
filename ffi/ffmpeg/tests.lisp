@@ -15,7 +15,7 @@
 (load-avformat)
 (load-avfilter)
 
-(defvar *test-flac* (asdf:system-relative-pathname :core ".stash/my_seat_and_weep.flac"))
+(defvar *test-flac* (system-relative-pathname :core ".stash/my_seat_and_weep.flac"))
 ;; (setq *test-flac* "/opt/stash/media/music/NX1/SR_EP/01_SR_1.flac")
 ;; (setq *test-flac* "/opt/stash/media/music/Village_People/Go_West/01_In_the_Navy.mp3")
 ;; (setq *test-flac* "/opt/store/packy/data/test/Weltschmerz.wav")

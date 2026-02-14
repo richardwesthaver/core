@@ -228,48 +228,97 @@
 (define-opaque x509-store x509-store-st)
 (define-opaque x509-trust x509-trust-st)
 
-(define-alien-enum (err-lib)
-  :none 1
-  :sys 2
-  :bn 3
-  :rsa 4
-  :dh 5
-  :evp 6
-  :buf 7
-  :obj 8
-  :pem 9
-  :dsa 10
-  :x509 11
-  :asn1 12
-  :conf 13
-  :crypto 14
-  :ec 15
-  :ssl 16
-  :bio 17
-  :pkcs7 18
-  :pkcs8 19
-  :x509v3 20
-  :rand 21
-  :engine 22
-  :ocsp 23
-  :ui 24
-  :comp 25
-  :ecdsa 26
-  :ecdh 27
-  :hmac 28
-  :digest 29
-  :cipher 30
-  :hkdf 31
-  :trust-token 32
-  :user 33
-  :libs 34
-  :pkcs12 35
-  :dso 36
-  :ossl-store 37
-  :fips 38
-  :cms 39
-  :ts 40
-  :ct 41
-  :async 42
-  :kdf 43
-  :sm2 44)
+(std:eval-always
+  (define-alien-enum (err-lib)
+    :none 1
+    :sys 2
+    :bn 3
+    :rsa 4
+    :dh 5
+    :evp 6
+    :buf 7
+    :obj 8
+    :pem 9
+    :dsa 10
+    :x509 11
+    :asn1 12
+    :conf 13
+    :crypto 14
+    :ec 15
+    :ssl 16
+    :bio 17
+    :pkcs7 18
+    :pkcs8 19
+    :x509v3 20
+    :rand 21
+    :engine 22
+    :ocsp 23
+    :ui 24
+    :comp 25
+    :ecdsa 26
+    :ecdh 27
+    :hmac 28
+    :digest 29
+    :cipher 30
+    :hkdf 31
+    :trust-token 32
+    :user 33
+    :libs 34
+    :pkcs12 35
+    :dso 36
+    :ossl-store 37
+    :fips 38
+    :cms 39
+    :ts 40
+    :ct 41
+    :async 42
+    :kdf 43
+    :sm2 44))
+
+(define-alien-enum (err-r)
+  :sys-lib (err-lib :sys)
+  :bn-lib (err-lib :bn)
+  :rsa-lib (err-lib :rsa)
+  :dh-lib (err-lib :dh)
+  :evp-lib (err-lib :evp)
+  :buf-lib (err-lib :buf)
+  :obj-lib (err-lib :obj)
+  :pem-lib (err-lib :pem)
+  :dsa-lib (err-lib :dsa)
+  :x509-lib (err-lib :x509)
+  :asn1-lib (err-lib :asn1)
+  :conf-lib (err-lib :conf)
+  :crypto-lib (err-lib :crypto)
+  :ec-lib (err-lib :ec)
+  :ssl-lib (err-lib :ssl)
+  :bio-lib (err-lib :bio)
+  :pkcs7-lib (err-lib :pkcs7)
+  :pkcs8-lib (err-lib :pkcs8)
+  :x509v3-lib (err-lib :x509v3)
+  :rand-lib (err-lib :rand)
+  :dso-lib (err-lib :dso)
+  :engine-lib (err-lib :engine)
+  :ocsp-lib (err-lib :ocsp)
+  :ui-lib (err-lib :ui)
+  :comp-lib (err-lib :comp)
+  :ecdsa-lib (err-lib :ecdsa)
+  :ecdh-lib (err-lib :ecdh)
+  ;; todo: where is this defined?
+  ;;  :store-lib (err-lib :store)
+  :fips-lib (err-lib :fips)
+  :cms-lib (err-lib :cms)
+  :ts-lib (err-lib :ts)
+  :hmac-lib (err-lib :hmac)
+  ;; TODO: where is this defined?
+  ;; :jpake-lib (err-lib :jpake)
+  :user-lib (err-lib :user)
+  :digest-lib (err-lib :digest)
+  :cipher-lib (err-lib :cipher)
+  :hkdf-lib (err-lib :hkdf)
+  :trust-token-lib (err-lib :trust-token)
+  :fatal 64
+  :malloc-failure (logior 1 64)
+  :should-not-have-been-called (logior 2 64)
+  :passed-null-parameter (logior 3 64)
+  :internal-error (logior 4 64)
+  :overflow (logior 5 64))

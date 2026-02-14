@@ -24,11 +24,11 @@
 (in-package :dat/parquet/gen)
 
 (defparameter *parquet-json-file*
-  (or (probe-file #.(asdf:system-relative-pathname :core #p".stash/parquet.json"))
+  (or (probe-file #.(system-relative-pathname :core #p".stash/parquet.json"))
       (warn "*PARQUET-JSON-FILE* not found")))
 
 (defparameter *parquet-output-file*
-  #.(asdf:system-relative-pathname :dat #P"parquet/thrift.lisp"))
+  #.(system-relative-pathname :dat #P"parquet/thrift.lisp"))
 
 (defvar *parquet-json* nil)
 
@@ -200,7 +200,7 @@
   `(progn (deftype ,(symbolicate "PARQUET-" (substitute #\- #\_ name)) ,opts ,@body)))
 
 (defun parse-parquet-thrift-definitions (&key (input *parquet-json-file*)
-                                           (output #.(asdf:system-relative-pathname :dat "parquet/thrift.lisp")))
+                                           (output #.(system-relative-pathname :dat "parquet/thrift.lisp")))
   (init-parquet-json input)
   (with-open-file (defs output :direction :output :if-exists :supersede :if-does-not-exist :create)
     (format defs ";;; ~a --- Parquet Thrift Definitions -*- buffer-read-only:t -*-

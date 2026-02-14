@@ -1,0 +1,12 @@
+;;; alsa.sys --- ALSA SYSTEMS
+
+;; ALSA for lisp.
+
+;;; Commentary:
+
+;;; Code:
+(defsys :alsa
+ "ALSA C FFI"
+ :require (:std)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

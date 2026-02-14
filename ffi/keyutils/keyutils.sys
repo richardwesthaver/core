@@ -1,0 +1,17 @@
+;;; keyutils.sys --- Linux keyutils FFI bindings
+
+;;
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
+(defsys :keyutils
+  :require (:std)
+  :components ((:file "pkg")
+               (:grovel "constants"
+                :package :keyutils)
+               (:file "keyutils" :require ("pkg" "constants"))
+               (:file "keyctl" :require ("keyutils")))
+ :provide ((:tests)))

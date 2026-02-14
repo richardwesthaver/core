@@ -1,0 +1,7 @@
+;;; glib.sys --- Glib Sytem Definitions
+(defsys :glib
+ "A thin FFI wrapper for Glib, used to support dynamically-loaded foreign
+libraries which expose parts of their API via GObjects."
+ :require (:std :log)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

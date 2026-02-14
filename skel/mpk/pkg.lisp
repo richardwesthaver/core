@@ -9,9 +9,9 @@
 ;; ref: https://github.com/schismtracker/schismtracker/wiki/ITTECH.TXT
 
 ;;; Code:
-(defpackage :mpk/mpd
+(defpackage :skel/mpk/mpd
+  (:nicknames :mpk/mpd :mpd)
   (:use :cl :std :sb-bsd-sockets :net/core :config :time :id :ast)
-  (:nicknames :mpd)
   (:export
    :with-mpc
    :ensure-mpd
@@ -85,7 +85,8 @@
    :ensure-mpc
    :mpc-connect))
 
-(defpackage :mpk
+(defpackage :skel/mpk
+  (:nicknames :mpk)
   (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp :progress)
   (:export
    #:*mpk-directory*
@@ -130,7 +131,8 @@
    #:*movies-metadata*
    #:metadata-scan-directory))
 
-(defpackage :mpk/db
+(defpackage :skel/mpk/db
+  (:nicknames :mpk/db)
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
   (:import-from :sb-ext :string-to-octets)
   (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
@@ -143,7 +145,8 @@
    :update-music-metadata
    :mpk-db-config))
 
-(defpackage :mpk/metro
+(defpackage :skel/mpk/metro
+  (:nicknames :mpk/metro)
   (:use :cl :std :log :mpk :schema :db :id :config :net/codec/osc :midi)
   (:import-from :sb-ext :string-to-octets)
   (:export :*mpk-metro*
@@ -153,10 +156,10 @@
    :metro-config))
 
 (pkg:defpkg :mpk-user
-  (:use :core-lisp)
-  (:use-reexport :mpk :mpk/db :mpk/mpd))
+  (:use-reexport :sk-user :mpk :mpk/db :mpk/mpd))
 
-(defpackage :mpk/cli
-  (:use :cl :std :log :mpk :cli :clap)
+(defpackage :skel/mpk/cli
+  (:nicknames :mpk/cli)
+  (:use :cl :std :log :mpk :cli :clap :cmd)
   (:export
    #:*mpk-cli*))

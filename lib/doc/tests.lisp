@@ -43,7 +43,7 @@
   (is-doc-typep system-documentation (system-documentation :std)))
 
 (deftest doc-file ()
-  (let ((file (or *compile-file-pathname* (asdf:system-relative-pathname :doc "tests.lisp"))))
+  (let ((file (or *compile-file-pathname* (system-relative-pathname :doc "tests.lisp"))))
     (is-doc-typep file-documentation (file-documentation file))))
 
 (deftest doc-dist ()

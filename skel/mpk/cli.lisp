@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :mpk/cli)
 
-(init :commands :name :mpk :copy :skel :clean t)
+(init :commands :name :mpk :copy :cli :clean t)
 
 (defcommand (:mpk stats) ()
   (when-let* ((*mpc* (ignore-errors (mpd:mpc-connect)))

@@ -297,7 +297,7 @@ objects of type COMPONENT."
    :sys
    name
    (compile-and-eval 
-    `(defsys ,@args :path ,(or *compile-file-truename* *load-truename* (path (find-system name)))))))
+    `(defsys ,@args :path ,(or (system-path name) *compile-file-truename* *load-truename*)))))
 
 (defprovider :bin (root &rest args)
   (let* ((namep (oddp (length args)))
@@ -337,8 +337,9 @@ objects of type COMPONENT."
      (compile-and-eval
       `(defsys ,(%test-system-name name) ,@args 
                :require ,req :class 'test-system 
-               :path ,(or *compile-file-truename* 
-                          *load-truename* (path (find-system name))))))))
+               :path ,(or (system-path name)
+                          *compile-file-truename* 
+                          *load-truename*))))))
 
 (defprovider :bench (name &rest args)
   (register-module 
@@ -346,7 +347,7 @@ objects of type COMPONENT."
    `(defsys ,(%bench-system-name name) 
       ,@args 
       :class 'bench-system 
-      :path ,(or *compile-file-truename* *load-truename*))))
+      :path ,(or (system-path name) *compile-file-truename* *load-truename*))))
 
 ;;; Module
 ;; Unlike MOD-COMPONENT/DIR-COMPONENT, based on ASDF:MODULE which is merely a
@@ -849,48 +850,54 @@ inputs."))
   c)
 
 (defun %parse-component-form (form)
-  (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
-      (if (directory-path-p form)
-          (make-instance 'dir-component
-            :name (last (pathname-directory form)))
-          (make-instance 'file-component 
-            :type (or (pathname-type form) "lisp")
-            :name (pathname-name form)))
-      (let ((n (cadr form))
-            (kind (gethash (car form) *component-class-table*))
-            (props (cddr form)))
-        (ecase (car form)
-          ((or :file :pkg :grovel)
-           (let ((ty (or (pathname-type n) "lisp")))
-             (apply 'make-instance kind
-                    :type (keywordicate (string-upcase ty))
-                    :name n
-                    :path (probe-file (make-pathname :name n :type ty :defaults *default-pathname-defaults*))
-                    props)))
-          (:mod
-           (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
-                  (*default-pathname-defaults* path))
-             (%mod-component-walk 
-              (make-instance kind
-                :name n 
-                :path path
-                :components 
-                (mapcar '%parse-component-form (getf props :components))
-                :require (getf props :require)))))
-          (:dir
-           (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
-                  (inc (or (getf props :include) *wildcard-regexp*))
-                  (exc (getf props :exclude))
-                  (c (make-instance kind
-                       :name n
-                       :path path
-                       :include inc
-                       :exclude exc
-                       :components (mapcar '%parse-component-form (getf props :components)))))
-             (%mod-component-walk c inc exc)))))))
+    (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
+        (if (directory-path-p form)
+            (make-instance 'dir-component
+              :name (last (pathname-directory form)))
+            (make-instance 'file-component 
+              :type (or (pathname-type form) "lisp")
+              :name (pathname-name form)))
+        (let ((n (cadr form))
+              (kind (gethash (car form) *component-class-table*))
+              (props (cddr form)))
+          (ecase (car form)
+            ((or :file :pkg :grovel)
+             (let ((ty (or (pathname-type n) "lisp")))
+               (apply 'make-instance kind
+                      :type (keywordicate (string-upcase ty))
+                      :name n
+                      :path (probe-file (make-pathname :name n :type ty :defaults *default-pathname-defaults*))
+                      props)))
+            (:mod
+             (let* ((%path (make-pathname :name n :defaults *default-pathname-defaults*))
+                    (path (or (std/file:probe-directory %path)
+                              (simple-system-error "Component path not found: ~A" %path)))
+                    (*default-pathname-defaults* path))
+               (%mod-component-walk
+                (make-instance kind
+                  :name n 
+                  :path path
+                  :components 
+                  (mapcar '%parse-component-form (getf props :components))
+                  :require (getf props :require)))))
+            (:dir
+             (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
+                    (inc (or (getf props :include) *wildcard-regexp*))
+                    (exc (getf props :exclude))
+                    (c (make-instance kind
+                         :name n
+                         :path path
+                         :include inc
+                         :exclude exc
+                         :components (mapcar '%parse-component-form (getf props :components)))))
+               (%mod-component-walk c inc exc)))))))
 
 (defun %parse-components-form (form)
-  (mapcar '%parse-component-form form))
+  (let ((*default-pathname-defaults* 
+          (or (when *defsys* 
+                (make-pathname :directory (pathname-directory (system-path *defsys*))))
+              *default-pathname-defaults*)))
+    (mapcar '%parse-component-form form)))
 
 (defmacro %make-sys (name class &body args)
   `(progn
@@ -904,7 +911,6 @@ inputs."))
   (when-let ((v (getf body n)))
     (remf body n)
     v))
-
 
 ;; (defun expand-module-provides (comp)
 ;;   "Walk the PROVIDE slot of COMP, expanding provider results."
@@ -1060,6 +1066,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
+  ;; (init :xdg)
   (when sysdefs (setq *sysdefs* sysdefs))
   (setq *system-table* (make-hash-table)
         *system-session* (make-system-session 

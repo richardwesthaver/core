@@ -78,7 +78,7 @@ b; arrays with matrices in the RFP storage have names ending in fp.
 (define-alien-type lapack-z-select1 (* (function lapack-logical (* lapack-complex-double))))
 (define-alien-type lapack-z-select2 (* (function lapack-logical (* lapack-complex-double) (* lapack-complex-double))))
 
-(defparameter *lapack-ffi* (asdf:system-relative-pathname :blas "lapack-ffi.lisp"))
+(defparameter *lapack-ffi* (system-relative-pathname :blas "lapack-ffi.lisp"))
 (defun load-lapack-ffi (&optional (file *lapack-ffi*))
   (load file))
 

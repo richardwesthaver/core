@@ -106,7 +106,7 @@
 (defparameter *parquet-test-file*
   (probe-file
    (merge-pathnames "../../../.stash/alltypes_plain.parquet"
-                    #.(asdf:system-source-directory :dat/tests))))
+                    #.(system-source-directory :dat/tests))))
 ;; see also: https://github.com/apache/parquet-testing/blob/master/data/README.md
 (deftest parquet-basic ()
   (when *parquet-test-file*

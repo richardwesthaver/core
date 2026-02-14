@@ -15,7 +15,7 @@
    :require
    (:rt :std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
-    :doc/tests :nlp/tests :skel/tests :box/tests
+    :doc/tests :nlp/tests :box/tests
     :syn/tests :organ/tests :obj/tests :math/tests
     :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
     :zstd/tests :uring/tests :blake3/tests

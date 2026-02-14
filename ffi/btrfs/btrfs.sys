@@ -1,6 +1,6 @@
 ;;; ~/comp/core/ffi/btrfs/btrfs.sys --- Btrfs Sytem Definitions
 (defsys :btrfs
- :require (:std :log)
+ :require (:std)
  :components ((:file "pkg")
               (:grovel "constants" :package :btrfs)
               (:file "util" :require ("pkg" "constants")))

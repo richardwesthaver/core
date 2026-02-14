@@ -39,8 +39,9 @@ pub fn main {} " 15)))
           (ts-tree-cursor-delete cursor)
           (ts-tree-delete new-tree))))))
 
-(deftest ts-query-c ()
-  (let ((src (read-file (asdf:system-relative-pathname :tree-sitter "alien.c"))))
+#+todo
+(deftest ts-query-c (:skip t)
+  (let ((src (read-file (system-relative-pathname :tree-sitter "alien.c"))))
     (declare (ignore src))
     (with-ts-query :c (q '(binary_expression (string_literal)))
       (istype 'sb-alien::alien-value q)

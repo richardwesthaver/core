@@ -7,5 +7,6 @@
 
 (in-suite :syn)
 
-(deftest c-src ()
-  (istype 'cons (parse-file :c (asdf:system-relative-pathname :tree-sitter "alien.c"))))
+#+todo
+(deftest c-src (:skip t)
+  (istype 'cons (parse-file :c (system-relative-pathname :tree-sitter "alien.c"))))

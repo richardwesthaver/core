@@ -78,7 +78,7 @@ case."
             (setf *readtable* *backup-readtable*))
            (t (error "Unknown code reader status: ~A" *code-reader*)))))
 
-(eval-when (:compile-toplevel)
+(eval-always
   (defmacro make-cl-reader (name)
     `(defun ,name ()
        (setf *code-reader* 'cl

@@ -49,7 +49,7 @@
 (defgeneric message-program (message))
 
 ;;; File support
-(eval-when (:compile-toplevel :load-toplevel)
+(eval-always
   (defun string-code (s)
     "compute the ASCII-based numerical value of the string [warning:
 works only if the chars are coded in ASCII]"
@@ -58,8 +58,8 @@ works only if the chars are coded in ASCII]"
 	    do (setf v (+ (* v 256) (char-code (aref s i)))))
       v)))
 
-(defconstant +header-mthd+ #.(string-code "MThd"))
-(defconstant +header-mtrk+ #.(string-code "MTrk"))
+(defconstant +header-mthd+ (string-code "MThd"))
+(defconstant +header-mtrk+ (string-code "MTrk"))
 (defconstant +header-mthd-length+ 6 "value of the header MThd data's length")
 
 (defparameter *midi-input* nil "stream for reading a Midifile")

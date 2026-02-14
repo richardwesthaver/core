@@ -57,7 +57,7 @@
     (with-open-file (out file 
                          :direction :output
                          :if-does-not-exist :create)
-      (write-ast cfg out :fmt :canonical))))
+      (write-ast cfg out :pretty nil))))
 
 (defun load-mpkrc (&optional (file *user-mpkrc*) (init t))
   "Load a mpkrc configuration from FILE. Defaults to ~/.mpkrc."

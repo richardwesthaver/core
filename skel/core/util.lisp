@@ -180,7 +180,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *SKEL-STORE*
 *SKEL-STASH*
 *SKEL-LOGGER*
-ASDF:*USER-CACHE*"
+*USER-FASL-CACHE*"
     (init :xdg)
     (setq *user-skelrc* (user-skelrc))
     (%init setq))

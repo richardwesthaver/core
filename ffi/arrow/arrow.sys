@@ -1,0 +1,6 @@
+;;; arrow.sys --- Apache Arrow Sytem Definitions
+(defsys :arrow
+ "A thin FFI wrapper for Arrow."
+ :require (:std :log)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

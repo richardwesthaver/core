@@ -1,0 +1,14 @@
+;;; sndfile.sys --- SNDFILE SYSTEMS
+
+;; SNDFILE for lisp.
+
+;;; Commentary:
+
+;;; Code:
+(defsys :sndfile
+ "SNDFILE C FFI"
+ :require (:std)
+ :components ((:file "pkg")
+              (:grovel "constants"
+               :package :sndfile))
+ :provide ((:tests)))

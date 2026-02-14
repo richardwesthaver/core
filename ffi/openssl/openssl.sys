@@ -1,0 +1,18 @@
+;;; openssl.sys --- Libssl/Libcrypto  bindings
+
+;; These bindings are not backward compatible with old versions of
+;; OpenSSL. Only the latest v3+ is supported.
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
+(defsys :openssl
+  :require (:std :io)
+  :components ((:file "pkg")
+               (:grovel "constants" :package :openssl)
+               (:file "types")
+               (:file "openssl")
+               (:file "condition"))
+ :provide ((:tests)))

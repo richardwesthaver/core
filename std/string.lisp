@@ -112,19 +112,6 @@ of a string."
 ;;; STRING-CASE
 ;; Implementing an efficient string= case in Common Lisp
 
-;; 2015-11-15: Defknown don't have explicit-check in SBCL 1.3.0
-;;  Remove the declaration.  It's never useful the way we use
-;;  numeric-char=.
-
-;; 2015-11-15: Make this a real ASDF system for Xach
-;;  I copied the system definition from Quicklisp and mangled as
-;;  necessary.
-
-;; 2010-06-30: Tiny bugfix
-;;  Widen the type declarations inside cases to allow vectors that
-;;  have a length that's shorter than the total size (due to fill-
-;;  pointers).
-
 ;;;; Introduction
 
 ;; In `<http://neverfriday.com/blog/?p=10>', OMouse asks how
@@ -143,9 +130,6 @@ of a string."
 ;; formatting. I'm particularly iffy with the way keywords look
 ;; like. It just looks really fuzzy when you're not really zoomed
 ;; in (or reading it on paper).
-
-;; I usually don't use packages for throw-away code, but this looks
-;; like it could be useful to someone.
 
 ;;;; Some utility code
 (defun split-tree (list &key (test 'eql) (key 'identity))

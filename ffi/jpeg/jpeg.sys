@@ -1,0 +1,11 @@
+;;; jpeg.sys --- JPEG Sytem Definitions (libjpeg-turbo)
+(defsys :jpeg
+ "FFI wrapper for JPEG. Currently binds to libjpeg-turbo."
+ :require (:std :log)
+ :components 
+ ((:file "pkg")
+  (:grovel "constants" :package :jpeg)
+  (:file "jpeg")
+  (:file "turbo")
+  (:file "api"))
+ :provide ((:tests)))

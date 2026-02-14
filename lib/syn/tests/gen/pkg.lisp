@@ -14,7 +14,7 @@
 
 (in-package :syn/tests/gen)
 
-(defvar *gen-test-files* (asdf:system-relative-pathname :syn "tests/gen/"))
+(defvar *gen-test-files* (system-relative-pathname :syn "tests/gen/"))
 
 (defmacro with-gen-test (file &body body)
   `(let ((%in ,file)

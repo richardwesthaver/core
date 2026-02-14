@@ -1,0 +1,17 @@
+;;; ssh2.sys --- SSH2 FFI bindings
+
+;;
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
+(defsys :ssh2
+  :require (:std)
+  :components 
+ ((:file "pkg")
+  (:grovel "constants"
+   :package :ssh2)
+  (:file "ssh2"))
+ :provide ((:tests)))

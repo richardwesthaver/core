@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; SK-COMPONENTs are similar in nature to ASDF/COMPONENT:COMPONENT objects but
+;; SK-COMPONENTs are similar in nature to STD:COMPONENT objects but
 ;; much more lightweight. We use this class with the assumption that whatever
 ;; it's wrapping is contained within another SKEL object, such as in the
 ;; :COMPONENTS slots of SK-PROJECTs.
@@ -25,7 +25,7 @@
 
 ;;; Module
 
-;; Again just like ASDF, we define an SK-MOD class which subclasses
+;; Again just like STD/DEFSYS, we define an SK-MOD class which subclasses
 ;; SK-COMPONENT. The SK-MOD class is used for components which have
 ;; sub-components themselves.
 

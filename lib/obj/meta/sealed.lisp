@@ -39,7 +39,7 @@ the following practices:
 
 * Metaobject sealing should be the very last step when loading a
   project. Ideally, all calls to SEAL-GENERIC-FUNCTION should be in a separate
-  file that ASDF loads last. This way, sealing can also be disabled
+  file that is loaded last. This way, sealing can also be disabled
   conveniently, e.g., to measure whether sealing actually improves
   performance (Which you should do!).
 

@@ -67,8 +67,20 @@
     (:file "client")
     (:file "endpoint")
     (:file "srv")))
+  (:mod "mpk"
+   :components
+   ((:file "pkg")
+    (:file "mpd")
+    (:file "var")
+    (:file "proto" :require ("proto"))
+    (:file "util")
+    (:file "db")
+    (:file "cfg")
+    #+todo (:file "clean")
+    (:file "net")
+    (:file "metro")
+    (:file "mpk")
+    (:file "cli")))
   (:file "cli")
   (:file "skel"))
  :provide ((:tests) (:bin)))
-
-

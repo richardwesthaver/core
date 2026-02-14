@@ -796,7 +796,6 @@
    :info
    :maybe-inline
    :defglobal :define-load-time-global
-   :register-project-directory
    :parse-eval-when-situations 
    :source-location
    :lexenv-user-data

@@ -116,16 +116,10 @@
                (truename
                 (merge-pathnames "zoneinfo/"
                                  (make-pathname :directory (pathname-directory project-home-directory))))))))
-    (or (when (find-package "ASDF")
-          (let ((path (eval (read-from-string
-                             "(let ((system (asdf:find-system :obj/time nil)))
-                                (when system
-                                  (asdf:component-pathname system)))"))))
-            (try path)))
-        (let ((path #.(or *compile-file-truename*
-                          '*load-truename*)))
-          (when path
-            (try (merge-pathnames "../" path)))))))
+    (or (when-let ((p (system-path :core))) (try p))
+        (try *stash*)
+        (when-let ((path #.(or *compile-file-truename* '*load-truename*)))
+          (try path)))))
 
 ;;; Month information
 (defparameter +month-names+

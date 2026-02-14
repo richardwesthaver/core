@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :mpk)
 
-(define-logical-pathname "MPK" nil
+(define-logical-pathname "MPK" *mpk-user-directory*
   ;; ("**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
   ("MEDIA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-media-directory*))
   ("USER;**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))

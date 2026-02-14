@@ -10,7 +10,7 @@
 (in-suite :jpeg)
 (load-jpeg)
 (load-turbojpeg)
-(defvar *test-file* (asdf:system-relative-pathname :core ".stash/egypt.jpg"))
+(defvar *test-file* (system-relative-pathname :core ".stash/egypt.jpg"))
 (deftest load-image () 
   (istype '(alien (* unsigned-char)) (load-jpeg-image *test-file* (make-instance 'jpeg-decompressor))))
 

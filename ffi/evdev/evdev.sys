@@ -1,4 +1,4 @@
-;;; ~/comp/core/ffi/evdev/evdev.sys --- Evdev Sytem Definitions
+;;; evdev.sys --- Evdev Sytem Definitions
 (defsys :evdev
  :require (:std)
  :components ((:file "pkg")

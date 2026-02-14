@@ -6,13 +6,14 @@
 (in-package :mpk)
 
 (defvar *mpc*)
-(defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
-(defvar *mpk-media-directory* *media-directory*)
-(defvar *mpk-data-directory* "/opt/stash/data/mpk/")
-(defvar *mpk-cache-directory* "/opt/stash/cache/mpk/")
-(defvar *mpk-db-directory* (merge-pathnames "db/" *mpk-data-directory*))
-(defvar *mpk-db-meta-directory* (merge-pathnames "meta" *mpk-db-directory*))
-(defvar *mpk-db-id-seed* (random 99999))
+(eval-always
+  (defvar *mpk-user-directory* (merge-pathnames ".stash/mpk/" (user-homedir-pathname)))
+  (defvar *mpk-media-directory* *media-directory*)
+  (defvar *mpk-data-directory* "/opt/stash/data/mpk/")
+  (defvar *mpk-cache-directory* "/opt/stash/cache/mpk/")
+  (defvar *mpk-db-directory* (merge-pathnames "db/" *mpk-data-directory*))
+  (defvar *mpk-db-meta-directory* (merge-pathnames "meta" *mpk-db-directory*))
+  (defvar *mpk-db-id-seed* (random 99999)))
 
 (defvar *mpk-media-sources* '(:youtube :freesound :spotify :local :torrent))
 

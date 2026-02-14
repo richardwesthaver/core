@@ -35,7 +35,6 @@
   (:file "cli" :require ("pkg" "clap")))
  :provide
  ((:tests
-   :require (:std :rt)
    :description "CLI Tests"
    :components
    ((:mod "tests"

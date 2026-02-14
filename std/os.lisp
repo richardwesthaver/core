@@ -192,12 +192,12 @@ arrange for FVAR to be closed after BODY."
 
 (defun init-xdg-logical-pathnames ()
   ;; only the XDG_*_HOME paths we care about for user apps
-  (define-logical-pathname "XDG" (user-homedir-pathname)
-    ("CONFIG;**;*.*.*" (xdg-dir :config-home))
-    ("DATA;**;*.*.*" (xdg-dir :data-home))
-    ("STATE;**;*.*.*" (xdg-dir :state-home))
-    ("CACHE;**;*.*.*" (xdg-dir :cache-home))
-    ("RUNTIME;**;*.*.*" (xdg-dir :runtime-dir))))
+    (define-logical-pathname "XDG" (user-homedir-pathname)
+      ("CONFIG;**;*.*.*" (xdg-dir :config-home))
+      ("DATA;**;*.*.*" (xdg-dir :data-home))
+      ("STATE;**;*.*.*" (xdg-dir :state-home))
+      ("CACHE;**;*.*.*" (xdg-dir :cache-home))
+      ("RUNTIME;**;*.*.*" (xdg-dir :runtime-dir))))
 
 (defun init-xdg-dirs ()
   "Init *XDG-USER-DIRS* from environment."
@@ -217,11 +217,12 @@ arrange for FVAR to be closed after BODY."
     *xdg-dir-table*))
 
 (defmethod std/meta:init ((self (eql :xdg)) &rest args)
-  (prog1 (init-xdg-dirs)
-    (init-xdg-logical-pathnames)
-    (unless (null args)
-      (std/list:doplist (k v) args
-        (setf (xdg-dir k) v)))))
+  (init-xdg-dirs)
+  ;; FIXME
+  ;; (init-xdg-logical-pathnames)
+  (unless (null args)
+    (std/list:doplist (k v) args
+      (setf (xdg-dir k) v))))
 
 (defun xdg-config-directory (name)
   (when-let ((p (merge-pathnames name (xdg-dir :config-home))))

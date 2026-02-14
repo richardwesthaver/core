@@ -1,0 +1,18 @@
+;;; ffi.sys --- Ffi Sytem Definitions
+(defsys :ffi
+ :require
+ (:arrow :blake3 :btrfs :alsa
+  :cuda :evdev :glib :gstreamer
+  :sndfile :ssh2 :tree-sitter
+  :uring :xkb :zstd :jpeg
+  :chromaprint :blas :openssl :ffmpeg
+  :syslog :jack :keyutils :rocksdb)
+ :provide
+ ((:tests 
+   :require
+   (:arrow/tests :blake3/tests :btrfs/tests
+    :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
+    :keyutils/tests :rocksdb/tests :alsa/tests :sndfile/tests 
+    :ssh2/tests :tree-sitter/tests :syslog/tests
+    :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
+    :jack/tests :blas/tests :jpeg/tests :openssl/tests :ffmpeg/tests))))

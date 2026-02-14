@@ -1,8 +1,7 @@
 ;;; ~/comp/core/lib/cry/cry.sys --- Cry Sytem Definitions
 (defsys :cry
  :require 
- (:ironclad :sb-concurrency 
-  :sb-posix :sb-bsd-sockets 
+ (:ironclad
   :std :log :obj :dat
   :blake3 :keyutils
   :openssl :io)

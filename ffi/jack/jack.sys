@@ -1,0 +1,5 @@
+;;; jack.sys --- Jack Sytem Definitions
+(defsys :jack
+ :require (:std :log :dat)
+ :components ((:file "pkg"))
+ :provide ((:tests)))

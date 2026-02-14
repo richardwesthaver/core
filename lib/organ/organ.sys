@@ -1,0 +1,60 @@
+(defsys :organ
+ "org-mode utils"
+ :version "0.1.0"
+ :require (:ppcre :std :nlp :parse :cry :obj :rdb :log :cry)
+ :components 
+ ((:file "pkg")
+  (:file "vars")
+  (:file "condition")
+  (:file "proto")
+  (:file "util")
+  (:file "macs")
+  (:mod "object"
+   :components
+   ((:file "markup")
+    (:file "entity")
+    (:file "citation")
+    (:file "footnote-ref")
+    (:file "inline-babel-call")
+    (:file "inline-source-block")
+    (:file "line-break")
+    (:file "link")
+    (:file "macro")
+    (:file "export-snippet")
+    (:file "sscript")
+    (:file "stat-cookie")
+    (:file "table-cell")
+    (:file "target")
+    (:file "timestamp")))
+  (:mod "element"
+   :components 
+   ((:mod "lesser"
+     :components 
+     ((:file "paragraph")
+                  (:file "block")
+                  (:file "clock")
+                  (:file "diary-sexp")
+                  (:file "latex-env")
+                  (:file "comment")
+                  (:file "fixed-width")
+                  (:file "horizontal-rule")
+                  (:file "keyword")
+                  (:file "planning")
+                  (:file "table-row")
+                  (:file "node-property")))
+    (:mod "greater"
+     :components 
+     ((:file "plain-list")
+                  (:file "block")
+                  (:file "drawer")
+                  (:file "footnote-def")
+                  (:file "item")
+                  (:file "table")))
+    (:file "headline")))
+  (:file "section")
+  (:file "heading")
+  (:file "document")
+  (:file "readtable")
+  (:file "graph")
+  (:file "cli"))
+ :provide ((:tests)))

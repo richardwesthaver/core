@@ -15,8 +15,8 @@
 ;;; Code:
 (in-package :io/kbd)
 
-;; always load xkbcommon - NAME-KEYSYM is used at compile-time
-(eval-when (:compile-toplevel) (load-xkbcommon t))
+;; load xkbcommon - NAME-KEYSYM is used at compile-time
+(eval-when (:compile-toplevel :load-toplevel) (load-xkbcommon t))
 
 (defun load-kbd-libs ()
   (load-xkbcommon)
@@ -598,7 +598,7 @@ KBD-PARSE-ERROR if the key failed to parse."
          (= (the keymod (key-mod key1)) (the keymod (key-mod key2))))))
 
 (define-constant +unbound-key+ (make-key :sym 0 :mod 255) :test 'key=)
-(define-constant +default-escape-key+ (parse-key "C-g") :test 'key=)
+(define-constant +default-escape-key+ (make-key :sym 103 :mod 2) :test 'key=) ;; (parse-key "C-g")
 
 (defun key-eq (key1 key2)
   (or (and (typep key1 'key) (typep key2 'key) (key= key1 key2))
@@ -645,6 +645,15 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
         (key-mod to) (key-mod from))
   to)
 
+(defun keymap-symbol-p (x)
+  (and (symbolp x)
+       (boundp x)
+       (keymap-p (symbol-value x))))
+
+(defun keymap-or-keymap-symbol-p (x)
+  (or (keymap-p x)
+      (keymap-symbol-p x)))
+
 (defun lookup-key-sequence (map key-seq)
   "Return the command bound to KEY-SEQ in keymap MAP."
   (when (keymap-symbol-p map)
@@ -659,15 +668,6 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
                (lookup-key-sequence cmd (cdr key-seq))
                cmd))
           (t nil))))
-
-(defun keymap-symbol-p (x)
-  (and (symbolp x)
-       (boundp x)
-       (keymap-p (symbol-value x))))
-
-(defun keymap-or-keymap-symbol-p (x)
-  (or (keymap-p x)
-      (keymap-symbol-p x)))
 
 ;; TODO: we don't want lists here - fix wm/xlib
 (defun deref-keymaps (maps)

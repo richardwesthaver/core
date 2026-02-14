@@ -2794,16 +2794,6 @@ with OUTPUT, a starting offset, and the count of pending data."
       (funcall compress-fun output (logxor offset #x8000) +input-limit+))
     result))
 
-(defun reinitialize-bitstream-funs (compressor bitstream)
-  (setf (literal-fun compressor)
-        (make-huffman-writer *fixed-huffman-codes* bitstream)
-        (length-fun compressor)
-        (make-huffman-writer *length-codes* bitstream)
-        (distance-fun compressor)
-        (make-huffman-writer *distance-codes* bitstream)
-        (compress-fun compressor)
-        (make-compress-fun compressor)))
-
 (defclass deflate-compressor ()
   ((input
     :initarg :input
@@ -2853,6 +2843,16 @@ with OUTPUT, a starting offset, and the count of pending data."
    :counter 0
    :bitstream (make-instance 'bitstream)
    :buffer (make-octets 1)))
+
+(defun reinitialize-bitstream-funs (compressor bitstream)
+  (setf (literal-fun compressor)
+        (make-huffman-writer *fixed-huffman-codes* bitstream)
+        (length-fun compressor)
+        (make-huffman-writer *length-codes* bitstream)
+        (distance-fun compressor)
+        (make-huffman-writer *distance-codes* bitstream)
+        (compress-fun compressor)
+        (make-compress-fun compressor)))
 
 ;;;; Compressor
 (defun deflate (input chains start end

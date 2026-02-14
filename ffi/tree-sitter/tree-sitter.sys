@@ -1,0 +1,14 @@
+;;; tree-sitter.sys --- TREE-SITTER SYSTEMS
+
+;; TREE-SITTER for lisp.
+
+;;; Code:
+(defsys :tree-sitter
+  :require (:std)
+  :components ((:file "pkg")
+               (:file "ffi")
+               (:file "lang")
+               (:file "api")
+               (:grovel "constants"
+                :package :tree-sitter))
+ :provide ((:tests)))

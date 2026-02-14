@@ -7,7 +7,6 @@
 ;;; Code:
 (in-package :dat/qrcode)
 
-
 (defun read-file-content (fpath)
   (with-open-file (fp fpath)
     (let ((content (make-string (file-length fp))))
