@@ -137,9 +137,11 @@
                                       "STASH"
                                       "STORE"
                                       "LISP_HOME"))
+(add-to-list 'exec-path "/usr/bin/")
 (add-to-list 'exec-path "/usr/local/sbin/")
 (add-to-list 'exec-path "/usr/local/bin/")
-(add-to-list 'exec-path "/usr/local/share/lisp/bin/")
+(add-to-list 'exec-path "/usr/local/share/lisp/")
+(add-to-list 'exec-path "/usr/share/lisp/")
 
 ;;; Util
 ;;;###autoload

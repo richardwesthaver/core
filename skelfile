@@ -163,12 +163,12 @@
     (funcall (print (find-module :bin :bin)))))
   (:compile () (compile-lisp :core :force t :verbose t))
   (:install (install-emacs)
-   (with-sudo "install -C -m 755 .stash/core /usr/local/bin/core")
+   (with-sudo "install -C -m 755 .stash/core /usr/bin/core")
    (let ((apps '("skel" "homer" "mpk" "pod")))
-    (with-progress-bar ((length apps) "installing core to /usr/local/bin/core")
+    (with-progress-bar ((length apps) "installing core to /usr/bin/core")
      (loop for i in apps
       while i
-      do (with-sudo (format nil "ln -sf /usr/local/bin/core /usr/local/bin/~A" i))
+      do (with-sudo (format nil "ln -sf /usr/bin/core /usr/bin/~A" i))
       do (update! 1))))))
  (tests ()
   (:run ()
@@ -194,7 +194,7 @@
   (with-directory ".stash/"
    (loop for f in (directory "*.core")
     while f
-    with d = #P"/usr/local/share/lisp/"
+    with d = #P"/usr/share/lisp/"
     do (format t "~A -> ~A" f d)
     do (sb-ext:run-program (find-exe "install") `("-C" "-m" "755" ,f ,d) :output t))))
  (syms.sxp () 
