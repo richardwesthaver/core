@@ -1,7 +1,7 @@
 ;;; ~/comp/core/app/skel/skel.sys --- Skel Sytem Definitions
 (defsys :skel
  :version "0.1.1"
- :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
+ :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn :nlp)
  :components 
  ((:file "pkg")
   (:mod "core"

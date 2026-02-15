@@ -9,7 +9,6 @@
   :rdb :cry :pod  
   :box :syn :vc :rt)
  :components ((:file "core"))
- :hook ((:load (lambda () (mumble "loading core"))))
  :provide 
  ((:tests
    :require

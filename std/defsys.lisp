@@ -27,6 +27,7 @@
 (in-readtable :std)
 
 ;;; Variables
+(declaim (list *sysdefs*))
 (defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
@@ -89,6 +90,7 @@ ASDF:DEFSYSTEM.")
 
 (defun sysdefs (&optional (dir *default-pathname-defaults*) (recurse t))
   "Return a list of system definition pathnames found in DIR."
+  (declare (ftype (sfunction (&optional pathname boolean) list)))
   (collecting
     (walk-directory dir 
       (constantly t)
@@ -100,10 +102,11 @@ ASDF:DEFSYSTEM.")
 
 (defun sysdef (&optional (dir *default-pathname-defaults*))
   "Return the 'default' system definition path of the current directory, if it exists."
+  (declare (ftype (sfunction (&optional pathname) t)))
   (when-let ((defs (sysdefs dir nil)))
     (if (= 1 (length defs))
         (car defs)
-        (find (car (last (pathname-directory dir))) defs :test 'string-equal :key 'pathname-name))))
+        (find (car (last (pathname-directory (the pathname dir)))) defs :test 'string-equal :key 'pathname-name))))
 
 (defun list-all-systems ()
   (std/hash:hash-table-values *system-table*))
@@ -125,6 +128,7 @@ ASDF:DEFSYSTEM.")
     (setf (gethash name *component-class-table*) class)))
 
 (defmacro defcomponent (name supers slots &rest opts)
+  (declare (dynamic-extent opts) (list opts))
   (let ((kw (find :keyword opts :key 'car)))
     (setf opts (delete :keyword opts :key 'car))
     `(prog1 (defclass* ,name ,(or supers '(component)) ,slots ,@opts)
@@ -182,7 +186,7 @@ component name or a list indicating a sequence of module component names
 ending with the target component name."
   (declare (component self))
   (if (atom path)
-      (find path (components self) :test 'string-equal :key 'name)
+      (find path (the list (components self)) :test 'string-equal :key 'name)
       (let ((c self))
         (loop for p in path
               with parents = (list c)
@@ -190,7 +194,7 @@ ending with the target component name."
               do (setf c (pop parents))
               else do
               (progn 
-                (setf c (find p (components c) :test 'string-equal :key 'name))
+                (setf c (find p (the list (components c)) :test 'string-equal :key 'name))
                 (when (mod-component-p c)
                   (push c parents)))
               finally (return c)))))
@@ -387,10 +391,10 @@ objects of type COMPONENT."
   (when-let ((mod (find-module* name)))
     (if kind
         (let ((k (getf mod kind)))
-          (if (sequencep k)
+          (if (listp k)
               (let ((len (length k)))
                 (if (and key (> len 1))
-                    (find key k :key 'name :test 'string=)
+                    (find key k :key 'name :test 'equal)
                     (if (= len 1)
                         (car k)
                         k)))
@@ -414,11 +418,12 @@ objects of type COMPONENT."
 (defsetf find-module (name &optional kind key (append t)) (val)
   `(set-module ,name ,val ,kind ,key ,append))
 
-(defmacro with-module-hooks (mod)
+(defun init-module (mod)
+  "Initialize module MOD, loading all implementation hooks."
   (with-slots (hook) mod
-    (when hook
-      (pushnew (funcall hook :exit) sb-ext:*exit-hooks*)
-      (funcall (funcall hook :load)))))
+    (maphash 
+     (lambda (k v) (when-let ((x (gethash k (hook-value hook)))) (std/list:appendf v x)))
+     (hook-value std/sys::*sbcl-hooks*))))
 
 ;; templates?
 (defun %load-module (form &rest args)
@@ -426,7 +431,7 @@ objects of type COMPONENT."
     ((member :proto) form) ; unevaluated
     ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
     (:io (gethash form *io-table*))
-    (:alien (funcall (gethash form std/alien:*alien-load-table*)))
+    (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
     (:prelude (use-package form))
     (:tests (load-system form))
     (:sys (load-system form))
@@ -449,7 +454,7 @@ objects of type COMPONENT."
 
 (defun unload-module (name &optional kind key)
   (setf (find-module name kind key nil) nil)
-  (when (eql *module* name)
+  (when (eq *module* name)
     (setf *module* nil)))
 
 (defun module-provide-system (name)
@@ -517,10 +522,11 @@ system jobs to be executed in an async context."
     (format stream "~A~@[ ~A~]" (name self) (version self))))
 
 (defun system-path (name)
+  (declare (ftype (sfunction (t) pathname)))
   (if (typep name 'system) (path name) (path (find-system name :default :error))))
 
 (defun system-home (name)
-  (make-pathname :directory (pathname-directory (system-path name))))
+  (make-pathname :directory (pathname-directory (the pathname (system-path name)))))
 
 (defun system-relative-pathname (self path)
   (merge-pathnames path (system-home self)))
@@ -654,8 +660,6 @@ system jobs to be executed in an async context."
 for processing.")
   (defstruct system-session
     "A reusable session in which SYSTEMs may be processed."
-    ;; A queue of SYSTEMs to be processed, effectively a global stack.
-    (systems (make-queue :capacity *system-session-capacity* :element-type 'system :prioritize t))
     ;; A simple cache of TASK results
     (task-cache (make-hash-table))
     ;; A simple cache of file operation times (:read :write :load :compile)
@@ -671,9 +675,6 @@ for processing.")
 (defmethod stop ((self system-session) &key)
   (stop (system-session-pool self)))
 
-(defmethod queue ((self system-session))
-  (system-session-systems self))
-
 (defmethod tasks ((self system-session))
   (system-session-tasks self))
 
@@ -686,21 +687,19 @@ for processing.")
 (defun check-system-session ()
   (assert *system-session* (*system-session*) 'system-session-missing))
 
-(defmacro with-system-session ((sym &optional sys) &body body)
+(defmacro with-system-session ((&optional sym sys) &body body)
   "Bind *SYSTEM-SESSION* to SYM around BODY. WHEN SYS is non-nil it is expected
 to be a system which is pushed to the session queue before BODY."
-  (multiple-value-bind (%body %decl) (std/prim:parse-body body)
-    (with-gensyms (system)
-      `(let ((,sym *system-session*)
-             (,system (unless (pathnamep ,sys) ,sys))
-             ,@(when sys `((*default-pathname-defaults* 
-                            (if (pathnamep ,sys)
-                                ,sys
-                                (pathname (directory-namestring (probe-file (path ,sys)))))))))
-         
-         ,@%decl
-         (when ,system (push-priority-queue ,system (queue ,sym)))
-         ,@%body))))
+  (if sym
+      (multiple-value-bind (%body %decl) (std/prim:parse-body body)
+        `(let ((,sym *system-session*)
+               ,@(when sys `((*default-pathname-defaults* 
+                              (if (pathnamep ,sys)
+                                  ,sys
+                                  (pathname (directory-namestring (probe-file (path ,sys)))))))))
+           ,@%decl
+           ,@%body))
+      `(progn ,@body)))
 
 (eval-always
   (defun cached-system-file (f)
@@ -725,16 +724,16 @@ to be a system which is pushed to the session queue before BODY."
 (defun reload-p (file)
   "Given a FILE, return T if it needs to be reloaded."
   (if-let ((f (cached-system-file file)))
-    (let ((w (setf (getf f :write) (file-write-date file)))
-          (l (getf f :load)))
+    (lety ((w (setf (getf f :write) (file-write-date file)) :type fixnum)
+          (l (getf f :load) :type fixnum))
       (or (not l) (> w l)))
     t))
 
 (defun recompile-p (file)
   "Given a FILE, return T if it needs to be recompiled."
   (if-let ((f (cached-system-file file)))
-    (let ((c (getf f :compile))
-          (w (setf (getf f :write) (file-write-date file))))
+    (lety ((c (getf f :compile) :type (or null fixnum))
+           (w (setf (getf f :write) (file-write-date file)) :type fixnum))
       (or (not c) (> w c)))
     t))
 
@@ -855,10 +854,10 @@ inputs."))
     (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
         (if (directory-path-p form)
             (make-instance 'dir-component
-              :name (last (pathname-directory form)))
+              :name (last (pathname-directory (the pathname form))))
             (make-instance 'file-component 
-              :type (or (pathname-type form) "lisp")
-              :name (pathname-name form)))
+              :type (or (pathname-type (the pathname form)) "lisp")
+              :name (pathname-name (the pathname form))))
         (let ((n (cadr form))
               (kind (gethash (car form) *component-class-table*))
               (props (cddr form)))
@@ -897,7 +896,7 @@ inputs."))
 (defun %parse-components-form (form)
   (let ((*default-pathname-defaults* 
           (or (when *defsys* 
-                (make-pathname :directory (pathname-directory (system-path *defsys*))))
+                (make-pathname :directory (pathname-directory (the pathname (system-path (the string *defsys*))))))
               *default-pathname-defaults*)))
     (mapcar '%parse-component-form form)))
 
@@ -953,7 +952,12 @@ the following extensions:
                    (slot-value ,sys 'components) (%parse-components-form ',comp)
                    (slot-value ,sys 'provide) (%parse-provide-form ',prov)
                    (slot-value ,sys 'require) ',req)
-             (mapc (lambda (x) (add-hook (hook ,sys) x)) ',hooks)
+             (mapc (lambda (x) (add-hook (hook ,sys) (if (or (symbolp (cadr x)) (functionp (cadr x)))
+                                                         x
+                                                         (list (car x) 
+                                                               (compile (gensym (string (car x)))
+                                                                        `(lambda () ,@(cdr x)))))))
+                   ',hooks)
              (expand-component-requires ,sys)
              (register-system ,name ,sys)
              ;; (expand-module-provides ,sys)
@@ -961,7 +965,8 @@ the following extensions:
 
 (defun compile-sys (path &optional output-file)
   "Compile a system's defsys file by PATH. Default extension is FSYS."
-  (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) (pathname path))))
+  (declare ((or string pathname) path))
+  (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) path)))
   (checked-compile-file path
                         :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
                         :entry-points '(load-sys))
@@ -970,14 +975,17 @@ the following extensions:
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
 internally. On success the path is added to the *SYSDEFS* list."
-  (let ((path (etypecase path
-                ((or string pathname) (truename path))
-                (t (find path *sysdefs* :key 'pathname-name :test 'string-equal)))))
+  (lety ((path 
+           (etypecase path
+             ((or string pathname) (truename path))
+             (symbol (find path *sysdefs* :key 'pathname-name :test 'string-equal)))
+           :type pathname))
     (unless (string-equal (pathname-type path) "fsys")
       (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
         (setf path compiled)))
     ;; (mumble "loading systems from ~A" path)
     (with-system-session (s path)
+      (declare (ignore s))
       (when 
           (restart-case (load path)
             (load-file (p)
@@ -1012,7 +1020,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 (defun compile-grovel-component (comp)
   "Compile a GROVEL-COMPONENT."
-  (let* ((path (path comp))
+  (lety* ((path (path comp) :type pathname)
          (output (merge-pathnames (make-pathname :directory (pathname-directory path)) *user-fasl-cache*))
          (output-file (make-pathname :defaults output
                                      :name (pathname-name path) :type "fasl"))
@@ -1022,15 +1030,16 @@ internally. On success the path is added to the *SYSDEFS* list."
          (tmp-constants (merge-pathnames #p"constants.lisp-temp"
                                          output)))
     (sb-grovel::c-constants-extract path tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
-    (let ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out)))
+    (lety ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out) :type fixnum))
       (unless (= code 0)
         (error 'sb-grovel::c-compile-failed)))
-    (let ((code (sb-ext:process-exit-code
+    (lety ((code (sb-ext:process-exit-code
                  (sb-ext:run-program (namestring tmp-a-dot-out)
                                      (list (namestring tmp-constants))
                                      :search nil
                                      :input nil
-                                     :output *trace-output*))))
+                                     :output *trace-output*))
+                 :type fixnum))
       (unless (= code 0)
         (error 'sb-grovel::a-dot-out-failed)))
     (multiple-value-bind (out warnings-p failure-p)
@@ -1114,6 +1123,8 @@ REQUIRE forms, PKG components, and PROVIDE forms to be loaded. The underlying
 object SELF remains unmodified."
   ;; first process all requires
   (load-system-requires self)
+  ;; initialize system hooks (call :init hooks)
+  (init-module self)
   ;; then we call providers
   (call-system-providers self)
   self)
@@ -1146,18 +1157,19 @@ object SELF remains unmodified."
   (:method ((self system) &rest args)
     (apply 'remove-system (name self) args))
   (:method ((self t) &key)
-    (with-system-session (s)
-      ;; freeze the session by acquiring the queue lock
-      (with-queue-lock (system-session-systems s)
-        ;; should we also remove from the queue?
-        (remhash self *system-table*)))))
+    (with-system-session ()
+      ;; should we also remove from the queue?
+      (remhash self *system-table*))))
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
   (:method ((self system) &key force (verbose *verbose*) (asdf *asdf-compatibility*) (init t))
     (or
-     (with-system-session (s self)
+     (with-system-session (_ self)
+       (declare (ignore _))
        (when init (init self))
+       ;; call the load hook
+       (funcall (the function (hook self)) :load)
        ;; TODO 2025-08-31:
        ;; - build-plan
        (case (plan self)
@@ -1175,7 +1187,7 @@ object SELF remains unmodified."
   (:documentation "Compile system SELF.")
   (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *verbose*) (init t))
     (or         
-     (with-system-session (s)
+     (with-system-session ()
        (when init (init self))
        (when verbose (mumble "Compiling system ~A" (name self)))
        (compile-component self))
