@@ -60,7 +60,7 @@
 (load-system :rt)
 (compile-system :jpeg)
 (compile-system :sndfile)
-(compile-system :ffi)
+(compile-system :alien)
 (load-system :parse)
 (load-system :cry)
 (load-system :rdb)

@@ -964,14 +964,14 @@ the following extensions:
              ;; (expand-module-provides ,sys)
              ,sys))))))
 
-(defun compile-sys (path &optional output-file)
+(defun compile-sys (path &optional force output-file)
   "Compile a system's defsys file by PATH. Default extension is FSYS."
-  (declare ((or string pathname) path))
-  (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) path)))
-  (checked-compile-file path
-                        :output-file (or output-file (make-pathname :name (pathname-name path) :type "fsys"))
-                        :entry-points '(load-sys))
-  (update-cached-system-file path nil t))
+  (unless (pathnamep path) (setf path (or (when-let ((sys (find-system path))) (path sys)) (probe-file path))))
+  (when (or (recompile-p path) force)
+    (checked-compile-file path
+                          :output-file (or output-file (ensure-fasl-cache-file path "fsys"))
+                          :entry-points '(load-sys))
+    (update-cached-system-file path nil t)))
 
 (defun load-sys (path &optional name)
   "Load a SYS file from PATH. Unlike LOAD-ASD this function calls LOAD
@@ -981,24 +981,22 @@ internally. On success the path is added to the *SYSDEFS* list."
              ((or string pathname) (truename path))
              (symbol (find path *sysdefs* :key 'pathname-name :test 'string-equal)))
            :type pathname))
-    (unless (string-equal (pathname-type path) "fsys")
-      (when-let ((compiled (probe-file (make-pathname :defaults path :type "fsys"))))
-        (setf path compiled)))
-    ;; (mumble "loading systems from ~A" path)
     (with-system-session (s path)
       (declare (ignore s))
-      (when 
-          (restart-case (load path)
-            (load-file (p)
-              :report "Load a different file." 
-              :interactive (lambda () 
-                             (list (setf path (interact-line "File: "))))
+      (let ((%path (or (and (not (recompile-p path)) (probe-file (fasl-cache-file path "fsys"))) path)))
+        (when *verbose* (mumble "loading systems from ~A" %path))
+        (when 
+            (restart-case (load %path)
+              (load-file (p)
+                :report "Load a different file." 
+                :interactive (lambda () 
+                               (list (setf %path (interact-line "File: "))))
               (load p)))
-        (update-cached-system-file path t)
-        (pushnew path *sysdefs* :test 'equal)
-        (if name 
-            (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
-            t)))))
+          (update-cached-system-file path t)
+          (pushnew path *sysdefs* :test 'equal)
+          (if name 
+              (find-system name :default (lambda () (error 'defsys-load-error :name name :pathname path)))
+              t))))))
 
 ;;; Templates
 ;; (define-template-generic (s.load #'subtypep) sym (&key))
@@ -1022,14 +1020,12 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defun compile-grovel-component (comp)
   "Compile a GROVEL-COMPONENT."
   (lety* ((path (path comp) :type pathname)
-         (output (merge-pathnames (make-pathname :directory (pathname-directory path)) *user-fasl-cache*))
-         (output-file (make-pathname :defaults output
-                                     :name (pathname-name path) :type "fasl"))
-         (tmp-c-source (merge-pathnames #p"foo.c" output))
-         (tmp-a-dot-out (merge-pathnames #-win32 #p"a.out" #+win32 #p"a.exe"
-                                         output))
-         (tmp-constants (merge-pathnames #p"constants.lisp-temp"
-                                         output)))
+          (output (fasl-cache-file path))
+          (tmp-c-source (merge-pathnames #p"foo.c" output))
+          (tmp-a-dot-out (merge-pathnames #-win32 #p"a.out" #+win32 #p"a.exe"
+                                          output))
+          (tmp-constants (merge-pathnames #p"constants.lisp-temp"
+                                          output)))
     (sb-grovel::c-constants-extract path tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
     (lety ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out) :type fixnum))
       (unless (= code 0)
@@ -1044,19 +1040,19 @@ internally. On success the path is added to the *SYSDEFS* list."
       (unless (= code 0)
         (error 'sb-grovel::a-dot-out-failed)))
     (multiple-value-bind (out warnings-p failure-p)
-        (uiop:compile-file* tmp-constants :output-file output-file)
-      (uiop:check-lisp-compile-results out warnings-p failure-p))))
+        (checked-compile-file tmp-constants :output-file output)
+      (std/comp:check-lisp-compile-results out warnings-p failure-p))))
 
-(defun compile-component (comp &key (verbose *verbose*))
+(defun compile-component (comp &key (verbose *verbose*) force)
   "Compile a component."
-  (declare (ftype (sfunction (component &rest list) component)))
-  (when (component-recompile-p comp)
+  (declare (ftype (sfunction (component &key (verbose boolean) (force boolean)) component)))
+  (when (or (component-recompile-p comp) force)
     (etypecase comp
-      (mod-component (mapcar 'compile-component (components comp)))
+      (mod-component (mapcar (lambda (x) (compile-component x :verbose verbose :force force)) (components comp)))
       (grovel-component (with-system-file ((path comp) :compile t) (compile-grovel-component comp)))
       (file-component
        (let ((f (path comp)))
-         (when (recompile-p f)
+         (when (or (recompile-p f) force)
            (with-system-file (f :compile t) 
              (checked-compile-file f :output-file (ensure-fasl-cache-file f) :verbose verbose)))))))
   comp)
@@ -1064,15 +1060,18 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defun load-component (comp &rest args)
   "Load a component."
   (declare (ftype (sfunction (component &rest list) component)))
-  (when (component-reload-p comp)
-    (etypecase comp
-      (mod-component (mapcar 'load-component (components comp)))
-      (file-component
-       (let ((f (path comp)))
-         (when (reload-p f)
-           ;; TODO: be smarter about which file to load
-           (with-system-file (f :load t) (apply 'load (resolve-fasl-cache-file f) args)))))))
-  comp)
+  (let ((force (getf args :force)))
+    (when (or (component-reload-p comp) force)
+      (etypecase comp
+        (mod-component (mapcar (lambda (x) (apply 'load-component x args)) (components comp)))
+        (file-component
+         (let ((f (path comp)))
+           (when (or (reload-p f) force)
+             ;; TODO: be smarter about which file to load
+             (with-system-file (f :load t) 
+               (apply 'load (resolve-fasl-cache-file f) 
+                      (std/list:remove-from-plist args :force)))))))))
+    comp)
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t) (fasl-cache (std/os:user-fasl-cache)))
@@ -1093,13 +1092,13 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
-(definline %load-system (sys &optional (verbose *verbose*))
+(definline %load-system (sys &optional (verbose *verbose*) force)
   (declare (optimize (speed 3)))
-  (when (component-reload-p sys)
+  (when (or (component-reload-p sys) force)
     (let ((path (path sys)))
       (with-system-file (path :load t)
         (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
-        (load-component sys)))
+        (load-component sys :force force)))
     sys))
 
 (defun load-system-requires (sys)
@@ -1174,7 +1173,7 @@ object SELF remains unmodified."
        ;; TODO 2025-08-31:
        ;; - build-plan
        (case (plan self)
-         ((or :serial nil) (%load-system self verbose))
+         ((or :serial nil) (%load-system self verbose force))
          (t (nyi! "Unrecognized PLAN keyword"))))
      (and asdf (asdf:load-system (name self) :verbose verbose :force force))))
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
@@ -1186,13 +1185,14 @@ object SELF remains unmodified."
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *verbose*) (init t))
+  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *verbose*) (init t) force)
     (or         
      (with-system-session ()
+       (compile-sys (keywordicate (name self)) force)
        (when init (init self))
        (when verbose (mumble "Compiling system ~A" (name self)))
-       (compile-component self))
-     (and asdf (asdf:compile-system (name self) :verbose verbose))))
+       (compile-component self :verbose verbose :force force))
+     (and asdf (asdf:compile-system (name self) :verbose verbose :force force))))
   (:method ((self symbol) &rest args &key (default :error))
     (remf args :default)
     (apply 'compile-system (find-system self :default default) args)))

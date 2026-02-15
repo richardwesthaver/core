@@ -301,11 +301,14 @@ match."
 
 (sb-ext:define-load-time-global *user-fasl-cache* (user-fasl-cache))
 
-(defun fasl-cache-file (path)
-  (merge-pathnames (make-pathname :type "fasl" :defaults path) *user-fasl-cache*))
+(defun fasl-cache-file (path &optional (type "fasl"))
+  (make-pathname :name (pathname-name path)
+                 :type type
+                 :directory (append (pathname-directory *user-fasl-cache*) 
+                                    (cdr (pathname-directory path)))))
 
-(defun ensure-fasl-cache-file (path)
-  (ensure-directories-exist (fasl-cache-file path) :verbose std/condition:*verbose*))
+(defun ensure-fasl-cache-file (path &optional (type "fasl"))
+  (pathname (ensure-directories-exist (fasl-cache-file path type) :verbose std/condition:*verbose*)))
 
 (defun resolve-fasl-cache-file (file)
   (let ((dir (pathname-directory file))
