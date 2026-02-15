@@ -725,16 +725,16 @@ to be a system which is pushed to the session queue before BODY."
   "Given a FILE, return T if it needs to be reloaded."
   (if-let ((f (cached-system-file file)))
     (lety ((w (setf (getf f :write) (file-write-date file)) :type fixnum)
-          (l (getf f :load) :type fixnum))
-      (or (not l) (> w l)))
+          (l (or (getf f :load) 0) :type fixnum))
+      (> w l))
     t))
 
 (defun recompile-p (file)
   "Given a FILE, return T if it needs to be recompiled."
   (if-let ((f (cached-system-file file)))
-    (lety ((c (getf f :compile) :type (or null fixnum))
+    (lety ((c (or (getf f :compile) 0) :type fixnum)
            (w (setf (getf f :write) (file-write-date file)) :type fixnum))
-      (or (not c) (> w c)))
+      (> w c))
     t))
 
 (defun component-reload-p (comp)
@@ -852,12 +852,13 @@ inputs."))
 
 (defun %parse-component-form (form)
     (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
-        (if (directory-path-p form)
-            (make-instance 'dir-component
-              :name (last (pathname-directory (the pathname form))))
-            (make-instance 'file-component 
-              :type (or (pathname-type (the pathname form)) "lisp")
-              :name (pathname-name (the pathname form))))
+        (lety ((dir (pathname form) :type pathname))
+          (if (directory-path-p dir)
+              (make-instance 'dir-component
+                :name (last (pathname-directory dir)))
+              (make-instance 'file-component 
+                :type (or (pathname-type dir) "lisp")
+                :name (pathname-name dir))))
         (let ((n (cadr form))
               (kind (gethash (car form) *component-class-table*))
               (props (cddr form)))
@@ -896,7 +897,7 @@ inputs."))
 (defun %parse-components-form (form)
   (let ((*default-pathname-defaults* 
           (or (when *defsys* 
-                (make-pathname :directory (pathname-directory (the pathname (system-path (the string *defsys*))))))
+                (make-pathname :directory (pathname-directory (the pathname (system-path *defsys*)))))
               *default-pathname-defaults*)))
     (mapcar '%parse-component-form form)))
 
