@@ -1,4 +1,4 @@
-;;; ffi/tree-sitter/lang.lisp --- Tree-sitter Languages
+;;; alien/tree-sitter/lang.lisp --- Tree-sitter Languages
 
 ;; Tree-sitter language bindings.
 

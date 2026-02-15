@@ -1,5 +1,5 @@
 ;;; ffi.sys --- Ffi Sytem Definitions
-(defsys :ffi
+(defsys :alien
  :require
  (:arrow :blake3 :btrfs :alsa
   :cuda :evdev :glib :gstreamer

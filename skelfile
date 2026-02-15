@@ -23,7 +23,7 @@
  (:asd "core")
  (:sys "core")
  (:mod "std" (:sys "std"))
- (:mod "ffi" (:sys "ffi"))
+ (:mod "alien" (:sys "alien"))
  (:mod "lib")
  (:mod "bin" (:sys "bin"))
  (:mod "skel" (:sys "skel"))

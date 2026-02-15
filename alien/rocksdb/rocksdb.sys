@@ -1,4 +1,4 @@
-;;; ~/comp/core/ffi/rocksdb/rocksdb.sys --- Rocksdb Sytem Definitions
+;;; alien/rocksdb/rocksdb.sys --- Rocksdb Sytem Definitions
 (defsys :rocksdb
  :require (:std :log)
  :components 

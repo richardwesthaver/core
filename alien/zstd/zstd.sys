@@ -1,4 +1,4 @@
-;;; ffi/zstd/zstd.sys --- Zstd Sytem
+;;; alien/zstd/zstd.sys --- Zstd Sytem
 (defsys :zstd
  :require (:std)
  :components ((:pkg "pkg")

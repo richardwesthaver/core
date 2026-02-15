@@ -1,4 +1,4 @@
-;;; ffi/tree-sitter/api.lisp --- High-level API for Tree-sitter library
+;;; alien/tree-sitter/api.lisp --- High-level API for Tree-sitter library
 
 ;; High-level Tree-sitter API
 

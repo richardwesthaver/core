@@ -1,4 +1,4 @@
-;;; ffi/tree-sitter/pkg.lisp --- Tree-sitter FFI
+;;; alien/tree-sitter/pkg.lisp --- Tree-sitter FFI
 
 ;; Tree-sitter FFI for Lisp
 

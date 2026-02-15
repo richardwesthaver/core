@@ -1,4 +1,4 @@
-;;; ffi/xkb/pkg.lisp --- XKBCommon bindings
+;;; alien/xkb/pkg.lisp --- XKBCommon bindings
 
 ;; We use the X Keyboard Configuration Database for keymaps.
 

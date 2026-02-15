@@ -1,4 +1,4 @@
-;;; ~/comp/core/ffi/uring/uring.sys --- Uring Sytem Definitions
+;;; alien/uring/uring.sys --- Uring Sytem Definitions
 (defsys :uring
  :require (:std :obj)
   :components ((:file "pkg")

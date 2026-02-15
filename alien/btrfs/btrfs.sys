@@ -1,4 +1,4 @@
-;;; ~/comp/core/ffi/btrfs/btrfs.sys --- Btrfs Sytem Definitions
+;;; alien/btrfs/btrfs.sys --- Btrfs Sytem Definitions
 (defsys :btrfs
  :require (:std)
  :components ((:file "pkg")

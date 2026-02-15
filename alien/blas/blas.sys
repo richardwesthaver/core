@@ -1,4 +1,4 @@
-;;; ~/comp/core/ffi/blas/blas.sys --- Blas Sytem Definitions
+;;; alien/blas/blas.sys --- Blas Sytem Definitions
 (defsys :blas
  :require (:std :log)
  :components ((:file "blas"))

@@ -1,4 +1,4 @@
-;;; ffi/zstd/pkg.lisp --- ZSTD FFI
+;;; alien/zstd/pkg.lisp --- ZSTD FFI
 
 ;; Zstd compression support for Lisp
 

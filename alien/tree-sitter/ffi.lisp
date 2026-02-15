@@ -1,4 +1,4 @@
-;;; ffi/tree-sitter/ffi.lisp --- Low-level FFI bindings for Tree-sitter
+;;; alien/tree-sitter/ffi.lisp --- Low-level FFI bindings for Tree-sitter
 
 ;;
 
