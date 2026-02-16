@@ -32,6 +32,8 @@
     (:file "makefile")
     (:file "sys")
     (:file "infer")))
+  (:file "net")
+  (:file "srv")
   (:mod "packy"
    :components
    ((:file "pkg")
@@ -60,13 +62,6 @@
     (:file "cfg")
     (:file "srv")
     (:file "cli")))
-  (:mod "net"
-   :components
-   ((:file "var")
-    (:file "server")
-    (:file "client")
-    (:file "endpoint")
-    (:file "srv")))
   (:mod "mpk"
    :components
    ((:file "pkg")

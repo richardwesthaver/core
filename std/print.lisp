@@ -821,6 +821,8 @@ The following three arguments are required:
   (multiple-value-bind (str fargs) (apply 'expand-annotated-string string args)
     (apply 'format output str fargs)))
 
+;; (aformat nil "%(% a b c) %(% d e f)") ;=> "% %"
+
 ;; Standard Annotations
 (defnotation (:std +annotation-prefix+) (stream) (write-char +annotation-prefix+ stream))
 (defnotation (:std #\") (stream) (write-char #\" stream))

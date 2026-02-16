@@ -150,11 +150,11 @@
                               (merge-homedir-pathnames ".corerc"))))))
 
 (defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel :cli :skel)
-  (let ((sb-debug:*backtrace-frame-count* 8))
-    (init :skel)
-    (let ((cmd (or (second *posix-argv*) "show"))
-          (args (cddr *posix-argv*)))
-      (call-interactively cmd args))))
+  (init :skel)
+  (let ((a1 (second *posix-argv*)))
+    (if (command a1)
+        (call-interactively a1 (cddr *posix-argv*))
+        (call "show" (cdr *posix-argv*)))))
 
 (define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))

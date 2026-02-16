@@ -159,8 +159,8 @@
     (compile-system :bin)
     (load-system :bin)
     ;; post-load hooks
-    (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
-    (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
+    ;; (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
+    ;; (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
     (funcall (print (find-module :bin :bin)))))
   (:compile () (compile-lisp :core :force t :verbose t))
   (:install (install-emacs)

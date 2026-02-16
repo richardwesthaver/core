@@ -26,8 +26,8 @@
 (require 'uiop)
 
 (progn
-  (asdf:load-asd (probe-file "~/comp/shed/ppcre/ppcre.asd"))
-  (asdf:load-asd (probe-file "~/comp/core/std/std.asd"))
+  (asdf:load-asd (probe-file "ppcre/ppcre.asd"))
+  (asdf:load-asd (probe-file "std/std.asd"))
   (asdf:load-system :ppcre)
   (asdf:load-system :std :force t))
 (shadowing-import '(reset) :std)
@@ -36,7 +36,6 @@
 (setq *user-fasl-cache* (merge-pathnames (make-pathname :directory '(:relative "cache" "lisp")) *stash*))
 (init :sys :fasl-cache *user-fasl-cache*)
 (load-system :ironclad)
-;; ffi
 (compile-system :uring)
 (compile-system :xkb)
 (compile-system :evdev)
@@ -46,6 +45,7 @@
 (compile-system :blake3)
 (compile-system :keyutils)
 (compile-system :tree-sitter)
+(load-system :xkb)
 (load-system :uring)
 (load-system :zstd)
 (load-system :btrfs)
@@ -60,7 +60,7 @@
 (load-system :rt)
 (compile-system :jpeg)
 (compile-system :sndfile)
-(compile-system :alien)
+(load-system :alien)
 (load-system :parse)
 (load-system :cry)
 (load-system :rdb)
@@ -75,4 +75,5 @@
 (compile-system :core)
 (load-system :core)
 (load-system :bin)
+(init :kbd :keysyms (stash-pathname "kbd.sxp") :input nil)
 (funcall (find-module :bin :bin))

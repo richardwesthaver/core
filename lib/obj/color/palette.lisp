@@ -58,6 +58,10 @@
 (definline find-palette (name)
   (gethash name *color-palettes*))
 
+(definline load-palette (name)
+  (when-let ((p (find-palette name)))
+    (setf *palette* p)))
+
 (defwith palette (name) (*palette* (find-palette name)))
 
 (defun parse-x11-palette (&key

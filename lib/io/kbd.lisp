@@ -798,9 +798,9 @@ can't be opened, else returns nil."
 
 (defconfig kbd-config ()
   ((device)
-   (prefix-key :accessor prefix-key)
-   (escape-key :accessor escape-key)
-   (keymaps :accessor keymaps)))
+   (prefix-key :initform (kbd "s-x") :accessor prefix-key)
+   (escape-key :initform (kbd "C-g") :accessor escape-key)
+   (keymaps :initform nil :accessor keymaps)))
 
 (defmethod make-config ((self (eql :kbd)) &rest args) (apply 'make-instance 'kbd-config args))
 
@@ -833,6 +833,7 @@ can't be opened, else returns nil."
             ((or :escape-key :prefix-key) (setf (slot-value c s) (parse-key v)))))))
     c))
 
-(defmethod init ((self (eql :kbd)) &key (directory "/dev/input/"))
+(defmethod init ((self (eql :kbd)) &key (input "/dev/input/") keysyms)
   (load-kbd-libs)
-  (when directory (setq *keyboards* (get-keyboards directory))))
+  (when keysyms (load-xkb-keysyms-file keysyms))
+  (when input (setq *keyboards* (get-keyboards input))))

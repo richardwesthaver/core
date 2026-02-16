@@ -662,7 +662,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
              (loop for line = (read-line f nil)
                    while line
                    do (push line (data buffer)))
-             (setf (prev buffer) (list buffer)))))
+             (setf (prev buffer) (data buffer)))))
        buffer))
     (list (let ((buffer (make-instance 'text-buffer :data datum)))
             (setf (prev buffer) (data buffer))
@@ -836,7 +836,7 @@ READ-CHORD according to CMDS."
 	      :initform 'lisp-complete
 	      :initarg :complete)
    (history :accessor editor-history)
-   (killring :accessor editor-killring)
+   (killring :accessor editor-killring :type text-buffer)
    (insert :accessor editor-insert-mode
 	   :initform t
 	   :initarg :insert-mode)
@@ -1275,7 +1275,8 @@ completion."
             (setf (get-string *editor*) string
                   (get-point *editor*) point
                   (editor-history *editor*) history)))
-        (let ((*editor* (apply 'make-editor keyword-args)))
+        (progn
+          (setf *editor* (apply 'make-editor keyword-args))
           (with-backend *editor*
             (edit))))))
 
@@ -1456,12 +1457,11 @@ completion."
 
 ;;; HISTORY
 (defun history-previous (chord editor)
-  ;; (declare (ignore chord))
-  (print chord)
-  (print editor)
-  (std:aif (buffer-previous (get-string editor) (editor-history editor))
-           (setf (get-string editor) std:it)
-           (beep editor)))
+  (declare (ignore chord))
+  (let ((p (buffer-previous (get-string editor) (editor-history editor))))
+    (if p
+        (setf (get-string editor) p)
+        (beep editor))))
 
 (defun history-next (chord editor)
   (declare (ignore chord))

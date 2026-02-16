@@ -1057,21 +1057,29 @@ internally. On success the path is added to the *SYSDEFS* list."
              (checked-compile-file f :output-file (ensure-fasl-cache-file f) :verbose verbose)))))))
   comp)
 
-(defun load-component (comp &rest args)
+(defun load-component-file (comp &key force compile verbose)
+  (when compile (compile-component comp :verbose verbose :force force))
+  (load-component comp :force force :verbose verbose))
+
+(defun load-component (comp &key force compile (verbose *verbose*))
   "Load a component."
-  (declare (ftype (sfunction (component &rest list) component)))
-  (let ((force (getf args :force)))
-    (when (or (component-reload-p comp) force)
-      (etypecase comp
-        (mod-component (mapcar (lambda (x) (apply 'load-component x args)) (components comp)))
-        (file-component
-         (let ((f (path comp)))
-           (when (or (reload-p f) force)
-             ;; TODO: be smarter about which file to load
-             (with-system-file (f :load t) 
-               (apply 'load (resolve-fasl-cache-file f) 
-                      (std/list:remove-from-plist args :force)))))))))
-    comp)
+  (declare (ftype (sfunction (component &key (force boolean) (compile boolean)) component)))
+  (when (or (component-reload-p comp) force)
+    (etypecase comp
+      (mod-component (mapcar (lambda (x) (load-component-file x :force force :compile compile :verbose verbose))
+                             (components comp)))
+      (file-component
+       (let ((f (path comp)))
+         (when (or (reload-p f) force)
+           ;; TODO: be smarter about which file to load
+           (with-system-file (f :load t) 
+             (typecase comp
+               (grovel-component 
+                (compile-grovel-component comp) 
+                (load (resolve-fasl-cache-file f) :verbose verbose))
+               (t (compile-and-load f :output-file (ensure-fasl-cache-file f)
+                                      :verbose verbose)))))))))
+  comp)
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t) (fasl-cache (std/os:user-fasl-cache)))

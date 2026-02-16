@@ -136,9 +136,9 @@ documentation string."
   "Splice, compile, and eval a FORM."
   (funcall (compile nil `(lambda () ,@form))))
 
-(defun compile-and-load (file &key (output-file ""))
+(defun compile-and-load (file &key (output-file "") verbose)
   "Utility function which compiles a lisp FILE and loads the resulting fasl file."
-  (load (compile-file (pathname file) :output-file output-file)))
+  (load (compile-file (pathname file) :output-file output-file :verbose verbose) :verbose verbose))
 
 ;; from jackdaniel's Dynamic Slots, see also META/DYNAMIC
 (defmacro dlet (bindings &body body)

@@ -391,7 +391,8 @@
    :*palette* :palette :base-color-key :find-palette
    :*color-palettes* :base-color-palette-p :get-color :style 
    :make-palette :theme :with-palette :call-with-palette
-   :remove-palette :*theme* :find-theme :load-theme :deftheme))
+   :remove-palette :*theme* :find-theme :load-theme 
+   :deftheme :load-palette))
 
 (defpkg :obj/time
   (:nicknames :time)
