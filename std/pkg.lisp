@@ -3,14 +3,7 @@
 ;;
 
 ;;; Code:
-(pkg:defpkg :std-int
-  (:use :cl)
-  (:use-reexport :std/defpkg)
-  (:export :*std-packages*))
-
-(in-package :std-int)
-(defparameter *std-packages* nil)
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *std-packages* :test 'string=)))
+#-std (in-package :std/defpkg)
 
 (defpkg :std/sym
   (:use :cl)
@@ -210,7 +203,7 @@
    :wrapped-error
    :wrap-error))
 
-(defpackage :std/named-readtables
+(defpkg :std/named-readtables
   (:use :cl :std/prim :std/condition)
   (:export
    :defreadtable
@@ -242,7 +235,7 @@
    :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
    :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
    :assemble :without-scheduling :inst :inst* 
-   :*emit-cfasl* :compile-component :describe-component :describe-ir2-component
+   :*emit-cfasl* :describe-component :describe-ir2-component
    :make-file-source-info :make-lisp-source-info
    :def-ir1-translator :defknown :ctype-of :type-specifier)
   (:import-from :sb-c :vop)
@@ -261,7 +254,7 @@
    :*backend-sbs* :*backend-sc-names* :emit :assemble
    :without-scheduling :dump-symbolic-asm :inst :inst*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
-   :*compile-progress* :*emit-cfasl* :compile-component :*compile-component-hook*
+   :*compile-progress* :*emit-cfasl* :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
@@ -1449,7 +1442,7 @@
     :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition
     :std/print :std/meta :std/path :std/sym
-    :std/macs :std/type :std/os)
+    :std/macs :std/type :std/os :std/defpkg)
   (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)
@@ -1481,6 +1474,8 @@
    :load-sys
    :compile-sys
    :system
+   :load-component
+   :compile-component
    :component
    :mod-component
    :file-component
@@ -1488,6 +1483,7 @@
    :dir-component
    :grovel-component
    :component-type
+   :component-package
    :find-system
    :save-system
    :make-system
@@ -1511,8 +1507,6 @@
    :+sys-extension+
    :find-component))
 
-(setq *defpkg-hook* nil)
-
 (defpkg :std
   (:use :cl)
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
@@ -1531,7 +1525,3 @@
   (:use :std-lisp :sb-ext :sb-alien 
     :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
     :sb-debug :std/defsys))
-
-(eval-when (:load-toplevel)
-  (pushnew :std *features*)
-  (setq *default-package* "STD-USER"))

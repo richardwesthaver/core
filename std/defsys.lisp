@@ -147,9 +147,20 @@ ASDF:DEFSYSTEM.")
   ((type :accessor component-type))
   (:keyword :file))
 
-(defcomponent pkg-component (file-component) ()
-  (:documentation "A FILE-COMPONENT which contains DEFPACKAGE-like forms.")
-  (:keyword :pkg))
+(defcomponent pkg-component (file-component) 
+  (use default
+    (package :accessor component-package :initform nil))
+  (:keyword :pkg)
+  (:documentation "A FILE-COMPONENT which contains a collection of packages. The *PACKAGE* is
+automatically set to an internal-only package based on the system name and
+supplied keywords. The *DEFPKG-HOOK* is bound to a function which collects new
+package-names defined with DEFPKG inside the specified file."))
+
+(defmethod initialize-instance :after ((self pkg-component) &key package (use *default-pkg-component-use*) default)
+  (unless (packagep (slot-value self 'std/defsys::package))
+    (when default (setq *default-package* default))
+    (setf (slot-value self 'std/defsys::package) (make-package (or package (gensym (name self))) 
+                                                               :use use))))
 
 (defcomponent mod-component (component) 
   ((components :accessor components))
@@ -174,9 +185,8 @@ ASDF:DEFSYSTEM.")
 directory recursively.")
   (:keyword :dir))
 
-;; TODO 2025-11-18: full compatibility with SB-GROVEL interface to ASDF
 (defcomponent grovel-component (file-component) 
-  (package)
+  ((package :accessor component-package))
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
   (:keyword :grovel))
 
@@ -574,13 +584,13 @@ system jobs to be executed in an async context."
      :name (name instance)
      :path (path instance)
      :type (component-type instance)
-     :package (grovel-component-package instance)))
+     :package (component-package instance)))
   (((instance sb-grovel:grovel-constants-file) (new-class-name (eql 'grovel-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
      :path (asdf:component-pathname instance)
      :type (asdf:file-type instance)
-     :package (grovel-component-package instance)))
+     :package (component-package instance)))
   (((instance asdf:module) (new-class-name (eql 'mod-component)) &key)
    (make-instance new-class-name
      :name (asdf:component-name instance)
@@ -1009,13 +1019,18 @@ internally. On success the path is added to the *SYSDEFS* list."
 ;; (defmacro define-system-method ())
 ;; (defmacro define-component-method ())
 
-(defun read-component (comp &key (external-format :default))
+(defun read-component (comp &key (external-format :default) (package *package*))
   "Read a component from its PATH slot."
   (declare (ftype (sfunction (component &key (external-format t)) component)))
   (etypecase comp
     (mod-component (mapcar 'read-component (components comp)))
-    (component (ignore-errors (read-lisp-file (path comp) :external-format external-format)))
-    ((or string pathname) (read-lisp-file comp :external-format external-format))))
+    ((or grovel-component pkg-component)
+     (with-safe-io-syntax ((or (when (slot-boundp comp 'std/defsys::package) (slot-value comp 'std/defsys::package))
+                               *package*))
+       (read-lisp-file (path comp) :external-format external-format)))
+    (component (ignore-errors (with-safe-io-syntax (package)
+                                (read-lisp-file (path comp) :external-format external-format))))
+    ((or string pathname) (with-safe-io-syntax (package) (read-lisp-file comp :external-format external-format)))))
 
 (defun compile-grovel-component (comp)
   "Compile a GROVEL-COMPONENT."
@@ -1043,6 +1058,15 @@ internally. On success the path is added to the *SYSDEFS* list."
         (checked-compile-file tmp-constants :output-file output)
       (std/comp:check-lisp-compile-results out warnings-p failure-p))))
 
+(defun compile-pkg-component (comp)
+  "Compile a PKG-COMPONENT."
+  (let ((output (ensure-fasl-cache-file (path comp))))
+    (multiple-value-bind (out warnings-p failure-p)
+        ;; REVIEW 2026-02-15: does this do anything?
+        (pkg:with-package (component-package comp)
+          (checked-compile-file (path comp) :output-file output :verbose *verbose*))
+      (std/comp:check-lisp-compile-results out warnings-p failure-p))))
+
 (defun compile-component (comp &key (verbose *verbose*) force)
   "Compile a component."
   (declare (ftype (sfunction (component &key (verbose boolean) (force boolean)) component)))
@@ -1050,6 +1074,7 @@ internally. On success the path is added to the *SYSDEFS* list."
     (etypecase comp
       (mod-component (mapcar (lambda (x) (compile-component x :verbose verbose :force force)) (components comp)))
       (grovel-component (with-system-file ((path comp) :compile t) (compile-grovel-component comp)))
+      (pkg-component (with-system-file ((path comp) :compile t) (compile-pkg-component comp)))
       (file-component
        (let ((f (path comp)))
          (when (or (recompile-p f) force)
@@ -1077,6 +1102,12 @@ internally. On success the path is added to the *SYSDEFS* list."
                (grovel-component 
                 (compile-grovel-component comp) 
                 (load (resolve-fasl-cache-file f) :verbose verbose))
+               (pkg-component
+                (compile-component comp :verbose verbose :force force)
+                (let ((*package* (component-package comp))
+                      (pkg:*defpkg-hook* (lambda (x) (pushnew (package-name x) pkg:*component-packages* :test 'string=))))
+                  (prog1 (load (resolve-fasl-cache-file f) :verbose verbose)
+                    (setq pkg:*component-packages* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)
                                       :verbose verbose)))))))))
   comp)

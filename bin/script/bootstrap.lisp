@@ -25,11 +25,10 @@
 (require 'asdf)
 (require 'uiop)
 
-(progn
-  (asdf:load-asd (probe-file "ppcre/ppcre.asd"))
-  (asdf:load-asd (probe-file "std/std.asd"))
-  (asdf:load-system :ppcre)
-  (asdf:load-system :std :force t))
+(asdf:load-asd (probe-file "ppcre/ppcre.asd"))
+(asdf:load-asd (probe-file "std/std.asd"))
+(asdf:load-system :ppcre)
+(asdf:load-system :std :force t)
 (shadowing-import '(reset) :std)
 (in-package :std-user)
 (setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))

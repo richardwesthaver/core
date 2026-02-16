@@ -24,7 +24,8 @@
    :*default-package-file-name*
    :test-package-p
    :module-package-p
-   :internal-package-p))
+   :internal-package-p
+   :*component-packages* :*default-pkg-component-use*))
 
 (in-package :std/defpkg)
 
@@ -35,6 +36,10 @@
 definitions.")
 
 (defparameter *defpkg-hook* nil)
+
+(defparameter *component-packages* nil)
+
+(defvar *default-pkg-component-use* '(#:cl #:std/defpkg))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun find-package* (package-designator &optional (error t))

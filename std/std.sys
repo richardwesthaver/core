@@ -15,7 +15,7 @@
  :require (:ppcre)
  :components 
  ((:file "defpkg")
-  (:pkg "pkg")
+  (:pkg "pkg" #+nil (:default :std-user))
   (:file "condition")
   (:file "sym")
   (:file "list")
