@@ -31,8 +31,11 @@
 (defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
-(defvar *system-cache-directory* #l"user:cache;lisp;sys;")
-(defvar *system-data-directory* #l"user:data;lisp;sys;")
+(defvar *system-cache-directory* (xdg-cache-directory "lisp/sys")
+  "Cached system data directory.")
+
+(defvar *system-data-directory* (xdg-data-directory "lisp/sys")
+  "Persistent system data directory.")
 
 (defvar *component-class-table* (make-hash-table))
 (defvar *test-system* :rt)
@@ -56,7 +59,9 @@ ASDF:DEFSYSTEM.")
   :test 'string=
   :documentation "The default file extension used in system definitions.")
 
-(defvar *module* nil "The name of the current module or NIL.")
+(defvar *module* nil "The name of the current module or NIL. This gets set to the name of a SYSTEM
+in a call to INIT.")
+
 (defvar *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
 
@@ -159,8 +164,8 @@ package-names defined with DEFPKG inside the specified file."))
 (defmethod initialize-instance :after ((self pkg-component) &key package (use *default-pkg-component-use*) default)
   (unless (packagep (slot-value self 'std/defsys::package))
     (when default (setq *default-package* default))
-    (setf (slot-value self 'std/defsys::package) (make-package (or package (gensym (name self))) 
-                                                               :use use))))
+    (setf (slot-value self 'std/defsys::package) 
+          (make-package (or package (gensym (name self))) :use use))))
 
 (defcomponent mod-component (component) 
   ((components :accessor components))
@@ -380,10 +385,9 @@ objects of type COMPONENT."
 
 ;; Note that calling INIT on a SYSTEM or MODULE is not the same as loading it
 ;; - the idea is that INIT prepares the current image so that operations don't
-;; need to concern themselves with checking for external dependencies. Note
-;; that internal dependencies still need to be coordinated between operations
-;; - that's what the system plan is for.
-
+;; need to concern themselves with checking for external
+;; dependencies. Internal dependencies still need to be coordinated between
+;; operations - that's what the system plan is for.
 (defclass module ()
   ((name :initarg :name :accessor name)
    (hook :initarg :hook :type hook :accessor hook)
@@ -679,6 +683,15 @@ for processing.")
     ;; A queue of system tasks.
     (tasks (make-queue :capacity *system-task-capacity*))))
 
+(defvar *system-kernel* (make-kernel #'std/thread::%work))
+
+(defclass system-worker (task-worker) ()
+  (:documentation "A worker created in a SYSTEM-SESSION pool.")
+  (:default-initargs 
+   :name "sys"
+   :kernel *system-kernel*
+   :bind (append *default-special-bindings* '((*kernel* *system-kernel*)))))
+
 (defmethod start ((self system-session))
   (start (system-session-pool self)))
 
@@ -970,7 +983,7 @@ the following extensions:
                                                                         `(lambda () ,@(cdr x)))))))
                    ',hooks)
              (expand-component-requires ,sys)
-             (register-system ,name ,sys)
+             (setf (gethash ,name *system-table*) ,sys)
              ;; (expand-module-provides ,sys)
              ,sys))))))
 
@@ -1113,14 +1126,13 @@ internally. On success the path is added to the *SYSDEFS* list."
   comp)
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool t) (fasl-cache (std/os:user-fasl-cache)))
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset 
+                                        (fasl-cache (std/os:user-fasl-cache)))
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   ;; (init :xdg)
   (when sysdefs (setq *sysdefs* sysdefs))
-  (setq *system-table* (make-hash-table)
-        *system-session* (make-system-session 
-                          :pool (when pool (make-thread-pool (std/alien:num-cpus) :name :sys)))
+  (setf *system-table* (make-hash-table)
         *module* nil
         *module-table* (make-hash-table :test 'equal)
         *user-fasl-cache* (ensure-directories-exist fasl-cache))
@@ -1128,6 +1140,14 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (ensure-directories-exist *system-data-directory*)
   (ensure-directories-exist *system-cache-directory*)
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
+  (let ((pool (when pool
+                (make-thread-pool (std/alien:num-cpus) 
+                                  :name :sys
+                                  :worker-class 'system-worker))))
+    (cond
+      ((or reset (not *system-session*)) (setf *system-session* (make-system-session :pool pool)))
+      (pool
+       (setf (system-session-pool *system-session*) pool))))
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
   (values))
 
@@ -1146,7 +1166,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
      (if (atom x)
          (if-let ((s (find-system x)))
            (when (component-reload-p s)
-             (%load-system s))
+             (%load-system s *verbose*))
            (simple-system-error "System not found: ~A" x))
          (apply 'load-module x)))
    (slot-value sys 'std/defsys::require)))
@@ -1166,6 +1186,8 @@ object SELF remains unmodified."
   (init-module self)
   ;; then we call providers
   (call-system-providers self)
+  ;; and set variables
+  (setf *module* (name self))
   self)
 
 ;; (typecase x
@@ -1176,11 +1198,6 @@ object SELF remains unmodified."
 ;;   ;; otherwise return as-is
 ;;   (t x)))
 ;; (slot-value self 'provide)))
-
-(defgeneric register-system (name self)
-  (:documentation "Register system SELF as NAME. This is called during DEFSYS.")
-  (:method (name self)
-    (setf (gethash name *system-table*) self)))
 
 (defgeneric find-system (self &key &allow-other-keys)
   (:method ((self t) &key default (asdf *asdf-compatibility*))

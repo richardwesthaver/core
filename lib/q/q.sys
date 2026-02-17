@@ -11,7 +11,7 @@
  :provide 
  ((:tests :require (:rt :q :log)
    :components
-   ((:module "tests"
+   ((:mod "tests"
      :components ((:file "pkg")
                   (:file "fuzz")
                   (:file "suite")))))))

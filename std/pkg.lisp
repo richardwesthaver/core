@@ -260,6 +260,7 @@
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
    :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
    :print-arguments :ea
+   :without-compiler-notes
    :checked-compile :runtime :asm-search :inspect-ir
    :compile-condition :compile-condition-context-format
    :compile-condition-context-arguments :compile-condition-description
@@ -1498,7 +1499,6 @@
    :with-module
    :load-system
    :compile-system
-   :register-system
    :test-system
    :with-system-session
    :make-system-session

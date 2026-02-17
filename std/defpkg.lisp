@@ -22,9 +22,9 @@
    :with-package :define-lisp-package
    :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except
    :*default-package-file-name*
-   :test-package-p
+           :test-package-p
    :module-package-p
-   :internal-package-p
+           :internal-package-p
    :*component-packages* :*default-pkg-component-use*))
 
 (in-package :std/defpkg)
@@ -42,6 +42,13 @@ definitions.")
 (defvar *default-pkg-component-use* '(#:cl #:std/defpkg))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
+  (defmacro without-package-warnings (&body body)
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (locally
+           (declare (sb-ext:muffle-conditions sb-kernel::package-at-variance))
+         (handler-bind
+             ((sb-kernel::package-at-variance #'muffle-warning))
+           ,@body))))
   (defun find-package* (package-designator &optional (error t))
     "Alternative to FIND-PACKAGE with optional error."
     (let ((package (find-package package-designator)))
@@ -260,7 +267,6 @@ and optionally nuking all symbols as well."
                    :prefix (or prefix (format nil "__~A__" (package-name p))) keys)))
       (record-fishy (list :rename-away (package-names p) new-name))
       (rename-package p new-name))))
-
 
 ;;; Communicable representation of symbol and package information
 (eval-when (:load-toplevel :compile-toplevel :execute)
@@ -562,104 +568,105 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
                               import-from export intern
                               recycle mix reexport
                               unintern package-local-nicknames lock implements)
-    (let* ((package-name (string name))
-	   (nicknames (mapcar #'string nicknames))
-           (names (cons package-name nicknames))
-           (previous (packages-from-names names))
-           (discarded (cdr previous))
-           (to-delete ())
-           (package (or (first previous) (make-package package-name :nicknames nicknames)))
-           (recycle (packages-from-names recycle))
-           (use (mapcar 'find-package* use))
-           (mix (mapcar 'find-package* mix))
-           (reexport (mapcar 'find-package* reexport))
-           (shadow (mapcar 'string shadow))
-           (export (mapcar 'string export))
-	   (intern (mapcar 'string intern))
-	   (implements (mapcar 'find-package* implements))
-           (unintern (mapcar 'string unintern))
-           (shadowed (make-hash-table :test 'equal)) ; string to bool
-           (imported (make-hash-table :test 'equal)) ; string to bool
-           (exported (make-hash-table :test 'equal)) ; string to bool
-           ;; string to list home package and use package:
-           (inherited (make-hash-table :test 'equal)))
-      (when-package-fishiness (record-fishy package-name))
-      (when documentation (setf (documentation package t) documentation))
-      (when lock (sb-ext:lock-package package))
-      (loop for p in (set-difference implements (sb-ext:package-implements-list package))
-            do (sb-ext:add-implementation-package p package))
-      (loop for p in package-local-nicknames
-	    do (sb-ext:add-package-local-nickname (pop p) (pop p) package))
-      (loop :for p :in (set-difference (package-use-list package) (append mix use))
-            :do (note-package-fishiness :over-use name (package-names p))
-                (unuse-package p package))
-      (loop :for p :in discarded
-            :for n = (remove-if #'(lambda (x) (member x names :test 'equal))
-                                (package-names p))
-            :do (note-package-fishiness :nickname name (package-names p))
-                (cond (n (rename-package p (first n) (rest n)))
-                      (t (rename-package-away p)
-                         (push p to-delete))))
-      (rename-package package package-name nicknames)
-      (dolist (name unintern)
-        (multiple-value-bind (existing status) (find-symbol name package)
-          (when status
-            (unless (eq status :inherited)
+    (without-package-warnings
+      (let* ((package-name (string name))
+	     (nicknames (mapcar #'string nicknames))
+             (names (cons package-name nicknames))
+             (previous (packages-from-names names))
+             (discarded (cdr previous))
+             (to-delete ())
+             (package (or (first previous) (make-package package-name :nicknames nicknames)))
+             (recycle (packages-from-names recycle))
+             (use (mapcar 'find-package* use))
+             (mix (mapcar 'find-package* mix))
+             (reexport (mapcar 'find-package* reexport))
+             (shadow (mapcar 'string shadow))
+             (export (mapcar 'string export))
+	     (intern (mapcar 'string intern))
+	     (implements (mapcar 'find-package* implements))
+             (unintern (mapcar 'string unintern))
+             (shadowed (make-hash-table :test 'equal)) ; string to bool
+             (imported (make-hash-table :test 'equal)) ; string to bool
+             (exported (make-hash-table :test 'equal)) ; string to bool
+             ;; string to list home package and use package:
+             (inherited (make-hash-table :test 'equal)))
+        (when-package-fishiness (record-fishy package-name))
+        (when documentation (setf (documentation package t) documentation))
+        (when lock (sb-ext:lock-package package))
+        (loop for p in (set-difference implements (sb-ext:package-implements-list package))
+              do (sb-ext:add-implementation-package p package))
+        (loop for p in package-local-nicknames
+	      do (sb-ext:add-package-local-nickname (pop p) (pop p) package))
+        (loop :for p :in (set-difference (package-use-list package) (append mix use))
+              :do (note-package-fishiness :over-use name (package-names p))
+                  (unuse-package p package))
+        (loop :for p :in discarded
+              :for n = (remove-if #'(lambda (x) (member x names :test 'equal))
+                                  (package-names p))
+              :do (note-package-fishiness :nickname name (package-names p))
+                  (cond (n (rename-package p (first n) (rest n)))
+                        (t (rename-package-away p)
+                           (push p to-delete))))
+        (rename-package package package-name nicknames)
+        (dolist (name unintern)
+          (multiple-value-bind (existing status) (find-symbol name package)
+            (when status
+              (unless (eq status :inherited)
+                (note-package-fishiness
+                 :unintern (package-name package) name (symbol-package-name existing) status)
+                (unintern* name package nil)))))
+        (dolist (name export)
+          (setf (gethash name exported) t))
+        (dolist (p reexport)
+          (do-external-symbols (sym p)
+            (setf (gethash (string sym) exported) t)))
+        (do-external-symbols (sym package)
+          (let ((name (symbol-name sym)))
+            (unless (gethash name exported)
               (note-package-fishiness
-               :unintern (package-name package) name (symbol-package-name existing) status)
-              (unintern* name package nil)))))
-      (dolist (name export)
-        (setf (gethash name exported) t))
-      (dolist (p reexport)
-        (do-external-symbols (sym p)
-          (setf (gethash (string sym) exported) t)))
-      (do-external-symbols (sym package)
-        (let ((name (symbol-name sym)))
-          (unless (gethash name exported)
-            (note-package-fishiness
-             :over-export (package-name package) name
-             (or (home-package-p sym package) (symbol-package-name sym)))
-            (unexport sym package))))
-      (dolist (name shadow)
-        (setf (gethash name shadowed) t)
-        (multiple-value-bind (existing status) (find-symbol name package)
-          (multiple-value-bind (recycled previous) (recycle-symbol name recycle exported)
-            (let ((shadowing (and status (symbol-shadowing-p existing package))))
-              (cond
-                ((eq previous package))
-                (previous
-                 (rehome-symbol recycled package))
-                ((or (member status '(nil :inherited))
-                     (home-package-p existing package)))
-                (t
-                 (let ((dummy (make-symbol name)))
-                   (note-package-fishiness
-                    :shadow-imported (package-name package) name
-                    (symbol-package-name existing) status shadowing)
-                   (shadowing-import* dummy package)
-                   (import* dummy package)))))))
-        (shadow* name package))
-      (loop :for (p . syms) :in shadowing-import-from
-            :for pp = (find-package* p) :do
-               (dolist (sym syms) (ensure-shadowing-import (string sym) package pp shadowed imported)))
-      (loop :for p :in mix
-            :for pp = (find-package* p) :do
-               (do-external-symbols (sym pp) (ensure-mix (symbol-name sym) sym package pp shadowed imported inherited)))
-      (loop :for (p . syms) :in import-from
-            :for pp = (find-package p) :do
-               (dolist (sym syms) (ensure-import (symbol-name sym) package pp shadowed imported)))
-      (dolist (p (append use mix))
-        (do-external-symbols (sym p) (ensure-inherited (string sym) sym package p nil shadowed imported inherited))
-        (use-package p package))
-      (loop :for name :being :the :hash-keys :of exported :do
-               (ensure-symbol name package t recycle shadowed imported inherited exported)
-               (ensure-export name package recycle))
-      (dolist (name intern)
-        (ensure-symbol name package t recycle shadowed imported inherited exported))
-      (do-symbols (sym package)
-        (ensure-symbol (symbol-name sym) package nil recycle shadowed imported inherited exported))
-      (map () 'delete-package* to-delete)
-      package)))
+               :over-export (package-name package) name
+               (or (home-package-p sym package) (symbol-package-name sym)))
+              (unexport sym package))))
+        (dolist (name shadow)
+          (setf (gethash name shadowed) t)
+          (multiple-value-bind (existing status) (find-symbol name package)
+            (multiple-value-bind (recycled previous) (recycle-symbol name recycle exported)
+              (let ((shadowing (and status (symbol-shadowing-p existing package))))
+                (cond
+                  ((eq previous package))
+                  (previous
+                   (rehome-symbol recycled package))
+                  ((or (member status '(nil :inherited))
+                       (home-package-p existing package)))
+                  (t
+                   (let ((dummy (make-symbol name)))
+                     (note-package-fishiness
+                      :shadow-imported (package-name package) name
+                      (symbol-package-name existing) status shadowing)
+                     (shadowing-import* dummy package)
+                     (import* dummy package)))))))
+          (shadow* name package))
+        (loop :for (p . syms) :in shadowing-import-from
+              :for pp = (find-package* p) :do
+                 (dolist (sym syms) (ensure-shadowing-import (string sym) package pp shadowed imported)))
+        (loop :for p :in mix
+              :for pp = (find-package* p) :do
+                 (do-external-symbols (sym pp) (ensure-mix (symbol-name sym) sym package pp shadowed imported inherited)))
+        (loop :for (p . syms) :in import-from
+              :for pp = (find-package p) :do
+                 (dolist (sym syms) (ensure-import (symbol-name sym) package pp shadowed imported)))
+        (dolist (p (append use mix))
+          (do-external-symbols (sym p) (ensure-inherited (string sym) sym package p nil shadowed imported inherited))
+          (use-package p package))
+        (loop :for name :being :the :hash-keys :of exported :do
+                 (ensure-symbol name package t recycle shadowed imported inherited exported)
+                 (ensure-export name package recycle))
+        (dolist (name intern)
+          (ensure-symbol name package t recycle shadowed imported inherited exported))
+        (do-symbols (sym package)
+          (ensure-symbol (symbol-name sym) package nil recycle shadowed imported inherited exported))
+        (map () 'delete-package* to-delete)
+        package))))
 
 (defmacro %defpkg* (pkg args)
   "Define a new 'prelude' package with NAME (car args) which exports SYMBOLS (cdr
@@ -748,15 +755,11 @@ defined."
   (multiple-value-bind (form preludes) (parse-defpkg-form package clauses)
     (let ((pkg `(apply 'ensure-package ',form))
           (prd (mapcar (lambda (x) `(%defpkg* ',(car form) ',x)) preludes)))
-      `(eval-when (:compile-toplevel :load-toplevel :execute)
-         (locally
-             (declare (sb-ext:muffle-conditions sb-kernel::package-at-variance))
-           (handler-bind
-               ((sb-kernel::package-at-variance #'muffle-warning))
-             (prog1 (if #1=*defpkg-hook*
-                        (funcall #1# ,pkg)
-                        ,pkg)
-               ,@(when prd `(,@prd)))))))))
+      `(without-package-warnings
+         (prog1 (if #1=*defpkg-hook*
+                    (funcall #1# ,pkg)
+                    ,pkg)
+           ,@(when prd `(,@prd)))))))
 
 (defmacro define-lisp-package (package)
   "Define a lisp package based on target PACKAGE which transparently exports all
@@ -768,12 +771,13 @@ package."
            (pkg-shadows (intersection (package-shadowing-symbols package)
                                       pkg-externs))
            (cl-externs (externals-of "COMMON-LISP")))
-      `(defpackage ,(sb-int:symbolicate package "-LISP")
-         (:use "COMMON-LISP")
-         (:shadowing-import-from ,package ,@pkg-shadows)
-         (:import-from ,package ,@(set-difference pkg-externs pkg-shadows))
-         (:export ,@cl-externs)
-         (:export ,@pkg-externs)))))
+      `(without-package-warnings
+         (defpackage ,(sb-int:symbolicate package "-LISP")
+           (:use "COMMON-LISP")
+           (:shadowing-import-from ,package ,@pkg-shadows)
+           (:import-from ,package ,@(set-difference pkg-externs pkg-shadows))
+           (:export ,@cl-externs)
+           (:export ,@pkg-externs))))))
 
 (defmacro with-package (pkg &body body)
   "Execute BODY within the package PKG."
@@ -788,10 +792,11 @@ package."
          (export-list (loop for i in (remove-duplicates ,export-symbols) collect
                                (intern (format nil "~a" i) :keyword)))
          (body ',body))
-     (eval `(defpackage ,,name
-              ,@body
-              (:shadow ,@shadow-list)
-              (:export ,@export-list)))))
+     (eval `(without-package-warnings 
+              (defpackage ,,name
+                ,@body
+                (:shadow ,@shadow-list)
+                (:export ,@export-list))))))
 
 ;; Helper function for blacklisting symbols when tracing whole packages.
 (defun package-symbols-except (name &rest exceptions)

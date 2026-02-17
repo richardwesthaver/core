@@ -151,9 +151,10 @@
 
 (defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel :cli :skel)
   (init :skel)
-  (let ((a1 (second *posix-argv*)))
-    (if (command a1)
-        (call-interactively a1 (cddr *posix-argv*))
+  (let ((a1 (second *posix-argv*))
+        (a2 (cddr *posix-argv*)))
+    (if (command a1) 
+        (if a2 (call-interactively a1 a2) (exec a1))
         (call "show" (cdr *posix-argv*)))))
 
 (define-cli "skel" #'start-skel

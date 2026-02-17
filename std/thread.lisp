@@ -458,15 +458,19 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
    (%tx :initform (make-queue :capacity *default-worker-tx-capacity*))))
 
 (defclass worker (worker-status)
-  ((thread :initform (make-ephemeral-thread (symbol-name (gensym "worker")))
-	   :accessor worker-thread
+  ((name :allocation :class :initarg :name :initform "worker")
+   (thread :accessor worker-thread
 	   :initarg :thread)
+   ;; REVIEW 2026-02-16: consider making this class-allocated
    (kernel :initform *worker-kernel* :accessor kernel)
    (work :accessor work :type spin-queue :initarg :work)
    (idx :type array-index :initarg :idx :accessor idx)
    (bind :type list :accessor worker-bind :initarg :bind :initform *default-special-bindings* :accessor bind)))
 
 (defmethod name ((self worker)) (thread-name (worker-thread self)))
+
+(defmethod initialize-instance :after ((self worker) &key thread &allow-other-keys)
+  (unless thread (setf (worker-thread self) (make-ephemeral-thread (symbol-name (gensym (slot-value self 'name)))))))
 
 (defmethod print-object ((self worker) stream)
   (let* ((thread (worker-thread self))
@@ -720,6 +724,11 @@ WORKER threads."))
    (scope :initarg :scope))
   (:documentation "Supervisors are threads which are responsible for a set of worker threads
 within their DOMAIN and SCOPE."))
+
+(defmethod initialize-instance :before ((self supervisor) &key name thread &allow-other-keys)
+  (unless thread
+    (when name
+      (setf (supervisor-thread self) (make-ephemeral-thread (symbol-name (gensym name)))))))
 
 (defmethod initialize-instance :after ((self supervisor) &key &allow-other-keys)
   (push (supervisor-thread self) *super-threads*))

@@ -801,3 +801,6 @@ possibly in a different process. Otherwise just call THUNK."
   (remf args :warnings-file)
   (with-saved-deferred-warnings (warnings-file)
     (apply 'compile-file path args)))
+
+(defmacro without-compiler-notes (&body body)
+  `(locally (declare (sb-ext:muffle-conditions sb-ext:compiler-note)) ,@body))
