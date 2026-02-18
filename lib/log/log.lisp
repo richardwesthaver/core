@@ -49,8 +49,6 @@ function in which case it is used as the function value of
 (defun init-log-timestamp ()
   (setq *log-timestamp* (get-internal-real-time)))
 
-;; TODO 2023-09-20: (declaim (inline log-timestamp-source)) ;; this
-;; probably shouldn't be inlined.. bench it
 (defun log-timestamp-source ()
   (typecase *log-timestamp*
     (function (funcall *log-timestamp*))
@@ -273,9 +271,7 @@ function 'NAME-P'."
       (rotate-file-sink obj))))
 
 (defclass level-filter (filter)
-  ((level :initform *log-level* :accessor level))
-  (:default-initargs
-   :level :info))
+  ((level :initform *log-level* :accessor level)))
 
 (defmethod initialize-instance :after ((filter level-filter) &key level)
   (setf (level filter) level))
@@ -469,15 +465,15 @@ first element is of type LOGGER, insert into that object instead."
 ;;; Utils
 ;; levels used in WM: 1-5,7[1],10
 (defun dformat (ilevel fmt &rest args)
-  (let ((lvls #.(1- (length *log-levels*)))
-        (level (+ ilevel 2))) ;; always force the range to (:WARN[0] :INFO :DEBUG :TRACE)
+  (let* ((lvls #.(length *log-levels*))
+         (level (min (1+ ilevel) (1- lvls)))) ;; always force the range to (:WARN[0] :INFO :DEBUG :TRACE)
     (log-message (svref *log-levels* (if (> level lvls) lvls level)) `(:wm ,ilevel)
                  (apply 'aformat nil fmt args))))
 
 (let ((dprint-count 0))
   (defun dprint (arg)
     (prog1 arg
-      (dformat 1 "~D: ~A" (incf dprint-count) arg))))
+      (dformat 3 "~D: ~A" (incf dprint-count) arg))))
 
 ;;; DEFSYS Providers
 ;; (defprovider :logger (name &rest args))

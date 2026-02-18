@@ -5,26 +5,17 @@
 ;;; Code:
 (in-package :std-user)
 
-(defpkg :cli/tools
-  (:nicknames :tools)
-  (:use :cl :std)
-  (:use-reexport . #.cli-int:*cli-tool-packages*))
-
 (defpkg :cli
   (:use :cl :std :log)
   (:import-from :time :format-timestring :timestamp)
   (:use-reexport :cli/tools :cli/clap)
-  (:use-reexport . #.cli-int:*cli-packages*)
+  (:use-reexport . #.cli-int::*cli-packages*)
   (:export :sudop :call-with-sudo :with-sudo :*sudo-output* :ensure-sudo))
 
 (defpkg :cli-user 
   (:use :cl :std :cli :tools :clap))
 
 (in-package :cli)
-(pushnew :cli *features*)
-
-(in-readtable :shell)
-
 ;;; Sudo
 (definline sudop () 
   "Return T if effective user appears to be root."

@@ -2,7 +2,7 @@
 (defsys :obj "Lisp object library"
  :require (:std)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :feature :obj :package :obj-int)
   (:mod "meta"
    :components ((:file "sealed")
                 (:file "stealth")

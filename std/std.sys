@@ -15,7 +15,7 @@
  :require (:ppcre)
  :components 
  ((:file "defpkg")
-  (:pkg "pkg" #+nil (:default :std-user))
+  (:pkg "pkg" :default :std-user :feature :std :package :std-int)
   (:file "condition")
   (:file "sym")
   (:file "list")
@@ -58,7 +58,7 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- (:std :defsys :defpkg :named-readtables ; *modules*
+ (:std :defsys :defpkg :named-readtables
   (:readtable :std)
   (:asdf "std.asd")
   (:proto :serde)
@@ -74,7 +74,7 @@
    :components 
    ((:mod "tests"
      :components
-     ((:file "pkg")
+     ((:pkg "pkg" :package :std-int)
       (:file "num")
       (:file "seq")
       (:file "pipe")

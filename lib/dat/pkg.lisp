@@ -1,16 +1,6 @@
 ;;; dat/pkg.lisp --- Data
 
 ;;; Code:
-(defpackage :dat-int
-  (:use :std-lisp)
-  (:export *dat-packages*))
-
-(in-package :dat-int)
-
-(eval-always (defparameter *dat-packages* nil))
-
-(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *dat-packages* :test 'string=))))
-
 (defpkg :dat/proto
   (:use :cl :std)
   (:export :dat-error))
@@ -503,9 +493,4 @@
    :parquet-encode
    :parquet-decode))
 
-(setq *defpkg-hook* nil)
-
-(eval-always
-  (pkg:defpkg :dat
-    (:use :cl :std)
-    #.`(:use-reexport ,@dat-int:*dat-packages*)))
+(defvar *dat-packages* *component-packages*)

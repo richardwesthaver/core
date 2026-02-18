@@ -12,14 +12,6 @@
 ;; class, something like IO-STREAM.
 
 ;;; Code:
-(pkg:defpkg :io-int
-  (:use :cl :std)
-  (:export :*io-packages*))
-
-(in-package :io-int)
-(defparameter *io-packages* nil)
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *io-packages* :test 'string=)))
-
 (defpkg :io/proto
   (:use :cl :std/condition)
   (:export :io-error
@@ -30,8 +22,7 @@
    :output-available-p :input-available-p
    :fill-buffer :header
    :header-type :header-length
-   :offset
-           :snapshot))
+   :offset :snapshot))
 
 (defpkg :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)
@@ -279,3 +270,48 @@
    :finalize-buffer :with-smart-buffer
    :buffer-on-memory-p :delete-stream-file
    :delete-temporary-files :buffer-limit-exceeded))
+
+(defpkg :io/disk
+  (:nicknames :disk)
+  (:use :cl :std :io/proto :btrfs :sb-alien)
+  (:shadowing-import-from :std/os :dir :fsname :opts :freq :passno)
+  (:export
+   #:*default-filesystem*
+   #:*filesystem-backends*
+   #:disk-condition
+   #:load-filesystem-backend
+   :disk
+   :disk-partition
+   #:disk-snapshot
+   #:disk-subvolume
+   :list-disks
+   :list-disk-info
+   :disk-space
+   :disk-total-space
+   :disk-available-space
+   :disk-free-space
+   #:statvfs
+   #:disk-info
+   #:mountpoint-get
+   #:mountpoint-device
+   #:mountpoint-fstype
+   #:mountpoint-options
+   #:fsblkcnt-t
+   #:fsfilcnt-t
+   #:disk-use-percent
+   #:mountpoint-directory))
+
+(defpkg :io/disk/btrfs
+  (:nicknames :disk/btrfs)
+  (:use :cl :std :io/proto :btrfs :io/disk :sb-alien)
+  (:export
+   :btrfs-subvolume
+   :btrfs-disk
+   :btrfs-subvolumes
+   :btrfs-default-subvolume
+   :btrfs-snapshot
+   :subvolume-valid-p
+   :btrfs-partition
+   :btrfs-simple-error
+   :btrfs-error
+   :load-btrfs-libs))

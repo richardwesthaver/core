@@ -34,4 +34,4 @@
 
 (defvar *mpk-user-config* nil)
 
-(defvar *user-mpkrc*)
+(sb-ext:define-load-time-global *user-mpkrc* (xdg-config-file :mpk))

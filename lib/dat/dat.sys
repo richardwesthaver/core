@@ -4,7 +4,7 @@
  :version "0.1.1"
  :require (:std :log :obj :io :openssl)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:file "condition")
   (:file "sxp")
   (:file "asn1")
@@ -46,7 +46,8 @@
   (:file "gif")
   (:file "ttf")
   (:file "base64")
-  (:file "qrcode"))
+  (:file "qrcode")
+  (:file "dat"))
  :provide ((:tests)))
 
 

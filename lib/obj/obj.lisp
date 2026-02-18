@@ -3,12 +3,13 @@
 ;; 
 
 ;;; Code:
-(in-package :std-user)
+(in-package :obj-int)
 
 (defpkg :obj
   (:use :cl :std)
-  (:use-reexport . #.obj-int:*obj-packages*))
+  (:use-reexport . #.*obj-packages*))
 
+(in-package :obj)
 ;;; DEFSYS Providers
 ;; (defprovider :ast (name))
 ;; (defprovider :schema (name))

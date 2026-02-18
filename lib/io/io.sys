@@ -10,27 +10,27 @@
            ;; :sb-bsd-sockets
            :zstd)
  :version "0.1.0"
- :components ((:pkg "pkg")
-              (:file "socket")
-              (:file "stream")
-              (:file "static")
-              (:file "fast")
-              (:file "xsubseq")
-              (:file "smart-buffer")
-              (:file "uring")
-              (:file "proto")
-              (:file "chunky")
-              (:file "flate")
-              (:file "zstd")
-              (:file "deflate")
-              (:mod "disk"
-               :components 
-               ((:file "pkg")
-                (:file "util")
-                (:file "proto")
-                (:file "btrfs")))
-              (:file "kbd")
-              (:file "io"))
+ :components 
+ ((:pkg "pkg" :feature :io :default :io-user)
+  (:file "socket")
+  (:file "stream")
+  (:file "static")
+  (:file "fast")
+  (:file "xsubseq")
+  (:file "smart-buffer")
+  (:file "uring")
+  (:file "proto")
+  (:file "chunky")
+  (:file "flate")
+  (:file "zstd")
+  (:file "deflate")
+  (:mod "disk"
+   :components 
+   ((:file "util")
+    (:file "proto")
+    (:file "btrfs")))
+  (:file "kbd")
+  (:file "io"))
  :provide
  ((:tests
    :require (:rt :io :uring :sb-bsd-sockets)

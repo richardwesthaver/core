@@ -18,17 +18,6 @@
 ;; install-ir, etc.
 
 ;;; Code:
-(in-package :std-user)
-(defpkg :cli-int 
-  (:use :cl :std) 
-  (:export :*cli-packages* :*cli-tool-packages*))
-
-(in-package :cli-int)
-
-(defparameter *cli-packages* nil)
-
-(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *cli-packages* :test 'string=))))
-
 (defpkg :cli/clap
   (:nicknames :clap)
   (:use :cl :std :log :cmd :ast :equiv)
@@ -186,4 +175,4 @@
   (:use :cl :std :ansi :linedit :progress :spark :terminfo :env :cmd :clap :secret)
   (:export :completing-read :completing-read-form))
 
-(setq *defpkg-hook* nil)
+(defvar *cli-packages* *component-packages*)

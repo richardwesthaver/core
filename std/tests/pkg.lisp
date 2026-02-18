@@ -5,7 +5,6 @@
 ;;
 
 ;;; Code:
-(in-package :std-int)
 (defpkg :std/tests
   (:use :cl :std :rt :sb-thread :sb-alien))
 (in-package :std/tests)

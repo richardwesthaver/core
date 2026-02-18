@@ -51,4 +51,4 @@
 (define-cli-tool :xvfb-run (args &key (input t) (output t))
   (let ((proc (sb-ext:run-program *xvfb-run* args :output output :input input)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
-      (xvfb-run-error "BUILDAH command failed: ~A ~A" *xvfb-run* args))))
+      (xvfb-run-error "XVFB-RUN command failed: ~A ~A" *xvfb-run* args))))

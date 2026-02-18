@@ -3,7 +3,7 @@
  :version "0.1.1"
  :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn :nlp)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :package :skel-int :feature :skel :default :sk-user)
   (:mod "core"
    :components 
    ((:file "condition")
@@ -36,7 +36,7 @@
   (:file "srv")
   (:mod "packy"
    :components
-   ((:file "pkg")
+   ((:pkg "pkg" :feature :packy :package :skel-int)
     (:file "var")
     (:file "proto")
     (:file "pkgbuild")
@@ -48,13 +48,13 @@
     (:file "cli")))
   (:mod "krypt"
    :components 
-   ((:file "pkg")
+   ((:pkg "pkg" :feature :krypt :package :skel-int)
     (:file "condition")
     (:file "krypt")
     (:file "cli")))
   (:mod "homer"
    :components 
-   ((:file "pkg")
+   ((:pkg "pkg" :feature :homer :package :skel-int)
     (:file "var")
     (:file "log")
     (:file "util")
@@ -64,7 +64,7 @@
     (:file "cli")))
   (:mod "mpk"
    :components
-   ((:file "pkg")
+   ((:pkg "pkg" :feature :mpk :package :skel-int)
     (:file "mpd")
     (:file "var")
     (:file "proto" :require ("proto"))

@@ -35,9 +35,7 @@
 ;; - DEPLOY enables CI/Deploy features.
 
 ;;; Code:
-(in-package :std-user)
-
-(defpackage :skel/core
+(defpkg :skel/core
   (:use :cl :std :ast :doc :log :config :project :schema :rdb :db :store :stored :build :id :vc)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
@@ -135,7 +133,7 @@
    :project-root
    :merge-project-pathnames))
 
-(defpackage :skel/comp/makefile
+(defpkg :skel/comp/makefile
   (:use :cl :std :skel/core :project)
   (:export
    :*default-makefile* :*makefile-extension* 
@@ -145,11 +143,11 @@
    :mk-val :mk-var
    :makefile))
 
-(defpackage :skel/comp/cargo
+(defpkg :skel/comp/cargo
   (:use :cl :std :skel/core :toml :build :config :cli/tools/rust)
   (:export :sk-rust-system :parse-sk-rust-system))
 
-(defpackage :skel/comp/sys
+(defpkg :skel/comp/sys
   (:use :cl :skel/core :std/defsys))
 
 (pkg:defpkg :skel/comp/asd
@@ -165,30 +163,30 @@
    :component-build-pathname :component-build-operation :component-entry-point)
   (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
-(defpackage :skel/comp/lisp
+(defpkg :skel/comp/lisp
   (:import-from :skel/core :*skel-project*)
   (:shadowing-import-from :std :version)
   (:use :cl :std :skel/core :id)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
   (:export :sk-lisp-file))
 
-(defpackage :skel/comp/container
+(defpkg :skel/comp/container
   (:use :cl :std :pod :skel/core :dat/proto :obj/id)
   (:export :sk-containerfile))
 
-(defpackage :skel/comp/dir-locals
+(defpkg :skel/comp/dir-locals
   (:use :cl :std :skel/core)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))
 
-(defpackage :skel/comp/org
+(defpkg :skel/comp/org
   (:use :cl :std :skel/core :organ :obj/id)
   (:export :sk-org-file))
 
-(defpackage :skel/comp/box
+(defpkg :skel/comp/box
   (:use :cl :std :skel/core :box :obj/id)
   (:export :sk-box-file))
 
-(defpackage :skel/comp/infer
+(defpkg :skel/comp/infer
   (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :nlp)
   (:export :sk-infer))
 
@@ -202,20 +200,7 @@
   (:nicknames :sk-cli)
   (:use :cl :std :log :skel/core :sb-ext :clap :cli/main))
 
-(defpackage :skel/net/core
-  (:nicknames :sk-net-core)
-  (:use :cl :log :std 
-   :net/core :net/proto/dns :net/codec/tlv :skel/core
-   :skel/core :net/udp :net/tcp :obj/id 
-   :net/srv/udp
-   :dat/proto :dat/json)
-  (:export
-   #:*skel-client-port-range*
-   #:*skel-port*
-   #:*skel-service-port*
-   #:*default-skel-service-port*))
-
-(defpackage :skel/srv
+(defpkg :skel/srv
   (:use :cl :std :db 
    :store :build :config :skel/core
    :net/srv/udp :net/srv/http :srv)
@@ -223,20 +208,9 @@
            #:sk-request
            #:sk-response))
 
-(defpackage :skel/net/client
-  (:nicknames :sk-client)
-  (:use :cl :std :net :skel/net/core :net/srv/udp :srv :skel/core :log :skel/srv)
-  (:export))
-
-(defpackage :skel/net/server
-  (:nicknames :sk-server)
-  (:use :cl :std :net/srv/udp :net/srv/http :sk-net-core :log :skel/core :srv :skel/srv)
-  (:export :sk-server))
-
 (defpkg :skel/net
   (:nicknames :sk-net)
-  (:use :cl :std :net/srv/udp :skel/core :srv :log :skel/srv)
-  (:use-reexport :skel/net/client :skel/net/server))
+  (:use :cl :std :net/srv/udp :skel/core :srv :log :skel/srv))
 
 (pkg:defpkg :skel
   (:nicknames :sk)

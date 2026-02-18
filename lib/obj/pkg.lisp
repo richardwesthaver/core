@@ -3,16 +3,6 @@
 ;;
 
 ;;; Code:
-(defpackage obj-int
-  (:use :cl :std)
-  (:export :*obj-packages*))
-(in-package :obj-int)
-
-(eval-always (defvar *obj-packages* nil))
-
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *obj-packages* :test 'string=)))
-
-;;; Internals
 (defpkg :obj/val
   (:nicknames :val)
   (:use :cl :std)
@@ -924,4 +914,4 @@
    #:with-store
    #:defstore))
 
-(setq *defpkg-hook* nil)
+(defvar *obj-packages* *cli-packages*)

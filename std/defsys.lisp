@@ -8,11 +8,11 @@
 
 ;; goals:
 ;; - dynamic asdf compatibility
-;; - replace quicklisp (will need to be in lib/sys)
+;; - replace quicklisp (will need to be in skel)
 ;; - share resources between system and dependency manager
 ;; - integrate with skel/packy (package distributor)
-;; - multi-threaded by default
-;; - parallel compilation (completely short-circuiting asdf)
+;; - async ready
+;; - parallel compilation
 ;; - LISP ONLY -- multi-lang systems are handled by skel
 ;; notes:
 
@@ -153,8 +153,11 @@ in a call to INIT.")
   (:keyword :file))
 
 (defcomponent pkg-component (file-component) 
-  (use default
-    (package :accessor component-package :initform nil))
+  ((package :accessor component-package :initform nil)
+   use 
+   default
+   readtable
+   feature)
   (:keyword :pkg)
   (:documentation "A FILE-COMPONENT which contains a collection of packages. The *PACKAGE* is
 automatically set to an internal-only package based on the system name and
@@ -164,8 +167,9 @@ package-names defined with DEFPKG inside the specified file."))
 (defmethod initialize-instance :after ((self pkg-component) &key package (use *default-pkg-component-use*) default)
   (unless (packagep (slot-value self 'std/defsys::package))
     (when default (setq *default-package* default))
-    (setf (slot-value self 'std/defsys::package) 
-          (make-package (or package (gensym (name self))) :use use))))
+    (setf (slot-value self 'std/defsys::package)
+          (std/macs:ifret (when package (find-package package))
+            (make-package (or package (gensym (name self))) :use use)))))
 
 (defcomponent mod-component (component) 
   ((components :accessor components))
@@ -1075,9 +1079,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   "Compile a PKG-COMPONENT."
   (let ((output (ensure-fasl-cache-file (path comp))))
     (multiple-value-bind (out warnings-p failure-p)
-        ;; REVIEW 2026-02-15: does this do anything?
-        (pkg:with-package (component-package comp)
-          (checked-compile-file (path comp) :output-file output :verbose *verbose*))
+        (checked-compile-file (path comp) :output-file output :verbose *verbose*)
       (std/comp:check-lisp-compile-results out warnings-p failure-p))))
 
 (defun compile-component (comp &key (verbose *verbose*) force)
@@ -1119,6 +1121,9 @@ internally. On success the path is added to the *SYSDEFS* list."
                 (compile-component comp :verbose verbose :force force)
                 (let ((*package* (component-package comp))
                       (pkg:*defpkg-hook* (lambda (x) (pushnew (package-name x) pkg:*component-packages* :test 'string=))))
+                  (when-let ((f (and (slot-boundp comp 'feature) (slot-value comp 'feature)))) (pushnew f *features*))
+                  (when-let ((r (and (slot-boundp comp 'readtable) (slot-value comp 'readtable))))
+                    (setf *readtable* (std/named-readtables:ensure-readtable r)))
                   (prog1 (load (resolve-fasl-cache-file f) :verbose verbose)
                     (setq pkg:*component-packages* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)

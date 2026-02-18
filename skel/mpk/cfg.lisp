@@ -60,7 +60,7 @@
       (write-ast cfg out :pretty nil))))
 
 (defun load-mpkrc (&optional (file *user-mpkrc*) (init t))
-  "Load a mpkrc configuration from FILE. Defaults to ~/.mpkrc."
+  "Load a mpkrc configuration from FILE. Defaults to $XDG_CONFIG_HOME/mpkrc."
   (flet ((%load ()
 	   (with-readtable :shell
 	     (let ((form (std:file-read-forms file)))
