@@ -91,7 +91,7 @@
 
 (deftest fmt ()
   "Test standard formatters"
-  (is (string= (format nil "| 1 | 2 | 3 |~%") (with-output-to-string (s) (fmt-row s '(1 2 3)))))
+  (is (string= (format nil "| 1 | 2 | 3 |~%") (with-output-to-string (s) (fmt-row s 1 2 3))))
   (is (string= 
        ;; note the read-time-eval..
        #.(with-output-to-string (s) (fmt-tree s '(foobar (:a) (:b) (c) (d)) :layout :down))
@@ -114,7 +114,7 @@
      ╰─ :HG
 "#))
   (is (string= "| A | B | C |
-" (with-output-to-string (s) (fmt-row s '(a b c))))))
+" (with-output-to-string (s) (fmt-row s 'a 'b 'c)))))
 
 (deftest alien ()
   "Test standard alien utils"

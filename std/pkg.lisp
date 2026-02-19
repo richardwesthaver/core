@@ -1465,6 +1465,7 @@
    :system-home
    :system-relative-pathname
    :list-all-systems
+   :list-all-test-systems
    :list-all-providers
    :list-all-modules
    :register-module

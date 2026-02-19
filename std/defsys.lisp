@@ -639,6 +639,10 @@ system jobs to be executed in an async context."
 (defun test-system-name-p (name)
   (std/seq:ends-with-subseq "/TESTS" (string-upcase name)))
 
+(definline list-all-test-systems ()
+  "Return a list of all TEST-SYSTEMs."
+  (collecting (maphash (lambda (k v) (when (test-system-name-p k) (collect v))) *system-table*)))
+
 (definline %test-system-name (name)
   (concatenate 'simple-base-string (string-upcase name) "/TESTS"))
 
@@ -1038,7 +1042,6 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 ;; (defmacro define-system-method ())
 ;; (defmacro define-component-method ())
-
 (defun read-component (comp &key (external-format :default) (package *package*))
   "Read a component from its PATH slot."
   (declare (ftype (sfunction (component &key (external-format t)) component)))
@@ -1228,7 +1231,7 @@ object SELF remains unmodified."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force (verbose *verbose*) (asdf *asdf-compatibility*) (init t))
+  (:method ((self system) &key force (verbose *verbose*) (asdf *asdf-compatibility*) (init t) tests)
     (or
      (with-system-session (_ self)
        (declare (ignore _))
@@ -1237,9 +1240,10 @@ object SELF remains unmodified."
        (funcall (the function (hook self)) :load)
        ;; TODO 2025-08-31:
        ;; - build-plan
-       (case (plan self)
-         ((or :serial nil) (%load-system self verbose force))
-         (t (nyi! "Unrecognized PLAN keyword"))))
+       (prog1 (case (plan self)
+                ((or :serial nil) (%load-system self verbose force))
+                (t (nyi! "Unrecognized PLAN keyword")))
+         (when tests (load-module (name self) :tests))))
      (and asdf (asdf:load-system (name self) :verbose verbose :force force))))
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
     (remf args :default)
@@ -1263,15 +1267,15 @@ object SELF remains unmodified."
     (apply 'compile-system (find-system self :default default) args)))
 
 (defgeneric save-system (self &key &allow-other-keys)
-  (:documentation "Save the system SELF."))
-
-(defmethod save-system ((self system) &rest args)
-  (let ((name (or (getf args :name) (name self))))
-    (apply 'std:save-lisp name (std/list:remove-from-plist args :name))))
+  (:documentation "Save the system SELF by loading it then calling SAVE-LISP with supplied args.")
+  (:method ((self system) &rest args)
+    (load-system self)
+    (let ((name (or (getf args :name) (name self))))
+      (apply 'std:save-lisp name (std/list:remove-from-plist args :name)))))
 
 (defgeneric make-system (self &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
-an image. This function does not respect *ASDF-COMPATIBILITY*.")
+an image. The PROVIDE slot of SELF is scanned for relevant modules given supplied args.")
   (:method ((self system) &key)
     (mumble "Making system ~A" (name self)))
   (:method ((self symbol) &key)
@@ -1279,13 +1283,13 @@ an image. This function does not respect *ASDF-COMPATIBILITY*.")
       (make-system sys))))
 
 (defgeneric fetch-system (self &key &allow-other-keys)
-  (:documentation "Fetch a system SELF from a remote location."))
+  (:documentation "Fetch a system from a remote location."))
 
 (defgeneric update-system (self &key &allow-other-keys)
   (:documentation "Update the system SELF."))
 
 (defgeneric delete-system (self &key force &allow-other-keys)
-  (:documentation "Delete the system SELF from the local filesystem."))
+  (:documentation "Delete the system SELF from the Lisp image, cache, or local filesystem."))
 
 (defgeneric test-system (self &rest args)
   (:documentation "Test the system SELF.")
