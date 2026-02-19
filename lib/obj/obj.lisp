@@ -3,11 +3,11 @@
 ;; 
 
 ;;; Code:
-(in-package :obj-int)
+(in-package :std-user)
 
 (defpkg :obj
   (:use :cl :std)
-  (:use-reexport . #.*obj-packages*))
+  (:use-reexport . #.obj-int::*obj-packages*))
 
 (in-package :obj)
 ;;; DEFSYS Providers

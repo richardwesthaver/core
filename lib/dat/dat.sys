@@ -4,7 +4,7 @@
  :version "0.1.1"
  :require (:std :log :obj :io :openssl)
  :components 
- ((:pkg "pkg")
+ ((:pkg "pkg" :feature :dat :package :dat-int)
   (:file "condition")
   (:file "sxp")
   (:file "asn1")

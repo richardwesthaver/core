@@ -39,7 +39,7 @@ definitions.")
 
 (defparameter *component-packages* nil)
 
-(defvar *default-pkg-component-use* '(#:cl #:std/defpkg))
+(defvar *default-pkg-component-use* '(#:std-lisp))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defmacro without-package-warnings (&body body)

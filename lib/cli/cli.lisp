@@ -6,10 +6,9 @@
 (in-package :std-user)
 
 (defpkg :cli
-  (:use :cl :std :log)
-  (:import-from :time :format-timestring :timestamp)
-  (:use-reexport :cli/tools :cli/clap)
-  (:use-reexport . #.cli-int::*cli-packages*)
+  (:use :std-lisp :log)
+  (:use-reexport . #.(cons :cli/tools cli-int::*cli-packages*))
+  (:import-from :time :format-string :timestamp)
   (:export :sudop :call-with-sudo :with-sudo :*sudo-output* :ensure-sudo))
 
 (defpkg :cli-user 

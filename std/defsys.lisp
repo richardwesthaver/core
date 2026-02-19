@@ -154,9 +154,9 @@ in a call to INIT.")
 
 (defcomponent pkg-component (file-component) 
   ((package :accessor component-package :initform nil)
-   use 
+   (use :accessor component-use :initform *default-pkg-component-use*)
    default
-   readtable
+   (readtable :accessor component-readtable)
    feature)
   (:keyword :pkg)
   (:documentation "A FILE-COMPONENT which contains a collection of packages. The *PACKAGE* is
@@ -164,12 +164,13 @@ automatically set to an internal-only package based on the system name and
 supplied keywords. The *DEFPKG-HOOK* is bound to a function which collects new
 package-names defined with DEFPKG inside the specified file."))
 
-(defmethod initialize-instance :after ((self pkg-component) &key package (use *default-pkg-component-use*) default)
+(defmethod initialize-instance :after ((self pkg-component) &key package default)
   (unless (packagep (slot-value self 'std/defsys::package))
+    ;; TODO: move to load
     (when default (setq *default-package* default))
     (setf (slot-value self 'std/defsys::package)
           (std/macs:ifret (when package (find-package package))
-            (make-package (or package (gensym (name self))) :use use)))))
+            (make-package (or package (gensym (name self))) :use (slot-value self 'use))))))
 
 (defcomponent mod-component (component) 
   ((components :accessor components))
@@ -969,27 +970,29 @@ the following extensions:
           (comp (%sys-get :components %body))
           (*defsys* name))
       (std/sym:with-gensyms (sys)
-        `(let ((,sys (apply 'make-instance ,class :name ,name ',%body)))
-           (when-let ((fpath (or *compile-file-truename* *load-truename* ,path)))
-             (setf *default-pathname-defaults* (make-pathname :directory (pathname-directory fpath))))
-           (let ((*defsys* ,sys))
-             (setf (path ,sys) (or ,path *compile-file-truename* *load-truename*)
-                   (slot-value ,sys 'plan) ,plan
-                   (slot-value ,sys 'description) ,doc
-                   (slot-value ,sys 'version) ,ver
-                   (slot-value ,sys 'components) (%parse-components-form ',comp)
-                   (slot-value ,sys 'provide) (%parse-provide-form ',prov)
-                   (slot-value ,sys 'require) ',req)
-             (mapc (lambda (x) (add-hook (hook ,sys) (if (or (symbolp (cadr x)) (functionp (cadr x)))
-                                                         x
-                                                         (list (car x) 
-                                                               (compile (gensym (string (car x)))
-                                                                        `(lambda () ,@(cdr x)))))))
+        `(let* ((,sys (apply 'make-instance ,class :name ,name ',%body))
+                (*default-pathname-defaults*
+                  (if-let ((fpath (or *compile-file-truename* *load-truename* ,path)))
+                    (make-pathname :directory (pathname-directory fpath))
+                    *default-pathname-defaults*))
+                (*defsys* ,sys))
+           (setf (path ,sys) (or ,path *compile-file-truename* *load-truename*)
+                 (slot-value ,sys 'plan) ,plan
+                 (slot-value ,sys 'description) ,doc
+                 (slot-value ,sys 'version) ,ver
+                 (slot-value ,sys 'components) (%parse-components-form ',comp)
+                 (slot-value ,sys 'provide) (%parse-provide-form ',prov)
+                 (slot-value ,sys 'require) ',req)
+           (mapc (lambda (x) (add-hook (hook ,sys) (if (or (symbolp (cadr x)) (functionp (cadr x)))
+                                                       x
+                                                       (list (car x) 
+                                                             (compile (gensym (string (car x)))
+                                                                      `(lambda () ,@(cdr x)))))))
                    ',hooks)
-             (expand-component-requires ,sys)
-             (setf (gethash ,name *system-table*) ,sys)
-             ;; (expand-module-provides ,sys)
-             ,sys))))))
+           (expand-component-requires ,sys)
+           (setf (gethash ,name *system-table*) ,sys)
+           ;; (expand-module-provides ,sys)
+           ,sys)))))
 
 (defun compile-sys (path &optional force output-file)
   "Compile a system's defsys file by PATH. Default extension is FSYS."
@@ -1118,14 +1121,15 @@ internally. On success the path is added to the *SYSDEFS* list."
                 (compile-grovel-component comp) 
                 (load (resolve-fasl-cache-file f) :verbose verbose))
                (pkg-component
-                (compile-component comp :verbose verbose :force force)
                 (let ((*package* (component-package comp))
                       (pkg:*defpkg-hook* (lambda (x) (pushnew (package-name x) pkg:*component-packages* :test 'string=))))
                   (when-let ((f (and (slot-boundp comp 'feature) (slot-value comp 'feature)))) (pushnew f *features*))
                   (when-let ((r (and (slot-boundp comp 'readtable) (slot-value comp 'readtable))))
                     (setf *readtable* (std/named-readtables:ensure-readtable r)))
+                  (compile-component comp :verbose verbose :force force)
                   (prog1 (load (resolve-fasl-cache-file f) :verbose verbose)
-                    (setq pkg:*component-packages* nil))))
+                    (setq pkg:*component-packages* nil
+                          pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)
                                       :verbose verbose)))))))))
   comp)

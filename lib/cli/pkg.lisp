@@ -175,4 +175,5 @@
   (:use :cl :std :ansi :linedit :progress :spark :terminfo :env :cmd :clap :secret)
   (:export :completing-read :completing-read-form))
 
-(defvar *cli-packages* *component-packages*)
+(eval-always (defvar *cli-packages* *component-packages*))
+

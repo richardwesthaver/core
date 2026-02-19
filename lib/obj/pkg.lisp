@@ -914,4 +914,4 @@
    #:with-store
    #:defstore))
 
-(defvar *obj-packages* *cli-packages*)
+(eval-always (defvar *obj-packages* *component-packages*))
