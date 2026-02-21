@@ -36,5 +36,5 @@
 
 (defmacro with-project (ctx &body body)
   `(let* ((*skel-project* ,(find-skelfile (or ctx *default-pathname-defaults*) :load t))
-          (*default-pathname-defaults* (sk-src *skel-project*)))
+          (*default-pathname-defaults* (path *skel-project*)))
      ,@body))

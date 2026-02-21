@@ -443,8 +443,6 @@ first element is of type LOGGER, insert into that object instead."
     (stop *logger*)
     (setf *logger* nil)))
 
-(pushnew 'remove-logger sb-ext:*save-hooks*)
-
 (defun restart-logger (&optional (logger (default-logger)))
   "Restart *LOGGER* by removing it and then setting it to LOGGER."
   (remove-logger)
