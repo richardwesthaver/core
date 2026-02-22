@@ -61,7 +61,7 @@
         (is (directory-path-p (probe-file *tmp*))))))
 
 (deftest fuzz ()
-  (defclass foo-fuzz (fuzzer) ())
+  (defkernel foo-fuzz (fuzz:fuzzer) ())
   (is (integerp
        (fuzz (make-instance 'foo-fuzz))))
-  (is (= 100 (length (fuzz* (make-random-state) (fuzz-generator (make-instance 'foo-fuzz)) :count 100)))))
+  (is (= 100 (length (fuzz* (make-random-state) (kernel (make-instance 'foo-fuzz)) :count 100)))))

@@ -130,9 +130,7 @@
    :start-tracing
    :stop-tracing
    :with-tracing
-   :save-report
-   ;; Extra utility
-   :package-symbols-except))
+   :save-report))
 
 (defpackage :rt/flamegraph
   (:nicknames :flamegraph)
@@ -142,8 +140,4 @@
 (defpackage :rt/fuzz
   (:nicknames :fuzz)
   (:use :cl :std :log :rt)
-  (:export :fuzzer
-           :fuzz
-           :fuzz*
-           :fuzz-generator
-           :fuzz-state))
+  (:export :fuzzer :fuzz :fuzz*))

@@ -10,7 +10,6 @@
                (:file "sys"))
  :provide
  (:log
-  (:asdf "log.asd")
   (:proto log)
   (:tests
    :require (:rt :std :log :io)
