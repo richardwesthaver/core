@@ -27,7 +27,7 @@
  (:mod "lib")
  (:mod "bin" (:sys "bin"))
  (:mod "skel" (:sys "skel"))
- (:mod "emacs"))
+ (:mod "etc"))
 :rules
 ((default (data rebuild-core))
  (bootstrap (data build-core))
@@ -131,8 +131,8 @@
              (out out :direction :output :if-exists :supersede))
             (std:copy-stream in out :finish-output t))))
     (let ((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
-          (config (directory "emacs/*.el"))
-          (lib (directory "emacs/lib/*.el")))
+          (config (directory "etc/emacs/*.el"))
+          (lib (directory "etc/emacs/lib/*.el")))
      (mapcar
       (lambda (el)
        (el-write el (merge-pathnames (file-namestring el) dotemacs)))

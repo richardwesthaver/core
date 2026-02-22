@@ -183,7 +183,9 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 *USER-FASL-CACHE*"
     (init :xdg)
     (setq *user-skelrc* (user-skelrc))
-    (%init setq))
+    (%init setq)
+    (setq *stash* *skel-stash*
+          *store* *skel-store*))
   (defun setf-skel-vars () (%init setf)))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
