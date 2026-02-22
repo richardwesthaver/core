@@ -220,7 +220,7 @@ debug or die."
   "Set the DONT-SAVE slot of OBJECTS to T."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
-(defun save-lisp (name &key package compression callable-exports executable (toplevel #'sb-impl::toplevel-init) forget (save-runtime-options :accept-runtime-options) root-structures (purify t))
+(defun save-lisp (name &key (package pkg:*default-package*) compression callable-exports executable (toplevel #'sb-impl::toplevel-init) forget (save-runtime-options :accept-runtime-options) root-structures (purify t))
   "Process NAME and keyword arguments then pass options to the underlying build
 system - eventually terminating on SAVE-LISP-AND-DIE."
   (pkg:with-package (or package *package*)

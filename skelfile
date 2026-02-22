@@ -152,16 +152,11 @@
    (with-core (:input t :no-userinit t :no-sysinit t)
     (init :sys)
     (setq *stash* (probe-directory ".stash/"))
-    (compile-system :std)
-    (load-system :std)
-    (compile-system :core)
-    (load-system :core)
-    (compile-system :bin)
-    (load-system :bin)
     ;; post-load hooks
     ;; (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
     ;; (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
-    (funcall (print (find-module :bin :bin)))))
+    (load-system :core)
+    (make-system :bin :verbose t)))
   (:compile () (compile-lisp :core :force t :verbose t))
   (:install (install-emacs)
    (with-sudo "install -C -m 755 .stash/core /usr/bin/core")

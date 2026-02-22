@@ -37,6 +37,11 @@
 (defvar-unbound *system-data-directory*
   "Persistent system data directory.")
 
+(defun system-cache-dir (dir)
+  (merge-pathnames dir *system-cache-directory*))
+(defun system-data-dir (dir)
+  (merge-pathnames dir *system-data-directory*))
+
 (defvar *component-class-table* (make-hash-table))
 (defvar *test-system* :rt)
 (defvar *system-table* (make-hash-table :test 'equal)
@@ -1171,9 +1176,10 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         *module* nil
         *module-table* (make-hash-table :test 'equal)
         *user-fasl-cache* (ensure-directories-exist fasl-cache)
-        *system-data-directory* (ensure-directories-exist (or system-data (xdg-data-directory "lisp/sys")))
+        *system-data-directory* (or system-data (xdg-data-directory "lisp/sys"))
         *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
         (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
+  (ensure-directories-exist (system-data-dir "bin/"))
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (let ((pool (when pool
                 (make-thread-pool (std/alien:num-cpus) 
@@ -1196,13 +1202,13 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         (load-component sys :force force)))
     sys))
 
-(defun load-system-requires (sys)
+(defun load-system-requires (sys &optional force)
   (mapc
    (lambda (x)
      (if (atom x)
          (if-let ((s (find-system x)))
            (when (component-reload-p s)
-             (%load-system s *verbose*))
+             (%load-system s *verbose* force))
            (simple-system-error "System not found: ~A" x))
          (apply 'load-module x)))
    (slot-value sys 'std/defsys::require)))
@@ -1212,12 +1218,12 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
     (mapc (lambda (x) (call-provider (car x) (cons *module* (cdr x))))
           (slot-value sys 'provide))))
 
-(defmethod init ((self system) &key)
+(defmethod init ((self system) &key force)
   "Initialize a SYSTEM which has been pre-loaded with LOAD-SYS. Arrange for
 REQUIRE forms, PKG components, and PROVIDE forms to be loaded. The underlying
 object SELF remains unmodified."
   ;; first process all requires
-  (load-system-requires self)
+  (load-system-requires self force)
   ;; initialize system hooks (call :init hooks)
   (init-module self)
   ;; then we call providers
@@ -1259,7 +1265,7 @@ object SELF remains unmodified."
     (or
      (with-system-session (_ self)
        (declare (ignore _))
-       (when init (init self))
+       (when init (init self :force force))
        ;; call the load hook
        (funcall (the function (hook self)) :load)
        ;; TODO 2025-08-31:
@@ -1295,14 +1301,19 @@ object SELF remains unmodified."
   (:documentation "Save the system SELF by loading it then calling SAVE-LISP with supplied args.")
   (:method ((self system) &rest args)
     (load-system self)
-    (let ((name (or (getf args :name) (name self))))
-      (apply 'std:save-lisp name (std/list:remove-from-plist args :name)))))
+    (let ((name (string-downcase (or (getf args :name) (name self)))))
+      (apply 'std:save-lisp (merge-pathnames name (system-data-dir "bin/")) (std/list:remove-from-plist args :name)))))
 
-(defgeneric make-system (self &key &allow-other-keys)
+(defgeneric make-system (self &rest args &key &allow-other-keys)
   (:documentation "Make the system SELF which usually entails loading, compiling, and then saving
 an image. The PROVIDE slot of SELF is scanned for relevant modules given supplied args.")
-  (:method ((self system) &key)
-    (mumble "Making system ~A" (name self)))
+  (:method ((self system) &rest args &key (bin t))
+    (let ((args (std/list:remove-from-plist args :bin)))
+      (apply 'compile-system self args)
+      (apply 'load-system self args)
+      (if-let ((bin (and bin (find-module (name self) :bin))))
+        (funcall bin)
+        (apply 'save-system self args))))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
       (make-system sys))))

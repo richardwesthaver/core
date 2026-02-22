@@ -101,21 +101,21 @@ control (or not)."
     (when fun
       (setf options (remove (car fun) options))
       (setf fun (cadar fun)))
-    `(prog1
-         (eval-when (:compile-toplevel :load-toplevel :execute)
-           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))
-       (when ',fun
-         (cond 
-           ((or
-             (member 'invalid-item ',%ancestors)
-             (member 'invalid-argument ',%ancestors))
-            (def-invalid-item-reporter ,name))
-           ((or (member 'simple-error ',%ancestors)
-                (member 'simple-condition ',%ancestors))
-            (def-simple-error-reporter ,name))
-           ((stringp ',fun)
-            (define-error-reporter ,name ',fun))
-           (t (define-error-reporter ,name)))))))
+    `(eval-when (:compile-toplevel :load-toplevel :execute)
+       (prog1
+           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+         (when ',fun
+           (cond 
+             ((or
+               (member 'invalid-item ',%ancestors)
+               (member 'invalid-argument ',%ancestors))
+              (def-invalid-item-reporter ,name))
+             ((or (member 'simple-error ',%ancestors)
+                  (member 'simple-condition ',%ancestors))
+              (def-simple-error-reporter ,name))
+             ((stringp ',fun)
+              (define-error-reporter ,name ',fun))
+             (t (define-error-reporter ,name))))))))
 
 (defmacro define-error-reporter (err &optional (message *error-message*))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
