@@ -13,9 +13,9 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Wed Feb 18 20:31:55 2026 -0500                  |
+| updated     | Sat Feb 21 19:35:59 2026 -0500                  |
 | langs       | c elisp lisp org perl                           |
-| lines       | 216074 :code 177905 :comment 16361 :blank 21808 |
+| lines       | 216083 :code 177911 :comment 16364 :blank 21808 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links() :dir ~/comp/core/
@@ -31,3 +31,12 @@ This repository contains the monolothic core of [[comp:][The Compiler Company]].
 The core is a Lisp hacking environment. It is bootstrapped from SBCL
 and no guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
+
+#+begin_src shell :eval never
+  # bootstrap the core
+  sbcl --load bin/script/bootstrap.lisp
+  # link to skel
+  ln -sf .stash/core .stash/skel
+  # install the core via skel
+  .stash/skel install
+#+end_src
