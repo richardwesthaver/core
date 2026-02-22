@@ -293,12 +293,13 @@ objects of type COMPONENT."
         (setf (gethash name *module-table*) (list key val)))))
 
 (defprovider :asdf (root path &optional name)
-  (register-module :asdf root 
-                   (compile nil 
-                            `(lambda () 
-                               (asdf:load-asd 
-                                ,(probe-file (merge-pathnames path (path (find-system root)))))
-                               (asdf:load-system ,(or name root))))))
+  (unless (find-module root :asdf)
+    (register-module :asdf root 
+                     (compile nil 
+                              `(lambda () 
+                                 (asdf:load-asd 
+                                  ,(probe-file (merge-pathnames path (path (find-system root)))))
+                                 (asdf:load-system ,(or name root)))))))
 
 (defprovider :alien (root name &rest args)
   (register-module :alien root (compile-and-eval `(std/alien:define-alien-loader ,name ,@args))))
@@ -1267,7 +1268,8 @@ object SELF remains unmodified."
                 ((or :serial nil) (%load-system self verbose force))
                 (t (nyi! "Unrecognized PLAN keyword")))
          (when tests (load-module (name self) :tests))))
-     (and asdf (asdf:load-system (name self) :verbose verbose :force force))))
+     (and asdf (asdf:load-system (name self) :verbose verbose :force force)))
+    self)
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
     (remf args :default)
     (let ((sys (find-system self :default default :asdf asdf)))
