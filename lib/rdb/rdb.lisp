@@ -167,7 +167,7 @@ just the keys currently present in TABLE."
 (defmethod prev ((self rdb-iter))
   (rocksdb-iter-prev (rdb-iter-sap self)))
 
-(defmethod key ((self rdb-iter))
+(defmethod skey ((self rdb-iter))
   (with-alien ((klen size-t))
     (let ((key (rocksdb-iter-key (rdb-iter-sap self) (addr klen))))
       (let ((k (make-octets klen)))
@@ -176,7 +176,7 @@ just the keys currently present in TABLE."
          k
          klen)))))
 
-(defmethod val ((self rdb-iter))
+(defmethod sval ((self rdb-iter))
   (with-alien ((vlen size-t))     
     (let ((val (rocksdb-iter-value (sap self) (addr vlen))))
       (let ((v (make-octets vlen)))
@@ -185,8 +185,10 @@ just the keys currently present in TABLE."
          v
          vlen)))))
 
+(defmethod val ((self rdb-iter)) (sval self))
+
 (defmethod kv ((self rdb-iter))
-  (make-kv (key self) (val self)))
+  (make-kv (skey self) (sval self)))
 
 (defmethod timestamp ((self rdb-iter))
   (with-alien ((tslen size-t))
@@ -489,7 +491,7 @@ internal sap slots are initialized."
                   :db sap
                   :message "Database is already open")
           sap)
-        (setf sap (open-db-raw name (or (sap opts) (push-sap* )))))))
+        (setf sap (open-db-raw name (or (sap opts) (push-opts self)))))))
 
 (defmethod db-prop ((self rdb) (propname string))
   (unless-null-db () self

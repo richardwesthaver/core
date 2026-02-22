@@ -197,7 +197,7 @@
 (defun mpk-db-shutdown (&optional (wait t))
   (maphash-values (lambda (v) (shutdown-db v :wait wait)) *mpk-db-table*))
 
-(defun mpk-db-info (db &key (schema t) stats log metadata)
+(defun mpk-db-info (db &key (schema t)) ;; stats log metadata)
   (when schema
     (schema-from-rdb-column-families (columns (find-db db *mpk-db-table*)))))
 
@@ -239,13 +239,13 @@
       (with-iter (it (iter *db* :column :id))
         (seek-to-first it)
         (loop while (iter-valid-p it)
-              do (let ((k (key it))
-                       (v (val it)))
+              do (let ((k (skey it))
+                       (v (sval it)))
                    (fmt-row (list
                              (uuid::octet-vector-to-uuid k)
                              (unless (null v)
                                (sb-ext:octets-to-string v))
-                             (when-let ((n (get-val *db* k :column name)))
+                             (when-let ((n (val:get-val *db* k :column name)))
                                (sb-ext:octets-to-string n)))
                             t)
                    (next it)))))))

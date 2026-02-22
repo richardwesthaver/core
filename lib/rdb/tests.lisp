@@ -76,14 +76,14 @@
     (with-iter (it (iter tmp))
       (is (sap it))
       seek-to-first
-      (is (sequence:emptyp key))
-      (is (sequence:emptyp val))
+      (is (sequence:emptyp skey))
+      (is (sequence:emptyp sval))
       (is (zerop (nth 1 (multiple-value-list (timestamp it)))))
       (is (not iter-valid-p))
       seek-to-last
       (is (typep (kv it) 'kv))
-      (is (sequence:emptyp (key it)))
-      (is (sequence:emptyp (val it)))
+      (is (sequence:emptyp (skey it)))
+      (is (sequence:emptyp (sval it)))
       ;; (info! (iter-next it))
       (rocksdb-iter-destroy (sap it)))
     (dotimes (i 10000)

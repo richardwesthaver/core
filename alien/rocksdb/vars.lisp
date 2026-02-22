@@ -102,7 +102,7 @@
          max-bytes-for-level-base level-compaction-dynamic-level-bytes max-bytes-for-level-multiplier
          compaction-pri
          allow-ingest-behind statistics-level
-         skip-stats-update-on-db-open skip-checking-sst-file-sizes-on-db-open enable-blob-files
+         skip-stats-update-on-db-open enable-blob-files
          min-blob-size blob-file-size blob-compression-type enable-blob-gc blob-gc-age-cutoff
          blob-gc-force-threshold blob-compaction-readahead-size blob-file-starting-level
          ;; deprecated: max-write-buffer-number-to-maintain

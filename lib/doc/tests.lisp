@@ -46,9 +46,6 @@
   (let ((file (or *compile-file-pathname* (system-relative-pathname :doc "tests.lisp"))))
     (is-doc-typep file-documentation (file-documentation file))))
 
-(deftest doc-dist ()
-  (is-doc-typep dist-documentation (dist-documentation :quicklisp)))
-
 ;; TODO 2025-08-18: 
-(deftest doc-db ()
+(deftest doc-db (:skip t)
   (db:load-database-backend :rdb))

@@ -198,7 +198,8 @@
 (define-opt-accessor rocksdb-options enable-blob-gc)
 (define-opt-accessor rocksdb-options allow-ingest-behind)
 (define-opt-accessor rocksdb-options skip-stats-update-on-db-open)
-(define-opt-accessor rocksdb-options skip-checking-sst-file-sizes-on-db-open)
+;; removed
+;; (define-opt-accessor rocksdb-options skip-checking-sst-file-sizes-on-db-open)
 (define-opt-accessor rocksdb-options enable-blob-files)
 (define-opt-accessor rocksdb-options enable-pipelined-write)
 (define-opt-accessor rocksdb-options unordered-write)

@@ -56,20 +56,18 @@
 
 ;;; Task
 (defkernel task ()
-  ((state :initform nil :initarg :state :accessor task-state))
+  ((state :initform nil :initarg :state :accessor state))
   (:documentation "This object represents a single unit of work to be done in a single thread by
 some worker. Tasks are typically distributed from the pool, but workers may
 also be granted the ability to create and distribute their own tasks, or be
 assigned a single task to call repeatedly until told to stop. Once a task is
 assigned, the 'owner', i.e. the worker that is assigned this task, may modify
 the object. When the work associated with a task is complete, the owner is
-responsible for indicating in the state slot the result of the computation.
-
-Tasks are _currently_ funcallable kernels.."))
+responsible for indicating in the state slot the result of the computation."))
 
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream ":state ~A" (task-state self))))
+    (format stream ":state ~A" (state self))))
 
 (defmethod taskp ((self task)) t)
 
@@ -93,7 +91,7 @@ Tasks are _currently_ funcallable kernels.."))
 
 (defmethod run-object ((self scheduled-task) &key time repeat absolute-p catch-up worker name)
   (sb-ext:schedule-timer
-   (sb-ext:make-timer (task-state self) :thread worker :name name)
+   (sb-ext:make-timer (state self) :thread worker :name name)
    time 
    :repeat-interval repeat :absolute-p absolute-p :catch-up catch-up))
 
@@ -138,16 +136,6 @@ Tasks are _currently_ funcallable kernels.."))
 
 (defgeneric dependents (self)
   (:method ((self t)) nil))
-
-;;; Task Scheduler
-(defclass task-scheduler (biased-scheduler) ()
-  (:documentation "Similar to the BIASED-SCHEDULER this class inherits from, instances of this
-class contain a primary queue and secondary queue. Instead of the abstract
-term 'work' the elements of our queue which are passed between workers are
-TASKs."))
-
-;;; Task Pool
-(defclass task-pool (thread-pool) ())
 
 ;;; Async Tasks
 (defkernel async-task (task) ()
@@ -290,3 +278,9 @@ wasn't visited yet."))
 (defkernel child-task (planned-task) ())
 ;; non-propagating
 (defkernel solo-task (planned-task) ())
+
+;;; Task Pool
+(defclass task-pool (thread-pool)
+  ((planner :initarg :planner :accessor planner))
+  (:documentation "Task pools contain an additional PLANNER slot which stores
+  an object responsible for generating CHANNELs and consuming PLANs."))

@@ -1248,7 +1248,7 @@
    :scheduler :make-scheduler
    :schedule-work :submit-raw-work
    :worker-kernel-function :pool-kernel-function
-   :channel-kernel-function :*worker-kernel*
+   :*worker-kernel*
    :*pool-kernel* :*thread-pool*
    :*thread-pool-table* :find-work
    :do-workers :submit-work
@@ -1342,7 +1342,7 @@
    :run-job
    :jobp :taskp :task :task-worker
    :plan :status :planner :plan-bits
-   :task-pool :task-scheduler
+   :task-pool
    :task-done-p :record-dependency
    :simple-task :simple-plan
    :pressure :task-forced-p :task-prevented-p :pressure-parameters

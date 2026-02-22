@@ -18,4 +18,9 @@
 
 (defmethod std/defsys::system-description ((self system-documentation)) (std/defsys::system-description (doc-system self)))
 
+(defun system-documentation (self &optional packages) 
+  (make-instance 'system-documentation 
+    :system (find-system self)
+    :packages packages))
+
 (defclass system-document (system-documentation org-document) ())

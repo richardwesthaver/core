@@ -25,7 +25,8 @@
       (setf (gethash p tbl) (merge-pathnames (string-downcase p) *mpk-media-directory*)))))
 
 ;; TODO 2025-03-12: 
-(defun find-supported-media-types (type))
+(defun find-supported-media-types (type)
+  (declare (ignore type)))
 
 (defvar *known-media-types*
   (let ((tbl (make-hash-table :size (length *mpk-media-types*))))

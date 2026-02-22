@@ -145,4 +145,4 @@ NAME. Return the object."
 
 (defun run-all-tests (&optional force)
   (with-readtable :std
-    (mapcar (lambda (x) (do-tests x force)) (remove *test-suite* *test-suite-list*))))
+    (mapcar (lambda (x) (do-tests x :force force)) (remove *test-suite* *test-suite-list*))))

@@ -38,7 +38,7 @@
   (defun make-suite (&rest slots)
     (apply #'make-instance 'test-suite slots)))
 
-(definline do-tests (&optional (suite *test-suite*) force (output *standard-output*))
+(definline do-tests (&key (suite *test-suite*) force (output *standard-output*))
   (if (pathnamep output)
       (with-open-file (stream output :direction :output)
         (do-suite (ensure-suite suite) :stream stream :force force))
@@ -47,7 +47,7 @@
 (defvar *test-output-mutex* (sb-thread:make-mutex :name "tests-output"))
 
 ;; TODO
-(defun do-tests-concurrently (&optional (suite *test-suite*) force (output *standard-output*))
+(defun do-tests-concurrently (&key (suite *test-suite*) force (output *standard-output*))
   (declare (ignore suite force))
   (sb-thread:with-mutex (*test-output-mutex*)
     (let ((stream (make-synonym-stream output)))

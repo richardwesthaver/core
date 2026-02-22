@@ -92,8 +92,6 @@
     (rocksdb-options-get-allow-ingest-behind o)
     (rocksdb-options-set-skip-stats-update-on-db-open o t)
     (rocksdb-options-get-skip-stats-update-on-db-open o)
-    (rocksdb-options-set-skip-checking-sst-file-sizes-on-db-open o t)
-    (rocksdb-options-get-skip-checking-sst-file-sizes-on-db-open o)
     (rocksdb-options-set-enable-blob-files o t)
     (rocksdb-options-get-enable-blob-files o)
     (rocksdb-options-set-enable-pipelined-write o t)

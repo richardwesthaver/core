@@ -31,10 +31,10 @@
 (defvar *sysdefs* nil
   "A list of files containing DEFSYS forms.")
 
-(defvar *system-cache-directory* (xdg-cache-directory "lisp/sys")
+(defvar-unbound *system-cache-directory*
   "Cached system data directory.")
 
-(defvar *system-data-directory* (xdg-data-directory "lisp/sys")
+(defvar-unbound *system-data-directory*
   "Persistent system data directory.")
 
 (defvar *component-class-table* (make-hash-table))
@@ -82,7 +82,16 @@ in a call to INIT.")
              (format s "System ~A not found after loading file ~A" 
                      (error-name c) (file-error-pathname c)))))
 
-;; (defmacro with-system-restarts (&body body))
+(defconstant +system-interrupt-tag+ 'system-interrupt-tag)
+
+(defmacro with-system-restarts (&body body)
+  `(catch +system-interrupt-tag+
+     (restart-case (progn ,@body)
+       (retry ()
+         :report (lambda (s)
+                   (format s "~@<Retry system method.~@:>"))))))
+         
+
 ;; (retry)
 ;; (reset-session)
 ;; (init :sys)
@@ -349,8 +358,10 @@ objects of type COMPONENT."
                             ,@args))))))
 
 (defprovider :tests (name &rest args)
-  (let ((req (getf args :require)))
+  (let ((req (getf args :require))
+        (comp (getf args :components)))
     (remf args :require)
+    (remf args :components)
     (unless (member name req :test 'string-equal)
       (push name req))
     (unless (member *test-system* req :test 'string-equal)
@@ -360,10 +371,11 @@ objects of type COMPONENT."
      name 
      (compile-and-eval
       `(defsys ,(%test-system-name name) ,@args 
-               :require ,req :class 'test-system 
-               :path ,(or (system-path name)
-                          *compile-file-truename* 
-                          *load-truename*))))))
+         :require ,req :class 'test-system 
+         :components ,(or comp '((:file "tests")))
+         :path ,(or (system-path name)
+                    *compile-file-truename* 
+                    *load-truename*))))))
 
 (defprovider :bench (name &rest args)
   (register-module 
@@ -690,7 +702,8 @@ for processing.")
     ;; A thread-pool which is dedicated to running system tasks
     pool
     ;; A queue of system tasks.
-    (tasks (make-queue :capacity *system-task-capacity*))))
+    (tasks (make-queue :capacity *system-task-capacity* :element-type 'std/task::task))
+    (states (make-queue :capacity *system-task-capacity* :element-type 'std/task::status))))
 
 (defvar *system-kernel* (make-kernel #'std/thread::%work))
 
@@ -724,14 +737,15 @@ for processing.")
 to be a system which is pushed to the session queue before BODY."
   (if sym
       (multiple-value-bind (%body %decl) (std/prim:parse-body body)
-        `(let ((,sym *system-session*)
-               ,@(when sys `((*default-pathname-defaults* 
-                              (if (pathnamep ,sys)
-                                  ,sys
-                                  (pathname (directory-namestring (probe-file (path ,sys)))))))))
-           ,@%decl
-           ,@%body))
-      `(progn ,@body)))
+        `(with-system-restarts
+           (let ((,sym *system-session*)
+                 ,@(when sys `((*default-pathname-defaults* 
+                                (if (pathnamep ,sys)
+                                    ,sys
+                                    (pathname (directory-namestring (probe-file (path ,sys)))))))))
+             ,@%decl
+             ,@%body)))
+      `(with-system-restarts (progn ,@body))))
 
 (eval-always
   (defun cached-system-file (f)
@@ -791,17 +805,23 @@ to be a system which is pushed to the session queue before BODY."
 ;;; Tasks
 ;; System Tasks are simple function which take a single component as an argument
 (defkernel system-task (task)
-  ((name :reader name :initarg :name :initform (gensym "sys-task"))))
+  ((name :reader name :initarg :name :initform (gensym "SYSTEM-TASK"))))
 
 (defmethod initialize-instance :after ((self system-task) &key)
-  (check-system-session)
+  ;; (check-system-session)
   (setf (gethash (name self) (system-session-task-cache *system-session*)) self))
 
-(defmacro with-system-task ((sym &rest args) &body body)
+(defun make-system-task (thunk &key (name (gensym "SYS-TASK")) (state (std/task::make-status)))
+  (let ((task (make-instance 'system-task :name name :state state)))
+    (setf (kernel task) thunk)
+    task))
+
+(defmacro with-system-task ((sym fn &rest args) &body body)
   "Create and return a new SYSTEM-TASK which is pushed to the task queue after executing BODY."
-  `(let ((,sym (make-instance 'system-task ,@args)))
+  `(let ((,sym (make-system-task ,fn ,@args)))
      (unwind-protect (progn ,@body)
-       (push-queue ,sym (system-session-tasks *system-session*)))))
+       (push-queue ,sym (system-session-tasks *system-session*))
+       (push-queue (state ,sym) (system-session-states *system-session*)))))
 
 (defgeneric needed-in-image-p (task component)
   (:documentation "Is the action of TASK on COMPONENT needed in the current image
@@ -1139,22 +1159,25 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset 
-                                        (fasl-cache (std/os:user-fasl-cache)))
+                                        (fasl-cache (std/os:user-fasl-cache))
+                                        system-data
+                                        system-cache)
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
-  ;; (init :xdg)
+  (init :xdg)
   (when sysdefs (setq *sysdefs* sysdefs))
   (setf *system-table* (make-hash-table)
         *module* nil
         *module-table* (make-hash-table :test 'equal)
-        *user-fasl-cache* (ensure-directories-exist fasl-cache))
-  (setf (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
-  (ensure-directories-exist *system-data-directory*)
-  (ensure-directories-exist *system-cache-directory*)
+        *user-fasl-cache* (ensure-directories-exist fasl-cache)
+        *system-data-directory* (ensure-directories-exist (or system-data (xdg-data-directory "lisp/sys")))
+        *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
+        (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (let ((pool (when pool
                 (make-thread-pool (std/alien:num-cpus) 
                                   :name :sys
+                                  :class 'std/task:task-pool
                                   :worker-class 'system-worker))))
     (cond
       ((or reset (not *system-session*)) (setf *system-session* (make-system-session :pool pool)))
@@ -1299,7 +1322,7 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
     (if asdf
         (asdf:test-system self args)
         (progn (load-module (name self) :tests)
-               (apply 'pkg:symbol-call *test-system* :do-suite (name self) args))))
+               (apply 'pkg:symbol-call *test-system* 'do-tests :suite (name self) args))))
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply #'test-system sys args))))
