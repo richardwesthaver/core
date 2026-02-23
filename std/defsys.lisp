@@ -1165,7 +1165,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 
 ;;; Protocol
 (defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset 
-                                        (fasl-cache (std/os:user-fasl-cache))
+                                        fasl-cache
                                         system-data
                                         system-cache)
   "Initialize STD/DEFSYS variables given a list of system directories SYSDEFS and
@@ -1175,7 +1175,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (setf *system-table* (make-hash-table)
         *module* nil
         *module-table* (make-hash-table :test 'equal)
-        *user-fasl-cache* (ensure-directories-exist fasl-cache)
+        *user-fasl-cache* (ensure-directories-exist (or fasl-cache (std/os:user-fasl-cache)))
         *system-data-directory* (or system-data (xdg-data-directory "lisp/sys"))
         *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
         (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
