@@ -634,3 +634,9 @@
   SVG object curve resolutions can be set via :curve-resolution (the higher the
   value, the more accurate curves are)."
   (parse-svg-string (file-contents filename) :curve-resolution curve-resolution :scale scale :save-attributes save-attributes :group-id-attribute-name group-id-attribute-name))
+
+(defmethod deserialize ((self pathname) (fmt (eql :svg)) &rest args)
+  (apply 'parse-svg-file self args))
+
+(defmethod deserialize ((self string) (fmt (eql :svg)) &rest args)
+  (apply 'parse-svg-string self args))

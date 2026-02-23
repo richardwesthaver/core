@@ -136,7 +136,7 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
     (labels ((print-path (path count)
                (let* ((nodes (reverse path))
                       (rest-nodes (remove-nodes-up-to-frame nodes
-                                                            *frame-where-profiling-was-started*))
+                                                            (or *frame-where-profiling-was-started* (sb-di:top-frame))))
                       (names (mapcar #'name rest-nodes)))
                  (when names
                    (format stream "~{~A~^;~} ~A~%"

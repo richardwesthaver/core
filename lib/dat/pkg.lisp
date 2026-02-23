@@ -244,7 +244,7 @@
 
 (defpkg :dat/svg
   (:nicknames :svg)
-  (:use :cl :ppcre :dat/xml :dat/proto)
+  (:use :cl :ppcre :dat/xml :dat/proto :std)
   (:import-from :std/string :*whitespaces*)
   (:export :parse-svg-file :parse-svg-string))
 

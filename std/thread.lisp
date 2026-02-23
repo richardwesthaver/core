@@ -414,6 +414,8 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
 (definline make-channel (&key (pool *thread-pool*) capacity)
   (%make-channel :queue (make-queue :capacity capacity) :pool pool))
 
+;; (defmacro defchannel ())
+
 ;;; Limiter
 (defclass thread-limiter ()
   ((limiter-lock :accessor limiter-lock :initarg :limiter-lock)
@@ -668,7 +670,8 @@ WORKER threads."))
              (values))
            (maybe-sleep ()
              (with-slots (wait-cvar wait-lock wait-count
-                          notify-count low-priority-work) sched
+                          notify-count low-priority-work) 
+                 sched
                (inc-counter wait-count)
                (unwind-protect 
                     (with-mutex (wait-lock)
@@ -677,7 +680,8 @@ WORKER threads."))
                       (loop until (plusp notify-count)
                             do (condition-wait wait-cvar wait-lock)
                             finally (decf notify-count)))
-                 (dec-counter wait-count)))
+                 (dec-counter wait-count)
+                 (sb-thread::thread-yield)))
              (values)))
     (declare (dynamic-extent #'try-pop #'try-pop-all #'maybe-sleep))
     (with-slots (spin-count) sched
@@ -1028,7 +1032,7 @@ provided. *THREAD-POOL* is returned."
 (defmethod designate-oracle ((self thread-pool) (guest (eql t)))
   (designate-oracle self *current-thread*))
 
-(defmacro work-lambda (&body body)
+(defmacro work-lambda (&body body)7
   "Generate a 'work-lambda' with BODY. *HANDLERS* will be bound for the duration
 of the returned lambda."
   (with-gensyms (work handlers)
@@ -1041,31 +1045,7 @@ of the returned lambda."
                  (,work)))
              #',work)))))
 
-;; TODO 2025-04-30: 
-(defmacro pool-lambda (state &body body)
-  "Generate a 'pool-lambda' with provided BODY. *THREAD-POOL* and *HANDLERS* are
-bound for the duration of the returned lambda and STATE is the name of the
-single required argument of the lambda. The lambda should run all code
-assigned to the input state and then return two values."
-  (with-gensyms (handlers pool)
-    `(labels ((*kernel* (,state) ,@body (values)))
-       (declare (optimize (speed 3) (safety 0))
-                (pool-kernel-function *kernel*)
-                (inline *kernel*))
-       (let ((,handlers *handlers*)
-             (,pool *thread-pool*))
-	 (if ,handlers
-	     (lambda (,state)
-	       (let ((*handlers* ,handlers)
-                     (*thread-pool* ,pool))
-		 (*kernel* ,state)))
-             (lambda (,state)
-               (let ((*thread-pool* ,pool))
-	         (*kernel* ,state))))))))
-
 ;; (defmacro super-lambda (&body body))
-
-;; (defmacro channel-lambda (ch &body body))
 
 (defun make-channeled-work (channel fn args)
   (declare (channel channel) (function fn) (list args))

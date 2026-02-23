@@ -74,6 +74,8 @@
 (defpkg :cli/tools/media
   (:use :cl :std :cli/tools/proto :cli/env :config :ini :ast)
   (:export
+   :*flamegraph.pl*
+   :flamegraph
    :*ffmpeg*
    :run-ffmpeg
    :ffmpeg-error

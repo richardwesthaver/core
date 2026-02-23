@@ -5,6 +5,20 @@
 ;;; Code:
 (in-package :cli/tools/media)
 
+(define-cli-tool :flamegraph.pl (args &optional (input *standard-input*) (output *standard-output*))
+  (let ((proc (sb-ext:run-program *flamegraph.pl* args :wait t :output output :input input)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (flamegraph.pl-error "FLAMEGRAPH.PL command failed: ~A ~A" *flamegraph.pl* (or args "")))))
+
+(defun flamegraph (input &optional output)
+  (with-open-file (i input)
+    (with-open-stream (o (if output
+                             (open output :direction :output :if-exists :supersede :if-does-not-exist :create)
+                             (make-string-output-stream)))
+      (run-flamegraph.pl nil i o)
+      (unless output
+        (deserialize (get-output-stream-string o) :svg)))))
+
 (define-cli-tool :ffmpeg (args &optional (output *standard-output*))
   (let ((proc (sb-ext:run-program *ffmpeg* args :wait t :output output)))
     (unless (eq 0 (sb-ext:process-exit-code proc))

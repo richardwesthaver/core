@@ -89,7 +89,7 @@ restarts is provided. *KERNEL* is returned."
   (let ((k (find :kernel opts :key #'car)))
     `(defclass ,name ,supers ,slots (:metaclass kernel-class) . ,(removef opts k :test 'equalp))))
 
-(defkernel hook (kernel-object) ()
+(defkernel hook () ()
   (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
 

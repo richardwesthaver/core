@@ -11,7 +11,7 @@
    (src :initform nil :initarg :src :type (or null pathname vc-repo))
    (skel :initform (load-user-skelrc) :initarg :skel :type (or null pathname sk-config))
    (krypt :initform (load-kryptrc) :initarg :krypt :type (or null pathname krypt-config))
-   #+mpk (mpk :initform (load-mpkrc) :initarg :mpk :type (or null pathname mpk-config))
+   #+mpk (mpk :initform (mpk:load-mpkrc) :initarg :mpk :type (or null pathname mpk-config))
    (packy :initform nil :initarg :packy :type (or null packy-config))
    (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config) :accessor logger)
    (mail :initarg :mail :type pathname)
@@ -26,6 +26,9 @@
    (boxes :initarg :box :type list)
    (pods :initform nil :initarg :pod :type list)
    (services :initform nil :initarg :services :type list :accessor services)))
+
+;; late declaim
+(declaim (type home-config *home-config*))
 
 (defmethod make-config ((self (eql :homer)) &rest args)
   (apply 'make-instance 'home-config args))

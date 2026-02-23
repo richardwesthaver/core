@@ -108,7 +108,7 @@ declarations for the test body."
       (multiple-value-bind (forms dec documentation)
           ;; parse body with docstring allowed
           (parse-body (or body) :documentation t :whole t)
-        `(,props ,documentation ,dec 
+        `(,props ,documentation '(,@(mapcar #'cadr dec))
                  ',(if-let ((fx (getf props :use)))
                      `((with-fixture (,@fx)
                          ,@forms))

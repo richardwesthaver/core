@@ -76,9 +76,8 @@
   (merge-pathnames (file self) (dir self)))
 
 ;;;; Tests
-(defclass test (test-object)
-  ((fn :type symbol :accessor test-fn)
-   (bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
+(defkernel test (test-object kernel-object)
+  ((bench :type (or boolean fixnum) :accessor test-bench :initform nil :initarg :bench)
    (profile :type list :accessor test-profile :initform nil :initarg :profile)
    (cover :type boolean :accessor test-cover :initform nil :initarg :cover)
    (declare :type list :accessor test-declare :initform nil :initarg :declare)
@@ -89,17 +88,16 @@
    (results :initarg :results :type (array test-result) :accessor test-results))
   (:documentation "Test class typically made with `deftest'."))
 
-(defmethod initialize-instance ((self test) &key name)
+(defmethod initialize-instance ((self test) &key form name declare &allow-other-keys)
   ;; (debug! "building test" name)
-  (setf (test-fn self)
-        (make-symbol
-         (format nil "~A~A"
-                 name
-                 (gensym *test-suffix*))))
-  (setf (test-lock-p self) t)
+  (setf (test-lock-p self) t
+        (name self) name
+        (test-form self) form
+        (test-declare self) declare
   ;; TODO 2023-09-21: we should count how many checks are in the :form
   ;; slot and infer the array dimensions.
-  (setf (test-results self) (make-array 0 :element-type 'test-result))
+        (test-results self) (make-array 0 :element-type 'test-result :fill-pointer t :adjustable t))
+  (set-funcallable-instance-function self (compile nil `(lambda () ,@(when declare `((declare ,@declare))) ,@form)))
   (call-next-method))
 
 ;; (defmethod initialize-instance :after ((self test) &key cover)
@@ -120,16 +118,17 @@
   (eval `(progn ,@(test-form self))))
 
 (defmethod funcall-test ((self test) &key declare)
-  (unless (functionp (test-fn self))
-    (trace! (setf (symbol-function (test-fn self))
+  ;; ensure kernel
+  (unless (functionp (kernel self))
+    (trace! (setf (symbol-function (kernel self))
                   (eval `(lambda ()
                            ,(when declare `(declare ,declare))
                            ,@(test-form self))))))
-  (funcall (test-fn self)))
+  (funcall (kernel self)))
 
 (defmethod compile-test ((self test) &key declare)
   (compile
-   (test-fn self)
+   (kernel self)
    `(lambda ()
       ,@(when declare `((declare ,declare)))
       ,@(test-form self))))
@@ -171,8 +170,8 @@
                    ;; TODO 2023-09-21: handle failures here
                    (unwind-protect-case ()
                        (funcall (compile-test self :declare (test-declare self)))
-                     (:normal (setf %test-result (make-test-result :pass (test-fn self))))
-                     (:abort (setf %test-result (make-test-result :fail (test-fn self))))))
+                     (:normal (setf %test-result (make-test-result :pass (kernel self))))
+                     (:abort (setf %test-result (make-test-result :fail (kernel self))))))
                  (progn
                    (funcall-test self :declare (test-declare self))
                    (setf %test-result (make-test-result :pass self))))

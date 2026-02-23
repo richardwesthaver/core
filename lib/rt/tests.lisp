@@ -15,7 +15,8 @@
 
 ;; FIX 2025-09-17: 
 (deftest sanity ()
-  (isnt t))
+  (is *testing*)
+  (isnt nil))
 
 (defun %foo (input)
   (loop for x below input
@@ -51,17 +52,17 @@
 
 (deftest tmp ()
   (is (null (with-tmp-directory ())))
-  (is (null (with-tmp-file (file))))
-  (is (with-tmp-file (f1 :name "temporary-file")
-        (is (probe-file *tmp*))
-        (write-string "1 2 3 4" f1)
-        (force-output f1)
-        (is (= 7 (file-length f1)))))
-  (is (with-tmp-directory ("foobar")
-        (is (directory-path-p (probe-file *tmp*))))))
+  (istype 'sb-sys:fd-stream (with-tmp-file (file) file))
+  (with-tmp-file (f1 :name "temporary-file")
+    (is (probe-file *tmp*))
+    (write-string "1 2 3 4" f1)
+    (force-output f1)
+    (is (= 7 (file-length f1))))
+  (with-tmp-directory ("foobar")
+    (is (directory-path-p (probe-file *tmp*)))))
 
 (deftest fuzz ()
   (defkernel foo-fuzz (fuzz:fuzzer) ())
-  (is (integerp
-       (fuzz (make-instance 'foo-fuzz))))
-  (is (= 100 (length (fuzz* (make-random-state) (kernel (make-instance 'foo-fuzz)) :count 100)))))
+  (istype 'fuzzer (make-instance 'foo-fuzz))
+  (is (integerp (fuzz (fuzzer))))
+  (is (= 100 (length (fuzz* (make-random-state) (kernel (fuzzer)) :count 100)))))

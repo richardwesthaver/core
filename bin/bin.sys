@@ -2,7 +2,6 @@
 (defsys :bin
  :require (:core :skel)
  :components 
- ((:file "core")
-  #+nil (:dir "script" :exclude ".*[.]fasl"))
+ ((:file "core"))
  :provide
  ((:bin :core :package :bin/core :toplevel "dispatch-core")))

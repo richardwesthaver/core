@@ -149,7 +149,7 @@ immediately, with BODY being ignored."
     (future (future-result obj))))
 
 (defmacro future (&body body)
-  "Create a future which is fulfilled in parallel by the implicit progn BODY."
+  "Create a future which is fulfilled in parallel by the implicit work-lambda BODY."
   `(make-future (std/thread::work-lambda ,@body)))
 
 (defmacro speculate (&body body)

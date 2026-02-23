@@ -26,9 +26,9 @@
                                       "Calling ~a with ~@{~a=~a, ~}~%" 
                                       ',name 
                                       ,@(loop for symbol in lambda-list 
-                                          collecting `(quote ,symbol) 
-                                          collecting symbol)) 
-                              body)))))
+                                              collecting `(quote ,symbol) 
+                                              collecting symbol)) 
+                             body)))))
     `(flet ,(mapcar #'add-traces functions) ,@body)))
 
 ;;; This is an implementation of a chromium-based Lisp tracer authored
@@ -81,7 +81,6 @@
   (id nil :type t))
 
 ;;; TODO: define accessors manually, to save performance? or somehow optimize it.  -- Jacek Złydach, 2019-11-04
-
 (declaim (inline convert-args))
 (defun convert-args (traced-fn-name args)
   "Depending on the function being traced, named `TRACED-FN-NAME', and the value of `*DEFAULT-ARG-CONVERTER*'
@@ -101,14 +100,12 @@ Returns the representation of `ARGS' to store."
 ;;; Timer
 
 ;;; TODO: make it so that user can plug a high-resolution timer here. -- Jacek Złydach, 2019-10-18
-
 (sb-ext:defglobal *hack-clock-jitter* 0 "A crude hack because our clock has too little resolution.")
 (declaim (type fixnum *hack-clock-jitter*))
 
 ;;; TODO: this needs to be a function that can be changed between invocations of tracing!
 ;;; I want to allow for injecting higher resolution clocks if available.
 ;;; -- Jacek Złydach, 2019-11-01
-
 (defun get-current-time-usec* ()
   "Get current time with microsecond resolution."
   (sb-ext:atomic-incf *hack-clock-jitter*)
@@ -318,7 +315,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
             ,@body))
      (stop-tracing)))
 
-(defun function-name->name-and-category (function-name)
+(defun function-name-and-category (function-name)
   (etypecase function-name
     (symbol
      (values (symbol-name function-name) (package-name (symbol-package function-name))))
@@ -337,7 +334,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
   (:method ((arg t))
     "Passthrough method."
     (or (ignore-errors
-          (prin1-to-string arg))
+         (prin1-to-string arg))
         "!!Error printing argument!!"))
   (:documentation "A hook useful for changing the printed representation of input and return values."))
 
@@ -346,15 +343,16 @@ and the stacks containing unclosed duration entries, keyed by thread."
       (format nil "[~{~F~^, ~}]" (coerce arg 'list))
       (call-next-method)))
 
-;;; FIXME: Something breaks if not collecting args, and :skip-args is NIL. Probably the getf in printing. -- Jacek Złydach, 2019-11-05
-(defun trace-event->json (trace-event &key (skip-args nil))
+;;; FIXME: Something breaks if not collecting args, and :skip-args is
+;;; NIL. Probably the getf in printing. -- Jacek Złydach, 2019-11-05
+(defun json-from-trace-event (trace-event &key (skip-args nil))
   (flet ((sanitize-and-format-args-list (argslist)
            (if skip-args "\"_\""
                (substitute #\Space #\Newline (format nil "[~{~S~^, ~}]" (mapcar #'post-process-arg argslist))))))
     (ecase (trace-event-phase trace-event)
       (:enter
        (multiple-value-bind (name category)
-           (function-name->name-and-category (trace-event-name trace-event))
+           (function-name-and-category (trace-event-name trace-event))
          (format nil
                  "{ \"name\" : ~S, \"cat\" : ~S, \"ph\" : \"B\", \"pid\" : 1, \"tid\" : ~D, \"ts\" : ~D, \"args\" : { \"in\" : ~A }}"
                  name
@@ -364,7 +362,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
                  (sanitize-and-format-args-list (trace-event-args trace-event)))))
       (:exit
        (multiple-value-bind (name category)
-           (function-name->name-and-category (trace-event-name trace-event))
+           (function-name-and-category (trace-event-name trace-event))
          (format nil
                  "{ \"name\" : ~S, \"cat\" : ~S, \"ph\" : \"E\", \"pid\" : 1, \"tid\" : ~D, \"ts\" : ~D, \"args\" : { \"out\" : ~A }}"
                  name
@@ -374,7 +372,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
                  (sanitize-and-format-args-list (trace-event-args trace-event)))))
       (:complete
        (multiple-value-bind (name category)
-           (function-name->name-and-category (trace-event-name trace-event))
+           (function-name-and-category (trace-event-name trace-event))
          (format nil
                  "{ \"name\" : ~S, \"cat\" : ~S, \"ph\" : \"X\", \"pid\" : 1, \"tid\" : ~D, \"ts\" : ~D, \"dur\" : ~D,  \"args\" : { \"in\" : ~A, \"out\" : ~A }}"
                  name
@@ -385,7 +383,7 @@ and the stacks containing unclosed duration entries, keyed by thread."
                  (sanitize-and-format-args-list (getf (trace-event-args trace-event) :in))
                  (sanitize-and-format-args-list (getf (trace-event-args trace-event) :out))))))))
 
-(defun thread->json (thread)
+(defun json-from-thread (thread)
   (format nil
           "{ \"name\" : \"thread_name\", \"ph\" : \"M\", \"pid\" : 1, \"tid\" : ~D, \"args\" : { \"name\" : ~S }}"
           (sb-impl::get-lisp-obj-address thread)
@@ -393,11 +391,11 @@ and the stacks containing unclosed duration entries, keyed by thread."
 
 (defun extract-threads (events)
   (loop
-     with uniques-ht = (make-hash-table :test #'eq)
-     for event in events
-     do
+    with uniques-ht = (make-hash-table :test #'eq)
+    for event in events
+    do
        (setf (gethash (trace-event-thread event) uniques-ht) t)
-     finally
+    finally
        (return (hash-table-keys uniques-ht))))
 
 ;;; FIXME: save with streams instead? -- Jacek Złydach, 2019-10-14
@@ -406,19 +404,19 @@ and the stacks containing unclosed duration entries, keyed by thread."
     ;; TODO: preamble -- Jacek Złydach, 2019-10-14
     (format stream "{~%\"traceEvents\" :  [~%")
     (loop
-       for (entry . restp) on *trace-events*
-       do
-         (write-string (trace-event->json entry :skip-args skip-args) stream)
+      for (entry . restp) on *trace-events*
+      do
+         (write-string (json-from-trace-event entry :skip-args skip-args) stream)
          (when restp
            (write-string "," stream)
            (terpri stream)))
     (loop
-       for (thread . restp) on (extract-threads *trace-events*)
-       initially
+      for (thread . restp) on (extract-threads *trace-events*)
+      initially
          (write-string "," stream)
          (terpri stream)
-       do
-         (write-string (thread->json thread) stream)
+      do
+         (write-string (json-from-thread thread) stream)
          (when restp
            (write-string "," stream)
            (terpri stream)))
