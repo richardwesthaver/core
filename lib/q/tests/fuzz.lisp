@@ -8,7 +8,7 @@
 (defvar *fuzz-value-max-size* 32)
 
 ;; > schema, state, generator
-(defclass query-fuzzer (fuzzer data-source) ())
+(defkernel query-fuzzer (fuzzer data-source) ())
 
 (defun generate-sql-type (state &optional (type :string))
   (case type
@@ -19,13 +19,11 @@
 
 (defun generate-dql-type (state &optional (type :string)))
 
-(defclass sql-fuzzer (query-fuzzer) ()
-  (:default-initargs
-   :generator #'generate-sql-type))
+(defkernel sql-fuzzer (query-fuzzer) ()
+  (:kernel #'generate-sql-type))
 
 (defmethod fuzz ((self sql-fuzzer) &key type)
-  (funcall (fuzz-generator self) (fuzz-state self) type))
+  (funcall (kernel self) (state self) type))
 
-(defclass dql-fuzzer (query-fuzzer) ()
-  (:default-initargs
-   :generator #'generate-dql-type))
+(defkernel dql-fuzzer (query-fuzzer) ()
+  (:kernel #'generate-dql-type))

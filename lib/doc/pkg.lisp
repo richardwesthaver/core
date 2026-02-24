@@ -55,6 +55,7 @@
    :doc-files
    :doc-symbols
    :doc-dependencies
+   :doc-system
    :doc-dependents
    :doc-packages
    :print-doc

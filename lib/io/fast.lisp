@@ -226,17 +226,18 @@ all data has been flushed to the stream."
       (flush output-buffer)
       (concat-buffer output-buffer)))
 
-(defmacro with-fast-output ((buffer &optional output) &body body)
-  "Create `BUFFER`, optionally outputting to `OUTPUT`."
-  `(let ((,buffer (make-output-buffer :output ,output)))
-     ,@body
-     (if (streamp (output-buffer-output ,buffer))
-         (flush ,buffer)
-         (finish-output-buffer ,buffer))))
+(eval-always
+  (defmacro with-fast-output ((buffer &optional output) &body body)
+    "Create `BUFFER`, optionally outputting to `OUTPUT`."
+    `(let ((,buffer (make-output-buffer :output ,output)))
+       ,@body
+       (if (streamp (output-buffer-output ,buffer))
+           (flush ,buffer)
+           (finish-output-buffer ,buffer))))
 
-(defmacro with-fast-input ((buffer vector &optional stream (offset 0)) &body body)
-  `(let ((,buffer (make-input-buffer :vector ,vector :stream ,stream :pos ,offset)))
-     ,@body))
+  (defmacro with-fast-input ((buffer vector &optional stream (offset 0)) &body body)
+    `(let ((,buffer (make-input-buffer :vector ,vector :stream ,stream :pos ,offset)))
+       ,@body)))
 
 ;; READx and WRITEx
 ;;; WRITE-UNSIGNED-BE, READ-UNSIGNED-BE, etc taken from PACK, which is

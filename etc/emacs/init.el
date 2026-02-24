@@ -17,10 +17,10 @@
  use-package-expand-minimally t)
 
 ;; HACK 2025-09-27: waiting for domain
-(setq url "https://otom8.dev"
-      packy-url "https://packy.otom8.dev"
-      company-domain "otom8.dev"
-      company-cdn-url "https://cdn.otom8.dev")
+(setq url "https://compiler.company"
+      packy-url "https://packy.compiler.company"
+      company-domain "compiler.company"
+      company-cdn-url "https://cdn.compiler.company")
 
 (dolist (x '("util.el" "default.el" "keys.el"))
   (let ((y (concat user-emacs-directory x)))

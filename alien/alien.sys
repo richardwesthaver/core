@@ -8,7 +8,7 @@
   :chromaprint :blas :openssl :ffmpeg
   :syslog :jack :keyutils :rocksdb)
  :provide
- ((:tests 
+ ((:sys :alien/tests 
    :require
    (:arrow/tests :blake3/tests :btrfs/tests
     :cuda/tests :evdev/tests :glib/tests :gstreamer/tests

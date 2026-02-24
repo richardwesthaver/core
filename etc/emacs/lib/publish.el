@@ -69,7 +69,7 @@ contextual information."
       org-export-with-broken-links 'mark
       org-html-checkbox-type 'unicode
       org-html-mathjax-options
-      '((path "https://cdn.otom8.dev/js/tex-mml-chtml.js")
+      '((path "https://cdn.compiler.company/js/tex-mml-chtml.js")
 	(scale 1.0) (align "center") (font "mathjax-modern")
 	(overflow "overflow") (tags "ams") (indent "0em")
 	(multlinewidth "85%") (tagindent ".8em") (tagside "right"))

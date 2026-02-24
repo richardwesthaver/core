@@ -1486,6 +1486,7 @@
    :grovel-component
    :component-type
    :component-package
+   :component-require
    :find-system
    :save-system
    :make-system

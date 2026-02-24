@@ -16,8 +16,8 @@
 (in-package :organ)
 
 (define-org-element keyword
-    ((key :accessor key :initarg :key :type string)
-     (val :accessor val :initarg :val))
+    ((key :accessor name :initarg :key :type string)
+     (val :accessor val:val :initarg :val))
   :lesser t)
 
 (define-org-parser (keyword :from string)

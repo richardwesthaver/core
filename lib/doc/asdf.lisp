@@ -74,7 +74,7 @@ SELF."
                  (asdf-system-documentation x)))
           (asdf:system-depends-on (doc-system self))))
 
-(defun find-system-dependents (system)
+(defun find-asdf-system-dependents (system)
   "Return a list of systems which depend on SYSTEM by iterating over ASDF:REGISTER-SYSTEMS."
   (let ((r))
   (dolist (s (asdf:registered-systems))
@@ -90,4 +90,4 @@ SELF."
   r))
 
 (defmethod doc-dependents ((self asdf-system-documentation))
-  (mapcar #'asdf-system-documentation (find-system-dependents (doc-system self))))
+  (mapcar #'asdf-system-documentation (find-asdf-system-dependents (doc-system self))))

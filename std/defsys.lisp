@@ -1021,7 +1021,6 @@ the following extensions:
                    ',hooks)
            (expand-component-requires ,sys)
            (setf (gethash ,name *system-table*) ,sys)
-           ;; (expand-module-provides ,sys)
            ,sys)))))
 
 (defun compile-sys (path &optional force output-file)
@@ -1172,10 +1171,7 @@ internally. On success the path is added to the *SYSDEFS* list."
 optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (init :xdg)
   (when sysdefs (setq *sysdefs* sysdefs))
-  (setf *system-table* (make-hash-table)
-        *module* nil
-        *module-table* (make-hash-table :test 'equal)
-        *user-fasl-cache* (ensure-directories-exist (or fasl-cache (std/os:user-fasl-cache)))
+  (setf *user-fasl-cache* (ensure-directories-exist (or fasl-cache (std/os:user-fasl-cache)))
         *system-data-directory* (or system-data (xdg-data-directory "lisp/sys"))
         *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
         (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
@@ -1187,7 +1183,11 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
                                   :class 'std/task:task-pool
                                   :worker-class 'system-worker))))
     (cond
-      ((or reset (not *system-session*)) (setf *system-session* (make-system-session :pool pool)))
+      ((or reset (not *system-session*)) 
+       (setf *system-session* (make-system-session :pool pool)
+             *system-table* (make-hash-table)
+             *module* nil
+             *module-table* (make-hash-table :test 'equal)))
       (pool
        (setf (system-session-pool *system-session*) pool))))
   (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))

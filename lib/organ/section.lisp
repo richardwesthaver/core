@@ -28,8 +28,8 @@
 (defclass org-meta-section (org-section) ((keywords :initform #() :initarg :keywords :type (vector org-keyword) :accessor org-keywords)))
 
 (defmethod org-title ((self org-meta-section))
-  (when-let ((kw (find "TITLE" (org-keywords self) :test 'string-equal :key (lambda (x) (string-upcase (key x))))))
-    (val kw)))
+  (when-let ((kw (find "TITLE" (org-keywords self) :test 'string-equal :key (lambda (x) (string-upcase (name x))))))
+    (val:val kw)))
 
 (defmethod org-create ((type (eql :meta)) &rest initargs)
   (apply #'make-instance 'org-meta-section initargs))

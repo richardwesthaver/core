@@ -5,10 +5,10 @@
 (in-package :organ/tests)
 (in-readtable :std)
 
-(defclass org-fuzzer (fuzzer) ()
+(defkernel org-fuzzer (fuzzer) ()
   (:default-initargs
-   :state nil
-   :generator 
+   :state nil)
+  (:kernel
    (lambda (state)
      (org-create 
       (or state

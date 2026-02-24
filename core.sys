@@ -10,7 +10,7 @@
   :box :syn :vc :rt)
  :components ((:file "core"))
  :provide 
- ((:tests
+ ((:sys :core/tests
    :require
    (:rt :std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
@@ -20,4 +20,5 @@
     :zstd/tests :uring/tests :blake3/tests
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
-    :vc/tests :cli/tests :q/tests :blas/tests))))
+    :vc/tests :cli/tests :q/tests :blas/tests)
+   :components nil)))

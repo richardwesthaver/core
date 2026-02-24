@@ -69,7 +69,7 @@
    ".stash/psl.dat"
    :if-exists nil))
  (kbd.sxp (%stash)
-  (req:fetch "https://packy.otom8.dev/data/kbd.sxp"
+  (req:fetch "https://packy.compiler.company/data/kbd.sxp"
    ".stash/kbd.sxp"
    :if-exists nil))
  (ccadb.dat (%stash)
@@ -95,23 +95,23 @@
    :if-exists nil)
   #$thrift --gen json -out .stash .stash/parquet.thrift$#)
  (parquet.json (%stash)
-  (req:fetch "https://packy.otom8.dev/data/parquet.json"
+  (req:fetch "https://packy.compiler.company/data/parquet.json"
    ".stash/parquet.json"
    :if-exists nil))
  (freedesktop.org.xml (%stash)
-  (req:fetch "https://packy.otom8.dev/data/freedesktop.org.xml"
+  (req:fetch "https://packy.compiler.company/data/freedesktop.org.xml"
    ".stash/freedesktop.org.xml"
    :if-exists nil))
  (parquet-test-data (%stash) 
-  (req:fetch "https://packy.otom8.dev/data/test/alltypes_plain.parquet"
+  (req:fetch "https://packy.compiler.company/data/test/alltypes_plain.parquet"
    ".stash/alltypes_plain.parquet"
    :if-exists nil))
  (sndfile-test-data (%stash)
-  (req:fetch "https://packy.otom8.dev/data/test/Weltschmerz.wav"
+  (req:fetch "https://packy.compiler.company/data/test/Weltschmerz.wav"
    ".stash/Weltschmerz.wav"
    :if-exists nil))
  (ffmpeg-test-data (%stash)
-  (req:fetch "https://packy.otom8.dev/data/test/my_seat_and_weep.flac"
+  (req:fetch "https://packy.compiler.company/data/test/my_seat_and_weep.flac"
    ".stash/my_seat_and_weep.flac"
    :if-exists nil))
  (test-data (ffmpeg-test-data sndfile-test-data parquet-test-data))
