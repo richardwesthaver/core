@@ -13,12 +13,12 @@
 ;; starting point.
 
 ;; make shared_lib DISABLE_JEMALLOC=1 && 
-;; sudo cp librocksdb.so.* /usr/local/lib/ && 
-;; sudo cp -rf include/* /usr/local/include/
+;; sudo cp librocksdb.so.* /usr/lib/ && 
+;; sudo cp -rf include/* /usr/include/
 
 ;; https://github.com/facebook/rocksdb/blob/main/Makefile
 
-;; check /usr/local/include/rocksdb/c.h for the C API header, the source is under
+;; check /usr/include/rocksdb/c.h for the C API header, the source is under
 ;; db/c.cc
 
 ;; here are some important notes to keepin mind (from the API header):

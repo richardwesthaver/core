@@ -424,10 +424,10 @@ accessible."
   ("**;*.*.*" "/opt/scratch/**/*.*"))
 
 ;; redefine the sys table
-(define-logical-pathname "SYS" "/usr/local/lib/sbcl/**/*.*"
-  ("SRC;**;*.*.*" #P"/usr/local/src/sbcl/src/**/*.*")
+(define-logical-pathname "SYS" "/usr/lib/sbcl/**/*.*"
+  ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
   ("CONTRIB;**;*.*.*"
-   #P"/usr/local/src/sbcl/contrib/**/*.*")
+   #P"/usr/src/sbcl/contrib/**/*.*")
   ("OUTPUT;**;*.*.*"
    (translate-logical-pathname "STASH:CACHE;lisp;**;*.*.*"))
   ("TMP;**;*.*.*" "/tmp/**/*.*"))

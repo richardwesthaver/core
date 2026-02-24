@@ -26,7 +26,7 @@
                (let ((fname (symbolicate 'load- name)))
                  `(prog1
                       (defun ,fname (&optional save)
-                        (prog1 (sb-alien:load-shared-object ,(format nil "/usr/local/lib/libtree-sitter-~(~a~).so" lang)
+                        (prog1 (sb-alien:load-shared-object ,(format nil "/usr/lib/libtree-sitter-~(~a~).so" lang)
                                                             :dont-save (not save))
                           (pushnew ,(sb-int:keywordicate name) *features*)))
                     (defar ,name (* ts-language))
@@ -51,7 +51,7 @@
 
 (defun list-ts-langs () (loop for name being each hash-key of *ts-langs* collect name))
 
-(defvar *tree-sitter-language-directory* #P"/usr/local/share/tree-sitter/")
+(defvar *tree-sitter-language-directory* #P"/usr/share/tree-sitter/")
 
 (defun tree-sitter-language-files ()
   (let ((res))

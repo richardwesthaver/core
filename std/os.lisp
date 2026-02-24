@@ -558,7 +558,7 @@ new one."
     (sb-alien:alien-funcall (sb-alien:extern-alien "execv" (function sb-alien:int sb-alien:c-string (* sb-alien:c-string)))
                             prg argv)))
 
-;; (apply 'execv "/usr/local/bin/core" sb-ext:*posix-argv*)
+;; (apply 'execv "/usr/bin/core" sb-ext:*posix-argv*)
 
 (defun open-pipe (&key (element-type '(unsigned-byte 8)))
   "Create a pipe and return two fd-streams. The first value is the input

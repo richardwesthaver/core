@@ -138,7 +138,6 @@
    :remove-hook
    :concat
    :parse-body
-   :define-api
    :destructure-case
    :ensure-function
    :ensure-functionf))
@@ -204,7 +203,8 @@
    :wrap-error))
 
 (defpkg :std/named-readtables
-  (:use :cl :std/prim :std/condition)
+  (:use :cl :std/prim :std/condition :std/list)
+  (:import-from :std/prim :parse-lambda-list)
   (:export
    :defreadtable
    :with-readtable

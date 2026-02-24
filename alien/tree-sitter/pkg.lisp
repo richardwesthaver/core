@@ -6,20 +6,19 @@
 ;; the LOAD-TREE-SITTER function, and the language parsers.
 
 ;; The language parser shared libraries should ALWAYS be located in
-;; /usr/local/lib/ and be prefixed with 'lib' like so:
-;; '/usr/local/lib/libtree-sitter-json.so'. Static libraries are not
+;; /usr/lib/ and be prefixed with 'lib' like so:
+;; '/usr/lib/libtree-sitter-json.so'. Static libraries are not
 ;; supported.
 
 ;; The language parsers have associated json files which should ALWAYS
-;; be stored in subdirectories of /usr/local/share/tree-sitter/ like
-;; so: '/usr/local/share/tree-sitter/json/grammar.json'.
+;; be stored in subdirectories of /usr/share/tree-sitter/ like
+;; so: '/usr/share/tree-sitter/json/grammar.json'.
 
 ;;; Code:
 (defpackage :tree-sitter
   (:use :cl :std :sb-alien :std/alien)
   (:export 
    :load-tree-sitter
-   :load-tree-sitter-alien
    :tree-sitter-language-files
    :*ts-langs*
    :list-ts-langs
@@ -106,4 +105,3 @@
 (in-package :tree-sitter)
 
 (define-alien-loader tree-sitter)
-(define-alien-loader tree-sitter-alien)

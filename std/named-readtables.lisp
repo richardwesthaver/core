@@ -515,6 +515,33 @@
 
 (declaim (special *standard-readtable* *empty-readtable*))
 
+(defmacro define-api (name lambda-list type-list &body body)
+  (flet ((parse-type-list (type-list)
+           (let ((ret (lastcar type-list)))
+             (assert ret () "You forgot to specify return type.")
+             (values (nbutlast type-list)
+                     `(values ,@(when ret `(,ret)) &optional)))))
+    (multiple-value-bind (body decls docstring)
+        (parse-body body :documentation t :whole `(define-api ,name))
+      (multiple-value-bind (arg-typespec value-typespec)
+          (parse-type-list type-list)
+        (multiple-value-bind (bits reqs opts rest keys) (parse-lambda-list lambda-list)
+          (declare (ignore bits) (ignorable reqs opts rest keys))
+          `(progn
+             (declaim (ftype (function ,arg-typespec ,value-typespec) ,name))
+             (locally
+                 ;; Muffle the annoying "&OPTIONAL and &KEY found in
+                 ;; the same lambda list" style-warning
+                 #+sbcl (declare (sb-ext:muffle-conditions style-warning))
+                 (defun ,name ,lambda-list
+                   ,docstring
+                   ,@decls
+                   (locally
+                       #+sbcl (declare (sb-ext:unmuffle-conditions style-warning))
+                       ;; SBCL will interpret the ftype declaration as
+                       ;; assertion and will insert type checks for us.
+                       ,@body)))))))))
+
 (locally (declare (sb-ext:muffle-conditions style-warning))
   (define-api make-readtable
       (&optional (name nil name-supplied-p) &key merge)

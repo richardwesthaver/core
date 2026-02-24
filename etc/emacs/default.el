@@ -74,9 +74,9 @@
 
 ;;; Treesitter
 
-;;(add-to-list 'treesit-extra-load-path "/usr/local/lib/")
+;;(add-to-list 'treesit-extra-load-path "/usr/lib/")
 
-;; (let ((grammar-dir "/usr/local/share/tree-sitter/"))
+;; (let ((grammar-dir "/usr/share/tree-sitter/"))
 ;;   (when (file-exists-p grammar-dir)
 ;;     (setq treesit-extra-load-path
 ;;           (append
@@ -85,7 +85,7 @@
 ;;              (lambda (f)
 ;;                (unless (or (string= "." f) (string= ".." f))
 ;;                  (concat grammar-dir f)))
-;;              (directory-files "/usr/local/share/tree-sitter")))
+;;              (directory-files "/usr/share/tree-sitter")))
 ;;            treesit-extra-load-path))))
 
 ;;; Variables
@@ -138,7 +138,7 @@
                                       "STORE"
                                       "LISP_HOME"))
 (add-to-list 'exec-path "/usr/bin/")
-(add-to-list 'exec-path "/usr/local/sbin/")
+(add-to-list 'exec-path "/usr/sbin/")
 (add-to-list 'exec-path "/usr/local/bin/")
 (add-to-list 'exec-path "/usr/local/share/lisp/")
 (add-to-list 'exec-path "/usr/share/lisp/")

@@ -177,15 +177,14 @@
                    (setf %test-result (make-test-result :pass self))))
              (when (test-profile self)
                (sb-sprof:stop-profiling))))
-      (if *catch-test-errors*
-          (handler-bind
-              ((error 
-                 (lambda (c)
-                   (setf %test-bail t)
-                   (setf %test-result (make-test-result :fail c))
-                   (return-from do-test %test-result))))
-            (%do))
-          (%do)))))
+      (handler-bind
+          ((error 
+             (lambda (c)
+               (setf %test-bail t)
+               (setf %test-result (make-test-result :fail c))
+               (when *catch-test-errors* (error c))
+               (return-from do-test %test-result))))
+        (%do)))))
 
 (defmethod do-test ((self simple-string) &optional fixture)
   (when-let ((test (find-test *test-suite* self)))

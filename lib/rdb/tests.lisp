@@ -155,7 +155,7 @@
       (prepare-transaction txn2)
       (rocksdb-transaction-set-savepoint (sap txn2))
       (isequal (name txn2) "foofn")
-      (rocksdb-transaction-destroy (sap txn2)))
+      (abort-transaction txn2))
     (with-transaction (:db db :txn (make-transaction (transaction-db db)))
       (print (istype 'rdb-transaction *txn*)))))
 

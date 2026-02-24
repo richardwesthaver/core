@@ -210,7 +210,7 @@
  (dist-source ()
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
- (deploy (dist)
+ (deploy (dist dist-repo)
   (move-file ".stash/core.zst" "/opt/store/packy/dist/x86_64-unknown-linux-gnu/core.zst")
   (sk-make *skel-project* :dist-source)
   (when-let ((f (probe-file "core.tar.zst")))

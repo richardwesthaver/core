@@ -71,6 +71,6 @@
                                  ,@(when name `(:name ,name))
                                  :container ,container)
                     name)))
-     (setf *container* ,sym)
+     (setq *container* ,sym)
      (unwind-protect (progn ,@body)
        ,@(when stop `((podman-stop ,sym))))))

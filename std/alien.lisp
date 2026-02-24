@@ -236,7 +236,7 @@
 
 (std/prim:definline load-alien (name) (funcall (gethash name *alien-load-table*)))
 
-(defmacro define-alien-loader (name &optional (root "/usr/local/lib/") path (package *package*))
+(defmacro define-alien-loader (name &optional (root "/usr/lib/") path (package *package*))
   "Define a default loader function named load-NAME which calls
 SB-ALIEN:LOAD-SHARED-OBJECT."
   (let ((fname (intern (format nil "~@:(LOAD-~a~)" name) package))

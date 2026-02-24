@@ -13,7 +13,6 @@
 ;;; Code:
 (in-package :syn/ts)
 (load-tree-sitter)
-(load-tree-sitter-alien)
 
 ;; (setq syn/lang:*language* :rust)
 (defmacro with-lang (lang &body body)

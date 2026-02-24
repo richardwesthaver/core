@@ -30,5 +30,4 @@
         (apply 'db:open-columns *packy-db* columns))))
   (when tree-sitter
     (tree-sitter:load-tree-sitter)
-    (tree-sitter:load-tree-sitter-alien)
     (tree-sitter:load-tree-sitter-bash)))

@@ -2,56 +2,37 @@
 
 ;; DEFAPI
 
+;;; Commentary:
+
+;; The purpose of this macro is to eliminate the amount of boilerplate code
+;; required to define simple hash-table-based APIs.
+
+;; We have many protocols which follow a similar pattern of defining a
+;; hash-table in a special variable and providing a bunch of functions,
+;; conditions, and macros.
+
+;; For example for a protocol FOO we may want:
+#|
+(defvar *foo*) ; needs to be initialized
+(defvar *foo-table* (make-hash-table)) ; all possible FOOs
+
+(define-condition foo-error (simple-error) ())
+(define-condition foo-warning (simple-warning) ())
+
+(defun foo (name &optional (tbl *foo*)) (gethash name tbl))
+(defun (setf foo) (new name &optional (tbl *foo*)) (setf (gethash name tbl) new))
+
+(defmacro with-foo (name &body body)
+ `(let ((*foo* (foo ,name))) 
+   ,@body))
+|#
+
+;; Capturing all this dynamically may be a challenge, but we apply this type
+;; of pattern often enough to merit special support.
+
+;; DEFAPI does not store any state of its own.
+
 ;;; Code:
 (in-package :std/prim)
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun parse-body (body &key documentation whole)
-    "Parses BODY into (values remaining-forms declarations doc-string).
-Documentation strings are recognized only if DOCUMENTATION is true.
-Syntax errors in body are signalled and WHOLE is used in the signal
-arguments when given."
-    (let ((doc nil)
-          (decls nil)
-          (current nil))
-      (tagbody
-       :declarations
-         (setf current (car body))
-         (when (and documentation (stringp current) (cdr body))
-           (if doc
-               (error "Too many documentation strings in ~S." (or whole body))
-               (setf doc (pop body)))
-           (go :declarations))
-         (when (and (listp current) (eql (first current) 'declare))
-           (push (pop body) decls)
-           (go :declarations)))
-      (values body (nreverse decls) doc))))
-
-(defmacro define-api (name lambda-list type-list &body body)
-  (flet ((parse-type-list (type-list)
-           (let ((ret (lastcar type-list)))
-             (assert ret () "You forgot to specify return type.")
-             (values (nbutlast type-list)
-                     `(values ,@(when ret `(,ret)) &optional)))))
-    (multiple-value-bind (body decls docstring)
-        (parse-body body :documentation t :whole `(define-api ,name))
-      (multiple-value-bind (arg-typespec value-typespec)
-          (parse-type-list type-list)
-        (multiple-value-bind (bits reqs opts rest keys) (parse-lambda-list lambda-list)
-          (declare (ignore bits) (ignorable reqs opts rest keys))
-          `(progn
-             (declaim (ftype (function ,arg-typespec ,value-typespec) ,name))
-             (locally
-                 ;; Muffle the annoying "&OPTIONAL and &KEY found in
-                 ;; the same lambda list" style-warning
-                 #+sbcl (declare (sb-ext:muffle-conditions style-warning))
-                 (defun ,name ,lambda-list
-                   ,docstring
-                   ,@decls
-                   (locally
-                       #+sbcl (declare (sb-ext:unmuffle-conditions style-warning))
-                       ;; SBCL will interpret the ftype declaration as
-                       ;; assertion and will insert type checks for us.
-                       ,@body)))))))))
 
 ;; (defmacro defapi (name))
