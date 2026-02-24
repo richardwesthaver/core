@@ -3,6 +3,7 @@
  "Lisp IO Interface"
  :require (:std
            :ironclad/digests
+           :ironclad/digest/crc32
            :uring
            :xkb
            :evdev
