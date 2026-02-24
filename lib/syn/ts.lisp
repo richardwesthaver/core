@@ -14,7 +14,6 @@
 (in-package :syn/ts)
 (load-tree-sitter)
 
-;; (setq syn/lang:*language* :rust)
 (defmacro with-lang (lang &body body)
   `(with-ts-lang syn/lang:*language* ,lang
      ,@body))
