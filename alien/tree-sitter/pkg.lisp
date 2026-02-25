@@ -68,7 +68,8 @@
    :ts-tree-cursor-new
    :ts-tree-cursor-delete
    :ts-tree-root-node
-   :ts-language-version
+   :ts-language-abi-version
+   :ts-language-name
    :ts-language-symbol-name
    :ts-language-symbol-count
    :ts-language-field-count

@@ -8,5 +8,3 @@
   (:export))
 (in-package :syn/lang/py)
 (load-tree-sitter-python)
-
-            

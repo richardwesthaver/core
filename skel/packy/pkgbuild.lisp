@@ -13,28 +13,29 @@
 
 (defparameter *pkgbuild-filename* "PKGBUILD")
 
-
 (defun parse-pkgbuild-value (l s)
   (destructuring-bind (n1 n2 b1 b2) l
     (cons (keywordicate (string-upcase (subseq s n1 n2)))
           (trim (subseq s b1 b2)))))
+
+;; (parse-pkgbuild #p"/usr/share/pacman/PKGBUILD.proto")
 
 (defun parse-pkgbuild (&optional (file *pkgbuild-filename*))
   "Parse FILE as a pkgbuild script using tree-sitter. Returns multiple
 values: (VARS FUNCTIONS SRC)"
   (let* ((path (probe-file file))
          (str (read-file path))
-         (tree (syn/ts:parse-file :bash path :consume t :produce-cst nil))
+         (tree (syn/ts:parse-file :bash path))
          vars fns)
     (mapc (lambda (x) 
             (case (car x)
               (:function-definition
-               (when-let ((body (cadar (member :body (caddr x) :key (lambda (x) (caar x)))))
-                          (name (cadar (member :name (caddr x) :key (lambda (x) (caar x))))))
+               (when-let ((body (cadar (member :body (caddr x) :key (lambda (x) (car x)))))
+                          (name (cadar (member :name (caddr x) :key (lambda (x) (car x))))))
                  (push (nconc name body) fns)))
               (:variable-assignment
-               (when-let ((name (cadar (member :name (caddr x) :key (lambda (x) (caar x)))))
-                          (val (cadar (member :value (caddr x) :key (lambda (x) (caar x))))))
+               (when-let ((name (cadar (member :name (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x))))))
+                          (val (cadar (member :value (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x)))))))
                  (push (nconc name val) vars)))))
           (caddr tree))
     (values

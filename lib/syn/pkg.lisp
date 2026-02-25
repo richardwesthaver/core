@@ -76,7 +76,7 @@
   (:use :cl :std :syn/ts :syn/lang :syn/gen :id :graph :ast))
 
 (defpackage :syn/grovel
-  (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint))
+  (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c))
 
 (pkg:defpkg :syn
   (:use :cl :std)

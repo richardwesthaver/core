@@ -18,18 +18,16 @@
   `(with-ts-lang syn/lang:*language* ,lang
      ,@body))
 
-(defun lang-stats (lang &optional names)
+(defun lang-stats (lang)
   (with-ts-lang lang l
     `(:symbols ,(ts-language-symbol-count l)
       :fields ,(ts-language-field-count l))))
 
-(defun parse-file (lang path &key (produce-cst t) (consume t) (start 0) (end))
+(defun parse-file (lang path &key (consume t) (start 0) end)
   (parse-string 
    lang
-   (with-output-to-string (s)
-     (write-file-into-stream path s))
+   (read-file path)
    :consume consume
-   :produce-cst produce-cst
    :start start
    :end end))
 

@@ -75,9 +75,9 @@
                    :lex 1)
 
 (define-alien-type ts-logger
-    (struct nil
-	    (payload (* t))
-	    (log (* (function void (* t) ts-log-type c-string)))))
+    (struct ts-logger
+      (payload (* t))
+      (log (* (function void (* t) ts-log-type c-string)))))
 
 (define-alien-type ts-input-edit
   (struct ts-input-edit
@@ -89,7 +89,7 @@
           (new-end-point ts-point)))
 
 (define-alien-type ts-tree-cursor 
-    (struct nil
+    (struct ts-tree-cursor
 	    (tree (* ts-tree))
 	    (id (* t))
 	    (context (array unsigned-int 2))))
@@ -111,14 +111,37 @@
                                                        (* unsigned-int))))
                                     (encoding ts-input-encoding)))
 
+(define-alien-type ts-language-metadata
+  (struct ts-language-metadata
+    (major-version unsigned-char)
+    (minor-version unsigned-char)
+    (patch-version unsigned-char)))
+
+(define-alien-type ts-parser-state
+  (struct ts-parser-state
+    (payload (* t))
+    (current-byte-offset (unsigned 32))
+    (has-error boolean)))
+    
+(define-alien-type ts-parse-options
+  (struct ts-parse-options
+    (payload (* t))
+    (progress-callback (* (function boolean (* ts-parser-state))))))
+
 ;;; Parser
 (defar ts-parser-new (* ts-parser))
 (defar ts-parser-delete void (self (* ts-parser)))
 (defar ts-parser-reset void (self (* ts-parser)))
 (defar ts-parser-set-language boolean (self (* ts-parser)) (language (* ts-language)))
 (defar ts-parser-language (* ts-language) (self (* ts-parser)))
-;; (defar ts-parser-parse (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (input ts-input))
+(defar ts-parser-parse (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (input ts-input))
 (defar ts-parser-parse-string (* ts-tree) (self (* ts-parser)) (old-tree (* ts-tree)) (string c-string) (length unsigned-int))
+(defar ts-parser-parse-with-options (* ts-tree)
+  (self (* ts-parser))
+  (old-tree (* ts-tree))
+  (input ts-input)
+  (parse-options ts-parse-options))
+
 ;; Set the file descriptor to which the parser should write debugging graphs
 ;; during parsing. The graphs are formatted in the DOT language. You may want
 ;; to pipe these graphs directly to a `dot(1)` process in order to generate
@@ -146,7 +169,9 @@
 (defar ts-tree-cursor-goto-descendant void (self (* ts-tree-cursor)) (goal-descendant-index unsigned-int))
 (defar ts-tree-cursor-delete void (cursor (* ts-tree-cursor)))
 
-(defar ts-language-version unsigned-int (v (* ts-language)))
+(defar ts-language-abi-version unsigned-int (v (* ts-language)))
+(defar ts-language-name c-string (v (* ts-language)))
+(defar ts-language-metadata (* ts-language-metadata) (self (* ts-language)))
 (defar ts-language-symbol-count unsigned-int (v (* ts-language)))
 (defar ts-language-symbol-name c-string (v (* ts-language)) (s (* ts-symbol)))
 (defar ts-language-symbol-type ts-symbol-type (v (* ts-language)) (s ts-symbol))
@@ -219,7 +244,7 @@
   (node ts-node))
 
 (defar ts-tree-cursor-current-node ts-node
-  (cursor ts-tree-cursor))
+  (cursor (* ts-tree-cursor)))
 
 (defar ts-node-start-point ts-point
   (node ts-node))
@@ -244,4 +269,3 @@
 
 (defar ts-node-parent ts-node
   (node ts-node))
-
