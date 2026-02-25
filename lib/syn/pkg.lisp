@@ -17,6 +17,11 @@
   (:use :cl :std)
   (:export :language :lang :*language*))
 
+(defpackage :syn/lang/c
+  (:nicknames :syn/c)
+  (:use :cl :std :syn/lang :parse/pratt :tree-sitter :syn/ts)
+  (:export))
+
 (defpackage :syn/fmt
   (:use :cl :std :config :ast)
   (:export :fmt :fmt-config))
