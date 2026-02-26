@@ -18,7 +18,7 @@
 
 ;;; Code:
 (defpackage :dat/parquet/gen ;; not public API
-  (:use :cl :std :dat/proto :dat/json)
+  (:use :cl :std :dat/json)
   (:export :load-parquet))
 
 (in-package :dat/parquet/gen)

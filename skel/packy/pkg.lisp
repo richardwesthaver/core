@@ -5,7 +5,7 @@
 ;;; Code:
 (defpackage :skel/packy
   (:nicknames :packy)
-  (:use :cl :std :id :dat/proto :io :ast :log :config :db :rdb :schema :time :net/core :net/srv)
+  (:use :cl :std :id :io :ast :log :config :db :rdb :schema :time :net/core :net/srv)
   (:export
    :*packy-url*
    :unpack

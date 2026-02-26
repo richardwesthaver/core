@@ -66,7 +66,7 @@
 
 (defpkg :net/codec/tlv
   (:nicknames :codec/tlv :net/tlv :tlv)
-  (:use :cl :std :net/core :dat/proto)
+  (:use :cl :std :net/core)
   (:export
    :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
 

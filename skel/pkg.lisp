@@ -171,7 +171,7 @@
   (:export :sk-lisp-file))
 
 (defpkg :skel/comp/container
-  (:use :cl :std :pod :skel/core :dat/proto :obj/id)
+  (:use :cl :std :pod :skel/core :obj/id)
   (:export :sk-containerfile))
 
 (defpkg :skel/comp/dir-locals

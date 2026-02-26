@@ -222,7 +222,7 @@
    :element-map-children))
 
 (defpkg :dat/xml
-  (:use :std)
+  (:use :std-lisp)
   (:import-from :log :trace!)
   (:import-from :std :serialize :deserialize)
   (:shadow :read-char :unread-char)

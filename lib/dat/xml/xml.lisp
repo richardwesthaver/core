@@ -65,8 +65,8 @@ the line number.")
   attrs
   children)
 
-(std:defaccessor ast:ast ((self xml-node)) (xml-node-children self))
-(std:defaccessor std:name ((self xml-node)) (xml-node-name self))
+(defaccessor ast:ast ((self xml-node)) (xml-node-children self))
+(defaccessor name ((self xml-node)) (xml-node-name self))
 
 (defun make-xml-node (&key name ns attrs child children)
   "Convenience function for creating a new xml node."
@@ -291,7 +291,7 @@ character translation."
        (error 'xml-parse-error)))
 
 ;;; Parser Internal
-(defstruct element
+(defstruct (%element (:constructor %make-element))
   "Common return type of all rule functions."
   (type nil :type symbol)
   (val nil))
@@ -431,9 +431,9 @@ character translation."
 
 (defrule ws ()
   (and (match+ ws-char)
-       (make-element :type 'whitespace :val nil)))
+       (%make-element :type 'whitespace :val nil)))
 
-(defrule name ()
+(defrule %name ()
   (and
    (peek namechar #\_ #\:)
    (match* namechar)))
@@ -470,7 +470,7 @@ character translation."
      (setf (values name suffix) (qname s))
      (or (ws s) t)
      (match #\>)
-     (make-element :type 'end-tag :val (or suffix name)))))
+     (%make-element :type 'end-tag :val (or suffix name)))))
 
 (defrule comment ()
   (and
@@ -479,7 +479,7 @@ character translation."
      (loop until (match-seq #\- #\- #\>)
            do (eat))
      t)
-   (make-element :type 'comment)))
+   (%make-element :type 'comment)))
 
 ;; For the CDATA matching of ]]> I by hand generated an NFA, and then
 ;; determinized it (also by hand).  Then I did a simpler thing of just pushing
@@ -522,7 +522,7 @@ character translation."
                              (setf state 0))))
                          )
                     until (eql state 3)
-                    finally (return (make-element
+                    finally (return (%make-element
                                      :type 'cdata
                                      :val (coerce
                                            ;; rip the ]]> off the end of the data and return it...
@@ -530,18 +530,18 @@ character translation."
                                            'simple-string)))))))))
 
 
-(declaim (ftype function element))     ; forward decl for content rule
+(declaim (ftype function %element))     ; forward decl for content rule
 (defrule content ()
   (if (match #\<)
       (must (or (comment-or-cdata s)
                 (processing-instruction s)
-                (element s)
+                (%element s)
                 (end-tag s)))
       (or (let (content)
             (and (setf content (match+ chardata))
-                 (make-element :type 'data :val (compress-whitespace content)))))))
+                 (%make-element :type 'data :val (compress-whitespace content)))))))
 
-(defrule element ()
+(defrule %element ()
   (let (elem children nsdecls end-name)
     (and
      ;; parse front end of tag
@@ -563,34 +563,34 @@ character translation."
        (loop for c = (content s)
              while c
              do (etypecase c
-                  (element (case (element-type c)
+                  (%element (case (%element-type c)
                              (end-tag
-                              (return (setf end-name (element-val c))))
+                              (return (setf end-name (%element-val c))))
                              ;; processing instructions may be discarded
                              (pi
                               (unless *discard-processing-instructions*
-                                (when (element-val c)
-                                  (push (element-val c) children))))
-                             (t (if (element-val c)
-                                    (push (element-val c) children)))))))
+                                (when (%element-val c)
+                                  (push (%element-val c) children))))
+                             (t (if (%element-val c)
+                                    (push (%element-val c) children)))))))
        (string= (xml-node-name elem) end-name)))
      ;; package up new node
      (progn
        (setf (xml-node-children elem) (nreverse children))
-       (make-element :type 'elem :val elem)))))
+       (%make-element :type 'elem :val elem)))))
 
 (defrule processing-instruction ()
   (let (name contents)
     (and
      (match #\?)
-     (setf name (name s))
+     (setf name (%name s))
      (not (string= name "xml"))
      ;; contents of a processing instruction can be arbitrary stuff, as long
      ;; as it doesn't contain ?>...
      (setf contents (pi-contents s))
      ;; if we get here, we have eaten ?> off the input in the course of
      ;; processing PI-CONTENTS
-     (make-element :type 'pi :val (make-proc-inst :target name :contents contents)))))
+     (%make-element :type 'pi :val (make-proc-inst :target name :contents contents)))))
 
 (defrule pi-contents ()
   (loop with data = (make-extendable-string 50)
@@ -623,11 +623,11 @@ character translation."
   (let (name contents)
     (and
      (match #\?)
-     (setf name (name s))
+     (setf name (%name s))
      (string= name "xml")
      (setf contents (none-or-more s #'ws-attr-or-nsdecl))
      (match-seq #\? #\>)
-     (make-element :type 'xmldecl :val contents))))
+     (%make-element :type 'xmldecl :val contents))))
 
 (defrule comment-or-doctype ()
   ;; skip dtd - bail out to comment if it's a comment
@@ -644,32 +644,32 @@ character translation."
                   until (eq level 0)
                   finally (return t))
             (setf (state-got-doctype s) t)
-            (make-element :type 'doctype)))))
+            (%make-element :type 'doctype)))))
 
 (defrule misc ()
   (or
    (ws s)
    (and (match #\<) (must (or (processing-instruction s)
                               (comment-or-doctype s)
-                              (element s))))))
+                              (%element s))))))
 
 (defrule document ()
   (let (elem)
     (if (match #\<)
         (must (or (xmldecl s)
                   (comment-or-doctype s)
-                  (setf elem (element s)))))
+                  (setf elem (%element s)))))
     ;; NOTE: I don't understand this: it seems to parse arbitrary crap
     (unless elem
       (loop for c = (misc s)
             while c
-            do (cond ((eql (element-type c) 'elem)
+            do (cond ((eql (%element-type c) 'elem)
                       (return (setf elem c)))
-                     ((and (eql (element-type c) 'pi)
+                     ((and (eql (%element-type c) 'pi)
                            (not *discard-processing-instructions*))
                       (return (setf elem c))))))
     
-    (and elem (element-val elem))))
+    (and elem (%element-val elem))))
 
 ;;; Public API
 (defun write-xml (e s &key (indent nil))

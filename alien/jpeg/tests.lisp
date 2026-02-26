@@ -18,6 +18,7 @@
   (time
    (let ((path (tmpize-pathname "save.jpg")))
      (multiple-value-bind (buf w h fmt size) (load-jpeg-image *test-file* (make-instance 'jpeg-decompressor))
+       (declare (ignore fmt))
        (save-jpeg-image 
         path buf w h 
         (make-instance 'jpeg-compressor :quality 1 :subsampling :440) :size size))
