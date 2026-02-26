@@ -242,11 +242,18 @@ argument of CALL."
 (defun (setf command-type) (new name &optional (command-types *command-types*)) 
   (setf (gethash (cmd-intern name) command-types) new))
 
-(defun commands (&optional name)
-  (hash-table-alist (if name (car (command-table name)) *commands*)))
+(definline commands (&optional name)
+  (if name (car (command-table name)) *commands*))
 
-(defun command-types (&optional name)
-  (hash-table-alist (if name (cdr (command-table name)) *command-types*)))
+(definline command-types (&optional name)
+  (if name (cdr (command-table name)) *command-types*))
+
+(defun list-commands (&optional name)
+  (when-let ((cmds (commands name)))
+    (hash-table-list cmds)))
+
+(defun list-command-types (&optional name)
+  (hash-table-list (command-types name)))
 
 (defun list-all-commands ()
   (let ((ret (hash-table-alist *command-table*)))
@@ -316,10 +323,20 @@ Example:
 
 1. the COMMAND object
 2. the arguments to that command
-3. the ITYPE of the COMMAND."
+3. the ITYPE of the COMMAND.
+
+This function respects the current *COMMANDS* binding only."
   (destructuring-bind (c &rest args) (read-args stream)
     (let ((cmd (or (command c) (undefined-command c args))))
       (values cmd args (interactive cmd)))))
+
+(defun read-command* (&optional (stream *standard-input*))
+  "Like READ-COMMAND but also attempts to parse a 'commander' prefix from input
+which is similar to package prefixes and indicates the key of *COMMAND-TABLE* to activate."
+  (destructuring-bind (c &rest args) (read-args stream)
+    (destructuring-bind (d &optional e) (split-sequence #\: c)
+      (let ((cmd (or (if e (command e (commands d)) (command d)) (undefined-command c args))))
+        (values cmd args (interactive cmd))))))
 
 (defun write-command (cmd &optional args (stream *standard-output*))
   (fmt-command stream cmd args)
@@ -392,6 +409,11 @@ command."))
   (and (or (typep cmd 'command)
            (command cmd))
        t))
+
+(defun command-name (root name) (format nil "~A:~A" root name))
+
+(definline print-command (name &optional (root *commander*) stream)
+  (format stream "#<~A>" (command-name root name)))
 
 ;; internal method
 (defmethod sb-impl::object-type-string ((self command)) "command function")

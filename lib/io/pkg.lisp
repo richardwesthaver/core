@@ -154,6 +154,7 @@
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector
+   :decompress-octet-vector
    :flush :compress-octet
    :with-compressor))
 
@@ -193,6 +194,10 @@
    #:bzip2-error
    #:invalid-bzip2-data :deflate-compressor
    :zlib-compressor :gzip-compressor))
+
+(defpkg :io/lzw
+  (:use :cl :std :io/proto :io/flate)
+  (:export :lzw-error :lzw-compressor :lzw-decompressor))
 
 (defpkg :io/kbd
   (:nicknames :kbd)

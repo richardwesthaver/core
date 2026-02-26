@@ -95,8 +95,8 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 (defgeneric compress-with (self obj &key &allow-other-keys))
 (defgeneric decompress-with (self obj &key &allow-other-keys))
 
-(defgeneric compress-octet-vector (vector compressor &key start end))
-(defgeneric decompress-octet-vector (vector decompressor &key start end))
+(defgeneric compress-octet-vector (vector compressor &key start end &allow-other-keys))
+(defgeneric decompress-octet-vector (vector decompressor &key start end &allow-other-keys))
 
 ;;; Compression
 (defclass compressor () ((output :initarg :output :accessor output)))

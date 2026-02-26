@@ -24,6 +24,7 @@
   (:file "flate")
   (:file "zstd")
   (:file "deflate")
+  (:file "lzw")
   (:mod "disk"
    :components 
    ((:file "util")

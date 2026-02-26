@@ -365,7 +365,7 @@
 
 (defpkg :obj/color
   (:nicknames :color)
-  (:use :cl :std :config)
+  (:use :cl :std :config :equiv)
   (:export
    #:color #:alpha
    #:rgb #:red #:green #:blue #:gray
@@ -378,11 +378,18 @@
    #:rgb-to-hsv #:hsv-to-rgb #:hex-to-rgb #:as-hsv #:as-rgb
    #:rgb-combination #:hsv-combination
    #:parse-hex-rgb #:print-hex-rgb
+   #:colors
    :*palette* :palette :base-color-key :find-palette
    :*color-palettes* :base-color-palette-p :get-color :style 
    :make-palette :theme :with-palette :call-with-palette
    :remove-palette :*theme* :find-theme :load-theme 
-   :deftheme :load-palette))
+   :deftheme :load-palette
+   :missing-palette :color-error
+   ;; color-table
+   :+max-color-table-size+
+   :color-rgb :rgb-color :make-color-table :color-table-code-size
+   :find-color :add-color :ensure-color :copy-color-table
+   :color-table-full :missing-color-table :color-table))
 
 (defpkg :obj/time
   (:nicknames :time)
@@ -608,6 +615,7 @@
    :save-commands :copy-commands
    :fmt-command :call-interactively
    :commandp :commands
+   :list-commands :list-command-types
    :command-types :make-commands
    :command-alias :load-commands
    :run-commands :print-help
@@ -617,7 +625,8 @@
    :read-arg :read-args
    :parse-interactive-ds-lambda-list :*command-input*
    :command-class :*command-names-p*
-   :list-all-commands :*commander*))
+   :list-all-commands :*commander*
+   :print-command :command-name))
 
 (defpkg :obj/project
   (:nicknames :project)

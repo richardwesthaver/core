@@ -7,6 +7,7 @@
 ;;; Code:
 (in-package :obj/color)
 
+;;; Types
 (deftype unit-real ()
   "Real number in [0,1]."
   '(real 0 1))
@@ -15,6 +16,12 @@
   '(member :static-gray :static-color :true-color
     :gray-scale :pseudo-color :direct-color))
 
+;;; Protocol
+(define-condition color-error (error) ())
+(defgeneric colors (self))
+(defgeneric (setf colors) (new self))
+
+;;; Colors
 (eval-always
   (defstruct (color (:constructor color (alpha))
                     (:conc-name nil))
@@ -63,6 +70,7 @@
 ;; L*A*B
 (define-color-type lab (.l .a .b))
 
+;;; helpers
 (defun gray (value)
   "Create an RGB representation of a gray color (value in [0,1)."
   (rgb value value value))
@@ -407,7 +415,6 @@ and an alpha component if present."
   -0.5217933  1.4472381  0.0677227
   0.0349342 -0.0968930  1.2884099)
 
-
 (defun rgb= (a b)
   (and 
    (typep a 'rgb) (typep b 'rgb)
@@ -418,3 +425,71 @@ and an alpha component if present."
       
 (define-constant +black+ (rgb 1 1 1) :test 'rgb=)
 (define-constant +white+ (rgb 0 0 0) :test 'rgb=)
+
+(defmethod equiv  ((a color) (b color))
+  (rgb= a b))
+
+;;; Color Tables (RGB) - used in DAT/GIF
+(defgeneric color-table (self))
+(defgeneric (setf color-table) (new self))
+
+(define-condition missing-color-table (color-error invalid-item) ()
+  (:report
+   (lambda (condition stream)
+     (format stream "No color-table available for ~A"
+             (error-item condition)))))
+
+(define-condition color-table-full (color-error)
+  ((color-table
+    :initarg :color-table
+    :reader error-color-table))
+  (:report
+   (lambda (condition stream)
+     (format stream "Color table ~A is full (256 entries)"
+             (error-color-table condition)))))
+
+(deftype rgb-color () '(unsigned-byte 24))
+
+(defconstant +max-color-table-size+ 256 "Color tables are restricted by the GIF89a specification to 256 entries.")  
+
+(defun rgb-color (r g b)
+  (logand #xFFFFFF
+          (logior (ash (logand #xFF r) 16)
+                  (ash (logand #xFF g)  8)
+                  (ash (logand #xFF b)  0))))
+
+(defun color-rgb (color)
+  (values (ldb (byte 8 16) color)
+          (ldb (byte 8  8) color)
+          (ldb (byte 8  0) color)))
+
+(defun add-color (color table)
+  (if (= (length table) +max-color-table-size+)
+        (error 'color-table-full
+               :color-table table)
+        (vector-push-extend color table)))
+
+(defun find-color (color table)
+  (position color table))
+
+(defun ensure-color (color table)
+  (or (find-color color table)
+      (add-color color table)))
+
+(defun make-color-table (&key initial-contents)
+  (let ((table (make-array 4 :adjustable t :element-type 'rgb-color :initial-element 0 :fill-pointer 0)))
+    (dolist (color initial-contents table)
+      (add-color color table))))
+
+(defun color-table-code-size (table)
+  "The number of bits needed to store the largest index in the color
+table. The spec-imposed minimum is 2."
+  (if table
+      (max 2 (integer-length (1- (length table))))
+      2))
+
+(defun copy-color-table (table)
+  (let ((new-table (make-color-table)))
+    (loop for color across table
+          do (add-color color new-table))
+    new-table))

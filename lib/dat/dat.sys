@@ -2,11 +2,10 @@
 (defsys :dat
  "Data Systems"
  :version "0.1.1"
- :require (:std :log :obj :io :openssl)
+ :require (:std :log :obj :io :openssl :jpeg)
  :components 
  ((:pkg "pkg" :feature :dat :package :dat-int)
-  (:file "condition")
-  (:file "sxp")
+  (:file "img")
   (:file "asn1")
   (:file "dot")
   (:file "csv")
@@ -43,6 +42,7 @@
   (:file "tar")
   (:file "midi")
   (:file "png")
+  (:file "jpeg")
   (:file "gif")
   (:file "ttf")
   (:file "base64")

@@ -73,7 +73,7 @@ data size SIZE."
   (write-uint32 (checksum (buffer chunk) (pos chunk)) stream))
 
 ;;;; Conditions
-(define-condition png-error (dat-error) ())
+(define-condition png-error (error) ())
 
 (define-condition invalid-size (png-error)
   ((width
@@ -274,7 +274,7 @@ data size SIZE."
 (defmethod write-idat (png stream)
   (let ((callback (make-idat-callback stream)))
     ;; TODO 2025-06-11: 
-    (io/flate:with-compressor (compressor 'io/deflate:zlib-compressor
+    (with-compressor (compressor 'zlib-compressor
                                           :callback callback)
       (dotimes (i (height png))
         (let* ((start-offset (scanline-offset png i))
@@ -335,7 +335,7 @@ data size SIZE."
   (write-png-header png stream)
   (write-ihdr png stream)
   (setf (compressor png)
-        (make-instance 'io/deflate:zlib-compressor
+        (make-instance 'zlib-compressor
           :callback (make-idat-callback stream)))
   stream)
 

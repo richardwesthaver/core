@@ -158,4 +158,5 @@
 (deftest keymaps ()
   (istype 'keymap (sparse-keymap)))
 
-
+#+todo ; 2026-02-25
+(deftest lzw (:skip t))

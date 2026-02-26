@@ -79,6 +79,7 @@
                          (incf data ret)
                          (when (< 0 (slot pkt 'ffmpeg::size))
                            (let ((ret 0) (size 0))
+                             (declare (ignorable size))
                              (setf ret (avcodec-send-packet c pkt))
                              (loop while (>= ret 0)
                                    do (progn

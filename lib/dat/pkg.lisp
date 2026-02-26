@@ -1,28 +1,39 @@
 ;;; dat/pkg.lisp --- Data
 
 ;;; Code:
-(defpkg :dat/proto
-  (:use :cl :std)
-  (:export :dat-error))
-
-(defpkg :dat/sxp
-  (:use :cl :std :ast))
+(defpkg :dat/img
+  (:use :std-lisp)
+  (:import-from :io :io-stream)
+  (:export 
+   :image :images
+   :canvas :scale
+   :write-canvas :read-canvas 
+   :save-canvas :load-canvas 
+   :fill-canvas :clip-canvas
+   :flip-horizontal :flip-vertical
+   :rotate-180 :pixel
+   :image-error :image-condition
+   :image-stream :check-dimensions
+   :last-image :add-image
+   :transparentp
+   :check-image-dimensions
+   :left :top :width :height))
 
 (defpkg :dat/asn1
   (:nicknames :asn1)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std)
   (:import-from :openssl :v-asn1 :asn1-string-type
    :asn1-time-check :asn1-utctime-check :asn1-string-data :asn1-string-length)
   (:export #:decode-asn1-string #:try-get-asn1-string-data #:decode-asn1-time))
 
 (defpkg :dat/dot
   (:nicknames :dot)
-  (:use :cl :std :dat/proto :obj/graph)
+  (:use :cl :std :obj/graph)
   (:export :graph-to-dot-file :graph-from-dot-file :graph-to-dot))
 
 (defpkg :dat/csv
   (:nicknames :csv)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std)
   (:export
    :read-csv-file
    :*csv-separator*
@@ -35,7 +46,7 @@
 
 (defpkg :dat/ini
   (:nicknames :ini)
-  (:use :cl :std :dat/proto :ast)
+  (:use :cl :std :ast)
   (:export
    :ini-document
    :ini-read
@@ -45,7 +56,7 @@
 
 (defpkg :dat/toml
   (:nicknames :toml)
-  (:use :cl :std :dat/proto :time :ast)
+  (:use :cl :std :time :ast)
   (:export
    #:parse-toml-blocks
    :parse-toml-value
@@ -62,7 +73,7 @@
 
 (defpkg :dat/arff
   (:nicknames :arff)
-  (:use :cl :std :dat/proto :dat/csv)
+  (:use :cl :std :dat/csv)
   (:export
    :arff :arff-relation :arff-attributes :arff-data :arff-path 
    :parse-arff :parse-arff-string :parse-arff-stream
@@ -70,12 +81,12 @@
 
 (defpkg :dat/bib
   (:nicknames :bib)
-  (:use :std-lisp :dat/proto :ast :id)
+  (:use :std-lisp :ast :id)
   (:export :bibliography))
 
 (defpkg :dat/json
   (:nicknames :json)
-  (:use :cl :std :dat/proto :uri :id)
+  (:use :cl :std :uri :id)
   (:import-from :ast :ast :load-ast)
   (:export
    #:*allow-json-trailing-commas*
@@ -95,11 +106,11 @@
 
 (defpkg :dat/openapi
   (:nicknames :openapi)
-  (:use :cl :std :dat/proto :dat/json :schema)
+  (:use :cl :std :dat/json :schema)
   (:import-from :ast :ast))
 
 (defpkg :dat/base64
-  (:use :cl :std :dat/proto)
+  (:use :cl :std)
   (:export 
    #:base64-stream-to-integer
    #:base64-stream-to-string
@@ -128,7 +139,7 @@
 
 (defpkg :dat/m3u
   (:nicknames :m3u)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std)
   (:export
    :read-m3u-file
    :read-m3u-stream
@@ -138,7 +149,7 @@
    :write-m3u-string))
 
 (defpkg :dat/id3
-  (:use :cl :std :dat/proto :id)
+  (:use :cl :std :id)
   (:export
    :read-id3
    :mp3-p
@@ -150,7 +161,7 @@
 
 (defpkg :dat/css
   (:nicknames :css)
-  (:use :cl :std :dat/proto :color)
+  (:use :cl :std :color)
   (:export
    :parse-css
    :*minify-css*
@@ -166,7 +177,7 @@
 
 (defpkg :dat/html
   (:nicknames :html)
-  (:use :cl :dat/proto :std/macs :std/string :std/io :std/condition :std/stream)
+  (:use :cl :std/macs :std/string :std/io :std/condition :std/stream)
   (:import-from :std :with-gensyms)
   (:import-from :sb-ext :defglobal)
   (:import-from :ast :ast)
@@ -211,7 +222,7 @@
    :element-map-children))
 
 (defpkg :dat/xml
-  (:use :cl :dat/proto)
+  (:use :std)
   (:import-from :log :trace!)
   (:import-from :std :serialize :deserialize)
   (:shadow :read-char :unread-char)
@@ -244,12 +255,12 @@
 
 (defpkg :dat/svg
   (:nicknames :svg)
-  (:use :cl :ppcre :dat/xml :dat/proto :std)
+  (:use :cl :ppcre :dat/xml :std)
   (:import-from :std/string :*whitespaces*)
   (:export :parse-svg-file :parse-svg-string))
 
 (defpkg :dat/mime
-  (:use :cl :std :dat/proto :dat/xml)
+  (:use :cl :std :dat/xml)
   (:export :*mime-database*
    :load-mime-info :update-mime-database
    :mime-magic :mime-magic-offset :mime-magic-type :mime-magic-value
@@ -259,12 +270,12 @@
    :mime-case))
 
 (defpkg :dat/yaml
-  (:use :cl :dat/proto)
+  (:use :cl)
   (:import-from :log :trace!))
 
 (defpkg :dat/midi
   (:nicknames :midi)
-  (:use :cl :std :dat/proto :io/proto)
+  (:use :cl :std :io/proto)
   (:export #:read-midi-file #:write-midi-file
            #:midifile
            #:midifile-format #:midifile-tracks #:midifile-division
@@ -281,7 +292,8 @@
 
 (defpkg :dat/png
   (:nicknames :png)
-  (:use :cl :std :dat/proto)
+  (:use :cl :std :io/proto :io/flate :color)
+  (:import-from :io/deflate :zlib-compressor)
   (:export
    :png
    :copy-png
@@ -296,7 +308,7 @@
 
 (defpkg :dat/qrcode
   (:nicknames :qrcode)
-  (:use :cl :std :dat/proto :dat/png)
+  (:use :cl :std :dat/png)
   (:export
    :encode-symbol
    ;; QR code representation
@@ -311,14 +323,20 @@
    :qr-encode-png-bytes
    :qr-encode-png-bytes-stream))
 
+(defpkg :dat/jpeg
+  (:use :std-lisp :dat/img :io/proto :color :jpeg)
+  (:export :jpeg-image))
+
 (defpkg :dat/gif
   (:nicknames :gif)
-  (:use :cl :std :dat/proto)
-  (:export))
+  (:use :cl :std :io/proto :io/lzw :color :dat/img :io/flate)
+  (:export :make-gif-image :make-gif-stream :gif-error
+   :*gif-delay-time* :*gif-disposal-methods*
+   :gif-image :gif-stream :interlacedp :interlace :deinterlace :add-delay))
 
 (defpkg :dat/ttf
   (:nicknames :ttf)
-  (:use :cl :std :dat/proto :io)
+  (:use :cl :std :io)
   (:export
    ;; font-cache
    :*font-cache*
@@ -415,7 +433,7 @@
 
 (defpkg :dat/tar
   (:nicknames :tar)
-  (:use :cl :std :dat/proto 
+  (:use :cl :std 
    :io/proto :io/chunky :sb-ext :io/stream
    :std/stream :std/macs :std/ht :io/flate)
   (:shadow :version)
@@ -483,7 +501,7 @@
    #:write-gnu-long-name-entry))
 
 (defpkg :dat/parquet
-  (:use :cl :std :obj/id :dat/proto :dat/json)
+  (:use :cl :std :obj/id :dat/json)
   (:export
    :parquet-object
    :parquet-enum-object

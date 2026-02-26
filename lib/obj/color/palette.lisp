@@ -5,6 +5,12 @@
 ;;; Code:
 (in-package :obj/color)
 
+(define-condition missing-palette (color-error invalid-item) ()
+  (:report
+   (lambda (condition stream)
+     (format stream "No palette available for ~A"
+             (error-item condition)))))
+
 ;;; Vars
 (defvar *color-palettes* (make-hash-table))
 (defvar *palette* nil)

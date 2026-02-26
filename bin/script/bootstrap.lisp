@@ -51,6 +51,7 @@
               :blake3
               :keyutils
               :tree-sitter
+              :obj
               :io
               :log
               :arrow
@@ -62,15 +63,14 @@
               :cuda
               :openssl
               :ssh2
+              :jpeg
               :dat
               :rt
-              :jpeg
               :sndfile
               :alsa
               :chromaprint
               :jack
               :ffmpeg
-              :alien
               :parse
               :cry
               :cli
@@ -86,6 +86,7 @@
               :net
               :math
               :dsp
+              :alien
               :skel
               :core
               :bin)))

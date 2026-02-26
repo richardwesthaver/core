@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar :dat/ttf)
+  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar :dat/ttf :dat/img :dat/gif :color)
   (:export))
 
 (in-package :dat/tests)
@@ -191,3 +191,25 @@ showVolumeMeters=1"))
   (init :ttf)
   (is (get-font-families))
   (is (get-font-subfamilies (car (get-font-families)))))
+
+;;; GIF
+(deftest gif ()
+  ;; example1
+  (let* ((height 100)
+         (width 100)
+         (stream (make-gif-stream 
+                  :height height
+                  :width width
+                  :color-table t))
+         (image (make-gif-image :height height :width width))
+         (red (ensure-color (rgb 1 0 0)
+                            (palette stream)))
+         (white (ensure-color (rgb-color #xFF #xFF #xFF)
+                              (color-table stream))))
+    (add-image image stream)
+    (fill (data image) white)
+    (dotimes (i (truncate height 2))
+      (let* ((start (* i width 2))
+             (end (+ start width)))
+        (fill (data image) red :start start :end end)))
+    (serde stream #p"example1.gif")))
