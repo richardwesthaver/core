@@ -5,10 +5,24 @@
 ;;; Code:
 (in-package :linedit)
 
-;;; Utils
+;;; Vars
+(defvar *history* nil)
+(defvar *killring* nil)
 (declaim (type simple-string *word-delimiters*))
 (defparameter *word-delimiters* "()[]{}',` \"")
+(defconstant +linedit-ok+ 0)
+(defconstant +linedit-not-atty+ 1)
+(defconstant +linedit-memory-error+ 2)
+(defconstant +linedit-tcgetattr-error+ 3)
+(defconstant +linedit-tcsetattr-error+ 4)
+(defconstant +linedit-attr-error+ 5)
+(defconstant +linedit-no-attr-error+ 6)
+(defvar *terminal-translations* (make-hash-table :test #'equalp))
 
+;; TODO 2026-01-31: use command protocol (REPL)?
+(defvar *cmds* (make-hash-table :test #'equalp))
+
+;;; Utils
 (defmacro ensure (symbol expr)
   `(or ,symbol (setf ,symbol ,expr)))
 
@@ -168,47 +182,40 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (defgeneric display (backend &key prompt line point &allow-other-keys))
 
 ;;; Terminal Glue
-(defvar +linedit-ok+              0)
-(defvar +linedit-not-atty+        1)
-(defvar +linedit-memory-error+    2)
-(defvar +linedit-tcgetattr-error+ 3)
-(defvar +linedit-tcsetattr-error+ 4)
-(defvar +linedit-attr-error+      5)
-(defvar +linedit-no-attr-error+   6)
-
-(let (attr)
-  (defun c-terminal-init ()
-    (if (zerop (isatty 0))
-        (return-from c-terminal-init +linedit-not-atty+))
-    ;; Save current terminal state in attr
-    (when attr
-      (warn "bad linedit attr: ~A" attr)
-      (return-from c-terminal-init +linedit-attr-error+))
-    (setf attr (std::foreign-alloc 'sb-posix::alien-termios))
-    (when (minusp (std::tcgetattr* 0 attr))
-      (return-from c-terminal-init +linedit-tcgetattr-error+))
-    ;; Enter keyboard input mode
-    (sb-alien:with-alien ((tmp sb-posix::alien-termios))
-      (when (minusp (tcgetattr* 0 (sb-alien:addr tmp)))
+(eval-always
+  (let (attr)
+    (defun c-terminal-init ()
+      (if (zerop (isatty 0))
+          (return-from c-terminal-init +linedit-not-atty+))
+      ;; Save current terminal state in attr
+      (when attr
+        (warn "bad linedit attr: ~A" attr)
+        (return-from c-terminal-init +linedit-attr-error+))
+      (setf attr (std::foreign-alloc 'sb-posix::alien-termios))
+      (when (minusp (std::tcgetattr* 0 attr))
         (return-from c-terminal-init +linedit-tcgetattr-error+))
-      (cfmakeraw (sb-alien:addr tmp))
-      (with-alien-slots (sb-posix::oflag) tmp
-        (setf sb-posix::oflag (logior sb-posix::oflag sb-posix::opost)))
-      (if (minusp (tcsetattr* 0 sb-posix::tcsaflush (sb-alien:addr tmp)))
-          +linedit-tcsetattr-error+))
-    +linedit-ok+)
-  (defun c-terminal-close ()
-    ;; Restore saved terminal state from attr
-    (when (null attr)
-      (warn "missing linedit attr on close")
-      (return-from c-terminal-close +linedit-no-attr-error+))
-    (when (zerop (isatty 0))
-      (return-from c-terminal-close +linedit-not-atty+))
-    (when (minusp (tcsetattr* 0 sb-posix::tcsanow attr))
-      (return-from c-terminal-close +linedit-tcsetattr-error+))
-    (std:foreign-free attr)
-    (setf attr nil)
-    +linedit-ok+))
+      ;; Enter keyboard input mode
+      (sb-alien:with-alien ((tmp sb-posix::alien-termios))
+        (when (minusp (tcgetattr* 0 (sb-alien:addr tmp)))
+          (return-from c-terminal-init +linedit-tcgetattr-error+))
+        (cfmakeraw (sb-alien:addr tmp))
+        (with-alien-slots (sb-posix::oflag) tmp
+          (setf sb-posix::oflag (logior sb-posix::oflag sb-posix::opost)))
+        (if (minusp (tcsetattr* 0 sb-posix::tcsaflush (sb-alien:addr tmp)))
+            +linedit-tcsetattr-error+))
+      +linedit-ok+)
+    (defun c-terminal-close ()
+      ;; Restore saved terminal state from attr
+      (when (null attr)
+        (warn "missing linedit attr on close")
+        (return-from c-terminal-close +linedit-no-attr-error+))
+      (when (zerop (isatty 0))
+        (return-from c-terminal-close +linedit-not-atty+))
+      (when (minusp (tcsetattr* 0 sb-posix::tcsanow attr))
+        (return-from c-terminal-close +linedit-tcsetattr-error+))
+      (std:foreign-free attr)
+      (setf attr nil)
+      +linedit-ok+)))
 
 (defun c-terminal-winsize (def side side-env)
   (if (boundp 'std::+tiocgwinsz+)
@@ -226,8 +233,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (c-terminal-winsize def 'std/os::col "COLUMNS"))
 
 ;;; Terminal Translations
-(defvar *terminal-translations* (make-hash-table :test #'equalp))
-
 (defmacro deftrans (name &rest chords)
   `(dolist (chord ',chords)
      (let ((old (gethash chord *terminal-translations*)))
@@ -584,8 +589,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (force-output))
 
 ;;; Mixin that implements undo
-(with-compilation-unit
-    (:policy '(optimize (debug 3) (safety 3)))
+(eval-always
   (defclass rewindable ()
     ((data :reader data
 	   :initform (make-array 12 :fill-pointer 0 :adjustable t))
@@ -720,9 +724,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     t))
 
 ;;; Command Keys
-;; TODO 2026-01-31: use command protocol (REPL)?
-(defvar *cmds* (make-hash-table :test #'equalp))
-
 (defmacro defcmd (command &optional action)
   (when action
     `(setf (gethash ,command *cmds*) ,action)))
@@ -825,9 +826,6 @@ READ-CHORD according to CMDS."
 (defcmd "End" 'move-to-eol)
 
 ;;; Editor
-(defvar *history* nil)
-(defvar *killring* nil)
-
 (defclass editor (line rewindable)
   ((commands :reader editor-commands
 	     :initform *cmds*

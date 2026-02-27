@@ -69,7 +69,7 @@
    :left 0
    :height nil
    :width nil))
-
+(stream-of (make-instance 'image :width 0 :height 0))
 (defmethod print-object ((object image) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (format stream "~Dx~D+~D+~D"

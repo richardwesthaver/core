@@ -713,26 +713,27 @@
          ("AVG" (make-instance 'avg-expression
                   :expr (make-sql-logical-expression (car (slot-value expr 'args)) input))))))))
          
-(labels ((visit (expr accum)
-           (when expr
-             (typecase expr
-               (column-expression (accumulate accum (name expr)))
-               (alias-expression (visit (slot-value expr 'expr) accum))
-               (binary-expression
-                (visit (lhs expr) accum)
-                (visit (rhs expr) accum))
-               (aggregate-expression (visit (slot-value expr 'expr) accum))))))
-  (defun get-ref-columns (exprs)
-    (let ((accum))
-      (loop for expr across exprs
-            collect (visit expr accum))))
-  (defun get-selection-ref-columns (select table)
-    (let ((accum))
-      (when (slot-value select 'selection)
-        (let ((filter-expr (make-sql-logical-expression (slot-value select 'selection) table)))
-          (visit filter-expr accum)
-          (let ((valid-cols (map 'list (lambda (x) (name x)) (fields (schema table)))))
-            (remove-if (lambda (x) (not (member x valid-cols :test 'string-equal))) accum)))))))
+(eval-always
+  (labels ((visit (expr accum)
+             (when expr
+               (typecase expr
+                 (column-expression (accumulate accum (name expr)))
+                 (alias-expression (visit (slot-value expr 'expr) accum))
+                 (binary-expression
+                  (visit (lhs expr) accum)
+                  (visit (rhs expr) accum))
+                 (aggregate-expression (visit (slot-value expr 'expr) accum))))))
+    (defun get-ref-columns (exprs)
+      (let ((accum))
+        (loop for expr across exprs
+              collect (visit expr accum))))
+    (defun get-selection-ref-columns (select table)
+      (let ((accum))
+        (when (slot-value select 'selection)
+          (let ((filter-expr (make-sql-logical-expression (slot-value select 'selection) table)))
+            (visit filter-expr accum)
+            (let ((valid-cols (map 'list (lambda (x) (name x)) (fields (schema table)))))
+              (remove-if (lambda (x) (not (member x valid-cols :test 'string-equal))) accum))))))))
 
 (defun plan-non-aggregate-query (select df projection-expr column-names-in-selection column-names-in-projection)
   (let ((plan df))

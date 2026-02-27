@@ -179,15 +179,6 @@ evaluation of BODY."
   (command (read-arg *query-io*) commands))
 
 ;;; CLI
-(defcommand (:cli :help) (&optional (arg *cli*))
-  "Print help and exit."
-  (declare (interactive (ustring "Command: ")))
-  (print-help (if (cli-p arg) arg (command arg))))
-
-(defcommand (:cli :version) (&optional (arg *cli*))
-  "Print version and exit." 
-  (print-version arg *standard-output*))
-
 ;; REVIEW 2026-01-16: should this be a struct containing a CLI-COMMAND? hmm..
 (defstruct cli
   ;; name slot defaults to *package*, must be string
@@ -201,6 +192,15 @@ evaluation of BODY."
 (defmethod version ((self cli)) (cli-version self))
 (defmethod name ((self cli)) (cli-name self))
 (defaccessor kernel ((self cli)) (cli-main self))
+
+(defcommand (:cli :help) (&optional (arg *cli*))
+  "Print help and exit."
+  (declare (interactive (ustring "Command: ")))
+  (print-help (if (cli-p arg) arg (command arg))))
+
+(defcommand (:cli :version) (&optional (arg *cli*))
+  "Print version and exit." 
+  (print-version arg *standard-output*))
 
 (defmacro define-cli (name main
                       &key (version "0.1.0") 

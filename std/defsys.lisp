@@ -125,7 +125,9 @@ in a call to INIT.")
   (when-let ((defs (sysdefs dir nil)))
     (if (= 1 (length defs))
         (car defs)
-        (find (car (last (pathname-directory (the pathname dir)))) defs :test 'string-equal :key 'pathname-name))))
+        (find (car (last (pathname-directory (the pathname dir)))) defs 
+              :test 'string-equal
+              :key (lambda (x) (pathname-name (the pathname x)))))))
 
 (defun list-all-systems ()
   (std/hash:hash-table-values *system-table*))
@@ -910,7 +912,7 @@ inputs."))
 
 (defun %parse-component-form (form)
     (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
-        (lety ((dir (pathname form) :type pathname))
+        (lety ((dir (make-pathname :defaults form) :type pathname))
           (if (directory-path-p dir)
               (make-instance 'dir-component
                 :name (last (pathname-directory dir)))
@@ -922,7 +924,7 @@ inputs."))
               (props (cddr form)))
           (ecase (car form)
             ((or :file :pkg :grovel)
-             (let ((ty (or (pathname-type n) "lisp")))
+             (let ((ty (if (pathnamep n) (pathname-type n) "lisp")))
                (apply 'make-instance kind
                       :type (keywordicate (string-upcase ty))
                       :name n
@@ -1038,7 +1040,8 @@ internally. On success the path is added to the *SYSDEFS* list."
   (lety ((path 
            (etypecase path
              ((or string pathname) (truename path))
-             (symbol (find path *sysdefs* :key 'pathname-name :test 'string-equal)))
+             (symbol (find (symbol-name path) *sysdefs* :key (lambda (x) (pathname-name (the pathname x)))
+                                                        :test 'string-equal)))
            :type pathname))
     (with-system-session (s path)
       (declare (ignore s))
@@ -1232,6 +1235,12 @@ object SELF remains unmodified."
   (setf *module* (name self))
   self)
 
+(defmethod reset ((self system) &key)
+  (let ((sys (path self))
+        (name (name self)))
+    (delete-system self)
+    (load-sys sys name)))
+
 ;; (typecase x
 ;;   ;; symbols and strings use PROVIDE
 ;;   ((or symbol simple-string) (provide x) x)
@@ -1256,7 +1265,7 @@ object SELF remains unmodified."
     (apply 'remove-system (name self) args))
   (:method ((self t) &key)
     (with-system-session ()
-      ;; should we also remove from the queue?
+      ;; TODO 2026-02-26: purge caches
       (remhash self *system-table*))))
 
 (defgeneric load-system (self &key &allow-other-keys)
@@ -1312,7 +1321,7 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
       (apply 'compile-system self args)
       (apply 'load-system self args)
       (if-let ((bin (and bin (find-module (name self) :bin))))
-        (funcall bin)
+        (funcall (the function bin))
         (apply 'save-system self args))))
   (:method ((self symbol) &key)
     (let ((sys (find-system self :default :error)))
@@ -1324,8 +1333,15 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
 (defgeneric update-system (self &key &allow-other-keys)
   (:documentation "Update the system SELF."))
 
-(defgeneric delete-system (self &key force &allow-other-keys)
-  (:documentation "Delete the system SELF from the Lisp image, cache, or local filesystem."))
+(defgeneric delete-system (self &key &allow-other-keys)
+  (:documentation "Delete the system SELF from the Lisp image, cache, or local filesystem.")
+  (:method ((self system) &key)
+    (remove-system self)
+    ;; todo: remove-module
+    (remhash (name self) *module-table*)
+    ;; todo: purge/protect
+    ;; (when cache
+    ))
 
 (defgeneric test-system (self &rest args)
   (:documentation "Test the system SELF.")

@@ -99,7 +99,7 @@ SUBGRAPH structure."
                   attrs)))
 
 (defun graph-to-dot (graph
-                     &key stream attributes node-attrs edge-attrs
+                     &key stream attributes node-attrs (edge-attrs `(,(cons :label (lambda (x) (format nil "\"~A\"" (name x))))))
                           subgraphs ranks)
   "Print the dot code representing GRAPH. The keyword
 argument ATTRIBUTES takes an assoc list with DOT graph attribute (name
@@ -110,9 +110,6 @@ http://www.graphviz.org/doc/info/attrs.html. SUBGRAPHS is a list of SUBGRAPH
 structures.  RANKS is a list of RANK structures."
   ;; by default edges are labeled with their values
   (declare (graph graph))
-  (unless (assoc :label edge-attrs)
-    (push (cons :label (lambda (x) (format nil "\"~A\"" (name x))))
-          edge-attrs))
   (format stream "~a to_dot {~%~{~a~}}~%"
           (etypecase graph
             (directed-graph "digraph")
@@ -137,7 +134,8 @@ structures.  RANKS is a list of RANK structures."
            (mapcar {edge-to-dot _ graph edge-attrs}
                    (let ((e (edges graph)))
                      (if (hash-table-p e)
-                         (hash-table-values e)
+                         ;; FIX 2026-02-26: 
+                         (hash-table-keys e)
                          e)))
            (mapcar #'subgraph-print subgraphs)
            (mapcar #'rank-print ranks)))

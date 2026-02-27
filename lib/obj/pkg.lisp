@@ -389,7 +389,8 @@
    :+max-color-table-size+
    :color-rgb :rgb-color :make-color-table :color-table-code-size
    :find-color :add-color :ensure-color :copy-color-table
-   :color-table-full :missing-color-table :color-table))
+   :color-table-full :missing-color-table :color-table
+   :rgb-color*))
 
 (defpkg :obj/time
   (:nicknames :time)
@@ -623,10 +624,14 @@
    :cmd :*command-hook*
    :eval-command :parse-args
    :read-arg :read-args
-   :parse-interactive-ds-lambda-list :*command-input*
+   :parse-interactive-lambda-list :*command-input*
    :command-class :*command-names-p*
    :list-all-commands :*commander*
-   :print-command :command-name))
+   :print-command :command-name
+   :command-eval-error :undefined-command
+   :undefined-command-type :invalid-command-type
+   :invalid-itype :command-error
+   :command-warning))
 
 (defpkg :obj/project
   (:nicknames :project)

@@ -489,7 +489,7 @@ implementation of A*.")
 ;; TODO 2025-08-19: accept optional direction arg (up = class-direct-superclasses)
 (defun class-graph (class)
   "Return a new GRAPH object containing all instances of CLASS."
-  (let ((graph (make-instance 'graph)))
+  (let ((graph (make-instance 'simple-directed-graph)))
     (flet ((.insert (x y)
              (when y
                (mapc

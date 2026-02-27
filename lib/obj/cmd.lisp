@@ -84,6 +84,9 @@ Z -- Coding system, nil if no prefix arg.
 (defconstant +interactive-placeholder-tag+ '_)
 ;;; Conditions
 (define-condition command-condition () ())
+(eval-always
+  (defwarning command-warning (command-condition simple-warning) () (:auto t)))
+
 (define-condition command-error (command-condition)
   ((name :initarg :name :reader error-name)
    (args :initarg :args :reader error-args :initform nil)))
@@ -124,7 +127,7 @@ Z -- Coding system, nil if no prefix arg.
 
 (defun parse-interactive-lambda-list (lambda-list &optional itype)
   (declare (values interactive-ds-lambda-list))
-  (flet ((%map (lst) (loop for l in lst collect (or (pop itype) t))))
+  (flet ((%map (lst) (loop for l in lst collect (if itype  (pop itype) t))))
     (destructuring-bind (&optional req opt rest allowp &rest keys) (parse-meta-ds-lambda-list lambda-list)
       (declare (ignore allowp))
       (vector (%map req)

@@ -10,21 +10,23 @@
 
 (deftest dot ()
   "Test Graphviz DOT functionality."
-  (let ((g1 (make-instance 'graph:graph)))
+  (let ((g1 (make-instance 'graph:simple-graph)))
     (graph:add-node g1 "foo")
     (graph:add-node g1 :bar)
     (graph:add-node g1 42)
     (graph:add-edge g1 '("foo" :bar) "a")
     (graph:add-edge g1 '(:bar 42) "b")
     (graph:add-edge g1 '(42 "foo") "c")
-    (is (stringp (serialize g1 :dot)))
-    (dat/dot::graph-to-dot-file g1 "/tmp/test")
+    (is (stringp (with-output-to-string (s) (serialize g1 :dot :stream s))))
+    (dat/dot::graph-to-dot-file g1 "/tmp/test" :edge-attrs nil)
     (is (probe-file "/tmp/test"))
     #$dot -Tsvg /tmp/test -o/tmp/test.svg$#
     (is (delete-file "/tmp/test"))
-    (is (delete-file "/tmp/test.svg")))
+    (is (delete-file "/tmp/test.svg"))))
+
+(deftest class-graph-dot ()
   (serialize (graph:class-graph 'id:id) :dot :path "/tmp/class-graph-test")
-  #$dot -Tsvg /tmp/test -o/tmp/class-graph-test.svg$#
+  #$dot -Tsvg /tmp/class-graph-test -o/tmp/class-graph-test.svg$#
   (is (delete-file "/tmp/class-graph-test")))
 
 (deftest csv ()
@@ -202,8 +204,8 @@ showVolumeMeters=1"))
                   :width width
                   :color-table t))
          (image (make-gif-image :height height :width width))
-         (red (ensure-color (rgb 1 0 0)
-                            (palette stream)))
+         (red (ensure-color (rgb-color 1 0 0)
+                            (color-table stream)))
          (white (ensure-color (rgb-color #xFF #xFF #xFF)
                               (color-table stream))))
     (add-image image stream)
@@ -212,4 +214,6 @@ showVolumeMeters=1"))
       (let* ((start (* i width 2))
              (end (+ start width)))
         (fill (data image) red :start start :end end)))
-    (serde stream #p"example1.gif")))
+    (serde stream #p"/tmp/test.gif")
+    (is (probe-file #p"/tmp/test.gif"))
+    (is (delete-file #p"/tmp/test.gif"))))

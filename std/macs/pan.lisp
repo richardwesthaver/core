@@ -95,5 +95,5 @@ the duration of BODY."
         `(with-pandoric ,args self
            ,@body)
         (progn
-          (std/condition:simple-style-warning "DEFPAN used instead of DEFUN.")
+          (warn 'sb-int:simple-style-warning "DEFPAN used instead of DEFUN.")
           `(progn ,@body)))))

@@ -24,7 +24,7 @@
   (define-tensor-method copy!-test ((x dense-tensor :a) (y dense-tensor :b t))
     `(tensor::t.copy! (,(cl :a) ,(cl :b)) x y))
   ;; FIX 2025-12-31: 
-  #+nil (tensor::print-tensor (zeros 10) nil)
+  (tensor::print-tensor (zeros 10) t)
   (is= 100 (total-size (copy!-test (zeros 10) (zeros 10)))))
 
 ;; (t.strict-coerce (number (complex double-float)) x) -> (COERCE X '(COMPLEX DOUBLE-FLOAT))

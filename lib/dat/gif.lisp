@@ -116,6 +116,31 @@ this image before displaying the next image"))
     :transparency transparency
     :disposal-method disposal-method))
 
+(defmethod initialize-instance :after ((image image)
+                                       &key stream
+                                       height width
+                                       data
+                                       color-table
+                                       &allow-other-keys)
+  (when (eql color-table t)
+    (setf (color-table image) (make-color-table)))
+  (unless height
+    (setf (height image) (height stream)
+          height (height stream)))
+  (unless width
+    (setf (width image) (width stream)
+          width (width stream)))
+  (cond (data
+         (let ((required-type `(array (unsigned-byte 8)
+                                (,(* height width)))))
+           (unless (typep data required-type)
+             (error "Supplied ~S is not of the required type ~A"
+                    :data required-type))))
+        (t
+         (setf (data image) (dat/img::make-image-data height width))))
+  (when stream
+    (vector-push-extend image (images stream))))
+
 (defun add-delay (delay stream)
   (let ((image (last-image stream)))
     (when image
@@ -190,6 +215,13 @@ this image before displaying the next image"))
   (when (eql color-table t)
     ;; note
     (setf (color-table self) (make-color-table))))
+
+(defmethod (setf stream-of) :after (image (stream gif-stream))
+  (unless (slot-boundp image 'height)
+    (setf (height image) (height stream)))
+  (unless (slot-boundp image 'width)
+    (setf (width image) (width stream)))
+  (vector-push-extend image (images stream)))
 
 (defun make-gif-stream (&key height width color-table loopingp comment
                              initial-images)
@@ -339,7 +371,7 @@ the effective color table of INDEX."
     (let ((data (if (interlacedp image)
                     (interlace image)
                     (data image))))
-      (compress data code-size context stream))
+      (compress-octet-vector data context :code-size code-size :output stream))
     (write-block-terminator stream)))
 
 (defun write-gif-stream-header (data-stream stream)
@@ -372,7 +404,7 @@ the effective color table of INDEX."
   (write-gif-stream-header data-stream stream)
   (when (zerop (length (images data-stream)))
     (warn "No images in ~A" data-stream))
-  (loop with context = (make-instance 'compression-context)
+  (loop with context = (make-instance 'lzw-compressor :output (io/lzw::make-bitstream stream))
         for image across (images data-stream) do
            (check-dimensions data-stream image)
            (write-gif-image image context stream))
@@ -599,7 +631,7 @@ streams); wrap it."
        (skip-data-blocks stream)))))
 
 (defun process-objects (data-stream stream)
-  (let ((context (make-instance 'decompression-context)))
+  (let ((context (make-instance 'lzw-decompressor)))
     (loop
       (let ((tag (read-byte stream nil)))
         (case tag

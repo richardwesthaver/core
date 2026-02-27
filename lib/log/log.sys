@@ -10,7 +10,7 @@
                (:file "sys"))
  :provide
  (:log
-  (:proto log)
+  (:proto :log)
   (:tests
    :require (:rt :std :log :io)
    :components ((:file "tests")))))

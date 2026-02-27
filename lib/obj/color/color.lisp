@@ -452,6 +452,9 @@ and an alpha component if present."
 
 (defconstant +max-color-table-size+ 256 "Color tables are restricted by the GIF89a specification to 256 entries.")  
 
+(defun rgb-color* (self)
+  (rgb-color (red self) (green self) (blue self)))
+
 (defun rgb-color (r g b)
   (logand #xFFFFFF
           (logior (ash (logand #xFF r) 16)
