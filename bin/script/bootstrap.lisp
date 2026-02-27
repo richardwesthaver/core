@@ -42,6 +42,7 @@
               :ironclad/aeads
               :ironclad/kdfs
               :ironclad/public-keys
+              :swank
               :uring
               :xkb
               :evdev

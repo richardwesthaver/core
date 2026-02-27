@@ -179,11 +179,10 @@ evaluation of BODY."
   (command (read-arg *query-io*) commands))
 
 ;;; CLI
-;; REVIEW 2026-01-16: should this be a struct containing a CLI-COMMAND? hmm..
 (defstruct cli
   ;; name slot defaults to *package*, must be string
-  (name (string-downcase (package-name *package*)) :type string :read-only t)
-  (version "0.1.0" :read-only t)
+  (name (string-downcase (package-name *package*)) :type string)
+  (version "0.1.0")
   description
   (cd *default-pathname-defaults*)
   (hook (make-instance 'key-hook))
