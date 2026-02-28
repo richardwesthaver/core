@@ -343,7 +343,8 @@ buffer should appear."
                        slime-xref-browser
                        slime-repl-ansi-color
                        ;; slime-highlight-edits
-                       slime-asdf))
+                       ;; slime-asdf
+		       ))
 (put 'make-instance 'common-lisp-indent-function 1)
 (put 'reinitialize-instance 'common-lisp-indent-function 1)
 (slime-setup slime-contribs)
