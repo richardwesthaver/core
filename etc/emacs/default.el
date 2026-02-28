@@ -109,7 +109,7 @@
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 (defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
-(add-to-load-path user-emacs-lib-directory (join-paths user-stash-directory "lisp/slime"))
+(add-to-load-path user-emacs-lib-directory (join-paths company-source-directory "core/slime"))
 
 (with-eval-after-load 'default
   (require 'ulang)
@@ -1052,7 +1052,8 @@ Add this function to appropriate major mode hooks such as
         org-log-refile 'time
         org-log-redeadline 'time
         org-log-states-order-reversed nil
-        org-clock-persist 'history)
+        org-clock-persist 'history
+	org-clock-persist-file (join-paths user-emacs-directory "org-clock-save.sxp"))
 
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
