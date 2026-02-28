@@ -52,7 +52,8 @@
   (:file "grovel")
   (:file "cli"))
  :provide 
- ((:tests 
+ ((:proto :syn)
+  (:tests 
    :components 
    ((:mod "tests"
      :components 

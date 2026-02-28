@@ -32,7 +32,7 @@
   (isequalp (net/codec/osc::decode-string #(110 117 108 108 32 112 97 100 100 101 100 0))
             "null padded")
   (isequalp (net/codec/osc::encode-blob #(1 1 1 1)) #(0 0 0 4 1 1 1 1))
-  (isequalp (net/codec/osc::encode-osc-timetag :now) #(0 0 0 0 0 0 0 1))
+  (isequalp (net/codec/osc::encode-timetag :now) #(0 0 0 0 0 0 0 1))
   (isequalp (net/codec/osc::encode-int64 16843009) #(0 0 0 0 1 1 1 1))
   (isequalp (net/codec/osc::enc-float32 1.00001) #(63 128 0 84))
   (isequalp (net/codec/osc::decode-float64 (octets-to-integer (octets 64 55 25 153 153 153 153 154))) 23.1d0)

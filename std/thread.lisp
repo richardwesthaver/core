@@ -732,7 +732,7 @@ within their DOMAIN and SCOPE."))
 (defmethod initialize-instance :before ((self supervisor) &key name thread &allow-other-keys)
   (unless thread
     (when name
-      (setf (supervisor-thread self) (make-ephemeral-thread (symbol-name (gensym name)))))))
+      (setf (supervisor-thread self) (make-ephemeral-thread (symbol-name (gensymify name)))))))
 
 (defmethod initialize-instance :after ((self supervisor) &key &allow-other-keys)
   (push (supervisor-thread self) *super-threads*))

@@ -159,7 +159,7 @@
   (keymap-set mpc-mode-map "m" 'mpc-mark)
   (keymap-set mpc-mode-map "1" 'mpc-playlist))
 
-;;;_. Modes
+;;; Modes
 (add-hook
  'conf-toml-mode-hook
  (lambda ()
@@ -169,22 +169,25 @@
 
 (keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
+(keymap-set slime-editing-map "C-c s s" #'slime-sprof-start)
+(keymap-set slime-editing-map "C-c s x" #'slime-sprof-stop)
+(keymap-set slime-editing-map "C-c s r" #'slime-sprof-report)
 
 (keymap-global-set "C-c (" #'parens-map)
 ;; (keymap-global-set "C-c )" #'parens-map)
 
-;;;_. C-x
+;;; C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)
 
-;;;_ . C-x r
+;;; C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)
 (keymap-set ctl-x-r-map "C-l" #'list-registers)
 (keymap-set ctl-x-r-map "C-b" #'buffer-to-register)
 (keymap-set ctl-x-r-map "C-f" #'file-query-to-register)
 (keymap-set ctl-x-r-map "C-r" #'copy-register)
-;;;_ . C-x x
+;;; C-x x
 
-;;;_. Global
+;;; Global
 (keymap-global-set "C-c c" user-map)
 (keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
 (keymap-global-set "<XF86Paste>" parens-map)
