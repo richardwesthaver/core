@@ -49,7 +49,6 @@
               :btrfs
               :zstd
               :syslog
-              :blake3
               :keyutils
               :tree-sitter
               :obj

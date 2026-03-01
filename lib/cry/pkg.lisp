@@ -3,14 +3,7 @@
 ;; 
 
 ;;; Code:
-
-#|
-(ironclad:digest-file :sha1 "/tmp/picard01t0fjkc.jpg")
-
-(cry/b3::load-blake3)
-(cry/b3:b3sum "/tmp/picard01t0fjkc.jpg" :hex nil)
-|#
-
+;; TODO 2026-02-28: sysify
 (defpackage :cry-int
   ;; (:nicknames :cry)
   (:shadowing-import-from :ironclad :integer-to-octets :octets-to-integer :xor)
@@ -45,12 +38,6 @@
   (:export :+polynomial+ :+improved-polynomial+
            :init-crc64 :crc64-stream
            :crc64-file :crc64-sequence))
-
-(defpackage :cry/b3
-  (:nicknames :b3)
-  (:use :cl :std :blake3 :sb-alien)
-  (:export :b3hash :b3sum
-           :b3hash-string))
 
 (defpkg :cry/jwt
   (:use :cl :std :dat/json :dat/base64 :cry-int)

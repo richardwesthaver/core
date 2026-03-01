@@ -1,7 +1,7 @@
 ;;; ffi.sys --- Ffi Sytem Definitions
 (defsys :alien
  :require
- (:arrow :blake3 :btrfs :alsa
+ (:arrow :btrfs :alsa
   :cuda :evdev :glib :gstreamer
   :sndfile :ssh2 :tree-sitter
   :uring :xkb :zstd :jpeg
@@ -10,7 +10,7 @@
  :provide
  ((:sys :alien/tests 
    :require
-   (:arrow/tests :blake3/tests :btrfs/tests
+   (:arrow/tests :btrfs/tests
     :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
     :keyutils/tests :rocksdb/tests :alsa/tests :sndfile/tests 
     :ssh2/tests :tree-sitter/tests :syslog/tests

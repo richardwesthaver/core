@@ -1,9 +1,11 @@
 ;;; password.lisp --- Reasonably Safe User Passwords
 
-;; 
+;; for even more reasonably safe password hashes see ironclad/src/kdf/password-hash.lisp
 
 ;;; Code:
 (in-package :cry/password)
+
+(defvar *password-digest* 'sha256)
 
 (defclass password ()
   ((hash :initarg :hash
@@ -16,9 +18,10 @@
          :reader password-salt)))
 
 (defun make-password-hash (password salt)
+  (ironclad:pbkdf2-hash-password password :salt salt)
   (ironclad:byte-array-to-hex-string
    (ironclad:digest-sequence
-    :sha256
+    *password-digest*
     (concatenate '(vector (unsigned-byte 8))
                  (sb-ext:string-to-octets password)
                  salt))))
