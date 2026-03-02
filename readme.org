@@ -13,7 +13,7 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Sun Mar 01 19:33:38 2026 -0500                  |
+| updated     | Sun Mar 01 19:43:00 2026 -0500                  |
 | langs       | c elisp lisp makefile org perl text             |
 | lines       | 264440 :code 215684 :comment 21808 :blank 26948 |
 |-------------+-------------------------------------------------|
@@ -34,5 +34,5 @@ packages or ANSI Lisp implementations.
 
 #+begin_src shell :eval never
   sbcl --load bootstrap.lisp
-  etc/script/install.lisp # prefix=/usr
+  sudo etc/script/install.lisp # prefix=/usr
 #+end_src

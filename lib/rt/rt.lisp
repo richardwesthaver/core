@@ -122,7 +122,11 @@ declarations for the test body."
                  ,@(when-let ((v (getf pr :profile))) `(:profile ,v))
                  ,@(when documentation `(:documentation ,documentation))
                  ,@(when dec `(:declare ,dec)))))
-       ,(unless (getf pr :skip) '(push-test obj *test-suite*))
+       ,(if-let ((skipped (getf pr :skip)))
+          ;; FIX 2026-03-01: kludge
+          (when (eql skipped :todo)
+            (warn "TODO: define test ~A" name))
+          '(push-test obj *test-suite*))
        obj)))
 
 (defmacro defsuite (suite-name &rest props)
