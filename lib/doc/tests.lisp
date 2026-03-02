@@ -47,5 +47,5 @@
     (is-doc-typep file-documentation (file-documentation file))))
 
 ;; TODO 2025-08-18: 
-(deftest doc-db (:skip t)
+(deftest doc-db (:skip :todo)
   (db:load-database-backend :rdb))

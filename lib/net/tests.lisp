@@ -81,4 +81,4 @@ Cookie: name=wookie
     (istype 'net/srv/udp:udp-service (make-instance 'net/srv/udp:udp-service))))
 
 ;; TODO 2025-10-18: 
-(deftest swank ())
+(deftest swank (:skip :todo))

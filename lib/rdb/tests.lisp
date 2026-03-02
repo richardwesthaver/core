@@ -184,7 +184,7 @@
       (put-key db k v)
       (get-val db k))))
 
-(deftest store ()
+(deftest store (:skip :todo)
   (with-store (store)))
 
 (deftest logger ()

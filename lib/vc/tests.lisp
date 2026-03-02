@@ -28,13 +28,13 @@
   (with-temp-repo *default-vc-kind* (is repo)))
 
 ;; TODO 2024-08-22: 
-(deftest vc-mirror-update (:skip t)
+(deftest vc-mirror-update (:skip :todo)
   "This test replicates a nushell script we've used for a very long time - 'use
 vc.nu; vc mirrors update;'"
   (with-temp-repo :hg
     (vc-id repo)))
 
-(deftest vc-iterator (:skip t)
+(deftest vc-iterator (:skip :todo)
   "Test iteration over a set of VC-REPOs.")
 
 (deftest vc-bundle ()
