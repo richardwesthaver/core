@@ -1,9 +1,4 @@
 #!/bin/core --script
-;;; install.lisp --- Core Installer
-
-;; 
-
-;;; Code:
 (in-readtable :shell)
 #$install -C -m 755 .stash/core /usr/bin/core$#
 (let ((apps '("skel" "homer" "mpk" "pod")))

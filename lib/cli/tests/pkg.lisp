@@ -440,3 +440,6 @@ Eastern Mediterranean ████████████████▊
               (cli/tools/sbcl::*sbcl-output* s))
           (with-sbcl (:noinform t :quit t)
             (print :ok))))))))
+
+(deftest shell-reader (:skip t)
+  "basic shell reader functionality")

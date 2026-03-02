@@ -1,8 +1,5 @@
-;;; perf.lisp --- Core Performance Analysis Script
-
+#!/bin/core --script
 ;; Record Linux perf data and run benchmarks.
-
-;;; Code:
 (in-package :user)
 (require 'sb-perf)
 (sb-perf:write-jitdump)

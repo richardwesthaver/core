@@ -1,8 +1,4 @@
-;;; ems.lisp --- Emacs Services
-
-;; 
-
-;;; Code:
+#!/bin/core --script
 (in-package :user)
 (make-thread-pool (num-cpus) :name :emacs)
 
