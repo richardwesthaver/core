@@ -5,5 +5,5 @@
   (with-progress-bar ((length apps) "installing core to /usr/bin/core")
     (loop for i in apps
           while i
-          do (run-program "ln" '("-sf" "/usr/bin/core" (format nil "/usr/bin/~A" i)))
+          do (run-program "/bin/ln" `("-sf" "/usr/bin/core" ,(format nil "/usr/bin/~A" i)))
           do (update! 1))))
