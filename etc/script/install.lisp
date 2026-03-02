@@ -1,4 +1,4 @@
-#!/bin/core --script
+#!/usr/bin/env -S core --script
 (in-readtable :shell)
 #$install -C -m 755 .stash/core /usr/bin/core$#
 (let ((apps '("skel" "homer" "mpk" "pod")))
