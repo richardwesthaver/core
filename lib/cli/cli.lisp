@@ -23,12 +23,12 @@
 (defvar *sudo-output* t)
 
 (defun call-with-sudo (str &optional (output *sudo-output*))
-  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input t :output output))
+  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input (make-synonym-stream '*standard-input*) :output output))
 
 (defun ensure-sudo ()
   "Run sudo with input from *standard-input*, validating the credential cache
 only."
-  (unless (sudop) (sb-ext:run-program (find-exe "sudo") '("-v") :input t :output *sudo-output*)))
+  (unless (sudop) (sb-ext:run-program (find-exe "sudo") '("-v") :input (make-synonym-stream '*standard-input*) :output *sudo-output*)))
     
 (defmacro with-sudo (&body body)
   "Eval BODY, a list of shell command strings, with sudo privileges."
@@ -40,4 +40,27 @@ only."
 
 (save :commands :cli)
   
-;; (defprovider :keymap (name &key package))
+(defmethod init ((self (eql :editor)) &rest args)
+  ;; performs :TERM init internally (set-terminal)
+  (setq cli/ed:*editor* (apply 'cli/linedit::make-editor args)))
+
+(defmethod init ((self (eql :repl))
+                 &key wrap (eof :quit)
+                      history killring
+                      acl)
+  (when acl (require 'sb-aclrepl))
+  (cli/linedit:install-repl :wrap-current wrap :eof-quits eof :history history :killring killring))
+
+(defmethod init ((self (eql :term)) &key name (color t))
+  (set-terminal name)
+  (when color (setq std:*print-color* (capability :max-colors))))
+
+(defmethod init ((self (eql :main))
+                 &key (package *package*)
+                      (userinit #'sb-impl::userinit-pathname)
+                      (sysinit #'sb-impl::sysinit-pathname)
+                      (default #'sb-impl::toplevel-init))
+  (make-toplevel-init :package package
+                      :userinit userinit
+                      :sysinit sysinit
+                      :default default))

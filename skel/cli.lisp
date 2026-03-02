@@ -153,7 +153,7 @@
   (init :skel)
   (let ((a1 (second *posix-argv*))
         (a2 (cddr *posix-argv*)))
-    (if (command a1) 
+    (if (command a1)
         (if a2 (call-interactively a1 a2) (exec a1))
         (call "show" (cdr *posix-argv*)))))
 

@@ -9,10 +9,10 @@
   (:file "progress" :require ("pkg"))
   (:file "spark" :require ("pkg"))
   (:file "terminfo" :require ("pkg"))
-  (:file "linedit" :require ("pkg" "terminfo"))
-  (:file "repl" :require ("pkg"))
-  (:file "shell" :require ("env"))
   (:file "ed" :require ("env"))
+  (:file "repl" :require ("pkg"))
+  (:file "linedit" :require ("pkg" "terminfo" "ed"))
+  (:file "shell" :require ("env"))
   (:mod "tools"
    :components
    ((:pkg "pkg" :package :cli-int :feature :tools)

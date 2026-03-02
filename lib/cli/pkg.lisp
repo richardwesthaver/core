@@ -98,31 +98,39 @@
    :set-a-foreground :enter-bold-mode
    :exit-attribute-mode))
 
-(defpkg :cli/linedit
-  (:nicknames :linedit)
-  (:use :cl :std :cli/term)
-  (:shadowing-import-from :sb-posix :ioctl)
-  (:import-from :sb-posix :getenv :tcgetattr :tcsetattr :termios)
-  (:import-from :terminfo :tputs :set-terminal :tparm)
-  (:import-from :std
-   :with-gensyms :with-directory-iterator
-   :file-kind :current-directory
-   :relative-pathname-p :if-let
-   #:isatty #:winsize)
-  (:export
-   #:linedit
-   #:yes-or-no
-   #:formedit
-   #:*default-columns*
-   #:*default-lines*
-   #:*highlight-color*
-   #:install-repl
-   #:uninstall-repl
-   #:make-editor
-   #:editor
-   #:*editor*
-   #:text-buffer
-   #:*announce*))
+(defpkg :cli/ed
+  (:use :cl :std :cli/env :ast :config :cmd)
+  (:export 
+   :run-emacs :run-emacsclient :org-store-link :editor-config 
+   :emacs-config :*user-emacs-directory*
+   :*user-org-directory*
+   :eval-emacs
+   :slime
+   :ielm
+   :ediff
+   :ediff3
+   :vc-ediff
+   :with-emacs
+   :emacs-find-file
+   :editor
+   :line
+   :rewindable
+   :get-line
+   :get-string
+   :get-point
+   :text-buffer
+   :copy-buffer
+   :ensure-buffer
+   :buffer-push
+   :buffer-find-next-if
+   :buffer-find-previous-if
+   :buffer-previous
+   :buffer-peek
+   :buffer-next
+   :buffer-cycle
+   :save-state
+   :rewind-state
+   #:*editor*))
 
 (defpkg :cli/progress
   (:use :cl :std)
@@ -152,17 +160,28 @@
   (:use :cl :std :cli/progress :cli/spark :config :ast :color :cli/term)
   (:export :load-acl-repl :start-rl-repl :make-toplevel-init))
 
-(defpkg :cli/ed
-  (:use :cl :std :cli/env :ast :config)
-  (:export :run-emacs :run-emacsclient :org-store-link :editor-config :emacs-config
-   :eval-emacs
-   :slime
-   :ielm
-   :ediff
-   :ediff3
-   :vc-ediff
-   :with-emacs
-   :emacs-find-file))
+(defpkg :cli/linedit
+  (:nicknames :linedit)
+  (:use :cl :std :cli/term :kbd :cmd :cli/ed)
+  (:shadowing-import-from :sb-posix :ioctl)
+  (:import-from :sb-posix :getenv :tcgetattr :tcsetattr :termios)
+  (:import-from :terminfo :tputs :set-terminal :tparm)
+  (:import-from :std
+   :with-gensyms :with-directory-iterator
+   :file-kind :current-directory
+   :relative-pathname-p :if-let
+   #:isatty #:winsize)
+  (:export
+   #:linedit
+   #:yes-or-no
+   #:formedit
+   #:*default-columns*
+   #:*default-lines*
+   #:*highlight-color*
+   #:install-repl
+   #:uninstall-repl
+   #:make-editor
+   #:*announce*))
 
 (defpkg :cli/main
   (:use :cl :std :cmd)

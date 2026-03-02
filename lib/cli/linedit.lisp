@@ -588,141 +588,6 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	   (write-string (subseq string (- (1+ point) columns) point)))))
   (force-output))
 
-;;; Mixin that implements undo
-(eval-always
-  (defclass rewindable ()
-    ((data :reader data
-	   :initform (make-array 12 :fill-pointer 0 :adjustable t))
-     ;; Index is the number of rewinds we've done.
-     (idx :accessor idx
-	  :initform 0)))
-
-  (defun %rewind-count (rewindable)
-    (fill-pointer (data rewindable)))
-
-  (defun last-state (rewindable)
-    (let ((size (%rewind-count rewindable)))
-      (if (zerop size)
-	  (values nil nil)
-	  (values (aref (data rewindable) (1- size)) t))))
-
-  (defun save-rewindable-state (rewindable object)
-    (let ((index (idx rewindable))
-	  (store (data rewindable)))
-      (unless (zerop index)
-        ;; Reverse the tail of pool, since we've
-        ;; gotten to the middle by rewinding.
-        (setf (subseq store index) (nreverse (subseq store index))))
-      (vector-push-extend object store)))
-
-  (defmethod rewind-state ((rewindable rewindable))
-    (assert (not (zerop (%rewind-count rewindable))))
-    (setf (idx rewindable) 
-	  (mod (1+ (idx rewindable)) (%rewind-count rewindable)))
-    (aref (data rewindable) 
-	  (- (%rewind-count rewindable) (idx rewindable) 1))))
-
-(defclass line ()
-  ((string :accessor get-string :initform "" :initarg :string)
-   (point :accessor get-point :initform 0 :initarg :point)))
-
-(defmethod (setf get-string) :around (string line)
-  (prog1 (call-next-method)
-    (when (>= (get-point line) (length string))
-      (setf (get-point line) (length string)))))
-
-(defmethod (setf get-point) :around (point line)
-  (when (<= 0 point (length (get-string line)))
-    (call-next-method)))
-
-;;; BUFFER offers a simple browsable from of storage. It is used to
-;;; implement both the kill-ring and history.
-(defclass text-buffer ()
-  ((prev :initarg :prev :accessor prev :initform nil)
-   (next :initarg :next :accessor next :initform nil)
-   (data :initarg :data :accessor data :initform nil)
-   ;; For file-backed buffers.
-   (path :initarg :path :initform nil :accessor path)))
-
-(defun copy-buffer (buffer)
-  (make-instance 'text-buffer
-    :prev (prev buffer)
-    :next (next buffer)
-    :data (data buffer)
-    :path (path buffer)))
-
-(defun ensure-buffer (datum)
-  "DATUM may be a buffer, a list, or a pathname designator."
-  (etypecase datum
-    (text-buffer datum)
-    ((or pathname string null)
-     (let ((buffer (make-instance 'text-buffer :path datum)))
-       (when datum
-         (with-open-file (f datum
-                            :direction :input
-                            :if-does-not-exist nil
-                            :external-format :utf-8)
-           (when f
-             (loop for line = (read-line f nil)
-                   while line
-                   do (push line (data buffer)))
-             (setf (prev buffer) (data buffer)))))
-       buffer))
-    (list (let ((buffer (make-instance 'text-buffer :data datum)))
-            (setf (prev buffer) (data buffer))
-            buffer))))
-
-(defun buffer-push (string buffer)
-  (unless (equal string (car (data buffer)))
-    (push string (data buffer))
-    (let ((pathname (path buffer)))
-      (when pathname
-        (with-open-file (f pathname
-                           :direction :output
-                           :if-does-not-exist :create
-                           :if-exists :append
-                           :external-format :utf-8)
-          (write-line string f))))
-    (setf (next buffer) nil
-          (prev buffer) (data buffer))))
-
-(defun buffer-find-previous-if (test buffer)
-  (std:awhen (position-if test (prev buffer))
-    (loop repeat (1+ std:it)
-          do (push (pop (prev buffer))
-                   (next buffer)))
-    (car (next buffer))))
-
-(defun buffer-previous (string buffer)
-  (when (prev buffer)
-    (push string (next buffer))
-    (pop (prev buffer))))
-
-(defun buffer-peek (buffer)
-  (std:aif (prev buffer)
-           (car std:it)))
-
-(defun buffer-find-next-if (test buffer)
-  (std:awhen (position-if test (next buffer))
-    (loop repeat (1+ std:it)
-          do (push (pop (next buffer)) (prev buffer)))
-    (car (prev buffer))))
-
-(defun buffer-next (string buffer)
-  (when (next buffer)
-    (push string (prev buffer))
-    (pop (next buffer))))
-
-(defun buffer-cycle (buffer)
-  (flet ((wrap-buffer ()
-	   (unless (prev buffer)
-	     (setf (prev buffer) (reverse (next buffer))
-		   (next buffer) nil))))
-    (wrap-buffer)
-    (push (pop (prev buffer)) (next buffer))
-    (wrap-buffer)
-    t))
-
 ;;; Command Keys
 (defmacro defcmd (command &optional action)
   (when action
@@ -825,30 +690,29 @@ READ-CHORD according to CMDS."
 (defcmd "Home" 'move-to-bol)
 (defcmd "End" 'move-to-eol)
 
-;;; Editor
-(defclass editor (line rewindable)
+(defclass terminal-editor (editor)
   ((commands :reader editor-commands
-	     :initform *cmds*
-	     :initarg :commands)
+             :initform *cmds*
+             :initarg :commands)
    (completer :accessor editor-completer
-	      :initform 'lisp-complete
-	      :initarg :complete)
+              :initform 'lisp-complete
+              :initarg :complete)
    (history :accessor editor-history)
    (killring :accessor editor-killring :type text-buffer)
-   (insert :accessor editor-insert-mode
-	   :initform t
-	   :initarg :insert-mode)
-   (mark :accessor editor-mark
-	 :initform nil)
-   (yank :accessor editor-yank
-	 :initform nil)
-   (last-yank :accessor editor-last-yank
-	      :initform nil)
    (prompt :accessor editor-prompt
-	   :initform ""
-	   :initarg :prompt)))
+           :initform ""
+           :initarg :prompt)
+   (yank :accessor editor-yank
+         :initform nil)
+   (last-yank :accessor editor-last-yank
+              :initform nil)
+   (insert :accessor editor-insert-mode
+           :initform t
+           :initarg :insert-mode)
+   (mark :accessor editor-mark
+         :initform nil)))
 
-(defmethod initialize-instance :after ((editor editor) &rest initargs &key history killring completions)
+(defmethod initialize-instance :after ((editor terminal-editor) &rest initargs &key history killring completions)
   (declare (ignorable initargs))
   (let ((history (ensure-buffer (or history *history*))))
     (unless *history*
@@ -861,12 +725,12 @@ READ-CHORD according to CMDS."
   (when completions (setf (editor-completer editor) (make-list-completer completions)))
   (save-state editor))
 
-(defclass smart-editor (editor smart-terminal) ())
-(defclass dumb-editor (editor dumb-terminal) ())
+(defclass smart-editor (terminal-editor smart-terminal) ())
+(defclass dumb-editor (terminal-editor dumb-terminal) ())
 
 (defvar *announce* nil)
 (defvar *linedit-spec* nil)
-(defvar *version* "0.1.1-cc")
+(defvar *version* "0.1.2-cc")
 
 (defun make-editor (&rest args)
   (set-terminal)
@@ -883,22 +747,6 @@ READ-CHORD according to CMDS."
                     "dumb"))))
         (setf *linedit-spec* spec)
     (apply 'make-instance type args)))
-
-;;; undo
-(defun save-state (editor)
-  (let ((string (get-string editor))
-	(last (last-state editor)))
-    (unless (and last (equal string (get-string last)))
-      ;; Save only if different than last saved state
-      (save-rewindable-state editor
-			     (make-instance 'line
-			       :string (copy-seq string)
-			       :point (get-point editor))))))
-
-(defmethod rewind-state ((editor editor))
-  (let ((line (call-next-method)))
-    (setf (get-string editor) (copy-seq (get-string line))
-	  (get-point editor) (get-point line))))
 
 (defvar *aux-prompt* nil)
 
@@ -1222,8 +1070,6 @@ to the appropriate home directory."
 		  (values list max-len))))))))
 
 ;;; Main
-(defvar *editor* nil)
-
 (defun linedit (&rest keyword-args &key prompt history killring completions &allow-other-keys)
   "Reads a single line of input with line-editing from standard input
 of the process and returns it as a string.

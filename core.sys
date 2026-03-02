@@ -7,7 +7,8 @@
   :net :nlp :dat :doc
   :q :dsp :math :parse 
   :rdb :cry :pod  
-  :box :syn :vc :rt)
+  :box :syn :vc :rt
+  :skel)
  :components ((:file "core"))
  :provide 
  ((:sys :core/tests
@@ -20,5 +21,7 @@
     :zstd/tests :uring/tests
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
-    :vc/tests :cli/tests :q/tests :blas/tests)
-   :components nil)))
+    :vc/tests :cli/tests :q/tests :blas/tests
+    :skel/tests)
+   :components nil)
+  (:bin :core :package :core :toplevel "dispatch-core")))

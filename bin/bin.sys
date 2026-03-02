@@ -1,7 +1,0 @@
-;;; ~/comp/core/bin/bin.sys --- Executable Program Definitions
-(defsys :bin
- :require (:core :skel)
- :components 
- ((:file "core"))
- :provide
- ((:bin :core :package :bin/core :toplevel "dispatch-core")))

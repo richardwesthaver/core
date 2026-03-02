@@ -43,6 +43,7 @@
               :ironclad/kdfs
               :ironclad/public-keys
               :swank
+              :swank/exts
               :uring
               :xkb
               :evdev
@@ -88,10 +89,9 @@
               :dsp
               :alien
               :skel
-              :core
-              :bin)))
+              :core)))
   (mapc 'load-system build-order))
 
 (init :kbd :keysyms (stash-pathname "kbd.sxp") :input nil)
 
-(make-system :bin)
+(make-system :core)

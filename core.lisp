@@ -5,7 +5,9 @@
 ;;; Code:
 (pkg:defpkg :core 
   (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math)
-  (:export #:app-config))
+  (:import-from :cli/main :define-multi-main)
+  (:import-from :cli/repl :make-toplevel-init)
+  (:export #:app-config #:dispatch-core))
 
 (in-package :core)
 
@@ -14,19 +16,19 @@
 (defreadtable :core
   (:fuse :modern :std :shell :graph :math))
 
-(eval-when (:load-toplevel)
-  (pushnew :core *features*))
-
 (pkg:defpkg :core/user
   (:nicknames :user)
   (:use :std-lisp :core :cli)
   (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-c)
   (:import-from :tools :with-sbcl))
 
-(in-package :user)
-
 (eval-when (:compile-toplevel)
   (setq *default-package* "USER"))
 
-(eval-when (:load-toplevel)
-  (pushnew :user *features*))
+(define-multi-main dispatch-core
+    (make-toplevel-init
+     :package :user
+     :userinit (lambda () (init :xdg) (xdg-config-file "corerc")))
+  (:skel (skel/cli::start-skel))
+  (:homer (skel/homer/cli::start-homer))
+  (:mpk (skel/mpk/cli::start-mpk)))

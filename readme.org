@@ -13,9 +13,9 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Fri Feb 27 21:45:33 2026 -0500                  |
+| updated     | Sat Feb 28 21:09:05 2026 -0500                  |
 | langs       | c elisp lisp makefile org perl text             |
-| lines       | 265001 :code 216097 :comment 21891 :blank 27013 |
+| lines       | 264449 :code 215680 :comment 21816 :blank 26953 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links() :dir ~/comp/core/
@@ -33,13 +33,6 @@ and no guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
 #+begin_src shell :eval never
-  # cold boot
-  sbcl --load bin/script/bootstrap.lisp
-  # link to skel
-  ln -sf .stash/core .stash/skel
-  # warm boot
-  .stash/skel make
-  # install the core
-  .stash/skel install
-  # skel homer mpk -> /usr/bin/core
+  sbcl --load bootstrap.lisp
+  etc/script/install.lisp # prefix=/usr
 #+end_src

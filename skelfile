@@ -25,7 +25,6 @@
  (:mod "std" (:sys "std"))
  (:mod "alien" (:sys "alien"))
  (:mod "lib")
- (:mod "bin" (:sys "bin"))
  (:mod "skel" (:sys "skel"))
  (:mod "etc"))
 :rules
@@ -148,7 +147,7 @@
   (:purge () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
  (core ()
-  (:build (%stash) (run-sbcl "--noinform" "--load" "bin/script/bootstrap.lisp"))
+  (:build (%stash) (run-sbcl "--noinform" "--no-userinit" "--no-sysinit" "--load" "bootstrap.lisp"))
   (:rebuild (%stash)
    (with-core (:input t :no-userinit t :no-sysinit t)
     (init :sys)
@@ -157,16 +156,9 @@
     ;; (funcall (find-symbol "LOAD-XKBCOMMON" :xkb)) ; requires xkbcommon.so
     ;; (funcall (find-symbol "LOAD-XKB-KEYSYMS-FILE" :io/kbd) ".stash/kbd.sxp")
     (load-system :core)
-    (make-system :bin :verbose t)))
+    (make-system :core)))
   (:compile () (compile-lisp :core :force t :verbose t))
-  (:install (install-emacs)
-   (with-sudo "install -C -m 755 .stash/core /usr/bin/core")
-   (let ((apps '("skel" "homer" "mpk" "pod")))
-    (with-progress-bar ((length apps) "installing core to /usr/bin/core")
-     (loop for i in apps
-      while i
-      do (with-sudo (format nil "ln -sf /usr/bin/core /usr/bin/~A" i))
-      do (update! 1))))))
+  (:install (install-emacs) (with-sudo "etc/script/install.lisp")))
  (tests ()
   (:run ()
    (asdf:load-system :core/tests)
