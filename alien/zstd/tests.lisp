@@ -14,8 +14,7 @@
 (load-zstd)
 
 (deftest sanity ()
-  (mapc (lambda (x)
-          (is (= (car x) (cdr x))))
+  (mapc (lambda (x) (is (= (car x) (cdr x))))
         `((,+zstd-clevel-default+ . ,(zstd::zstd-defaultclevel))
           (,+zstd-magicnumber+ . -47205080)
           (,+zstd-magic-skippable-start+ . 407710288)

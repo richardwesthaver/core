@@ -37,20 +37,33 @@
    rebuild-core
    deploy))
  (upstream () 
-  (let ((tmp "/tmp/core/"))
-   (probe-delete-directory tmp)
-   (vc-export (vc *skel-project*) tmp :filter-regexp "^std$") ;; yuck
+  (with-directory "/tmp"
+   (delete-directories '("core" "slime" "ppcre" "ironclad")))
+  (labels ((add-remotes (repo name)
+            (vc-remote repo :add :name "cb" :url (format nil "ssh://git@codeberg.org/c-c/~A" name))
+            (vc-remote repo :add :name "gh" :url (format nil "ssh://git@github.com/richardwesthaver/~A" name)))
+           (push-upstream (repo &optional force)
+            (vc-push repo :set-upstream t :remote "cb" :all t :force force)
+            (vc-push repo :remote "gh" :all t :force force))
+           (bump (name)
+            (let ((tmp (directory-path (merge-pathnames name "/tmp/"))))
+             (vc-export (vc *skel-project*) tmp)
+             (with-repo (r :type :git :path tmp)
+              (add-remotes r name)
+              (push-upstream r t)))))
+   (bump "ppcre")
+   (bump "ironclad")
+   (bump "slime")
+   (vc-export (vc *skel-project*) "/tmp/core" :filter-regexp "^std$") ;; yuck
    (with-repo (r :path tmp :type :git)
+    (add-remotes r "core")
     (vc-update r)
     (vc-submodule r :add :url "https://github.com/richardwesthaver/ppcre")
     (vc-submodule r :add :url "https://github.com/richardwesthaver/ironclad")
     (vc-submodule r :add :url "https://github.com/richardwesthaver/slime")
-    (vc-remote r :add :name "cb" :url "ssh://git@codeberg.org/c-c/core")
-    (vc-remote r :add :name "gh" :url "ssh://git@github.com/richardwesthaver/core")
     (vc-add r ".gitmodules")
     (vc-commit r "gitmodules")
-    (vc-push r :set-upstream t :remote "cb" :branch "default" :force t)
-    (vc-push r :remote "gh" :branch "default" :force t))))
+    (push-upstream r t))))
  (clean ()
   (probe-delete-directory ".stash" :recursive t)
   (mapc 'delete-file (directory "**/*.fasl"))
@@ -179,13 +192,7 @@
    (sb-cover:report ".stash/coverage/")
    (sb-cover:clear-coverage)))
  ;; install
- (install (install-core)
-  (with-directory ".stash/"
-   (loop for f in (directory "*.core")
-    while f
-    with d = #P"/usr/share/lisp/"
-    do (format t "~A -> ~A" f d)
-    do (sb-ext:run-program (find-exe "install") `("-C" "-m" "755" ,f ,d) :output t))))
+ (install (install-core))
  (syms.sxp () 
   (with-open-file (f "syms.sxp" 
                    :direction :output
