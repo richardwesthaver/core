@@ -23,12 +23,12 @@
 (defvar *sudo-output* t)
 
 (defun call-with-sudo (str &optional (output *sudo-output*))
-  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input (make-synonym-stream '*standard-input*) :output output))
+  (sb-ext:run-program (find-exe "sudo") `("-S" ,@(split-sequence #\space str)) :input t :output output))
 
 (defun ensure-sudo ()
   "Run sudo with input from *standard-input*, validating the credential cache
 only."
-  (unless (sudop) (sb-ext:run-program (find-exe "sudo") '("-v") :input (make-synonym-stream '*standard-input*) :output *sudo-output*)))
+  (unless (sudop) (sb-ext:run-program (find-exe "sudo") '("-v") :input t :output *sudo-output*)))
     
 (defmacro with-sudo (&body body)
   "Eval BODY, a list of shell command strings, with sudo privileges."

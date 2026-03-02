@@ -1046,7 +1046,6 @@ internally. On success the path is added to the *SYSDEFS* list."
     (with-system-session (s path)
       (declare (ignore s))
       (let ((%path (or (and (not (recompile-p path)) (probe-file (fasl-cache-file path "fsys"))) path)))
-        (when *verbose* (mumble "loading systems from ~A" %path))
         (when 
             (restart-case (load %path)
               (load-file (p)
@@ -1193,15 +1192,19 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
              *module-table* (make-hash-table :test 'equal)))
       (pool
        (setf (system-session-pool *system-session*) pool))))
-  (when (and sysdefs preload) (mapc 'load-sys *sysdefs*))
+  (when (and sysdefs preload) 
+    (mapc (lambda (x)
+            (when *verbose* (mumble "loading systems from ~A" x))
+            (load-sys x))
+          *sysdefs*))
   (values))
 
-(definline %load-system (sys &optional (verbose *verbose*) force)
+(definline %load-system (sys &optional force)
   (declare (optimize (speed 3)))
   (when (or (component-reload-p sys) force)
     (let ((path (path sys)))
       (with-system-file (path :load t)
-        (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
+        ;; (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
         (load-component sys :force force)))
     sys))
 
@@ -1211,7 +1214,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
      (if (atom x)
          (if-let ((s (find-system x)))
            (when (component-reload-p s)
-             (%load-system s *verbose* force))
+             (%load-system s force))
            (simple-system-error "System not found: ~A" x))
          (apply 'load-module x)))
    (slot-value sys 'std/defsys::require)))
@@ -1280,7 +1283,7 @@ object SELF remains unmodified."
        ;; TODO 2025-08-31:
        ;; - build-plan
        (prog1 (case (plan self)
-                ((or :serial nil) (%load-system self verbose force))
+                ((or :serial nil) (%load-system self force))
                 (t (nyi! "Unrecognized PLAN keyword")))
          (when tests (load-module (name self) :tests))))
      (and asdf (asdf:load-system (name self) :verbose verbose :force force)))
