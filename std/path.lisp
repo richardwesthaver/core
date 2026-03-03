@@ -108,6 +108,9 @@ appended."
   (set-pathname-suffix path (symbol-name
                              (gensym *tmp-suffix*))))
 
+(defun tmp-path (name)
+  (merge-pathnames (tmpize-pathname name) *tmp*))
+
 (defun call-with-directory (dir thunk)
   "call the THUNK in a context where the current directory was changed to DIR, if not NIL.
 Note that this operation is usually NOT thread-safe."

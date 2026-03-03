@@ -14,10 +14,7 @@
 (defvar *default-memory-limit* (expt 2 20))
 (defvar *default-disk-limit* (expt 2 30))
 
-(defvar *temporary-directory*
-  (uiop:ensure-directory-pathname
-    (merge-pathnames (format nil "smart-buffer-~36R" (random (expt 36 #-gcl 8 #+gcl 5)))
-                     (uiop:default-temporary-directory))))
+(defvar *smart-buffer-tmp* (ensure-directories-exist (tmp-path "smart-buffer")))
 
 (defstruct (smart-buffer (:conc-name :buffer-)
                          (:constructor %make-smart-buffer))
@@ -65,7 +62,7 @@
        (error 'buffer-limit-exceeded :limit (buffer-disk-limit buffer)))
      (setf (buffer-disk-buffer buffer)
            (uiop:with-temporary-file (:stream stream :pathname tmp
-                                      :directory *temporary-directory*
+                                      :directory *smart-buffer-tmp*
                                       :direction :output
                                       :element-type '(unsigned-byte 8)
                                       :keep t)
@@ -110,4 +107,4 @@
     (mapc #'uiop:delete-file-if-exists
           (remove-if-not (lambda (file)
                            (< stale-seconds (- now (file-write-date file))))
-                         (uiop:directory-files *temporary-directory*)))))
+                         (uiop:directory-files *smart-buffer-tmp*)))))

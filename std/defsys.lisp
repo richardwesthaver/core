@@ -1076,18 +1076,20 @@ internally. On success the path is added to the *SYSDEFS* list."
     (mod-component (mapcar 'read-component (components comp)))
     ((or grovel-component pkg-component)
      (with-safe-io-syntax ((or (when (slot-boundp comp 'std/defsys::package) (slot-value comp 'std/defsys::package))
-                               *package*))
+                               *package*) 
+                           ;; NOTE: *read-eval* = T
+                           t)
        (read-lisp-file (path comp) :external-format external-format)))
-    (component (ignore-errors (with-safe-io-syntax (package)
-                                (read-lisp-file (path comp) :external-format external-format))))
-    ((or string pathname) (with-safe-io-syntax (package) (read-lisp-file comp :external-format external-format)))))
+    (component (with-safe-io-syntax (package t)
+                 (read-lisp-file (path comp) :external-format external-format)))
+    ((or string pathname) (with-safe-io-syntax (package t) (read-lisp-file comp :external-format external-format)))))
 
 (defun compile-grovel-component (comp)
   "Compile a GROVEL-COMPONENT."
   (lety* ((path (path comp) :type pathname)
           (output (fasl-cache-file path))
           (tmp-c-source (merge-pathnames #p"foo.c" output))
-          (tmp-a-dot-out (merge-pathnames #-win32 #p"a.out" #+win32 #p"a.exe"
+          (tmp-a-dot-out (merge-pathnames #p"a.out"
                                           output))
           (tmp-constants (merge-pathnames #p"constants.lisp-temp"
                                           output)))
@@ -1145,7 +1147,7 @@ internally. On success the path is added to the *SYSDEFS* list."
        (let ((f (path comp)))
          (when (or (reload-p f) force)
            ;; TODO: be smarter about which file to load
-           (with-system-file (f :load t) 
+           (with-system-file (f :load t)
              (typecase comp
                (grovel-component 
                 (compile-grovel-component comp) 
@@ -1235,7 +1237,7 @@ object SELF remains unmodified."
   ;; then we call providers
   (call-system-providers self)
   ;; and set variables
-  (setf *module* (name self))
+  (setq *module* (name self))
   self)
 
 (defmethod reset ((self system) &key)

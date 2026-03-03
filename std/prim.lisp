@@ -308,17 +308,17 @@ the argument given, which should be a symbol."
   "The standard readtable, implementing the syntax specified by the CLHS.
 It must never be modified, though only good implementations will even enforce that.")
 
-(defmacro with-safe-io-syntax ((&optional (package :std-user)) &body body)
+(defmacro with-safe-io-syntax ((&optional (package :std-user) eval) &body body)
   "Establish safe CL reader options around the evaluation of BODY"
-  `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body))))
+  `(call-with-safe-io-syntax #'(lambda () (let ((*package* (find-package ,package))) ,@body)) :package ,package :eval ,eval))
 
-(defun call-with-safe-io-syntax (thunk &key (package :std-user))
+(defun call-with-safe-io-syntax (thunk &key (package :std-user) eval)
   "Call THUNK with safe CL reader options."
   (with-standard-io-syntax
     (let ((*package* (find-package package))
           (*read-default-float-format* 'double-float)
           (*print-readably* nil)
-          (*read-eval* nil))
+          (*read-eval* eval))
       (funcall thunk))))
 
 (defun safe-read-from-string (string &key (package :cl) (eof-error-p t) eof-value (start 0) end preserve-whitespace)

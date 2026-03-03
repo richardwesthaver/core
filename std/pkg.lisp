@@ -746,7 +746,6 @@
    :make-unbound-marker
    :*external-formats*
    :get-external-format
-   :revive-image
    :int-sap :print-allocated-objects
    :current-sp :current-fp
    :hexdump :hexdump-object
@@ -795,7 +794,6 @@
    :lexenv-user-data
    :lexenv-find
    :make-null-lexenv
-   :revive-image
    :64-bit-p :32-bit-p
    :*logical-hosts*
    :save-shared-objects
@@ -1159,7 +1157,9 @@
    :absolute-directory-pathname
    :ensure-absolute-pathname
    :+wildfile+ :+pathsep+ :set-pathname-suffix :*tmp-suffix*
+   :*tmp*
    :tmpize-pathname
+   :tmp-path
    :with-directory
    :call-with-directory
    :with-tmp
@@ -1476,8 +1476,9 @@
    :load-sys
    :compile-sys
    :system
-   :load-component
+   :read-component
    :compile-component
+   :load-component
    :component
    :mod-component
    :file-component

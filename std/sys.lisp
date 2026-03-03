@@ -157,39 +157,6 @@ debug or die."
          (format t "~A" condition)
          (sb-ext:quit :unix-status 99))))))
 
-(eval-always
-  (defvar *core-image-revived-p* nil
-    "Set to T when the current image has been revived.")
-  (defvar *core-image-revive-hooks* nil
-    "List of hooks to be evaluated when an image is revived.")
-  (defvar *core-image-entry-point* nil
-    "Entrypoint associated with this core image."))
-
-(defun revive-image (&key (interactive *interactive*)
-                          (hooks *core-image-revive-hooks*)
-                          (entry-point *core-image-entry-point*)
-                          (if-already-revived '(cerror "Revive image anyway")))
-  "Like UIOP:RESTORE-IMAGE but without a prelude."
-  (when *core-image-revived-p*
-    (if if-already-revived
-        (funcall if-already-revived "Image already ~:[being ~;~]revived"
-                 (eq *core-image-revived-p* t))
-        (return-from revive-image)))
-  (handler-bind ((serious-condition #'handle-serious-condition))
-    (setf *interactive* interactive)
-    (setf *core-image-revive-hooks* hooks)
-    (setf *core-image-revived-p* :in-progress)
-    (dolist (f *core-image-revive-hooks*)
-      (funcall f))
-    (setf *core-image-revived-p* t)
-    (let ((results (multiple-value-list
-                    (if entry-point
-                        (funcall entry-point)
-                        t))))
-      (if interactive
-          (values-list results)
-          (sb-ext:exit :code (if (first results) 0 1))))))
-
 ;; TODO
 (defun save-lisp-tree-shake-and-die (name &rest args)
   "A naive tree-shaker for lisp."

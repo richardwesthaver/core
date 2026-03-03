@@ -30,6 +30,8 @@
 (in-package :cli/main)
 
 ;;; Main
+(defvar *main*)
+
 (defmacro defmain (name (&key (exit t) (debug t) (package *package*) cli
                               commands readtable printer annotations)
                    &body body)
@@ -64,8 +66,8 @@ main FUNCTION.
 When you save an executable lisp image with this function you should
 arrange for symlinks for each handled value of (ARG0) to be generated
 ."
-  `(progn
+  `(let ((*main* (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))))
      (defun ,name ()
-       (case (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))
+       (case *main*
          ,@mains
          (t ,default)))))

@@ -311,6 +311,7 @@ state of each file in FILES."
 (defkernel editor-command (command) ()
   (:documentation "Class of COMMANDs which are executed by an EDITOR."))
 
+
 ;; TODO 2025-09-19: 
 ;; (defun edit-line (file &key line start end)
 ;;   "A simple lisp line editor.")

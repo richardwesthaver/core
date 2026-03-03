@@ -269,6 +269,7 @@
 
 (defpkg :io/smart-buffer
   (:use :cl :io/xsubseq)
+  (:import-from :std :tmp-path)
   (:export :*default-memory-limit*
    :*default-disk-limit* :smart-buffer
    :make-smart-buffer :write-to-buffer
