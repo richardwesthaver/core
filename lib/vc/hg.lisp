@@ -307,7 +307,7 @@ first value and 'stuff' as the second."
 (defvar *fast-export-directory* (merge-pathnames ".data/skel/ext/hg-fast-export/" (user-homedir-pathname)))
 (defvar *hg-fast-export-script* (merge-pathnames "hg-fast-export.sh" *fast-export-directory*))
 
-(defun hg-fast-export (repo &optional output filter-regexp)
+(defun hg-fast-export (repo &optional output filter-regexp (force t))
   "Call the hg-fast-export.sh script, converting a HG-REPO to a GIT-REPO which is
 initialized at OUTPUT. Note that the repo will be 'bare' and not contain a
 working directory.
@@ -319,9 +319,9 @@ git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
   (let* ((output (ensure-directories-exist 
                   (or output (format nil "/tmp/~A" (car (last (pathname-directory (path repo))))))))
          (out-repo (make-repo output :type :git :init t)))
-    (sb-ext:run-program "/bin/bash" (list 
-                                     (namestring *hg-fast-export-script*)
-                                     "-r" (namestring (path repo)) "-M" "default")
+    (sb-ext:run-program "/bin/bash" `(,(namestring *hg-fast-export-script*)
+                                      "-r" ,(namestring (path repo)) "-M" "default"
+                                      ,@(when force '("--force")))
                         :output t
                         :directory (pathname output))
     (when filter-regexp

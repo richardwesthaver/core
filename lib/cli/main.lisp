@@ -66,8 +66,8 @@ main FUNCTION.
 When you save an executable lisp image with this function you should
 arrange for symlinks for each handled value of (ARG0) to be generated
 ."
-  `(let ((*main* (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))))
-     (defun ,name ()
+  `(defun ,name ()
+     (let ((*main* (keywordicate (string-upcase (pathname-name (cli/clap::arg0))))))
        (case *main*
          ,@mains
          (t ,default)))))
