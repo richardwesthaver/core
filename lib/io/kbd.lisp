@@ -14,7 +14,6 @@
 
 ;;; Code:
 (in-package :io/kbd)
-(println :OK)
 ;; load xkbcommon - NAME-KEYSYM is used at compile-time
 (eval-when (:compile-toplevel :load-toplevel) (load-xkbcommon t))
 

@@ -4,11 +4,11 @@
  :require (:std
            :ironclad/digests
            :ironclad/digest/crc32
+           :zstd
            :uring
            :xkb
            :evdev
-           :btrfs
-           :zstd)
+           :btrfs)
  :version "0.1.0"
  :components 
  ((:pkg "pkg" :feature :io :default :io-user)

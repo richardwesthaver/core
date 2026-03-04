@@ -773,6 +773,7 @@ to be a system which is pushed to the session queue before BODY."
      ,@body
      (update-cached-system-file ,file ,load ,compile)))
   
+;; TODO 2026-03-03: 
 ;; (defmacro component-case ())
 
 (defun reload-p (file)
@@ -1132,16 +1133,16 @@ internally. On success the path is added to the *SYSDEFS* list."
              (checked-compile-file f :output-file (ensure-fasl-cache-file f) :verbose verbose)))))))
   comp)
 
-(defun load-component-file (comp &key force compile verbose)
-  (when compile (compile-component comp :verbose verbose :force force))
+(defun load-component-file (comp &key force verbose)
+  (when force (compile-component comp :verbose verbose :force t))
   (load-component comp :force force :verbose verbose))
 
-(defun load-component (comp &key force compile (verbose *verbose*))
+(defun load-component (comp &key force (verbose *verbose*))
   "Load a component."
-  (declare (ftype (sfunction (component &key (force boolean) (compile boolean)) component)))
+  (declare (ftype (sfunction (component &key (force boolean)) component)))
   (when (or (component-reload-p comp) force)
     (etypecase comp
-      (mod-component (mapcar (lambda (x) (load-component-file x :force force :compile compile :verbose verbose))
+      (mod-component (mapcar (lambda (x) (load-component-file x :force force :verbose verbose))
                              (components comp)))
       (file-component
        (let ((f (path comp)))
@@ -1204,10 +1205,9 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
 (definline %load-system (sys &optional force)
   (declare (optimize (speed 3)))
   (when (or (component-reload-p sys) force)
-    (let ((path (path sys)))
-      (with-system-file (path :load t)
-        ;; (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
-        (load-component sys :force force)))
+    (with-system-file ((path sys) :load t)
+      ;; (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
+      (load-component sys :force force))
     sys))
 
 (defun load-system-requires (sys &optional force)

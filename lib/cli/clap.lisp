@@ -178,6 +178,9 @@ evaluation of BODY."
   (force-output *query-io*)
   (command (read-arg *query-io*) commands))
 
+;; REVIEW 2026-03-03: 
+;; (define-command-type (:cli key)) ;; typed keyword?
+
 ;;; CLI
 (defstruct cli
   ;; name slot defaults to *package*, must be string
@@ -295,3 +298,5 @@ runtime if nil."
 (defun load-cli (cli &optional (name (package-name *package*)))
   (declare (cli cli))
   (setf (cli name) cli))
+
+(save :commands :cli)

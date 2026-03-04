@@ -37,8 +37,6 @@ only."
 ;;; DEFSYS Providers
 (std/defsys::defprovider :cli (name &key package)
   (register-module :cli name `(clap:load-cli ,name ,@(when package `(,package)))))
-
-(save :commands :cli)
   
 (defmethod init ((self (eql :editor)) &rest args)
   ;; performs :TERM init internally (set-terminal)

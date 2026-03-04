@@ -3,7 +3,8 @@
  "Core Systems"
  :version "0.1.0"
  :require
- (:std :io :obj :log :cli
+ (:std :obj
+  :io :log :cli
   :net :nlp :dat :doc
   :q :dsp :math :parse 
   :rdb :cry :pod  
