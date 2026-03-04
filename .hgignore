@@ -3,7 +3,7 @@
 .*[.]zst$
 .*[.](html|css)$
 .*system-index.txt$
-.*perf[.].*data$
+.*perf[.].*data.*$
 foo.c
 [.]stash/.*
 lib/syn/tests/gen/.*[.](c|rs|cu|cpp|js|py|apl|fs)$

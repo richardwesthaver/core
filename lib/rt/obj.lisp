@@ -267,13 +267,16 @@
        (do-test (pop-test self)))
    self))
 
+(deffmt fmt-in-suite "in suite ~x:~%")
+(deffmt fmt-test-result "~@[~<~%~:;~:@(~S~) ~>~]~%")
+(deffmt fmt-success "~&No tests failed.~%")
+
 ;; HACK 2023-09-01: find better method of declaring failures from
 ;; within the body of `deftest'.
-(defmethod do-suite ((self test-suite) &key stream force)
+(defmethod do-suite ((self test-suite) &key stream force (error *catch-test-errors*))
   (when stream (setf (test-stream self) stream))
   (with-slots (name stream) self
-    (format stream "in suite ~x:~%"
-            name)
+    (fmt-in-suite stream name)
     (format stream "; with ~A~A tests~%"
             (if force
                 ""
@@ -288,7 +291,7 @@
                  (when (or force (test-lock-p x) (test-persist-p x))
                    (let ((res (do-test x)))
                      (push-result res self)
-                     (format stream "~@[~<~%~:;~:@(~S~) ~>~]~%" res)))))
+                     (fmt-test-result stream res)))))
     ;; compare locked vs expected
     (let ((locked (remove-if #'null (map-tests self (lambda (x) (when (test-lock-p x) x)))))
           (fails
@@ -297,9 +300,8 @@
                   unless (test-pass-p r)
                   collect r)))
       (if (null locked)
-          (format stream "~&No tests failed.~%")
+          (fmt-success stream)
           (progn
-            ;;  RESEARCH 2023-09-04: print fails ??
             (format stream "~&~A out of ~A ~
                    total tests failed: ~
                    ~:@(~{~<~%   ~1:;~S~>~
@@ -316,7 +318,9 @@
       ;; close stream
       (finish-output stream)
       ;; return values (PASS? LOCKED)
-      (values (not fails) locked))))
+      (values (or (not fails) 
+                  (when error (error 'test-failed :name (name self) :form fails :reason "Failure in test suite")))
+              locked))))
 
 (defmethod do-suite ((self string) &key stream)
   (do-suite (ensure-suite self) :stream stream))
@@ -326,3 +330,8 @@
 
 (defmethod do-suite ((self null) &key stream)
   (do-suite *test-suite* :stream stream))
+
+;;; Threading
+(defkernel test-worker (task-worker) ())
+(defclass test-pool (task-pool) ())
+;; test plan
