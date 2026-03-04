@@ -39,11 +39,11 @@
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (cli:find-exe "rhg") (cli:find-exe "hg")))
 
-(defun run-hg-command (cmd &optional args (output t) (wait t))
+(defun run-hg-command (cmd &optional args (output t) (input t) (wait t))
   "Run an hg command."
   (unless (listp args) (setf args (list args)))
   (setf args (mapcar 'vc/proto::namestring-or args)) ;;  TODO 2024-05-10: slow
-  (sb-ext:run-program *hg-program* (push cmd args) :output output :wait wait))
+  (sb-ext:run-program *hg-program* (push cmd args) :output output :input input :wait wait))
 
 (defun hg-url-p (url)
   "Return nil if URL does not look like a URL to a hg valid remote."
@@ -275,8 +275,8 @@ first value and 'stuff' as the second."
   (apply 'vc-run self "addremove" files))
 
 (defmethod vc-purge ((self hg-repo) &key all (ignored t) &allow-other-keys) 
-  (apply 'vc-run self "purge" 
-         `(,@(when all '("--all")) ,@(when ignored '("--ignored")))))
+  (with-directory (path self)
+    (run-hg-command "purge" `("--confirm" ,@(when all '("--all")) ,@(when ignored '("--ignored"))))))
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 

@@ -60,6 +60,7 @@
     (vc-push r :remote "cb" :force t :branch "default"))))
  (clean ()
   (probe-delete-directory ".stash" :recursive t)
+  (vc-purge (vc *skel-project*))
   (mapc 'delete-file (directory "**/*.fasl"))
   (mapc 'delete-file (directory "**/*.elc")))
  (readme ()
