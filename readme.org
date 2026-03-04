@@ -13,9 +13,9 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Mon Mar 02 21:14:27 2026 -0500                  |
-| langs       | c elisp lisp makefile org perl text             |
-| lines       | 264024 :code 215316 :comment 21784 :blank 26924 |
+| updated     | Tue Mar 03 21:26:40 2026 -0500                  |
+| langs       | elisp lisp makefile org perl text               |
+| lines       | 262836 :code 214136 :comment 21782 :blank 26918 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links() :dir ~/comp/core/
