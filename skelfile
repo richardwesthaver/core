@@ -43,7 +43,7 @@
              (make-vc-remote :type :hg :name "gh" :url (format nil "ssh://git@github.com/richardwesthaver/~A" name))))
            (bump (name)
             (let ((repo (make-instance 'hg-repo :path (probe-directory name) :remotes (remotes name))))
-             (vc-export repo :upstream '("gh" "cb") :delete t :force t :branch "default"))))
+             (vc-export repo :upstream "gh" :delete t :force t :branch "default"))))
    (bump "ppcre")
    (bump "ironclad")
    (bump "slime")
