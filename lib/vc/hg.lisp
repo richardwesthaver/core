@@ -168,7 +168,8 @@ first value and 'stuff' as the second."
         path
         (hg-error "hg init failed:" path))))
 
-(defun make-hg-repo (path &key init (update '(:bookmarks :submodules :remotes)))
+(defun make-hg-repo (path &key init (update '(:bookmarks :submodules :remotes :branches :head :tags)))
+  ;; TODO 2026-03-03: parallelize
   (flet ((set-requires (repo)
            (setf (vc-requires repo) 
                  (mapcar 'trim
@@ -188,8 +189,20 @@ first value and 'stuff' as the second."
                         (push (make-vc-remote :type :hg :name "default" :url (cdr x)) (vc-remotes r)))
                       r))
                   (find-hg-submodules path))))
-         (set-bookmarks (repo) (setf (vc-bookmarks repo) (find-hg-bookmarks path))))
-    (let ((repo (make-instance 'hg-repo :path path)))
+         (set-bookmarks (repo) (setf (vc-bookmarks repo) (find-hg-bookmarks path)))
+         (set-tags (repo) (setf (vc-tags repo)
+                                (with-directory (path repo)
+                                  (mapcar #'read-from-string
+                                          (lines
+                                           (with-output-to-string (s)
+                                             (run-hg-command "tags" nil s)))))))
+         (set-branches (repo) (setf (vc-branches repo)
+                                    (with-directory (path repo)
+                                      (mapcar #'read-from-string
+                                              (lines
+                                               (with-output-to-string (s)
+                                                 (run-hg-command "branches" nil s))))))))
+    (let ((repo (make-instance 'hg-repo :path (probe-directory path))))
       (when init (vc-init repo))
       (etypecase update
         ((eql t)
@@ -197,7 +210,11 @@ first value and 'stuff' as the second."
          (set-bookmarks repo)
          (set-submodules repo))
         (cons
+         (when (member :head update)
+           (setf (vc-head repo) (trim (with-output-to-string (s) (vc:run-hg-command "id" '("-i") s)))))
          (when (member :requires update) (set-requires repo))
+         (when (member :tags update) (set-tags repo))
+         (when (member :branches update) (set-branches repo))
          (when (member :bookmarks update) (set-bookmarks repo))
          (when (member :submodules update) (set-submodules repo))))
       (when-let ((cfg (find-hgrc path)))
@@ -205,8 +222,9 @@ first value and 'stuff' as the second."
         (when (or (eql update t) (member :remotes update))
           (setf (vc-remotes repo) 
                 (mapcar (lambda (x) 
-                          (multiple-value-bind (uri type) (parse-hg-uri (cdr x))
-                            (make-vc-remote :type type :url uri :name (car x))))
+                          (let ((s (string-downcase (cdr x))))
+                            (multiple-value-bind (uri type) (parse-hg-uri s)
+                              (make-vc-remote :type type :url uri :name (car x)))))
                         (slot-value cfg 'paths)))))
       repo)))
 
@@ -262,7 +280,8 @@ first value and 'stuff' as the second."
 
 (defmethod vc-status ((self hg-repo) &key &allow-other-keys) (vc-run self "status"))
 
-(defmethod vc-branch ((self hg-repo)) (vc-run self "branch"))
+(defmethod vc-branch ((self hg-repo)) 
+  (with-directory (path self) (trim (with-output-to-string (s) (run-hg-command "branch" nil s)))))
 
 (defmethod vc-diff ((a hg-repo) (b hg-repo) &key &allow-other-keys) 
   (vc-run a "diff" (vc-head a) (vc-head b)))
@@ -307,7 +326,7 @@ first value and 'stuff' as the second."
 (defvar *fast-export-directory* (merge-pathnames ".data/skel/ext/hg-fast-export/" (user-homedir-pathname)))
 (defvar *hg-fast-export-script* (merge-pathnames "hg-fast-export.sh" *fast-export-directory*))
 
-(defun hg-fast-export (repo &optional output filter-regexp (force t))
+(defun hg-fast-export (repo &optional output filter-regexp force (branch "default"))
   "Call the hg-fast-export.sh script, converting a HG-REPO to a GIT-REPO which is
 initialized at OUTPUT. Note that the repo will be 'bare' and not contain a
 working directory.
@@ -320,7 +339,7 @@ git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
                   (or output (format nil "/tmp/~A" (car (last (pathname-directory (path repo))))))))
          (out-repo (make-repo output :type :git :init t)))
     (sb-ext:run-program "/bin/bash" `(,(namestring *hg-fast-export-script*)
-                                      "-r" ,(namestring (path repo)) "-M" "default"
+                                      "-r" ,(namestring (path repo)) "-M" ,branch
                                       ,@(when force '("--force")))
                         :output t
                         :directory (pathname output))
@@ -329,8 +348,20 @@ git filter-repo --invert-paths --path-regex FILTER-REGEXP --force"
         (run-git-command "filter-repo" `("--invert-paths" "--path-regex" ,filter-regexp "--force"))))
     out-repo))
 
-(defmethod vc-export ((self hg-repo) output &key filter-regexp)
-  (hg-fast-export self output filter-regexp))
+(defmethod vc-export ((self hg-repo) 
+                      &key (output (directory-path 
+                                    (merge-pathnames (car (last (pathname-directory (path self)))) *tmp*)))
+                           filter-regexp (force t) (branch "default")
+                           upstream delete)
+  (hg-fast-export self output filter-regexp force branch)
+  (when upstream
+    (vc:with-repo (r :type :git :path output)
+      (loop for remote across (setf (vc-remotes r) (vc-remotes self))
+            do (vc-remote r :add :name (name remote) :url (uri remote)))
+      (if (atom upstream)
+          (vc-push r :set-upstream t :remote upstream :force force :branch branch)
+          (mapcar (lambda (x) (vc-push r :remote x :force force :branch branch)) upstream))))
+  (when delete (delete-directory output :recursive t)))
 
 ;;; Client
 ;; ref: https://wiki.mercurial-scm.org/CommandServer

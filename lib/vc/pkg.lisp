@@ -37,7 +37,10 @@
    :vc-submodules
    :vc-config
    :find-repo-root
-   :vc-purge))
+   :with-repo
+   :vc-purge
+   :vc-branches
+   :vc-tags))
 
 (defpackage :vc/git
   (:use :cl :std :cli :vc/proto :config)
@@ -67,7 +70,7 @@
 (defpackage :vc/util
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
   (:import-from :uri :uri :uri-to-string)
-  (:export :make-repo :with-current-vc-root :with-repo
+  (:export :make-repo :with-current-vc-root
    :directory-repos :bundle-repo
    :bundle-repos :update-repo
    :update-repos))

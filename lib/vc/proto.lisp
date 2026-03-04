@@ -73,7 +73,7 @@ directories which are ignored."))
 (defgeneric vc-bundle (self output &key &allow-other-keys))
 (defgeneric vc-unbundle (self input &key &allow-other-keys))
 
-(defgeneric vc-export (self output &key &allow-other-keys))
+(defgeneric vc-export (self &key &allow-other-keys))
 
 (defgeneric vc (self))
 (defgeneric (setf vc) (new self))
@@ -137,6 +137,7 @@ directories which are ignored."))
   url)
 
 (defaccessor name ((self vc-remote)) (vc-remote-name self))
+(defaccessor uri ((self vc-remote)) (vc-remote-url self))
 
 (defmethod print-object ((self vc-remote) stream)
   (let ((name (vc-remote-name self))
@@ -151,13 +152,13 @@ directories which are ignored."))
          :documentation "AKA working-directory or working-copy")
    (head :initform nil :initarg :head :type (or null vc-rev) :accessor vc-head)
    (branches :initform (make-array 0 :element-type 'vc-branch :fill-pointer 0)
-             :type (vector vc-branch) :accessor vc-branches)
+             :type (vector vc-branch) :accessor vc-branches :initarg :branches)
    (submodules :type (vector vc-repo) :accessor vc-submodules)
    (tags :initform (make-array 0 :element-type 'vc-tag :fill-pointer 0) :type (vector vc-tag) :accessor vc-tags)
    (revisions :initform (make-array 0 :element-type 'vc-rev :fill-pointer 0)
               :type (vector vc-rev) :accessor vc-revs)
    (remotes :initform (make-array 0 :element-type 'vc-remote :fill-pointer 0)
-            :type (vector vc-remote) :accessor vc-remotes)
+            :type (vector vc-remote) :accessor vc-remotes :initarg :remotes)
    (config :initform nil :type (or null vc-config) :accessor vc-config))
   (:documentation "generic Repository object backed by one of VC-DESIGNATOR."))
 
@@ -217,3 +218,14 @@ we find one, else return NIL."
             return nil
             else
             do (setf %path parent)))))
+
+;;; Early Macro definition
+(defmacro with-repo ((sym &rest args &key path init type &allow-other-keys) &body body)
+  `(with-directory (probe-directory ,path)
+     (let ((,sym ,@(or (unless (keywordp (car args))
+                         `(pop ,args))
+                       `((make-repo 
+                          *default-pathname-defaults* 
+                          ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
+       (setf *repo* ,sym)
+       ,@body)))

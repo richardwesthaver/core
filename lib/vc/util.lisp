@@ -44,16 +44,6 @@
   (loop for repo in (directory-repos path type)
         do (update-repo repo push pull)))
 
-(defmacro with-repo ((sym &rest args &key path init type &allow-other-keys) &body body)
-  `(with-directory (probe-directory ,path)
-     (let ((,sym ,@(or (unless (keywordp (car args))
-                         `(pop ,args))
-                       `((make-repo 
-                          *default-pathname-defaults* 
-                          ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
-       (setf *repo* ,sym)
-       ,@body)))
-
 ;;; Clone
 (defmethod vc-clone ((self pathname) (remote string) &key type)
   (let ((repo (if (or (search "git" remote)
