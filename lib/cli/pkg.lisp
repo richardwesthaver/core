@@ -96,7 +96,7 @@
    :column-address :auto-right-margin
    :clr-eos :enter-am-mode
    :set-a-foreground :enter-bold-mode
-   :exit-attribute-mode))
+   :exit-attribute-mode :dumb-terminal-p))
 
 (defpkg :cli/ed
   (:use :cl :std :cli/env :ast :config :cmd)
@@ -130,6 +130,7 @@
    :buffer-cycle
    :save-state
    :rewind-state
+   #:edit-file
    #:*editor*))
 
 (defpkg :cli/progress

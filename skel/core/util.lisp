@@ -113,11 +113,11 @@ skelfile if found."
 
 (defun edit-skelrc ()
   "Open the current user configuration using ED."
-  (ed (user-skelrc)))
+  (ed (list (namestring (user-skelrc)))))
 
 (defun edit-system-skelrc ()
   "Open the current system configuration using ED."
-  (ed *system-skelrc*))
+  (ed (list (namestring *system-skelrc*))))
 
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value

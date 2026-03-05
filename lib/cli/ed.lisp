@@ -18,7 +18,7 @@
          (*print-readably* nil))
      ,@body))
 
-(defun run-emacsclient (args &key file (create-frame t) function eval wait output server input)
+(defun run-emacsclient (args &key file create-frame function eval wait output server input)
   (let ((keys))
     (when file (push (format nil "~S" file) keys))
     (when create-frame (push "-c" keys))
@@ -94,9 +94,6 @@ state of each file in FILES."
        `(vc-ediff t))
    :wait t
    :create-frame t))
-
-(push #'run-emacsclient sb-ext:*ed-functions*)
-(push #'run-emacs sb-ext:*ed-functions*)
 
 ;;; Conditions
 ;; TODO 2025-11-01: 'EDIT' restart
@@ -311,8 +308,13 @@ state of each file in FILES."
 (defkernel editor-command (command) ()
   (:documentation "Class of COMMANDs which are executed by an EDITOR."))
 
-
+;;; Editor Funtions
 ;; TODO 2025-09-19: 
 ;; (defun edit-line (file &key line start end)
 ;;   "A simple lisp line editor.")
+(defun edit-file (file) (run-emacsclient (list (namestring file))))
+
+;;; Prologue
+(pushnew #'run-emacs sb-ext:*ed-functions*)
+(pushnew #'run-emacsclient sb-ext:*ed-functions*)
 (save :commands :ed)

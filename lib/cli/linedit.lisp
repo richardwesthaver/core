@@ -1002,6 +1002,8 @@ to the appropriate home directory."
           (values matches (reduce 'max (mapcar 'length matches)))))))
 
 (defun lisp-complete (string editor)
+  "Complete the input STRING given the current EDITOR. This function is intended
+for vanilla, *PACKAGE*-aware Lisp completions."
   (declare (simple-string string))
   (when (plusp (length string))
     (if (in-quoted-string-p editor)
@@ -1083,11 +1085,8 @@ HISTORY and KILLRING can be pathname designators, in which case
 they indicate the file to use for history and killring persistence,
 respectively.
 
-Further keyword arguments to LINEDIT are an advanced and undocumented
-topic, but if you're willing to dive into sources you can eg. use
-multiple kill-rings not shared between different invocations of
-LINEDIT, or change the function responsible for providing input
-completion."
+COMPLETIONS may be provided as a list of strings which is passed to
+MAKE-LIST-COMPLETER."
   (declare (ignore prompt history killring))
   (flet ((edit ()
            (catch 'linedit-done
@@ -1144,11 +1143,8 @@ HISTORY and KILLRING can be pathname designators, in which case
 they indicate the file to use for history and killring persistence,
 respectively.
 
-Further keyword arguments to FORMEDIT are an advanced and undocumented
-topic, but if you're willing to dive into sources you can eg. use
-multiple kill-rings not shared between different invocations of
-FORMEDIT, or change the function responsible for providing input
-completion."
+COMPLETIONS may be provided as a list of strings which is passed to
+MAKE-LIST-COMPLETER."
   (declare (ignore history killring completions))
   (let ((args (copy-list args)))
     (dolist (key '(:prompt1 :prompt2))

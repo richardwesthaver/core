@@ -1150,3 +1150,6 @@ the TERM environment variable."
   (setf *terminfo* (load-terminfo (or name
 				      (sb-ext:posix-getenv "TERM")
 				      "dumb"))))
+
+(defun dumb-terminal-p (&optional (term *terminfo*))
+  (find "dumb" (slot-value term 'names) :test 'string-equal :key (lambda (x) (subseq x 0 4))))

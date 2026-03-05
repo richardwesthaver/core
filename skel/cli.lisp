@@ -26,7 +26,6 @@
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
 (defcommand (:skel inspect) ()
-  (sb-ext:enable-debugger)
   (setq *no-exit* t)
   (inspect (or *skel-project* *skel-user-config*)))
 
@@ -66,7 +65,6 @@
   (defcommand (:skel save) (&rest args)
     (call-with-args :save args))
   (defcommand (:skel run) (&rest args)
-    (sb-ext:enable-debugger)
     (if args
         (mapc (lambda (script)
                 ;; first check if a script with the same name exists, else check
@@ -117,7 +115,6 @@
   (declare (interactive (ustring* "Make what? ")))
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
-      (sb-ext:enable-debugger)
       (if args
           (loop for a in args
                 do (debug!
@@ -149,7 +146,7 @@
                               (merge-homedir-pathnames ".config/corerc") 
                               (merge-homedir-pathnames ".corerc"))))))
 
-(defmain start-skel (:debug nil :package :sk-user :readtable :shell :commands :skel :cli :skel)
+(defmain start-skel (:package :sk-user :readtable :shell :commands :skel :cli :skel)
   (init :skel)
   (let ((a1 (second *posix-argv*))
         (a2 (cddr *posix-argv*)))
