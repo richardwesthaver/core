@@ -480,8 +480,10 @@ empty string."
   (quoted-p (get-string editor) (get-point editor)))
 
 ;;; Commands
-(defkernel editor-command (command) ()
-  (:documentation "Class of COMMANDs which are executed by an EDITOR."))
+(defkernel editor-command (command) 
+  ((editor :initform *editor* :initarg :editor))
+  (:documentation "Class of COMMANDs which use an EDITOR stored in a slot of the same
+name (usually same as *EDITOR*."))
 
 ;;; Editor Funtions
 ;; TODO 2025-09-19: 

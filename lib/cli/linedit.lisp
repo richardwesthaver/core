@@ -504,7 +504,52 @@ READ-CHORD according to CMDS."
         (when act (setf (gethash key tbl) act))))
     `(setf (gethash ,cmd *cmds*) ,tbl)))
 
+(define-keymap :linedit ()
+  "C-x" "move-to-bol"
+  "C-a" "move-to-bol"
+  "C-b" "move-char-left"
+  "C-c" "interrupt-lisp"
+  "C-d" "delete-char-forwards-or-eof"
+  "C-e" "move-to-eol"
+  "C-f" "move-char-right"
+  "C-k" "kill-to-eol"
+  "C-n" "history-next"
+  "C-W" "cut-region"
+  "C-Y" "yank"
+  "C-Z" "stop-lisp"
+  "C--" "undo"
+  "C-U" "kill-to-bol"
+  "C-O" "close-all-sexp"
+  "C-P" "history-previous"
+  "C-R" "search-history-backwards"
+  "C-S" "search-history-forwards"
+  "M-A" "apropos-word"
+  "M-B" "move-word-backwards"
+  "M-D" "delete-word-forwards"
+  "M-F" "move-word-forwards"
+  "M-H" "help"
+  "M-I" "describe-word"
+  "M-J" "inspect-word"
+  "M-L" "downcase-word"
+  "M-U" "upcase-word"
+  "M-W" "copy-region"
+  "M-Y" "yank-cycle"
+  "C-M-b" "backward-sexp"
+  "C-M-f" "forward-sexp"
+  "C-M-k" "kill-sexp"
+  "M-Backspace" "delete-word-backwards"
+  "C-Space" "set-mark"
+  "C-Backspace" "delete-word-backwards"
+  "Tab" "complete"
+  "Backspace" "delete-char-backwards"
+  "Return" "finish-input"
+  "Insert" "toggle-insert"
+  "Delete" "delete-char-forwards"
+  "Home" "move-to-bol"
+  "End" "move-to-eol")
+
 (defcmd-prefix "C-X" ("C-X" move-to-bol))
+
 (defcmd "C-A" 'move-to-bol)
 (defcmd "C-B" 'move-char-left)
 (defcmd "C-C" 'interrupt-lisp)
@@ -525,11 +570,9 @@ READ-CHORD according to CMDS."
 (defcmd "C-U" 'kill-to-bol)
 (defcmd "C-V")
 (defcmd "C-W" 'cut-region)
-;; (defcmd "C-X")
 (defcmd "C-Y" 'yank)
 (defcmd "C-Z" 'stop-lisp)
 (defcmd "C--" 'undo)
-
 (defcmd "M-A" 'apropos-word)
 (defcmd "M-B" 'move-word-backwards)
 (defcmd "M-C")

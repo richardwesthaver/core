@@ -480,6 +480,9 @@ computations) and by the keysym-downcase function."
       (%make-key :sym sym :mod (or (getf args :mod) 
                                    (apply 'make-keymod args))))))
 
+(defmethod make-load-form ((self key) &optional env)
+  (make-load-form-saving-slots self :environment env))
+
 (defgeneric key (self)
   (:documentation "Return the KEY associated with SELF."))
 (defgeneric (setf key) (new self))
@@ -527,6 +530,9 @@ computations) and by the keysym-downcase function."
     key))
 
 (defstruct keybind key cmd)
+(defmethod make-load-form ((self keybind) &optional env)
+  (make-load-form-saving-slots self :environment env))
+
 (deftype keymap () '(vector keybind))
 (definline keymap-p (obj) (typep obj 'keymap))
 (defun keymap (&optional name) (if name (gethash name *keymaps*) *keymap*))
@@ -705,7 +711,7 @@ interpreted as the name of a KEYMAP-SYMBOL."
       (with-gensyms (k)
         `(let ((,k ,km))
            ,@(loop for i = bindings then (cddr i) while i
-                   collect `(define-key ,k ,(first i) ,(second i)))
+                   collect `(define-key ,k ,(if (key-p (first i)) (first i) (kbd (first i))) ,(second i)))
            (setf ,n ,k))))))
 
 ;;; Keyboard
@@ -715,6 +721,9 @@ interpreted as the name of a KEYMAP-SYMBOL."
   (state nil)
   (compose-state nil)
   (keymap nil))
+
+(defmethod make-load-form ((self keyboard) &optional env)
+  (make-load-form-saving-slots self :environment env))
 
 (defaccessor sap ((self keyboard)) (keyboard-sap self))
 

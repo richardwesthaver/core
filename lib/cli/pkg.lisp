@@ -138,7 +138,7 @@
    :find-close-quote
    :find-open-paren
    :find-close-paren
-   :wim-mark-parens
+   :dwim-mark-parens
    :editor-word-start
    :editor-previous-word-start
    :editor-next-word-end
