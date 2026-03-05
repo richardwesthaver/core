@@ -9,7 +9,6 @@
 (defvar *history* nil)
 (defvar *killring* nil)
 (declaim (type simple-string *word-delimiters*))
-(defparameter *word-delimiters* "()[]{}',` \"")
 (defconstant +linedit-ok+ 0)
 (defconstant +linedit-not-atty+ 1)
 (defconstant +linedit-memory-error+ 2)
@@ -21,45 +20,6 @@
 
 ;; TODO 2026-01-31: use command protocol (REPL)?
 (defvar *cmds* (make-hash-table :test #'equalp))
-
-;;; Utils
-(defmacro ensure (symbol expr)
-  `(or ,symbol (setf ,symbol ,expr)))
-
-(defun word-delimiter-p (char)
-  (declare (simple-string *word-delimiters*)
-	   (character char))
-  (find char *word-delimiters*))
-
-(defun whitespacep (char)
-  (member char '(#\space #\newline #\tab #\return #\page)))
-
-(defun at-delimiter-p (string index)
-  (and (< index (length string))
-       (word-delimiter-p (char string index))))
-
-;;;; QUOTES
-
-;; FIXME: should checking for #\", "\"", et cetera.
-(defun quoted-p (string index)
-  (let ((quoted-p nil))
-    (dotimes (n (min index (length string)) quoted-p)
-      (when (eql (schar string n) #\")
-	(setf quoted-p (not quoted-p))))))
-
-(defun find-open-quote (string index)
-  (when (quoted-p string index)
-    (loop for n from (1- index) downto 0
-	  when (eql (schar string n) #\") return n)))
-
-(defun find-close-quote (string index)
-  (when (quoted-p string index)
-    (loop for n from (1+ index) below (length string)
-	  when (eql (schar string n) #\") return n)))
-
-;; (defun dwim-match-quotes (string index))
-
-;; (defun dwim-mark-quotes (string index &key pre post))
 
 (defun yes-or-no (control &rest args)
   "Like Y-OR-N-P, but using linedit functionality."
@@ -88,64 +48,6 @@
     (end-of-file ()
       (fresh-line)
       (funcall quit-fn))))
-
-;;;; PARENS
-
-;; FIXME: This is not the Right Way to do paren matching.
-;; * use stack, not counting
-;; * don't count #\( #\) &co
-(defun after-close-p (string index)
-  (and (array-in-bounds-p string (1- index))
-       (find (schar string (1- index)) ")]}")))
-
-(defun at-open-p (string index)
-  (and (array-in-bounds-p string index)
-       (find (schar string index) "([{")))
-
-(defun paren-count-delta (char)
-  (case char
-    ((#\( #\[ #\{) -1)
-    ((#\) #\] #\}) 1)
-    (t 0)))
-
-(defun find-open-paren (string index)
-  (loop with count = 1
-	for n from (1- index) downto 0
-	do (incf count (paren-count-delta (schar string n)))
-	when (zerop count) return n))
-
-(defun find-close-paren (string index)
-  (loop with count = -1
-	for n from (1+ index) below (length string)
-	do (incf count (paren-count-delta (schar string n)))
-	when (zerop count) return n))
-
-(defun dwim-match-parens (string index)
-  (cond ((after-close-p string index)
-	 (values (find-open-paren string (1- index)) (1- index)))
-	((at-open-p string index)
-	 (values index (find-close-paren string index)))
-	(t 
-	 (values nil nil))))
-
-(defun dwim-mark-parens (string index &key pre post)
-  (multiple-value-bind (open close) (dwim-match-parens string index)
-    (values 
-     (if (and open close)
-	 (concatenate 'simple-string
-                      (subseq string 0 open)
-		      pre
-		      (string (schar string open))
-		      post
-		      (subseq string (1+ open) close)
-		      pre
-		      (string (schar string close))
-		      post
-		      (if (> (length string) (1+ close))
-		          (subseq string (1+ close))
-		          ""))
-	 string)
-     open)))
 
 (defparameter *default-columns* 80)
 (defparameter *default-lines* 24)
@@ -730,7 +632,7 @@ READ-CHORD according to CMDS."
 
 (defvar *announce* nil)
 (defvar *linedit-spec* nil)
-(defvar *version* "0.1.2-cc")
+(defvar *version* "0.1.2")
 
 (defun make-editor (&rest args)
   (set-terminal)
@@ -788,98 +690,12 @@ READ-CHORD according to CMDS."
   (newline editor)
   (get-string editor))
 
-(eval-always
-  (defmacro with-editor-point-and-string (((point string) editor) &body forms)
-    `(let ((,point (get-point ,editor))
-	   (,string (get-string ,editor)))
-       ,@forms)))
-
 (defun editor-interrupt (editor)
   (without-backend editor
     (sb-posix:kill 0 sb-posix:sigint)))
 
 (defun editor-stop (editor)
   (without-backend editor (sb-posix:kill 0 sb-posix:sigtstp)))
-
-(defun editor-word-start (editor)
-  "Returns the index of the first letter of current or previous word,
-if the point is just after a word, or the point."
-  (with-editor-point-and-string ((point string) editor)
-    (if (or (not (at-delimiter-p string point))
-	    (not (and (plusp point) (at-delimiter-p string (1- point)))))
-	(1+ (or (position-if 'word-delimiter-p string :end point :from-end t)
-		-1)) ; start of string
-	point)))
-
-(defun editor-previous-word-start (editor)
-  "Returns the index of the first letter of current or previous word,
-if the point was at the start of a word or between words."
-  (with-editor-point-and-string ((point string) editor)
-    (let ((tmp (cond ((at-delimiter-p string point)
-		      (position-if-not 'word-delimiter-p string
-				       :end point :from-end t))
-		     ((and (plusp point) (at-delimiter-p string (1- point)))
-		      (position-if-not 'word-delimiter-p string
-				       :end (1- point) :from-end t))
-		     (t point))))
-      ;; tmp is always in the word whose start we want (or NIL)
-      (1+ (or (position-if 'word-delimiter-p string
-			   :end (or tmp 0) :from-end t)
-	      -1)))))
-
-(defun editor-word-end (editor)
-  "Returns the index just beyond the current word or the point if
-point is not inside a word."
-  (with-editor-point-and-string ((point string) editor)
-    (if (at-delimiter-p string point)
-	point
-	(or (position-if 'word-delimiter-p string :start point)
-	    (length string)))))
-
-(defun editor-next-word-end (editor)
-  "Returns the index just beyond the last letter of current or next
-word, if the point was between words."
-  (with-editor-point-and-string ((point string) editor)
-    (let ((tmp (if (at-delimiter-p string point)
-		   (or (position-if-not 'word-delimiter-p string
-					:start point)
-		       (length string))
-		   point)))
-      ;; tmp is always in the word whose end we want (or already at the end)
-      (or (position-if 'word-delimiter-p string :start tmp)
-	  (length string)))))
-
-(defun editor-word (editor)
-  "Returns the current word the point is in or right after, or an
-empty string."
-  (let ((start (editor-word-start editor))
-	(end (editor-word-end editor)))
-    (subseq (get-string editor) start end)))
-
-(defun editor-sexp-start (editor)
-  (with-editor-point-and-string ((point string) editor)
-    (setf point (loop for n from (min point (1- (length string))) downto 0
-		      when (not (whitespacep (schar string n)))
-		      return n))
-    (case (and point (schar string point))
-      ((#\) #\] #\}) (or (find-open-paren string point) 0))
-      ((#\( #\[ #\{) (max (1- point) 0))
-      (#\" (or (find-open-quote string point)
-	       (max (1- point) 0)))
-      (t (editor-previous-word-start editor)))))
-
-(defun editor-sexp-end (editor)
-  (with-editor-point-and-string ((point string) editor)
-    (setf point (loop for n from point below (length string)
-		      when (not (whitespacep (schar string n)))
-		      return n))
-    (case (and point (schar string point))
-      ((#\( #\[ #\{) (or (find-close-paren string point)
-			 (length string)))
-      ((#\) #\] #\}) (min (1+ point) (length string)))
-      (#\" (or (find-close-quote string (1+ point))
-	       (min (1+ point) (length string))))
-      (t (editor-next-word-end editor)))))
 
 (defun editor-complete (editor)
   (funcall (editor-completer editor) (editor-word editor) editor))
@@ -893,18 +709,6 @@ empty string."
 (defun try-yank (editor)
   (setf (editor-yank editor) (editor-last-yank editor))
   (editor-yank editor))
-
-(defun editor-replace-word (editor word)
-  (with-editor-point-and-string ((point string) editor)
-    (declare (ignore point))
-    (let ((start (editor-word-start editor))
-	  (end (editor-word-end editor)))
-      (setf (get-string editor)
-	    (concatenate 'simple-string (subseq string 0 start) word (subseq string end))
-	    (get-point editor) (+ start (length word))))))
-
-(defun in-quoted-string-p (editor)
-  (quoted-p (get-string editor) (get-point editor)))
 
 ;;; Completion
 (defun pathname-directory-pathname (pathname)

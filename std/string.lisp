@@ -20,6 +20,17 @@
                             #\No-break_space)
   "On some implementations, linefeed and newline represent the same character (code).")
 
+(defparameter *word-delimiters* "()[]{}',` \"")
+
+(defun word-delimiter-p (char)
+  (declare (simple-string *word-delimiters*)
+           (character char))
+  (find char *word-delimiters*))
+
+(defun at-delimiter-p (string index)
+  (and (< index (length string))
+       (word-delimiter-p (char string index))))
+
 (deftype string-designator ()
   "A string designator type. A string designator is either a string, a symbol,
 or a character."

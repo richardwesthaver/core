@@ -423,6 +423,9 @@
    :ascii-ichar=
    :ascii-istring=
    :utf8-to-string
+   :word-delimiter-p
+   :at-delimiter-p
+   :*word-delimiters*
    :split-whitespace))
 
 (defpkg :std/num

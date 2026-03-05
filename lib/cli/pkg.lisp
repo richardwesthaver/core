@@ -105,6 +105,7 @@
    :emacs-config :*user-emacs-directory*
    :*user-org-directory*
    :eval-emacs
+   :with-editor-point-and-string
    :slime
    :ielm
    :ediff
@@ -131,7 +132,22 @@
    :save-state
    :rewind-state
    #:edit-file
-   #:*editor*))
+   #:*editor*
+   :quoted-p
+   :find-open-quote
+   :find-close-quote
+   :find-open-paren
+   :find-close-paren
+   :wim-mark-parens
+   :editor-word-start
+   :editor-previous-word-start
+   :editor-next-word-end
+   :editor-word
+   :editor-sexp-start
+   :editor-sexp-end
+   :editor-command
+   :editor-replace-word
+   :in-quoted-string-p))
 
 (defpkg :cli/progress
   (:use :cl :std)
