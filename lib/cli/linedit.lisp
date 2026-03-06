@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :linedit)
-(init :commands :name :linedit :class 'editor-command :copy :ed :clean t :names t)
+(init :commands :name :linedit :class 'editor-command :copy :ed :names t)
 ;;; Vars
 (defvar *history* nil)
 (defvar *killring* nil)
@@ -496,7 +496,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   "C-x" "move-to-bol")
 
 (define-keymap *linedit-map* ()
-  "C-x" '*linedit-ctrl-x-map*
+  "C-x" *linedit-ctrl-x-map*
   "C-a" "move-to-bol"
   "C-b" "move-char-left"
   "C-c" "interrupt-lisp"
@@ -846,9 +846,9 @@ COMPLETIONS may be provided as a list of strings which is passed to
 MAKE-LIST-COMPLETER."
   (declare (ignore prompt history killring))
   (flet ((edit ()
-           (catch 'linedit-done
+           (catch 'editor-done
              (loop
-	       (catch 'linedit-loop
+	       (catch 'editor-loop
 		 (next-chord *editor*))))
            (redraw-line *editor*)
            (get-finished-string *editor*)))
@@ -948,11 +948,11 @@ MAKE-LIST-COMPLETER."
 ;; responsibility of the editor -- but beeping is ok.
 (defcommand finish-input (&optional editor)
   (declare (ignore editor))
-  (throw 'linedit-done t))
+  (throw 'editor-done t))
 
 (defcommand undo (editor)
   (rewind-state editor)
-  (throw 'linedit-loop t))
+  (throw 'editor-loop t))
 
 (defcommand history-previous (editor)
   (let ((p (buffer-previous (get-string editor) (editor-history editor))))
@@ -1052,7 +1052,7 @@ MAKE-LIST-COMPLETER."
     (with-editor-point-and-string ((point string) editor)
       (let ((start (min std:it point))
             (end (max std:it point)))
-        (copy-region editor)
+        (funcall (command "copy-region" (commands :linedit)) editor)
         (setf (get-string editor) (concatenate 'simple-string (subseq string 0 start)
                                                (subseq string end))
               (get-point editor) start)))))
@@ -1082,8 +1082,10 @@ MAKE-LIST-COMPLETER."
   (let ((pairs nil)
         (max-id 0)
         (max-f 0))
-    (maphash (lambda (id function)
-               (let ((f (string-downcase (symbol-name function))))
+    (maphash (lambda (id cmd)
+               ;; TODO 2026-03-05: 
+               (let ((f (kernel-documentation cmd)))
+                       ;;(string-downcase (format nil "~A" (ignore-errors (sb-impl::%fun-name (kernel cmd)))))))
                  (push (list id f) pairs)
                  (setf max-id (max max-id (length id))
                        max-f (max max-f (length f)))))
@@ -1101,7 +1103,7 @@ MAKE-LIST-COMPLETER."
 
 (defun unknown-command (editor chord)
   (newline editor)
-  (format *standard-output* "Unknown command ~S." chord)
+  (format *standard-output* "Unknown command ~S." (print-key chord))
   (newline editor))
 
 (defcommand complete (editor)

@@ -107,6 +107,8 @@
    :eval-emacs
    :with-editor-point-and-string
    :editor-insert-mode
+   :move-to-eol
+   :move-to-bol
    :slime
    :ielm
    :ediff

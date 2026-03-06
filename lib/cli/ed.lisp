@@ -9,6 +9,7 @@
 
 (defvar *editor* nil)
 
+;;; Emacs
 (defvar *user-emacs-directory* (std:xdg-config-dir :emacs))
 (defvar *user-org-directory* (merge-homedir-pathnames "org/"))
 
@@ -571,14 +572,15 @@ name (usually same as *EDITOR*."))
   (setf (get-point editor) (editor-next-word-end editor)))
 
 (defcommand close-all-sexp (editor)
-  (move-to-eol editor)
+  (funcall (command "move-to-eol" (commands :ed)) editor)
   (do ((string (get-string editor) (get-string editor)))
       ((not (find-open-paren string (length string))))
-    (add-char editor 
-              (case (schar string (find-open-paren string (length string)))
-                (#\( #\))
-                (#\[ #\])
-                (#\{ #\})))))
+    (funcall (command "add-char" (commands :ed)) 
+             editor 
+             (case (schar string (find-open-paren string (length string)))
+               (#\( #\))
+               (#\[ #\])
+               (#\{ #\})))))
 
 ;;; SEXP MOTION
 (defcommand forward-sexp (editor)
@@ -597,4 +599,3 @@ name (usually same as *EDITOR*."))
 (pushnew #'run-emacs sb-ext:*ed-functions*)
 (pushnew #'run-emacsclient sb-ext:*ed-functions*)
 (save :commands :ed)
-(setq *command-names-p* nil)
