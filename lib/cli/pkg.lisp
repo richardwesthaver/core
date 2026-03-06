@@ -106,6 +106,7 @@
    :*user-org-directory*
    :eval-emacs
    :with-editor-point-and-string
+   :editor-insert-mode
    :slime
    :ielm
    :ediff

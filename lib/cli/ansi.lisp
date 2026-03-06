@@ -513,16 +513,6 @@ struct termios
     (:cc    'sb-posix:termios-cc)
     (t nil)))
 
-(defun stream-fd (stream)
-  "Return the posix file descriptor associated with the lisp stream."
-  (etypecase stream
-    (fixnum stream)
-    ;; *standard-input*, *standard-output*, *terminal-io*, etc.
-    (synonym-stream (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol stream))))
-    ;; sb-sys:*stdin*, *stdout*, *tty*, etc.
-    (file-stream (sb-sys:fd-stream-fd stream))
-    (t (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol *standard-input*))))))
-
 ;; ncurses:
 ;; cooked: ixon brkint parmrk
 ;; raw =   -cooked -icanon -isig -iexten

@@ -6,6 +6,16 @@
 (in-package :std/stream)
 (declaim (optimize speed))
 
+(defun stream-fd (stream)
+  "Return the posix file descriptor associated with the lisp stream."
+  (etypecase stream
+    (fixnum stream)
+    ;; *standard-input*, *standard-output*, *terminal-io*, etc.
+    (synonym-stream (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol stream))))
+    ;; sb-sys:*stdin*, *stdout*, *tty*, etc.
+    (file-stream (sb-sys:fd-stream-fd stream))
+    (t (sb-sys:fd-stream-fd (symbol-value (synonym-stream-symbol *standard-input*))))))
+
 (definline copy-stream (input output &key (element-type (stream-element-type input))
                     (buffer-size 4096)
                     (buffer (make-array buffer-size :element-type element-type))

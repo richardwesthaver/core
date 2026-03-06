@@ -153,7 +153,7 @@
   (is (key-shift (make-key :sym 99 :shift t :control t :altgr t)))
   (is= 4 (length (apply 'cons (multiple-value-list (kbd "C-c t S-f z")))))
   (is= 99 (key-sym (parse-key "C-c")))
-  (is= 5 (length (parse-key-seq "C-c f z S-1 C-u"))))
+  (is= 5 (length (parse-keyseq "C-c f z S-1 C-u"))))
 
 (deftest keymaps ()
   (istype 'keymap (sparse-keymap)))

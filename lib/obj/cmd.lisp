@@ -141,6 +141,9 @@ Z -- Coding system, nil if no prefix arg.
 
 (definline interactive-required-count (ids) (length (svref ids 0)))
 
+(defun icount (cmd) (interactive-required-count (interactive cmd)))
+(defun icount* (cmd) (interactive-total-count (interactive cmd)))
+
 (definline placeholder-arg-p (arg) (eq +interactive-placeholder-tag+ arg))
 (definline interactive-arg-p (arg) (not (eq +interactive-placeholder-tag+ arg)))
 
@@ -336,7 +339,12 @@ This function respects the current *COMMANDS* binding only."
 (defun read-command* (&optional (stream *standard-input*))
   "Like READ-COMMAND but also attempts to parse a 'commander' prefix from input
 which is similar to package prefixes and indicates the key of *COMMAND-TABLE* to activate."
-  (destructuring-bind (c &rest args) (read-args stream)
+  (destructuring-bind (c &rest args) (cons (concatenate 'simple-string
+                                                        (loop for c = (read-char stream nil)
+                                                              while (and c (not (whitespace-p c)))
+                                                              collect c))
+                                           (unless (eql :eof (peek-char t stream nil :eof))
+                                             (read-args stream)))
     (destructuring-bind (d &optional e) (split-sequence #\: c)
       (let ((cmd (or (if e (command e (commands d)) (command d)) (undefined-command c args))))
         (values cmd args (interactive cmd))))))
@@ -352,6 +360,14 @@ which is similar to package prefixes and indicates the key of *COMMAND-TABLE* to
                                    (fmt-command s (string str) args))
                                  str))
     (read-command s)))
+
+(defun parse-command* (str &rest args)
+  "Parse an optionally prefixed COMMAND from STR."
+  (with-input-from-string (s (if args 
+                                 (with-output-to-string (s)
+                                   (fmt-command s (string str) args))
+                                 str))
+    (read-command* s)))
 
 (defun call-interactively (command &optional input)
   "Parse COMMAND's arguments from input according to its lambda-list and itype,
@@ -440,6 +456,8 @@ command."))
   (multiple-value-bind (cmd args) (apply 'parse-command self args)
     (call cmd args)))
 
+;; RESEARCH 2026-03-05: self-call? - commands with additional slots
+
 (defmethod exec ((self command)) 
   (if *interactive*
       (call-interactively self)
@@ -511,10 +529,10 @@ the args to it."
            ,@(when (and (consp name) (cddr name))
                (mapcar (lambda (x) `(command-alias ',x ',(second name))) (cddr name))))))))
 
-#+nil
-(progn
-  (define-command-type :test (in))
-  (defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c)))
+#|
+(define-command-type :test (in))
+(defcommand art (a b &optional c) (declare (interactive :test :test &optional :test)) (values a b c))
+|#
 
 (defun run-commands (&rest commands)
   "Run each command in COMMANDS sequentially."
@@ -598,4 +616,5 @@ with each hook being passed the RESULT."
   (when name (remhash name *command-table*)))
 
 (defmethod save ((self (eql :commands)) &rest args)
-  (save-commands (pop args)))
+  (let ((name (pop args)))
+    (save-commands name)))

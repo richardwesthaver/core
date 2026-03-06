@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :linedit)
-
+(init :commands :name :linedit :class 'editor-command :copy :ed :clean t :names t)
 ;;; Vars
 (defvar *history* nil)
 (defvar *killring* nil)
@@ -17,9 +17,9 @@
 (defconstant +linedit-attr-error+ 5)
 (defconstant +linedit-no-attr-error+ 6)
 (defvar *terminal-translations* (make-hash-table :test #'equalp))
-
-;; TODO 2026-01-31: use command protocol (REPL)?
-(defvar *cmds* (make-hash-table :test #'equalp))
+(defvar *announce* nil)
+(defvar *linedit-spec* nil)
+(defvar *version* "0.1.2")
 
 (defun yes-or-no (control &rest args)
   "Like Y-OR-N-P, but using linedit functionality."
@@ -56,6 +56,7 @@
 color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 :BLUE, :MAGENTA, :CYAN, and :WHITE.")
 
+;;; Backend
 (defclass backend ()
   ((ready-p :accessor backend-ready-p :initform nil)
    (translations :reader backend-translations)
@@ -140,7 +141,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
      (let ((old (gethash chord *terminal-translations*)))
        (when (and old (not (equal old ,name)))
 	 (warn "Overriding old translation ~S for ~S with ~S." old chord ,name)))
-     (setf (gethash chord *terminal-translations*) ,name)))
+     ;; TODO 2026-03-05: point to KEY or KEYSEQ
+     (setf (gethash chord *terminal-translations*) ,(kbd name))))
 
 (deftrans "C-Space" 0)
 (deftrans "C-A" 1)
@@ -213,15 +215,15 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (deftrans "C-M-b" (#\Esc #\^B) 130)
 (deftrans "C-M-k" (#\Esc #\^K) 139)
 
-(deftrans "Up-arrow"    (#\Esc #\[ #\A))
-(deftrans "Down-arrow"  (#\Esc #\[ #\B))
-(deftrans "Right-arrow" (#\Esc #\[ #\C))
-(deftrans "Left-arrow"  (#\Esc #\[ #\D))
+(deftrans "Up"    (#\Esc #\[ #\A))
+(deftrans "Down"  (#\Esc #\[ #\B))
+(deftrans "Right" (#\Esc #\[ #\C))
+(deftrans "Left"  (#\Esc #\[ #\D))
 (deftrans "Insert"      (#\Esc #\[ #\2 #\~))
 (deftrans "Delete"      (#\Esc #\[ #\3 #\~))
 (deftrans "C-Delete"    (#\Esc #\[ #\3 #\^))
-(deftrans "Page-up"     (#\Esc #\[ #\5 #\~))
-(deftrans "Page-down"   (#\Esc #\[ #\6 #\~))
+(deftrans "Page_up"     (#\Esc #\[ #\5 #\~))
+(deftrans "Page_down"   (#\Esc #\[ #\6 #\~))
 (deftrans "Home"        (#\Esc #\[ #\7 #\~) (#\Esc #\[ #\1 #\~) (#\Esc #\[ #\H))
 (deftrans "End"         (#\Esc #\[ #\8 #\~) (#\Esc #\[ #\4 #\~) (#\Esc #\[ #\F))
 
@@ -267,21 +269,20 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	     (push c chars))))
     (let ((chord
 	    (acase (read-char)
-	      (#\Esc
-	       (cons it (acase (read-char)
-			  (#\[ (cons
-			        it
-			        (let ((char (read-char)))
-				  (if (digit-char-p char)
-				      (cons char
-					    (read-open-chord))
-				      (list char)))))
-			  (t (list it)))))
-	      (t (if (graphic-char-p it)
-		     it
-		     (char-code it))))))
-      (gethash chord
-	       (backend-translations backend)
+	           (#\Esc
+	            (cons it (acase (read-char)
+			            (#\[ (cons
+			                  it
+			                  (let ((char (read-char)))
+				            (if (digit-char-p char)
+				                (cons char
+					              (read-open-chord))
+				                (list char)))))
+			            (t (list it)))))
+	           (t (if (graphic-char-p it)
+		          it
+		          (char-code it))))))
+      (gethash chord (backend-translations backend)
 	       (if (characterp chord)
 		   chord
 		   (list 'untranslated chord))))))
@@ -490,22 +491,12 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 	   (write-string (subseq string (- (1+ point) columns) point)))))
   (force-output))
 
-;;; Command Keys
-(defmacro defcmd (command &optional action)
-  (when action
-    `(setf (gethash ,command *cmds*) ,action)))
+;;; Keymaps
+(define-keymap *linedit-ctrl-x-map* ()
+  "C-x" "move-to-bol")
 
-(defmacro defcmd-prefix (cmd &rest cmds)
-  "Define a prefix command on CMD which interprets the next sequence read with
-READ-CHORD according to CMDS."
-  (let ((tbl (make-hash-table :test 'equalp :size (length cmds))))
-    (dolist (c cmds tbl)
-      (destructuring-bind (key act) c
-        (when act (setf (gethash key tbl) act))))
-    `(setf (gethash ,cmd *cmds*) ,tbl)))
-
-(define-keymap :linedit ()
-  "C-x" "move-to-bol"
+(define-keymap *linedit-map* ()
+  "C-x" '*linedit-ctrl-x-map*
   "C-a" "move-to-bol"
   "C-b" "move-char-left"
   "C-c" "interrupt-lisp"
@@ -548,98 +539,9 @@ READ-CHORD according to CMDS."
   "Home" "move-to-bol"
   "End" "move-to-eol")
 
-(defcmd-prefix "C-X" ("C-X" move-to-bol))
-
-(defcmd "C-A" 'move-to-bol)
-(defcmd "C-B" 'move-char-left)
-(defcmd "C-C" 'interrupt-lisp)
-(defcmd "C-D" 'delete-char-forwards-or-eof)
-(defcmd "C-E" 'move-to-eol)
-(defcmd "C-F" 'move-char-right)
-(defcmd "C-G")
-(defcmd "C-J")
-(defcmd "C-K" 'kill-to-eol)
-(defcmd "C-L")
-(defcmd "C-N" 'history-next)
-(defcmd "C-O" 'close-all-sexp)
-(defcmd "C-P" 'history-previous)
-(defcmd "C-Q")
-(defcmd "C-R" 'search-history-backwards)
-(defcmd "C-S" 'search-history-forwards)
-(defcmd "C-T")
-(defcmd "C-U" 'kill-to-bol)
-(defcmd "C-V")
-(defcmd "C-W" 'cut-region)
-(defcmd "C-Y" 'yank)
-(defcmd "C-Z" 'stop-lisp)
-(defcmd "C--" 'undo)
-(defcmd "M-A" 'apropos-word)
-(defcmd "M-B" 'move-word-backwards)
-(defcmd "M-C")
-(defcmd "M-D" 'delete-word-forwards)
-(defcmd "M-E")
-(defcmd "M-F" 'move-word-forwards)
-(defcmd "M-G")
-(defcmd "M-H" 'help)
-(defcmd "M-I" 'describe-word)
-(defcmd "M-J" 'inspect-word)
-(defcmd "M-K")
-(defcmd "M-L" 'downcase-word)
-(defcmd "M-M")
-(defcmd "M-N")
-(defcmd "M-O")
-(defcmd "M-P")
-(defcmd "M-Q")
-(defcmd "M-R")
-(defcmd "M-S")
-(defcmd "M-T")
-(defcmd "M-U" 'upcase-word)
-(defcmd "M-V")
-(defcmd "M-W" 'copy-region)
-(defcmd "M-X")
-(defcmd "M-Y" 'yank-cycle)
-(defcmd "M-Z")
-(defcmd "M-1")
-(defcmd "M-2")
-(defcmd "M-3")
-(defcmd "M-4")
-(defcmd "M-5")
-(defcmd "M-6")
-(defcmd "M-7")
-(defcmd "M-8")
-(defcmd "M-9")
-(defcmd "M-0")
-
-(defcmd "C-M-b" 'backward-sexp)
-(defcmd "C-M-f" 'forward-sexp)
-(defcmd "C-M-k" 'kill-sexp)
-
-(defcmd "M-Backspace" 'delete-word-backwards)
-
-(defcmd "C-Space" 'set-mark)
-(defcmd "C-Backspace" 'delete-word-backwards)
-
-(defcmd "Tab" 'complete)
-(defcmd "Backspace" 'delete-char-backwards)
-(defcmd "Return" 'finish-input)
-
-(defcmd "Up-arrow" 'history-previous)
-(defcmd "Down-arrow" 'history-next)
-(defcmd "Right-arrow" 'move-char-right)
-(defcmd "Left-arrow" 'move-char-left)
-(defcmd "Insert" 'toggle-insert)
-(defcmd "Delete" 'delete-char-forwards)
-(defcmd "C-Delete")
-(defcmd "Page-up")
-(defcmd "Page-down")
-(defcmd "Home" 'move-to-bol)
-(defcmd "End" 'move-to-eol)
-
+;;; Editor
 (defclass terminal-editor (editor)
-  ((commands :reader editor-commands
-             :initform *cmds*
-             :initarg :commands)
-   (completer :accessor editor-completer
+  ((completer :accessor editor-completer
               :initform 'lisp-complete
               :initarg :complete)
    (history :accessor editor-history)
@@ -673,10 +575,6 @@ READ-CHORD according to CMDS."
 (defclass smart-editor (terminal-editor smart-terminal) ())
 (defclass dumb-editor (terminal-editor dumb-terminal) ())
 
-(defvar *announce* nil)
-(defvar *linedit-spec* nil)
-(defvar *version* "0.1.2")
-
 (defun make-editor (&rest args)
   (set-terminal)
   (let* ((type (if (smart-terminal-p)
@@ -690,7 +588,7 @@ READ-CHORD according to CMDS."
                 (if (eq 'smart-editor type)
                     "smart"
                     "dumb"))))
-        (setf *linedit-spec* spec)
+    (setf *linedit-spec* spec)
     (apply 'make-instance type args)))
 
 (defvar *aux-prompt* nil)
@@ -708,23 +606,35 @@ READ-CHORD according to CMDS."
   (redraw-line editor :markup t)
   (forget-yank editor)
   (let* ((chord (read-chord editor))
-	 (command (gethash chord (editor-commands editor)
-			   (if (characterp chord)
-			       'add-char
-			       'unknown-command))))
-    (if (hash-table-p command)
+	 (command (lookup-key *linedit-map* chord
+			      (if (characterp chord)
+			          (command "add-char" (commands :linedit))
+			          'unknown-command))))
+    (if (keymap-p command)
         ;; prefix command
         (let* ((ch (read-chord editor))
                (com
-                 (gethash chord command
-                          (if (characterp chord)
-                              'add-char
-                              'unknown-command))))
+                 (lookup-key command chord
+                             (if (characterp chord)
+                                 (command "add-char" (commands :linedit))
+                                 'unknown-command))))
           (setf *last-command* (cons chord com))
-          (funcall com ch editor))
+          (typecase com
+            (symbol (funcall com editor ch))
+            (t
+             (when (stringp com) (setf com (command com (commands :linedit))))
+             (if (> (icount* com) 1)
+                 (funcall com editor ch)
+                 (funcall com editor)))))
         ;; command
         (progn
-          (funcall command chord editor)
+          (typecase command 
+            (symbol (funcall command editor chord))
+            (t
+             (when (stringp command) (setf command (command command (commands :linedit))))
+             (if (> (icount* command) 1)
+                 (funcall command editor chord)
+                 (funcall command editor))))
           (setf *last-command* command))))
   (save-state editor))
 
@@ -1033,125 +943,24 @@ MAKE-LIST-COMPLETER."
   (read stream t nil t))
 
 ;;; Command Functions
-;; These functions are meant to be call throught the command table
-;; of an editor. These functions should not explicitly call refresh, etc:
-;; that is the responsibility of the editor -- but beeping is ok.
-
-;; The arguments passed are: CHORD EDITOR
-
-;;; BASIC EDITING
-(defun add-char (char editor)
-  (with-editor-point-and-string ((point string) editor)
-    (setf (get-string editor)
-          (concatenate 'simple-string (subseq string 0 point)
-                       (string char)
-                       (if (editor-insert-mode editor)
-                           (subseq string point)
-                           (when (> (length string) (1+ point))
-                             (subseq string (1+ point))))))
-    (incf (get-point editor))))
-
-(defun delete-char-backwards (chord editor)
-  (declare (ignore chord))
-  (with-editor-point-and-string ((point string) editor)
-    ;; Can't delegate to editor because of the SUBSEQ index calc.
-    (unless (zerop point)
-      (setf (get-string editor) (concatenate 'simple-string (subseq string 0 (1- point))
-                                             (subseq string point))
-            (get-point editor) (1- point)))))
-
-(defun delete-char-forwards (chord editor)
-  (declare (ignore chord))
-  (with-editor-point-and-string ((point string) editor)
-    (setf (get-string editor) (concatenate 'simple-string (subseq string 0 point)
-                                           (subseq string (min (1+ point) (length string)))))))
-
-(defun delete-char-forwards-or-eof (chord editor)
-  (if (equal "" (get-string editor))
-      (error 'end-of-file :stream *standard-input*)
-      (delete-char-forwards chord editor)))
-
-(defun delete-word-forwards (chord editor)
-  (declare (ignore chord))
-  (with-editor-point-and-string ((point string) editor)
-    (declare (ignore point))
-    (let ((i (get-point editor))
-          (j (editor-next-word-end editor)))
-      (setf (get-string editor)
-            (concatenate 'simple-string (subseq string 0 i) (subseq string j))))))
-
-(defun delete-word-backwards (chord editor)
-  (declare (ignore chord))
-  (with-editor-point-and-string ((point string) editor)
-    (let ((i (editor-previous-word-start editor)))
-      (setf (get-string editor) (concatenate 'simple-string (subseq string 0 i)
-                                             (subseq string point))
-            (get-point editor) i))))
-
-(defun finish-input (chord editor)
-  (declare (ignore chord editor))
+;; These functions are meant to be call throught the :LINEDIT command table.
+;; These functions should not explicitly call refresh, etc: that is the
+;; responsibility of the editor -- but beeping is ok.
+(defcommand finish-input (&optional editor)
+  (declare (ignore editor))
   (throw 'linedit-done t))
 
-;;; CASE CHANGES
-(flet ((frob-case (frob editor)
-         (with-editor-point-and-string ((point string) editor)
-           (let ((end (editor-next-word-end editor)))
-             (setf (get-string editor) (concatenate 'simple-string
-                                                    (subseq string 0 point)
-                                                    (funcall frob
-                                                             (subseq string point end))
-                                                    (subseq string end))
-                   (get-point editor) end)))))
-
-  (defun upcase-word (chord editor)
-    (declare (ignore chord))
-    (funcall #'frob-case #'string-upcase editor))
-
-  (defun downcase-word (chord editor)
-    (declare (ignore chord))
-    (funcall #'frob-case #'string-downcase editor)))
-
-;;; MOVEMENT
-(defun move-to-bol (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) 0))
-
-(defun move-to-eol (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) (length (get-string editor))))
-
-(defun move-char-right (chord editor)
-  (declare (ignore chord))
-  (incf (get-point editor)))
-
-(defun move-char-left (chord editor)
-  (declare (ignore chord))
-  (decf (get-point editor)))
-
-(defun move-word-backwards (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) (editor-previous-word-start editor)))
-
-(defun move-word-forwards (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) (editor-next-word-end editor)))
-
-;;; UNDO
-(defun undo (chord editor)
-  (declare (ignore chord))
+(defcommand undo (editor)
   (rewind-state editor)
   (throw 'linedit-loop t))
 
-;;; HISTORY
-(defun history-previous (chord editor)
-  (declare (ignore chord))
+(defcommand history-previous (editor)
   (let ((p (buffer-previous (get-string editor) (editor-history editor))))
     (if p
         (setf (get-string editor) p)
         (beep editor))))
 
-(defun history-next (chord editor)
-  (declare (ignore chord))
+(defcommand history-next (editor)
   (std:aif (buffer-next (get-string editor) (editor-history editor))
            (setf (get-string editor) std:it)
            (beep editor)))
@@ -1159,8 +968,7 @@ MAKE-LIST-COMPLETER."
 (defvar *history-search* nil)
 (defvar *history-needle* nil)
 
-(defun history-search-needle (editor &key direction)
-  (declare (ignore direction))
+(defun history-search-needle (editor)
   (let ((text (if *history-search*
                   (cond ((and *history-needle*
                               (member *last-command* '(search-history-backwards
@@ -1191,12 +999,10 @@ MAKE-LIST-COMPLETER."
     (setf (get-string editor) match
           (get-point editor) (length match))))
 
-(defun search-history-backwards (chord editor)
-  (declare (ignore chord))
+(defcommand search-history-backwards (editor)
   (history-search editor :backwards))
 
-(defun search-history-forwards (chord editor)
-  (declare (ignore chord))
+(defcommand search-history-forwards (editor)
   (history-search editor :forwards))
 
 ;;; KILLING & YANKING
@@ -1210,35 +1016,30 @@ MAKE-LIST-COMPLETER."
                    (get-point editor) (+ (editor-yank editor) (length std:it))))
            (beep editor)))
 
-(defun yank (chord editor)
-  (declare (ignore chord))
+(defcommand yank (editor)
   (remember-yank editor)
   (%yank editor))
 
-(defun yank-cycle (chord editor)
-  (declare (ignore chord))
+(defcommand yank-cycle (editor)
   (if (try-yank editor)
       (progn
         (buffer-cycle (editor-killring editor))
         (%yank editor))
       (beep editor)))
 
-(defun kill-to-eol (chord editor)
-  (declare (ignore chord))
+(defcommand kill-to-eol (editor)
   (with-editor-point-and-string ((point string) editor)
     (buffer-push (subseq string point) (editor-killring editor))
     (setf (get-string editor) (subseq string 0 point))))
 
-(defun kill-to-bol (chord editor)
+(defcommand kill-to-bol (editor)
   ;; Thanks to Andreas Fuchs
-  (declare (ignore chord))
   (with-editor-point-and-string ((point string) editor)
     (buffer-push (subseq string 0 point) (editor-killring editor))
     (setf (get-string editor) (subseq string point)
           (get-point editor) 0)))
 
-(defun copy-region (chord editor)
-  (declare (ignore chord))
+(defcommand copy-region (editor)
   (std:awhen (editor-mark editor)
     (with-editor-point-and-string ((point string) editor)
       (let ((start (min std:it point))
@@ -1246,37 +1047,23 @@ MAKE-LIST-COMPLETER."
         (buffer-push (subseq string start end) (editor-killring editor))
         (setf (editor-mark editor) nil)))))
 
-(defun cut-region (chord editor)
-  (declare (ignore chord))
+(defcommand cut-region (editor)
   (std:awhen (editor-mark editor)
     (with-editor-point-and-string ((point string) editor)
       (let ((start (min std:it point))
             (end (max std:it point)))
-        (copy-region t editor)
+        (copy-region editor)
         (setf (get-string editor) (concatenate 'simple-string (subseq string 0 start)
                                                (subseq string end))
               (get-point editor) start)))))
 
-(defun set-mark (chord editor)
-  (declare (ignore chord))
-  ;; FIXME: this was (setf mark (unless mark point)) -- modulo correct
-  ;; accessors.  Why? Was I not thinking, or am I not thinking now?
+(defcommand set-mark (editor)
   (setf (editor-mark editor) (get-point editor)))
-
-;;; SEXP MOTION
-(defun forward-sexp (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) (editor-sexp-end editor)))
-
-(defun backward-sexp (chord editor)
-  (declare (ignore chord))
-  (setf (get-point editor) (editor-sexp-start editor)))
 
 ;; FIXME: KILL-SEXP is fairly broken, but works for enough of my
 ;; common use cases.  Most of its flaws lie in how the EDITOR-SEXP-
 ;; functions deal with objects other than lists and strings.
-(defun kill-sexp (chord editor)
-  (declare (ignore chord))
+(defcommand kill-sexp (editor)
   (with-editor-point-and-string ((point string) editor)
     (declare (ignore point))
     (let ((start (editor-sexp-start editor))
@@ -1286,28 +1073,12 @@ MAKE-LIST-COMPLETER."
                                              (subseq string end))
             (get-point editor) start))))
 
-(defun close-all-sexp (chord editor)
-  (move-to-eol chord editor)
-  (do ((string (get-string editor) (get-string editor)))
-      ((not (find-open-paren string (length string))))
-    (add-char (case (schar string (find-open-paren string (length string)))
-                (#\( #\))
-                (#\[ #\])
-                (#\{ #\}))
-              editor)))
-
 ;;; SIGNALS
-(defun interrupt-lisp (chord editor)
-  (declare (ignore chord))
-  (editor-interrupt editor))
-
-(defun stop-lisp (chord editor)
-  (declare (ignore chord))
-  (editor-stop editor))
+(defcommand interrupt-lisp (editor) (editor-interrupt editor))
+(defcommand stop-lisp (editor) (editor-stop editor))
 
 ;;; MISCELLANY
-(defun help (chord editor)
-  (declare (ignore chord))
+(defcommand help (editor)
   (let ((pairs nil)
         (max-id 0)
         (max-f 0))
@@ -1316,7 +1087,7 @@ MAKE-LIST-COMPLETER."
                  (push (list id f) pairs)
                  (setf max-id (max max-id (length id))
                        max-f (max max-f (length f)))))
-             (editor-commands editor))
+             (commands :linedit))
     (print-in-columns editor
                       (mapcar (lambda (pair)
                                 (destructuring-bind (id f) pair
@@ -1328,13 +1099,12 @@ MAKE-LIST-COMPLETER."
                               (nreverse pairs))
                       :width (+ max-id max-f 2))))
 
-(defun unknown-command (chord editor)
+(defun unknown-command (editor chord)
   (newline editor)
   (format *standard-output* "Unknown command ~S." chord)
   (newline editor))
 
-(defun complete (chord editor)
-  (declare (ignore chord))
+(defcommand complete (editor)
   (multiple-value-bind (completions max-len) (editor-complete editor)
     (if completions
         (if (not (cdr completions))
@@ -1342,8 +1112,7 @@ MAKE-LIST-COMPLETER."
             (print-in-columns editor completions :width (+ max-len 2)))
         (beep editor))))
 
-(defun apropos-word (chord editor)
-  (declare (ignore chord))
+(defcommand apropos-word (editor)
   (let* ((word (editor-word editor))
          (apropi (apropos-list word)))
     (if (null apropi)
@@ -1357,28 +1126,23 @@ MAKE-LIST-COMPLETER."
                                 apropi)))
           (print-in-columns editor strings :width (+ longest 2))))))
 
-(defun describe-word (chord editor)
-  (declare (ignore chord))
+(defcommand describe-word (editor)
   (print-in-lines editor
                   (with-output-to-string (s)
                     (describe (read-from-string (editor-word editor)) s))))
 
-(defun inspect-word (chord editor)
-  (declare (ignore chord))
+(defcommand inspect-word (editor)
   (without-backend editor
     (inspect (read-from-string (editor-word editor)))))
 
-(defun toggle-insert (chord editor)
-  (declare (ignore chord))
+(defcommand toggle-insert (editor)
   (setf (editor-insert-mode editor) (not (editor-insert-mode editor))))
 
 (let (prompt-fun read-form-fun)
   (declare (type (or null function) prompt-fun read-form-fun))
-
   (macrolet ((enforce-consistent-state ()
 	       `(assert (or (and prompt-fun read-form-fun)
 			    (not (or prompt-fun read-form-fun))))))
-
     (defun uninstall-repl ()
       (enforce-consistent-state)
       (if prompt-fun
@@ -1388,7 +1152,6 @@ MAKE-LIST-COMPLETER."
 		read-form-fun nil)
 	  (warn "UNINSTALL-REPL failed: No Linedit REPL present."))
       nil)
-
     (defun install-repl (&rest args &key wrap-current eof-quits history killring  &allow-other-keys)
       (enforce-consistent-state)
       (let ((args (copy-list args)))
@@ -1438,3 +1201,7 @@ MAKE-LIST-COMPLETER."
 			  (write-line "#<end-of-file>")
 			  (values)))))))
 	t))))
+
+;;; Prologue
+(save :commands :linedit)
+(setq *command-names-p* nil)

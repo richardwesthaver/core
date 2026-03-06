@@ -104,14 +104,6 @@ function 'NAME-P'."
 (define-log-level error (or (warn-p) (eq *log-level* :error)) t)
 (define-log-level fatal t t) ;; probably needs to be a special case
 
-;; TODO 2023-08-31: single format control string
-;; (defun debug! (&rest args)
-;;   (when (debug-p)
-;;     ;...
-;;     ;; RESEARCH 2023-08-31: what's better here.. loop, do, mapc+nil?
-;;     (map nil (lambda (x) (format t "~X~%" x)) args))
-;;   args)
-
 (defmacro with-logger-lock ((&optional (logger '*logger*)) &body body)
   `(with-mutex ((lock ,logger))
      ,@body))

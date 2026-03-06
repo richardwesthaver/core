@@ -236,12 +236,12 @@
    :sparse-keymap :keybind-cmd
    :lookup-key :lookup-cmd
    :keybind-key :kbd
-   :lookup-key-sequence :search-keymap
+   :lookup-keyseq :search-keymap
    :deref-keymaps :keymap-symbol-p
    :keymap-or-keymap-symbol-p :print-key
-   :keymap-p :parse-key :parse-key-seq
+   :keymap-p :parse-key :parse-keyseq
    :key-shift :*default-keysym-translate-mask*
-   :keysym-code-name :print-key-seq
+   :keysym-code-name :print-keyseq
    :*dead-keysym-name-table* :*name-keysym-table*
    :keysyms-from-character :*keysym-character-table*
    :char-map :char-map-char :char-map-lower :char-map-mods 

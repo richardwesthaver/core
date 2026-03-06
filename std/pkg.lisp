@@ -478,7 +478,7 @@
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/prim :definline)
   (:export
-   ;; stream
+   :stream-fd
    :copy-stream
    :wrapped-stream :wrapped-stream-p
    :wrapped-character-input-stream

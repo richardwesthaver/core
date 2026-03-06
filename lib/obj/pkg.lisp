@@ -615,6 +615,10 @@
    :write-command :parse-command
    :save-commands :copy-commands
    :fmt-command :call-interactively
+   :interactive-required-count
+   :interactive-total-count
+   :icount :icount*
+   :parse-command* :read-command*
    :commandp :commands
    :list-commands :list-command-types
    :command-types :make-commands

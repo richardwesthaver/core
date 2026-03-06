@@ -24,7 +24,7 @@
 ;;; Vars
 (defconstant +evdev-offset+ 8)
 (defconstant +long-bit+ (sb-alien:alien-size sb-alien:unsigned-long))
-(defparameter *keyboards* nil)
+(defvar *keyboards* nil)
 (defvar *keysym-sets* nil
   "Alist of (NAME FIRST LAST).")
 (defvar *keysym-character-table* (make-hash-table :test 'eql)
@@ -533,6 +533,11 @@ computations) and by the keysym-downcase function."
 (defmethod make-load-form ((self keybind) &optional env)
   (make-load-form-saving-slots self :environment env))
 
+(deftype keyseq () '(vector key)
+  "We store key sequences as vectors of KEYs where possible - internally lists
+are used in functions such as PARSE-KEYSEQ and PRINT-KEYSEQ, but LOOKUP-KEYSEQ
+accepts this type.")
+
 (deftype keymap () '(vector keybind))
 (definline keymap-p (obj) (typep obj 'keymap))
 (defun keymap (&optional name) (if name (gethash name *keymaps*) *keymap*))
@@ -575,8 +580,8 @@ computations) and by the keysym-downcase function."
      (format nil "~a~a"
              (print-key-mods key)
              (name-from-keysym (key-sym key)))))
-  (defun print-key-seq (seq)
-    (format nil "*~{~a~^ ~}" (mapcar 'print-key seq)))
+  (defun print-keyseq (seq)
+    (format nil "~{~a~^ ~}" (map 'list 'print-key seq)))
     (memoizing
      (defun parse-key (string)
        "Parse STRING and return a KEY structure. Raise an error of type
@@ -589,14 +594,14 @@ KBD-PARSE-ERROR if the key failed to parse."
              (make-key :sym keysym :mod mods)
              (error 'kbd-parse-error :item string)))))
   (memoizing
-   (defun parse-key-seq (keys)
+   (defun parse-keyseq (keys)
      "KEYS is a key sequence. Parse it and return the list of keys."
-     (mapcar 'parse-key (split-whitespace keys))))
+     (map 'list 'parse-key (if (stringp keys) (split-whitespace keys) keys))))
   (memoizing
    (defun kbd (keys)
      "This compiles a key string into a key structure used by
 `define-key', `set-prefix-key' and others."
-     (let ((seq (parse-key-seq keys)))
+     (let ((seq (parse-keyseq keys)))
        (values (car seq) (cdr seq)))))))
 
 (eval-always
@@ -644,8 +649,9 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
         collect (keybind-key i)))
 
 (defun lookup-key (keymap key &optional default)
-  (when-let ((kb (or (find-key key keymap) (when default (find-key t keymap)))))
-    (keybind-cmd kb)))
+  (if-let ((kb (or (find-key key keymap) (when (eql default t) (find-key t keymap)))))
+    (keybind-cmd kb)
+    (unless (eql default t) default)))
 
 (defmethod copy ((from key) (to key))
   (setf (key-sym to) (key-sym from)
@@ -661,18 +667,19 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
   (or (keymap-p x)
       (keymap-symbol-p x)))
 
-(defun lookup-key-sequence (map key-seq)
-  "Return the command bound to KEY-SEQ in keymap MAP."
+(defun lookup-keyseq (map keyseq)
+  "Return the command bound to KEYSEQ in keymap MAP."
   (when (keymap-symbol-p map)
     (setf map (symbol-value map)))
   (check-type map keymap)
-  (let* ((key (car key-seq))
+  (when (atom keyseq) (setf keyseq (list keyseq)))
+  (let* ((key (car keyseq))
          (cmd (lookup-key map key)))
-    (cond ((null (cdr key-seq))
+    (cond ((null (cdr keyseq))
            cmd)
           (cmd
            (if (keymap-or-keymap-symbol-p cmd)
-               (lookup-key-sequence cmd (cdr key-seq))
+               (lookup-keyseq cmd (cdr keyseq))
                cmd))
           (t nil))))
 
@@ -688,15 +695,15 @@ Example: (define-key some-keymap (kbd \"C-z\") some-cmd-or-object)"
 (defun search-keymap (command keymap &key (test 'equal))
   "Search the keymap for the specified binding. Return the key
 sequences that run binding."
-  (labels ((search-it (cmd kmap key-seq)
+  (labels ((search-it (cmd kmap keyseq)
              (when (keymap-symbol-p kmap)
                (setf kmap (symbol-value kmap)))
              (check-type kmap keymap)
              (loop for i across kmap
                    if (funcall test (keybind-cmd i) cmd)
-                   collect (cons (keybind-key i) key-seq)
+                   collect (cons (keybind-key i) keyseq)
                    else if (keymap-or-keymap-symbol-p (keybind-cmd i))
-                   append (search-it cmd (keybind-cmd i) (cons (keybind-key i) key-seq)))))
+                   append (search-it cmd (keybind-cmd i) (cons (keybind-key i) keyseq)))))
     (mapcar 'reverse (search-it command keymap nil))))
 
 (defmacro define-keymap (name (&optional parent modify) &body bindings) ;; full:t=generate charvec,nil=sparse-keymap
@@ -711,8 +718,10 @@ interpreted as the name of a KEYMAP-SYMBOL."
       (with-gensyms (k)
         `(let ((,k ,km))
            ,@(loop for i = bindings then (cddr i) while i
-                   collect `(define-key ,k ,(if (key-p (first i)) (first i) (kbd (first i))) ,(second i)))
-           (setf ,n ,k))))))
+                   collect `(define-key ,k (if (key-p ,(first i)) ,(first i) (kbd ,(first i))) ,(second i)))
+           ,(if (keywordp name)
+                `(setf (keymap ,name) ,k)
+                `(defvar ,name ,k)))))))
 
 ;;; Keyboard
 (defstruct keyboard 

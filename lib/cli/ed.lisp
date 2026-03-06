@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :cli/ed)
 
-(init :commands :name :ed :class 'editor-command :clean t)
+(init :commands :name :ed :class 'editor-command :clean t :names t)
 
 (defvar *editor* nil)
 
@@ -289,6 +289,10 @@ state of each file in FILES."
 ;;; Editor
 (defclass editor (line rewindable) ())
 
+(defgeneric editor-insert-mode (self)
+  (:method ((self editor)) t))
+(defgeneric (setf editor-insert-mode) (new self))
+
 (defun save-state (editor)
   (let ((string (get-string editor))
         (last (last-state editor)))
@@ -481,11 +485,109 @@ empty string."
 
 ;;; Commands
 (defkernel editor-command (command) 
-  ((editor :initform *editor* :initarg :editor))
+  ((editor :initform *editor* :initarg :editor :accessor editor))
   (:documentation "Class of COMMANDs which use an EDITOR stored in a slot of the same
 name (usually same as *EDITOR*."))
 
-;;; Editor Funtions
+;;; BASIC EDITING
+(defcommand delete-char-backwards (editor)
+  (with-editor-point-and-string ((point string) editor)
+    ;; Can't delegate to editor because of the SUBSEQ index calc.
+    (unless (zerop point)
+      (setf (get-string editor) (concatenate 'simple-string (subseq string 0 (1- point))
+                                             (subseq string point))
+            (get-point editor) (1- point)))))
+
+(defcommand delete-char-forwards (editor)
+  (with-editor-point-and-string ((point string) editor)
+    (setf (get-string editor) (concatenate 'simple-string (subseq string 0 point)
+                                           (subseq string (min (1+ point) (length string)))))))
+
+(defcommand add-char (editor char)
+  (with-editor-point-and-string ((point string) editor)
+    (setf (get-string editor)
+          (concatenate 'simple-string (subseq string 0 point)
+                       (string char)
+                       (if (editor-insert-mode editor)
+                           (subseq string point)
+                           (when (> (length string) (1+ point))
+                             (subseq string (1+ point))))))
+    (incf (get-point editor))))
+
+(defcommand delete-char-forwards-or-eof (editor)
+  (if (equal "" (get-string editor))
+      (error 'end-of-file :stream *standard-input*)
+      (delete-char-forwards editor)))
+
+(defcommand delete-word-forwards (editor)
+  (with-editor-point-and-string ((point string) editor)
+    (declare (ignore point))
+    (let ((i (get-point editor))
+          (j (editor-next-word-end editor)))
+      (setf (get-string editor)
+            (concatenate 'simple-string (subseq string 0 i) (subseq string j))))))
+
+(defcommand delete-word-backwards (editor)
+  (with-editor-point-and-string ((point string) editor)
+    (let ((i (editor-previous-word-start editor)))
+      (setf (get-string editor) (concatenate 'simple-string (subseq string 0 i)
+                                             (subseq string point))
+            (get-point editor) i))))
+
+;;; CASE CHANGES
+(flet ((frob-case (frob editor)
+         (with-editor-point-and-string ((point string) editor)
+           (let ((end (editor-next-word-end editor)))
+             (setf (get-string editor) (concatenate 'simple-string
+                                                    (subseq string 0 point)
+                                                    (funcall frob
+                                                             (subseq string point end))
+                                                    (subseq string end))
+                   (get-point editor) end)))))
+
+  (defcommand upcase-word (editor)
+    (funcall #'frob-case #'string-upcase editor))
+
+  (defcommand downcase-word (editor)
+    (funcall #'frob-case #'string-downcase editor)))
+
+;;; MOVEMENT
+(defcommand move-to-bol (editor)
+  (setf (get-point editor) 0))
+
+(defcommand move-to-eol (editor)
+  (setf (get-point editor) (length (get-string editor))))
+
+(defcommand move-char-right (editor)
+  (incf (get-point editor)))
+
+(defcommand move-char-left (editor)
+  (decf (get-point editor)))
+
+(defcommand move-word-backwards (editor)
+  (setf (get-point editor) (editor-previous-word-start editor)))
+
+(defcommand move-word-forwards (editor)
+  (setf (get-point editor) (editor-next-word-end editor)))
+
+(defcommand close-all-sexp (editor)
+  (move-to-eol editor)
+  (do ((string (get-string editor) (get-string editor)))
+      ((not (find-open-paren string (length string))))
+    (add-char editor 
+              (case (schar string (find-open-paren string (length string)))
+                (#\( #\))
+                (#\[ #\])
+                (#\{ #\})))))
+
+;;; SEXP MOTION
+(defcommand forward-sexp (editor)
+  (setf (get-point editor) (editor-sexp-end editor)))
+
+(defcommand backward-sexp (editor)
+  (setf (get-point editor) (editor-sexp-start editor)))
+
+;;; Editor Functions
 ;; TODO 2025-09-19: 
 ;; (defun edit-line (file &key line start end)
 ;;   "A simple lisp line editor.")
@@ -495,3 +597,4 @@ name (usually same as *EDITOR*."))
 (pushnew #'run-emacs sb-ext:*ed-functions*)
 (pushnew #'run-emacsclient sb-ext:*ed-functions*)
 (save :commands :ed)
+(setq *command-names-p* nil)
