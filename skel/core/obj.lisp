@@ -88,9 +88,6 @@
           (t 'sk-config)))
   (apply #'sk-new self args))
 
-(defmethod make-config ((self (eql :skel)) &rest args)
-  (apply 'make-instance 'sk-config args))
-
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
 (defun sk-dir (o)
@@ -184,6 +181,9 @@
    (name :initarg :name :type string :accessor name)
    (email :initarg :email :type string :accessor email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
+
+(defmethod make-config ((self (eql :skel)) &rest args)
+  (apply 'make-instance 'sk-user-config args))
 
 (defun default-sk-user-config () (make-instance 'sk-user-config))
 

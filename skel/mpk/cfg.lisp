@@ -15,7 +15,7 @@
    (db :initarg :db :type mpk/db:mpk-db-config)
    (picard :initarg :picard :type cli/tools/media:picard-config :initform (cli/tools/media:load-picard-config))
    (transmission :initarg :transmission :type cli/tools/net::transmission-config :initform (cli/tools/net::load-transmission-config))
-   (ytdl :initarg :ytdl :type cli/tools/net::ytdl-config :initform (cli/tools/net::load-ytdl-config))))
+   (ytdl :initarg :ytdl :initform (cli/tools/net::load-ytdl-config))))
 
 (defmethod make-config ((self (eql :mpk)) &rest args &key &allow-other-keys)
   (apply 'make-instance 'mpk-config args))
@@ -75,3 +75,6 @@
 	    (init-mpkrc file))))
   (setf *log-level* (level (logger *mpk-user-config*)))
   *mpk-user-config*)
+
+(defmethod load-config ((self mpk-config) (from pathname) &key init)
+  (load-mpkrc from init))

@@ -785,8 +785,6 @@ can't be opened, else returns nil."
         (sb-posix:syscall-error () nil)
         (simple-kbd-error () nil)))))
 
-;; (xkb::xkb-consumed-mode :xkb)
-
 (defun print-device-input-info (path)
   (when-let ((dev (new-device-from-path path)))
     (pprint 

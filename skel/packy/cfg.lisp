@@ -12,3 +12,15 @@
 
 (defmethod make-config ((self (eql :packy)) &key ast path)
   (make-instance 'packy-user-config :ast ast :path path))
+
+(defmethod load-ast ((self packy-config))
+  (with-slots (ast) self
+    (if (formp ast)
+        (progn
+          (sb-int:doplist (k v) ast
+            (when-let ((s (find-symbol (symbol-name k) :skel/packy))) ;; needs to be correct package
+              (setf (slot-value self s) v)))
+          (unless *keep-ast* (setf (ast self) nil))
+          self)
+        ;; invalid ast, signal error
+        (error 'syntax-error))))

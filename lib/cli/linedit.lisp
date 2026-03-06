@@ -17,9 +17,6 @@
 (defconstant +linedit-attr-error+ 5)
 (defconstant +linedit-no-attr-error+ 6)
 (defvar *terminal-translations* (make-hash-table :test #'equalp))
-(defvar *announce* nil)
-(defvar *linedit-spec* nil)
-(defvar *version* "0.1.2")
 
 (defun yes-or-no (control &rest args)
   "Like Y-OR-N-P, but using linedit functionality."
@@ -579,16 +576,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (set-terminal)
   (let* ((type (if (smart-terminal-p)
                    'smart-editor
-                   'dumb-editor))
-         (spec (list *version* type)))
-    (when *announce*
-      (unless (equal *linedit-spec* spec)
-        (format t "~&Linedit version ~A, ~A mode, ESC-h for help.~%"
-                *version*
-                (if (eq 'smart-editor type)
-                    "smart"
-                    "dumb"))))
-    (setf *linedit-spec* spec)
+                   'dumb-editor)))
     (apply 'make-instance type args)))
 
 (defvar *aux-prompt* nil)
@@ -1082,14 +1070,21 @@ MAKE-LIST-COMPLETER."
   (let ((pairs nil)
         (max-id 0)
         (max-f 0))
-    (maphash (lambda (id cmd)
-               ;; TODO 2026-03-05: 
-               (let ((f (kernel-documentation cmd)))
-                       ;;(string-downcase (format nil "~A" (ignore-errors (sb-impl::%fun-name (kernel cmd)))))))
-                 (push (list id f) pairs)
-                 (setf max-id (max max-id (length id))
-                       max-f (max max-f (length f)))))
-             (commands :linedit))
+    (map nil (lambda (kbd)
+               (let ((k (print-key (keybind-key kbd)))
+                     (c (if (keymap-p (keybind-cmd kbd))
+                            (format nil "keymap: ~{~A~^ ~}" 
+                                    (map 'list 
+                                         (lambda (x) 
+                                           (cons (print-key (keybind-key x)) 
+                                                 (keybind-cmd x))) 
+                                         (keybind-cmd kbd)))
+                            (keybind-cmd kbd))))
+                 ;; (kernel-documentation cmd)))
+                 (push (list k c) pairs)
+                 (setf max-id (max max-id (length k))
+                       max-f (max max-f (length c)))))
+             *linedit-map*)
     (print-in-columns editor
                       (mapcar (lambda (pair)
                                 (destructuring-bind (id f) pair

@@ -8,6 +8,7 @@
 (init :commands :name :ed :class 'editor-command :clean t :names t)
 
 (defvar *editor* nil)
+(defvar *editor-config*)
 
 ;;; Emacs
 (defvar *user-emacs-directory* (std:xdg-config-dir :emacs))
@@ -115,14 +116,18 @@ state of each file in FILES."
 
 (defun load-emacs-config (&optional (path *user-emacs-directory*))
   (make-config :emacs :path path 
-                      :default (merge-pathnames "default.el" path) 
+                      :default (merge-pathnames "default.el" path)
                       :user (merge-pathnames (format nil "~(~A~).el" (sb-posix:getenv "USER")) path)))
 
-(defmethod make-config ((fmt (eql :emacs)) &key ast path default user)
+(defmethod make-config ((fmt (eql :emacs)) 
+                        &key ast 
+                             (path *user-emacs-directory*) 
+                             (default (merge-pathnames "default.el" path))
+                             (user (merge-pathnames (format nil "~(~A~).el" (sb-posix:getenv "USER")) path)))
   (make-instance 'emacs-config 
     :ast ast 
     :path path 
-    :default (when default (probe-file default)) 
+    :default (when default (probe-file default))
     :user (when user (probe-file user))))
 
 ;;; Org Protocol

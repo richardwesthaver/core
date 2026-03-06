@@ -104,6 +104,7 @@
    :run-emacs :run-emacsclient :org-store-link :editor-config 
    :emacs-config :*user-emacs-directory*
    :*user-org-directory*
+   :*editor-config*
    :eval-emacs
    :with-editor-point-and-string
    :editor-insert-mode
