@@ -8,12 +8,10 @@
 (in-suite :tree-sitter)
 
 (load-tree-sitter)
-(load-tree-sitter-json)
-(load-tree-sitter-rust)
-(load-tree-sitter-c)
 
 ;; the following tests require the TREE-SITTER-LANGS pack to be installed
 (deftest ts-json ()
+  (load-tree-sitter-json)
   (let ((parser (ts-parser-new))
         (lang (tree-sitter-json)))
     (is (= (ts-language-abi-version lang) 14))
@@ -25,6 +23,7 @@
       (ts-tree-delete new-tree))))
 
 (deftest ts-rust ()
+  (load-tree-sitter-rust)
   (let ((parser (ts-parser-new))
         (lang (tree-sitter-rust)))
     (is> (ts-language-abi-version lang) 14)
@@ -37,18 +36,19 @@ pub fn main {} " 15)))
         (let ((cursor (ts-tree-cursor-new root-node)))
           (ts-tree-delete new-tree))))))
 
-#+todo
-(deftest ts-query-c (:skip t)
-  (let ((src (read-file (system-relative-pathname :tree-sitter "alien.c"))))
+(deftest ts-query-c ()
+  (load-tree-sitter-c)
+  (let ((src "#define __bitwise__ __bitwise
+"))
     (declare (ignore src))
-    (with-ts-query :c (q '(binary_expression (string_literal)))
+    (with-ts-query :c (q '(_))
       (istype 'sb-alien::alien-value q)
       (with-ts-query-cursor c
         (istype 'sb-alien::alien-value c)
         (let ((m (sb-alien:make-alien tree-sitter::ts-query-match)))
           (declare (ignore m))
-          (ts-query-cursor-delete c)))
-      (is= 1 (tree-sitter::ts-query-pattern-count q))
-      (iszero (tree-sitter::ts-query-capture-count q))
-      (ts-query-delete q))))
+          (ts-query-cursor-delete c))
+        (is= 1 (tree-sitter::ts-query-pattern-count q))
+        (iszero (tree-sitter::ts-query-capture-count q))
+        (ts-query-delete q)))))
 

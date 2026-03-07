@@ -11,7 +11,6 @@
    (:file "sym")
    (:file "list")
    (:file "prim")
-   (:file "api")
    (:file "kernel")
    (:file "condition")
    (:file "named-readtables")
