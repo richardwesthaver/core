@@ -51,4 +51,3 @@ pub fn main {} " 15)))
         (is= 1 (tree-sitter::ts-query-pattern-count q))
         (iszero (tree-sitter::ts-query-capture-count q))
         (ts-query-delete q)))))
-
