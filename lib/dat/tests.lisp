@@ -195,7 +195,7 @@ showVolumeMeters=1"))
   (is (get-font-subfamilies (car (get-font-families)))))
 
 ;;; GIF
-(deftest gif ()
+(deftest gif1 ()
   ;; example1
   (let* ((height 100)
          (width 100)
@@ -217,3 +217,72 @@ showVolumeMeters=1"))
     (serde stream #p"/tmp/test.gif")
     (is (probe-file #p"/tmp/test.gif"))
     (is (delete-file #p"/tmp/test.gif"))))
+
+(deftest gif2 ()
+  (let* ((height 9)
+         (width 99)
+         (color-table (make-color-table))
+         (data-stream (make-gif-stream :height height
+                                        :width width
+                                        :color-table color-table))
+         (gray (ensure-color #xCCCCCC color-table))
+         (white (ensure-color #xFFFFFF color-table))
+         (black (ensure-color #x000000 color-table))
+         (bg (make-gif-image :stream data-stream
+                         :width width :height height
+                         :data (make-image-data 
+                                height width
+                                :initial-element gray)))
+         (sprite-data (make-image-data 3 3)))
+    (flet ((hatch-data (data a b)
+             (dotimes (i (length data))
+               (setf (aref data i) (if (zerop (mod i 2)) a b)))))
+      (hatch-data sprite-data white black)
+      (hatch-data (data bg) white gray)
+      (dotimes (i 128)
+        (add-color (random #xFFFFF) color-table))
+      (dotimes (i 96)
+        (let ((image (make-gif-image :height 3
+                                 :width 3
+                                 :data sprite-data
+                                 :top 3
+                                 :delay-time 10
+                                 :disposal-method :restore-previous
+                                 :transparency white
+                                 :left i)))
+          (add-image image data-stream)))
+      (setf (loopingp data-stream) t)
+      (with-directory "/tmp/"
+        (is (output-gif-stream data-stream #p"example2.gif"))
+        (is (delete-file #p"example2.gif"))))))
+
+(deftest gif3 ()
+  (let* ((height 100)
+         (width 100)
+         (color-count 256)
+         (color-table (make-color-table))
+         (data-stream (make-gif-stream :color-table color-table
+                                        :loopingp t
+                                        :height height
+                                        :width width)))
+    (dotimes (i color-count)
+      (add-color (rgb-color (random 255) (random 255) (random 255))
+                 color-table))
+    (dotimes (i color-count)
+      (let* ((top (random height))
+             (left (random width))
+             (h (1+ (random (- height top))))
+             (w (1+ (random (- width left))))
+             (image (make-gif-image :height h
+                                :width w
+                                :stream data-stream
+                                :top top
+                                :left left
+                                :data (make-image-data 
+                                       w h
+                                       :initial-element (random color-count))
+                                :delay-time 5)))
+        (add-image image data-stream)))
+      (with-directory "/tmp/"
+        (is (output-gif-stream data-stream #p"example3.gif"))
+        (is (delete-file #p"example3.gif")))))

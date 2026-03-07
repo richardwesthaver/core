@@ -1071,6 +1071,7 @@ MAKE-LIST-COMPLETER."
         (max-id 0)
         (max-f 0))
     (map nil (lambda (kbd)
+               ;; TODO 2026-03-06: print keymaps as (KEYSEQ CMD)* + (KEY MAP)
                (let ((k (print-key (keybind-key kbd)))
                      (c (if (keymap-p (keybind-cmd kbd))
                             (format nil "keymap: ~{~A~^ ~}" 

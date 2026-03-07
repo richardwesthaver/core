@@ -15,6 +15,7 @@
    :image-error :image-condition
    :image-stream :check-dimensions
    :last-image :add-image
+   :make-image-data
    :transparentp
    :check-image-dimensions
    :left :top :width :height))
@@ -332,7 +333,8 @@
   (:use :cl :std :io/proto :io/lzw :color :dat/img :io/flate)
   (:export :make-gif-image :make-gif-stream :gif-error
    :*gif-delay-time* :*gif-disposal-methods*
-   :gif-image :gif-stream :interlacedp :interlace :deinterlace :add-delay))
+   :gif-image :gif-stream :interlacedp :interlace :deinterlace :add-delay
+   :loopingp :output-gif-stream))
 
 (defpkg :dat/ttf
   (:nicknames :ttf)

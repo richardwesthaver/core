@@ -1407,3 +1407,12 @@ before returning."
   (:documentation "A message which may be passed between worker threads."))
 
 (defclass worker-event (event) ())
+;;; Message Box (MBOX)
+(defclass message-box ()
+  ())
+;; (defstruct async-message ...)
+
+;; shared message-box, driven by thread-pool
+(defclass mbox (message-box) ())
+;; owned message-box, driven by a worker
+(defkernel mbox-worker (message-box worker) ())
