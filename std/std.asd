@@ -55,7 +55,6 @@
    (:file "file")
    (:file "rand")
    (:file "defsys"))
-  :build-pathname "../.stash/std"
   :in-order-to ((test-op (test-op "std/tests"))))
 
 (defsystem :std/tests

@@ -3,7 +3,8 @@
 ;;
 
 ;;; Code:
-#-std (in-package :std/defpkg)
+(in-package :std/defpkg)
+;; #+std (in-package :std-int)
 
 (defpkg :std/sym
   (:use :cl)

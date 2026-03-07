@@ -14,7 +14,7 @@
               (:file "fuzz"))
  :provide
  ((:proto :test)
-  (:proto :uzz)
+  (:proto :fuzz)
   (:tests
    :require (:rt)
    :components ((:file "tests")))))

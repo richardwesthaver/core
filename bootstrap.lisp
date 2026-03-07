@@ -1,5 +1,4 @@
-;;; bootstrap.lisp --- Core Bootstrap Script
-
+#!/usr/bin/env -S sbcl --script
 ;; Bootstrap the core from a fresh SBCL installation.
 
 ;;; Commentary:
@@ -8,7 +7,7 @@
 
 ;; from the project root:
 
-;; sbcl --script bin/script/bootstrap.lisp 
+;; sbcl --script bootstrap.lisp 
 
 ;;; Code:
 (in-package :cl-user)
@@ -27,7 +26,7 @@
 (asdf:load-asd (probe-file "ppcre/ppcre.asd"))
 (asdf:load-asd (probe-file "std/std.asd"))
 (asdf:load-system :ppcre)
-(asdf:load-system :std :force t)
+(asdf:load-system :std)
 (shadowing-import '(reset) :std)
 (in-package :std-user)
 (setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))

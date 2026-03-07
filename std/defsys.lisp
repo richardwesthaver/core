@@ -325,13 +325,16 @@ objects of type COMPONENT."
   (register-module :io root (if args (cons name args) name) t))
 
 (defprovider :proto (root name &rest args)
-  (register-module :proto root (if args (cons name args) name) t))
+  (register-module :proto root (if args (cons name args) (list name)) t))
 
 (defprovider :pool (root name)
   (register-module :pool root (compile-and-eval `(find-thread-pool ,name))))
 
 (defprovider :printer (root name)
   (register-module :printer root (compile-and-eval `(find-printer ,name))))
+
+(defprovider :annotations (root name)
+  (register-module :annotations root (compile-and-eval `(annotations ,name))))
 
 (defprovider :sys (name &rest args)
   (register-module
