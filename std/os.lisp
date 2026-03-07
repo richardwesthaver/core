@@ -154,6 +154,158 @@ arrange for FVAR to be closed after BODY."
 
 ;; (defmacro define-ioctl (name fd cmd))
 
+;;; NETLINK
+(defconstant af-netlink sb-bsd-sockets-internal::af-route)
+
+;; (defconstant +netlink-max+ 32)
+
+(define-alien-type sockaddr-nl
+    (struct sockaddr-nl
+      (nl-family int) ;; af-netlink
+      (nl-pad unsigned-short) ;; 0
+      (nl-pid (unsigned 32)) ;; port ID
+      (nl-groups (unsigned 32)))) ;; multicast groups mask
+
+(std/alien:define-alien-enum (netlink-proto :type int)
+  :route 0
+  :unused 1
+  :usersock 2
+  ;; :firewall 3
+  :sock-diag 4
+  :inet-diag :sock-diag
+  ;; :nflog 5
+  :xfrm 6
+  :selinux 7
+  :iscsi 8
+  :audit 9
+  :fib-lookup 10
+  :connector 11
+  :netfilter 12
+  ;; :ip6-fw 13
+  ;; :dnrtmsg 14
+  :kobject-uevent 15
+  :generic 16
+  :scsitransport 18
+  :ecryptfs 19
+  :rdma 20
+  :crypto 21
+  :smc 22)
+  
+(define-alien-type nlmsghdr
+    (struct nlmsghdr
+      (len (unsigned 32))
+      (type (unsigned 16))
+      (flags (unsigned 16))
+      (seq (unsigned 32))
+      (pid (unsigned 32))))
+
+(std/alien:define-alien-enum (nlm-f :type (unsigned 16))
+  :request #x01
+  :multi #x02
+  :ack #x04
+  :echo #x08
+  :dump-intr #x10
+  :dump-filtered #x20
+  ;; get request
+  :root #x100
+  :match #x200
+  :atomic #x400
+  :dump (logior #x100 #x200)
+  ;; new request
+  :replace #x100
+  :excl #x200
+  :create #x400
+  :append #x800
+  ;; delete request
+  :nonrec #x100
+  :bulk #x200
+  ;; ack
+  :capped #x100
+  :ack-tlvs #x200)
+
+(std/alien:define-alien-enum (nlmsg)
+  :noop #x1
+  :error #x2
+  :done #x3
+  :overrun #x4
+  :min-type #x10)
+
+(define-alien-type nlmsgerr
+    (struct nlmsgerr
+      (error int)
+      (msg nlmsghdr)))
+
+(std/alien:define-alien-enum (nlmsgerr-attr)
+  :unused 0
+  :msg 1
+  :offs 2
+  :cookie 3
+  :policy 4
+  :miss-type 5
+  :miss-nest 6)
+;; (:max 7)
+
+(std/alien:define-alien-enum (netlink-attribute-type)
+  :invalid 0
+  :flag 1
+  :u8 2
+  :u16 3
+  :u32 4
+  :u64 5
+  :s8 6
+  :s16 7
+  :s32 8
+  :s64 9
+  :binary 10
+  :string 11
+  :nul-string 12
+  :nested 13
+  :nested-array 14
+  :bitfield32 15
+  :sint 16
+  :uint 17)
+
+(std/alien:define-alien-enum (netlink-policy-type-attr)
+  :unspec 0
+  :type 1
+  :min-value-s 2
+  :max-value-s 3
+  :min-value-u 4
+  :max-value-u 5
+  :min-length 6
+  :max-length 7
+  :policy-idx 8
+  :policy-maxtype 9
+  :bitfield32-mask 10
+  :pad 11
+  :mask 12)
+;; (:max 12)
+
+(defconstant +size-of-sockaddr-nl+ (sb-alien::alien-size std/os::sockaddr-nl))
+
+(defclass netlink-socket (sb-bsd-sockets:socket)
+  ((sb-bsd-sockets::family :initform af-netlink))
+  (:documentation "Class representing NETLINK local sockets."))
+
+(defmethod sb-bsd-sockets::size-of-sockaddr ((self netlink-socket))
+  +size-of-sockaddr-nl+)
+
+(defmethod sb-bsd-sockets::make-sockaddr-for ((self netlink-socket) &optional sockaddr &rest address)
+  (let ((sockaddr (or sockaddr (make-alien sockaddr-nl))))
+    (destructuring-bind (&optional pid groups) address
+      (setf (slot sockaddr 'nl-family) af-netlink)
+      (when pid (setf (slot sockaddr 'nl-pid) pid))
+      (when groups (setf (slot sockaddr 'nl-groups) groups)))
+    (values sockaddr +size-of-sockaddr-nl+)))
+
+(defmethod sb-bsd-sockets::free-sockaddr-for ((socket netlink-socket) sockaddr)
+  (sb-alien:free-alien sockaddr))
+
+(defmethod sb-bsd-sockets::bits-of-sockaddr ((socket netlink-socket) sockaddr &optional size)
+  "Return the PID of the local socket address SOCKADDR. 0 indicates the kernel's address."
+  (declare (ignore size))
+  (slot sockaddr 'nl-pid))
+
 ;;; XDG
 ;; ref: https://freedesktop.org/wiki/Software/xdg-user-dirs/
 ;; ref: https://specifications.freedesktop.org/basedir-spec/latest/
