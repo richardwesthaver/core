@@ -408,6 +408,12 @@ NAME *COMMAND-TABLE*)."
           *command-types* types
           *commander* name)))
 
+(defun map-commands (name function)
+  (maphash-values function (commands name)))
+
+(defun map-command-types (name function)
+  (maphash-values function (command-types name)))
+
 (defkernel command (kernel-object)
   ((interactive :initarg :interactive :reader interactive))
   (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.

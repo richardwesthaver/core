@@ -618,6 +618,8 @@
    :interactive-required-count
    :interactive-total-count
    :icount :icount*
+   :map-commands
+   :map-command-types
    :parse-command* :read-command*
    :commandp :commands
    :list-commands :list-command-types
