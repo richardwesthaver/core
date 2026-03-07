@@ -37,5 +37,9 @@
     (:file "ext")))
   (:file "net"))
  :provide
- ((:tests)))
+ ((:proto :net)
+  (:proto :http)
+  (:proto :dns)
+  (:proto :osc)
+  (:tests)))
 

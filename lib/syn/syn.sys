@@ -52,7 +52,12 @@
   (:file "grovel")
   (:file "cli"))
  :provide 
- ((:proto :syn)
+ ((:proto :syn) ; ts
+  (:proto :lang)
+  (:proto :gen)
+  (:proto :tempo)
+  (:proto :grovel)
+  (:proto :fmt)
   (:tests 
    :components 
    ((:mod "tests"

@@ -16,4 +16,6 @@
   (:file "cfg")
   (:file "srv")
   (:file "cli"))
- :provide ((:tests :require (:rt :rocksdb :rdb :log :obj))))
+ :provide 
+ ((:proto :rdb)
+  (:tests :require (:rt :rocksdb :rdb :log :obj))))

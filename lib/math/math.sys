@@ -34,4 +34,6 @@
   (:file "auto")
   (:file "graph")
   (:file "math"))
- :provide ((:tests :require (:rt :math :log :obj))))
+ :provide 
+ ((:proto :math)
+  (:tests :require (:rt :math :log :obj))))

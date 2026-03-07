@@ -13,6 +13,8 @@
               (:file "flamegraph")
               (:file "fuzz"))
  :provide
- ((:tests
+ ((:proto :test)
+  (:proto :uzz)
+  (:tests
    :require (:rt)
    :components ((:file "tests")))))

@@ -16,5 +16,7 @@
    ((:file "pkg")))
   (:file "gst")
   (:file "dsp"))
- :provide ((:tests)))
+ :provide 
+ ((:proto :media)
+  (:tests)))
 

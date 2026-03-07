@@ -7,4 +7,6 @@
   (:file "archiso")
   (:file "qemu")
   (:file "qmp"))
- :provide ((:tests :require (:rt :box :log))))
+ :provide 
+ ((:proto :box)
+  (:tests :require (:rt :box :log))))

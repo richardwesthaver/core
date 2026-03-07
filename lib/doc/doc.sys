@@ -10,4 +10,6 @@
   (:file "asdf")
   (:file "sys")
   (:file "reprex"))
- :provide ((:tests :require (:rt :doc :rdb :obj))))
+ :provide 
+ ((:proto :doc)
+  (:tests :require (:rt :doc :rdb :obj))))

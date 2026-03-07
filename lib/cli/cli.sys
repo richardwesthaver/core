@@ -35,7 +35,12 @@
   (:file "tui" :require ("ansi" "progress" "spark" "linedit"))
   (:file "cli" :require ("pkg" "clap")))
  :provide
- ((:tests
+ ((:proto :editor)
+  (:proto :clap)
+  (:proto :main)
+  (:proto :tool)
+  (:proto :tui) 
+  (:tests
    :description "CLI Tests"
    :components
    ((:mod "tests"

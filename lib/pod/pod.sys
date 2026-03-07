@@ -21,4 +21,6 @@
   (:file "client")
   (:file "srv")
   (:file "cli"))
- :provide ((:tests)))
+ :provide 
+ ((:proto :pod)
+  (:tests)))

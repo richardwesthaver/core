@@ -19,19 +19,16 @@
 (defparameter *cry-packages* nil)
 (setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *cry-packages* :test 'string=)))
 
-(defpkg :cry/hotp
-  (:nicknames :hotp)
+(defpkg :cry/otp
+  (:nicknames :otp)
   (:use :cl :std :cry-int)
-  (:export *digits*
-           *hmac-sha-mode*
-           hotp))
-
-(defpkg :cry/totp
-  (:nicknames :totp)
-  (:use :cl :std :cry/hotp)
-  (:export *time-zero*
-           *time-step-in-seconds* 
-           totp))
+  (:export 
+   *digits*
+   *hmac-sha-mode*
+   hotp
+   *time-zero*
+   *time-step-in-seconds* 
+   totp))
 
 (defpkg :cry/crc64
   (:use :cl)

@@ -41,5 +41,6 @@
   (:proto :flate)
   (:proto :kbd)
   (:proto :smart-buffer)
+  (:proto :xsubseq)
   (:proto :static)
   (:proto :disk)))

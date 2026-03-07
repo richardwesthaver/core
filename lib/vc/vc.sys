@@ -8,4 +8,8 @@
   (:file "hg")
   (:file "util")
   (:file "cli"))
- :provide ((:tests :require (:std :rt :vc :io))))
+ :provide 
+ ((:proto :vc)
+  (:proto :git)
+  (:proto :hg)
+  (:tests :require (:std :rt :vc :io))))

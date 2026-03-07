@@ -9,7 +9,10 @@
   (:file "sql")
   (:file "dql"))
  :provide 
- ((:tests :require (:rt :q :log)
+ ((:proto :q)
+  (:proto :sql)
+  (:proto :dql)
+  (:tests :require (:rt :q :log)
    :components
    ((:mod "tests"
      :components ((:file "pkg")

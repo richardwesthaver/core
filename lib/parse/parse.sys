@@ -7,5 +7,9 @@
   (:file "lex")
   (:file "pratt")
   (:file "yacc"))
- :provide ((:tests)))
+ :provide 
+ ((:proto :yacc)
+  (:proto :lex)
+  (:proto :parse)
+  (:tests)))
 

@@ -14,5 +14,7 @@
   (:file "section")
   (:file "string")
   (:file "fuzzy"))
- :provide ((:tests)))
+ :provide 
+ ((:proto :search)
+  (:tests)))
 
