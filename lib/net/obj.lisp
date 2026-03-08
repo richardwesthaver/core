@@ -119,5 +119,48 @@ servers, and peers as vertices and connections as edges."))
 (defgeneric make-server-response (self res &rest args &key &allow-other-keys)
   (:method ((self server) res &key) (nyi!)))
 
-(defgeneric send-request (self req &key))
-(defgeneric receive-response (self req &key))
+(defgeneric send-message (message connection)
+  (:documentation "Send an encoded message to the server.  The
+operation will force (but not finish) output before returning."))
+
+(defgeneric connection-server-address (connection)
+  (:documentation "Return the address of the server associated with
+the connection."))
+
+(defgeneric connection-server-id (connection)
+  (:documentation "Return the unique ID of the server associated with
+the connection."))
+
+(defgeneric (setf connection-server-id) (id connection)
+  (:documentation "Set the unique ID of the server associated with the
+connection.  If an ID is already set and is not EQUAL to the new ID,
+signal a continuable error."))
+
+(defgeneric connection-fd (connection)
+  (:documentation "Return the file descriptor associated with
+the (open) connection."))
+
+(defgeneric connection-pending-messages (connection)
+  (:documentation "Return a list of the currently pending messages
+associated with the connection, from newest to oldest."))
+
+(defgeneric (setf connection-pending-messages) (new-list connection)
+  (:documentation "Set the list of currently pending messages
+associated with the connection."))
+
+(defgeneric connection-next-serial (connection)
+  (:documentation "Return a 32-bit integer for associating request
+messages and their replies."))
+
+(defgeneric drain-pending-messages (connection)
+  (:documentation "Return a list of the currently pending messages
+associated with the connection, from oldest to newest, and consider
+these messages no longer pending."))
+
+(defgeneric wait-for-reply (serial connection)
+  (:documentation "Wait for a reply message with the supplied serial
+to be received via connection."))
+
+(defgeneric receive-message-no-hang (connection)
+  (:documentation "Read a D-BUS message from the server.  If no
+message is available to read, return NIL."))

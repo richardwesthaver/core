@@ -35,6 +35,15 @@
    :connection
    :connect
    :disconnect
+   :send-message
+   :connection-fd
+   :connection-pending-messages
+   :connection-next-serial
+   :drain-pending-messages
+   :wait-for-reply
+   :receive-message-no-hang
+   :connection-server-id
+   :connection-server-address
    :make-client
    :make-server
    :make-client-request
@@ -103,7 +112,7 @@
 
 (defpkg :net/codec/dbus
   (:use :std-lisp :net/core)
-  (:export))
+  (:export :dbus-error :dbus-auth-error :dbus-method-error))
 
 (defpkg :net/udp
   (:nicknames :udp)

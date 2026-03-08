@@ -62,4 +62,6 @@
 
 (defpkg :cry/auth
   (:use :cl :std :cry/password)
-  (:export :authenticator :authenticator-textual-p :authenticator-challenge :auth :authenticate))
+  (:export :authenticator :authenticator-textual-p :authenticator-challenge 
+   :auth :authenticate
+   :supported-authenticators))

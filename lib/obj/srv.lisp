@@ -120,7 +120,6 @@ logging, etc."))
 
 (defgeneric send-response (service stream &key content &allow-other-keys))
 (defgeneric send-request (client req &key &allow-other-keys))
-
 (defgeneric receive-response (service stream &key))
 (defgeneric receive-request (client res &key))
 

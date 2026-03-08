@@ -12,6 +12,9 @@
   (:method ((self password) password)
     (string= (password-hash self) (make-password-hash password (password-salt self)))))
                                  
+(defgeneric supported-authenticators (self)
+  (:documentation "Return a list of supported authenticators."))
+
 (defgeneric authenticate (self obj &key &allow-other-keys)
   (:documentation "Attempt to authenticate OBJ against SELF."))
 
