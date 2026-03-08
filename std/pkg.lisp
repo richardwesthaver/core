@@ -903,7 +903,8 @@
   (:export :define-io
    :serde :ser :de :serialize 
    :deserialize :serde-condition :serde-error :serializer-error 
-   :deserializer-error :*io-table*))
+   :deserializer-error :*io-table*
+   :with-binary-readers :with-binary-writers))
 
 (defpkg :std/alien
   (:use :cl :sb-alien)

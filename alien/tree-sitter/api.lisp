@@ -136,7 +136,6 @@ desired name for use in lisp."
       (with-alien-slots (tree-sitter::row tree-sitter::column) p
         (cons tree-sitter::row tree-sitter::column)))))
 
-;; TODO 2026-02-24: fixme
 (defun convert-foreign-tree-to-list (tree &key (name-generator #'make-lisp-name)
                                           &aux did-visit-children parse-stack)
   (with-ts-cursor (tc node tree)
