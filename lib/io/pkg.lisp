@@ -30,26 +30,16 @@
   (:export :io-stream-error :io-stream :make-bound-stream
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked
-   :peeked-count
-           :peeked-size
-   :make-flex-stream
-           :make-in-memory-output-stream
-   :make-in-memory-input-stream
-           :with-output-to-sequence
-   :with-input-from-sequence
-           :output-stream-sequence-length
-   :get-output-stream-sequence
-           :peek-byte
-   :peeked
-           :flex-stream
-   :flex-input-stream
-           :flex-output-stream
-   :flex-io-stream
-           :make-decoding-stream
-   :decoding-stream
-           :+buffer-size+
-   :dec-fill-buffer
-           :needs-to-fill-buffer-p))
+   :peeked-count :peeked-size
+   :make-flex-stream :make-in-memory-output-stream
+   :make-in-memory-input-stream :with-output-to-sequence
+   :with-input-from-sequence :output-stream-sequence-length
+   :get-output-stream-sequence :peek-byte
+   :peeked :flex-stream
+   :flex-input-stream :flex-output-stream
+   :flex-io-stream :make-decoding-stream
+   :decoding-stream :+buffer-size+
+   :dec-fill-buffer :needs-to-fill-buffer-p))
 
 (defpkg :io/static
   (:use :cl :std :sb-alien :io/stream)

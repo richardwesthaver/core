@@ -9,6 +9,7 @@
   (:export
    :*packy-url*
    :unpack
+   :pack
    :install-package
    :uninstall-package
    :update-package
