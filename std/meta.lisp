@@ -571,6 +571,30 @@ given the name and specializer."
           (rplacd lst (remove filter (cdr lst) :test #'(lambda (a b) (eql a (cdr b)))))))
     nil))
 
+;;; Class Maps
+;; inspired by death's dbus::define-name-class-mapping
+(defmacro define-class-map (&key class map find)
+  "Define an interface for mapping names (strings) to classes (or
+class names)."
+  (let ((map-docstring (format nil "Map names to ~A classes or class names." class))
+        (find-docstring (format nil "Return the ~A class (or class name) corresponding to NAME." class))
+        (find-setf-docstring (format nil "Associate a ~A class (or class name) with NAME." class)))
+    `(progn
+       (defvar ,map
+         (make-hash-table :test 'equal)
+         ,map-docstring)
+       (defun ,find (name &key (if-does-not-exist :error))
+         ,find-docstring
+         (or (gethash name ,map)
+             (std/condition:missing-entry name if-does-not-exist)))
+       (defun (setf ,find) (class name &key (if-exists :warn))
+         ,find-setf-docstring
+         (when-let ((old (,find name :if-does-not-exist nil)))
+           (when (not (std/condition:replace-entry-p old class if-exists))
+             (return-from ,find class)))
+         (setf (gethash name ,map) class))
+       ',class)))
+
 ;;; Sham Classes
 ;; inspired by CLX::DEF-CLX-CLASS (pseudo-class mechanism)
 (defvar *sham-classes* nil

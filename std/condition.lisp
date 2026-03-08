@@ -301,6 +301,104 @@ was provided."))
     (format stream "Unknown token: ~A~%" (error-item c)))
   (call-next-method))
 
+;; from death's dbus
+(defun prompt-for-value ()
+  "Interactively prompt for a value.  An expression is read and
+evaluated, and its value is returned."
+  (format *query-io* "Enter an expression: ")
+  (multiple-value-list (eval (read *query-io*))))
+
+(define-condition missing-entry (error)
+  ((designator :initarg :designator :reader missing-entry-designator))
+  (:report (lambda (condition stream)
+             (format stream "An invalid entry was sought using designator ~S."
+                     (missing-entry-designator condition)))))
+
+(defun missing-entry (designator if-does-not-exist)
+  "Called when a missing entry was sought using DESIGNATOR, and
+acts according to the value of IF-DOES-NOT-EXIST:
+
+  :ERROR
+
+    Signal an MISSING-ENTRY error with a USE-VALUE restart.
+
+  NIL
+
+    Return NIL."
+  (ecase if-does-not-exist
+    (:error
+     (restart-case (error 'missing-entry :designator designator)
+       (use-value (new-value)
+         :report "Use a value as entry."
+         :interactive prompt-for-value
+         new-value)))
+    ((nil) nil)))
+
+(define-condition entry-replacement-attempt (error)
+  ((old :initarg :old :reader entry-replacement-attempt-old)
+   (new :initarg :new :reader entry-replacement-attempt-new))
+  (:report (lambda (condition stream)
+             (format stream "Attempted to replace ~S by ~S."
+                     (entry-replacement-attempt-old condition)
+                     (entry-replacement-attempt-new condition)))))
+
+(defun replace-entry-p (old new if-exists)
+  "Return true if the new entry should replace the old one.  IF-EXISTS
+determines how to find out:
+
+  :ERROR
+
+    Signal an ENTRY-REPLACEMENT-ATTEMPT error with a CONTINUE restart
+    to replace the entry, and an ABORT restart to not replace it.
+
+  :WARN
+
+    Replace the entry after signaling a warning.
+
+  :DONT-REPLACE
+
+    Don't replace entry.
+
+  :REPLACE
+
+    Replace entry."
+  (flet ((replace-it () (return-from replace-entry-p t))
+         (dont-replace-it () (return-from replace-entry-p nil)))
+    (ecase if-exists
+      (:error
+       (restart-case (error 'entry-replacement-attempt :old old :new new)
+         (continue ()
+           :report "Replace old entry."
+           (replace-it))
+         (abort ()
+           :report "Don't replace old entry."
+           (dont-replace-it))))
+      (:warn
+       (warn "Replacing existing entry ~S with ~S." old new)
+       (replace-it))
+      (:dont-replace
+       (dont-replace-it))
+      (:replace
+       (replace-it)))))
+
+(defun call-with-if-failed-handler (if-failed function)
+  "Call FUNCTION in a context according to IF-FAILED:
+
+  :ERROR
+
+    Signal an error on failure.
+
+  NIL
+
+    Return NIL on failure."
+  (ecase if-failed
+    (:error (funcall function))
+    ((nil) (ignore-errors (funcall function)))))
+
+(defmacro with-if-failed-handler (if-failed-form &body forms)
+  "Sugar for CALL-WITH-IF-FAILED-HANDLER."
+  `(call-with-if-failed-handler ,if-failed-form (lambda () ,@forms)))
+
 (defun interact (&rest prompt)
   "Read from user and eval."
   (apply #'format *query-io* prompt)

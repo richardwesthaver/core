@@ -97,6 +97,18 @@ BODY contains elements of the form:
            (setf (gethash ,name *io-table*) (list :read ,readers :write ,writers)))))))
 
 ;;; Binary Stream IO
+(defvar *stream-read-positions*
+  (make-hash-table :weakness :key)
+  "A mapping from a stream (weakly referenced) to a read position.")
+
+(defun stream-read-position (stream)
+  "Return the stream's read position (zero by default)."
+  (gethash stream *stream-read-positions* 0))
+
+(defun (setf stream-read-position) (new-read-position stream)
+  "Set the stream's read position to a new value."
+  (setf (gethash stream *stream-read-positions*) new-read-position))
+
 (defmacro with-binary-writers ((stream endianness) &body forms)
   "Evaluate forms with functions to write binary data to the stream in
 a given endianness.

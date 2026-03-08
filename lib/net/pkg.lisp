@@ -23,6 +23,11 @@
    :net-warning
    :net-config
    :socket-config
+   :socket-element-type
+   :socket-address
+   :ip-address
+   :port
+   :privileged-port :unprivileged-port
    :client
    :client-config
    :server
@@ -112,7 +117,11 @@
 
 (defpkg :net/codec/dbus
   (:use :std-lisp :net/core)
-  (:export :dbus-error :dbus-auth-error :dbus-method-error))
+  (:import-from :sb-ext :string-to-octets :octets-to-string)
+  (:export :dbus-error :dbus-auth-error :dbus-method-error
+   :encode-dbus-message :decode-dbus-message
+   :dbus-message :dbus-type
+   :define-dbus-type :*dbus-type-table*))
 
 (defpkg :net/udp
   (:nicknames :udp)

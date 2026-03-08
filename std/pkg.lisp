@@ -163,6 +163,10 @@
    :transfer-error
    :invoke-transfer-error
    :transfer-error-report
+   :missing-entry
+   :entry-replacement-attempt
+   :replace-entry-p
+   :with-if-failed-handler
    :deferror
    :car-eql
    :nyi!
@@ -387,7 +391,7 @@
    #:of-type
    #:type=
    #:word
-   :u1 :u2 :u3 :u4 :u5 :u6 :u7 :u8 :u16 :u24 :u32 :u64
+   :u1 :u2 :u3 :u4 :u5 :u6 :u7
    :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
    :*simple-types* :*primitive-object-table* 
    :*simple-type-table* :*core-types*
@@ -864,6 +868,8 @@
    :int-list-bits
    :aref-bit
    :make-bit-vector
+   :signed-to-unsigned
+   :unsigned-to-signed
    :logbit
    :bitfield
    :bitfield-slot-name
@@ -893,7 +899,7 @@
    :octets))
 
 (defpkg :std/io
-  (:use :cl :std/sys)
+  (:use :cl :std/sys :std/type)
   (:import-from :std/prim :definline :parse-body)
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
@@ -901,7 +907,9 @@
   (:import-from :std/type :octet-vector :*type-classes* 
    :type-class-name-of :type-class-name :type=)
   (:export :define-io
+   :u8 :u16 :u24 :u32 :u64 :align
    :serde :ser :de :serialize 
+   :*stream-read-positions* :stream-read-position
    :deserialize :serde-condition :serde-error :serializer-error 
    :deserializer-error :*io-table*
    :with-binary-readers :with-binary-writers))
@@ -1080,7 +1088,7 @@
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
    :defsham :save
-   :clone))
+   :clone :define-class-map))
 
 (defpkg :std/seq
   (:use :cl :std/prim)

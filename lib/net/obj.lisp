@@ -20,9 +20,11 @@
 ;;; Objects
 (defgeneric socket-element-type (self)
   (:documentation "Return the element-type of the underlying stream or buffer of socket SELF."))
+(defgeneric socket-address (self)
+  (:documentation "Return the address associated with socket SELF."))
 
 (defconfig net-config (id) 
-  ((addr)
+  ((address)
    (port)))
 
 (defclass connection () ()
