@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :cry/password)
 
-(defvar *password-digest* 'sha256)
+(defvar *password-digest* :sha256)
 
 (defclass password ()
   ((hash :initarg :hash
@@ -18,13 +18,14 @@
          :reader password-salt)))
 
 (defun make-password-hash (password salt)
-  (ironclad:pbkdf2-hash-password password :salt salt)
+  (let ((buf (sb-ext:string-to-octets password)))
+  (ironclad:pbkdf2-hash-password buf :salt salt)
   (ironclad:byte-array-to-hex-string
    (ironclad:digest-sequence
     *password-digest*
     (concatenate '(vector (unsigned-byte 8))
-                 (sb-ext:string-to-octets password)
-                 salt))))
+                 buf
+                 salt)))))
 
 (defgeneric (setf password) (password auth)
   (:method (password (object password))
