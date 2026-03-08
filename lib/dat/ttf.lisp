@@ -999,7 +999,7 @@ table.")
       (setf (value name-entry) value
             (data name-entry) octets))))
 
-(defmethod value ((name-entry name-entry))
+(defmethod std:value ((name-entry name-entry))
   (unless (slot-boundp name-entry 'value)
     (initialize-name-entry name-entry))
   (%value name-entry))

@@ -27,7 +27,6 @@
    :socket-address
    :ip-address
    :socket
-   :make-socket
    :port
    :privileged-port :unprivileged-port
    :client
@@ -55,7 +54,8 @@
    :make-client
    :make-server
    :make-client-request
-   :make-server-response)
+   :make-server-response
+   :make-socket)
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*

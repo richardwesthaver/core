@@ -372,7 +372,6 @@
    #:glyph-count
    #:name-entry-value
    #:find-name-entry
-   #:value
    #:collection-font-count
    #:collection-font-index
    ;; font typographic
