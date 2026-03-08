@@ -905,7 +905,7 @@
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/sym :symbolicate :with-gensyms)
   (:import-from :std/type :octet-vector :*type-classes* 
-   :type-class-name-of :type-class-name :type=)
+   :type-class-name-of :type-class-name :type= :u8 :u16 :u24 :u32 :u64)
   (:export :define-io
    :u8 :u16 :u24 :u32 :u64 :align
    :serde :ser :de :serialize 

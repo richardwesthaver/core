@@ -311,3 +311,16 @@
    :btrfs-simple-error
    :btrfs-error
    :load-btrfs-libs))
+
+(defpkg :io/mux
+  (:use :std-lisp)
+  (:export :event-base :event-dispatch :set-io-handler :remove-fd-handlers))
+
+(defpkg :io
+  (:use :cl)
+  (:use-reexport :io/proto :io/uring :io/flate 
+   :io/zstd :io/stream :io/socket :io/chunky 
+   :io/smart-buffer :io/static :io/xsubseq))
+
+(defpkg :io-user
+  (:use :std-lisp :io))

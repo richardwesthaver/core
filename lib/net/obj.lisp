@@ -175,3 +175,5 @@ to be received via connection."))
 (defgeneric receive-message-no-hang (connection)
   (:documentation "Read a D-BUS message from the server.  If no
 message is available to read, return NIL."))
+
+(defun make-socket (&rest args))

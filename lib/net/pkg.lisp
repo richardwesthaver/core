@@ -26,6 +26,8 @@
    :socket-element-type
    :socket-address
    :ip-address
+   :socket
+   :make-socket
    :port
    :privileged-port :unprivileged-port
    :client
@@ -119,7 +121,7 @@
 (defpkg :net/codec/dbus
   (:use :std-lisp :net/core :dat/xml)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
-  (:export :dbus-error :dbus-auth-error :dbus-method-error
+  (:export 
    :encode-dbus-message :decode-dbus-message
    :dbus-message :dbus-type
    :dbus-type-table :find-dbus-type
@@ -207,14 +209,14 @@
    :with-dns-error-handling))
 
 (defpkg :net/proto/dbus
-  (:use :std-lisp :net/core :cry/auth :net/codec/dbus)
+  (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux)
   (:import-from :net/codec/dbus
    :message-endianness :message-flags :message-major-protocol-version :message-body-length
    :message-serial :message-sender :message-signature :message-body
    :message-member :message-reply-serial :message-error-name :message-interface
    :signature :valid-body-p :handler-output-signature :handler-function
    :handler-full-lisp-name :handler-input-signature :full-member-name :require-dbus-object)
-  (:export))
+  (:export :dbus-error :dbus-auth-error :dbus-method-error))
 
 (defpkg :net/proto/ssh
   (:use :std-lisp :net/core :sb-bsd-sockets)

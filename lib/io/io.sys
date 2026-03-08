@@ -11,7 +11,7 @@
            :btrfs)
  :version "0.1.0"
  :components 
- ((:pkg "pkg" :feature :io :default :io-user)
+ ((:pkg "pkg" :feature :io :default :io-user :package :io-int)
   (:file "socket")
   (:file "stream")
   (:file "static")
@@ -31,7 +31,7 @@
     (:file "proto")
     (:file "btrfs")))
   (:file "kbd")
-  (:file "io"))
+  (:file "mux"))
  :provide
  ((:tests
    :require (:rt :io :uring)
