@@ -512,5 +512,3 @@
    :parquet-write
    :parquet-encode
    :parquet-decode))
-
-(defvar *dat-packages* *component-packages*)

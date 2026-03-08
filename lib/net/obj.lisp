@@ -30,6 +30,8 @@
 (defclass connection () ()
   (:documentation "Base class of connection objects between network nodes."))
 
+(defgeneric connection (self))
+
 (defclass route (obj:edgex) ()
   (:documentation "Base class of route objects which may be spawned by a router. Compatible with
 the EDGE and ID protocols."))
@@ -111,6 +113,13 @@ servers, and peers as vertices and connections as edges."))
 ;;; Protocol
 (defverb connect (self &key &allow-other-keys))
 (defverb disconnect (self &key &allow-other-keys))
+
+(defmacro with-open-connection ((sym addr &rest args) &body body)
+  `(let ((,sym (connect ,addr ,@args)))
+     (unwind-protect
+          (progn ,@body)
+       (when ,sym
+         (disconnect ,sym)))))
 
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-server (kind &rest initargs &key &allow-other-keys))

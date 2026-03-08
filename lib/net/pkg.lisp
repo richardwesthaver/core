@@ -40,6 +40,7 @@
    :connection
    :connect
    :disconnect
+   :with-open-connection
    :send-message
    :connection-fd
    :connection-pending-messages
@@ -116,12 +117,25 @@
    :+known-http-methods+))
 
 (defpkg :net/codec/dbus
-  (:use :std-lisp :net/core)
+  (:use :std-lisp :net/core :dat/xml)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export :dbus-error :dbus-auth-error :dbus-method-error
    :encode-dbus-message :decode-dbus-message
    :dbus-message :dbus-type
-   :define-dbus-type :*dbus-type-table*))
+   :dbus-type-table :find-dbus-type
+   :define-dbus-type :*dbus-type-table*
+   :invoke-method :+message-no-reply-expected+
+   :+message-no-auto-start+
+   :dbus-standard-message :dbus-method-call-message
+   :dbus-signal-message :dbus-method-return-message
+   :dbus-error-message :dbus-object
+   :dbus-object-handler-lookup-table
+   :find-dbus-object :register-dbus-object
+   :define-dbus-object :introspection-document
+   :output-introspection-fragment :define-dbus-signal-handler
+   :register-dbus-signal-handler :dbus-signal-handler
+   :*all-dbus-objects* :*authenticator-classes* 
+   :find-authenticator-class :dbus-handler :dbus-signal-handler :dbus-method-handler))
 
 (defpkg :net/udp
   (:nicknames :udp)
@@ -193,7 +207,13 @@
    :with-dns-error-handling))
 
 (defpkg :net/proto/dbus
-  (:use :std-lisp :net/core)
+  (:use :std-lisp :net/core :cry/auth :net/codec/dbus)
+  (:import-from :net/codec/dbus
+   :message-endianness :message-flags :message-major-protocol-version :message-body-length
+   :message-serial :message-sender :message-signature :message-body
+   :message-member :message-reply-serial :message-error-name :message-interface
+   :signature :valid-body-p :handler-output-signature :handler-function
+   :handler-full-lisp-name :handler-input-signature :full-member-name :require-dbus-object)
   (:export))
 
 (defpkg :net/proto/ssh
