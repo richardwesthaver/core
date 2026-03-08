@@ -14,9 +14,14 @@
 (setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=))))
 
 (defpkg :net/core
-  (:use :cl :std :sb-thread :config :id :sb-bsd-sockets)
+  (:use :cl :std :sb-thread :config :id :sb-bsd-sockets :io/socket :io/mux)
   (:recycle :sb-bsd-sockets)
   (:export
+   ;; sb-bsd-sockets
+   :family
+   :size-of-sockaddr
+   :make-sockaddr-for
+   :bits-of-sockaddr
    ;; obj
    :net-condition
    :net-error

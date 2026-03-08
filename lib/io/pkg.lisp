@@ -127,7 +127,12 @@
   (:import-from :std :deferror :eval-always :timeval)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
-   :sockopt-peercred))
+   :sockopt-peercred :netlink-socket
+   :sockaddr-nl :af-netlink
+   :netlink-proto :netlink-proto*
+   :nlm-f :nlm-f*
+   :nlmsg :nlmsg*
+   :nlmsghdr :nlmsgerr))
 
 (defpkg :io/flate
   (:use :cl :io/proto :sb-gray)
@@ -144,9 +149,7 @@
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector
-   :decompress-octet-vector
-   :flush :compress-octet
-   :with-compressor))
+   :decompress-octet-vector :flush :compress-octet :with-compressor))
 
 (defpkg :io/zstd
   (:use :cl :std :io/proto :io/flate :sb-alien)
@@ -229,7 +232,7 @@
    :lookup-keyseq :search-keymap
    :deref-keymaps :keymap-symbol-p
    :keymap-or-keymap-symbol-p :print-key
-   :keymap-p :parse-key :parse-keyseq
+   :keymap-p :parse-key :parse-keyseq :+unbound-key+
    :key-shift :*default-keysym-translate-mask*
    :keysym-code-name :print-keyseq
    :*dead-keysym-name-table* :*name-keysym-table*
@@ -242,7 +245,7 @@
    :find-key :key-eq
    :kbd-config :prefix-key
    :escape-key :keymaps
-   :+unbound-keysym+ :+unbound-key+))
+   :+unbound-keysym+))
 
 (defpkg :io/xsubseq
   (:use :cl)

@@ -1434,12 +1434,6 @@
    :+tiocgwinsz+ :+tiocswinsz+ :+tiocnotty+ :+tcsanow+
    :+tcsaflush+ :+tcsadrain+
    :+opost+ :current-user
-   :netlink-socket
-   :sockaddr-nl :af-netlink
-   :netlink-proto :netlink-proto*
-   :nlm-f :nlm-f*
-   :nlmsg :nlmsg*
-   :nlmsghdr :nlmsgerr
    :*xdg-dir-table* :xdg-dir
    :init-xdg-dirs :xdg-config-file
    :xdg-config-directory :xdg-config-dir
