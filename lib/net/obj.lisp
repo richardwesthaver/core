@@ -17,11 +17,10 @@
 (define-condition net-error (net-condition std-error) ())
 (define-condition net-warning (net-condition std-warning) ())
 
-;;; Generics
+;;; Objects
 (defgeneric socket-element-type (self)
   (:documentation "Return the element-type of the underlying stream or buffer of socket SELF."))
 
-;;; Classes
 (defconfig net-config (id) 
   ((addr)
    (port)))

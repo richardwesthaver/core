@@ -38,8 +38,3 @@
   (declare (ignore initargs))
   (when password
     (setf (password object) password)))
-
-(defmethod auth (object password)
-  (string= (password-hash object)
-           (make-password-hash password
-                               (password-salt object))))

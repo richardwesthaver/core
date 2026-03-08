@@ -6,7 +6,7 @@
   :keyutils
   :openssl :io)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :feature :cry :package :cry-int)
   (:file "condition" :require ("pkg"))
   (:file "crc64" :require ("condition"))
   (:mod "tls"
