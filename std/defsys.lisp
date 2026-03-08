@@ -173,7 +173,8 @@ in a call to INIT.")
    (use :accessor component-use :initform *default-pkg-component-use*)
    default
    (readtable :accessor component-readtable)
-   feature)
+   feature
+   (export :accessor component-package-export))
   (:keyword :pkg)
   (:documentation "A FILE-COMPONENT which contains a collection of packages. The *PACKAGE* is
 automatically set to an internal-only package based on the system name and
@@ -1145,8 +1146,10 @@ internally. On success the path is added to the *SYSDEFS* list."
   (declare (ftype (sfunction (component &key (force boolean)) component)))
   (when (or (component-reload-p comp) force)
     (etypecase comp
-      (mod-component (mapcar (lambda (x) (load-component-file x :force force :verbose verbose))
-                             (components comp)))
+      (mod-component 
+       (let ((*component-packages* nil))
+         (mapcar (lambda (x) (load-component-file x :force force :verbose verbose))
+                 (components comp))))
       (file-component
        (let ((f (path comp)))
          (when (or (reload-p f) force)
@@ -1164,6 +1167,9 @@ internally. On success the path is added to the *SYSDEFS* list."
                     (setf *readtable* (std/named-readtables:ensure-readtable r)))
                   (compile-component comp :verbose verbose :force force)
                   (prog1 (load (resolve-fasl-cache-file f) :verbose verbose)
+                    (when-let ((e (and (slot-boundp comp 'export) (slot-value comp 'export))))
+                      (unless (find-package e) (make-package e :internal-symbols 0))
+                      (export-packages *component-packages* e))
                     (setq pkg:*component-packages* nil
                           pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)

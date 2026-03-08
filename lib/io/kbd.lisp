@@ -716,12 +716,13 @@ interpreted as the name of a KEYMAP-SYMBOL."
     (when parent (copy (keymap parent) km))
     (unless (or modify (and (keymap-symbol-p n) (not (sequence:emptyp (symbol-value n)))))
       (with-gensyms (k)
-        `(let ((,k ,km))
-           ,@(loop for i = bindings then (cddr i) while i
-                   collect `(define-key ,k (if (key-p ,(first i)) ,(first i) (kbd ,(first i))) ,(second i)))
-           ,(if (keywordp name)
-                `(setf (keymap ,name) ,k)
-                `(defvar ,name ,k)))))))
+        `(eval-always
+           (let ((,k ,km))
+             ,@(loop for i = bindings then (cddr i) while i
+                     collect `(define-key ,k (if (key-p ,(first i)) ,(first i) (kbd ,(first i))) ,(second i)))
+             ,(if (keywordp name)
+                  `(setf (keymap ,name) ,k)
+                  `(defvar ,name ,k))))))))
 
 ;;; Keyboard
 (defstruct keyboard 

@@ -21,11 +21,10 @@
    :rename-package-away :package-definition-form :parse-defpkg-form :ensure-package
    :with-package :define-lisp-package
    :defpackage* :*default-package* :*defpkg-hook* :package-symbols-except
-   :*default-package-file-name*
-           :test-package-p
-   :module-package-p
-           :internal-package-p
-   :*component-packages* :*default-pkg-component-use*))
+   :*default-package-file-name* :test-package-p
+   :module-package-p :internal-package-p
+   :*component-packages* :*default-pkg-component-use*
+   :export-packages))
 
 (in-package :std/defpkg)
 
@@ -40,6 +39,9 @@ definitions.")
 (defparameter *component-packages* nil)
 
 (defvar *default-pkg-component-use* '(#:std-lisp))
+
+(defun export-packages (packages &optional (from *package*))
+  (mapc (lambda (pkg) (do-external-symbols (sym pkg) (export* sym from))) packages))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defmacro without-package-warnings (&body body)

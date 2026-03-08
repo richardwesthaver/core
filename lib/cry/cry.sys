@@ -6,7 +6,7 @@
   :keyutils
   :openssl :io)
  :components 
- ((:pkg "pkg" :feature :cry :package :cry-int)
+ ((:pkg "pkg" :feature :cry :package :cry-int :export :cry)
   (:file "condition" :require ("pkg"))
   (:file "crc64" :require ("condition"))
   (:mod "tls"
@@ -29,8 +29,7 @@
   (:file "drm" :require ("condition"))
   (:file "gpg" :require ("condition"))
   (:file "ssh" :require ("condition"))
-  (:file "auth" :require ("password" "gpg" "jwt" "authinfo" "keyring" "otp"))
-  (:file "cry" :require ("pkg")))
+  (:file "auth" :require ("password" "gpg" "jwt" "authinfo" "keyring" "otp")))
  :provide 
  ((:proto :tls)
   (:proto :auth)
