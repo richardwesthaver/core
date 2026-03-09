@@ -43,15 +43,16 @@
               :ironclad/public-keys
               :swank
               :swank/exts
-              :uring
               :xkb
               :evdev
               :btrfs
               :zstd
               :syslog
+              :epoll
               :keyutils
               :tree-sitter
               :obj
+              :uring
               :io
               :log
               :arrow
