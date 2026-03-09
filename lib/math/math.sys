@@ -32,8 +32,7 @@
   (:file "readtable")
   (:file "sfc")
   (:file "auto")
-  (:file "graph")
-  (:file "math"))
+  (:file "graph"))
  :provide 
  ((:proto :math)
   (:tests :require (:rt :math :log :obj))))
