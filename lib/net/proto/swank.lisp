@@ -136,7 +136,7 @@ evaluated by the remote Lisp."
     (setf (aref message (1- (length message))) (char-code #\Newline))
     ;; We use IGNORE-ERRORS here to catch SB-INT:CLOSED-STREAM-ERROR on SBCL and any other
     ;; system-dependent network or stream errors.
-    (let ((success (ignore-errors (write-sequence message (sb-bsd-sockets:socket-make-stream sock :output t)))))
+    (let ((success (ignore-errors (write-sequence message (socket-make-stream sock :output t)))))
       (unless success (error 'slime-network-error)))))
 
 (defun slime-send (sexp connection)
@@ -148,7 +148,7 @@ if there are communications problems."
     ;; system-dependent network or stream errors.
     (let ((success nil))
       (ignore-errors
-       (progn (force-output (sb-bsd-sockets:socket-make-stream sock :output t))
+       (progn (force-output (socket-make-stream sock :output t))
               (setf success t)))
       (unless success (error 'slime-network-error))))
   (values))
@@ -165,11 +165,11 @@ doesn't exist; otherwise, returns the first line of the file."
   "Configures TCP keep alive packets for SOCKET.  The socket connection will be
 considered dead if keep alive packets are lost."
   (declare (ignorable socket))
-  (setf (sb-bsd-sockets:sockopt-keep-alive socket) t)
+  (setf (sockopt-keep-alive socket) t)
   #+linux
-  (setf (sb-bsd-sockets:sockopt-tcp-keepcnt socket) 1
-        (sb-bsd-sockets:sockopt-tcp-keepidle socket) 30
-        (sb-bsd-sockets:sockopt-tcp-keepintvl socket) 30))
+  (setf (sockopt-tcp-keepcnt socket) 1
+        (sockopt-tcp-keepidle socket) 30
+        (sockopt-tcp-keepintvl socket) 30))
 
 (defun slime-net-connect (host-name port)
   "Establishes a connection to the Swank server listening on PORT of HOST-NAME.

@@ -33,13 +33,13 @@
 
 (defun try-server (server send send-length recv recv-length &key (attempts 4) (timeout 1))
   (handler-case
-      (let ((socket (sb-bsd-sockets:socket-connect
+      (let ((socket (socket-connect
                      (make-instance 'inet-socket
                        :type :datagram :protocol :udp)
                      (make-inet-address server) +dns-port+)))
         (unwind-protect
              (loop repeat attempts
-                   do (sb-bsd-sockets:socket-send socket send send-length)
+                   do (socket-send socket send send-length)
                       (sb-ext:with-timeout timeout
                         (let ((received (nth-value 1 (socket-receive socket recv recv-length))))
                           (when (and received (< 0 received))
@@ -97,7 +97,7 @@ candidate as the first value and all candidates as the second."
       (handler-bind ((dns-server-failure #'continue))
         (let* ((ipv6-p (find #\: ip))
                (parts (if ipv6-p
-                          (loop for byte across (sb-bsd-sockets:host-ent-address (sb-bsd-sockets:get-host-by-address ip))
+                          (loop for byte across (host-ent-address (get-host-by-address ip))
                                 collect (format nil "~x" (ldb (byte 4 4) byte))
                                 collect (format nil "~x" (ldb (byte 4 0) byte)))
                           (ssplit #\. ip)))

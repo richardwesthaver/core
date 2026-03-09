@@ -12,7 +12,7 @@
 
 ;;; Code:
 (defpkg :box
-  (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config :obj :build :ast)
+  (:use :cl :std :cli :net :dat/json :config :obj :build :ast)
   (:export
    :box-config
    :archiso-config
@@ -20,7 +20,6 @@
    :run-archiso
    :qemu-image-config
    :qemu-system-config))
-
 
 ;;; DEFSYS Providers
 ;; (defprovider :box (name))

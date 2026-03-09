@@ -10,7 +10,7 @@
   "When non-nil, automatically defer to ipv6 addresses where possible.")
 
 (define-symbol-macro default-inet-address-family
-    (if *ipv6* sb-bsd-sockets-internal::af-inet6 sb-bsd-sockets-internal::af-inet))
+    (if *ipv6* sockint::af-inet6 sockint::af-inet))
 
 ;;; Types
 (deftype port () "Port number" '(integer 0 65535))

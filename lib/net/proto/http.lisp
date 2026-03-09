@@ -530,9 +530,8 @@ buffer."
            (check-type end (or null pointer))
            (when data-buffer
              (setq data
-                   (coerce 'list
-                    (xnconc (xsubseq data-buffer 0)
-                            (xsubseq (the octet-vector data) start (or end (length data))))))
+                   (xnconc (xsubseq data-buffer 0)
+                           (xsubseq (the octet-vector data) start (or end (length data)))))
              (setq data-buffer nil
                    start 0
                    end nil))
@@ -1701,7 +1700,6 @@ us a never-ending header that the application keeps buffering.")
                                              header-parameter-value-callback)
   (declare (type simple-string data)
            (optimize (speed 3) (safety 2)))
-
   (let* ((header-name-mark 0)
          parameter-key-mark
          parameter-value-mark
@@ -1710,10 +1708,8 @@ us a never-ending header that the application keeps buffering.")
          (end (length data))
          (char (aref data p)))
     (declare (type character char))
-
     (when (= end 0)
       (return-from parse-header-value-parameters 0))
-
     (macrolet ((go-state (state &optional (advance 1))
                    `(locally (declare (optimize (speed 3) (safety 0)))
                       (incf p ,advance)

@@ -4,10 +4,9 @@
 
 ;;; Code:
 (defpackage :box/tests
-  (:use :cl :rt :box :sb-bsd-sockets)
+  (:use :cl :rt :box :net/core)
   (:import-from :std :in-readtable)
-  (:export
-   #:*archiso-json*))
+  (:export #:*archiso-json*))
 
 (in-package :box/tests)
 (defsuite :box)

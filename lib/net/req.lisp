@@ -1022,19 +1022,19 @@ keep-alive-stream), and should handle clean-up of it"
     (labels ((make-new-connection (uri)
                (restart-case
                    (let* ((con-uri (uri (or proxy uri)))
-                          (socket (make-instance 'sb-bsd-sockets:inet-socket
+                          (socket (make-instance 'inet-socket
                                     :type :stream
                                     :protocol :tcp))
-                          (connection (sb-bsd-sockets:socket-connect
+                          (connection (socket-connect
                                        socket
-                                       (sb-bsd-sockets:make-inet-address (or (net/proto/dns:resolve (uri-host con-uri)) (uri-host con-uri)))
+                                       (make-inet-address (or (net/proto/dns:resolve (uri-host con-uri)) (uri-host con-uri)))
                                        (or (uri-port con-uri) (when (or insecure (string-equal (uri-scheme con-uri) "http")) 80) 443)))
-                          (stream (sb-bsd-sockets:socket-make-stream connection
-                                                                     :input t
-                                                                     :output t
-                                                                     :timeout connect-timeout
-                                                                     :auto-close t
-                                                                     :element-type :default))
+                          (stream (socket-make-stream connection
+                                                      :input t
+                                                      :output t
+                                                      :timeout connect-timeout
+                                                      :auto-close t
+                                                      :element-type :default))
                           (scheme (or (uri-scheme uri) "https")))
                      (when read-timeout ;; TODO 2024-06-19: test
                        (with-alien ((timeout timeval))

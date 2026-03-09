@@ -36,10 +36,10 @@ the underlying link).")
 
 ;;; Socket Utils
 (definline %socket-operation-in-progress-p (condition)
-  (typep condition 'sb-bsd-sockets:operation-in-progress)) ;; errno 36 
+  (typep condition 'operation-in-progress)) ;; errno 36 
 
 (definline %socket-not-connected-p (condition)
-  (typep condition 'sb-bsd-sockets:not-connected-error)) ;; errno 36 
+  (typep condition 'not-connected-error)) ;; errno 36 
 
 ;; returns an alien struct pointer, allocated based on input
 (defun %sockaddr (&optional sockaddr &rest addr)
@@ -87,7 +87,7 @@ the underlying link).")
 (defun get-address-by-name (name)
   "Return the address of a host by NAME."
   (multiple-value-bind (host4 host6)
-      (sb-bsd-sockets:get-host-by-name name)
+      (get-host-by-name name)
     (let ((addr4 (when host4
                    (car (sb-bsd-sockets::host-ent-addresses host4))))
           (addr6 (when host6

@@ -44,19 +44,19 @@
    (user-timeout)))
 
 (defclass tcp-socket (socket) 
-  ((sb-bsd-sockets::family :initarg :family :reader sb-bsd-sockets::socket-family))
+  ((family :initarg :family :reader socket-family))
   (:default-initargs :type :stream :protocol :tcp :family default-inet-address-family))
 
-(defmethod sb-bsd-sockets::make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
+(defmethod make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
   (apply 'net/core::%sockaddr sockaddr address))
 
-(defmethod sb-bsd-sockets::size-of-sockaddr ((socket tcp-socket))
-  (case (sb-bsd-sockets::socket-family socket)
+(defmethod size-of-sockaddr ((socket tcp-socket))
+  (case (socket-family socket)
     (#.sockint::af-inet sockint::size-of-sockaddr-in)
     (#.sockint::af-inet6 sockint::size-of-sockaddr-in6)
     (t (error "unknown sockaddr size"))))
 
-(defmethod sb-bsd-sockets::free-sockaddr-for ((socket tcp-socket) sockaddr)
+(defmethod free-sockaddr-for ((socket tcp-socket) sockaddr)
   (when sockaddr
     (sb-alien:free-alien sockaddr)))
 

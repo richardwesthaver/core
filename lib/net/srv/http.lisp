@@ -924,11 +924,11 @@ protocol of the request."
             (values headers method url-string protocol)))))))
 
 (defmethod process-connection ((*service* http-service) (socket t))
-  (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
+  (let* ((socket-stream (socket-make-stream socket))
          (*service-stream*)
          (*close-service-stream* t)
-         (remote (multiple-value-list (sb-bsd-sockets:socket-peername socket)))
-         (local (multiple-value-list (sb-bsd-sockets:socket-name socket))))
+         (remote (multiple-value-list (socket-peername socket)))
+         (local (multiple-value-list (socket-name socket))))
     (unwind-protect
          ;; process requests until shutdown signal is received or the peer
          ;; fails to send a request
@@ -985,9 +985,9 @@ protocol of the request."
   "Create a dummy connection to the service, waking ACCEPT while it
 is waiting. The idea is to force a check of SHUTDOWN-P."
   (handler-case
-      (multiple-value-bind (address port) (sb-bsd-sockets:socket-name (net/srv::socket service))
-        (let ((conn (sb-bsd-sockets:socket-connect
-                     (make-instance 'sb-bsd-sockets:inet-socket :type :stream :protocol :tcp)
+      (multiple-value-bind (address port) (socket-name (net/srv::socket service))
+        (let ((conn (socket-connect
+                     (make-instance 'inet-socket :type :stream :protocol :tcp)
                      (cond
                        ((and (= (length address) 4) (zerop (elt address 0)))
                         #(127 0 0 1))
@@ -996,7 +996,7 @@ is waiting. The idea is to force a check of SHUTDOWN-P."
                         #(0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1))
                        (t address))
                      port)))
-          (sb-bsd-sockets:socket-close conn)))
+          (socket-close conn)))
     (error (e)
       (service-log-message service :error "Wake-for-shutdown connect failed: ~A" e))))
 

@@ -4,7 +4,8 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :cl :std :sb-thread :config :id :sb-bsd-sockets :io/socket :io/mux)
+  (:use :cl :std :sb-thread :config :id :io/socket :io/mux)
+  (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
    ;; sb-bsd-sockets
@@ -12,6 +13,7 @@
    :size-of-sockaddr
    :make-sockaddr-for
    :bits-of-sockaddr
+   :free-sockaddr-for
    ;; obj
    :*ipv6*
    :net-condition
@@ -19,11 +21,14 @@
    :net-warning
    :net-config
    :socket-config
+   :socket-peername
    :socket-element-type
    :socket-address
    :socket-error
+   :socket-name
    :socket-accept
    :socket-bind
+   :socket-family
    :socket-close
    :socket-send
    :socket-receive
@@ -187,15 +192,15 @@
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
-  (:use :cl :sb-bsd-sockets :std :net/core :punycode))
+  (:use :cl :std :net/core :punycode))
 
 (defpkg :net/proto/dict
   (:nicknames :net/dict)
-  (:use :cl :sb-bsd-sockets :std :net/core))
+  (:use :cl :std :net/core))
 
 (defpkg :net/proto/dns
   (:nicknames :net/dns)
-  (:use :cl :sb-bsd-sockets :std :net/core :codec/dns)
+  (:use :cl :std :net/core :codec/dns)
   (:export
    :dns-servers-exhausted
    :dns-port
@@ -225,13 +230,13 @@
   (:export :dbus-error :dbus-auth-error :dbus-method-error))
 
 (defpkg :net/proto/ssh
-  (:use :std-lisp :net/core :sb-bsd-sockets)
+  (:use :std-lisp :net/core)
   (:export))
 
 (defpkg :net/proto/http
   (:nicknames :http)
   (:use-reexport :net/codec/http)
-  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer :config)
+  (:use :cl :std :net/core :parse/bytes :io/xsubseq :io/smart-buffer :config)
   (:export
    :http-config
    :make-http-parser
@@ -311,19 +316,15 @@
   (:import-from :id :id)
   (:import-from :uri :uri)
   (:import-from :srv :request :response :service :session :request-protocol :content-stream)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/proto/http))
+  (:use :cl :std :net/core :net/proto/http))
 
 (defpkg :net/proto/dm
   (:nicknames :net/dm)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/codec/tlv))
+  (:use :cl :std :net/core :net/codec/tlv))
 
 (defpkg :net/proto/sesh
   (:nicknames :net/sesh)
-  (:use :cl :sb-bsd-sockets :std :net/core))
-
-(defpkg :net/proto/nsm
-  (:nicknames :net/nsm)
-  (:use :cl :sb-bsd-sockets :std :net/core :codec/osc))
+  (:use :std-lisp :net/core))
 
 (defpkg :net/cookie
   (:use :cl :std :parse/bytes :obj/uri)
@@ -353,7 +354,7 @@
 
 (defpkg :net/proto/swank
   (:nicknames :net/swank)
-  (:use :cl :sb-bsd-sockets :std :net/core)
+  (:use :std-lisp :net/core)
   (:export 
    #:*swank-connections*
    #:*default-swank-port*
@@ -369,7 +370,7 @@
    #:slime-connect-file))
 
 (defpkg :net/proto/crew
-  (:use :cl :sb-bsd-sockets :std :net/core :obj/id :net/proto/swank)
+  (:use :std-lisp :net/core :obj/id :net/proto/swank)
   (:import-from #:sb-thread
                 #:condition-notify
                 #:condition-wait
@@ -429,8 +430,7 @@
 (defpkg :net/srv
   (:use :cl :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
-   :sb-gray :dat/mime :sb-bsd-sockets :obj/db 
-   :obj/schema :config :build :srv :ast :std/thread)
+   :sb-gray :dat/mime :obj/db :obj/schema :config :build :srv :ast :std/thread)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
   (:import-from :std :defvar-unbound :once-only 
    :deferror :defwarning :with-gensyms :deserialize
@@ -579,4 +579,3 @@
 (export-packages (remove "NET/REQ" *component-packages* :test 'string=) :net)
 
 (defpkg :net-user (:use :cl :std :net :uri :url))
-  

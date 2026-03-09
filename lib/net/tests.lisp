@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-thread :sb-bsd-sockets))
+  (:use :rt :std :cl :net :sb-thread))
 
 (in-package :net/tests)
 
@@ -13,13 +13,13 @@
 
 (deftest tcp ()
   (with-tcp-client (client)
-    (is (typep client 'sb-bsd-sockets:inet-socket))
+    (is (typep client 'inet-socket))
     (is (= (get-protocol-by-name :tcp)
            (socket-protocol client)))))
 
 (deftest udp ()
   (with-udp-client (client)
-    (istype 'sb-bsd-sockets:inet-socket client)
+    (istype 'inet-socket client)
     (is (= (get-protocol-by-name :udp)
            (socket-protocol client)))))
 

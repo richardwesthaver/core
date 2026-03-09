@@ -51,11 +51,11 @@ type (THREAD-PER-CONNECTION-ENGINE) expects the connection protocol to be
   implemented. We implement this function for UDP-SERVICE to allow a simple
   handshake to be performed which registers a connection from the peer on
   SOCKET."
-  (let* ((socket-stream (sb-bsd-sockets:socket-make-stream socket))
+  (let* ((socket-stream (socket-make-stream socket))
          (*service-stream*)
          (*close-service-stream* t)
-         (remote (multiple-value-list (sb-bsd-sockets:socket-peername socket)))
-         (local (multiple-value-list (sb-bsd-sockets:socket-name socket))))
+         (remote (multiple-value-list (socket-peername socket)))
+         (local (multiple-value-list (socket-name socket))))
     (progn
       (setq *service-stream* (initialize-connection-hook *service* socket-stream))
       (loop
