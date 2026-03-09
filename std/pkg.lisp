@@ -1121,14 +1121,20 @@
    :queue-count :queue-count* :queue-empty-p :queue-empty-p* :queue-full-p :queue-full-p*
    :try-pop-queue :try-pop-queue* :call-with-queue-lock :with-queue-lock
    :queue :make-queue
+   ;; priority-queue
    :priority-queue :vector-queue
    :*default-priority* :*default-priority-queue-size*
    :push-priority-queue :pop-priority-queue
+   ;; pqueue
+   :pqueue :make-pqueue
+   :pqueue-insert :pqueue-remove :pqueue-extract-maximum :pqueue-reorder
+   :pqueue-emptyp :pqueue-maximum :pqueue-contents :pqueue-keyfun
    ;; spin queue
    :spin-queue :make-spin-queue :push-spin-queue :make-spin-lock
    :with-spin-lock :pop-spin-queue :peek-spin-queue :spin-queue-count 
-   :spin-queue-empty-p :make-heap :fib-insert :extract-min 
-   :fib-delete :fib-heap
+   :spin-queue-empty-p :fib-heap
+   ;; fib-heap
+   :make-heap :fib-insert :extract-min :fib-delete
    ;; accumulator
    :accumulated :accumulate :accumulator :max-accumulator 
    :min-accumulator :counter :make-counter :counter-value 
@@ -1262,7 +1268,8 @@
    :scheduler :make-scheduler
    :schedule-work :submit-raw-work
    :worker-kernel-function :pool-kernel-function
-   :*worker-kernel*
+   :*worker-kernel* :run-with-timer
+   :timer-expired-p
    :*pool-kernel* :*thread-pool*
    :*thread-pool-table* :find-work
    :do-workers :submit-work

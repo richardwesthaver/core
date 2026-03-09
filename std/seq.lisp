@@ -733,6 +733,7 @@ associated priority vector."
 (declaim (ftype (function (simple-array priority-vector array-length)
                     (values null &optional))
                 heapify-upwards))
+
 (definline heapify-upwards (data-vector prio-vector index)
   (declare (type simple-array data-vector))
   (declare (type priority-vector prio-vector))
@@ -1010,6 +1011,130 @@ associated priority vector."
       (extract-min fib))
     (when delete? (remhash id (fib-heap-data fib))))
   id)
+
+;;; Pqueue
+;; more like FIB-HEAP than PRIORITY-QUEUE, but based on vectors instead of
+;; dlists. Note that this is already implemented in SBCL internally (see
+;; timer.lisp) but is not accessible at runtime :(
+;;;; Heap
+(definline heap-parent (i)
+  (ash (1- i) -1))
+
+(definline heap-left (i)
+  (1+ (ash i 1)))
+
+(definline heap-right (i)
+  (+ 2 (ash i 1)))
+
+(definline heap-size (heap)
+  (1- (length heap)))
+
+(defun heapify (heap start &key (key #'identity) (test #'>=))
+  (declare (function key test))
+  (flet ((key (obj) (funcall key obj))
+         (ge (i j) (funcall test i j)))
+    (let ((l (heap-left start))
+          (r (heap-right start))
+          (size (heap-size heap))
+          largest)
+      (setf largest (if (and (<= l size)
+                             (not (ge (key (aref heap start))
+                                      (key (aref heap l)))))
+                        l
+                        start))
+      (when (and (<= r size)
+                 (not (ge (key (aref heap largest))
+                          (key (aref heap r)))))
+        (setf largest r))
+      (when (/= largest start)
+        (rotatef (aref heap largest) (aref heap start))
+        (heapify heap largest :key key :test test)))
+    heap))
+
+(defun heap-insert (heap new-item &key (key #'identity) (test #'>=))
+  (declare (function key test))
+  (flet ((key (obj) (funcall key obj))
+         (ge (i j) (funcall test i j)))
+    (vector-push-extend nil heap)
+    (loop for i = (heap-size heap) then parent-i
+          for parent-i = (heap-parent i)
+          while (and (> i 0)
+                     (not (ge (key (aref heap parent-i))
+                              (key new-item))))
+          do (setf (aref heap i) (aref heap parent-i))
+          finally (setf (aref heap i) new-item)
+          (return-from heap-insert i))))
+
+(defun heap-maximum (heap)
+  (unless (zerop (length heap))
+    (aref heap 0)))
+
+(defun heap-extract (heap i &key (key #'identity) (test #'>=))
+  (unless (> (length heap) i)
+    (error "Heap underflow"))
+  (prog1
+      (aref heap i)
+    (setf (aref heap i) (aref heap (heap-size heap)))
+    (decf (fill-pointer heap))
+    (heapify heap i :key key :test test)))
+
+(defun heap-extract-maximum (heap &key (key #'identity) (test #'>=))
+  (heap-extract heap 0 :key key :test test))
+
+(declaim (inline %make-pqueue))
+(defstruct (pqueue
+             (:conc-name %pqueue-)
+             (:constructor %make-pqueue))
+  contents
+  keyfun)
+
+(defun make-pqueue (&key (key #'identity) (element-type t))
+  (let ((contents (make-array 100 :adjustable t
+                              :fill-pointer 0
+                              :element-type element-type)))
+    (%make-pqueue :keyfun key
+                          :contents contents)))
+
+(defmethod print-object ((object pqueue) stream)
+  (print-unreadable-object (object stream :type t :identity t)
+    (format stream "~[empty~:;~:*~D item~:P~]"
+            (length (%pqueue-contents object)))))
+
+(defun pqueue-max (pq)
+  "Return the item in PRIORITY-QUEUE with the largest key."
+  (symbol-macrolet ((contents (%pqueue-contents pq)))
+    (unless (zerop (length contents))
+      (heap-maximum pq))))
+
+(defun pqueue-extract-maximum (pq)
+  "Remove and return the item in PRIORITY-QUEUE with the largest key."
+  (symbol-macrolet ((contents (%pqueue-contents pq))
+                    (keyfun (%pqueue-keyfun pq)))
+    (unless (zerop (length contents))
+      (heap-extract-maximum contents :key keyfun :test #'<=))))
+
+(defun pqueue-insert (pq new-item)
+  "Add NEW-ITEM to PRIORITY-QUEUE."
+  (symbol-macrolet ((contents (%pqueue-contents pq))
+                    (keyfun (%pqueue-keyfun pq)))
+    (heap-insert contents new-item :key keyfun :test #'<=)))
+
+(defun pqueue-empty-p (pq)
+  (zerop (length (%pqueue-contents pq))))
+
+(defun priority-queue-remove (pq item &key (test #'eq))
+  "Remove and return ITEM from PRIORITY-QUEUE."
+  (symbol-macrolet ((contents (%pqueue-contents pq))
+                    (keyfun (%pqueue-keyfun pq)))
+    (let ((i (position item contents :test test)))
+      (when i
+        (heap-extract contents i :key keyfun :test #'<=)
+        i))))
+
+(defun pqueue-reorder (pq)
+  (symbol-macrolet ((contents (%pqueue-contents pq))
+                    (keyfun (%pqueue-keyfun pq)))
+    (heapify contents 0 :key keyfun :test #'<=)))
 
 ;;; Spin Queue
 (defconstant +dummy+ :null

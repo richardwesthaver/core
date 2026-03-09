@@ -80,7 +80,10 @@ arrange for FVAR to be closed after BODY."
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
 
-;;; Linux
+;;; SYSCALLs
+;; based on IOLib
+;; TODO 2026-03-08:
+
 ;; https://man7.org/linux/man-pages/man3/statvfs.3.html
 (defar statvfs int
   (path c-string)
@@ -112,10 +115,10 @@ arrange for FVAR to be closed after BODY."
 (defar cfmakeraw void (term (* sb-posix::alien-termios)))
 
 (define-alien-type winsize (struct winsize
-			     (row unsigned-short)
-			     (col unsigned-short)
-			     (xpixel unsigned-short)
-			     (ypixel unsigned-short)))
+                             (row unsigned-short)
+                             (col unsigned-short)
+                             (xpixel unsigned-short)
+                             (ypixel unsigned-short)))
 
 ;; #define TIOCGWINSZ	0x5413
 ;; #define TIOCSWINSZ	0x5414
@@ -128,9 +131,32 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;; SYSCALLs
-;; based on IOLib
-;; TODO 2026-03-08:
+;;;; resources
+(define-alien-type rlim-t unsigned-long)
+
+(define-alien-type rlimit
+    (struct rlimit
+      (rlim-cur rlim-t)
+      (rlim-max rlim-t)))
+
+(defar getrlimit int
+  (resource int)
+  (rlimits (* rlimit)))
+(defar setrlimit int
+  (resource int)
+  (rlimit (* rlimit)))
+(defar getpriority int
+  (which int)
+  (who int))
+(defar setpriority int
+  (which int)
+  (who int)
+  (value int))
+(defar nice int (inc int))
+(defar sigaction int
+  (signum int)
+  (act (* t))
+  (oldact (* t)))
 
 ;;; IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV

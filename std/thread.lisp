@@ -205,6 +205,24 @@ that was created in `body'."
 (defun timer-p (self)
   (typep self 'sb-ext:timer))
 
+(defun run-with-timer (secs repeat function &rest args)
+  "Perform an action after a delay of SECS seconds.
+Repeat the action every REPEAT seconds, if repeat is non-nil.
+SECS and REPEAT may be reals.
+The action is to call FUNCTION with arguments ARGS."
+  (check-type secs (real 0 *))
+  (check-type repeat (or null (real 0 *)))
+  (check-type function (or function symbol))
+  (let ((timer (sb-ext:make-timer (lambda () (apply function args)) :thread t)))
+    (sb-ext:schedule-timer timer secs :repeat-interval repeat)
+    timer))
+
+(defun timer-expired-p (timer now &optional (delta 0.0d0))
+  (assert (sb-impl::%timer-expire-time timer) ((sb-impl::%timer-expire-time timer))
+          "Timer ~A must have an expiry time set." timer)
+  (let ((compare-time (+ now delta)))
+    (> compare-time (sb-impl::%timer-expire-time timer))))
+
 (defun thread-support-p () 
   "Return Non-nil if threads are supported on this system. (:THREAD-SUPPORT feature)"
   (member :thread-support *features*))
