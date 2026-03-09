@@ -1418,14 +1418,17 @@
   (:import-from :sb-unix 
    :unix-fast-select :fd-set :fd-clr :fd-isset
    :fd-zero :unix-stat :unix-fstat :unix-lstat
-   :unix-file-mode :unix-pid :unix-uid :unix-gid)
+   :unix-file-mode :unix-pid :unix-uid :unix-gid
+   :syscall-type :syscall :syscall* :int-syscall
+   :type-syscall :void-syscall :with-restarted-syscall)
   (:import-from :std/alien :defar)
   (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
    :unix-file-mode :unix-pid :unix-uid :unix-gid
    :unix-fast-select :fd-set :fd-clr :fd-isset
    :fd-zero :unix-stat :unix-fstat :unix-lstat
-   :fd-type
+   :fd-type :syscall-type :syscall :syscall*
+   :int-syscall :type-syscall :void-syscall :with-restarted-syscall
    :*user-fasl-cache*
    :user-fasl-cache
    :ensure-fasl-cache-file
