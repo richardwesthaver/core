@@ -128,6 +128,10 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
+;;; SYSCALLs
+;; based on IOLib
+;; TODO 2026-03-08:
+
 ;;; IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV
 ;; TODO 2025-04-27: 

@@ -45,7 +45,7 @@
 
 (defclass tcp-socket (socket) 
   ((sb-bsd-sockets::family :initarg :family :reader sb-bsd-sockets::socket-family))
-  (:default-initargs :type :stream :protocol :tcp :family sockint::af-inet))
+  (:default-initargs :type :stream :protocol :tcp :family default-inet-address-family))
 
 (defmethod sb-bsd-sockets::make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
   (apply 'net/core::%sockaddr sockaddr address))

@@ -39,7 +39,7 @@
   ((broadcast)))
 
 (defclass udp-socket (socket) 
-  ((sb-bsd-sockets::family :initform sockint::af-inet))
+  ((sb-bsd-sockets::family :initform default-inet-address-family))
   (:default-initargs :type :datagram :protocol :udp))
 
 (defmethod sb-bsd-sockets::make-sockaddr-for ((socket udp-socket) &optional sockaddr &rest address)

@@ -334,7 +334,7 @@ returning.  The string should not contain any newline characters."))
         (close socket)))))
 
 (defmethod connection-fd ((connection dbus-socket-connection-mixin))
-  (sb-bsd-sockets:socket-file-descriptor (connection-socket connection)))
+  (socket-file-descriptor (connection-socket connection)))
 
 (defmethod disconnect ((connection dbus-socket-connection-mixin) &key)
   (close (connection-socket connection)))

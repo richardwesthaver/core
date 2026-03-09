@@ -400,7 +400,7 @@
    :type-id :simple-type-id))
 
 (defpkg :std/string
-  (:use :cl :std/sym :std/list)
+  (:use :cl :std/sym :std/list :sb-ext)
   (:use-reexport :sb-unicode)
   (:import-from :std/prim :parse-body)
   (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
@@ -409,6 +409,7 @@
    :ef-octets-to-string-fun :ef-string-to-octets-fun
    :character-coding-error :character-encoding-error
    :character-decoding-error :*suppress-character-coding-errors*
+   :string-to-octets :octets-to-string
    :*omit-nulls*
    :*whitespaces*
    :*tab-width*
@@ -1414,9 +1415,17 @@
   (:import-from :sb-posix :tcgetattr :tcsetattr 
    :termios :termios-cc :termios-cflag :termios-iflag 
    :termios-oflag :termios-lflag)
+  (:import-from :sb-unix 
+   :unix-fast-select :fd-set :fd-clr :fd-isset
+   :fd-zero :unix-stat :unix-fstat :unix-lstat
+   :unix-file-mode :unix-pid :unix-uid :unix-gid)
   (:import-from :std/alien :defar)
   (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
+   :unix-file-mode :unix-pid :unix-uid :unix-gid
+   :unix-fast-select :fd-set :fd-clr :fd-isset
+   :fd-zero :unix-stat :unix-fstat :unix-lstat
+   :fd-type
    :*user-fasl-cache*
    :user-fasl-cache
    :ensure-fasl-cache-file

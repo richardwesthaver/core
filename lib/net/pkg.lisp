@@ -23,6 +23,7 @@
    :make-sockaddr-for
    :bits-of-sockaddr
    ;; obj
+   :*ipv6*
    :net-condition
    :net-error
    :net-warning
@@ -30,6 +31,19 @@
    :socket-config
    :socket-element-type
    :socket-address
+   :socket-error
+   :socket-accept
+   :socket-bind
+   :socket-close
+   :socket-send
+   :socket-receive
+   :socket-shutdown
+   :socket-connect
+   :socket-list
+   :socket-protocol
+   :socket-open-p
+   :socket-make-stream
+   :socket-file-descriptor
    :ip-address
    :socket
    :port
@@ -60,7 +74,7 @@
    :make-server
    :make-client-request
    :make-server-response
-   :make-socket)
+   :default-inet-address-family)
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*
@@ -104,7 +118,10 @@
    :unix-client)
   ;; netlink
   (:export 
-   :netlink-socket))
+   :netlink-socket)
+  ;; socket
+  (:export
+   :make-socket))
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
@@ -180,11 +197,11 @@
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :punycode))
+  (:use :cl :sb-bsd-sockets :std :net/core :punycode))
 
 (defpkg :net/proto/dict
   (:nicknames :net/dict)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp))
+  (:use :cl :sb-bsd-sockets :std :net/core))
 
 (defpkg :net/proto/dns
   (:nicknames :net/dns)
@@ -224,7 +241,7 @@
 (defpkg :net/proto/http
   (:nicknames :http)
   (:use-reexport :net/codec/http)
-  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer :config :net/tcp)
+  (:use :cl :std :net/core :sb-bsd-sockets :parse/bytes :io/xsubseq :io/smart-buffer :config)
   (:export
    :http-config
    :make-http-parser
@@ -304,19 +321,19 @@
   (:import-from :id :id)
   (:import-from :uri :uri)
   (:import-from :srv :request :response :service :session :request-protocol :content-stream)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp :net/proto/http))
+  (:use :cl :sb-bsd-sockets :std :net/core :net/proto/http))
 
 (defpkg :net/proto/dm
   (:nicknames :net/dm)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/udp :net/codec/tlv))
+  (:use :cl :sb-bsd-sockets :std :net/core :net/codec/tlv))
 
 (defpkg :net/proto/sesh
   (:nicknames :net/sesh)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/udp))
+  (:use :cl :sb-bsd-sockets :std :net/core))
 
 (defpkg :net/proto/nsm
   (:nicknames :net/nsm)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/udp :codec/osc))
+  (:use :cl :sb-bsd-sockets :std :net/core :codec/osc))
 
 (defpkg :net/cookie
   (:use :cl :std :parse/bytes :obj/uri)
@@ -346,7 +363,7 @@
 
 (defpkg :net/proto/swank
   (:nicknames :net/swank)
-  (:use :cl :sb-bsd-sockets :std :net/core :net/tcp)
+  (:use :cl :sb-bsd-sockets :std :net/core)
   (:export 
    #:*swank-connections*
    #:*default-swank-port*
@@ -397,8 +414,7 @@
   (:use :cl :std :uri
    :url :http :net/cookie :net/core
    :io/fast :io/chunky
-   :dat/base64 :ssl :sb-gray :config
-   :net/tcp)
+   :dat/base64 :ssl :sb-gray :config)
   (:export
    :request
    :get
@@ -533,7 +549,7 @@
 (defpkg :net/srv/http
   (:use :cl :std :net/proto/http
    :net/codec/http :net/core :net/cookie :io/chunky 
-   :srv :net/tcp :config)
+   :srv :config)
   (:import-from :net/srv :service-log)
   (:import-from :io/chunky :trim-whitespace)
   (:use-reexport :net/srv)
@@ -543,7 +559,7 @@
   (:export :http-service :https-service :http-service-config))
 
 (defpkg :net/srv/udp
-  (:use :cl :std :net/udp :net/codec/tlv :net/core :srv :config)
+  (:use :cl :std :net/codec/tlv :net/core :srv :config)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service :udp-service-config))
 

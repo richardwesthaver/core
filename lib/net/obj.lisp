@@ -5,6 +5,13 @@
 ;;; Code:
 (in-package :net/core)
 
+;;; Vars
+(defvar *ipv6* nil
+  "When non-nil, automatically defer to ipv6 addresses where possible.")
+
+(define-symbol-macro default-inet-address-family
+    (if *ipv6* sb-bsd-sockets-internal::af-inet6 sb-bsd-sockets-internal::af-inet))
+
 ;;; Types
 (deftype port () "Port number" '(integer 0 65535))
 (deftype unprivileged-port () "Unprivileged port number" '(or (integer 1024 65535) (integer 0)))
