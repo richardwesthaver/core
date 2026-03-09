@@ -127,7 +127,7 @@
   (:import-from :std :deferror :eval-always :timeval)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
-   :sockopt-peercred :netlink-socket
+   :sockopt-peercred
    :sockaddr-nl :af-netlink
    :netlink-proto :netlink-proto*
    :nlm-f :nlm-f*

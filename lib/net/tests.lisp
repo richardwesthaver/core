@@ -60,6 +60,7 @@ Cookie: name=wookie
     (is req)))
 
 (deftest req ()
+  (cry/tls:ensure-ssl)
   (istype 'net/req::keep-alive-chunked-stream
           (req:get (uri:uri "https://compiler.company") :force-binary t :want-stream t :keep-alive t))
   (istype 'string (req:get (uri:uri "https://compiler.company")))

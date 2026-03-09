@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :net/tcp)
+(in-package :net/core)
 
 ;;; Utils
 (defun tcp-echo (port)

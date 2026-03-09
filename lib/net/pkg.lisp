@@ -70,7 +70,41 @@
    :*default-connect-timeout*
    :*default-read-timeout*
    :*default-proxy*
-   :*default-user-agent*))
+   :*default-user-agent*)
+  ;; udp
+  (:export
+   :udp-server
+   :with-udp-client
+   :with-udp-server
+   :udp-receive-ping
+   :udp-echo
+   :udp-socket
+   :udp-client)
+  ;; tcp
+  (:export
+   :tcp-server
+   :with-tcp-client
+   :tcp-ping-server
+   :*tcp-ping-size*
+   :tcp-echo
+   :tcp-receive-ping
+   :tcp-client
+   :tcp-source
+   :tcp-sink
+   :tcp-socket
+   :tcp-config)
+  ;; unix
+  (:export
+   :unix-server
+   :with-unix-client
+   :with-unix-server
+   :unix-receive-ping
+   :unix-echo
+   :unix-socket
+   :unix-client)
+  ;; netlink
+  (:export 
+   :netlink-socket))
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
@@ -143,46 +177,6 @@
    :register-dbus-signal-handler :dbus-signal-handler
    :*all-dbus-objects* :*authenticator-classes* 
    :find-authenticator-class :dbus-handler :dbus-signal-handler :dbus-method-handler))
-
-(defpkg :net/udp
-  (:nicknames :udp)
-  (:use :cl :std :net/core :sb-bsd-sockets :config)
-  (:export
-   :udp-server
-   :with-udp-client
-   :with-udp-server
-   :udp-receive-ping
-   :udp-echo
-   :udp-socket
-   :udp-client))
-
-(defpkg :net/tcp
-  (:nicknames :tcp)
-  (:use :cl :std :net/core :sb-bsd-sockets :config)
-  (:export
-   :tcp-server
-   :with-tcp-client
-   :tcp-ping-server
-   :*tcp-ping-size*
-   :tcp-echo
-   :tcp-receive-ping
-   :tcp-client
-   :tcp-source
-   :tcp-sink
-   :tcp-socket
-   :tcp-config))
-
-(defpkg :net/unix
-  (:nicknames :uds)
-  (:use :cl :std :net/core :sb-bsd-sockets :config)
-  (:export
-   :unix-server
-   :with-unix-client
-   :with-unix-server
-   :unix-receive-ping
-   :unix-echo
-   :unix-socket
-   :unix-client))
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)

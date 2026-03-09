@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(in-package :net/udp)
+(in-package :net/core)
 
 (defvar *udp-ping-size* 512)
 

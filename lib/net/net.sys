@@ -14,6 +14,7 @@
   (:file "udp")
   (:file "tcp")
   (:file "unix")
+  (:file "netlink")
   (:file "socket")
   (:mod "proto"
    :components ((:file "dns")

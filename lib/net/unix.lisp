@@ -3,7 +3,7 @@
 ;; Support for local domain (AF_DOMAIN) sockets.
 
 ;;; Code:
-(in-package :net/unix)
+(in-package :net/core)
 
 (defconfig unix-socket-config (socket-config) 
   ())
