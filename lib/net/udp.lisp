@@ -42,7 +42,7 @@
   ((family :initform default-inet-address-family))
   (:default-initargs :type :datagram :protocol :udp))
 
-(defmethod sb-bsd-sockets::make-sockaddr-for ((socket udp-socket) &optional sockaddr &rest address)
+(defmethod make-sockaddr-for ((socket udp-socket) &optional sockaddr &rest address)
   (apply 'net/core::%sockaddr sockaddr address))
 
 (defclass udp-client (udp-socket client) ())

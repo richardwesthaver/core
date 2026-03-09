@@ -49,7 +49,7 @@
    :run-git-command :git-meta :gitignore :make-git-repo))
 
 (defpkg :vc/hg
-  (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config :dat/toml :ast :uri)
+  (:use :cl :std :cli :net/core :vc/proto :config :dat/toml :ast :uri)
   (:import-from :vc/git :run-git-command)
   (:export :*hg-program* 
    :hg-repo :hg-error 

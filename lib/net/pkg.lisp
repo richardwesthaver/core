@@ -477,14 +477,13 @@
    #:find-route
    #:next-session-id
    #:remove-session
-   #:session
    #:session-expired-p
    #:defroute
    #:defservice
    :service-log
    #:*headers-sent*
    #:*log-service-errors*
-   #:service-config
+   #:net-service-config
    #:session-db
    #:remote-addr*
    #:remote-port*

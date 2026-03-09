@@ -164,7 +164,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
 
 ;; session-cookie-value, session-verify
 
-(defclass session (id:id)
+(defclass srv:session (id:id)
   ((start :initarg :start :initform (get-universal-time) :accessor start)
    (data :initarg :data :accessor data)
    (timeout :type fixnum :accessor session-timeout :initarg :timeout))

@@ -52,7 +52,7 @@
   ucre nil check-ucre sb-alien:addr)
 
 ;;; NETLINK
-(defconstant af-netlink sb-bsd-sockets-internal::af-route)
+(defconstant af-netlink sockint::af-route)
 
 ;; (defconstant +netlink-max+ 32)
 
