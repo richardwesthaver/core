@@ -9,12 +9,6 @@
 ;;; Code:
 (in-package :cli/tui)
 
-(define-command-type secret (input &optional (prompt "Secret: "))
-  (format *query-io* prompt)
-  (force-output *query-io*)
-  (let ((val (without-echo (read-arg input))))
-    (conceal val)))
-
 (defun completing-read (prompt completions &optional (default :error))
   "Print PROMPT then read input using linedit with completions. DEFAULT is the
 value returned when the input doesn't match a member of COMPLETIONS. A default
@@ -45,3 +39,9 @@ that the input is passed to READ-FROM-STRING."
 (define-command-type cmd (input &optional (prompt "Command: ") completions (default :error))
   (let ((*query-io* input))
     (completing-read prompt (or completions (mapcar (lambda (x) (string-downcase (car x))) (commands))) default)))
+
+(define-command-type secret (input &optional (prompt "Secret: "))
+  (format *query-io* prompt)
+  (force-output *query-io*)
+  (let ((val (without-echo (read-arg input))))
+    (conceal val)))

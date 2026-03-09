@@ -1,47 +1,11 @@
-(require :sb-cltl2)
+;;; parse/pkg.lisp --- Parser packages
 
-(defpackage :parse/proto
+;;; Code:
+(defpkg :parse/proto
   (:use :cl :std)
   (:export :parse :parser-condition :parser-error :simple-parser-error))
 
-(defpackage :parse/lex
-  (:nicknames :lex)
-  (:use :cl :ppcre :std :parse/proto)
-  (:export
-   #:*string*
-   #:*length*
-   #:*index*
-   #:with-lexer-environment
-   #:consume
-   #:advance
-   #:unread
-   #:peek
-   #:advance-n
-   #:unread-n
-   #:consume-until
-   #:matcher-character
-   #:matcher-string
-   #:matcher-range
-   #:matcher-find
-   #:matcher-or
-   #:matcher-and
-   #:matcher-not
-   #:matcher-next
-   #:matcher-prev
-   #:matcher-any
-   #:make-matcher
-   #:define-matcher))
-
-(defpackage :parse/yacc
-  (:use :cl :parse/proto)
-  (:import-from :std :memq :required-argument)
-  (:export :make-production :make-grammar :make-parser :parse-with-lexer
-           :define-grammar :define-parser
-           :yacc-compile-warning :conflict-warning :conflict-summary-warning
-           :yacc-runtime-error :yacc-parse-error :yacc-parse-error-terminal
-           :yacc-parse-error-value :yacc-parse-error-expected-terminals))
-
-(defpackage parse/bytes
+(defpkg :parse/bytes
   (:use :cl :parse/proto)
   (:import-from :sb-cltl2
    :variable-information)
@@ -75,11 +39,44 @@
    :match-i-case
    :match-failed))
 
-(defpackage :parse/pratt
+(defpkg :parse/lex
+  (:nicknames :lex)
+  (:use :cl :ppcre :std :parse/proto)
+  (:shadowing-import-from :parse/bytes :advance :peek)
+  (:export
+   #:*string*
+   #:*length*
+   #:*index*
+   #:with-lexer-environment
+   #:consume
+   #:advance
+   #:unread
+   #:peek
+   #:advance-n
+   #:unread-n
+   #:consume-until
+   #:matcher-character
+   #:matcher-string
+   #:matcher-range
+   #:matcher-find
+   #:matcher-or
+   #:matcher-and
+   #:matcher-not
+   #:matcher-next
+   #:matcher-prev
+   #:matcher-any
+   #:make-matcher
+   #:define-matcher))
+
+(defpkg :parse/yacc
+  (:use :cl :parse/proto)
+  (:import-from :std :memq :required-argument)
+  (:export :make-production :make-grammar :make-parser :parse-with-lexer
+           :define-grammar :define-parser
+           :yacc-compile-warning :conflict-warning :conflict-summary-warning
+           :yacc-runtime-error :yacc-parse-error :yacc-parse-error-terminal
+           :yacc-parse-error-value :yacc-parse-error-expected-terminals))
+
+(defpkg :parse/pratt
   (:use :cl :parse/proto)
   (:export :pratt-parser :next-precedence :parse-prefix :parse-infix))
-
-;; FIX 2024-11-09: name conflict ADVANCE bytes vs lex
-(uiop:define-package :parse
-  (:use :cl :std)
-  (:use-reexport :parse/proto :parse/lex :parse/yacc :parse/pratt))

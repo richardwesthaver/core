@@ -47,7 +47,7 @@
 ;; for printing the final output of a MESSAGE to a stream or file.
 
 ;;; Code:
-(defpackage :log
+(defpkg :log
   (:use :cl :std :std/meta :std/thread :time :db :config :ast :id :build :schema)
   (:export :*log-level* :*logger* :get-real-time-since 
    :init-log-timestamp

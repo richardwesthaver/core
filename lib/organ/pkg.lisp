@@ -28,7 +28,7 @@
 ;; section in the META slot and the full tree of headings in the TREE slot.
 
 ;;; Code:
-(defpackage :organ
+(defpkg :organ
   (:use :cl :ppcre :std :parse/lex :sb-gray :ast :val)
   (:import-from :uiop :read-file-string)
   (:export
@@ -142,7 +142,7 @@
    :org-tags
    :org-file-headings))
 
-(defpackage :organ/graph
+(defpkg :organ/graph
   (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :uri :url :equiv :val)
   (:import-from :graph :in :out)
   (:export :init-org-graph :org-graph
@@ -158,10 +158,10 @@
    :org-graph-minisearch-json
    :org-graph-tinysearch-json))
 
-(defpackage :organ/db
+(defpkg :organ/db
   (:use :cl :std :organ :organ/graph :db :rdb :id :uuid :q :schema :uri :url :equiv :val :graph :ast)
   (:export :org-graph-db))
 
-(defpackage :organ/cli
+(defpkg :organ/cli
   (:use :cl :std :organ :cli :clap)
   (:export :*organ-cli*))

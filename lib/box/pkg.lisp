@@ -11,7 +11,7 @@
 ;; server or spawning one in a user process when supported.
 
 ;;; Code:
-(defpackage :box
+(defpkg :box
   (:use :cl :std :cli :sb-bsd-sockets :net :dat/json :config :obj :build :ast)
   (:export
    :box-config

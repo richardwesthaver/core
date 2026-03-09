@@ -3,13 +3,6 @@
 ;;
 
 ;;; Code:
-(defpackage :math-int
-  (:use :cl :std)
-  (:export :*math-packages*))
-(in-package :math-int)
-(defparameter *math-packages* nil)
-(setq *defpkg-hook* (lambda (x) (pushnew (package-name x) *math-packages* :test 'string=)))
-
 (defpkg :math/util
   (:use :cl :std :tensor)
   (:import-from :cli/tools/cc :run-nvcc)
@@ -73,7 +66,6 @@
       #:log #:log! #:atan #:atan! #:expt #:expt!
       ;; #:transpose #:ctranspose
       #:sum #:realpart #:imagpart #:max #:min #:conjugate))
-
   (defparameter *math-exports* (append syn:*cl-symbols* *math-syntax*))
 
   (defpackage* :math/sym
@@ -84,3 +76,10 @@
   (:shadowing-import-from :math/sym . #.*math-exports*)
   (:use :std-lisp :tensor :parse/yacc :id :math/blas :math/lapack :math/cuda :math/sym)
   (:export :*linfix-parser*))
+
+(defpkg :math)
+(reexport-packages *component-packages* :math)
+
+(defpkg :math-user
+  (:use :math :tensor :math/sym :id))
+

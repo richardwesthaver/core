@@ -2,7 +2,7 @@
 (defsys :rdb
  :require (:std :rocksdb :obj :log :q :dat :cli :net)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :feature :rdb)
   (:file "condition") 
   (:file "macs")
   (:file "rocksdb")

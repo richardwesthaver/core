@@ -1,13 +1,14 @@
 ;;; log.sys --- logging system
 (defsys :log
   :require (:std :io :obj :syslog)
-  :components ((:file "pkg")
-               (:file "condition")
-               (:file "log")
-               (:file "db")
-               (:file "stream")
-               (:file "cfg")
-               (:file "sys"))
+  :components 
+ ((:pkg "pkg" :feature :log)
+  (:file "condition")
+  (:file "log")
+  (:file "db")
+  (:file "stream")
+  (:file "cfg")
+  (:file "sys"))
  :provide
  (:log
   (:proto :log)

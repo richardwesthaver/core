@@ -108,7 +108,11 @@
    :proj
    :select
    :boolean-binary-expression
-   :query-parser))
+   :query-parser
+   :*query-engine*
+   :*query-dialect*
+   :query-dialect-designator
+   :sql :dql))
 
 (defpackage :q/select
   (:use :cl :std :q/proto :schema :ast)
@@ -174,12 +178,5 @@
    :dql-anonymous
    :dql-anonymous-p))
 
-(pkg:defpkg :q
-  (:use :cl :std :id :schema :ast :srv)
-  (:use-reexport :q/proto)
-  (:export
-   :*query-engine*
-   :*query-dialect*
-   :query-dialect-designator
-   :sql :dql))
-
+;; (:use :cl :std :id :schema :ast :srv)
+;; (:use-reexport :q/proto)

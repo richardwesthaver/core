@@ -24,7 +24,7 @@
    :*default-package-file-name* :test-package-p
    :module-package-p :internal-package-p
    :*component-packages* :*default-pkg-component-use*
-   :export-packages))
+   :export-packages :reexport-packages))
 
 (in-package :std/defpkg)
 
@@ -42,6 +42,12 @@ definitions.")
 
 (defun export-packages (packages &optional (from *package*))
   (mapc (lambda (pkg) (do-external-symbols (sym pkg) (export* sym from))) packages))
+
+(defun reexport-packages (packages &optional (from *package*))
+  (mapc (lambda (pkg) (do-external-symbols (sym pkg) 
+                        (import* sym from)
+                        (export* sym from))) 
+        packages))
 
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defmacro without-package-warnings (&body body)

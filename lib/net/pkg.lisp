@@ -3,16 +3,6 @@
 ;; 
 
 ;;; Code:
-(defpackage :net-int
-  (:use :cl :std)
-  (:export :*net-packages*))
-
-(in-package :net-int)
-
-(eval-always (defparameter *net-packages* nil))
-
-(setq *defpkg-hook* (compile nil (lambda (x) (pushnew (package-name x) *net-packages* :test 'string=))))
-
 (defpkg :net/core
   (:use :cl :std :sb-thread :config :id :sb-bsd-sockets :io/socket :io/mux)
   (:recycle :sb-bsd-sockets)

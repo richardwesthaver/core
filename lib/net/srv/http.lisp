@@ -35,7 +35,7 @@ session-management.")
 
 (defun ssl-p (&optional (service *service*))
   (and (secure-service-p service)
-       (eql :https (sb-bsd-sockets:socket-protocol (sb-bsd-sockets:socket service)))))
+       (eql :https (socket-protocol (socket service)))))
 
 ;;; Config
 (defconfig http-service-config (net-service-config) ())

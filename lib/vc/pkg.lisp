@@ -1,7 +1,7 @@
 ;;; vc/pkg.lisp --- Version Control Packages
 
 ;;; Code:
-(defpackage :vc/proto
+(defpkg :vc/proto
   (:use :cl :std :log :parse/lex :obj :config)
   (:export 
    :vc
@@ -42,13 +42,13 @@
    :vc-branches
    :vc-tags))
 
-(defpackage :vc/git
+(defpkg :vc/git
   (:use :cl :std :cli :vc/proto :config)
   (:export :*git-program* 
    :git-repo :git-error 
    :run-git-command :git-meta :gitignore :make-git-repo))
 
-(defpackage :vc/hg
+(defpkg :vc/hg
   (:use :cl :std :cli :sb-bsd-sockets :vc/proto :config :dat/toml :ast :uri)
   (:import-from :vc/git :run-git-command)
   (:export :*hg-program* 
@@ -67,7 +67,7 @@
    :find-hg-bookmarks
    :find-hg-requires))
 
-(defpackage :vc/util
+(defpkg :vc/util
   (:use :cl :std :cli :vc/proto :vc/git :vc/hg :config)
   (:import-from :uri :uri :uri-to-string)
   (:export :make-repo :with-current-vc-root
@@ -75,10 +75,6 @@
    :bundle-repos :update-repo
    :update-repos))
    
-(defpackage :vc/cli
+(defpkg :vc/cli
   (:use :cl :std :cli :clap :vc/proto :vc/git :vc/hg :vc/util)
   (:export :*vc-cli*))
-
-(pkg:defpkg :vc
-  (:use :cl :std)
-  (:use-reexport :vc/proto :vc/hg :vc/git #+cli :vc/cli :vc/util))

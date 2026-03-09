@@ -7,7 +7,7 @@
 ;; Commentary:
 
 ;; Code:
-(defpackage :rdb
+(defpkg :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :schema :btree 
    :store :stored :log :io/static 
@@ -160,7 +160,7 @@
    :init-rdbrc
    :rdb-service))
 
-(defpackage :rdb/cli
+(defpkg :rdb/cli
   (:use :cl :std :cli :clap :rdb :db :std/seq))
 
 (in-package :rdb)

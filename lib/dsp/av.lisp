@@ -95,3 +95,7 @@
     (assert (zerop (avformat-open-input (addr ctx) (namestring path) nil nil)))
     (assert (zerop (avformat-find-stream-info ctx nil)))
     (values (slot ctx 'ffmpeg::nb-streams) (slot ctx 'ffmpeg::nb-stream-groups))))
+
+#+nil
+(defun probe-media-file (path)
+  "Probe PATH, checking that it is a supported media format and returning a subclass of MEDIA-FILE.")

@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(defpackage :dsp/core
+(defpkg :dsp/core
   (:use :cl :std :log :config)
   (:export
    #:media-codec
@@ -24,7 +24,7 @@
    #:video-config
    #:video-system-config))
 
-(defpackage :dsp/av
+(defpkg :dsp/av
   (:use :cl :std :dsp/core :ffmpeg :sb-alien :dat/mime :id)
   (:export
    :av-error
@@ -40,7 +40,7 @@
    #:media-file-stream-count
    #:load-av))
 
-(defpackage :dsp/gst
+(defpkg :dsp/gst
   (:use :cl :std :dsp/core :gstreamer :sb-alien)
   (:export
    :gst-condition

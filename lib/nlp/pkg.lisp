@@ -1,4 +1,7 @@
-(defpackage :nlp/data
+;;; nlp/pkg.lisp --- NLP packages
+
+;;; Code:
+(defpkg :nlp/data
   (:use :cl :std)
   (:export 
    :language-data
@@ -6,15 +9,15 @@
    :stop-words-lookup
    :stop-words))
 
-(defpackage :nlp/stem/porter
+(defpkg :nlp/stem/porter
   (:use :cl :std :rdb)
   (:export :stem))
 
-(defpackage :nlp/tokenize
+(defpkg :nlp/tokenize
   (:use :cl :std :ppcre :nlp/data :nlp/stem/porter)
   (:export :word-tokenize :sentence-tokenize))
 
-(defpackage :nlp/doc
+(defpkg :nlp/doc
   (:use :cl :std :nlp/data :nlp/tokenize)
   (:export 
    :document
@@ -35,12 +38,12 @@
    :tf-vectorize-documents
    :vector-data))
 
-(defpackage :nlp/textrank
+(defpkg :nlp/textrank
   (:use :cl :std :nlp/doc :nlp/tokenize)
   (:export 
    :summarize-text :edges :document-vertex))
 
-(defpackage :nlp/dbscan
+(defpkg :nlp/dbscan
   (:use :cl :std :nlp/doc :nlp/textrank :nlp/tokenize)
   (:export 
    :document-cluster :clusters :get-cluster :distance
@@ -48,11 +51,11 @@
    :cluster :neighbors :clusters
    :dbscan))
 
-(defpackage :nlp/section
+(defpkg :nlp/section
   (:use :cl :std :nlp/doc :nlp/dbscan :nlp/tokenize)
   (:export :extract-sections))
 
-(defpackage :nlp/string
+(defpkg :nlp/string
   (:use :cl)
   (:export    
    #:hamming
@@ -65,18 +68,6 @@
    #:jaro
    #:jaro-winkler))
 
-(defpackage :nlp/fuzzy
+(defpkg :nlp/fuzzy
   (:use :cl)
   (:export :fuzzy-match :file-match))
-
-(pkg:defpkg :nlp
-  (:use :cl)
-  (:use-reexport
-   :nlp/data
-   :nlp/tokenize
-   :nlp/doc
-   :nlp/stem/porter
-   :nlp/textrank
-   :nlp/dbscan
-   :nlp/section
-   :nlp/fuzzy))

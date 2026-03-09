@@ -2,7 +2,7 @@
 (defsys :dsp
  :require (:ppcre :std :obj :dat :sndfile :net :math :gstreamer :log :io :jack :chromaprint :alsa :ffmpeg)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :feature :dsp :export :dsp :package :dsp-int)
   (:file "var")
   (:file "proto")
   (:file "av")
@@ -14,8 +14,7 @@
   (:mod "vid"
    :components
    ((:file "pkg")))
-  (:file "gst")
-  (:file "dsp"))
+  (:file "gst"))
  :provide 
  ((:proto :media)
   (:tests)))

@@ -26,9 +26,7 @@
 ;; self-documenting language :).
 
 ;;; Code:
-(eval-when (:compile-toplevel :load-toplevel) (require :sb-introspect))
-
-(defpackage :doc
+(defpkg :doc
   (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
   (:import-from :uiop :string-prefix-p)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)

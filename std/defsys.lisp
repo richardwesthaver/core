@@ -1169,7 +1169,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                   (prog1 (load (resolve-fasl-cache-file f) :verbose verbose)
                     (when-let ((e (and (slot-boundp comp 'export) (slot-value comp 'export))))
                       (unless (find-package e) (make-package e :internal-symbols 0))
-                      (export-packages *component-packages* e))
+                      (reexport-packages *component-packages* e))
                     (setq pkg:*component-packages* nil
                           pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)
