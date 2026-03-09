@@ -220,12 +220,14 @@ we find one, else return NIL."
             do (setf %path parent)))))
 
 ;;; Early Macro definition
-(defmacro with-repo ((sym &rest args &key path init type &allow-other-keys) &body body)
-  `(with-directory (probe-directory ,path)
-     (let ((,sym ,@(or (unless (keywordp (car args))
-                         `(pop ,args))
-                       `((make-repo 
-                          *default-pathname-defaults* 
-                          ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
-       (setf *repo* ,sym)
-       ,@body)))
+(defmacro with-repo ((sym &rest args &key path init type delete &allow-other-keys) &body body)
+  `(unwind-protect
+        (with-directory (probe-directory ,path)
+          (let ((,sym ,@(or (unless (keywordp (car args))
+                              `(pop ,args))
+                            `((make-repo 
+                               *default-pathname-defaults* 
+                               ,@(when init `(:init ,init)) ,@(when type `(:type ,type)))))))
+            (setf *repo* ,sym)
+            ,@body))
+     ,@(when delete `((probe-delete-directory ,path)))))

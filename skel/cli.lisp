@@ -139,7 +139,10 @@
     (in-package :sk-user)
     (using :cl-user :sb-ext :std-user)
     (println "Welcome to SKEL")
-    (cli/linedit:install-repl :wrap-current t :history "/tmp/skel.history" :killring "/tmp/skel.killring")
+    (cli/linedit:install-repl 
+     :wrap-current t 
+     :history (xdg-data-dir :skel "history") 
+     :killring (xdg-data-dir :skel "/killring"))
     (cli/repl:make-toplevel-init
      :package :sk-user
      :userinit (lambda () (or (xdg-config-file :core) 

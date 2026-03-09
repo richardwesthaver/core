@@ -1,5 +1,5 @@
 (defpackage :dat/tests
-  (:use :cl :std :rt :dat :log :ast :dat/html :dat/css :dat/tar :dat/ttf :dat/img :dat/gif :color)
+  (:use :cl :std :rt :dat :log :ast :color)
   (:export))
 
 (in-package :dat/tests)

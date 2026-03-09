@@ -48,7 +48,7 @@
    (bump "ironclad")
    (bump "slime")
    (vc-export (vc *skel-project*) :filter-regexp "^std$" :upstream nil) ;; yuck
-   (with-repo (r :path "/tmp/core" :type :git)    
+   (with-repo (r :path "/tmp/core" :type :git :delete t)
     (loop for remote across (setf (vc-remotes r) (remotes "core"))
      do (vc-remote r :add :name (name remote) :url (uri remote)))
     (vc-update r)
