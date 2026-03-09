@@ -4,7 +4,8 @@
 
 ;;; Code:
 (in-package :dsp/core)
-(defvar *media-directory* #p"/opt/stash/media/")
+(eval-always (defvar *media-directory* #p"/opt/stash/media/"))
+  
 (defvar *default-media-probe* t
   "Default profile for PROBE-MEDIA-FILE.
 

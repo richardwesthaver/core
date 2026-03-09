@@ -223,8 +223,7 @@
 (pkg:defpkg :sk-user
   (:use :cl :std :cli :clap :tools
    :cl-user :log :sb-debug :sb-ext
-   :net/proto/dns :obj/ast :vc :rdb 
-   :io :net :pod)
+   :obj/ast :vc :rdb :io :net :pod)
   (:import-from :uri :uri)
   (:use :skel :skel/core :skel/comp :skel/net))
 
