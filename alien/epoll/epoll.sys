@@ -1,0 +1,8 @@
+;;; alien/epoll/epoll.sys --- Epoll Sytem Definitions
+(defsys :epoll
+ :require (:std :obj)
+  :components ((:file "pkg")
+               (:grovel "constants"
+                :package :epoll))
+ :provide
+ ((:tests)))

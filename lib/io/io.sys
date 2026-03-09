@@ -5,6 +5,7 @@
            :ironclad/digests
            :ironclad/digest/crc32
            :zstd
+           :epoll
            :uring
            :xkb
            :evdev
