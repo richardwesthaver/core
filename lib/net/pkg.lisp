@@ -34,7 +34,7 @@
    :socket-receive
    :socket-shutdown
    :socket-connect
-   :socket-list
+   :socket-listen
    :socket-protocol
    :socket-open-p
    :socket-make-stream
@@ -575,6 +575,6 @@
   (:import-from :net/req :http-client-config :http-client)
   (:export :http-client-config :http-client))
 
-(export-packages (remove "NET/REQ" *component-packages* :test 'string=) :net)
+(reexport-packages (remove "NET/REQ" *component-packages* :test 'string=) :net)
 
 (defpkg :net-user (:use :cl :std :net :uri :url))
