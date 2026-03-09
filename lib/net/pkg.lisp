@@ -580,3 +580,13 @@
   (:export :caddy-service :nginx-service))
 
 (setq *defpkg-hook* nil)
+
+(defpkg :net
+  (:use :cl :std)
+  (:import-from :net/req :http-client-config :http-client)
+  (:export :http-client-config :http-client))
+
+(export-packages (remove "NET/REQ" *component-packages* :test 'string=) :net)
+
+(defpkg :net-user (:use :cl :std :net :uri :url))
+  

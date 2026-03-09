@@ -2,7 +2,7 @@
 (defsys :net
  :require (:dat :obj :io :parse :rt :cry :std :cli :log)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg" :default :net-user :feature :net :package :net-int)
   (:file "obj")
   (:file "util")
   (:mod "codec"
@@ -36,8 +36,7 @@
     (:file "http")
     (:file "oauth")
     (:file "openapi")
-    (:file "ext")))
-  (:file "net"))
+    (:file "ext"))))
  :provide
  ((:proto :net)
   (:proto :http)
