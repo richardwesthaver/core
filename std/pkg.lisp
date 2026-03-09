@@ -1420,7 +1420,7 @@
    :fd-zero :unix-stat :unix-fstat :unix-lstat
    :unix-file-mode :unix-pid :unix-uid :unix-gid
    :syscall-type :syscall :syscall* :int-syscall
-   :type-syscall :void-syscall :with-restarted-syscall)
+   :type-syscall :void-syscall)
   (:import-from :std/alien :defar)
   (:import-from :sb-impl :find-a-pty :open-pty)
   (:export
@@ -1428,7 +1428,7 @@
    :unix-fast-select :fd-set :fd-clr :fd-isset
    :fd-zero :unix-stat :unix-fstat :unix-lstat
    :fd-type :syscall-type :syscall :syscall*
-   :int-syscall :type-syscall :void-syscall :with-restarted-syscall
+   :int-syscall :type-syscall :void-syscall
    :*user-fasl-cache*
    :user-fasl-cache
    :ensure-fasl-cache-file
