@@ -1,15 +1,9 @@
-;;; epoll/pkg.lisp --- EPOLL Systems
+;;; epoll.lisp --- EPOLL bindings
 
-;; /usr/include/sys/epoll.h
-
-;;; Commentary:
+;; 
 
 ;;; Code:
-(defpackage :epoll
-  (:use :cl :std :sb-alien)
-  (:export))
-   
-(in-package :epoll)
+(in-package :sys)
 
 (define-alien-type epoll-data
   (union epoll-data-t

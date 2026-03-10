@@ -8,3 +8,10 @@
 ;; convenience enums for errors and signals (grovelled by sb-posix/sys)
 (std/alien:define-alien-enum (errno :type int))
 (std/alien:define-alien-enum (signo :type int))
+
+(define-alien-type sigaction
+  (struct sigaction
+    (handler (* t))
+    (sigaction (* t))
+    (mask unsigned-long)
+    (flags int)))
