@@ -26,6 +26,7 @@
   (:mod "xml"
    :components
    ((:file "xml")
+    (:file "stream")
     (:file "svg")))
   (:mod "html"
    :components
