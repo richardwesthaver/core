@@ -1,4 +1,4 @@
-;;; syslog.sys --- Linux Syslog FFI bindings
+;;; sys.sys --- Linux System FFI bindings
 
 ;;
 
@@ -7,10 +7,11 @@
 ;; 
 
 ;;; Code:
-(defsys :syslog
+(defsys :sys
   :require (:std)
   :components ((:file "pkg")
                (:grovel "constants"
-                :package :syslog)
+                :package :sys)
+               (:file "types")
                (:file "syslog"))
   :provide ((:tests)))

@@ -1,4 +1,4 @@
-("sys/syslog.h" "sys/syscall.h")
+("sys/syscall.h" "sys/syslog.h" "signal.h" "errno.h")
 
 (;; syscalls
  (:integer +sys-gettid+ "SYS_gettid")

@@ -1473,7 +1473,7 @@
    :disable-echo :without-echo))
 
 (pkg:defpkg :std/defsys
-  (:nicknames :sys)
+  (:nicknames :defsys)
   (:use :cl :std/prim :std/meta 
     :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition

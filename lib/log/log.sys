@@ -1,6 +1,6 @@
 ;;; log.sys --- logging system
 (defsys :log
-  :require (:std :io :obj :syslog)
+  :require (:std :io :obj :sys)
   :components 
  ((:pkg "pkg" :feature :log)
   (:file "condition")

@@ -47,7 +47,7 @@
               :evdev
               :btrfs
               :zstd
-              :syslog
+              :sys
               :epoll
               :keyutils
               :tree-sitter

@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :syslog)
+(in-package :sys)
 
 (define-alien-enum (syslog-option)
   :cons +log-cons+

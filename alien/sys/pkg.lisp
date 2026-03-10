@@ -1,13 +1,13 @@
-;;; pkg.lisp --- low-level bindings to Linux syslog
+;;; pkg.lisp --- low-level bindings to Linux systems
 
 ;;; Commentary:
 
-;; also exporting some additional syscalls here cuz why not.
+;; syscalls, syslog, sockets, errors, signums
 
 ;; gettid
 
 ;;; Code:
-(defpackage :syslog
+(defpackage :sys
   (:use :cl :std :sb-alien)
   (:export 
    :closelog :openlog :setlogmask :syslog 
