@@ -213,7 +213,7 @@ shared libraries."
   `(sb-int:with-float-traps-masked (:invalid :divide-by-zero)
      ,@body))
 
-
+;;; CPUID
 ;; https://www.intel.com/content/dam/develop/public/us/en/documents/10tb-24-breakthrough-aes-performance-with-intel-aes-new-instructions-final-secure.pdf
 
 ;; ncycles=(tscend-tscstart/i)
@@ -301,10 +301,12 @@ Core i7 4770K, do **NOT** support RTM."
       (let ((ebx (nth-value 1 (cpuid 7))))
         (not (zerop (logand ebx #x800)))))))
 
+#-(or :x86 :x86-64 :little-endian :ppc :powerpc :big-endian)
 (defparameter %little-endian nil
   "An internal flag which indicates the host is little-endian, in the event that
 we can't determine endianness at compile-time.")
 
+;;; Endianness
 (defun little-endian-p ()
   "Return T if the current platform is little-endian else NIL."
   #+(or :x86 :x86-64 :little-endian) t

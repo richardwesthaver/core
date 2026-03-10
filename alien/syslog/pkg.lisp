@@ -2,6 +2,10 @@
 
 ;;; Commentary:
 
+;; also exporting some additional syscalls here cuz why not.
+
+;; gettid
+
 ;;; Code:
 (defpackage :syslog
   (:use :cl :std :sb-alien)

@@ -1,6 +1,10 @@
-("sys/syslog.h")
+("sys/syslog.h" "sys/syscall.h")
 
-((:integer +log-emerg+ "LOG_EMERG")
+(;; syscalls
+ (:integer +sys-gettid+ "SYS_gettid")
+ (:integer +sys-bpf+ "SYS_bpf")
+ ;; syslog
+ (:integer +log-emerg+ "LOG_EMERG")
  (:integer +log-alert+ "LOG_ALERT")
  (:integer +log-crit+ "LOG_CRIT")
  (:integer +log-err+ "LOG_ERR")

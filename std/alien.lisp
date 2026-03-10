@@ -418,7 +418,7 @@ return a pointer instead of its value."
 
 (define-compiler-macro sap-ref (&whole form ptr type &optional (offset 0))
   "Open-code SAP-REF when TYPE is constant."
-  (if (or (constantp type) (and (consp type) (eql (car type) 'quote)))
+  (if (constantp type)
       (let ((ptyp (parse-alien-type (eval type) nil)))
         (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
           ;; todo: memoize
@@ -433,7 +433,7 @@ return a pointer instead of its value."
 
 (define-compiler-macro sap-svref (&whole form sap type &optional (index 0))
   "Open-code SAP-SVREF when TYPE (and eventually INDEX) are constant."
-  (if (or (constantp type) (and (consp type) (eql (car type) 'quote)))
+  (if (constantp type)
       (if (constantp index)
           `(sap-ref ,sap ,type
                     ,(* (eval index) (foreign-type-size (eval type))))

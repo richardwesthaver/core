@@ -80,6 +80,10 @@ arrange for FVAR to be closed after BODY."
      (unwind-protect (progn ,@body)
        ,@(when close `(sb-posix:close ,fvar)))))
 
+;; convenience enums for errors and signals (exported by sb-posix)
+(std/alien:define-alien-enum (errno :type int))
+(std/alien:define-alien-enum (signo :type int))
+
 ;;; SYSCALLs
 ;; based on IOLib
 ;; TODO 2026-03-08:

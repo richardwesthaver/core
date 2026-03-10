@@ -36,10 +36,10 @@ the underlying link).")
 
 ;;; Socket Utils
 (definline %socket-operation-in-progress-p (condition)
-  (typep condition 'operation-in-progress)) ;; errno 36 
+  (typep condition 'operation-in-progress)) ;; errno 115 
 
 (definline %socket-not-connected-p (condition)
-  (typep condition 'not-connected-error)) ;; errno 36 
+  (typep condition 'not-connected-error)) ;; errno 107
 
 ;; returns an alien struct pointer, allocated based on input
 (defun %sockaddr (&optional sockaddr &rest addr)

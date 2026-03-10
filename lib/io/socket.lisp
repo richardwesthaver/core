@@ -179,3 +179,68 @@
 ;; (:max 12)
 
 (defconstant +size-of-sockaddr-nl+ (sb-alien::alien-size sockaddr-nl))
+
+;;; ICMP
+(define-alien-type ip-header
+    (struct ip-header
+      (ver-ihl  (unsigned 8))
+      (tos      (unsigned 8))
+      (length   (unsigned 16))
+      (id       (unsigned 16))
+      (offset   (unsigned 16))
+      (ttl      (unsigned 8))
+      (protocol (unsigned 8))
+      (checksum (unsigned 16))
+      (saddr    (unsigned 32))
+      (daddr    (unsigned 32))))
+
+(define-alien-type icmp-header
+    (struct icmp-header
+      (type     (unsigned 8))
+      (code     (unsigned 8))
+      (checksum (unsigned 16))
+      (quench   (unsigned 32))))
+
+(defun write-ip-header (ip-header total-length target-ip)
+  (std/alien:with-alien-slots (ver-ihl length id offset ttl protocol daddr) ip-header
+    (setf ver-ihl  #x45       ; Version 4, header length 5 words(20 bytes)
+          length   total-length
+          offset   #b01000000 ; Don't fragment
+          ttl      64
+          protocol sockint::ipproto_icmp
+          daddr    (io/swap-bytes:htonl target-ip))))
+
+(defun compute-icmp-checksum (icmp-header packet-size)
+  (let* ((sum1
+           (loop :for offset :from 0 :below (/ packet-size 2)
+                 :sum (std:sap-ref icmp-header 'unsigned-short offset)))
+         (sum2 (+ (ash sum1 -16)
+                  (logand sum1 #xFFFF))))
+    (logand #xFFFF (lognot (+ sum2 (ash sum2 -16))))))
+
+(defun write-icmp-header (icmp-header packet-size id seqno)
+  (std:with-alien-slots (type quench checksum) icmp-header
+    (let ((new-quench
+            (+ (ash id 16) seqno)))
+      (setf type     icmp-echo-request
+            quench   (htonl new-quench))
+      (setf checksum (compute-icmp-checksum icmp-header packet-size)))))
+
+#+todo
+(defun ping (target &key (id #xFF) (seqno 1))
+  (with-open-socket (socket :address-family :ipv4 :type :raw :protocol sockint::ipproto_icmp
+                            :include-headers t)
+    (let* ((payload-size 4)
+           (icmp-packet-size (+ (alien-size icmp-header) payload-size))
+           (frame-size (+ (alien-size ip-header) icmp-packet-size)))
+      (std:with-foreign-object (frame 'unsigned-char frame-size)
+        (std:memset frame 0 frame-size)
+        (let* ((ip-header frame)
+               (icmp-header (sb-sys:sap+ ip-header (alien-size ip-header)))
+               (payload (sb-sys:sap+ icmp-header (alien-size icmp-header))))
+          (write-ip-header ip-header frame-size (dotted-to-integer target))
+          (setf (std:sap-ref payload unsigned-int) (htonl #x1A2B3C4D))
+          (write-icmp-header icmp-header icmp-packet-size id seqno)
+          (send-to socket frame :end frame-size :remote-host target)
+          (wait-until-fd-ready (sb-bsd-sockets::socket-file-descriptor socket) :input)
+          (receive-from socket :size (* 64 1024)))))))

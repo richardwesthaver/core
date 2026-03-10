@@ -24,6 +24,14 @@
    :header-type :header-length
    :offset :snapshot))
 
+(defpkg :io/swap-bytes
+  (:use :cl :sb-c :sb-assem)
+  (:shadowing-import-from :std :component :call)
+  (:use :std)
+  (:export #:swap-bytes-16 #:swap-bytes-32 #:swap-bytes-64
+           #:htons #:ntohs #:htonl #:ntohl #:htonq #:ntohq
+           #:endianness #:+endianness+ #:find-swap-byte-function))
+
 (defpkg :io/stream
   (:use :cl :io/proto :sb-gray :std/meta)
   (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
@@ -123,7 +131,7 @@
    #:*treat-semicolon-as-continuation*))
 
 (defpkg :io/socket
-  (:use :cl :io/proto :sb-alien)
+  (:use :cl :io/proto :sb-alien :io/swap-bytes)
   (:import-from :std :deferror :eval-always :timeval)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger

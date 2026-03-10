@@ -13,6 +13,8 @@
  :version "0.1.0"
  :components 
  ((:pkg "pkg" :feature :io :default :io-user :package :io-int)
+  (:file "proto")
+  (:file "swap-bytes")
   (:file "socket")
   (:file "stream")
   (:file "static")
@@ -20,7 +22,6 @@
   (:file "xsubseq")
   (:file "smart-buffer")
   (:file "uring")
-  (:file "proto")
   (:file "chunky")
   (:file "flate")
   (:file "zstd")

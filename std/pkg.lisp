@@ -1270,6 +1270,7 @@
    :worker-kernel-function :pool-kernel-function
    :*worker-kernel* :run-with-timer
    :timer-expired-p
+   :errno :errno* :signo :signo*
    :*pool-kernel* :*thread-pool*
    :*thread-pool-table* :find-work
    :do-workers :submit-work
