@@ -262,6 +262,7 @@
   (std:with-alien-slots (type quench checksum) icmp-header
     (let ((new-quench
             (+ (ash id 16) seqno)))
+      ;; TODO 2026-03-09: sys
       (setf type     icmp-echo-request
             quench   (htonl new-quench))
       (setf checksum (compute-icmp-checksum icmp-header packet-size)))))

@@ -13,9 +13,9 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Mon Mar 09 20:27:13 2026 -0400                  |
+| updated     | Mon Mar 09 21:00:29 2026 -0400                  |
 | langs       | elisp lisp makefile org perl text               |
-| lines       | 265515 :code 216463 :comment 21830 :blank 27222 |
+| lines       | 265516 :code 216463 :comment 21831 :blank 27222 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links() :dir ~/comp/core/
@@ -33,6 +33,6 @@ and no guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
 #+begin_src shell :eval never
-  sbcl --load bootstrap.lisp
+  sbcl --script bootstrap.lisp
   sudo .stash/core --script etc/script/install.lisp # prefix=/usr
 #+end_src
