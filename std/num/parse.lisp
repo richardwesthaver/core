@@ -350,3 +350,24 @@ complex numbers and negative numbers."
                                       :start start
                                       :end end
                                       :radix radix))))))))
+
+;; from iolib
+(defun ensure-integer (value &key (start 0) end (radix 10) (type t) (errorp t))
+  (let ((parsed
+         (typecase value
+           (string
+            (ignore-errors (parse-integer value :start start :end end
+                                          :radix radix :junk-allowed nil)))
+           (t value))))
+    (cond
+      ((typep parsed type) parsed)
+      (errorp (error 'invalid-number :reason (format nil "value is not of type ~A" type) :value parsed)))))
+
+(defun ensure-number (value &key (start 0) end (radix 10) (type t) (errorp t))
+  (let ((parsed
+         (typecase value
+           (string (ignore-errors (parse-number value :start start :end end :radix radix)))
+           (t value))))
+    (cond
+      ((typep parsed type) parsed)
+      (errorp (error 'invalid-number :reason (format nil "value is not of type ~A" type) :value parsed)))))

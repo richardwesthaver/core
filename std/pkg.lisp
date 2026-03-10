@@ -446,6 +446,8 @@
    :invalid-number
    :invalid-number-value
    :invalid-number-reason
+   :ensure-integer
+   :ensure-number
    ;; num/float
    :make-float-converters
    :encode-float32

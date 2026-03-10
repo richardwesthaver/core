@@ -5,6 +5,46 @@
 ;;; Code:
 (in-package :io/socket)
 
+(deftype ipv4-array () '(simple-array octet 4))
+(deftype ipv6-array () '(simple-array (unsigned-byte 16) 8))
+
+(defun integer-to-dotted (integer)
+  "Convert an (UNSIGNED-BYTE 32) IPv4 address to a dotted string."
+  (check-type integer (unsigned-byte 32) "an '(unsigned-byte 32)")
+  (let ((*print-pretty* nil) (*print-base* 10))
+    (format nil "~A.~A.~A.~A"
+            (ldb (byte 8 24) integer)
+            (ldb (byte 8 16) integer)
+            (ldb (byte 8 8) integer)
+            (ldb (byte 8 0) integer))))
+
+(defun dotted-to-vector (address)
+  "Convert a dotted IPv4 address to a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) 4)."
+  (check-type address string "a string")
+  (let ((addr (make-array 4 :element-type 'octet :initial-element 0))
+        (split (split-sequence #\. address :count 5)))
+    (flet ((set-array-value (index str)
+             (setf (aref addr index)
+                   (ensure-integer str :type 'octet))))
+      (let ((len (length split)))
+        (unless (<= 1 len 4)
+          (error 'parse-error))
+        (set-array-value 3 (nth (1- len) split))
+        (loop for n in split
+              for index below (1- len)
+              do (set-array-value index n))))
+    (values addr)))
+
+(defun vector-to-dotted (vector)
+  "Convert an 4-element vector to a dotted string."
+  (coercef vector 'ipv4-array)
+  (let ((*print-pretty* nil) (*print-base* 10))
+    (with-output-to-string (s)
+      (princ (aref vector 0) s) (princ #\. s)
+      (princ (aref vector 1) s) (princ #\. s)
+      (princ (aref vector 2) s) (princ #\. s)
+      (princ (aref vector 3) s))))
+
 (defun check-timeval (buffer size)
   (assert (= size #.(alien-size timeval :bytes)))
   buffer)

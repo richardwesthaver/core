@@ -18,6 +18,7 @@
     (destructuring-bind (&optional pid groups) address
       (setf (slot sockaddr 'nl-family) af-netlink)
       (when pid (setf (slot sockaddr 'nl-pid) pid))
+      ;; TODO 2026-03-09: parse groups
       (when groups (setf (slot sockaddr 'nl-groups) groups)))
     (values sockaddr io/socket::+size-of-sockaddr-nl+)))
 
@@ -27,4 +28,4 @@
 (defmethod bits-of-sockaddr ((socket netlink-socket) sockaddr &optional size)
   "Return the PID of the local socket address SOCKADDR. 0 indicates the kernel's address."
   (declare (ignore size))
-  (slot sockaddr 'nl-pid))
+  (values (slot sockaddr 'nl-pid) (slot sockaddr 'nl-groups)))

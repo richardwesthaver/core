@@ -131,10 +131,10 @@
    #:*treat-semicolon-as-continuation*))
 
 (defpkg :io/socket
-  (:use :cl :io/proto :sb-alien :io/swap-bytes)
-  (:import-from :std :deferror :eval-always :timeval)
+  (:use :cl :io/proto :sb-alien :io/swap-bytes :std)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
+   :integer-to-dotted :dotted-to-vector
    :sockopt-peercred
    :sockaddr-nl :af-netlink
    :netlink-proto :netlink-proto*
