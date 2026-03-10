@@ -48,7 +48,6 @@
               :btrfs
               :zstd
               :sys
-              :epoll
               :keyutils
               :tree-sitter
               :obj

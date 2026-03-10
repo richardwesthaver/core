@@ -9,7 +9,10 @@
 ;;; Code:
 (defpackage :sys
   (:use :cl :std :sb-alien)
-  (:export 
+  (:export :sigaction
+   :err :err* :sig :sig*
+   :epoll-data :epoll-event :epoll-create :epoll-create1
+   :epoll-ctl :epoll-wait
    :closelog :openlog :setlogmask :syslog 
    :syslog-option :syslog-option*
    :syslog-facility :syslog-facility*

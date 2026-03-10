@@ -8,7 +8,7 @@
 (defsuite :skel)
 (in-suite :skel)
 
-(defun tmp-path (ext) (make-pathname :name (namestring (tmpize-pathname (string (gensym "g")))) :type ext))
+(defun %tmp-path (ext) (make-pathname :name (namestring (tmpize-pathname (string (gensym "g")))) :type ext))
 
 (deftest header-comments ()
   "Make sure header comments are generated correctly. 
@@ -50,10 +50,10 @@ the appropriate restarts."
 	     (src (path) (list path))
 	     (cmd (&rest body) body)
 	     (rule (tr sr) (make-sk-rule (file-namestring tr) sr)))
-	(is (null (sk-write-file (mk) :if-exists :supersede :path (merge-pathnames (tmp-path "mk") *tmp*))))
-	(let* ((tr1 (tmp-path "t1"))
-	       (tr2 (tmp-path "t2"))
-	       (sr (src (tmp-path "s1")))
+	(is (null (sk-write-file (mk) :if-exists :supersede :path (merge-pathnames (%tmp-path "mk") *tmp*))))
+	(let* ((tr1 (%tmp-path "t1"))
+	       (tr2 (%tmp-path "t2"))
+	       (sr (src (%tmp-path "s1")))
 	       (r1 (rule tr1 sr))
 	       (r2 (rule (car sr) (src tr2)))
 	       (mk1 (mk "test.mk")))
@@ -68,7 +68,7 @@ endif")
 	  ;; FIXME
 	  (is 
            (null 
-            (sk-write-file mk1 :if-exists :supersede :path (merge-pathnames (tmp-path "mk") *tmp*))))))))
+            (sk-write-file mk1 :if-exists :supersede :path (merge-pathnames (%tmp-path "mk") *tmp*))))))))
 
 (deftest asd ()
   (let ((sk (make-instance 'sk-project :components '((:lisp "test")
