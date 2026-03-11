@@ -131,33 +131,6 @@ arrange for FVAR to be closed after BODY."
 (defconstant +tcsaflush+ 2)
 (defconstant +opost+ #x01)
 
-;;;; resources
-(define-alien-type rlim-t unsigned-long)
-
-(define-alien-type rlimit
-    (struct rlimit
-      (rlim-cur rlim-t)
-      (rlim-max rlim-t)))
-
-(defar getrlimit int
-  (resource int)
-  (rlimits (* rlimit)))
-(defar setrlimit int
-  (resource int)
-  (rlimit (* rlimit)))
-(defar getpriority int
-  (which int)
-  (who int))
-(defar setpriority int
-  (which int)
-  (who int)
-  (value int))
-(defar nice int (inc int))
-(defar sigaction int
-  (signum int)
-  (act (* t))
-  (oldact (* t)))
-
 ;;; IOCTLs
 ;; based on functions from Shinmera's CL-SPIDEV
 ;; TODO 2025-04-27: 

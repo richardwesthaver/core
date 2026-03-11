@@ -2,7 +2,7 @@
  "sys/epoll.h" "sys/syslog.h" "sys/socket.h" "sys/un.h"
  "net/if.h" "netinet/in.h" "netinet/tcp.h" "netinet/ip.h" 
  "linux/icmp.h" "linux/errqueue.h" "linux/netlink.h" "arpa/inet.h"
- "fcntl.h" "netdb.h")
+ "fcntl.h" "netdb.h" "sys/resource.h")
 
 (;; signals
  ;; (:integer sig-ign "SIG_IGN") 1
@@ -101,6 +101,31 @@
  (:integer +log-ndelay+ "LOG_NDELAY")
  (:integer +log-nowait+ "LOG_NOWAIT")
  (:integer +log-perror+ "LOG_PERROR")
+ ;; resource
+ (:integer prio-process "PRIO_PROCESS")
+ (:integer prio-pgrp "PRIO_PGRP")
+ (:integer prio-user "PRIO_USER")
+ (:integer rlim-infinity "RLIM_INFINITY")
+ (:integer rusage-self "RUSAGE_SELF")
+ (:integer rusage-children "RUSAGE_CHILDREN")
+ (:integer rlimit-as "RLIMIT_AS")
+ (:integer rlimit-core "RLIMIT_CORE")
+ (:integer rlimit-cpu "RLIMIT_CPU")
+ (:integer rlimit-data "RLIMIT_DATA")
+ (:integer rlimit-fsize "RLIMIT_FSIZE")
+ (:integer rlimit-memlock "RLIMIT_MEMLOCK")
+ (:integer rlimit-nofile "RLIMIT_NOFILE")
+ (:integer rlimit-nproc "RLIMIT_NPROC")
+ (:integer rlimit-rss "RLIMIT_RSS")
+ (:integer rlimit-stack "RLIMIT_STACK")
+ (:integer rlim-saved-max "RLIM_SAVED_MAX")
+ (:integer rlim-saved-cur "RLIM_SAVED_CUR")
+ (:integer rlimit-locks "RLIMIT_LOCKS")
+ (:integer rlimit-msgqueue "RLIMIT_MSGQUEUE")
+ (:integer rlimit-nlimits "RLIMIT_NLIMITS")
+ (:integer rlimit-nice "RLIMIT_NICE")
+ (:integer rlimit-rtprio "RLIMIT_RTPRIO")
+ (:integer rlimit-sigpending "RLIMIT_SIGPENDING")
  ;; socket
  (:integer ipproto_icmpv6 "IPPROTO_ICMPV6") ; same convention as sockint
  (:integer ipproto_sctp "IPPROTO_SCTP")

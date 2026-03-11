@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :net/core)
 
+;; client-socket = active-socket
+;; server-socket = passive-socket
 (defun make-socket (&rest args &key family type protocol connect ipv6 &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL(or :FILE, :UNIX), :IPV4, :IPV6 or :NETLINK")

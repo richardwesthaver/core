@@ -113,7 +113,11 @@ the underlying link).")
 ;; (find-port)
 ;; (get-address-by-name "localhost")
 
+;; (defun make-address (name)
+;; (defun ensure-address (address &key (family :inet) abstract (errorp nil)))
+
 ;;; Macros
+;; TODO 2026-03-10: 
 (defmacro with-open-socket ((var socket) &body body)
   "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
   (once-only (socket)

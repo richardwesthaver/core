@@ -16,4 +16,5 @@
    :closelog :openlog :setlogmask :syslog 
    :syslog-option :syslog-option*
    :syslog-facility :syslog-facility*
-   :syslog-priority :syslog-priority*))
+   :syslog-priority :syslog-priority*
+   :rlimit))

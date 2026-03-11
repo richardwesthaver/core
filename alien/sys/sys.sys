@@ -13,6 +13,7 @@
                (:grovel "constants"
                 :package :sys)
                (:file "types")
+               (:file "res")
                (:file "epoll")
                (:file "syslog"))
   :provide ((:tests)))
