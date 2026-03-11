@@ -1,4 +1,8 @@
-("signal.h" "errno.h" "sys/stat.h" "sys/syscall.h" "sys/epoll.h" "sys/syslog.h" "fcntl.h")
+("signal.h" "errno.h" "sys/stat.h" "sys/syscall.h"
+ "sys/epoll.h" "sys/syslog.h" "sys/socket.h" "sys/un.h"
+ "net/if.h" "netinet/in.h" "netinet/tcp.h" "netinet/ip.h" 
+ "linux/icmp.h" "linux/errqueue.h" "linux/netlink.h" "arpa/inet.h"
+ "fcntl.h" "netdb.h")
 
 (;; signals
  ;; (:integer sig-ign "SIG_IGN") 1
@@ -96,4 +100,93 @@
  (:integer +log-odelay+ "LOG_ODELAY")
  (:integer +log-ndelay+ "LOG_NDELAY")
  (:integer +log-nowait+ "LOG_NOWAIT")
- (:integer +log-perror+ "LOG_PERROR"))
+ (:integer +log-perror+ "LOG_PERROR")
+ ;; socket
+ (:integer ipproto_icmpv6 "IPPROTO_ICMPV6") ; same convention as sockint
+ (:integer ipproto_sctp "IPPROTO_SCTP")
+ (:integer somaxconn "SOMAXCONN")
+ (:integer sol-tcp "SOL_TCP")
+ (:integer sol-ip "SOL_IP")
+ (:integer sol-raw "SOL_RAW")
+ (:integer so-acceptconn "SO_ACCEPTCONN")
+ (:integer so-peercred "SO_PEERCRED")
+ (:integer so-timestamp "SO_TIMESTAMP")
+ ;; tcp
+ (:integer tcp-cork "TCP_CORK")
+ (:integer tcp-defer-accept "TCP_DEFER_ACCEPT")
+ (:integer tcp-info "TCP_INFO")
+ (:integer tcp-keepcnt "TCP_KEEPCNT")
+ (:integer tcp-keepidle "TCP_KEEPIDLE")
+ (:integer tcp-keepintvl "TCP_KEEPINTVL")
+ (:integer tcp-linger2 "TCP_LINGER2")
+ (:integer tcp-maxseg "TCP_MAXSEG")
+ (:integer tcp-nodelay "TCP_NODELAY")
+ (:integer tcp-quickack "TCP_QUICKACK")
+ (:integer tcp-syncnt "TCP_SYNCNT")
+ (:integer tcp-window-clamp "TCP_WINDOW_CLAMP")
+ ;; ip
+ (:integer ip-hdrincl "IP_HDRINCL")
+ (:integer ip-recverr "IP_RECVERR")
+ ;; raw
+ (:integer icmp-filter "ICMP_FILTER")
+ (:integer icmp-echo-request "ICMP_ECHO")
+ (:integer icmp-echo-reply "ICMP_ECHOREPLY")
+ (:integer icmp-dest-unreach "ICMP_DEST_UNREACH")
+ (:integer icmp-source-quench "ICMP_SOURCE_QUENCH")
+ (:integer icmp-redirect "ICMP_REDIRECT")
+ (:integer icmp-time-exceeded "ICMP_TIME_EXCEEDED")
+ (:integer icmp-parameter-prob "ICMP_PARAMETERPROB")
+ (:integer icmp-timestamp-request "ICMP_TIMESTAMP")
+ (:integer icmp-timestamp-reply "ICMP_TIMESTAMPREPLY")
+ (:integer icmp-info-request "ICMP_INFO_REQUEST")
+ (:integer icmp-info-reply "ICMP_INFO_REPLY")
+ (:integer icmp-address-request "ICMP_ADDRESS")
+ (:integer icmp-address-reply "ICMP_ADDRESSREPLY")
+ (:integer icmp-net-unreach "ICMP_NET_UNREACH")
+ (:integer icmp-host-unreach "ICMP_HOST_UNREACH")
+ (:integer icmp-prot-unreach "ICMP_PROT_UNREACH")
+ (:integer icmp-port-unreach "ICMP_PORT_UNREACH")
+ (:integer icmp-frag-needed "ICMP_FRAG_NEEDED")
+ (:integer icmp-sr-failed "ICMP_SR_FAILED")
+ (:integer icmp-net-unknown "ICMP_NET_UNKNOWN")
+ (:integer icmp-host-unknown "ICMP_HOST_UNKNOWN")
+ (:integer icmp-host-isolated "ICMP_HOST_ISOLATED")
+ (:integer icmp-net-ano "ICMP_NET_ANO")
+ (:integer icmp-host-ano "ICMP_HOST_ANO")
+ (:integer icmp-net-unr-tos "ICMP_NET_UNR_TOS")
+ (:integer icmp-host-unr-tos "ICMP_HOST_UNR_TOS")
+ (:integer icmp-pkt-filtered "ICMP_PKT_FILTERED")
+ (:integer icmp-prec-violation "ICMP_PREC_VIOLATION")
+ (:integer icmp-prec-cutoff "ICMP_PREC_CUTOFF")
+ (:integer icmp-redir-net "ICMP_REDIR_NET")
+ (:integer icmp-redir-host "ICMP_REDIR_HOST")
+ (:integer icmp-redir-nettos "ICMP_REDIR_NETTOS")
+ (:integer icmp-redir-hosttos "ICMP_REDIR_HOSTTOS")
+ (:integer icmp-exc-ttl "ICMP_EXC_TTL")
+ (:integer icmp-exc-fragtime "ICMP_EXC_FRAGTIME")
+ ;; shutdown
+ (:integer shut-rd "SHUT_RD")
+ (:integer shut-wr "SHUT_WR")
+ (:integer shut-rdwr "SHUT_RDWR")
+ ;;recv/sendmsg
+ (:integer msg-errqueue "MSG_ERRQUEUE")
+ (:integer msg-proxy "MSG_PROXY")
+ (:integer msg-fin "MSG_FIN")
+ (:integer msg-syn "MSG_SYN")
+ ;; (:integer msg-eof "MSG_EOF")
+ ;; (:integer msg-nbio "MSG_NBIO")
+ ;; (:integer msg-compat "MSG_COMPAT")
+ (:integer msg-ctrunc "MSG_CTRUNC")
+ ;; inet
+ (:integer ipv6-join-group "IPV6_JOIN_GROUP")
+ (:integer ipv6-leave-group "IPV6_LEAVE_GROUP")
+ (:integer ipv6-multicast-hops "IPV6_MULTICAST_HOPS")
+ (:integer ipv6-multicast-if "IPV6_MULTICAST_IF")
+ (:integer ipv6-multicast-loop "IPV6_MULTICAST_LOOP")
+ (:integer ipv6-unicast-hops "IPV6_UNICAST_HOPS")
+ (:integer ipv6-v6only "IPV6_V6ONLY")
+ ;; net/if
+ (:integer if-namesize "IF_NAMESIZE"))
+
+
+

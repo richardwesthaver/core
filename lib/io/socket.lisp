@@ -88,8 +88,51 @@
   (assert (= size #.(sb-alien:alien-size ucre :bytes)))
   buffer)
 
-(sb-bsd-sockets::define-socket-option sockopt-peer-cred nil sockint::sol-socket sockint::so-linger
+(sb-bsd-sockets::define-socket-option sockopt-peercred nil sockint::sol-socket sockint::so-linger
   ucre nil check-ucre sb-alien:addr)
+
+(define-alien-type msghdr 
+    (struct msghdr
+      (name (* t))
+      (namelen sockint::socklen-t)
+      (iov (* t))
+      (iovlen size-t)
+      (control (* t))
+      (controllen sockint::socklen-t)
+      (flags int)))
+
+(define-alien-type cmsghdr 
+  (struct cmsghdr
+    (len sockint::socklen-t)
+    (level int)
+    (type int)))
+
+(define-alien-type linger
+    (struct linger
+      (onoff int)
+      (linger int)))
+
+(define-alien-type if-nameindex
+    (struct if-nameindex
+      (index unsigned-int)
+      (name c-string)))
+
+(define-alien-type ifreq
+    (struct ifreq
+      (name (* char))))
+
+(define-alien-enum (tcp-state :type int)
+  :tcp-established 1
+  :tcp-syn-sent 2
+  :tcp-syn-recv 3
+  :tcp-fin-wait1 4
+  :tcp-fin-wait2 5
+  :tcp-time-wait 6
+  :tcp-close 7
+  :tcp-close-wait 8
+  :tcp-last-ack 9
+  :tcp-listen 10
+  :tcp-closing 11)
 
 ;;; NETLINK
 (defconstant af-netlink sockint::af-route)
