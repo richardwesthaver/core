@@ -953,7 +953,7 @@
    :c-string :int 
    :enum :long :slot :void
    :cast :char :addr :short
-   :null-pointer
+   :null-pointer :null-pointer-p
    :alien :deref
    :double :union
    :signed :unsigned
@@ -963,92 +963,54 @@
    :unparse-alien-type
    :naturalize :deport :deport-alloc :%alien-value
    :compute-lisp-rep-type :compute-alien-rep-type
-   :alien-value
-   :lisp-for-c-symbol
-   :*alien-load-table*
-   :load-alien
-   :define-alien-variable
-   :alien-size
-   :alien-size*
-   :*alien-type-classes*
-   :*linkage-info*
-   :*shared-objects*
-   :with-vector-sap
+   :alien-value :lisp-for-c-symbol
+   :*alien-load-table* :load-alien
+   :define-alien-variable :setfa
+   :alien-size :alien-size*
+   :*alien-type-classes* :*linkage-info*
+   :*shared-objects* :with-vector-sap
    :sap-alien :alien-sap
    :make-alien :free-alien
-   :alien-funcall
-   :make-alien-string
-   :setfa
-   :double-array-pointer
-   :float-array-pointer
-   :octet-vector-pointer
-   :copy-c-string
-   :clone-strings
-   :clone-octet-vector-list
-   :clone-integer-list
-   :clone-octet-vector-list*
-   :octets-to-alien-array
-   :foreign-type-size
-   :with-foreign-pointer
-   :with-foreign-object
-   :with-foreign-objects
-   :with-alien-slots
-   :with-alien
-   :extern-alien
-   :clone-octets-to-alien
-   :octets-to-alien
-   :clone-octets-from-alien
-   :foreign-int-to-integer
-   :foreign-int-to-bool
-   :bool-to-foreign-int
-   :define-alien-enum
-   :define-alien-routine
-   :define-opaque
-   :shared-object-name
-   :define-alien-loader
-   :c-strings-to-string-list
-   :list-all-shared-objects
+   :alien-funcall :make-alien-string
+   :double-array-pointer :float-array-pointer
+   :octet-vector-pointer :copy-c-string
+   :clone-strings :clone-octet-vector-list
+   :clone-integer-list :clone-octet-vector-list*
+   :octets-to-alien-array :foreign-type-size
+   :with-foreign-pointer :with-foreign-object
+   :with-foreign-objects :with-alien-slots
+   :with-alien :extern-alien
+   :clone-octets-to-alien :octets-to-alien
+   :clone-octets-from-alien :foreign-int-to-integer
+   :foreign-int-to-bool :bool-to-foreign-int
+   :define-alien-enum :define-alien-routine
+   :define-opaque :shared-object-name
+   :define-alien-loader :c-strings-to-string-list
    :read-alien-signed-byte-32 :read-alien-fixnum
    :read-alien-signed-byte-64 :read-alien-unsigned-byte-32
    :read-alien-unsigned-byte-64 :read-alien-single-float
    :read-alien-double-float :write-alien-signed-byte-32
    :write-alien-fixnum :write-alien-unsigned-byte-32
-   :write-alien-signed-byte-64
    :write-alien-unsigned-byte-64 :write-alien-single-float
    :write-alien-double-float :offset-char-pointer
-   :num-cpus
-   :*cpus*
-   :alien-or-lisp-octets
-   :foreign-alloc
-   :foreign-free
-   :read-alien
-   :write-alien
-   :loff-t
-   :pid-t
-   :uid-t
-   :gid-t
-   :memset
-   :memcpy
-   :posix-memalign
-   :timeval
-   :timespec
-   :sap
-   :sap-int
-   :free
-   :push-sap
-   :push-sap*
-   :pull-sap
-   :pull-sap*
-   :defar
-   :alien-to-element-type
-   :element-type-to-alien
-   :sap-ref
-   :sap-set
-   :sap-svref
-   :foreign-vector
-   :foreign-vector-class
-   :foreign-vector-length
-   :foreign-vector-element-type
+   :write-alien-signed-byte-64 :*cpus*
+   :num-cpus :list-all-shared-objects
+   :alien-or-lisp-octets :foreign-alloc
+   :foreign-free :read-alien
+   :write-alien :loff-t
+   :pid-t :uid-t
+   :gid-t :memset
+   :memcpy :posix-memalign
+   :timeval :timespec
+   :sap :sap-int
+   :alloc :free
+   :push-sap :push-sap*
+   :pull-sap :pull-sap*
+   :alien-to-element-type :element-type-to-alien
+   :defar :sap-svref
+   :sap-ref :sap-set
+   :foreign-vector :foreign-vector-class
+   :foreign-vector-length :foreign-vector-element-type
    :fvref))
 
 (defpkg :std/meta

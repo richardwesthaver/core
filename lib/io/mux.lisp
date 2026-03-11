@@ -8,33 +8,36 @@
 (defvar *multiplexers* nil
   "A list of all available multiplexers.")
 
-(defvar *default-multiplexer* nil
+(defvar *default-multiplexer* 'epoll-multiplexer
   "The default multiplexer for the current machine.")
 
 (defvar *multiplexer-order* nil
   "An ordered list of multiplexers to prioritize. Higher priority items come first.")
 
+;; TODO 2026-03-10: see if sbcl already does this
+(defconstant +global-fd-limit+ 65536)
+
+;;; File Descriptors
+(deftype fd-event-type ()
+  '(member :read :write))
+
 (defun get-fd-limit ()
   "Return the maximum number of FDs available for the current process."
   (let ((fd-limit (sys:rlimit sys::rlimit-nofile)))
     (if (= fd-limit sys::rlim-infinity)
-        65536 ; 64K should be enough for anybody
+        +global-fd-limit+
         fd-limit)))
-
-;;; file descriptors
-(deftype fd-event-type ()
-  '(member :read :write))
 
 (defstruct (fd-handler
              (:constructor make-fd-handler
-                           (fd type callback one-shot-p &optional timer))
+                           (fd type callback oneshot-p &optional timer))
              (:copier nil))
   (fd nil :type unsigned-byte)
   (type nil :type fd-event-type)
   (callback nil :type function-designator)
   (timer nil :type (or null sb-ext:timer))
-  ;; one-shot events are removed after being triggered
-  (one-shot-p nil :type boolean))
+  ;; oneshot events are removed after being triggered
+  (oneshot-p nil :type boolean))
 
 (defstruct (fd-entry
              (:constructor make-fd-entry (fd))
@@ -138,13 +141,13 @@ Returns a list of fd/result pairs which have one of these forms:
 
 (defgeneric set-io-handler (base fd &rest args))
 (defgeneric set-error-handler (base fd function))
-(defgeneric add-timer (event-base function timeout &key one-shot))
+(defgeneric add-timer (event-base function timeout &key oneshot))
 (defgeneric remove-fd-handlers (base fd &key read write error)
   (:documentation "Removes FD handlers for the given event types.
 If READ, WRITE and ERROR are all NIL (the default), then all are removed.
 Returns T if some handlers were removed, NIL otherwise."))
 (defgeneric remove-timer (base timer))
-(defgeneric event-dispatch (base &key one-shot timeout min-step max-step))
+(defgeneric event-dispatch (base &key oneshot timeout min-step max-step))
 (defgeneric exit-event-loop (base &key delay))
 (defgeneric event-base-empty-p (base))
 
@@ -163,6 +166,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   (values base))
 
 ;;; EPOLL
+;; preferred interface
 (define-multiplexer epoll-multiplexer (multiplexer)
   ((events :reader events)))
 

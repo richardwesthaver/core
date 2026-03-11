@@ -263,6 +263,8 @@ is TY with a -T prepended as is customary in many C codebases."
 (defun null-pointer ()
   #.(sb-sys:int-sap 0))
 
+(defun null-pointer-p (x) (= 0 (sap-int x)))
+
 (defun double-array-pointer (array)
   "Return a SAP pointing to the start of ARRAY's storage vector."
   (sap-alien (vector-sap (array-storage-vector array)) (* double)))
@@ -929,6 +931,9 @@ such alien exists.")
   (:documentation "Set the value of system-area-pointer SELF to NEW."))
 
 ;; TODO 2024-12-31: 
+(defgeneric alloc (self)
+  (:documentation "Allocate the SAP associated with object SELF."))
+
 (defgeneric free (self)
   (:documentation "Free the SAP associated with object SELF if one exists and return NIL.")
   (:method ((self alien-value)) (free-alien self))
@@ -951,7 +956,7 @@ handle stored in another slot of the same object."))
 ;;; Foreign Vector
 ;; from MATLISP
 (defclass foreign-vector-class (standard-class)
-  ((element-type :reader element-type)))
+  ((element-type :accessor element-type)))
 
 (defmethod sb-mop:validate-superclass ((class foreign-vector-class) (superclass standard-class))  t)
 
@@ -978,7 +983,17 @@ handle stored in another slot of the same object."))
   (slot-value fv 'length))
 
 (defun foreign-vector-element-type (fv)
-  (slot-value fv 'element-type))
+  (slot-value (class-of fv) 'element-type))
+
+(defmethod alloc ((self foreign-vector))
+  (setf (sap self) (foreign-alloc 
+                    `(array ,(element-type-to-alien (foreign-vector-element-type self))
+                            ,(foreign-vector-length self)))))
+
+(defmethod free ((self foreign-vector))
+  (unless (or (not (sap self)) (null-pointer-p (sap self)))
+    (foreign-free (sap self)))
+  (setf (sap self) (null-pointer)))
 
 (defparameter *fvref-range-check* t)
 
