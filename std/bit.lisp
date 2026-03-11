@@ -607,3 +607,18 @@ the number having BYTES octets (defaulting to 4)."
   (if (logbitp (1- size) value)
       (dpb value (byte size 0) -1)
       value))
+
+;;; Flags
+;; from iolib
+(defmacro flags-case (mask &body clauses)
+  (std/macs:once-only (mask)
+    `(progn 
+       ,@(mapcar (lambda (clause)
+                   `(when (logtest 
+                           ,(let ((flags (first clause)))
+                              (if (listp flags)
+                                  `(logior ,@flags)
+                                  flags))
+                           ,mask)
+                      ,@(rest clause)))
+                 clauses))))

@@ -21,6 +21,54 @@
         65536 ; 64K should be enough for anybody
         fd-limit)))
 
+;;; file descriptors
+(deftype fd-event-type ()
+  '(member :read :write))
+
+(defstruct (fd-handler
+             (:constructor make-fd-handler
+                           (fd type callback one-shot-p &optional timer))
+             (:copier nil))
+  (fd nil :type unsigned-byte)
+  (type nil :type fd-event-type)
+  (callback nil :type function-designator)
+  (timer nil :type (or null sb-ext:timer))
+  ;; one-shot events are removed after being triggered
+  (one-shot-p nil :type boolean))
+
+(defstruct (fd-entry
+             (:constructor make-fd-entry (fd))
+             (:copier nil))
+  (fd 0 :type unsigned-byte)
+  (read-handler  nil :type (or null fd-handler))
+  (write-handler nil :type (or null fd-handler))
+  (write-ts 0.0d0 :type double-float)
+  (error-callback nil :type (or null function-designator)))
+
+(defun fd-entry-handler (fd-entry event-type)
+  (case event-type
+    (:read  (fd-entry-read-handler  fd-entry))
+    (:write (fd-entry-write-handler fd-entry))))
+
+(defun (setf fd-entry-handler) (event fd-entry event-type)
+  (case event-type
+    (:read  (setf (fd-entry-read-handler  fd-entry) event))
+    (:write (setf (fd-entry-write-handler fd-entry) event))))
+
+(defun fd-entry-empty-p (fd-entry)
+  (and (null (fd-entry-read-handler  fd-entry))
+       (null (fd-entry-write-handler fd-entry))))
+
+;;; Multiplexer
+(defclass multiplexer ()
+  ((fd :reader fd)
+   (fd-limit :initform (get-fd-limit)
+             :initarg :fd-limit
+             :reader fd-limit)
+   (closedp :accessor multiplexer-closedp
+            :initform nil))
+  (:documentation "Base class for I/O multiplexers."))
+
 (defgeneric close-multiplexer (mux)
   (:method-combination progn :most-specific-last)
   (:documentation "Close multiplexer MUX, calling close() on the multiplexer's FD if bound."))
@@ -45,40 +93,28 @@ Returns a list of fd/result pairs which have one of these forms:
   (fd (:read :write))
   (fd . :error)"))
 
-(defclass multiplexer ()
-  ((fd :reader fd)
-   (fd-limit :initform (get-fd-limit)
-             :initarg :fd-limit
-             :reader fd-limit)
-   (closedp :accessor multiplexer-closedp
-            :initform nil))
-  (:documentation "Base class for I/O multiplexers."))
-
 (defmethod close-multiplexer :around ((mux multiplexer))
   (unless (multiplexer-closedp mux)
     (call-next-method)
     (setf (multiplexer-closedp mux) t)))
 
-#+todo
-(defmethod close-multiplexer :progn ((mux multiplexer))
+(defmethod close-multiplexer progn ((mux multiplexer))
   (when (and (slot-boundp mux 'fd) (not (null (fd mux))))
     (close (fd mux))
     (setf (slot-value mux 'fd) nil))
   (values mux))
 
-;; requires fd-entry
-#+todo
 (defmethod monitor-fd :before ((mux multiplexer) fd-entry)
   (with-accessors ((fd-limit fd-limit)) mux
     (let ((fd (fd-entry-fd fd-entry)))
       (when (and fd-limit (> fd fd-limit))
         (error "Cannot add such a large FD: ~A" fd)))))
 
-(defmacro define-multiplexer (name priority superclasses slots &rest options)
+(defmacro define-multiplexer (name superclasses slots &rest options)
   `(progn
      (defclass ,name ,superclasses ,slots ,@options)
-     (pushnew (cons ,priority ',name) *multiplexers*
-              :test #'equal)))
+     (pushnew ',name *multiplexers*
+              :test #'eql)))
 
 ;;; Events
 (defclass event-base ()
@@ -100,8 +136,7 @@ Returns a list of fd/result pairs which have one of these forms:
    :write-interval-threshold 0.0d0
    :exit-when-empty nil))
 
-(defun set-io-handler (base fd &rest args))
-(defun event-dispatch (base &rest args))
+(defgeneric set-io-handler (base fd &rest args))
 (defgeneric set-error-handler (base fd function))
 (defgeneric add-timer (event-base function timeout &key one-shot))
 (defgeneric remove-fd-handlers (base fd &key read write error)
@@ -126,3 +161,116 @@ Returns T if some handlers were removed, NIL otherwise."))
   (dolist (slot '(mux fds timers fd-timers expired-events))
     (setf (slot-value base slot) nil))
   (values base))
+
+;;; EPOLL
+(define-multiplexer epoll-multiplexer (multiplexer)
+  ((events :reader events)))
+
+(defmethod print-object ((mux epoll-multiplexer) stream)
+  (print-unreadable-object (mux stream :type nil :identity nil)
+    (format stream "epoll(4) multiplexer")))
+
+(defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
+  (setf (slot-value mux 'fd) (sys:epoll-create size))
+  (setf (slot-value mux 'events)
+        (foreign-alloc 'sys:epoll-event
+                       :count (fd-limit mux))))
+
+(defmethod close :after ((mux epoll-multiplexer) &key abort)
+  (declare (ignore abort))
+  (with-slots (events) mux
+    (when events
+      (foreign-free events)
+      (setf events nil))))
+
+(defun calc-epoll-flags (fd-entry)
+  (logior 
+   (if (fd-entry-read-handler fd-entry)
+       sys::epollin
+       0)
+   (if (fd-entry-write-handler fd-entry)
+       sys::epollout
+       0)
+   sys::epollpri))
+
+(defmethod monitor-fd ((mux epoll-multiplexer) fd-entry)
+  (assert fd-entry (fd-entry) "Must supply an FD-ENTRY!")
+  (let ((flags (calc-epoll-flags fd-entry))
+        (fd (fd-entry-fd fd-entry)))
+    (with-alien ((ev sys::epoll-event))
+      ;; TODO 2026-03-10: 
+      #+todo
+      (sys:bzero ev (alien-size sys::epoll-event))
+      (setf (slot ev 'sys::events)
+            flags)
+      (setf (slot
+             (slot ev 'sys::data)
+             'sys::fd)
+            fd)
+      (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd (addr ev))
+        (sb-posix::ebadf (warn "FD ~A is invalid, cannot monitor it." fd))
+        (sb-posix::eexist (warn "FD ~A is already monitored." fd))))))
+
+(defmethod update-fd ((mux epoll-multiplexer) fd-entry event-type edge-change)
+  (declare (ignore event-type edge-change))
+  (assert fd-entry (fd-entry) "Must supply an FD-ENTRY!")
+  (let ((flags (calc-epoll-flags fd-entry))
+        (fd (fd-entry-fd fd-entry)))
+    (with-alien ((ev sys:epoll-event))
+      ;; (sys:bzero ev (alien-size sys:epoll-event))
+      (setf (slot ev 'sys::events) flags)
+      (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
+      (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev))
+        (sb-posix:ebadf (warn "FD ~A is invalid, cannot update its status." fd))
+        (sb-posix:enoent (warn "FD ~A was not monitored, cannot update its status." fd))))
+    (values fd-entry)))
+
+(defmethod unmonitor-fd ((mux epoll-multiplexer) fd-entry)
+  (case
+      (sys:epoll-ctl (fd mux)
+                           sys::epoll-ctl-del
+                           (fd-entry-fd fd-entry)
+                           (null-pointer))
+    (sb-posix:ebadf ()
+      (warn "FD ~A is invalid, cannot unmonitor it." (fd-entry-fd fd-entry)))
+    (sb-posix:enoent ()
+     (warn "FD ~A was not monitored, cannot unmonitor it."
+            (fd-entry-fd fd-entry)))))
+
+;; TODO 2026-03-10: 
+#+todo
+(defmethod harvest-events ((mux epoll-multiplexer) timeout)
+  (with-accessors ((events event-set-of)
+                   (fd-limit fd-limit-of))
+      mux
+    ;; (isys:bzero events (* fd-limit (isys:sizeof '(:struct isys:epoll-event))))
+    (let (ready-fds)
+      (isys:repeat-upon-condition-decreasing-timeout
+          ((isys:eintr) tmp-timeout timeout)
+        (setf ready-fds (isys:epoll-wait (fd-of mux) events fd-limit
+                                         (timeout->milliseconds tmp-timeout))))
+      (macrolet ((epoll-slot (slot-name)
+                   `(foreign-slot-value
+                     ;; FIXME: tests fail when wrapping this bare reference
+                     ;; in a :STRUCT.
+                     (mem-aref events 'isys:epoll-event i)
+                     '(:struct isys:epoll-event) ',slot-name)))
+        (return*
+         (loop :for i :below ready-fds
+               :for fd := (foreign-slot-value (epoll-slot isys:data)
+                                              '(:union isys:epoll-data) 'isys:fd)
+               :for event-mask := (epoll-slot isys:events)
+               :for epoll-event := (make-epoll-event fd event-mask)
+               :when epoll-event :collect epoll-event))))))
+
+(defun make-epoll-event (fd mask)
+  (let ((event ()))
+    (flags-case mask
+      ((sys::epollout sys::epollhup)
+       (push :write event))
+      ((sys::epollin sys::epollpri sys::epollhup)
+       (push :read event))
+      (sys::epollerr
+       (push :error event)))
+    (when event
+      (list fd event))))

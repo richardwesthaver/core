@@ -666,7 +666,8 @@
    :defwith
    :with-memoization
    :memoizing
-   :match :lambda-match))
+   :match :lambda-match
+   :multiple-value-case))
 
 (defpkg :std/array
   (:use :cl)
@@ -899,7 +900,8 @@
    :write-little-endian
    :hexchar-to-int
    :make-octets
-   :octets))
+   :octets
+   :flags-case))
 
 (defpkg :std/io
   (:use :cl :std/sys :std/type)
