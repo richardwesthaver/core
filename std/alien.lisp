@@ -22,7 +22,7 @@
 
 ;;; Code:
 (in-package :std/alien)
-(declaim (optimize (speed 3) (safety 0)))
+;; (declaim (optimize (speed 3) (safety 0)))
 ;; (shadowing-import
 ;;  '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
 ;;    sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)
@@ -146,17 +146,17 @@
     `(progn
        (define-sap-accessors
          ,@(loop for (kw alien-type fixed-accessor)
-                   in accessible-types
+                 in accessible-types
                  and (alien-size signedp)
-                   in size-and-signedp-forms
+                 in size-and-signedp-forms
                  for (signed-ref unsigned-ref)
-                   = (cdr (assoc alien-size accessor-table))
+                    = (cdr (assoc alien-size accessor-table))
                  collect
-                 `(,kw
-                   ,(or fixed-accessor
-                        (if signedp signed-ref unsigned-ref)
-                        (error "No accessor found for ~S"
-                               alien-type)))))
+                    `(,kw
+                      ,(or fixed-accessor
+                           (if signedp signed-ref unsigned-ref)
+                           (error "No accessor found for ~S"
+                                  alien-type)))))
        (defun convert-alien-type (type-keyword)
          (ecase type-keyword
            ,@(loop for (kw alien-type) in alien-table
@@ -181,11 +181,11 @@
      (long-long          long-long)
      (unsigned-long-long unsigned-long-long)
      (float              single-float
-                          sb-sys:sap-ref-single)
+                         sb-sys:sap-ref-single)
      (double             double-float
-                          sb-sys:sap-ref-double)
+                         sb-sys:sap-ref-double)
      (pointer            system-area-pointer
-                          sb-sys:sap-ref-sap)
+                         sb-sys:sap-ref-sap)
      (void               void)))
 
 ;; TODO: translate-into-alien-memory translate-to-alien
@@ -205,13 +205,13 @@
 (defun lisp-name-from-c (name &optional (package *package*))
   "Convert a C symbol NAME as a string into a lisp symbol, interning it in PACKAGE."
   (let ((n name))
-  (etypecase n
-    (list
-     (lisp-name-from-c (car n)))
-    (string
-     ;; set prefix to %
-     (when (eql #\_ (char n 0)) (setf (char n 0) #\%))
-     (intern (substitute #\- #\_ (string-upcase n)) package)))))
+    (etypecase n
+      (list
+       (lisp-name-from-c (car n)))
+      (string
+       ;; set prefix to %
+       (when (eql #\_ (char n 0)) (setf (char n 0) #\%))
+       (intern (substitute #\- #\_ (string-upcase n)) package)))))
 
 (defun c-name-from-lisp (name)
   "Convert a lisp symbol or string NAME instead a C symbol name as a string."
@@ -423,7 +423,7 @@ return a pointer instead of its value."
         (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
           ;; todo: memoize
           `(funcall ,(compile nil extract) ,ptr ,(* sb-vm:n-byte-bits offset) nil)
-          `(%alien-value ,ptr ,type ,(* offset (alien-type-bits ptyp)))))
+          `(%alien-value ,ptr ,type ,(* (eval offset) (alien-type-bits ptyp)))))
       form))
 
 ;;;; SAP-SVREF
@@ -474,12 +474,12 @@ return a pointer instead of its value."
                          (* ,index-tmp (foreign-type-size ,type-tmp))))
           ,store)
        `(sap-svref ,getter
-                  ,@(if (constantp type)
-                        (list type)
-                        (list type-tmp))
-                  ,@(if (and (constantp type) (constantp index))
-                        (list index)
-                        (list index-tmp)))))))
+                   ,@(if (constantp type)
+                         (list type)
+                         (list type-tmp))
+                   ,@(if (and (constantp type) (constantp index))
+                         (list index)
+                         (list index-tmp)))))))
 
 ;;;; SAP-SET (SETF SAP-REF) (SETF SAP-SVREF)
 (defun sap-set (value sap type &optional (offset 0))
@@ -524,8 +524,8 @@ to open-code (SETF SAP-REF) forms."
       (once-only (type)
         (let ((parsed-type (parse-alien-type type nil)))
           (if (aggregatep parsed-type)
-              `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) ,value)
-              `(setf (%alien-value ,sap ,(* offset (alien-type-bits parsed-type))) ,value))))
+              `(setf (sap-svref ,sap ,type (sap+ ,sap ,(eval offset))) ,value)
+              `(setf (%alien-value ,sap ,(* (eval offset) (alien-type-bits parsed-type))) ,value))))
       form))
 
 ;;; DEFAR
@@ -823,8 +823,8 @@ The buffer has dynamic extent and may be stack allocated."
       `(progn ,@body)))
 
 (defun foreign-alloc (type &key (initial-element nil initial-element-p)
-                      (initial-contents nil initial-contents-p)
-                      (count 1 count-p) null-terminated-p)
+                                (initial-contents nil initial-contents-p)
+                                (count 1 count-p) null-terminated-p)
   "Allocate enough memory to hold COUNT objects of type TYPE. If
 INITIAL-ELEMENT is supplied, each element of the newly allocated
 memory is initialized with its value. If INITIAL-CONTENTS is supplied,
@@ -887,7 +887,7 @@ newly allocated memory."
     (alien-funcall (extern-alien "sysconf" (function int int)) sb-unix:sc-nprocessors-onln)))
 
 (sb-ext:defglobal *cpus* (num-cpus)
-  "The number of unique processors (cores) reported by the OS.")
+    "The number of unique processors (cores) reported by the OS.")
 
 ;;; C Standard
 ;; types
@@ -901,14 +901,14 @@ newly allocated memory."
 (defar posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
 
 (define-alien-type timeval
-  (struct timeval
-          (tv-sec (signed 64))
-          (tv-usec (signed 64))))
+    (struct timeval
+      (tv-sec (signed 64))
+      (tv-usec (signed 64))))
 
 (define-alien-type timespec
-  (struct timespec
-          (tv-sec (signed 64))
-          (tv-nsec (signed 64))))
+    (struct timespec
+      (tv-sec (signed 64))
+      (tv-nsec (signed 64))))
 
 ;;; Fortran
 (defmacro with-fortran-float-modes (&body body)
@@ -981,7 +981,7 @@ handle stored in another slot of the same object."))
   (slot-value fv 'element-type))
 
 (defparameter *fvref-range-check* t)
-  
+
 (defun fvref (x i)
   (declare (type foreign-vector x))
   (let ((n (slot-value (the foreign-vector x) 'length)))

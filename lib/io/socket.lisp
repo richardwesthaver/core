@@ -203,7 +203,7 @@
   :capped #x100
   :ack-tlvs #x200)
 
-(std/alien:define-alien-enum (nlmsg)
+(define-alien-enum (nlmsg)
   :noop #x1
   :error #x2
   :done #x3
@@ -215,7 +215,7 @@
       (error int)
       (msg nlmsghdr)))
 
-(std/alien:define-alien-enum (nlmsgerr-attr)
+(define-alien-enum (nlmsgerr-attr)
   :unused 0
   :msg 1
   :offs 2
@@ -225,7 +225,7 @@
   :miss-nest 6)
 ;; (:max 7)
 
-(std/alien:define-alien-enum (netlink-attribute-type)
+(define-alien-enum (netlink-attribute-type)
   :invalid 0
   :flag 1
   :u8 2
@@ -245,7 +245,7 @@
   :sint 16
   :uint 17)
 
-(std/alien:define-alien-enum (netlink-policy-type-attr)
+(define-alien-enum (netlink-policy-type-attr)
   :unspec 0
   :type 1
   :min-value-s 2
@@ -285,7 +285,7 @@
       (quench   (unsigned 32))))
 
 (defun write-ip-header (ip-header total-length target-ip)
-  (std/alien:with-alien-slots (ver-ihl length id offset ttl protocol daddr) ip-header
+  (with-alien-slots (ver-ihl length id offset ttl protocol daddr) ip-header
     (setf ver-ihl  #x45       ; Version 4, header length 5 words(20 bytes)
           length   total-length
           offset   #b01000000 ; Don't fragment
@@ -302,11 +302,11 @@
     (logand #xFFFF (lognot (+ sum2 (ash sum2 -16))))))
 
 (defun write-icmp-header (icmp-header packet-size id seqno)
-  (std:with-alien-slots (type quench checksum) icmp-header
+  (with-alien-slots (type quench checksum) icmp-header
     (let ((new-quench
             (+ (ash id 16) seqno)))
       ;; TODO 2026-03-09: sys
-      (setf type     icmp-echo-request
+      (setf type     sys::icmp-echo-request
             quench   (htonl new-quench))
       (setf checksum (compute-icmp-checksum icmp-header packet-size)))))
 
