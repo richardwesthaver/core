@@ -1012,8 +1012,7 @@
    :foreign-vector :foreign-vector-class
    :foreign-vector-length :foreign-vector-element-type
    :fvref :bref
-   :iobuf))
-   
+   :iobuf :bzero))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)

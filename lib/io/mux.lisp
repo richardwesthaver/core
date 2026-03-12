@@ -202,9 +202,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-alien ((ev sys::epoll-event))
-      ;; TODO 2026-03-10: 
-      #+todo
-      (sys:bzero ev (alien-size sys::epoll-event))
+      (bzero ev (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events)
             flags)
       (setf (slot
@@ -221,7 +219,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-alien ((ev sys:epoll-event))
-      ;; (sys:bzero ev (alien-size sys:epoll-event))
+      (bzero ev (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events) flags)
       (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
       (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev))
@@ -247,22 +245,21 @@ Returns T if some handlers were removed, NIL otherwise."))
   (with-accessors ((events event-set-of)
                    (fd-limit fd-limit-of))
       mux
-    ;; (isys:bzero events (* fd-limit (isys:sizeof '(:struct isys:epoll-event))))
+    (bzero events (* fd-limit (alien-size 'sys:epoll-event)))
     (let (ready-fds)
-      (isys:repeat-upon-condition-decreasing-timeout
-          ((isys:eintr) tmp-timeout timeout)
-        (setf ready-fds (isys:epoll-wait (fd-of mux) events fd-limit
+      (sys:repeat-upon-condition-decreasing-timeout
+          ((sys::eintr) tmp-timeout timeout)
+        (setf ready-fds (sys:epoll-wait (fd mux) events fd-limit
                                          (timeout->milliseconds tmp-timeout))))
       (macrolet ((epoll-slot (slot-name)
-                   `(foreign-slot-value
+                   `(slot
                      ;; FIXME: tests fail when wrapping this bare reference
                      ;; in a :STRUCT.
-                     (mem-aref events 'isys:epoll-event i)
-                     '(:struct isys:epoll-event) ',slot-name)))
+                     (sap-ref events 'sys:epoll-event i)
+                     'sys:epoll-event ',slot-name)))
         (return*
          (loop :for i :below ready-fds
-               :for fd := (foreign-slot-value (epoll-slot isys:data)
-                                              '(:union isys:epoll-data) 'isys:fd)
+               :for fd := (slot (epoll-slot sys::data) 'sys::fd)
                :for event-mask := (epoll-slot isys:events)
                :for epoll-event := (make-epoll-event fd event-mask)
                :when epoll-event :collect epoll-event))))))

@@ -405,11 +405,12 @@ alien (* size-t) with same size as the first value."
          :format-arguments (list var enum)))
 
 ;;; SAP-REF
-(defun aggregatep (type)
-  "Return T if the given ALIEN-TYPE is 'aggregate'."
-  ;; always arrays and structs, never 'built-in'
-  (or (sb-alien::alien-array-type-p type)
-      (sb-alien::alien-record-type-p type)))
+(std/macs:eval-always
+  (defun aggregatep (type)
+    "Return T if the given ALIEN-TYPE is 'aggregate'."
+    ;; always arrays and structs, never 'built-in'
+    (or (sb-alien::alien-array-type-p type)
+        (sb-alien::alien-record-type-p type))))
 
 (defun sap-ref (sap type &optional (offset 0))
   "Return the value of TYPE at OFFSET bytes from SAP. If TYPE is aggregate we
@@ -570,7 +571,7 @@ containing the variants. These are technically exposed anaphors
            ,(format nil "Given a ~A, check that it is equal to one of the variants of ~A and return
 it. This function returns a second value which indicates the name of the
 variant associated with this value." type name)
-           (std:when-let ((found (gethash ,val ,%lisp-enum-table*
+           (std/macs:when-let ((found (gethash ,val ,%lisp-enum-table*
                                           ,default)))
              ,@(when (eql default :error)
                  `((when (eql found :error) (invalid-enum-value ,val ',name))))
@@ -867,7 +868,7 @@ newly allocated memory."
   (if (or (and count-p (<= (length args) 2)) (null args))
       (cond
         ((and (constantp type) (constantp count))
-         `(%foreign-alloc (* count (foreign-type-size type))))
+         `(%foreign-alloc (* ,count (foreign-type-size ,type))))
         ((constantp type)
          `(%foreign-alloc (* ,count (foreign-type-size ,type))))
         (t form))
@@ -1194,6 +1195,10 @@ handle stored in another slot of the same object."))
   (let ((end (iobuf-tail iobuf)))
     (prog1 (setf (bref iobuf end) octet)
       (incf (iobuf-tail iobuf)))))
+
+(std/prim:definline bzero (buf count)
+  "Fill the first COUNT bytes of BUF with zeros."
+  (memset buf 0 count))
 
 (defmethod alloc ((self iobuf))
   (setf (iobuf-sap self) (foreign-alloc 'unsigned-char :count (iobuf-length self))))
