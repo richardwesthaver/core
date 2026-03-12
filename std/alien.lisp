@@ -424,8 +424,8 @@ return a pointer instead of its value."
       (let ((ptyp (parse-alien-type (eval type) nil)))
         (std/macs:if-let ((extract (sb-alien::compute-extract-lambda ptyp)))
           ;; todo: memoize
-          `(funcall ,(compile nil extract) ,ptr ,(* sb-vm:n-byte-bits offset) nil)
-          `(%alien-value ,ptr ,type ,(* (eval offset) (alien-type-bits ptyp)))))
+          `(funcall ,extract ,ptr (* sb-vm:n-byte-bits ,offset) nil)
+          `(%alien-value ,ptr (* ,offset (alien-type-bits ptyp)) ,type)))
       form))
 
 ;;;; SAP-SVREF
@@ -523,11 +523,10 @@ to open-code (SETF SAP-REF) forms."
     (&whole form value sap type &optional (offset 0))
   "Compiler macro to open-code (SETF SAP-REF) when type is constant."
   (if (constantp type)
-      (once-only (type)
-        (let ((parsed-type (parse-alien-type type nil)))
-          (if (aggregatep parsed-type)
-              `(setf (sap-svref ,sap ,type (sap+ ,sap ,(eval offset))) ,value)
-              `(setf (%alien-value ,sap ,(* (eval offset) (alien-type-bits parsed-type))) ,value))))
+      (let ((parsed-type (parse-alien-type (eval type) nil)))
+        (if (aggregatep parsed-type)
+            `(setf (sap-svref ,sap ,type (sap+ ,sap ,offset)) ,value)
+            `(setf (%alien-value ,sap (* ,offset ,(alien-type-bits parsed-type)) ,parsed-type) ,value)))
       form))
 
 ;;; DEFAR
@@ -868,9 +867,9 @@ newly allocated memory."
   (if (or (and count-p (<= (length args) 2)) (null args))
       (cond
         ((and (constantp type) (constantp count))
-         `(%foreign-alloc ,(* (eval count) (foreign-type-size (eval type)))))
+         `(%foreign-alloc (* count (foreign-type-size type))))
         ((constantp type)
-         `(%foreign-alloc (* ,count ,(foreign-type-size (eval type)))))
+         `(%foreign-alloc (* ,count (foreign-type-size ,type))))
         (t form))
       form))
 
@@ -900,6 +899,8 @@ newly allocated memory."
 
 (defar memset void (ptr (* t)) (constant int) (size size-t))
 (defar memcpy void (dst (* t)) (src (* t)) (size size-t))
+(defar memmove (* t) (dest (* t)) (src (* t)) (count size-t))
+
 (defar posix-memalign int (box (* (* t))) (alignment size-t) (size size-t))
 
 (define-alien-type timeval
@@ -1047,3 +1048,154 @@ handle stored in another slot of the same object."))
                                              (the fixnum ,(foreign-type-size alien-type)))))
                      (the ,lt ,val))))))
       form))
+
+;;; IOBUF
+;; based on the struct of the same name in IOLib
+
+;; SBCL implements a BUFFER of its own internally with the same basic concept,
+;; but much more complex as it provisions ANSI-STREAM and thus
+;; FD-STREAM. IOBUFs are simpler and designed for in-app IO.
+
+(defconstant +bytes-per-iobuf+ (* 4 1024))
+
+(defstruct (iobuf (:constructor %make-iobuf ()))
+  (sap (null-pointer) :type system-area-pointer)
+  (length 0 :type array-index)
+  (head 0 :type array-index)
+  (tail 0 :type array-index))
+
+;; REVIEW 2026-03-11: 
+(deftype iobuf-lisp-array ()
+  '(simple-array * (*)))
+
+(defun allocate-iobuf (&optional (length +bytes-per-iobuf+))
+  (let ((b (%make-iobuf)))
+    (setf (iobuf-sap b) (foreign-alloc 'unsigned-char :count length)
+          (iobuf-length b) length)
+    (values b)))
+
+(defun free-iobuf (iobuf)
+  (unless (null-pointer-p (iobuf-sap iobuf))
+    (foreign-free (iobuf-sap iobuf)))
+  (setf (iobuf-sap iobuf) (null-pointer))
+  (values iobuf))
+
+(defun iobuf-size (iobuf)
+  (- (iobuf-tail iobuf)
+     (iobuf-head iobuf)))
+
+(defun iobuf-start-pointer (iobuf)
+  (sap+ (iobuf-sap iobuf)
+        (iobuf-head iobuf)))
+
+(defun iobuf-end-pointer (iobuf)
+  (sap+ (iobuf-sap iobuf)
+        (iobuf-tail iobuf)))
+
+(defun iobuf-empty-p (iobuf)
+  (= (iobuf-tail iobuf)
+     (iobuf-length iobuf)))
+
+(defun iobuf-full-p (iobuf)
+  (= (iobuf-tail iobuf)
+     (iobuf-length iobuf)))
+
+(defun iobuf-end-space-length (iobuf)
+  (- (iobuf-length iobuf)
+     (iobuf-tail iobuf)))
+
+(defun iobuf-reset (iobuf)
+  (setf (iobuf-head iobuf) 0
+        (iobuf-tail iobuf)   0))
+
+(defun iobuf-peek (iobuf &optional (offset 0))
+  (bref iobuf (+ (iobuf-head iobuf) offset)))
+
+(defun iobuf-copy-data-to-start (iobuf)
+  (declare (type iobuf iobuf))
+  (memmove
+   (iobuf-sap iobuf)
+   (sap+ (iobuf-sap iobuf)
+         (iobuf-head iobuf))
+   (iobuf-size iobuf))
+  (setf (iobuf-tail iobuf) (iobuf-size iobuf))
+  (setf (iobuf-head iobuf) 0))
+
+(defun iobuf-can-fit-slice-p (iobuf start end)
+  (<= (- end start) (iobuf-end-space-length iobuf)))
+
+(defun iobuf-append-slice (iobuf array start end)
+  (let ((slice-length (- end start)))
+    (iobuf-copy-from-lisp-array array start iobuf
+                                (iobuf-tail iobuf) slice-length)
+    (incf (iobuf-tail iobuf) slice-length)))
+
+;;; BREF, (SETF BREF) and BUFFER-COPY *DO NOT* check boundaries
+;;; that must be done by their callers
+(defun bref (iobuf index)
+  (declare (type iobuf iobuf)
+           (type array-index index))
+  ;; (debug-only (assert (not (minusp index))))
+  (sap-ref (iobuf-sap iobuf) 'unsigned-char index))
+
+(defun (setf bref) (octet iobuf index)
+  (declare (type (unsigned-byte 8) octet)
+           (type iobuf iobuf)
+           (type array-index index))
+  #+nil
+  (debug-only
+    (assert (>= index 0))
+    (assert (< index (iobuf-length iobuf))))
+  (setf (sap-ref (iobuf-sap iobuf) 'unsigned-char index) octet))
+
+(defun iobuf-copy-from-lisp-array (src soff dst doff length)
+  (declare (type iobuf-lisp-array src)
+           (type iobuf dst)
+           (type array-index soff doff length))
+  #+nil
+  (debug-only
+    (assert (>= doff 0))
+    (assert (>= soff 0))
+    (assert (<= (+ doff length) (iobuf-size dst))))
+  (let ((dst-ptr (iobuf-sap dst)))
+    (with-vector-sap (src-ptr src)
+      (memcpy
+       (sap+ dst-ptr doff)
+       (sap+ src-ptr soff)
+       length))))
+
+(defun iobuf-copy-into-lisp-array (src soff dst doff length)
+  (declare (type iobuf src)
+           (type iobuf-lisp-array dst)
+           (type array-index soff doff length))
+  #+nil
+  (debug-only
+    (assert (>= doff 0))
+    (assert (>= soff 0))
+    (assert (<= (+ doff length) (length dst))))
+  (let ((src-ptr (iobuf-sap src)))
+    (with-vector-sap (dst-ptr dst)
+      (memcpy
+       (sap+ dst-ptr doff)
+       (sap+ src-ptr soff)
+       length))))
+
+(defun iobuf-pop-octet (iobuf)
+  (declare (type iobuf iobuf))
+  #+nil (debug-only (assert (> (iobuf-size iobuf) 0)))
+  (let ((start (iobuf-head iobuf)))
+    (prog1 (bref iobuf start)
+      (incf (iobuf-head iobuf)))))
+
+(defun iobuf-push-octet (iobuf octet)
+  (declare (type iobuf iobuf)
+           (type octet octet))
+  #+nil (debug-only (assert (not (iobuf-full-p iobuf))))
+  (let ((end (iobuf-tail iobuf)))
+    (prog1 (setf (bref iobuf end) octet)
+      (incf (iobuf-tail iobuf)))))
+
+(defmethod alloc ((self iobuf))
+  (setf (iobuf-sap self) (foreign-alloc 'unsigned-char :count (iobuf-length self))))
+(defmethod free ((self iobuf))
+  (free-iobuf self))

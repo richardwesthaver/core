@@ -1011,7 +1011,9 @@
    :sap-ref :sap-set
    :foreign-vector :foreign-vector-class
    :foreign-vector-length :foreign-vector-element-type
-   :fvref))
+   :fvref :bref
+   :iobuf))
+   
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)
