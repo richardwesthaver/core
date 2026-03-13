@@ -1,5 +1,6 @@
 (defpackage :io/tests
-  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream :io/deflate :kbd))
+  (:use :cl :std :rt :io :uring :zstd :sb-gray :disk :disk/btrfs :io/stream :io/deflate :kbd
+    :io/mux :io/sys))
 
 (in-package :io/tests)
 (defsuite :io)
@@ -158,5 +159,7 @@
 (deftest keymaps ()
   (istype 'keymap (sparse-keymap)))
 
-#+todo ; 2026-02-25
-(deftest lzw (:skip t))
+(deftest lzw (:skip :todo))
+
+(deftest mux (:skip :todo)
+  (io/mux::with-event-base (e :mux 'io/mux::epoll-multiplexer) (io/mux:event-dispatch e :timeout 0)))

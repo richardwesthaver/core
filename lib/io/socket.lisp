@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :io/socket)
 
-(deftype ipv4-array () '(simple-array octet 4))
-(deftype ipv6-array () '(simple-array (unsigned-byte 16) 8))
+(deftype ipv4-array () '(simple-array octet (4)))
+(deftype ipv6-array () '(simple-array (unsigned-byte 16) (8)))
 
 (defun integer-to-dotted (integer)
   "Convert an (UNSIGNED-BYTE 32) IPv4 address to a dotted string."

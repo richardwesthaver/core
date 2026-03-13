@@ -102,7 +102,7 @@ Returns a list of fd/result pairs which have one of these forms:
 
 (defmethod close-multiplexer progn ((mux multiplexer))
   (when (and (slot-boundp mux 'fd) (not (null (fd mux))))
-    (close (fd mux))
+    (sb-posix:close (fd mux))
     (setf (slot-value mux 'fd) nil))
   (values mux))
 
@@ -159,7 +159,7 @@ Returns T if some handlers were removed, NIL otherwise."))
 
 (defmethod close ((base event-base) &key abort)
   (declare (ignore abort))
-  (shutdown (mux base))
+  (close-multiplexer (mux base))
   (dolist (slot '(mux fds timers fd-timers expired-events))
     (setf (slot-value base slot) nil))
   (values base))

@@ -1104,7 +1104,7 @@ associated priority vector."
   "Return the item in PRIORITY-QUEUE with the largest key."
   (symbol-macrolet ((contents (%pqueue-contents pq)))
     (unless (zerop (length contents))
-      (heap-maximum pq))))
+      (heap-maximum contents))))
 
 (defun pqueue-extract-maximum (pq)
   "Remove and return the item in PRIORITY-QUEUE with the largest key."
