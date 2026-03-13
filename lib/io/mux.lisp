@@ -23,10 +23,9 @@
 
 (defun get-fd-limit ()
   "Return the maximum number of FDs available for the current process."
-  (let ((fd-limit (sys:rlimit sys::rlimit-nofile)))
-    (if (= fd-limit sys::rlim-infinity)
-        +global-fd-limit+
-        fd-limit)))
+  (multiple-value-bind (limit max) (sys:rlimit sys::rlimit-nofile)
+    (if (= limit sys::rlim-infinity)
+        max limit)))
 
 (defstruct (fd-handler
              (:constructor make-fd-handler
@@ -165,6 +164,75 @@ Returns T if some handlers were removed, NIL otherwise."))
     (setf (slot-value base slot) nil))
   (values base))
 
+(defmacro with-event-base ((var &rest initargs) &body body)
+  "Binds VAR to a new EVENT-BASE, instantiated with INITARGS,
+within the extent of BODY.  Closes VAR."
+  `(let ((,var (make-instance 'event-base ,@initargs)))
+     (unwind-protect
+          (locally ,@body)
+       (when ,var (close ,var)))))
+
+;;;; Event Loop
+(defun fd-entry (event-base fd)
+  (gethash fd (fds event-base)))
+
+(defun (setf fd-entry) (fd-entry event-base fd)
+  (setf (gethash fd (fds event-base)) fd-entry))
+
+(defmethod exit-event-loop ((event-base event-base) &key (delay 0))
+  (add-timer event-base
+             (lambda () (setf (state event-base) :exit))
+             delay :oneshot t))
+
+(defmethod event-base-empty-p ((event-base event-base))
+  (and (zerop (hash-table-count (fds event-base)))
+       (pqueue-empty-p (timers event-base))))
+
+(defmethod set-io-handler :before
+    ((event-base event-base) fd &key type timeout oneshot &allow-other-keys)
+  (declare (ignore timeout))
+  (check-type fd unsigned-byte)
+  ;; (check-type event-type fd-event-type)
+  ;; (check-type function function-designator)
+  ;; FIXME: check the type of the timeout
+  (check-type oneshot boolean)
+  (when (fd-monitored-p event-base fd type)
+    (error "FD ~A is already monitored for event ~A" fd type)))
+
+(defun fd-monitored-p (event-base fd event-type)
+  "Generalised predicate returning the event handler if the given FD
+is monitored for EVENT-TYPE."
+  (let ((entry (fd-entry event-base fd)))
+    (and entry (fd-entry-handler entry event-type))))
+
+(defmethod set-io-handler ((event-base event-base) fd &key type function timeout oneshot)
+  (let ((current-fd-entry (fd-entry event-base fd))
+        (event (make-fd-handler fd type function oneshot)))
+    (cond
+      (current-fd-entry
+       (%set-io-handler event-base fd event current-fd-entry timeout)
+       (update-fd (mux event-base) current-fd-entry type :add))
+      (t
+       (let ((new-fd-entry (make-fd-entry fd)))
+         (%set-io-handler event-base fd event new-fd-entry timeout)
+         (monitor-fd (mux event-base) new-fd-entry))))
+    (values event)))
+
+(defun %set-io-handler (event-base fd event fd-entry timeout)
+  (when timeout
+    (%set-io-handler-timer event-base event timeout))
+  (setf (fd-entry-handler fd-entry (fd-handler-type event)) event)
+  (setf (fd-entry event-base fd) fd-entry)
+  (values event))
+
+(defun %set-io-handler-timer (event-base event timeout)
+  (let ((timer (sb-ext:make-timer (lambda () (sb-ext:with-timeout timeout (expire-event event-base event))))))
+    (setf (fd-handler-timer event) timer)
+    (sb-ext:schedule-timer timer (fd-timers event-base))))
+
+(defun expire-event (event-base event)
+  (push event (expired-events event-base)))
+
 ;;; EPOLL
 ;; preferred interface
 (define-multiplexer epoll-multiplexer (multiplexer)
@@ -202,7 +270,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-alien ((ev sys::epoll-event))
-      (bzero ev (alien-size sys:epoll-event))
+      (bzero (alien-sap ev) (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events)
             flags)
       (setf (slot
@@ -219,7 +287,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-alien ((ev sys:epoll-event))
-      (bzero ev (alien-size sys:epoll-event))
+      (bzero (alien-sap ev) (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events) flags)
       (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
       (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev))
@@ -240,29 +308,21 @@ Returns T if some handlers were removed, NIL otherwise."))
             (fd-entry-fd fd-entry)))))
 
 ;; TODO 2026-03-10: 
-#+todo
 (defmethod harvest-events ((mux epoll-multiplexer) timeout)
-  (with-accessors ((events event-set-of)
-                   (fd-limit fd-limit-of))
-      mux
-    (bzero events (* fd-limit (alien-size 'sys:epoll-event)))
+  (with-accessors ((events events) (fd-limit fd-limit)) mux
+    (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
-      (sys:repeat-upon-condition-decreasing-timeout
-          ((sys::eintr) tmp-timeout timeout)
-        (setf ready-fds (sys:epoll-wait (fd mux) events fd-limit
-                                         (timeout->milliseconds tmp-timeout))))
+      (repeat-syscall-decreasing-timeout
+          ((sb-posix:eintr) tmp-timeout timeout)
+        (setf ready-fds (sys:epoll-wait (fd mux) events fd-limit (timeout-ms tmp-timeout))))
       (macrolet ((epoll-slot (slot-name)
-                   `(slot
-                     ;; FIXME: tests fail when wrapping this bare reference
-                     ;; in a :STRUCT.
-                     (sap-ref events 'sys:epoll-event i)
-                     'sys:epoll-event ',slot-name)))
-        (return*
-         (loop :for i :below ready-fds
-               :for fd := (slot (epoll-slot sys::data) 'sys::fd)
-               :for event-mask := (epoll-slot isys:events)
-               :for epoll-event := (make-epoll-event fd event-mask)
-               :when epoll-event :collect epoll-event))))))
+                   `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))
+        (return-from harvest-events
+          (loop :for i :below ready-fds
+                :for fd := (slot (epoll-slot sys::data) 'sys::fd)
+                :for event-mask := (epoll-slot sys::events)
+                :for epoll-event := (make-epoll-event fd event-mask)
+                :when epoll-event :collect epoll-event))))))
 
 (defun make-epoll-event (fd mask)
   (let ((event ()))
@@ -275,3 +335,6 @@ Returns T if some handlers were removed, NIL otherwise."))
        (push :error event)))
     (when event
       (list fd event))))
+
+
+

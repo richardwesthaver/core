@@ -1115,7 +1115,7 @@
    :idx :with-iter
    :make-priority-queue :do-indexes
    :mod-incf :mod-decf
-   :repeat))
+   :repeat :pqueue-empty-p))
 
 (defpkg :std/path
   (:use :cl)

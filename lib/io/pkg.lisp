@@ -130,6 +130,13 @@
    #:*accept-bogus-eols*
    #:*treat-semicolon-as-continuation*))
 
+(defpkg :io/sys
+  (:use :std-lisp)
+  (:export :sys-condition :sys-error :syscall-error
+   :repeat-upon-condition :repeat-decreasing-timeout 
+   :repeat-upon-condition-decreasing-timeout :timeval-from-timeout
+   :timespec-from-timeout :timeout-ms :decode-timeout :repeat-syscall-decreasing-timeout))
+
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)
   (:export :io-socket-error 
@@ -324,7 +331,7 @@
    :load-btrfs-libs))
 
 (defpkg :io/mux
-  (:use :std-lisp)
+  (:use :std-lisp :io/sys)
   (:export :event-base :event-dispatch :set-io-handler :remove-fd-handlers))
 
 (defpkg :io

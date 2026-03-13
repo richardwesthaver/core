@@ -15,6 +15,7 @@
  ((:pkg "pkg" :feature :io :default :io-user :package :io-int)
   (:file "proto")
   (:file "swap-bytes")
+  (:file "sys")
   (:file "socket")
   (:file "stream")
   (:file "static")
