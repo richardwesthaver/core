@@ -1122,7 +1122,7 @@ associated priority vector."
 (defun pqueue-empty-p (pq)
   (zerop (length (%pqueue-contents pq))))
 
-(defun priority-queue-remove (pq item &key (test #'eq))
+(defun pqueue-remove (pq item &key (test #'eq))
   "Remove and return ITEM from PRIORITY-QUEUE."
   (symbol-macrolet ((contents (%pqueue-contents pq))
                     (keyfun (%pqueue-keyfun pq)))

@@ -228,10 +228,253 @@ is monitored for EVENT-TYPE."
 (defun %set-io-handler-timer (event-base event timeout)
   (let ((timer (sb-ext:make-timer (lambda () (sb-ext:with-timeout timeout (expire-event event-base event))))))
     (setf (fd-handler-timer event) timer)
-    (sb-ext:schedule-timer timer (fd-timers event-base))))
+    (pqueue-insert (fd-timers event-base) timer)))
 
 (defun expire-event (event-base event)
   (push event (expired-events event-base)))
+
+(defmethod set-error-handler :before ((event-base event-base) fd function)
+  (check-type fd unsigned-byte)
+  (check-type function function-designator)
+  (unless (fd-entry event-base fd)
+    (error "FD ~A is not being monitored" fd))
+  (when (fd-has-error-handler-p event-base fd)
+    (error "FD ~A already has an error handler" fd)))
+
+(defun fd-has-error-handler-p (event-base fd)
+  (let ((entry (fd-entry event-base fd)))
+    (and entry (fd-entry-error-callback entry))))
+
+(defmethod set-error-handler
+    ((event-base event-base) fd function)
+  (let ((fd-entry (fd-entry event-base fd)))
+    (setf (fd-entry-error-callback fd-entry) function)))
+
+(defmethod add-timer :before ((event-base event-base) function timeout &key oneshot)
+  (declare (ignore timeout))
+  (check-type function function-designator)
+  ;; FIXME: check the type of the timeout
+  (check-type oneshot boolean))
+
+(defmethod add-timer ((event-base event-base) function timeout &key oneshot)
+  ;; TODO 2026-03-12: 
+  (declare (ignore oneshot))
+  (pqueue-insert 
+   (timers event-base)
+   (sb-ext:make-timer (lambda () (sb-ext:with-timeout timeout (funcall function))))))
+
+(defmethod remove-fd-handlers
+    ((event-base event-base) fd &key read write error)
+  (unless (or read write error)
+    (setf read t write t error t))
+  (let ((entry (fd-entry event-base fd)))
+    (cond
+      (entry
+       (prog1
+           (%remove-fd-handlers event-base fd entry read write error)
+         (when (and read write)
+           (assert (null (fd-entry event-base fd))))))
+      (t nil))))
+
+(defun %remove-fd-handlers (event-base fd entry read write error)
+  (let ((rev (fd-entry-read-handler entry))
+        (wev (fd-entry-write-handler entry))
+        (eev (fd-entry-error-callback entry))
+        (removed nil))
+    (when (and rev read)
+      (%remove-io-handler event-base fd entry rev)
+      (setf removed t))
+    (when (and wev write)
+      (%remove-io-handler event-base fd entry wev)
+      (setf removed t))
+    (when (and eev error)
+      (setf (fd-entry-error-callback entry) nil)
+      (setf removed t))
+    removed))
+
+(defun %remove-io-handler (event-base fd fd-entry event)
+  (let ((event-type (fd-handler-type event)))
+    (setf (fd-entry-handler fd-entry event-type) nil)
+    (when-let ((timer (fd-handler-timer event)))
+      (pqueue-remove (fd-timers event-base) timer))
+    (cond
+      ((fd-entry-empty-p fd-entry)
+       (%remove-fd-entry event-base fd)
+       (unmonitor-fd (mux event-base) fd-entry))
+      (t
+       (update-fd (mux event-base) fd-entry event-type :del)))))
+
+(defun %remove-fd-entry (event-base fd)
+  (remhash fd (fds event-base)))
+
+(defmethod remove-timer :before
+    ((event-base event-base) timer)
+  (check-type timer sb-ext:timer))
+
+(defmethod remove-timer ((event-base event-base) timer)
+  (pqueue-remove (timers event-base) timer)
+  (values event-base))
+
+;;;; Scheduler
+(defun peek-schedule (schedule)
+  (std/seq::pqueue-max schedule))
+
+(defun time-to-next-timer (schedule)
+  (when-let ((timer (peek-schedule schedule)))
+    (sb-impl::%timer-expire-time timer)))
+
+(defun dispatch-timer (timer)
+  (funcall (sb-impl::%timer-function timer)))
+
+(defun time-left (timer)
+  (- (sb-impl::%timer-expire-time timer) (get-internal-real-time)))
+
+(defun timer-oneshot-p (timer)
+  (not (sb-impl::%timer-repeat-interval timer)))
+
+(defun timer-reschedulable-p (timer)
+  (symbol-macrolet ((relative-time (time-left timer))
+                    (one-shot (timer-oneshot-p timer)))
+    (and relative-time (not one-shot))))
+
+(defun reschedule-timer (schedule timer)
+  (incf (sb-impl::%timer-expire-time timer) (time-left timer))
+  (pqueue-insert schedule timer))
+
+(defun expire-pending-timers (schedule now)
+  (let ((expired-p nil)
+        (timers-to-reschedule ()))
+    (flet ((handle-expired-timer (timer)
+             (when (timer-reschedulable-p timer)
+               (push timer timers-to-reschedule))
+             (dispatch-timer timer))
+           (%return ()
+             (dolist (timer timers-to-reschedule)
+               (reschedule-timer schedule timer))
+             (return-from expire-pending-timers expired-p)))
+      (loop
+         (let ((next-timer (peek-schedule schedule)))
+           (unless next-timer (%return))
+           (cond ((timer-expired-p next-timer now)
+                  (setf expired-p t)
+                  (handle-expired-timer (pqueue-extract-maximum schedule)))
+                 (t
+                  (%return))))))))
+
+;;;; Event Dispatch
+(defvar *minimum-event-loop-step* 0.0d0)
+(defvar *maximum-event-loop-step* nil)
+
+(defmethod event-dispatch :around
+    ((event-base event-base) &key timeout oneshot min-step max-step)
+  (declare (ignore oneshot min-step max-step))
+  (setf (state event-base) nil)
+  (let ((timer (when timeout
+                 (exit-event-loop event-base :delay timeout))))
+    (unwind-protect
+         (call-next-method)
+      (when timer
+        (remove-timer event-base timer)))))
+
+(defmethod event-dispatch ((event-base event-base) &key oneshot timeout
+                           (min-step *minimum-event-loop-step*)
+                           (max-step *maximum-event-loop-step*))
+  (declare (ignore timeout))
+  (coercef min-step 'double-float)
+  (when max-step (coercef max-step 'double-float))
+  (with-accessors ((mux mux) (fds fds) (state state)
+                   (exit-when-empty exit-when-empty-p)
+                   (timers timers) (fd-timers fd-timers)
+                   (expired-events expired-events))
+      event-base
+    (labels ((poll-timeout (now)
+               (let* ((deadline1 (time-to-next-timer timers))
+                      (deadline2 (time-to-next-timer fd-timers))
+                      (deadline (if (and deadline1 deadline2)
+                                    (min deadline1 deadline2)
+                                    (or deadline1 deadline2))))
+                 (if deadline
+                     (io/sys::clamp-timeout (- deadline now) min-step max-step)
+                     max-step)))
+             (must-exit-loop-p ()
+               (or state
+                   (and exit-when-empty
+                        (event-base-empty-p event-base)))))
+      (loop :with deletion-list := ()
+            :with eventsp := nil
+            :for now := (get-internal-real-time)
+            :for poll-timeout := (poll-timeout now)
+            :until (must-exit-loop-p) :do
+        (setf expired-events nil)
+        (setf (values eventsp deletion-list)
+              (dispatch-fd-events-once event-base poll-timeout now))
+        (%remove-handlers event-base (delete nil deletion-list))
+        (when (expire-pending-timers fd-timers now) (setf eventsp t))
+        (dispatch-fd-timeouts expired-events)
+        (when (expire-pending-timers timers now) (setf eventsp t))
+        (when (and eventsp oneshot) (setf state :oneshot))))))
+
+(defun %remove-handlers (event-base event-list)
+  (loop :for ev :in event-list
+        :for fd := (fd-handler-fd ev)
+        :for fd-entry := (fd-entry event-base fd)
+     :do (%remove-io-handler event-base fd fd-entry ev)))
+
+;;; Waits for events and dispatches them.  Returns T if some events
+;;; have been received, NIL otherwise.
+(defun dispatch-fd-events-once (event-base timeout now)
+  (let ((wthreshold (write-interval-threshold event-base)))
+    (loop
+      :with fd-events := (harvest-events (mux event-base) timeout)
+      :for ev :in fd-events
+      :for dlist :=    (%handle-one-fd event-base ev now nil wthreshold)
+                 :then (%handle-one-fd event-base ev now dlist wthreshold)
+      :finally
+         (pqueue-reorder (fd-timers event-base))
+       (return (values (consp fd-events) dlist)))))
+
+(defun %handle-one-fd (event-base event now deletion-list wthreshold)
+  (destructuring-bind (fd ev-types) event
+    (let* ((readp nil) (writep nil)
+           (fd-entry (fd-entry event-base fd))
+           (errorp (and fd-entry (member :error ev-types))))
+      (when fd-entry
+        (when (member :read ev-types)
+          (setf readp (%dispatch-event fd-entry :read
+                                       (if errorp :error nil) now)))
+        (when (member :write ev-types)
+          (when (<= wthreshold (- now (fd-entry-write-ts fd-entry)))
+            (unwind-protect
+                 (setf writep (%dispatch-event fd-entry :write
+                                               (if errorp :error nil) now))
+              (setf (fd-entry-write-ts fd-entry) now))))
+        (when errorp
+          (when-let ((callback (fd-entry-error-callback fd-entry)))
+            (funcall callback (fd-entry-fd fd-entry) :error))
+          (setf readp t writep t))
+        (when readp (push (fd-entry-read-handler fd-entry) deletion-list))
+        (when writep (push (fd-entry-write-handler fd-entry) deletion-list)))
+      (values deletion-list))))
+
+(defun %dispatch-event (fd-entry event-type errorp now)
+  (let ((ev (fd-entry-handler fd-entry event-type)))
+    (when ev
+      (funcall (fd-handler-callback ev)
+               (fd-entry-fd fd-entry)
+               event-type
+               (if errorp :error nil))
+      (when-let ((timer (fd-handler-timer ev)))
+        (setf (sb-impl::%timer-expire-time timer)
+              ;; now + time-left
+              (+ now (time-left timer))))
+      (fd-handler-oneshot-p ev))))
+
+(defun dispatch-fd-timeouts (events)
+  (dolist (ev events)
+    (funcall (fd-handler-callback ev)
+             (fd-handler-fd ev)
+             (fd-handler-type ev)
+             :timeout)))
 
 ;;; EPOLL
 ;; preferred interface
