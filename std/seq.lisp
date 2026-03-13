@@ -775,7 +775,7 @@ associated priority vector."
       (incf (priority-queue-size queue))
       nil)))
 
-(declaim (ftype (function (simple-array priority-vector array-index)
+(declaim (ftype (function (simple-array priority-vector (array-index))
                     (values null &optional))
                 heapify-downwards))
 (definline heapify-downwards (data-vector prio-vector size)
@@ -1051,7 +1051,7 @@ associated priority vector."
         (heapify heap largest :key key :test test)))
     heap))
 
-(defun heap-insert (heap new-item &key (key #'identity) (test #'>=))
+(definline heap-insert (heap new-item &key (key #'identity) (test #'>=))
   (declare (function key test))
   (flet ((key (obj) (funcall key obj))
          (ge (i j) (funcall test i j)))
@@ -1081,26 +1081,23 @@ associated priority vector."
 (defun heap-extract-maximum (heap &key (key #'identity) (test #'>=))
   (heap-extract heap 0 :key key :test test))
 
-(declaim (inline %make-pqueue))
-(defstruct (pqueue
-             (:conc-name %pqueue-)
-             (:constructor %make-pqueue))
+(defstruct (pqueue (:conc-name %pqueue-) (:constructor %make-pqueue))
   contents
   keyfun)
 
 (defun make-pqueue (&key (key #'identity) (element-type t))
-  (let ((contents (make-array 100 :adjustable t
-                              :fill-pointer 0
-                              :element-type element-type)))
-    (%make-pqueue :keyfun key
-                          :contents contents)))
+  (%make-pqueue 
+   :keyfun key 
+   :contents (the vector (make-array 100 :adjustable t :fill-pointer 0 :element-type element-type))))
 
 (defmethod print-object ((object pqueue) stream)
   (print-unreadable-object (object stream :type t :identity t)
     (format stream "~[empty~:;~:*~D item~:P~]"
             (length (%pqueue-contents object)))))
 
-(defun pqueue-max (pq)
+(defmethod data ((self pqueue)) (%pqueue-contents self))
+
+(defun pqueue-maximum (pq)
   "Return the item in PRIORITY-QUEUE with the largest key."
   (symbol-macrolet ((contents (%pqueue-contents pq)))
     (unless (zerop (length contents))

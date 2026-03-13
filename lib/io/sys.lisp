@@ -1,15 +1,23 @@
 ;;; sys.lisp --- Linux System IO
 
-;; Syscalls
+;; Syscall condition handling, Timeouts, and IO Timers
+
+;;; Commentary:
+
+;; Attempts have been made to use SBCL internals as much as possible over
+;; IOLib-style re-implementations, however it turns out in most cases the
+;; duplicates are needed in order to extend functionality without interfering
+;; with SBCL internals.
 
 ;;; Code:
 (in-package :io/sys)
 
 ;;; Conditions
-(define-condition sys-condition () ())
+(define-condition sys-condition () ()
+  (:documentation "Base class for all IO/SYS conditions."))
 (define-condition sys-error (error sys-condition) ())
-(define-condition syscall-error (sys-error std-error) ())
-(define-condition poll-error (syscall-error)
+(define-condition io-syscall-error (sys-error std-error syscall-error) ())
+(define-condition poll-error (io-syscall-error)
   ((type :initarg :type :reader error-type))
   (:report (lambda (c s)
              (format s "Poll error(event ~S)" (error-type c))
@@ -28,8 +36,11 @@ of a file descriptor."))
 (defun syscall-error-p (thing)
   (typep thing 'syscall-error))
 
-(defun syscall-error (control-string &rest args)
-  (error 'syscall-error :message (format nil "~?" control-string args)))
+(defun io-syscall-error-p (thing)
+  (typep thing 'io-syscall-error))
+
+(defun io-syscall-error (control-string &rest args)
+  (error 'io-syscall-error :message (format nil "~?" control-string args)))
 
 (defmacro repeat-upon-condition ((&rest conditions) &body body)
   (with-gensyms (block-name)
@@ -77,9 +88,12 @@ of a file descriptor."))
 (defmacro repeat-syscall-decreasing-timeout (((&rest ints) timeout-var timeout &optional (block-name nil blockp))
                                              &body body)
   (unless blockp (setf block-name (gensym "BLOCK")))
-  `(repeat-decreasing-timeout (,timeout-var ,timeout ,block-name)
-     (acase (progn ,@body)
-       ,@(mapcar (lambda (x) `(,x (return-from ,block-name std::it))) ints))))
+  (with-gensyms (ret)
+    `(repeat-decreasing-timeout (,timeout-var ,timeout ,block-name)
+       (let ((,ret (progn ,@body) ))
+         (case (print (sb-alien:get-errno))
+           ,@(mapcar (lambda (x) `(,x)) ints)
+           (t (return-from ,block-name ,ret)))))))
 
 ;;; Timeouts
 (deftype timeout ()
@@ -139,3 +153,97 @@ of a file descriptor."))
         (+ (* sec 1000)
            (truncate usec 1000)))
       -1))
+
+;;; Timers
+(defstruct (io-timer
+             (:conc-name %io-timer-)
+             (:constructor %make-io-timer (name function expire-time
+                                           relative-time oneshot)))
+  name
+  ;; to call when the timer expires
+  function
+  ;; absolute expiry time
+  expire-time
+  ;; relative expiry time
+  relative-time
+  ;; when NIL, the timer is automatically rescheduled
+  ;; when triggered
+  oneshot)
+
+(defmethod print-object ((object io-timer) stream)
+  (print-unreadable-object (object stream)
+    (format stream "IO-TIMER ~S, Timeout: [ ~A , ~A ], ~:[persistent~;oneshot~]"
+            (%io-timer-name object)
+            (%io-timer-relative-time object)
+            (%io-timer-expire-time object)
+            (%io-timer-oneshot object))))
+
+(defun make-io-timer (function delay &key name oneshot)
+  (flet ((abs-timeout (timeout)
+           (+ (get-internal-real-time)
+              (normalize-timeout timeout))))
+    (let ((name (or name "(unnamed)")))
+      (%make-io-timer name function (abs-timeout delay) delay oneshot))))
+
+(defun io-timer-name (timer)
+  (%io-timer-name timer))
+
+(defun io-timer-expired-p (timer now &optional (delta 0.0d0))
+  (assert (%io-timer-expire-time timer) ((%io-timer-expire-time timer))
+          "Timer ~A must have an expiry time set." timer)
+  (let ((compare-time (+ now delta)))
+    (> compare-time (%io-timer-expire-time timer))))
+
+(defun reset-io-timer (timer)
+  (setf (%io-timer-expire-time timer) 0))
+
+(defun peek-schedule (schedule)
+  (pqueue-maximum schedule))
+
+(defun time-to-next-timer (schedule)
+  (when-let ((timer (peek-schedule schedule)))
+    (%io-timer-expire-time timer)))
+
+(defun dispatch-timer (timer)
+  (funcall (%io-timer-function timer)))
+
+(defun timer-reschedulable-p (timer)
+  (symbol-macrolet ((relative-time (%io-timer-relative-time timer))
+                    (oneshot (%io-timer-oneshot timer)))
+    (and relative-time (not oneshot))))
+
+(defun reschedule-timer (schedule timer)
+  (incf (%io-timer-expire-time timer) (%io-timer-relative-time timer))
+  (pqueue-insert schedule timer))
+
+(defun expire-pending-timers (schedule now)
+  (let ((expired-p nil)
+        (timers-to-reschedule ()))
+    (flet ((handle-expired-timer (timer)
+             (when (timer-reschedulable-p timer)
+               (push timer timers-to-reschedule))
+             (dispatch-timer timer))
+           (%return ()
+             (dolist (timer timers-to-reschedule)
+               (reschedule-timer schedule timer))
+             (return-from expire-pending-timers expired-p)))
+      (loop
+         (let ((next-timer (peek-schedule schedule)))
+           (unless next-timer (%return))
+           (cond ((io-timer-expired-p next-timer now)
+                  (setf expired-p t)
+                  (handle-expired-timer (pqueue-extract-maximum schedule)))
+                 (t
+                  (%return))))))))
+
+(defun schedule-io-timer (schedule timer)
+  (pqueue-insert schedule timer)
+  (values timer))
+
+(defun unschedule-io-timer (schedule timer)
+  (pqueue-remove schedule timer)
+  (values timer))
+
+(defun reschedule-timer-relative-to-now (timer now)
+  (setf (%io-timer-expire-time timer)
+        (+ now (%io-timer-relative-time timer))))

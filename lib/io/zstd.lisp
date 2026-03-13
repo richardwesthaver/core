@@ -17,8 +17,8 @@
 ;;; Objects
 (defclass zstd-compressing-stream (compressing-stream)
   ((level :initform *compression-level* :accessor compression-level)
-   (input :initform (allocate-zstd-inbuffer) :reader input)
-   (output :initform (allocate-zstd-outbuffer) :reader output)
+   (input :initform (allocate-zstd-inbuffer) :accessor input)
+   (output :initform (allocate-zstd-outbuffer) :accessor output)
    (stream :initform (zstd-createcstream)
             :type (alien (* zstd-cstream))
             :reader cstream)))

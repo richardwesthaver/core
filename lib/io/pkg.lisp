@@ -132,10 +132,15 @@
 
 (defpkg :io/sys
   (:use :std-lisp)
+  (:import-from :sb-posix :syscall-error :syscall-errno :syscall-name)
   (:export :sys-condition :sys-error :syscall-error
    :repeat-upon-condition :repeat-decreasing-timeout 
    :repeat-upon-condition-decreasing-timeout :timeval-from-timeout
-   :timespec-from-timeout :timeout-ms :decode-timeout :repeat-syscall-decreasing-timeout))
+   :timespec-from-timeout :timeout-ms :decode-timeout :repeat-syscall-decreasing-timeout
+   :make-io-timer :io-timer :reschedule-timer :dispatch-timer
+   :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
+   :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
+   :reschedule-timer-relative-to-now :expire-pending-timers))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)
@@ -332,7 +337,10 @@
 
 (defpkg :io/mux
   (:use :std-lisp :io/sys)
-  (:export :event-base :event-dispatch :set-io-handler :remove-fd-handlers))
+  (:export :event-base :event-dispatch :set-io-handler 
+   :remove-fd-handlers :set-io-handler :set-error-handler :add-timer
+   :remove-timer :exit-event-loop :event-base-empty-p :with-event-base
+   :fd-entry :monitor-fd :update-fd :unmonitor-fd))
 
 (defpkg :io
   (:use :cl)

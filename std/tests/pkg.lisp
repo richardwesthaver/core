@@ -205,3 +205,13 @@ These tests are copied directly from the Alexandria test suite."
     (is= 0 (fvref fv 4095))
     (signals out-of-bounds-error (fvref fv 4096))
     (is (null-pointer-p (free fv)))))
+
+(deftest iobuf ()
+  (let ((src (std/alien::allocate-iobuf))
+        (dst (make-array 400 :element-type 'octet))
+        (off (random std/alien::+bytes-per-iobuf+)))
+    (is= std/alien::+bytes-per-iobuf+ (std/alien::iobuf-length src))
+    (dotimes (i off) (std/alien::iobuf-push-octet src 1))
+    (is= off (std/alien::iobuf-size src))
+    (isnt (std/alien::iobuf-copy-into-lisp-array src 0 dst 0 (std/alien::iobuf-length src)))))
+
