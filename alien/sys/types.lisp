@@ -6,7 +6,7 @@
 (in-package :sys)
 
 ;; convenience enums for errors and signals (grovelled mostly by sb-posix)
-(define-alien-enum (err :type int)
+(define-alien-enum (err)
   :e2big sb-posix::E2BIG
   :eacces sb-posix::eacces
   :eaddrinuse sb-posix::EADDRINUSE
@@ -106,7 +106,7 @@
   :enotty sb-posix::ENOTTY
   :enotuniq sb-posix::ENOTUNIQ
   :enxio sb-posix::ENXIO
-  :eopnotsupp sb-posix::EOPNOTSUPP
+  ;; :eopnotsupp sb-posix::EOPNOTSUPP
   :eoverflow sb-posix::EOVERFLOW
   ;; :eownerdead sb-posix::EOWNERDEAD
   :eperm sb-posix::EPERM

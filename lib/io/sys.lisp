@@ -95,6 +95,23 @@ of a file descriptor."))
            ,@(mapcar (lambda (x) `(,x)) ints)
            (t (return-from ,block-name ,ret)))))))
 
+;;;; Syscall Errors
+(defvar *syscall-error-table* (make-hash-table))
+
+;; TODO 2026-03-13: 
+(macrolet
+    ((define-syscall-errors (keywords)
+       `(progn
+          ,@(loop for kw in keywords collect
+               (let ((cond-name (intern (symbol-name kw)))
+                     (code (err kw)))
+                 `(progn
+                    (define-condition ,cond-name (io-syscall-error) ()
+                      (:default-initargs :errno ,code :name ,kw :message ,(sb-int:strerror code)))
+                    (setf (gethash ,code *syscall-error-table*) ',cond-name)))))))
+  (define-syscall-errors
+      #.(alien-enum-keys 'err)))
+
 ;;; Timeouts
 (deftype timeout ()
   'double-float)

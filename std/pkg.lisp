@@ -983,6 +983,7 @@
    :clone-octets-to-alien :octets-to-alien
    :clone-octets-from-alien :foreign-int-to-integer
    :foreign-int-to-bool :bool-to-foreign-int
+   :alien-enum-keys :alien-enum-values
    :define-alien-enum :define-alien-routine
    :define-opaque :shared-object-name
    :define-alien-loader :c-strings-to-string-list

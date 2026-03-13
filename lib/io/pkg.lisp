@@ -131,7 +131,7 @@
    #:*treat-semicolon-as-continuation*))
 
 (defpkg :io/sys
-  (:use :std-lisp)
+  (:use :std-lisp :sys)
   (:import-from :sb-posix :syscall-error :syscall-errno :syscall-name)
   (:export :sys-condition :sys-error :syscall-error
    :repeat-upon-condition :repeat-decreasing-timeout 
