@@ -1209,3 +1209,13 @@ handle stored in another slot of the same object."))
   (setf (iobuf-sap self) (foreign-alloc 'unsigned-char :count (iobuf-length self))))
 (defmethod free ((self iobuf))
   (free-iobuf self))
+
+;;; Syscalls
+(defvar *syscall-type-table* (make-hash-table))
+
+(defmacro defsyscall (name result-type &rest args)
+  "Like DEFAR but associate NAME with RESULT-TYPE in *SYSCALL-TYPE-TABLE*."
+  (setf (gethash name *syscall-type-table*) 
+        (let ((sb-alien::*values-type-okay* t))
+          (parse-alien-type result-type nil)))
+  `(defar ,name ,result-type ,@args))

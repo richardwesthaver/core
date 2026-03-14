@@ -930,7 +930,7 @@
   (:import-from :std/type :octet-vector :octet :array-index)
   (:import-from :sb-int :with-float-traps-masked)
   (:import-from :std/io :define-io)
-  (:import-from :sb-posix :lisp-for-c-symbol)
+  (:import-from :sb-posix :lisp-for-c-symbol :define-designator :*designator-types* :filename)
   (:import-from :sb-alien :%alien-value :sap+ 
    :*linkage-info* :*shared-objects* :*alien-type-classes* :alien-type-class 
    :unparse-alien-type :parse-alien-type :pick-lisp-and-alien-names :alien-type-bits
@@ -1013,7 +1013,8 @@
    :foreign-vector :foreign-vector-class
    :foreign-vector-length :foreign-vector-element-type
    :fvref :bref
-   :iobuf :bzero))
+   :iobuf :bzero
+   :defsyscall :*syscall-type-table*))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)

@@ -36,33 +36,25 @@ of a file descriptor."))
    "Signaled when a timeout occurs while polling for I/O readiness
 of a file descriptor."))
 
-(defun syscall-always (errcode syscall)
+(defun syscall-never (errcode syscall)
   (declare (ignore errcode syscall))
   nil)
 
-(defun syscall-error-predicate (base-type)
-  (case base-type
-    (simple-string
-     '(lambda (s) (null s)))
-    ((or string c-string)
-     '(lambda (s) (not (stringp s))))
+(defun syscall-error-predicate (alien-type)
+  (typecase alien-type
+    (sb-alien::alien-c-string-type '(lambda (s) (not (stringp s))))
+    (sb-alien::alien-pointer-type 'null-pointer-p)
+    (sb-alien::alien-integer-type
+     (if (sb-alien::alien-integer-type-signed alien-type)
+         'minusp
+         'syscall-never))
+    (sb-alien::alien-values-type
+     (if (sb-alien::alien-void-type-p alien-type)
+         'syscall-never
+         ;; WARNING: assumes only 1 value
+         (syscall-error-predicate (car (sb-alien::alien-values-type-values alien-type)))))
     (t
-     (labels ((%case (b)
-                (atypecase b
-                  (sb-alien::alien-pointer-type 'null-pointer-p)
-                  (sb-alien::alien-integer-type
-                   (if (sb-alien::alien-integer-type-signed it)
-                       'minusp
-                       'syscall-always))
-                  (sb-alien::alien-values-type
-                   (if (sb-alien::alien-void-type-p it)
-                       'syscall-always
-                       ;; WARNING: assumes only 1 value
-                       (%case (car (sb-alien::alien-values-type-values it)))))
-                  (t
-                   (error "Could not choose an error-predicate function.")))))
-       (let ((sb-alien::*values-type-okay* t))
-         (%case (parse-alien-type base-type nil)))))))
+     (error "Could not choose an error-predicate function."))))
 
 (defun syscall-error-p (thing)
   (typep thing 'syscall-error))
