@@ -508,9 +508,9 @@ is monitored for EVENT-TYPE."
   (with-accessors ((events events) (fd-limit fd-limit)) mux
     (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
-      (repeat-syscall-decreasing-timeout
-          ((sb-posix:eintr) tmp-timeout timeout)
-        (setf ready-fds (sys:epoll-wait (fd mux) events fd-limit (timeout-ms tmp-timeout))))
+      (repeat-upon-condition-decreasing-timeout
+          ((io/sys::eintr) tmp-timeout timeout)
+        (setf ready-fds (io-syscall (sys:epoll-wait (fd mux) events fd-limit (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
                    `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))
         (return-from harvest-events

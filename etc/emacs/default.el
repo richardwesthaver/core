@@ -393,6 +393,8 @@ function: '(ql:quickload :clouseau)'."
   (letv* (as let*))
   (deferror (as define-condition))
   (plet (as let))
+  (acase (as case))
+  (atypecase (as typecase))
   (defwarning (as define-condition))
   (make-db (as make-instance))
   (make-schema (as make-instance))

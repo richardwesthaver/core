@@ -15,8 +15,11 @@
 ;;; Conditions
 (define-condition sys-condition () ()
   (:documentation "Base class for all IO/SYS conditions."))
-(define-condition sys-error (error sys-condition) ())
-(define-condition io-syscall-error (sys-error std-error syscall-error) ())
+(define-condition sys-error (sys-condition std-error)
+  ((id :initarg :id :reader error-id)))
+(define-condition io-syscall-error (sys-error syscall-error) 
+  ((handlers :initarg :handlers :reader error-handlers))
+  (:default-initargs :id :unknown))
 (define-condition poll-error (io-syscall-error)
   ((type :initarg :type :reader error-type))
   (:report (lambda (c s)
@@ -33,6 +36,34 @@ of a file descriptor."))
    "Signaled when a timeout occurs while polling for I/O readiness
 of a file descriptor."))
 
+(defun syscall-always (errcode syscall)
+  (declare (ignore errcode syscall))
+  nil)
+
+(defun syscall-error-predicate (base-type)
+  (case base-type
+    (simple-string
+     '(lambda (s) (null s)))
+    ((or string c-string)
+     '(lambda (s) (not (stringp s))))
+    (t
+     (labels ((%case (b)
+                (atypecase b
+                  (sb-alien::alien-pointer-type 'null-pointer-p)
+                  (sb-alien::alien-integer-type
+                   (if (sb-alien::alien-integer-type-signed it)
+                       'minusp
+                       'syscall-always))
+                  (sb-alien::alien-values-type
+                   (if (sb-alien::alien-void-type-p it)
+                       'syscall-always
+                       ;; WARNING: assumes only 1 value
+                       (%case (car (sb-alien::alien-values-type-values it)))))
+                  (t
+                   (error "Could not choose an error-predicate function.")))))
+       (let ((sb-alien::*values-type-okay* t))
+         (%case (parse-alien-type base-type nil)))))))
+
 (defun syscall-error-p (thing)
   (typep thing 'syscall-error))
 
@@ -45,17 +76,18 @@ of a file descriptor."))
 (defmacro repeat-upon-condition ((&rest conditions) &body body)
   (with-gensyms (block-name)
     `(loop :named ,block-name :do
-       (ignore-some-conditions ,conditions
-         (return-from ,block-name (progn ,@body))))))
+              (ignore-some-conditions ,conditions
+                (return-from ,block-name (progn ,@body))))))
 
 (definline handle-eintr (syscall)
+  "Call SYSCALL with interrupts handled (in second value)."
   (let (v e)
     (loop (multiple-value-setq (v e) syscall)
           (unless (eql sb-posix:eintr e)
             (return (values v e))))))
 
 (defmacro with-eintr-restart (syscall &body body)
-    `(progn (handle-eintr ,syscall) ,@body))
+  `(handle-eintr (io-syscall ,syscall (progn ,@body))))
 
 (defmacro repeat-upon-eintr (&body body)
   `(repeat-upon-condition (eintr) ,@body))
@@ -70,13 +102,13 @@ of a file descriptor."))
             (,deadline (when ,timeout-var
                          (+ ,timeout-var (get-internal-real-time)))))
        (loop :named ,block-name :do
-         ,@body
-           (when ,deadline
-             (let ((,temp-timeout (- ,deadline (get-internal-real-time))))
-               (setf ,timeout-var
-                     (if (plusp ,temp-timeout)
-                         ,temp-timeout
-                         0))))))))
+                ,@body
+                (when ,deadline
+                  (let ((,temp-timeout (- ,deadline (get-internal-real-time))))
+                    (setf ,timeout-var
+                          (if (plusp ,temp-timeout)
+                              ,temp-timeout
+                              0))))))))
 
 (defmacro repeat-upon-condition-decreasing-timeout
     (((&rest conditions) timeout-var timeout &optional (block-name nil blockp)) &body body)
@@ -84,16 +116,6 @@ of a file descriptor."))
   `(repeat-decreasing-timeout (,timeout-var ,timeout ,block-name)
      (ignore-some-conditions ,conditions
        (return-from ,block-name (progn ,@body)))))
-
-(defmacro repeat-syscall-decreasing-timeout (((&rest ints) timeout-var timeout &optional (block-name nil blockp))
-                                             &body body)
-  (unless blockp (setf block-name (gensym "BLOCK")))
-  (with-gensyms (ret)
-    `(repeat-decreasing-timeout (,timeout-var ,timeout ,block-name)
-       (let ((,ret (progn ,@body) ))
-         (case (print (sb-alien:get-errno))
-           ,@(mapcar (lambda (x) `(,x)) ints)
-           (t (return-from ,block-name ,ret)))))))
 
 ;;;; Syscall Errors
 (defvar *syscall-error-table* (make-hash-table))
@@ -103,14 +125,29 @@ of a file descriptor."))
     ((define-syscall-errors (keywords)
        `(progn
           ,@(loop for kw in keywords collect
-               (let ((cond-name (intern (symbol-name kw)))
-                     (code (err kw)))
-                 `(progn
-                    (define-condition ,cond-name (io-syscall-error) ()
-                      (:default-initargs :errno ,code :name ,kw :message ,(sb-int:strerror code)))
-                    (setf (gethash ,code *syscall-error-table*) ',cond-name)))))))
+                     (let ((cond-name (intern (symbol-name kw)))
+                           (code (err kw)))
+                       `(progn
+                          (define-condition ,cond-name (io-syscall-error) ()
+                            (:default-initargs :errno ,code :name ,kw :message ,(strerror code)))
+                          (setf (gethash ,code *syscall-error-table*) ',cond-name)))))))
   (define-syscall-errors
       #.(alien-enum-keys 'err)))
+
+;;; Syscall wrappers
+;; TODO 2026-03-13: this section will eventuall cover io_uring wrappers too.
+(defmacro io-syscall ((name &rest args) &optional (success-form 'io-result))
+  "Wrap a syscall which is bound to alien-function NAME, passing it
+ARGS. SUCCESS-FORM is returned when result is >0, defaulting to IO-RESULT
+which is lexically bound and exposed by this macro."
+  `(locally
+       (declare (optimize (sb-c::float-accuracy 0)))
+     ;; NOTE 2026-03-13: IO-RESULT is an anaphor - may be included in
+     ;; SUCCESS-FORM.
+     (let ((io-result (,name ,@args)))
+       (if (minusp io-result)
+           (values nil (get-errno))
+           ,success-form))))
 
 ;;; Timeouts
 (deftype timeout ()
@@ -173,9 +210,9 @@ of a file descriptor."))
 
 ;;; Timers
 (defstruct (io-timer
-             (:conc-name %io-timer-)
-             (:constructor %make-io-timer (name function expire-time
-                                           relative-time oneshot)))
+            (:conc-name %io-timer-)
+            (:constructor %make-io-timer (name function expire-time
+                                          relative-time oneshot)))
   name
   ;; to call when the timer expires
   function
@@ -245,13 +282,13 @@ of a file descriptor."))
                (reschedule-timer schedule timer))
              (return-from expire-pending-timers expired-p)))
       (loop
-         (let ((next-timer (peek-schedule schedule)))
-           (unless next-timer (%return))
-           (cond ((io-timer-expired-p next-timer now)
-                  (setf expired-p t)
-                  (handle-expired-timer (pqueue-extract-maximum schedule)))
-                 (t
-                  (%return))))))))
+        (let ((next-timer (peek-schedule schedule)))
+          (unless next-timer (%return))
+          (cond ((io-timer-expired-p next-timer now)
+                 (setf expired-p t)
+                 (handle-expired-timer (pqueue-extract-maximum schedule)))
+                (t
+                 (%return))))))))
 
 (defun schedule-io-timer (schedule timer)
   (pqueue-insert schedule timer)

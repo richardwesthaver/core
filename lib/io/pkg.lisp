@@ -132,15 +132,16 @@
 
 (defpkg :io/sys
   (:use :std-lisp :sys)
+  (:import-from :sb-impl :get-errno :strerror)
   (:import-from :sb-posix :syscall-error :syscall-errno :syscall-name)
   (:export :sys-condition :sys-error :syscall-error
    :repeat-upon-condition :repeat-decreasing-timeout 
    :repeat-upon-condition-decreasing-timeout :timeval-from-timeout
-   :timespec-from-timeout :timeout-ms :decode-timeout :repeat-syscall-decreasing-timeout
+   :timespec-from-timeout :timeout-ms :decode-timeout :io-syscall
    :make-io-timer :io-timer :reschedule-timer :dispatch-timer
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
-   :reschedule-timer-relative-to-now :expire-pending-timers))
+   :reschedule-timer-relative-to-now :expire-pending-timers :io-result))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)

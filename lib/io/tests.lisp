@@ -161,6 +161,9 @@
 
 (deftest lzw (:skip :todo))
 
+(deftest sys ()
+  (iseql 'minusp (io/sys::syscall-error-predicate '(values int))))
+
 (deftest mux ()
   (with-event-base (e)
     (let ((cb nil))
