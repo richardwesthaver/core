@@ -162,7 +162,7 @@
 (deftest lzw (:skip :todo))
 
 (deftest sys ()
-  (iseql 'minusp (io/sys::syscall-error-predicate '(values int))))
+  (iseql 'minusp (io/sys::syscall-error-predicate #.(parse-alien-type 'int nil))))
 
 (deftest mux ()
   (with-event-base (e)

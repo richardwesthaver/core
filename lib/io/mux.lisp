@@ -189,12 +189,11 @@ within the extent of BODY.  Closes VAR."
        (pqueue-empty-p (timers event-base))))
 
 (defmethod set-io-handler :before
-    ((event-base event-base) fd &key type timeout oneshot &allow-other-keys)
-  (declare (ignore timeout))
+    ((event-base event-base) fd &key type function timeout oneshot &allow-other-keys)
   (check-type fd unsigned-byte)
-  ;; (check-type event-type fd-event-type)
-  ;; (check-type function function-designator)
-  ;; FIXME: check the type of the timeout
+  (check-type type fd-event-type)
+  (check-type function function-designator)
+  (check-type timeout (or null real))
   (check-type oneshot boolean)
   (when (fd-monitored-p event-base fd type)
     (error "FD ~A is already monitored for event ~A" fd type)))
@@ -251,15 +250,14 @@ is monitored for EVENT-TYPE."
     (setf (fd-entry-error-callback fd-entry) function)))
 
 (defmethod add-timer :before ((event-base event-base) function timeout &key oneshot)
-  (declare (ignore timeout))
   (check-type function function-designator)
-  ;; FIXME: check the type of the timeout
+  (check-type timeout (or null real))
   (check-type oneshot boolean))
 
 (defmethod add-timer ((event-base event-base) function timeout &key oneshot)
   (schedule-io-timer 
    (timers event-base)
-   (make-io-timer function timeout :oneshot oneshot)))
+   (make-io-timer function (when timeout (coercef timeout 'io/sys::timeout)) :oneshot oneshot)))
 
 (defmethod remove-fd-handlers
     ((event-base event-base) fd &key read write error)
@@ -305,11 +303,7 @@ is monitored for EVENT-TYPE."
 (defun %remove-fd-entry (event-base fd)
   (remhash fd (fds event-base)))
 
-(defmethod remove-timer :before
-    ((event-base event-base) timer)
-  (check-type timer io-timer))
-
-(defmethod remove-timer ((event-base event-base) timer)
+(defmethod remove-timer ((event-base event-base) (timer io-timer))
   (unschedule-io-timer (timers event-base) timer))
 
 ;;;; Event Dispatch
@@ -324,7 +318,7 @@ is monitored for EVENT-TYPE."
     (unwind-protect
          (call-next-method)
       (when timer
-        (remove-timer event-base timer)))))
+        (print (remove-timer event-base timer))))))
 
 (defmethod event-dispatch ((event-base event-base) &key oneshot timeout
                            (min-step *minimum-event-loop-step*)
@@ -349,18 +343,17 @@ is monitored for EVENT-TYPE."
                      max-step)))
              (must-exit-loop-p ()
                (or state
-                   (and exit-when-empty
-                        (event-base-empty-p event-base)))))
+                   (and exit-when-empty (event-base-empty-p event-base)))))
       (loop with deletion-list = ()
             with eventsp = nil
             for now = (get-internal-real-time)
             for poll-timeout = (poll-timeout now)
-            until (must-exit-loop-p) 
+            until (must-exit-loop-p)
             do (setf expired-events nil)
                (setf (values eventsp deletion-list)
                      ;; todo
                      (dispatch-fd-events-once event-base poll-timeout now))
-               (mumble "deletion list: ~A" deletion-list)
+               ;; (mumble "deletion list: ~A" deletion-list)
                (%remove-handlers event-base (delete nil deletion-list))
                (when (expire-pending-timers fd-timers now) (setf eventsp t))
                (dispatch-fd-timeouts expired-events)
@@ -376,18 +369,19 @@ is monitored for EVENT-TYPE."
 ;;; Waits for events and dispatches them.  Returns T if some events
 ;;; have been received, NIL otherwise.
 (defun dispatch-fd-events-once (event-base timeout now)
-  (mumble "dispatching fd events..")
+  ;; (mumble "dispatching fd events..")
   (let ((wthreshold (write-interval-threshold event-base)))
-    (mumble "wthreshold: ~A" wthreshold)
+    ;; (mumble "wthreshold: ~A" wthreshold)
     (loop
       with fd-events = (harvest-events (mux event-base) timeout) ; NIL
       for ev in fd-events
       for dlist = (%handle-one-fd event-base ev now nil wthreshold) ; #()
-      then (print (%handle-one-fd event-base ev now dlist wthreshold))
-      finally (print (pqueue-reorder (fd-timers event-base)))
+      then (%handle-one-fd event-base ev now dlist wthreshold)
+      finally (pqueue-reorder (fd-timers event-base))
               (return (values (consp fd-events) dlist)))))
 
 (defun %handle-one-fd (event-base event now deletion-list wthreshold)
+  (mumble "handling event: ~A" event)
   (destructuring-bind (fd ev-types) event
     (let* ((readp nil) (writep nil)
            (fd-entry (fd-entry event-base fd))
@@ -440,15 +434,12 @@ is monitored for EVENT-TYPE."
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
   (setf (slot-value mux 'fd) (sys:epoll-create size))
   (setf (slot-value mux 'events)
-        (foreign-alloc 'sys:epoll-event
-                       :count (fd-limit mux))))
+        (make-alien sys:epoll-event (fd-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
   (declare (ignore abort))
   (with-slots (events) mux
-    (when events
-      (foreign-free events)
-      (setf events nil))))
+    (when events (setf events nil))))
 
 (defun calc-epoll-flags (fd-entry)
   (logior 
@@ -508,11 +499,12 @@ is monitored for EVENT-TYPE."
   (with-accessors ((events events) (fd-limit fd-limit)) mux
     (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
-      (repeat-upon-condition-decreasing-timeout
-          ((io/sys::eintr) tmp-timeout timeout)
-        (setf ready-fds (io-syscall (sys:epoll-wait (fd mux) events fd-limit (timeout-ms tmp-timeout)))))
+      (repeat-upon-condition-decreasing-timeout ((io/sys::eintr) tmp-timeout timeout)
+        (setf ready-fds (io-syscall (sys:epoll-wait (fd mux) events fd-limit
+                                                    (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
                    `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))
+        ;; return* ? need to return from a specific block here, not the harvester
         (return-from harvest-events
           (loop for i below ready-fds
                 for fd = (slot (epoll-slot sys::data) 'sys::fd)

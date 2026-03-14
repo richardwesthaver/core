@@ -128,7 +128,7 @@ of a file descriptor."))
 
 ;;; Syscall wrappers
 ;; TODO 2026-03-13: this section will eventuall cover io_uring wrappers too.
-(defmacro io-syscall ((name &rest args) &optional (success-form 'io-result))
+(defmacro io-syscall ((name &rest args) &optional (success-form '(values io-result (get-errno))))
   "Wrap a syscall which is bound to alien-function NAME, passing it
 ARGS. SUCCESS-FORM is returned when result is >0, defaulting to IO-RESULT
 which is lexically bound and exposed by this macro."
