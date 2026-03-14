@@ -23,9 +23,7 @@
 
 (defun get-fd-limit ()
   "Return the maximum number of FDs available for the current process."
-  (multiple-value-bind (limit max) (sys:rlimit sys::rlimit-nofile)
-    (if (= limit sys::rlim-infinity)
-        max limit)))
+  (sys:rlimit sys::rlimit-nofile))
 
 (defstruct (fd-handler
              (:constructor make-fd-handler
@@ -72,7 +70,7 @@
   (:documentation "Base class for I/O multiplexers."))
 
 (defgeneric close-multiplexer (mux)
-  (:method-combination progn :most-specific-last)
+  ;; (:method-combination progn :most-specific-last)
   (:documentation "Close multiplexer MUX, calling close() on the multiplexer's FD if bound."))
 
 (defgeneric monitor-fd (mux fd-entry)
@@ -100,7 +98,7 @@ Returns a list of fd/result pairs which have one of these forms:
     (call-next-method)
     (setf (multiplexer-closedp mux) t)))
 
-(defmethod close-multiplexer progn ((mux multiplexer))
+(defmethod close-multiplexer ((mux multiplexer))
   (when (and (slot-boundp mux 'fd) (not (null (fd mux))))
     (sb-posix:close (fd mux))
     (setf (slot-value mux 'fd) nil))
@@ -433,13 +431,14 @@ is monitored for EVENT-TYPE."
 
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
   (setf (slot-value mux 'fd) (sys:epoll-create size))
-  (setf (slot-value mux 'events)
-        (make-alien sys:epoll-event (fd-limit mux))))
+  (setf (slot-value mux 'events) (foreign-alloc 'sys:epoll-event :count (fd-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
   (declare (ignore abort))
   (with-slots (events) mux
-    (when events (setf events nil))))
+    (when (print events)
+      (foreign-free events)
+      (setf events nil))))
 
 (defun calc-epoll-flags (fd-entry)
   (logior 
@@ -455,43 +454,41 @@ is monitored for EVENT-TYPE."
   (assert fd-entry (fd-entry) "Must supply an FD-ENTRY!")
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
-    (with-alien ((ev sys::epoll-event))
-      (bzero (alien-sap ev) (alien-size sys:epoll-event))
-      (setf (slot ev 'sys::events)
+    (with-foreign-object (ev 'sys::epoll-event)
+      (bzero ev (alien-size sys:epoll-event))
+      (setf (slot (sap-alien ev sys::epoll-event) 'sys::events)
             flags)
       (setf (slot
-             (slot ev 'sys::data)
+             (slot (sap-alien ev sys::epoll-event) 'sys::data)
              'sys::fd)
             fd)
-      (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd (addr ev))
-        (sb-posix::ebadf (warn "FD ~A is invalid, cannot monitor it." fd))
-        (sb-posix::eexist (warn "FD ~A is already monitored." fd))))))
+      (handler-case (io-syscall (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd ev))
+        (io/sys::ebadf () (warn "FD ~A is invalid, cannot monitor it." fd))
+        (io/sys::eexist () (warn "FD ~A is already monitored." fd))))))
 
 (defmethod update-fd ((mux epoll-multiplexer) fd-entry event-type edge-change)
   (declare (ignore event-type edge-change))
   (assert fd-entry (fd-entry) "Must supply an FD-ENTRY!")
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
-    (with-alien ((ev sys:epoll-event))
-      (bzero (alien-sap ev) (alien-size sys:epoll-event))
-      (setf (slot ev 'sys::events) flags)
-      (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
-      (case (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev))
-        (sb-posix:ebadf (warn "FD ~A is invalid, cannot update its status." fd))
-        (sb-posix:enoent (warn "FD ~A was not monitored, cannot update its status." fd))))
+    (with-foreign-object (ev 'sys:epoll-event)
+      (bzero ev (alien-size sys:epoll-event))
+      (setf (slot (sap-alien ev sys:epoll-event) 'sys::events) flags)
+      (setf (slot (slot (sap-alien ev sys:epoll-event) 'sys::data) 'sys::fd) fd)
+      (handler-case (io-syscall (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd ev))
+        (io/sys::ebadf () (warn "FD ~A is invalid, cannot update its status." fd))
+        (io/sys::enoent () (warn "FD ~A was not monitored, cannot update its status." fd))))
     (values fd-entry)))
 
 (defmethod unmonitor-fd ((mux epoll-multiplexer) fd-entry)
-  (case
-      (sys:epoll-ctl (fd mux)
-                           sys::epoll-ctl-del
-                           (fd-entry-fd fd-entry)
-                           (null-pointer))
-    (sb-posix:ebadf ()
-      (warn "FD ~A is invalid, cannot unmonitor it." (fd-entry-fd fd-entry)))
-    (sb-posix:enoent ()
-     (warn "FD ~A was not monitored, cannot unmonitor it."
-            (fd-entry-fd fd-entry)))))
+  (handler-case
+      (io-syscall (sys:epoll-ctl 
+                   (fd mux)
+                   sys::epoll-ctl-del
+                   (fd-entry-fd fd-entry)
+                   (null-pointer)))
+    (io/sys::ebadf () (warn "FD ~A is invalid, cannot unmonitor it." (fd-entry-fd fd-entry)))
+    (io/sys::enoent () (warn "FD ~A was not monitored, cannot unmonitor it." (fd-entry-fd fd-entry)))))
 
 ;; TODO 2026-03-10: 
 (defmethod harvest-events ((mux epoll-multiplexer) timeout)

@@ -167,6 +167,6 @@
 (deftest mux ()
   (with-event-base (e)
     (let ((cb nil))
-      (add-timer e (lambda () (setq cb :timeout)) 1.5)
-      (event-dispatch e :timeout 2)
+      (add-timer e (lambda () (setq cb :timeout)) 1.5 :oneshot t)
+      (event-dispatch e :timeout 2.0)
       (iseq cb :timeout))))
