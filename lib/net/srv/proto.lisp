@@ -513,7 +513,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
   (values))
        
 (defmethod accept ((self net-service))
-  (with-open-socket (sock (socket self))
+  (with-socket (sock (socket self))
     (loop
       (with-mutex ((shutdown-lock self))
         (when (shutdown-p self)

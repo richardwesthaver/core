@@ -310,21 +310,62 @@
             quench   (htonl new-quench))
       (setf checksum (compute-icmp-checksum icmp-header packet-size)))))
 
-#+todo
-(defun ping (target &key (id #xFF) (seqno 1))
-  (with-open-socket (socket :address-family :ipv4 :type :raw :protocol sockint::ipproto_icmp
-                            :include-headers t)
-    (let* ((payload-size 4)
-           (icmp-packet-size (+ (alien-size icmp-header) payload-size))
-           (frame-size (+ (alien-size ip-header) icmp-packet-size)))
-      (std:with-foreign-object (frame 'unsigned-char frame-size)
-        (std:memset frame 0 frame-size)
-        (let* ((ip-header frame)
-               (icmp-header (sb-sys:sap+ ip-header (alien-size ip-header)))
-               (payload (sb-sys:sap+ icmp-header (alien-size icmp-header))))
-          (write-ip-header ip-header frame-size (dotted-to-integer target))
-          (setf (std:sap-ref payload unsigned-int) (htonl #x1A2B3C4D))
-          (write-icmp-header icmp-header icmp-packet-size id seqno)
-          (send-to socket frame :end frame-size :remote-host target)
-          (wait-until-fd-ready (sb-bsd-sockets::socket-file-descriptor socket) :input)
-          (receive-from socket :size (* 64 1024)))))))
+;;; Interface
+(define-condition unknown-interface (invalid-item io/sys::enxio) ()
+  (:default-initargs :reason "Unknown Interface")
+  (:documentation "Condition raised when a network interface is not found."))
+
+(defun unknown-interface (call item)
+  (error 'unknown-interface :name call :item item))
+
+(defun list-network-interfaces ()
+  "Returns a list of network interfaces currently available."
+  (let ((ifptr (null-pointer)))
+    (unwind-protect
+         (progn
+           (setf ifptr (sys:if-nameindex))
+           (loop :for p := (alien-sap ifptr) :then (sb-sys:sap+ p (alien-size sys:if-nameindex))
+                 :for name := (print (slot (sap-alien p (* sys:if-nameindex)) 'name))
+                 :for index := (print (slot (sap-alien p (* sys:if-nameindex)) 'index))
+                 :while (plusp index) :collect (cons name index)))
+      (unless (null-pointer-p ifptr) (sys:if-freenameindex ifptr)))))
+
+(defun get-interface-by-index (index)
+  (with-alien ((buffer (array char #.sys::if-namesize)))
+    (handler-case
+        (sys:if-indextoname index buffer)
+      (io/sys::enxio ()
+        (unknown-interface "if_indextoname" index))
+      (:no-error (name)
+        (cons name index)))))
+
+(defun get-interface-by-name (name)
+  (handler-case
+      (sys:if-nametoindex name)
+    (io/sys::enxio ()
+      (unknown-interface "if_nametoindex" name))
+    (:no-error (index)
+      (cons (copy-seq name) index))))
+
+(defun interface-name (interface)
+  "Return the name of an network interface."
+  (car interface))
+
+(defun interface-index (interface)
+  "Return the OS index of a network interface."
+  (cdr interface))
+
+(defun ensure-string-or-unsigned-byte (thing &key (type t) (radix 10) (errorp t))
+  (or (and (symbolp thing) (string-downcase thing))
+      (ensure-number thing :type type :radix radix :errorp nil)
+      (and (stringp thing) thing)
+      (if errorp (error 'parse-error) nil)))
+
+(defun lookup-interface (interface)
+  "Lookup an interface by name or index. UNKNOWN-INTERFACE is
+signalled if an interface is not found."
+  (check-type interface (or unsigned-byte string symbol) "non-negative integer, a string or a symbol")
+  (let ((parsed (ensure-string-or-unsigned-byte interface :errorp t)))
+    (typecase parsed
+      (unsigned-byte (get-interface-by-index parsed))
+      (string        (get-interface-by-name  parsed)))))

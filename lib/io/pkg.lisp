@@ -148,6 +148,7 @@
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
    :integer-to-dotted :dotted-to-vector
+   :vector-to-dotted
    :sockopt-peercred
    :sockaddr-nl :af-netlink
    :netlink-proto :netlink-proto*

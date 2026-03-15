@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :cl :std :sb-thread :config :id :io/socket :io/mux)
+  (:use :cl :std :sb-thread :config :id :io/socket :io/mux :equiv)
   (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
@@ -22,8 +22,8 @@
    :net-config
    :socket-config
    :socket-peername
-   :socket-element-type
-   :socket-address
+   :address
+   ;; bsd-sockets
    :socket-error
    :socket-name
    :socket-accept
@@ -32,6 +32,7 @@
    :socket-close
    :socket-send
    :socket-receive
+   :socket-address
    :socket-shutdown
    :socket-connect
    :socket-listen
@@ -73,9 +74,8 @@
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*
-   :with-open-socket :find-port
    :*wildcard-host* :*wildcard-port*
-   :*default-mtu*
+   :*default-mtu* :find-port
    :*default-connect-timeout*
    :*default-read-timeout*
    :*default-proxy*

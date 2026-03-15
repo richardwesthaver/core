@@ -40,6 +40,11 @@
 (defmethod find-config ((self (eql :pacman)) &key (path #p"/etc/pacman.conf"))
   (load-pacman-config path))
 
+(define-cli-tool :mkarchroot (&rest args)
+  (let ((proc (sb-ext:run-program *mkarchroot* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (makepkg-error "MKARCHROOT command failed: ~A ~A" *mkarchroot* (sb-ext:process-error proc)))))
+
 (define-cli-tool :makepkg (&rest args)
   (let ((proc (sb-ext:run-program *makepkg* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))

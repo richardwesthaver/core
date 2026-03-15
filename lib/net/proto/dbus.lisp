@@ -150,7 +150,7 @@ server addresses."
        "unix:path=/var/run/dbus/system_bus_socket")))
 
 (defclass unix-server-address (standard-server-address)
-  ((socket-address :reader socket-address))
+  ((address :reader address))
   (:documentation "Represents a DBUS server address with Unix Domain
 Sockets for transport."))
 
@@ -161,8 +161,8 @@ Sockets for transport."))
   (declare (ignore initargs slot-names))
   (let ((abstract (server-address-property "abstract" address :if-does-not-exist nil))
         (path (server-address-property "path" address :if-does-not-exist nil)))
-    (with-slots (socket-address) address
-      (setf socket-address
+    (with-slots (address) address
+      (setf address
             (ensure-address (or abstract path)
                             :family :local
                             :abstract (if abstract t nil))))))
@@ -220,8 +220,7 @@ returning.  The string should not contain any newline characters."))
        (deletef (connection-pending-messages connection) message :count 1)
        (return-from wait-for-reply
          (values (net/codec/dbus::message-body message) message))))
-    ;; TODO 2026-03-08: iolib:event-dispatch
-    (event-dispatch (connection-event-base connection) :one-shot t)))
+    (io/mux:event-dispatch (connection-event-base connection) :oneshot t)))
 
 (defun activate-io-handlers (connection)
   ;; TODO 2026-03-08: iolib
@@ -318,14 +317,14 @@ returning.  The string should not contain any newline characters."))
 (defclass dbus-socket-connection-mixin (connection)
   ((socket :initarg :socket :reader connection-socket)))
 
-(defun open-socket-connection (address-family socket-address)
+(defun open-socket-connection (family address)
   ;; iolib: make-socket connect
   (let ((socket (make-socket 
-                 :address-family address-family
+                 :family family
                  :external-format '(:utf-8 :eol-style :crlf))))
     (unwind-protect
          (progn
-           (connect socket-address :socket socket)
+           (connect address :socket socket)
            (write-byte 0 socket)
            (force-output socket)
            (prog1 socket
@@ -362,7 +361,7 @@ Domain Sockets."))
 (defmethod connect ((address unix-server-address) &key (if-failed :error) event-base)
   (declare (ignore if-failed))
   (make-instance 'dbus-unix-connection
-                 :socket (open-socket-connection :local (socket-address address))
+                 :socket (open-socket-connection :local (address address))
                  :server-address address
                  :uuid (server-address-property "guid" address :if-does-not-exist nil)
                  :event-base event-base))
@@ -489,7 +488,7 @@ return the argument; otherwise, signal an authentication error."
          (if (null object)
              (missing-handler message connection)
              (dispatch-message message object connection))))
-     (event-dispatch (connection-event-base connection) :one-shot t))))
+     (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
 
 (defun make-object-index (object-names)
   (let ((index (make-hash-table :test 'equal)))

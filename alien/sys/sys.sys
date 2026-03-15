@@ -14,6 +14,7 @@
                 :package :sys)
                (:file "types")
                (:file "res")
+               (:file "net")
                (:file "epoll")
                (:file "syslog"))
   :provide ((:tests)))

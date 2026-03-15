@@ -118,7 +118,7 @@ the underlying link).")
 
 ;;; Macros
 ;; TODO 2026-03-10: 
-(defmacro with-open-socket ((var socket) &body body)
+(defmacro with-socket ((var socket) &body body)
   "Bind SOCKET to VAR and eval BODY followed by calling SOCKET-CLOSE on SOCKET."
   (once-only (socket)
     `(let ((,var ,socket))
@@ -128,7 +128,7 @@ the underlying link).")
 (defmacro with-client-socket ((socket-var stream-var &rest args) &body body)
   "Bind the socket resulting from (APPLY 'SOCKET-CONNECT ARGS) to SOCKET-VAR and
 if STREAM-VAR is non-nil, also bind the associated socket stream to it."
-  `(with-open-socket (,socket-var (socket-connect . ,args))
+  `(with-socket (,socket-var (socket-connect . ,args))
      ,(if (null stream-var)
           `(progn . ,body)
           `(let ((,stream-var (stream-of ,socket-var)))
@@ -137,7 +137,7 @@ if STREAM-VAR is non-nil, also bind the associated socket stream to it."
 (defmacro with-server-socket ((var socket) &body body)
   "Bind SOCKET to VAR, ensuring socket destruction on exit. BODY is only
 evaluated when VAR is non-nil."
-  `(with-open-socket (,var ,socket)
+  `(with-socket (,var ,socket)
      . ,body))
 
 (defmacro with-socket-listener ((var &rest args) &body body)

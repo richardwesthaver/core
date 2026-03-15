@@ -85,6 +85,8 @@ After RELOAD, you need to call this again."
     (error "ssl-ctx-set-default-verify-paths failed.")))
 
 (defmethod init ((self (eql :ssl)) &key method seed)
+  (load-ssl)
+  (load-crypto)
   (bio-init)
   (when seed 
     (let ((n (length seed)))

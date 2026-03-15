@@ -184,3 +184,12 @@
       (sigaction (* t))
       (mask unsigned-long)
       (flags int)))
+
+(define-alien-type if-nameindex
+  (struct if-nameindex
+    (index unsigned-int)
+    (name c-string)))
+
+(define-alien-type ifreq
+  (struct ifreq
+    (name (* char))))

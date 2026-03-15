@@ -5,6 +5,7 @@
  ((:pkg "pkg" :default :net-user :feature :net :package :net-int)
   (:file "obj")
   (:file "util")
+  (:file "addr")
   (:mod "codec"
    :components ((:file "dns")
                 (:file "tlv")

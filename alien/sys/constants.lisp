@@ -211,7 +211,8 @@
  (:integer ipv6-unicast-hops "IPV6_UNICAST_HOPS")
  (:integer ipv6-v6only "IPV6_V6ONLY")
  ;; net/if
- (:integer if-namesize "IF_NAMESIZE"))
+ (:integer if-namesize "IF_NAMESIZE")
+ (:integer if-namsiz "IFNAMSIZ"))
 
 
 

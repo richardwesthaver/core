@@ -83,3 +83,14 @@ Cookie: name=wookie
 
 ;; TODO 2025-10-18: 
 (deftest swank (:skip :todo))
+
+(deftest netlink ()
+  (let ((ns (make-instance 'netlink-socket)))
+    (istype 'netlink-socket ns)
+    (is= io/socket::+size-of-sockaddr-nl+ (size-of-sockaddr ns))
+    (let ((a (make-sockaddr-for ns)))
+      (istype '(alien (* io/socket:sockaddr-nl)) a)
+      (multiple-value-bind (pid grp) (bits-of-sockaddr ns a)
+        (istype 'positive-integer pid)
+        (istype 'positive-integer grp)
+        (free-sockaddr-for ns a)))))

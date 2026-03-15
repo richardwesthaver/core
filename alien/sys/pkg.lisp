@@ -17,4 +17,6 @@
    :syslog-option :syslog-option*
    :syslog-facility :syslog-facility*
    :syslog-priority :syslog-priority*
-   :rlimit))
+   :rlimit :if-nameindex
+   :if-nametoindex :if-indextoname
+   :if-freenameindex))
