@@ -260,17 +260,15 @@ Example:
 ;; from iolib
 (defmacro multiple-value-case ((values &key (test 'eql)) &body body)
   (setf values (std/list:ensure-list values))
-  (when (symbolp test) (setf test `(quote ,test)))
   (assert values () "Must provide at least one value to test")
-  (let ((test-name (sb-kernel:%fun-name test)))
-    (labels ((%do-var (var val)
+  (labels ((%do-var (var val)
                (cond
                  ((and (symbolp var) (member var '("_" "*") :test #'string=))
                   t)
                  ((consp var)
-                  `(member ,val ',var :test ,test))
+                  `(member ,val ',var :test ',test))
                  (t
-                  `(,test-name ,val ',var))))
+                  `(,test ,val ',var))))
              (%do-clause (c gensyms)
                (destructuring-bind (vals &rest code) c
                  (let* ((tests (remove t (mapcar #'%do-var (std/list:ensure-list vals) gensyms)))
@@ -280,8 +278,8 @@ Example:
                    `(,clause-test ,@code))))
              (%do-last-clause (c gensyms)
                (when c
-                 (destructuring-bind (test &rest code) c
-                   (if (member test '(otherwise t))
+                 (destructuring-bind (%test &rest code) c
+                   (if (member %test '(otherwise t))
                        `((t ,@code))
                        `(,(%do-clause c gensyms)))))))
       (let ((gensyms (mapcar (lambda (v) (gensym (string v)))
@@ -290,4 +288,4 @@ Example:
            (declare (ignorable ,@gensyms))
            (cond ,@(append (mapcar (lambda (c) (%do-clause c gensyms))
                                    (butlast body))
-                           (%do-last-clause (std/list:lastcar body) gensyms))))))))
+                           (%do-last-clause (std/list:lastcar body) gensyms)))))))

@@ -1014,7 +1014,8 @@
    :foreign-vector-length :foreign-vector-element-type
    :fvref :bref
    :iobuf :bzero
-   :defsyscall :*syscall-type-table*))
+   :defsyscall :*syscall-type-table*
+   :syscall-return-type))
 
 (defpkg :std/meta
   (:use :cl :sb-pcl)

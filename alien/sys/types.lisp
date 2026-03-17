@@ -5,6 +5,11 @@
 ;;; Code:
 (in-package :sys)
 
+;; errno.h
+(define-alien-variable program-invocation-name c-string)
+(define-alien-variable program-invocation-short-name c-string)
+;; (defar ("__errno_location" errno-location) (* int))
+
 ;; convenience enums for errors and signals (grovelled mostly by sb-posix)
 (define-alien-enum (err)
   :e2big sb-posix::E2BIG

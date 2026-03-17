@@ -7,41 +7,45 @@
 
 ;; client-socket = active-socket
 ;; server-socket = passive-socket
-(defun make-socket (&rest args &key family type protocol connect ipv6 &allow-other-keys)
+(defun make-socket (&rest args &key (family :internet) (type :stream) (connection-type :client) connect (ipv6 *ipv6*) (protocol *default-inet-protocol*) port &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL(or :FILE, :UNIX), :IPV4, :IPV6 or :NETLINK")
   (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
-  (check-type connect (member :active :passive) "either :ACTIVE or :PASSIVE")
-  (let ((args (remove-from-plist args :family :type :protocol :connect :ipv6)))
-    (when (eql :ipv4 family) (setf ipv6 nil))
-    (let ((*ipv6* ipv6))
-      (when (or (eql :internet family)
-                (eql :inet family))
-        (setf family default-inet-address-family)))))
+  (check-type connection-type (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
+  (when (eql :ipv4 family) (setf ipv6 nil))
+  (let ((*ipv6* ipv6)
+        (args (remove-from-plist args :port)))
+    (when (or (eql :internet family)
+              (eql :inet family))
+      (setq family default-inet-address-family-keyword))
+    (let ((sock
+            (case connection-type
+              (:client
+               (case family
+                 (:ipv4 (make-instance 'client :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
+                 (:ipv6 (make-instance 'client :socket (apply 'make-instance 'inet6-socket :type type :protocol protocol args)))
+                 (:local (make-instance 'client :socket (apply 'make-instance 'local-socket :type type :protocol protocol args)))))
+              (:server
+               (case family
+                 (:ipv4 (make-instance 'server :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
+                 (:ipv6 (make-instance 'server :socket (apply 'make-instance 'inet6-socket :type type :protocol protocol args)))
+                 (:local (make-instance 'server :socket (apply 'make-instance 'local-socket :type type :protocol protocol args)))))
+              (t 
+               (case family
+                 (:ipv4 (apply 'make-instance 'inet-socket args))
+                 (:ipv6 (apply 'make-instance 'inet6-socket args))
+                 (:local (apply 'make-instance 'local-socket args))
+                 (:netlink (apply 'make-instance 'netlink-socket args)))))))
+      (if connect 
+          (values (apply 'socket-connect sock (if (atom connect) 
+                                                  (list connect port)
+                                                  connect))
+                  (socket-make-stream sock))
+          sock))))
 
-#+todo
-(define-compiler-macro make-socket (&whole form &environment env &rest args
-                                    &key (family :internet) (type :stream) (protocol :default)
-                                    (connect :active) (ipv6 '*ipv6* ipv6p) &allow-other-keys)
-  (when (eql :file family) (setf family :local))
-  (cond
-    ((and (constantp family env) (constantp type env) (constantp connect env))
-     (check-type family (member :internet :local :ipv4 :ipv6 :netlink)
-                 "one of :INTERNET, :LOCAL(or :FILE), :IPV4, :IPV6 or :NETLINK")
-     (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
-     (check-type connect (member :active :passive) "either :ACTIVE or :PASSIVE")
-     (let* ((family (if (member family '(:ipv4 :ipv6)) :internet family))
-            (lower-function (make-first-level-name family type connect))
-            (args (remove-from-plist args :family :type :protocol :connect :ipv6)))
-       (case family
-         (:internet (setf family '+default-inet-address-family+))
-         (:ipv4     (setf ipv6 nil ipv6p t)))
-       (let ((expansion `(,lower-function (list ,@args) ,family ,protocol)))
-         (if ipv6p `(let ((*ipv6* ,ipv6)) ,expansion) expansion))))
-    (t form)))
-
-(defmacro with-open-socket ((var &rest args) &body body)
-  `(with-open-stream (,var (make-socket ,@args)) ,@body))
+(defmacro with-open-socket ((sock &rest args) &body body)
+  `(let ((,sock (make-socket ,@args)))
+     ,@body))
 
 #+todo
 (defun ping (target &key (id #xFF) (seqno 1))

@@ -1207,6 +1207,7 @@ handle stored in another slot of the same object."))
 
 (defmethod alloc ((self iobuf))
   (setf (iobuf-sap self) (foreign-alloc 'unsigned-char :count (iobuf-length self))))
+
 (defmethod free ((self iobuf))
   (free-iobuf self))
 
@@ -1219,3 +1220,6 @@ handle stored in another slot of the same object."))
         (let ((sb-alien::*values-type-okay* t))
           (parse-alien-type result-type nil)))
   `(defar ,name ,result-type ,@args))
+
+(std/prim:definline syscall-return-type (name &optional (default #.(parse-alien-type 'int nil)))
+  (gethash name *syscall-type-table* default))

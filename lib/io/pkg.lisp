@@ -131,7 +131,7 @@
    #:*treat-semicolon-as-continuation*))
 
 (defpkg :io/sys
-  (:use :std-lisp :sys)
+  (:use :std-lisp :sys :io/proto)
   (:import-from :sb-impl :get-errno :strerror)
   (:import-from :sb-posix :syscall-error :syscall-errno :syscall-name)
   (:export :sys-condition :sys-error :syscall-error
@@ -141,7 +141,7 @@
    :make-io-timer :io-timer :reschedule-timer :dispatch-timer
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
-   :reschedule-timer-relative-to-now :expire-pending-timers :io-result))
+   :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)

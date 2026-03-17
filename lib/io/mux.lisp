@@ -316,7 +316,7 @@ is monitored for EVENT-TYPE."
     (unwind-protect
          (call-next-method)
       (when timer
-        (print (remove-timer event-base timer))))))
+        (remove-timer event-base timer)))))
 
 (defmethod event-dispatch ((event-base event-base) &key oneshot timeout
                            (min-step *minimum-event-loop-step*)
@@ -436,7 +436,7 @@ is monitored for EVENT-TYPE."
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
   (declare (ignore abort))
   (with-slots (events) mux
-    (when (print events)
+    (when events
       (foreign-free events)
       (setf events nil))))
 
@@ -462,7 +462,7 @@ is monitored for EVENT-TYPE."
              (slot (sap-alien ev sys::epoll-event) 'sys::data)
              'sys::fd)
             fd)
-      (handler-case (io-syscall (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd ev))
+      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd ev))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot monitor it." fd))
         (io/sys::eexist () (warn "FD ~A is already monitored." fd))))))
 
@@ -475,14 +475,14 @@ is monitored for EVENT-TYPE."
       (bzero ev (alien-size sys:epoll-event))
       (setf (slot (sap-alien ev sys:epoll-event) 'sys::events) flags)
       (setf (slot (slot (sap-alien ev sys:epoll-event) 'sys::data) 'sys::fd) fd)
-      (handler-case (io-syscall (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd ev))
+      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd ev))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot update its status." fd))
         (io/sys::enoent () (warn "FD ~A was not monitored, cannot update its status." fd))))
     (values fd-entry)))
 
 (defmethod unmonitor-fd ((mux epoll-multiplexer) fd-entry)
   (handler-case
-      (io-syscall (sys:epoll-ctl 
+      (io-syscall* (sys:epoll-ctl 
                    (fd mux)
                    sys::epoll-ctl-del
                    (fd-entry-fd fd-entry)
@@ -497,7 +497,7 @@ is monitored for EVENT-TYPE."
     (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
       (repeat-upon-condition-decreasing-timeout ((io/sys::eintr) tmp-timeout timeout)
-        (setf ready-fds (io-syscall (sys:epoll-wait (fd mux) events fd-limit
+        (setf ready-fds (io-syscall* (sys:epoll-wait (fd mux) events fd-limit
                                                     (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
                    `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))

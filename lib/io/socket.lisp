@@ -112,15 +112,6 @@
       (onoff int)
       (linger int)))
 
-(define-alien-type if-nameindex
-    (struct if-nameindex
-      (index unsigned-int)
-      (name c-string)))
-
-(define-alien-type ifreq
-    (struct ifreq
-      (name (* char))))
-
 (define-alien-enum (tcp-state :type int)
   :tcp-established 1
   :tcp-syn-sent 2
@@ -320,24 +311,22 @@
 
 (defun list-network-interfaces ()
   "Returns a list of network interfaces currently available."
-  (let ((ifptr (null-pointer)))
+  (with-alien ((ifptr (* sys:if-nameindex) (sys:if-nameindex)))
     (unwind-protect
-         (progn
-           (setf ifptr (sys:if-nameindex))
-           (loop :for p := (alien-sap ifptr) :then (sb-sys:sap+ p (alien-size sys:if-nameindex))
-                 :for name := (print (slot (sap-alien p (* sys:if-nameindex)) 'name))
-                 :for index := (print (slot (sap-alien p (* sys:if-nameindex)) 'index))
-                 :while (plusp index) :collect (cons name index)))
-      (unless (null-pointer-p ifptr) (sys:if-freenameindex ifptr)))))
+         (loop for i from 0
+               :for p := (deref ifptr i)
+               :for name := (slot p 'name)
+               :for index := (slot p 'index)
+               :while (plusp index) :collect (cons name index))
+      (sys:if-freenameindex ifptr))))
 
 (defun get-interface-by-index (index)
-  (with-alien ((buffer (array char #.sys::if-namesize)))
-    (handler-case
-        (sys:if-indextoname index buffer)
-      (io/sys::enxio ()
-        (unknown-interface "if_indextoname" index))
-      (:no-error (name)
-        (cons name index)))))
+  (handler-case (io/sys:io-syscall (sys:if-indextoname index))
+    (io/sys::enxio ()
+      (unknown-interface "if_indextoname" index))
+    (:no-error (name _)
+      (declare (ignore _))
+      (cons name index))))
 
 (defun get-interface-by-name (name)
   (handler-case

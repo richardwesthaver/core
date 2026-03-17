@@ -57,6 +57,8 @@
    :connect
    :disconnect
    :with-open-connection
+   #:with-socket
+   #:with-open-socket
    :send-message
    :connection-fd
    :connection-pending-messages
@@ -518,7 +520,6 @@
    #:send-service-unavailable-response
    #:message-log-output
    #:access-log-output
-   #:with-open-socket
    #:wake-service-for-shutdown
    #:call-with-request-count-incf
    #:detach-socket

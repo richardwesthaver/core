@@ -9,8 +9,10 @@
 (defvar *ipv6* nil
   "When non-nil, automatically defer to ipv6 addresses where possible.")
 
-(define-symbol-macro default-inet-address-family
-    (if *ipv6* sockint::af-inet6 sockint::af-inet))
+(defvar *default-inet-protocol* :tcp)
+
+(define-symbol-macro default-inet-address-family (if *ipv6* sockint::af-inet6 sockint::af-inet))
+(define-symbol-macro default-inet-address-family-keyword (if *ipv6* :ipv6 :ipv4))
 
 ;;; Types
 (deftype port () "Port number" '(integer 0 65535))
@@ -126,6 +128,21 @@ the EDGE and ID protocols."))
   (declare (ignore abort))
   (when (slot-boundp self 'queue)
     (remove-element (queue self) self)))
+
+(defmethod socket-make-stream ((socket wrapped-socket) &rest args &key (output t) (input t) &allow-other-keys)
+  (apply 'socket-make-stream (socket socket) :output output :input input args))
+
+(defmethod make-sockaddr-for ((socket wrapped-socket) &optional sockaddr &rest address)
+  (apply 'make-sockaddr-for (socket socket) sockaddr address))
+
+(defmethod size-of-sockaddr ((socket wrapped-socket))
+  (size-of-sockaddr (socket socket)))
+
+(defmethod free-sockaddr-for ((socket wrapped-socket) sockaddr)
+  (when sockaddr (free-sockaddr-for (socket socket) sockaddr)))
+
+(defmethod socket-connect ((socket wrapped-socket) &rest sockaddr)
+  (apply 'socket-connect (socket socket) sockaddr))
 
 (defclass stream-socket (wrapped-socket wrapped-stream) ()
   (:documentation "A Streaming socket which may be closed with either SOCKET-CLOSE or by closing

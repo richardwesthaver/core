@@ -15,11 +15,11 @@
 ;;; Conditions
 (define-condition sys-condition () ()
   (:documentation "Base class for all IO/SYS conditions."))
-(define-condition sys-error (sys-condition std-error)
-  ((id :initarg :id :reader error-id)))
-(define-condition io-syscall-error (sys-error syscall-error) 
+(define-condition io-syscall-error (sys-condition syscall-error std-error) 
   ((handlers :initarg :handlers :reader error-handlers))
-  (:default-initargs :id :unknown))
+  (:report (lambda (c s) 
+             (format s "Syscall error ~S ~A" (syscall-name c) (syscall-errno c))
+             (when (error-message c) (format s ": ~A" (error-message c))))))
 (define-condition poll-error (io-syscall-error)
   ((type :initarg :type :reader error-type))
   (:report (lambda (c s)
@@ -40,10 +40,13 @@ of a file descriptor."))
   (declare (ignore errcode syscall))
   nil)
 
+(definline get-syscall-error (code)
+  (gethash code *syscall-error-table*))
+
 (defun syscall-error-predicate (alien-type)
   (typecase alien-type
     (sb-alien::alien-c-string-type '(lambda (s) (not (stringp s))))
-    (sb-alien::alien-pointer-type 'null-pointer-p)
+    (sb-alien::alien-pointer-type 'sb-alien:null-alien)
     (sb-alien::alien-integer-type
      (if (sb-alien::alien-integer-type-signed alien-type)
          'minusp
@@ -53,8 +56,7 @@ of a file descriptor."))
          'syscall-never
          ;; WARNING: assumes only 1 value
          (syscall-error-predicate (car (sb-alien::alien-values-type-values alien-type)))))
-    (t
-     (error "Could not choose an error-predicate function."))))
+    (t (error "Could not choose an error-predicate function."))))
 
 (defun syscall-error-p (thing)
   (typep thing 'syscall-error))
@@ -120,27 +122,39 @@ of a file descriptor."))
                      (let ((cond-name (intern (symbol-name kw)))
                            (code (err kw)))
                        `(progn
-                          (define-condition ,cond-name (io-syscall-error) ()
-                            (:default-initargs :errno ,code :name ,kw :message ,(strerror code)))
+                          (deferror ,cond-name (io-syscall-error) ()
+                            (:default-initargs :errno ,code :name ,kw :message ,(strerror code))
+                            (:auto t))
                           (setf (gethash ,code *syscall-error-table*) ',cond-name)))))))
   (define-syscall-errors
       #.(alien-enum-keys 'err)))
 
 ;;; Syscall wrappers
 ;; TODO 2026-03-13: this section will eventuall cover io_uring wrappers too.
-(defmacro io-syscall ((name &rest args) &optional (success-form '(values io-result (get-errno))))
+(defmacro io-syscall ((name &rest args) &optional (success-form '(values io-result io-error)))
   "Wrap a syscall which is bound to alien-function NAME, passing it
-ARGS. SUCCESS-FORM is returned when result is >0, defaulting to IO-RESULT
-which is lexically bound and exposed by this macro."
-  `(locally
-       (declare (optimize (sb-c::float-accuracy 0)))
-     ;; NOTE 2026-03-13: IO-RESULT is an anaphor - may be included in
-     ;; SUCCESS-FORM.
-     (let ((io-result (,name ,@args)))
-       (if (minusp io-result)
-           (values nil (get-errno))
-           ,success-form))))
+ARGS. SUCCESS-FORM is returned when return-type is INT and result is >0,
+defaulting to (values IO-RESULT IO-ERROR) which are lexically bound and
+exposed by this macro."
+  (let ((rtyp (syscall-return-type name)))
+    `(locally
+         (declare (optimize (sb-c::float-accuracy 0)))
+       (sb-alien:set-errno 0)
+       (let ((io-result (,name ,@args))
+             (io-error (get-errno)))
+         (if (,(syscall-error-predicate rtyp) io-result)
+             (values nil io-error)
+             ,success-form)))))
 
+(defmacro io-syscall* ((name &rest args) &optional (success-form '(values io-result io-error)))
+  "Like IO-SYSCALL but check and signal conditions based on the second
+value of the syscall NAME, or return the first (actual) value."
+  (with-gensyms (ret code)
+    `(multiple-value-bind (,ret ,code) (io-syscall (,name ,@args) ,success-form)
+       (if-let ((err (get-syscall-error ,code)))
+         (error err)
+         ,ret))))
+  
 ;;; Timeouts
 (deftype timeout ()
   'double-float)
