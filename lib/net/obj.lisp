@@ -10,6 +10,36 @@
   "When non-nil, automatically defer to ipv6 addresses where possible.")
 
 (defvar *default-inet-protocol* :tcp)
+(defvar *socket-auto-close* t
+  "When non-nil arrange for WITH-OPEN-SOCKET to auto-close the socket it opens.")
+
+(defvar *localhost* #(127 0 0 1))
+(defvar *wildcard-host* #(0 0 0 0))
+(defvar *wildcard-port* 0)
+(defparameter *default-user-agent*
+  (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
+          (lisp-implementation-type)
+          (lisp-implementation-version)
+          (software-type)
+          (software-version)))
+(defvar *default-connect-timeout* 10)
+(defvar *default-read-timeout* 10)
+(defvar *default-proxy* nil
+  "If specified will be used as the default value of PROXY in calls to REQ.")
+(defvar *default-mtu* 65507
+  "Theoretical maximum bytes in a UDP datagram.
+
+The IPv4 UDP packets have a 16-bit length constraint, and IP+UDP header has
+28-byte.
+
+IP_MAXPACKET = 65535,       /* netinet/ip.h */
+sizeof(struct ip) = 20,     /* netinet/ip.h */
+sizeof(struct udphdr) = 8,  /* netinet/udp.h */
+
+65535 - 20 - 8 = 65507
+
+(But for UDP broadcast, the maximum message size is limited by the MTU size of
+the underlying link).")
 
 (define-symbol-macro default-inet-address-family (if *ipv6* sockint::af-inet6 sockint::af-inet))
 (define-symbol-macro default-inet-address-family-keyword (if *ipv6* :ipv6 :ipv4))
@@ -129,6 +159,12 @@ the EDGE and ID protocols."))
   (when (slot-boundp self 'queue)
     (remove-element (queue self) self)))
 
+(defmethod socket-open-p ((self wrapped-socket))
+  (socket-open-p (socket self)))
+
+(defmethod socket-close ((self wrapped-socket) &key abort)
+  (socket-close (socket self) :abort abort))
+
 (defmethod socket-make-stream ((socket wrapped-socket) &rest args &key (output t) (input t) &allow-other-keys)
   (apply 'socket-make-stream (socket socket) :output output :input input args))
 
@@ -143,6 +179,9 @@ the EDGE and ID protocols."))
 
 (defmethod socket-connect ((socket wrapped-socket) &rest sockaddr)
   (apply 'socket-connect (socket socket) sockaddr))
+
+(defmethod socket-bind ((socket wrapped-socket) &rest sockaddr)
+  (apply 'socket-bind (socket socket) sockaddr))
 
 (defclass stream-socket (wrapped-socket wrapped-stream) ()
   (:documentation "A Streaming socket which may be closed with either SOCKET-CLOSE or by closing

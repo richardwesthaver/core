@@ -94,3 +94,8 @@ Cookie: name=wookie
         (istype 'positive-integer pid)
         (istype 'positive-integer grp)
         (free-sockaddr-for ns a)))))
+
+(deftest socket ()
+  (with-open-socket ((s c) :port 443 :connect "compiler.company" :bind '(#(0 0 0 0) 0) :close t) 
+    (istype 'client s) 
+    (istype 'stream c)))

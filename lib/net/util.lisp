@@ -5,35 +5,6 @@
 ;;; Code:
 (in-package :net/core)
 
-;;; Variables
-(defvar *localhost* #(127 0 0 1))
-(defvar *wildcard-host* #(0 0 0 0))
-(defvar *wildcard-port* 0)
-(defparameter *default-user-agent*
-  (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
-          (lisp-implementation-type)
-          (lisp-implementation-version)
-          (software-type)
-          (software-version)))
-(defvar *default-connect-timeout* 10)
-(defvar *default-read-timeout* 10)
-(defvar *default-proxy* nil
-  "If specified will be used as the default value of PROXY in calls to REQ.")
-(defvar *default-mtu* 65507
-  "Theoretical maximum bytes in a UDP datagram.
-
-The IPv4 UDP packets have a 16-bit length constraint, and IP+UDP header has
-28-byte.
-
-IP_MAXPACKET = 65535,       /* netinet/ip.h */
-sizeof(struct ip) = 20,     /* netinet/ip.h */
-sizeof(struct udphdr) = 8,  /* netinet/udp.h */
-
-65535 - 20 - 8 = 65507
-
-(But for UDP broadcast, the maximum message size is limited by the MTU size of
-the underlying link).")
-
 ;;; Socket Utils
 (definline %socket-operation-in-progress-p (condition)
   (typep condition 'operation-in-progress)) ;; errno 115 

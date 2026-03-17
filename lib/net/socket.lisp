@@ -7,19 +7,19 @@
 
 ;; client-socket = active-socket
 ;; server-socket = passive-socket
-(defun make-socket (&rest args &key (family :internet) (type :stream) (connection-type :client) connect (ipv6 *ipv6*) (protocol *default-inet-protocol*) port &allow-other-keys)
+(defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) connect (ipv6 *ipv6*) (protocol *default-inet-protocol*) port bind &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL(or :FILE, :UNIX), :IPV4, :IPV6 or :NETLINK")
   (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
-  (check-type connection-type (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
+  (check-type class (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
   (when (eql :ipv4 family) (setf ipv6 nil))
   (let ((*ipv6* ipv6)
-        (args (remove-from-plist args :port)))
+        (args (remove-from-plist args :port :bind :class :connect :ipv6)))
     (when (or (eql :internet family)
               (eql :inet family))
       (setq family default-inet-address-family-keyword))
     (let ((sock
-            (case connection-type
+            (case class
               (:client
                (case family
                  (:ipv4 (make-instance 'client :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
@@ -36,16 +36,25 @@
                  (:ipv6 (apply 'make-instance 'inet6-socket args))
                  (:local (apply 'make-instance 'local-socket args))
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
-      (if connect 
-          (values (apply 'socket-connect sock (if (atom connect) 
-                                                  (list connect port)
-                                                  connect))
-                  (socket-make-stream sock))
+      (when bind (apply 'socket-bind sock (etypecase bind 
+                                            (string (list (host-ent-address (get-host-by-name bind)) *wildcard-port*))
+                                            (vector (list bind *wildcard-port*))
+                                            (list bind))))
+      (when connect 
+        (apply 'socket-connect sock (etypecase connect
+                                      (string (list (host-ent-address (get-host-by-name connect)) port))
+                                      (vector (list connect port))
+                                      (list connect))))
+      (if (or bind connect)
+          (values sock (socket-make-stream sock))
           sock))))
 
-(defmacro with-open-socket ((sock &rest args) &body body)
-  `(let ((,sock (make-socket ,@args)))
-     ,@body))
+(defmacro with-open-socket ((sock &rest args &key (close *socket-auto-close*) abort &allow-other-keys) &body body)
+  (let ((svar (if (atom sock) sock (car sock))))
+    `(multiple-value-bind (,@(if (atom sock) `(,sock) sock)) (make-socket ,@args)
+     ,@(if (or close abort)
+           `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
+           body))))
 
 #+todo
 (defun ping (target &key (id #xFF) (seqno 1))
