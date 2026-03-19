@@ -111,13 +111,14 @@
     (signals error (write-byte 2 out-stream))))
 
 (deftest bzip2 ())
+
 (deftest zlib ())
 
 ;;; Static Vectors
 (deftest static-vector ()
-  (with-static-vector (v 4)
+  (with-static-vector (v 4 :initial-element 0)
     (isequalp #(0 0 0 0) v))
-  (isequalp #(0 0 0 0) (make-static-vector 4)))
+  (isequalp #(1 2 3 4) (make-static-vector 4 :initial-contents '(1 2 3 4))))
 
 ;;; Smart Buffers
 (deftest smart-buffer ()

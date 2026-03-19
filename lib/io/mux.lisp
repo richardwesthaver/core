@@ -11,12 +11,6 @@
 (defvar *default-multiplexer* 'epoll-multiplexer
   "The default multiplexer for the current machine.")
 
-(defvar *multiplexer-order* nil
-  "An ordered list of multiplexers to prioritize. Higher priority items come first.")
-
-;; TODO 2026-03-10: see if sbcl already does this
-(defconstant +global-fd-limit+ 65536)
-
 ;;; File Descriptors
 (deftype fd-event-type ()
   '(member :read :write))
@@ -166,8 +160,7 @@ Returns T if some handlers were removed, NIL otherwise."))
   "Binds VAR to a new EVENT-BASE, instantiated with INITARGS,
 within the extent of BODY.  Closes VAR."
   `(let ((,var (make-instance 'event-base ,@initargs)))
-     (unwind-protect
-          (locally ,@body)
+     (unwind-protect (progn ,@body)
        (when ,var (close ,var)))))
 
 ;;;; Event Loop
@@ -330,7 +323,6 @@ is monitored for EVENT-TYPE."
                    (expired-events expired-events))
       event-base
     (labels ((poll-timeout (now)
-               (mumble "poll-timeout: ~A" now)
                (let* ((deadline1 (time-to-next-timer timers))
                       (deadline2 (time-to-next-timer fd-timers))
                       (deadline (if (and deadline1 deadline2)
@@ -351,7 +343,6 @@ is monitored for EVENT-TYPE."
                (setf (values eventsp deletion-list)
                      ;; todo
                      (dispatch-fd-events-once event-base poll-timeout now))
-               ;; (mumble "deletion list: ~A" deletion-list)
                (%remove-handlers event-base (delete nil deletion-list))
                (when (expire-pending-timers fd-timers now) (setf eventsp t))
                (dispatch-fd-timeouts expired-events)
@@ -369,7 +360,6 @@ is monitored for EVENT-TYPE."
 (defun dispatch-fd-events-once (event-base timeout now)
   ;; (mumble "dispatching fd events..")
   (let ((wthreshold (write-interval-threshold event-base)))
-    ;; (mumble "wthreshold: ~A" wthreshold)
     (loop
       with fd-events = (harvest-events (mux event-base) timeout) ; NIL
       for ev in fd-events
@@ -379,7 +369,7 @@ is monitored for EVENT-TYPE."
               (return (values (consp fd-events) dlist)))))
 
 (defun %handle-one-fd (event-base event now deletion-list wthreshold)
-  (mumble "handling event: ~A" event)
+  ;; (mumble "handling event: ~A" event)
   (destructuring-bind (fd ev-types) event
     (let* ((readp nil) (writep nil)
            (fd-entry (fd-entry event-base fd))
@@ -430,7 +420,7 @@ is monitored for EVENT-TYPE."
     (format stream "epoll(4) multiplexer")))
 
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
-  (setf (slot-value mux 'fd) (sys:epoll-create size))
+  (setf (slot-value mux 'fd) (io-syscall* (sys:epoll-create size)))
   (setf (slot-value mux 'events) (foreign-alloc 'sys:epoll-event :count (fd-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
@@ -490,15 +480,15 @@ is monitored for EVENT-TYPE."
     (io/sys::ebadf () (warn "FD ~A is invalid, cannot unmonitor it." (fd-entry-fd fd-entry)))
     (io/sys::enoent () (warn "FD ~A was not monitored, cannot unmonitor it." (fd-entry-fd fd-entry)))))
 
-;; TODO 2026-03-10: 
 (defmethod harvest-events ((mux epoll-multiplexer) timeout)
-  (mumble "harvesting events with timeout: ~A" timeout)
+  ;; (mumble "harvesting events with timeout: ~A" timeout)
   (with-accessors ((events events) (fd-limit fd-limit)) mux
-    (bzero events (* fd-limit (alien-size sys:epoll-event)))
+    ;; REVIEW 2026-03-18: do we need to zero out the events pointer? causes malloc errors in current state
+    ;; (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
       (repeat-upon-condition-decreasing-timeout ((io/sys::eintr) tmp-timeout timeout)
         (setf ready-fds (io-syscall* (sys:epoll-wait (fd mux) events fd-limit
-                                                    (timeout-ms tmp-timeout)))))
+                                                     (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
                    `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))
         ;; return* ? need to return from a specific block here, not the harvester
@@ -520,6 +510,3 @@ is monitored for EVENT-TYPE."
        (push :error event)))
     (when event
       (list fd event))))
-
-
-

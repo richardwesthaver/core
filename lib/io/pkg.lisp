@@ -342,7 +342,9 @@
   (:export :event-base :event-dispatch :set-io-handler 
    :remove-fd-handlers :set-io-handler :set-error-handler :add-timer
    :remove-timer :exit-event-loop :event-base-empty-p :with-event-base
-   :fd-entry :monitor-fd :update-fd :unmonitor-fd))
+   :fd-entry :monitor-fd :update-fd :unmonitor-fd
+   :epoll-multiplexer :multiplexer :*multiplexers* :*default-multiplexer*
+   :fd-monitored-p))
 
 (defpkg :io
   (:use :cl)
