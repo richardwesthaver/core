@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :net/core)
 
+;; TODO 2026-03-21: URLs
+
 (defun make-netmask (&key cidr class)
   "Create a subnet mask by specifying either its class(:A, :B or :C) or
 a CIDR suffix(a number between 0 and 32)."

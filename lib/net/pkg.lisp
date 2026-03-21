@@ -58,7 +58,6 @@
    :disconnect
    :with-open-connection
    #:with-socket
-   #:with-open-socket
    :send-message
    :connection-pending-messages
    :connection-next-serial
@@ -116,7 +115,10 @@
    :netlink-socket)
   ;; socket
   (:export
-   :make-socket))
+   :make-socket
+   #:with-open-socket)
+  ;; address
+  (:export :make-netmask :ensure-netmask :ipv4-network))
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
