@@ -7,14 +7,17 @@
 
 ;; client-socket = active-socket
 ;; server-socket = passive-socket
-(defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) connect (ipv6 *ipv6*) (protocol *default-inet-protocol*) port bind &allow-other-keys)
+(defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
+                                    (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
+                                    (local-host *wildcard-host*) (local-port *wildcard-port*) 
+                                    remote-host remote-port &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL(or :FILE, :UNIX), :IPV4, :IPV6 or :NETLINK")
   (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
   (check-type class (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
   (when (eql :ipv4 family) (setf ipv6 nil))
   (let ((*ipv6* ipv6)
-        (args (remove-from-plist args :port :bind :class :connect :ipv6)))
+        (args (remove-from-plist args :remote-host :local-host :local-port :remote-port :bind :class :connect :ipv6)))
     (when (or (eql :internet family)
               (eql :inet family))
       (setq family default-inet-address-family-keyword))
@@ -36,16 +39,17 @@
                  (:ipv6 (apply 'make-instance 'inet6-socket args))
                  (:local (apply 'make-instance 'local-socket args))
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
-      (when bind (apply 'socket-bind sock (etypecase bind 
-                                            (string (list (host-ent-address (get-host-by-name bind)) *wildcard-port*))
-                                            (vector (list bind *wildcard-port*))
-                                            (list bind))))
-      (when connect 
-        (apply 'socket-connect sock (etypecase connect
-                                      (string (list (host-ent-address (get-host-by-name connect)) port))
-                                      (vector (list connect port))
-                                      (list connect))))
-      (if (or bind connect)
+      (when local-host 
+        (apply 'socket-bind sock (etypecase local-host 
+                                   (string (list (host-ent-address (get-host-by-name local-host)) local-port))
+                                   (vector (list local-host local-port))
+                                   (list local-host))))
+      (when remote-host
+        (apply 'socket-connect sock (etypecase remote-host
+                                      (string (list (host-ent-address (get-host-by-name remote-host)) remote-port))
+                                      (vector (list remote-host remote-port))
+                                      (list remote-host))))
+      (if (or local-host remote-host)
           (values sock (socket-make-stream sock))
           sock))))
 

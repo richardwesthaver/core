@@ -153,6 +153,9 @@ function NAME and be skipped for (setf NAME)."
 ;; TODO 2025-11-01: 
 (defverb scan (self seq &key))
 
+(defverb send (self buffer &rest args &key start end))
+(defverb receive (self &rest args &key buffer length start end))
+
 ;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)
   (:documentation "Explicitly run the object SELF."))

@@ -118,7 +118,7 @@ message is available to read, return NIL."))
 
 ;;; Config
 (defconfig net-config (id) 
-  ((address)
+  ((host)
    (port)))
 
 (defconfig socket-config (net-config)

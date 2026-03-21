@@ -1050,6 +1050,7 @@
    :reset :state
    :init* :pause
    :install :uninstall
+   :send :receive
    :class-equalp :slots-boundp
    :*standard-metaobjects* :find-slot-def-by-name
    :find-direct-slot-def-by-name :find-slot-defs-by-type

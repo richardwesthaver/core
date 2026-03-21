@@ -12,6 +12,9 @@
 ;;; Code:
 (in-package :io/sys)
 
+;;; Variables
+(defvar *syscall-error-table* (make-hash-table))
+
 ;;; Conditions
 (define-condition sys-condition () ()
   (:documentation "Base class for all IO/SYS conditions."))
@@ -112,7 +115,6 @@ of a file descriptor."))
        (return-from ,block-name (progn ,@body)))))
 
 ;;;; Syscall Errors
-(defvar *syscall-error-table* (make-hash-table))
 
 ;; TODO 2026-03-13: 
 (macrolet

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :cl :std :sb-thread :config :id :io/socket :io/mux :equiv)
+  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv)
   (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
@@ -122,7 +122,7 @@
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
-  (:use :cl :std :net/core :punycode)
+  (:use :std-lisp :net/core :punycode)
   (:export
    :dns-condition
    :dns-server-failure
@@ -136,13 +136,13 @@
 
 (defpkg :net/codec/tlv
   (:nicknames :codec/tlv :net/tlv :tlv)
-  (:use :cl :std :net/core)
+  (:use :std-lisp :net/core)
   (:export
    :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
 
 (defpkg :net/codec/osc
   (:nicknames :codec/osc)
-  (:use :cl :std :log :net/core)
+  (:use :std-lisp :log :net/core)
   (:import-from :obj/time :get-unix-time)
   (:export
    :*default-osc-buffer-size*
@@ -194,15 +194,15 @@
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
-  (:use :cl :std :net/core :punycode))
+  (:use :std-lisp :net/core :punycode))
 
 (defpkg :net/proto/dict
   (:nicknames :net/dict)
-  (:use :cl :std :net/core))
+  (:use :std-lisp :net/core))
 
 (defpkg :net/proto/dns
   (:nicknames :net/dns)
-  (:use :cl :std :net/core :codec/dns)
+  (:use :std-lisp :net/core :codec/dns)
   (:export
    :dns-servers-exhausted
    :dns-port
@@ -238,7 +238,7 @@
 (defpkg :net/proto/http
   (:nicknames :http)
   (:use-reexport :net/codec/http)
-  (:use :cl :std :net/core :parse/bytes :io/xsubseq :io/smart-buffer :config)
+  (:use :std-lisp :net/core :parse/bytes :io/xsubseq :io/smart-buffer :config)
   (:export
    :http-config
    :make-http-parser
@@ -318,18 +318,18 @@
   (:import-from :id :id)
   (:import-from :uri :uri)
   (:import-from :srv :request :response :service :session :request-protocol :content-stream)
-  (:use :cl :std :net/core :net/proto/http))
+  (:use :std-lisp :net/core :net/proto/http))
 
 (defpkg :net/proto/dm
   (:nicknames :net/dm)
-  (:use :cl :std :net/core :net/codec/tlv))
+  (:use :std-lisp :net/core :net/codec/tlv))
 
 (defpkg :net/proto/sesh
   (:nicknames :net/sesh)
   (:use :std-lisp :net/core))
 
 (defpkg :net/cookie
-  (:use :cl :std :parse/bytes :obj/uri)
+  (:use :std-lisp :parse/bytes :obj/uri)
   (:shadowing-import-from :std :when-let :if-let)
   (:import-from :obj/time
    :today :timestamp-century
@@ -404,7 +404,7 @@
   (:import-from :obj/srv :send-request)
   (:shadow :get :delete :head)
   (:import-from :sb-ext :string-to-octets)
-  (:use :cl :std :uri
+  (:use :std-lisp :uri
    :url :http :net/cookie :net/core
    :io/fast :io/chunky
    :dat/base64 :ssl :sb-gray :config)
@@ -537,7 +537,7 @@
    #:net-service-config))
 
 (defpkg :net/srv/http
-  (:use :cl :std :net/proto/http
+  (:use :std-lisp :net/proto/http
    :net/codec/http :net/core :net/cookie :io/chunky 
    :srv :config)
   (:import-from :net/srv :service-log)
@@ -549,33 +549,33 @@
   (:export :http-service :https-service :http-service-config))
 
 (defpkg :net/srv/udp
-  (:use :cl :std :net/codec/tlv :net/core :srv :config)
+  (:use :std-lisp :net/codec/tlv :net/core :srv :config)
   (:use-reexport :net/srv)
   (:export :udp-service :echo-service :udp-service-config))
 
 (defpkg :net/srv/oauth
-  (:use :cl :std :net/codec/http :net/cookie :net/core :id :secret :uri :net/srv/http :srv :config)
+  (:use :std-lisp :net/codec/http :net/cookie :net/core :id :secret :uri :net/srv/http :srv :config)
   (:import-from :cli/tools/net :browse-url)
   (:use-reexport :net/srv)
   (:export :oauth-service :oauth-service-config))
 
 (defpkg :net/srv/openapi
-  (:use :cl :std :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast :config)
+  (:use :std-lisp :net/proto/http :net/core :id :secret :uri :net/srv/http :srv :dat/json :ast :config)
   (:import-from :net/req :http-client :http-client-config)
   (:use-reexport :net/srv)
   (:export :openapi-service :openapi-document :oapi-client :oapi-server :openapi-service-config))
 
 (defpkg :net/srv/ext
-  (:use :cl :std :net/core :cli/tools/net :config)
+  (:use :std-lisp :net/core :cli/tools/net :config)
   (:export :caddy-service :nginx-service))
 
 (setq *defpkg-hook* nil)
 
 (defpkg :net
-  (:use :cl :std)
+  (:use :std-lisp)
   (:import-from :net/req :http-client-config :http-client)
   (:export :http-client-config :http-client))
 
 (reexport-packages (remove "NET/REQ" *component-packages* :test 'string=) :net)
 
-(defpkg :net-user (:use :cl :std :net :uri :url))
+(defpkg :net-user (:use :std-lisp :net :uri :url))

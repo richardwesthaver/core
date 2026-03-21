@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-thread))
+  (:use :rt :std :cl :net :sb-thread :io/mux))
 
 (in-package :net/tests)
 
@@ -99,3 +99,42 @@ Cookie: name=wookie
   (with-open-socket ((s c) :port 443 :connect "compiler.company" :bind '(#(0 0 0 0) 0) :close t) 
     (istype 'client s) 
     (istype 'stream c)))
+
+(defun timeout-cb (fd event)
+  (declare (ignore fd event))
+  (error "timeout"))
+
+(defmacro waiting-for-event ((base fd event-type) &body body)
+  (with-gensyms (fd-arg event-arg error-arg)
+    (once-only (base)
+      `(progn
+         (set-io-handler ,base ,fd ,event-type
+                         (lambda (,fd-arg ,event-arg ,error-arg)
+                           (declare (ignore ,error-arg))
+                           (when (eq ,event-arg :error)
+                             (error "error with ~A" ,fd-arg))
+                           ,@body)
+                         :oneshot t)
+         (event-dispatch ,base :oneshot t)))))
+
+(deftest mux-socket ()
+  (is 
+   (block test
+     (with-event-base (base)
+       (with-open-socket (passive :family :ipv4 :class :server)
+         (with-open-socket (active :family :ipv4
+                                   :remote-port (local-port passive)
+                                   :remote-host *wildcard-host*)
+           (add-timer base #'timeout-cb 5)
+           (let (peer)
+             (waiting-for-event (base (socket-file-descriptor passive) :read)
+               (setq peer (accept passive)))
+             (assert (socket-open-p peer))
+             (socket-send active #(1 2 3 4) 4)
+             (waiting-for-event (base (socket-file-descriptor peer) :read)
+               (multiple-value-bind (v n)
+                   (receive-from peer :size 5)
+                 (is= n 4))
+                 (isequalp v #(1 2 3 4 0))))
+               (return-from test t)))))))
+  
