@@ -36,7 +36,11 @@
   (:method ((obj t)) 0)
   (:method :before ((obj global-id)) (reset-global-id (id obj))))
 
-(defgeneric update-id (obj)
+(defgeneric next-id (self)
+  (:documentation "Return the next serial id given SELF.")
+  (:method ((obj number)) (incf obj)))
+
+(defgeneric update-id (self)
   (:documentation "Update the id slot of SELF.")
   (:method ((obj standard-object)) (setf (id obj) (hash-object obj)))
   (:method ((obj t)) (hash-object obj))
@@ -63,3 +67,11 @@ specialize on ID but should still sometimes return an ID."))
 
 (definline id= (a b)
   (= (id a) (id b)))
+
+(defmethods equiv 
+  (((a id) (b id))
+   (equiv (id a) (id b)))
+  (((a id) (b t))
+   (equiv (id a) b))
+  (((a t) (b id))
+   (equiv a (id b))))

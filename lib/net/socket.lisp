@@ -41,12 +41,12 @@
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
       (when local-host 
         (apply 'socket-bind sock (etypecase local-host 
-                                   (string (list (host-ent-address (get-host-by-name local-host)) local-port))
+                                   (string (list (get-address-by-name local-host) local-port))
                                    (vector (list local-host local-port))
                                    (list local-host))))
       (when remote-host
         (apply 'socket-connect sock (etypecase remote-host
-                                      (string (list (host-ent-address (get-host-by-name remote-host)) remote-port))
+                                      (string (list (get-address-by-name remote-host) remote-port))
                                       (vector (list remote-host remote-port))
                                       (list remote-host))))
       (if (or local-host remote-host)
@@ -56,9 +56,9 @@
 (defmacro with-open-socket ((sock &rest args &key (close *socket-auto-close*) abort &allow-other-keys) &body body)
   (let ((svar (if (atom sock) sock (car sock))))
     `(multiple-value-bind (,@(if (atom sock) `(,sock) sock)) (make-socket ,@args)
-     ,@(if (or close abort)
-           `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
-           body))))
+       ,@(if (or close abort)
+             `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
+             body))))
 
 #+todo
 (defun ping (target &key (id #xFF) (seqno 1))

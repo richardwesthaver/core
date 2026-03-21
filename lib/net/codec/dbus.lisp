@@ -415,7 +415,7 @@ operator, the stream has to be a bivalent stream."
 (defun invoke-method (connection member
                       &key path signature arguments interface destination
                            no-reply no-auto-start asynchronous (endianness :little-endian))
-  (let ((serial (connection-next-serial connection)))
+  (let ((serial (next-id connection)))
     (send-message
      (encode-dbus-message endianness :method-call
                      (logior (if no-reply +message-no-reply-expected+ 0)
@@ -555,6 +555,7 @@ operator, the stream has to be a bivalent stream."
   :pack (u32 value)
   :unpack (u32)
   :checker (unsigned-byte 32))
+
 ;;; Objects
 (defvar *all-dbus-objects* '())
 

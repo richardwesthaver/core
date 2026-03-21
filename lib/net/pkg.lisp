@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv)
+  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv :graph :ast)
   (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
@@ -60,14 +60,12 @@
    #:with-socket
    #:with-open-socket
    :send-message
-   :connection-fd
    :connection-pending-messages
    :connection-next-serial
    :drain-pending-messages
    :wait-for-reply
    :receive-message-no-hang
    :connection-server-id
-   :connection-server-address
    :make-client
    :make-server
    :make-client-request
@@ -172,7 +170,7 @@
    :+known-http-methods+))
 
 (defpkg :net/codec/dbus
-  (:use :std-lisp :net/core :dat/xml)
+  (:use :std-lisp :net/core :dat/xml :id)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    :encode-dbus-message :decode-dbus-message
@@ -222,7 +220,7 @@
    :with-dns-error-handling))
 
 (defpkg :net/proto/dbus
-  (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux)
+  (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux :io/sys :id)
   (:import-from :net/codec/dbus
    :message-endianness :message-flags :message-major-protocol-version :message-body-length
    :message-serial :message-sender :message-signature :message-body

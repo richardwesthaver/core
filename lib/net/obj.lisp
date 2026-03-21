@@ -56,65 +56,43 @@ the underlying link).")
 (define-condition net-error (net-condition std-error) ())
 (define-condition net-warning (net-condition std-warning) ())
 
-;;; Protocol
-(defgeneric address (self))
-(defgeneric connection (self))
+;;; Generic Functions
+(defverb address (self) (:accessor t))
+(defverb connection (self) (:accessor t))
+
+(defverb connect (self &key &allow-other-keys))
+(defverb disconnect (self &key &allow-other-keys))
 
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
-(defgeneric make-server (kind &rest initargs &key &allow-other-keys))
-
 (defgeneric make-client-request (self req &rest args &key &allow-other-keys))
 
+(defgeneric make-server (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-server-response (self res &rest args &key &allow-other-keys))
 
 (defgeneric send-message (message connection)
-  (:documentation "Send an encoded message to the server.  The
+  (:documentation "Send an encoded MESSAGE over CONNECTION. The
 operation will force (but not finish) output before returning."))
 
-(defgeneric connection-server-address (connection)
-  (:documentation "Return the address of the server associated with
-the connection."))
-
-(defgeneric connection-server-id (connection)
-  (:documentation "Return the unique ID of the server associated with
-the connection."))
-
-(defgeneric (setf connection-server-id) (id connection)
-  (:documentation "Set the unique ID of the server associated with the
-connection.  If an ID is already set and is not EQUAL to the new ID,
-signal a continuable error."))
-
-(defgeneric connection-fd (connection)
-  (:documentation "Return the file descriptor associated with
-the (open) connection."))
-
-(defgeneric connection-pending-messages (connection)
+(defgeneric pending-messages (self)
   (:documentation "Return a list of the currently pending messages
-associated with the connection, from newest to oldest."))
+associated with SELF, from newest to oldest."))
 
-(defgeneric (setf connection-pending-messages) (new-list connection)
+(defgeneric (setf pending-messages) (new-list self)
   (:documentation "Set the list of currently pending messages
-associated with the connection."))
-
-(defgeneric connection-next-serial (connection)
-  (:documentation "Return a 32-bit integer for associating request
-messages and their replies."))
+associated with SELF."))
 
 (defgeneric drain-pending-messages (connection)
   (:documentation "Return a list of the currently pending messages
 associated with the connection, from oldest to newest, and consider
 these messages no longer pending."))
 
-(defgeneric wait-for-reply (serial connection)
-  (:documentation "Wait for a reply message with the supplied serial
+(defgeneric wait-for-reply (id connection)
+  (:documentation "Wait for a reply message with the supplied ID
 to be received via connection."))
 
 (defgeneric receive-message-no-hang (connection)
-  (:documentation "Read a D-BUS message from the server.  If no
+  (:documentation "Read a message from a CONNECTION. If no
 message is available to read, return NIL."))
-
-(defverb connect (self &key &allow-other-keys))
-(defverb disconnect (self &key &allow-other-keys))
 
 ;;; Config
 (defconfig net-config (id) 
@@ -140,14 +118,32 @@ message is available to read, return NIL."))
 (defconfig client-config (net-config) ())
 (defconfig server-config (net-config) ())
 
-;;; Classes
+;;; Connection
 (defclass connection () ()
   (:documentation "Base class of connection objects between network nodes."))
 
-(defclass route (obj:edgex) ()
+;;; Network Graph
+(defclass network-graph (graph) ()
+  (:documentation "Graph representation of a network's edges and nodes. Network graphs consist of ROUTEs (edges), ROUTERs and ENDPOINTs (nodes)."))
+
+(defclass route (edgex) ()
   (:documentation "Base class of route objects which may be spawned by a router. Compatible with
 the EDGE and ID protocols."))
 
+(defclass router (vertex) ()
+  (:documentation "Base class of router objects which may spawn routes. Compatible with the NODE
+and ID protocols."))
+
+(defclass proxy (server route) ()
+  (:documentation "Base class of proxy objects which are servers that can act like a route."))
+
+(defclass endpoint (vertex) ()
+  (:documentation "Base class of endpoint objects containing a network address."))
+
+(defclass peer (endpoint) ()
+  (:documentation "A network-accessible peer."))
+
+;;; Sockets
 (defclass wrapped-socket ()
   ((socket :initarg :socket
            :accessor socket)
@@ -193,44 +189,30 @@ the associated stream (accessed with STREAM-OF) with CLOSE."))
     :initform 'base-char
     :reader element-type
     :documentation "Default element type of streams created by SOCKET-ACCEPT."))
-  (:documentation "A Socket which listens for stream connections to be initiated by remote
+  (:documentation "A socket which listens for stream connections to be initiated by remote
 sockets."))
 
 (defclass datagram-socket (wrapped-socket)
   ((connected-p :type boolean
                 :accessor connected-p
-                :initarg :connected-p)))
+                :initarg :connected-p))
+  (:documentation "A socket which sends or receives datagram packets."))
 
-(defclass client (wrapped-socket obj:node) ()
+;;; Client
+(defclass client (wrapped-socket node) ()
   (:documentation "Base class of client objects which wrap a socket and may be treated as nodes
 in a NETWORK-GRAPH."))
 
 (defmethod make-client-request ((self client) req &key) (nyi!))
 
-(defclass server (wrapped-socket obj:node) ()
+;;; Server
+(defclass server (wrapped-socket node) ()
   (:documentation "Base class of server objects which wrap a socket and may be treated as nodes
 in a NETWORK-GRAPH."))
 
 (defmethod make-server-response ((self server) res &key) (nyi!))
 
-(defclass router (obj:vertex) ()
-  (:documentation "Base class of router objects which may spawn routes. Compatible with the NODE
-and ID protocols."))
-
-(defclass proxy (server route) ()
-  (:documentation "Base class of proxy objects which are servers that can act like a route."))
-
-(defclass endpoint (obj:vertex) ()
-  (:documentation "Base class of endpoint objects containing a network address."))
-
-(defclass peer (endpoint) ()
-  (:documentation "A network-accessible peer."))
-
-(defclass network-graph (obj:graph) ()
-  (:documentation "Graph representation of networks containing clients,
-servers, and peers as vertices and connections as edges."))
-
-;;; Protocol
+;;; Macros
 (defmacro with-open-connection ((sym addr &rest args) &body body)
   `(let ((,sym (connect ,addr ,@args)))
      (unwind-protect

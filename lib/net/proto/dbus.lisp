@@ -184,8 +184,8 @@ string will not contain newline characters."))
 the server.  The operation will force (but not finish) output before
 returning.  The string should not contain any newline characters."))
 
-(defclass standard-dbus-connection (connection id:id)
-  ((server-address :initarg :server-address :reader connection-server-address)
+(defclass standard-dbus-connection (connection id)
+  ((address :initarg :server-address :reader address)
    (pending-messages :initform '() :accessor connection-pending-messages)
    (event-base :initarg :event-base :reader connection-event-base)
    (serial :initform 1)
@@ -193,15 +193,13 @@ returning.  The string should not contain any newline characters."))
   (:default-initargs :id nil)
   (:documentation "Represents a standard DBUS connection."))
 
-(defaccessor connection-server-id ((self standard-dbus-connection)) (id:id self))
-
-(defmethod (setf connection-server-id) :before (new-id (connection standard-dbus-connection))
-  (let ((old-id (connection-server-id connection)))
+(defmethod (setf id) :before (new-id (connection standard-dbus-connection))
+  (let ((old-id (id connection)))
     (when (and old-id (not (equal old-id new-id)))
       (cerror "Set new ID and continue."
               "A server ID is already assigned to this connection."))))
 
-(defmethod connection-next-serial ((connection standard-dbus-connection))
+(defmethod next-id ((connection standard-dbus-connection))
   (with-slots (serial) connection
     (prog1 serial
       (setf serial
@@ -223,10 +221,9 @@ returning.  The string should not contain any newline characters."))
     (io/mux:event-dispatch (connection-event-base connection) :oneshot t)))
 
 (defun activate-io-handlers (connection)
-  ;; TODO 2026-03-08: iolib
   (set-io-handler
    (connection-event-base connection)
-   (connection-fd connection)
+   (fd connection)
    :read
    (lambda (fd event error)
      (declare (ignore fd event))
@@ -297,7 +294,7 @@ returning.  The string should not contain any newline characters."))
            (:reject (go initial))
            (t (error 'authentication-error :command op :argument arg)))
        got-ok
-         (setf (connection-server-id connection) arg)
+         (setf (id connection) arg)
          (send :negotiate-unix-fd)
          (go wait-for-unix-fd-passing-agreement)
        wait-for-unix-fd-passing-agreement
@@ -332,7 +329,7 @@ returning.  The string should not contain any newline characters."))
       (when socket
         (close socket)))))
 
-(defmethod connection-fd ((connection dbus-socket-connection-mixin))
+(defmethod fd ((connection dbus-socket-connection-mixin))
   (socket-file-descriptor (connection-socket connection)))
 
 (defmethod disconnect ((connection dbus-socket-connection-mixin) &key)
@@ -576,7 +573,7 @@ return the argument; otherwise, signal an authentication error."
   (unless (logtest +message-no-reply-expected+ (message-flags message))
     (send-message
      (encode-dbus-message (message-endianness message) :method-return 0 1
-                     (connection-next-serial connection) nil nil nil nil
+                     (next-id connection) nil nil nil nil
                      (message-serial message) (message-sender message)
                      nil (handler-output-signature handler) results)
      connection)))
@@ -589,7 +586,7 @@ return the argument; otherwise, signal an authentication error."
   (unless (logtest +message-no-reply-expected+ (message-flags message))
     (send-message
      (encode-dbus-message (message-endianness message) :error 0 1
-                     (connection-next-serial connection) nil nil nil
+                     (next-id connection) nil nil nil
                      ;; TODO: Not invent error names like that.
                      (concatenate 'string (message-interface message) ".Error." error-name)
                      (message-serial message) (message-sender message) nil

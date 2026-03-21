@@ -131,6 +131,9 @@ of a file descriptor."))
   (define-syscall-errors
       #.(alien-enum-keys 'err)))
 
+;;; Generic Functions
+(defverb fd (self) (:accessor t))
+
 ;;; Syscall wrappers
 ;; TODO 2026-03-13: this section will eventuall cover io_uring wrappers too.
 (defmacro io-syscall ((name &rest args) &optional (success-form '(values io-result io-error)))

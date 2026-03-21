@@ -141,7 +141,8 @@
    :make-io-timer :io-timer :reschedule-timer :dispatch-timer
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
-   :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*))
+   :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*
+   :fd))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)

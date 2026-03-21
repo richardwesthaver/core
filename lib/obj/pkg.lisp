@@ -193,19 +193,19 @@
 (defpkg :obj/meta/method
   (:use :cl :std))
 
-;;; Objective Packages
-(defpkg :obj/id
-  (:nicknames :id)
-  (:use :cl :std)
-  (:export 
-   :id :reset-id :update-id :make-id
-   :id-factory :*global-id-table* :global-id :global-id-value
-   :update-global-id :reset-global-id :identify :id=))
-
 (defpkg :obj/equiv
   (:nicknames :equiv)
   (:use :cl :std)
   (:export :equiv :eqv :equivalence :equals))
+
+(defpkg :obj/id
+  (:nicknames :id)
+  (:use :cl :std :equiv)
+  (:export 
+   :id :reset-id :update-id :make-id
+   :id-factory :*global-id-table* :global-id :global-id-value
+   :update-global-id :reset-global-id :identify :id=
+   :next-id))
 
 (defpkg :obj/uri/punycode
   (:nicknames :punycode)
