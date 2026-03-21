@@ -825,6 +825,8 @@ sans dashes."
 a particular DBUS  object."))
 
 (defmethod introspection-document ((object child-object-mixin))
+  (dat/xml:write-xml
+  ;; (make-xmlrep
   (with-xml-output (make-string-sink)
     (doctype "node"
              "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"

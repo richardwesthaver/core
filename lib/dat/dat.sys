@@ -23,11 +23,8 @@
     (:file "io")
     (:file "rle")
     (:file "proto")))
-  (:mod "xml"
-   :components
-   ((:file "xml")
-    (:file "stream")
-    (:file "svg")))
+  (:file "xml")
+  (:file "svg")
   (:mod "html"
    :components
    ((:file "const")

@@ -323,10 +323,10 @@ objects of type COMPONENT."
    t))
 
 (defprovider :io (root name &rest args)
-  (register-module :io root (if args (cons name args) name) t))
+  (register-module :io root (cons name args) t))
 
 (defprovider :proto (root name &rest args)
-  (register-module :proto root (if args (cons name args) (list name)) t))
+  (register-module :proto root (cons name args) t))
 
 (defprovider :pool (root name)
   (register-module :pool root (compile-and-eval `(find-thread-pool ,name))))

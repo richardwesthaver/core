@@ -113,6 +113,7 @@ mode and HTML5 mode).  For all other tags, it will always generate
   (or (some (lambda (x) (char= c x)) "<>&'\"")))
 
 (declaim (inline escape-char))
+
 (defun escape-char (char &key (test #'escape-char-p))
   (declare (optimize speed) (function test))
   "Returns an escaped version of the character CHAR if CHAR satisfies

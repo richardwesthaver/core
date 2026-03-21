@@ -27,7 +27,7 @@
           (*index* 0))
      (handler-bind ((error #'(lambda (err)
                                (declare (ignore err))
-                               (format T "Error during lexing at index ~a~%" *index*))))
+                               (format t "Error during lexing at index ~a~%" *index*))))
        ,@body)))
 
 (declaim (ftype (function () (or character null)) consume)

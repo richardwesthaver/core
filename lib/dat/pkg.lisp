@@ -176,6 +176,44 @@
    :compile-css
    :compile-css-file))
 
+(defpkg :dat/xml
+  (:use :std-lisp)
+  (:import-from :log :trace!)
+  (:import-from :std :serialize :deserialize)
+  (:shadow :read-char :unread-char)
+  (:export
+   :xml-node-name 
+   :xml-node-ns 
+   :xml-node-attrs 
+   :xml-node-children 
+   :make-xml-node 
+   :xml-parse 
+   :write-xml
+   :xml-node-p 
+   :xml-node ; needed to support use in typep
+   ;; processing instruction objects
+   :proc-inst-p
+   :proc-inst-target
+   :proc-inst-contents
+   :write-prologue
+   :write-prolog
+   ;; rpg utils
+   :make-xmlrep :xmlrep-add-child!
+   :xmlrep-tag :xmlrep-tagmatch
+   :xmlrep-attribs :xmlrep-children
+   :xmlrep-string-child :xmlrep-integer-child
+   :xmlrep-find-child-tags :xmlrep-find-child-tag
+   :xmlrep-attrib-value :xmlrep-boolean-attrib-value
+   ;; tree searching from Daniel Eliason
+   :extract-path-list
+   :extract-path))
+
+(defpkg :dat/svg
+  (:nicknames :svg)
+  (:use :cl :ppcre :dat/xml :std)
+  (:import-from :std/string :*whitespaces*)
+  (:export :parse-svg-file :parse-svg-string))
+
 (defpkg :dat/html
   (:nicknames :html)
   (:use :cl :std/macs :std/string :std/io :std/condition :std/stream)
@@ -221,44 +259,6 @@
    :element-map-attributes
    :element-map-attributes*
    :element-map-children))
-
-(defpkg :dat/xml
-  (:use :std-lisp)
-  (:import-from :log :trace!)
-  (:import-from :std :serialize :deserialize)
-  (:shadow :read-char :unread-char)
-  (:export
-   :xml-node-name 
-   :xml-node-ns 
-   :xml-node-attrs 
-   :xml-node-children 
-   :make-xml-node 
-   :xml-parse 
-   :write-xml
-   :xml-node-p 
-   :xml-node ; needed to support use in typep
-   ;; processing instruction objects
-   :proc-inst-p
-   :proc-inst-target
-   :proc-inst-contents
-   :write-prologue
-   :write-prolog
-   ;; rpg utils
-   :make-xmlrep :xmlrep-add-child!
-   :xmlrep-tag :xmlrep-tagmatch
-   :xmlrep-attribs :xmlrep-children
-   :xmlrep-string-child :xmlrep-integer-child
-   :xmlrep-find-child-tags :xmlrep-find-child-tag
-   :xmlrep-attrib-value :xmlrep-boolean-attrib-value
-   ;; tree searching from Daniel Eliason
-   :extract-path-list
-   :extract-path))
-
-(defpkg :dat/svg
-  (:nicknames :svg)
-  (:use :cl :ppcre :dat/xml :std)
-  (:import-from :std/string :*whitespaces*)
-  (:export :parse-svg-file :parse-svg-string))
 
 (defpkg :dat/mime
   (:use :cl :std :dat/xml)

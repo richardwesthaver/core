@@ -97,20 +97,6 @@ the line number.")
 (defun write-escaped (string stream)
   (write-string (escape-for-html string) stream))
 
-(defun escape-for-html (string)
-  "Escapes the characters #\\<, #\\>, #\\', #\\\", and #\\& for HTML output."
-  (with-output-to-string (out)
-    (with-input-from-string (in string)
-      (loop for char = (read-char in nil nil)
-            while char
-            do (case char
-                 ((#\<) (write-string "&lt;" out))
-                 ((#\>) (write-string "&gt;" out))
-                 ((#\") (write-string "&quot;" out))
-                 ((#\') (write-string "&#039;" out))
-                 ((#\&) (write-string "&amp;" out))
-                 (otherwise (write-char char out)))))))
-
 (defun make-extendable-string (&optional (size 10))
   "Creates an adjustable string with a fill pointer."
   (make-array size
@@ -196,8 +182,7 @@ internally encode strings in US-ASCII, ISO-8859-1 or UCS."
       (second (find ent *entities* :test #'string= :key #'first))
       (error "Unable to resolve entity ~S" ent)))
 
-(declaim (inline peek-stream))
-(defun peek-stream (stream)
+(definline peek-stream (stream)
   "Looks one character ahead in the input stream.  Serves as a potential hook for
 character translation."
   (peek-char nil stream nil))
@@ -291,6 +276,7 @@ character translation."
        (error 'xml-parse-error)))
 
 ;;; Parser Internal
+(declaim (inline %make-element))
 (defstruct (%element (:constructor %make-element))
   "Common return type of all rule functions."
   (type nil :type symbol)
@@ -305,371 +291,317 @@ character translation."
              (setf (xml-node-ns elem) (cadr nsurl))
              (return ns))))))
 
-;;; Match and Rule Utils
-(defmacro defmatch (name &rest body)
-  "Match definition macro that provides a common lexical environment for matchers."
-  `(defun ,name (c)
-     ,@body))
-
-(defmacro defrule (name &rest body)
-  "Rule definition macro that provides a common lexical environment for rules."
-  `(defun ,name (s)
-     ,@body))
-
-(defmacro matchfn (name)
-  "Convenience macro for creating an anonymous function wrapper around a matcher macro."
-  `(lambda (s) (match ,name)))
-
-(defun none-or-more (s func)
-  "Collects any matches of the supplied rule with the input stream."
-  (declare (type function func))
-  (let ((val (funcall func s)))
-    (if val
-        (multiple-value-bind (res nextval)
-            (none-or-more s func)
-          (values res (cons val nextval)))
-        (values t nil))))
-
-(defun one-or-more (s func)
-  "Collects one or more matches of the supplied rule with the input stream."
-  (declare (type function func))
-  (let ((val (funcall func s)))
-    (if val
-        (multiple-value-bind (res nextval)
-            (none-or-more s func)
-          (declare (ignore res))
-          (cons val nextval))
-        nil)))
-
-;;; Matchers
-(defmatch digit ()
-  (and c (digit-char-p c)))
-
-(defmatch letter ()
-  (and c (alpha-char-p c)))
-
-;; Modified because *whitespace* is not defined at compile
-;; time. [2004/08/31:rpg]
-(defmatch ws-char ()
-  (member c *whitespace*))
-;;;  (case c
-;;;    (#.*whitespace* t)
-;;;    (t nil)))
-
-(defmatch namechar ()
-  (or
-   (and c (alpha-char-p c))
-   (and c (digit-char-p c))
-   (case c
-     ((#\. #\- #\_ #\:) t))))
-
-(defmatch ncname-char ()
-  (or
-   (and c (alpha-char-p c))
-   (and c (digit-char-p c))
-   (case c
-     ((#\. #\- #\_) t))))
-
-(defmatch attr-text-dq ()
-  (and c (not (member c (list #\< #\")))))
-
-(defmatch attr-text-sq ()
-  (and c (not (member c (list #\< #\')))))
-
-(defmatch chardata ()
-  (and c (not (char= c #\<))))
-
-(defmatch comment-char ()
-  (and c (not (eql c #\-))))
-
-;;; Rules
-(defrule ncname ()
-  (and (peek letter #\_)
-       (match+ ncname-char)))
-
-(defrule qname ()
-  (let (name suffix)
-    (and
-     (setf name (ncname s))
-     (or
-      (and
-       (match #\:)
-       (setf suffix (ncname s)))
-      t))
-    (values name suffix)))
-
-(defrule attr-or-nsdecl ()
-  (let (suffix name val)
-    (and
-     (setf (values name suffix) (qname s))
-     (or
-      (and
-       (progn
-         (match* ws-char)
-         (match #\=))
-       (or
+;;; Matchers/Rules
+(labels ((none-or-more (s func)
+           (declare (type function func))
+           (let ((val (funcall func s)))
+             (if val
+                 (multiple-value-bind (res nextval)
+                     (none-or-more s func)
+                   (values res (cons val nextval)))
+                 (values t nil)))))
+  (declare (dynamic-extent #'none-or-more))
+  (macrolet ((matchfn (name) `(lambda (s) (match ,name)))
+             (def (name &rest body)
+                 `(defun ,name (c) ,@body))
+             (defrule (name &rest body)
+               `(defun ,name (s) ,@body)))
+    (def digit (and c (digit-char-p c)))      
+    (def letter (and c (alpha-char-p c)))
+    (def attr-text-dq (and c (not (member c (list #\< #\")))))
+    (def attr-text-sq (and c (not (member c (list #\< #\')))))
+    (def chardata (and c (not (char= c #\<))))
+    (def comment-char (and c (not (eql c #\-))))
+    (def ws-char (case c
+                   (#.*whitespace* t)
+                   (t nil)))
+    (def namechar
+        (or
+         (and c (alpha-char-p c))
+         (and c (digit-char-p c))
+         (case c
+           ((#\. #\- #\_ #\:) t))))
+    (def ncname-char
+        (or
+         (and c (alpha-char-p c))
+         (and c (digit-char-p c))
+         (case c
+           ((#\. #\- #\_) t))))
+    ;; Rules
+    (defrule ncname
+        (and (peek letter #\_)
+             (match+ ncname-char)))
+    (defrule qname
+        (let (name suffix)
+          (and
+           (setf name (ncname s))
+           (or
+            (and
+             (match #\:)
+             (setf suffix (ncname s)))
+            t))
+          (values name suffix)))
+    (defrule attr-or-nsdecl
+        (let (suffix name val)
+          (and
+           (setf (values name suffix) (qname s))
+           (or
+            (and
+             (progn
+               (match* ws-char)
+               (match #\=))
+             (or
+              (and
+               (progn
+                 (match* ws-char)
+                 (match #\"))
+               (setf val (match* attr-text-dq))
+               (match #\"))
+              (and
+               (progn
+                 (match* ws-char)
+                 (match #\'))
+               (setf val (match* attr-text-sq))
+               (match #\'))))
+            t)
+           (if (string= "xmlns" name)
+	       (list 'nsdecl suffix val)
+	       ;; If SUFFIX is true, then NAME is Prefix and SUFFIX is
+	       ;; LocalPart.
+	       (if suffix
+	           (list 'attr suffix val :attr-ns name)
+	           (list 'attr name val))))))
+    (defrule ws
+        (and (match+ ws-char)
+             (%make-element :type 'whitespace :val nil)))
+    (defrule %name
         (and
-         (progn
-           (match* ws-char)
-           (match #\"))
-         (setf val (match* attr-text-dq))
-         (match #\"))
+         (peek namechar #\_ #\:)
+         (match* namechar)))
+    (defrule ws-attr-or-nsdecl
         (and
+         (ws s)
+         (attr-or-nsdecl s)))
+    (defrule start-tag
+        (let (name suffix attrs nsdecls)
+          (and
+           (peek namechar)
+           (setf (values name suffix) (qname s))
+           (multiple-value-bind (res a)
+               (none-or-more s #'ws-attr-or-nsdecl)
+             (mapcar (lambda (x) (if (eq (car x) 'attr)
+                                     (push (cdr x) attrs)
+                                     (push (cdr x) nsdecls)))
+                     a)
+             res)
+           (or (ws s) t)
+           (values
+            (make-xml-node
+             :name (or suffix name)
+             :ns (and suffix name)
+             :attrs attrs)
+            nsdecls))))
+    (defrule end-tag
+        (let (name suffix)
+          (and
+           (match #\/)
+           (setf (values name suffix) (qname s))
+           (or (ws s) t)
+           (match #\>)
+           (%make-element :type 'end-tag :val (or suffix name)))))
+    (defrule comment
+        (and
+         (match-seq #\! #\- #\-)
          (progn
-           (match* ws-char)
-           (match #\'))
-         (setf val (match* attr-text-sq))
-         (match #\'))))
-      t)
-     (if (string= "xmlns" name)
-	 (list 'nsdecl suffix val)
-	 ;; If SUFFIX is true, then NAME is Prefix and SUFFIX is
-	 ;; LocalPart.
-	 (if suffix
-	     (list 'attr suffix val :attr-ns name)
-	     (list 'attr name val))))))
+           (loop until (match-seq #\- #\- #\>)
+                 do (eat))
+           t)
+         (%make-element :type 'comment)))
+    ;; For the CDATA matching of ]]> I by hand generated an NFA, and then
+    ;; determinized it (also by hand).  Then I did a simpler thing of just pushing
+    ;; ALL the data onto the data string, and truncating it when done.
+    (defrule comment-or-cdata
+        (and
+         (peek #\!)
+         (must (or (comment s)
+                   (and
+                    (match-seq #\[ #\C #\D #\A #\T #\A #\[)
+                    (loop with data = (make-extendable-string 50)
+                          with state = 0
+                          for char = (eat)
+                          do (push-string char data)
+                          do (case state
+                               (0
+                                (case char
+                                  (#\]
+                                   (trace! :cdata "State 0 Match #\], go to state {0,1} = 4.")
+                                   (setf state 4))
+                                  (otherwise
+                                   (trace! :cdata "State 0 Non-], go to (remain in) state 0."))))
+                               (4 ; {0, 1}
+                                (case char
+                                  (#\]
+                                   (trace! :cdata "State 4 {0, 1}, match ], go to state {0,1,2} = 5")
+                                   (setf state 5))
+                                  (otherwise
+                                   (trace! :cdata "State 4 {0, 1}, Non-], go to state 0.")
+                                   (setf state 0))))
+                               (5 ; {0, 1, 2}
+                                (case char
+                                  (#\]
+                                   (trace! :cdata "State 5 {0, 1, 2}, match ], stay in state 5."))
+                                  (#\>
+                                   (trace! :cdata "State 5 {0, 1, 2}, match >, finish match and go to state 3.")
+                                   (setf state 3))
+                                  (otherwise
+                                   (trace! :cdata "State 5 {0, 1, 2}, find neither ] nor >; go to state 0.")
+                                   (setf state 0))))
+                               )
+                          until (eql state 3)
+                          finally (return (%make-element
+                                           :type 'cdata
+                                           :val (coerce
+                                                 ;; rip the ]]> off the end of the data and return it...
+                                                 (subseq data 0 (- (fill-pointer data) 3))
+                                                 'simple-string)))))))))
+    (declaim (ftype function %element))     ; forward decl for content rule
+    (defrule content
+        (if (match #\<)
+            (must (or (comment-or-cdata s)
+                      (processing-instruction s)
+                      (%element s)
+                      (end-tag s)))
+            (or (let (content)
+                  (and (setf content (match+ chardata))
+                       (%make-element :type 'data :val (compress-whitespace content)))))))
+    (defrule %element
+        (let (elem children nsdecls end-name)
+          (and
+           ;; parse front end of tag
+           (multiple-value-bind (e n)
+               (start-tag s)
+             (setf elem e)
+             (setf nsdecls n)
+             e)
+           ;; resolve namespaces *before* parsing children
+           (if nsdecls (push nsdecls (state-nsstack s)) t)
+           (or (if (or nsdecls (state-nsstack s))
+                   (resolve-namespace elem (state-nsstack s)))
+               t)
+           ;; parse end-tag and children
+           (or
+            (match-seq #\/ #\>)
+            (and
+             (match #\>)
+             (loop for c = (content s)
+                   while c
+                   do (etypecase c
+                        (%element (case (%element-type c)
+                                    (end-tag
+                                     (return (setf end-name (%element-val c))))
+                                    ;; processing instructions may be discarded
+                                    (pi
+                                     (unless *discard-processing-instructions*
+                                       (when (%element-val c)
+                                         (push (%element-val c) children))))
+                                    (t (if (%element-val c)
+                                           (push (%element-val c) children)))))))
+             (string= (xml-node-name elem) end-name)))
+           ;; package up new node
+           (progn
+             (setf (xml-node-children elem) (nreverse children))
+             (%make-element :type 'elem :val elem)))))
 
-(defrule ws ()
-  (and (match+ ws-char)
-       (%make-element :type 'whitespace :val nil)))
+    (defrule processing-instruction
+        (let (name contents)
+          (and
+           (match #\?)
+           (setf name (%name s))
+           (not (string= name "xml"))
+           ;; contents of a processing instruction can be arbitrary stuff, as long
+           ;; as it doesn't contain ?>...
+           (setf contents (pi-contents s))
+           ;; if we get here, we have eaten ?> off the input in the course of
+           ;; processing PI-CONTENTS
+           (%make-element :type 'pi :val (make-proc-inst :target name :contents contents)))))
 
-(defrule %name ()
-  (and
-   (peek namechar #\_ #\:)
-   (match* namechar)))
+    (defrule pi-contents
+        (loop with data = (make-extendable-string 50)
+              with state = 0
+              for char = (eat)
+              do (push-string char data)
+              do (ecase state
+                   (0
+                    (case char
+                      (#\?
+                       (trace! :pi-contents "State 0 Match #\?, go to state 1.")
+                       (setf state 1))
+                      (otherwise
+                       (trace! :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
+                   (1
+                    (case char
+                      (#\>
+                       (trace! :pi-contents "State 1 Match #\>, done.")
+                       (setf state 2))
+                      (otherwise
+                       (trace! :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
+                       (setf state 0)))))
+              until (eql state 2)
+              finally (return (coerce
+                               ;; rip the ?> off the end of the data and return it...
+                               (subseq data 0 (max 0 (- (fill-pointer data) 2)))
+                               'simple-string))))
 
-(defrule ws-attr-or-nsdecl ()
-  (and
-   (ws s)
-   (attr-or-nsdecl s)))
+    (defrule xmldecl
+        (let (name contents)
+          (and
+           (match #\?)
+           (setf name (%name s))
+           (string= name "xml")
+           (setf contents (none-or-more s #'ws-attr-or-nsdecl))
+           (match-seq #\? #\>)
+           (%make-element :type 'xmldecl :val contents))))
 
-(defrule start-tag ()
-  (let (name suffix attrs nsdecls)
-    (and
-     (peek namechar)
-     (setf (values name suffix) (qname s))
-     (multiple-value-bind (res a)
-         (none-or-more s #'ws-attr-or-nsdecl)
-       (mapcar (lambda (x) (if (eq (car x) 'attr)
-                               (push (cdr x) attrs)
-                               (push (cdr x) nsdecls)))
-               a)
-       res)
-     (or (ws s) t)
-     (values
-      (make-xml-node
-       :name (or suffix name)
-       :ns (and suffix name)
-       :attrs attrs)
-      nsdecls))))
+    (defrule comment-or-doctype
+        ;; skip dtd - bail out to comment if it's a comment
+        ;; only match doctype once
+        (and
+         (peek #\!)
+         (or (comment s)
+             (and (not (state-got-doctype s))
+                  (must (match-seq #\D #\O #\C #\T #\Y #\P #\E))
+                  (loop with level = 1
+                        do (case (eat)
+                             (#\> (decf level))
+                             (#\< (incf level)))
+                        until (eq level 0)
+                        finally (return t))
+                  (setf (state-got-doctype s) t)
+                  (%make-element :type 'doctype)))))
 
-(defrule end-tag ()
-  (let (name suffix)
-    (and
-     (match #\/)
-     (setf (values name suffix) (qname s))
-     (or (ws s) t)
-     (match #\>)
-     (%make-element :type 'end-tag :val (or suffix name)))))
+    (defrule misc
+        (or
+         (ws s)
+         (and (match #\<) (must (or (processing-instruction s)
+                                    (comment-or-doctype s)
+                                    (%element s))))))
 
-(defrule comment ()
-  (and
-   (match-seq #\! #\- #\-)
-   (progn
-     (loop until (match-seq #\- #\- #\>)
-           do (eat))
-     t)
-   (%make-element :type 'comment)))
-
-;; For the CDATA matching of ]]> I by hand generated an NFA, and then
-;; determinized it (also by hand).  Then I did a simpler thing of just pushing
-;; ALL the data onto the data string, and truncating it when done.
-(defrule comment-or-cdata ()
-  (and
-   (peek #\!)
-   (must (or (comment s)
-             (and
-              (match-seq #\[ #\C #\D #\A #\T #\A #\[)
-              (loop with data = (make-extendable-string 50)
-                    with state = 0
-                    for char = (eat)
-                    do (push-string char data)
-                    do (case state
-                         (0
-                          (case char
-                            (#\]
-                             (trace! :cdata "State 0 Match #\], go to state {0,1} = 4.")
-                             (setf state 4))
-                            (otherwise
-                             (trace! :cdata "State 0 Non-], go to (remain in) state 0."))))
-                         (4 ; {0, 1}
-                          (case char
-                            (#\]
-                             (trace! :cdata "State 4 {0, 1}, match ], go to state {0,1,2} = 5")
-                             (setf state 5))
-                            (otherwise
-                             (trace! :cdata "State 4 {0, 1}, Non-], go to state 0.")
-                             (setf state 0))))
-                         (5 ; {0, 1, 2}
-                          (case char
-                            (#\]
-                             (trace! :cdata "State 5 {0, 1, 2}, match ], stay in state 5."))
-                            (#\>
-                             (trace! :cdata "State 5 {0, 1, 2}, match >, finish match and go to state 3.")
-                             (setf state 3))
-                            (otherwise
-                             (trace! :cdata "State 5 {0, 1, 2}, find neither ] nor >; go to state 0.")
-                             (setf state 0))))
-                         )
-                    until (eql state 3)
-                    finally (return (%make-element
-                                     :type 'cdata
-                                     :val (coerce
-                                           ;; rip the ]]> off the end of the data and return it...
-                                           (subseq data 0 (- (fill-pointer data) 3))
-                                           'simple-string)))))))))
-
-
-(declaim (ftype function %element))     ; forward decl for content rule
-(defrule content ()
-  (if (match #\<)
-      (must (or (comment-or-cdata s)
-                (processing-instruction s)
-                (%element s)
-                (end-tag s)))
-      (or (let (content)
-            (and (setf content (match+ chardata))
-                 (%make-element :type 'data :val (compress-whitespace content)))))))
-
-(defrule %element ()
-  (let (elem children nsdecls end-name)
-    (and
-     ;; parse front end of tag
-     (multiple-value-bind (e n)
-         (start-tag s)
-       (setf elem e)
-       (setf nsdecls n)
-       e)
-     ;; resolve namespaces *before* parsing children
-     (if nsdecls (push nsdecls (state-nsstack s)) t)
-     (or (if (or nsdecls (state-nsstack s))
-             (resolve-namespace elem (state-nsstack s)))
-         t)
-     ;; parse end-tag and children
-     (or
-      (match-seq #\/ #\>)
-      (and
-       (match #\>)
-       (loop for c = (content s)
-             while c
-             do (etypecase c
-                  (%element (case (%element-type c)
-                             (end-tag
-                              (return (setf end-name (%element-val c))))
-                             ;; processing instructions may be discarded
-                             (pi
-                              (unless *discard-processing-instructions*
-                                (when (%element-val c)
-                                  (push (%element-val c) children))))
-                             (t (if (%element-val c)
-                                    (push (%element-val c) children)))))))
-       (string= (xml-node-name elem) end-name)))
-     ;; package up new node
-     (progn
-       (setf (xml-node-children elem) (nreverse children))
-       (%make-element :type 'elem :val elem)))))
-
-(defrule processing-instruction ()
-  (let (name contents)
-    (and
-     (match #\?)
-     (setf name (%name s))
-     (not (string= name "xml"))
-     ;; contents of a processing instruction can be arbitrary stuff, as long
-     ;; as it doesn't contain ?>...
-     (setf contents (pi-contents s))
-     ;; if we get here, we have eaten ?> off the input in the course of
-     ;; processing PI-CONTENTS
-     (%make-element :type 'pi :val (make-proc-inst :target name :contents contents)))))
-
-(defrule pi-contents ()
-  (loop with data = (make-extendable-string 50)
-        with state = 0
-        for char = (eat)
-        do (push-string char data)
-        do (ecase state
-             (0
-              (case char
-                (#\?
-                 (trace! :pi-contents "State 0 Match #\?, go to state 1.")
-                 (setf state 1))
-                (otherwise
-                 (trace! :pi-contents "State 0 ~c, go to (remain in) state 0." char))))
-             (1
-              (case char
-                (#\>
-                 (trace! :pi-contents "State 1 Match #\>, done.")
-                 (setf state 2))
-                (otherwise
-                 (trace! :pi-contents "State 1, ~c, do not match #\>, return to 0." char)
-                 (setf state 0)))))
-        until (eql state 2)
-        finally (return (coerce
-                         ;; rip the ?> off the end of the data and return it...
-                         (subseq data 0 (max 0 (- (fill-pointer data) 2)))
-                         'simple-string))))
-
-(defrule xmldecl ()
-  (let (name contents)
-    (and
-     (match #\?)
-     (setf name (%name s))
-     (string= name "xml")
-     (setf contents (none-or-more s #'ws-attr-or-nsdecl))
-     (match-seq #\? #\>)
-     (%make-element :type 'xmldecl :val contents))))
-
-(defrule comment-or-doctype ()
-  ;; skip dtd - bail out to comment if it's a comment
-  ;; only match doctype once
-  (and
-   (peek #\!)
-   (or (comment s)
-       (and (not (state-got-doctype s))
-            (must (match-seq #\D #\O #\C #\T #\Y #\P #\E))
-            (loop with level = 1
-                  do (case (eat)
-                       (#\> (decf level))
-                       (#\< (incf level)))
-                  until (eq level 0)
-                  finally (return t))
-            (setf (state-got-doctype s) t)
-            (%make-element :type 'doctype)))))
-
-(defrule misc ()
-  (or
-   (ws s)
-   (and (match #\<) (must (or (processing-instruction s)
-                              (comment-or-doctype s)
-                              (%element s))))))
-
-(defrule document ()
-  (let (elem)
-    (if (match #\<)
-        (must (or (xmldecl s)
-                  (comment-or-doctype s)
-                  (setf elem (%element s)))))
-    ;; NOTE: I don't understand this: it seems to parse arbitrary crap
-    (unless elem
-      (loop for c = (misc s)
-            while c
-            do (cond ((eql (%element-type c) 'elem)
-                      (return (setf elem c)))
-                     ((and (eql (%element-type c) 'pi)
-                           (not *discard-processing-instructions*))
-                      (return (setf elem c))))))
-    
-    (and elem (%element-val elem))))
+    (defrule document
+        (let (elem)
+          (if (match #\<)
+              (must (or (xmldecl s)
+                        (comment-or-doctype s)
+                        (setf elem (%element s)))))
+          ;; NOTE: I don't understand this: it seems to parse arbitrary crap
+          (unless elem
+            (loop for c = (misc s)
+                  while c
+                  do (cond ((eql (%element-type c) 'elem)
+                            (return (setf elem c)))
+                           ((and (eql (%element-type c) 'pi)
+                                 (not *discard-processing-instructions*))
+                            (return (setf elem c))))))
+          (and elem (%element-val elem))))))
 
 ;;; Public API
 (defun write-xml (e s &key (indent nil))
@@ -686,9 +618,6 @@ character translation."
   (format s " ?>~%")
   (when doctype
     (format s "<!DOCTYPE ~A>~%" doctype)))
-
-(defun write-prolog (xml-decl doctype s)
-  (write-prologue xml-decl doctype s))
 
 (defun toxml (e &key (indent nil))
   "Renders a lisp node tree to an xml string."
@@ -715,13 +644,13 @@ character translation."
 ;;; Xmlrep
 (defun make-xmlrep (tag &key (type :node) namespace attribs children)
   (case type
-    ((:list)
+    (:list
      (cond
        (namespace
-        (list (list tag namespace) (list attribs) children))
+           (list (list tag namespace) (list attribs) children))
        (t
         (list tag (list attribs) children))))
-    ((:node)
+    (:node
      (make-xml-node :name tag :ns namespace :attrs attribs :children children))
     (otherwise
      (error "TYPE must be :LIST or :NODE, got ~s" type))))
@@ -783,8 +712,7 @@ character translation."
         (first children)
         (if (eq if-unfound :error)
             (error "Node does not have a single string child: ~a" treenode)
-            if-unfound)
-        )))
+            if-unfound))))
 
 (defun xmlrep-integer-child (treenode)
   (parse-integer (xmlrep-string-child treenode)))
@@ -992,3 +920,11 @@ the first two return values.)"
 
 (defmethod serialize (self (fmt (eql :xml)) &key indent stream)
   (write-xml self stream :indent indent))
+;;; Incremental API
+;; ref: https://cxml.common-lisp.dev/klacks.html
+;; REVIEW 2026-03-18: it appears that an incremental parser (CXML/XSPAM) will
+;; be needed for dbus coding: unconfirmed.
+
+;; (defmacro with-xml-output (sink &body body))
+
+;; (defmacro with-xml-input (source &body body))
