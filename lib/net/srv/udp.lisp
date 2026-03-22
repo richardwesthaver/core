@@ -34,7 +34,7 @@ On success two values are returned: (PROTO HEADERS)."
   (declare (ignore stream spec)))
 
 ;;; Service
-(defclass udp-service (net-service udp-server) ()
+(defclass udp-service (net-service) ()
   (:default-initargs
    :request-class 'udp-service-request
    :response-class 'udp-service-response

@@ -9,8 +9,9 @@
 ;; server-socket = passive-socket
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
-                                    (host *wildcard-host*) (port *wildcard-port*) 
-                                    remote-host remote-port &allow-other-keys)
+                                    (host *wildcard-host*) (port *wildcard-port*)
+                                    remote-host remote-port (listen (when (eql class :server) *default-backlog*))
+                    &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL (or :UNIX), :IPV4, :IPV6 or :NETLINK")
   (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
@@ -39,11 +40,12 @@
                  (:ipv6 (apply 'make-instance 'inet6-socket args))
                  (:local (apply 'make-instance 'local-socket args))
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
-      (when host 
+      (when host
         (apply 'socket-bind sock (etypecase host 
                                    (string (list (get-address host) port))
                                    (vector (list host port))
                                    (list host))))
+      (when listen (socket-listen sock listen))
       (when remote-host
         (apply 'socket-connect sock (etypecase remote-host
                                       (string (list (get-address remote-host) remote-port))
@@ -228,8 +230,9 @@ BODY."
    (keepintvl)
    (user-timeout)))
 
-(defclass tcp-socket (socket) ()
-  (:default-initargs :type :stream :protocol :tcp :family default-inet-address-family))
+(defclass tcp-socket (socket) 
+  ((family :initform default-inet-address-family :reader socket-family))
+  (:default-initargs :type :stream :protocol :tcp))
 
 (defmethod make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
   (apply 'net/core::%sockaddr sockaddr address))
@@ -302,13 +305,12 @@ BODY."
             ,@body)
        (socket-close ,socket-var))))
 
-;;; Objects
 (defconfig udp-config (socket-config) 
   ;; checksum (udplite), anycast/multicast
   ((broadcast)))
 
 (defclass udp-socket (socket) 
-  ((family :initform default-inet-address-family))
+  ((family :initform default-inet-address-family :reader socket-family))
   (:default-initargs :type :datagram :protocol :udp))
 
 (defmethod make-sockaddr-for ((socket udp-socket) &optional sockaddr &rest address)
@@ -318,9 +320,15 @@ BODY."
 ;; ref: https://www.rfc-editor.org/rfc/rfc9000.html#section-14.3
 ;; ref: https://github.com/quinn-rs/quinn/blob/main/quinn-proto/src/config/transport.rs (MtuDiscoveryConfig)
 
-;;; Multicast
-;; range 224.0.0.0 to 239.255.255.255
-;; don't use .1,2,22
+(defmethod size-of-sockaddr ((socket udp-socket))
+  (case (socket-family socket)
+    (#.sockint::af-inet sockint::size-of-sockaddr-in)
+    (#.sockint::af-inet6 sockint::size-of-sockaddr-in6)
+    (t (error "unknown sockaddr size"))))
+
+(defmethod free-sockaddr-for ((socket udp-socket) sockaddr)
+  (when sockaddr
+    (sb-alien:free-alien sockaddr)))
 
 ;;; UNIX
 (defconfig unix-socket-config (socket-config) 
@@ -332,6 +340,13 @@ BODY."
 
 (defmethod make-sockaddr-for ((socket unix-socket) &optional sockaddr &rest address)
   (apply '%sockaddr sockaddr address))
+
+(defmethod free-sockaddr-for ((socket unix-socket) sockaddr)
+  (when sockaddr
+    (sb-alien:free-alien sockaddr)))
+
+(defmethod size-of-sockaddr ((socket unix-socket))
+  sockint::size-of-sockaddr-un)
 
 ;;; NETLINK
 (defclass netlink-socket (socket)

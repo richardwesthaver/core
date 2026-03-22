@@ -108,7 +108,8 @@ Cookie: name=wookie
   (with-gensyms (fd-arg event-arg error-arg)
     (once-only (base)
       `(progn
-         (set-io-handler ,base ,fd ,event-type
+         (set-io-handler ,base ,fd :type ,event-type
+                         :function
                          (lambda (,fd-arg ,event-arg ,error-arg)
                            (declare (ignore ,error-arg))
                            (when (eq ,event-arg :error)
@@ -134,6 +135,6 @@ Cookie: name=wookie
              (waiting-for-event (base (socket-file-descriptor peer) :read)
                (multiple-value-bind (v n) (receive peer :length 5)
                  (is= n 4)
-                 (isequalp v #(1 2 3 4 0)))))
-               (return-from test t)))))))
+                 (isequalp v #(1 2 3 4 0)))
+               (return-from test t)))))))))
   

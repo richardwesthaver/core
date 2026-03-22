@@ -24,6 +24,7 @@
           (software-version)))
 (defvar *default-connect-timeout* 10)
 (defvar *default-read-timeout* 10)
+(defvar *default-backlog* 16)
 (defvar *default-proxy* nil
   "If specified will be used as the default value of PROXY in calls to REQ.")
 (defvar *default-mtu* 65507
@@ -160,6 +161,14 @@ and ID protocols."))
 (defmethods fd 
   (((self wrapped-socket)) (socket-file-descriptor self))
   (((self socket)) (socket-file-descriptor self)))
+
+(defmethods host
+  (((self socket)) (nth-value 0 (socket-name self)))
+  (((self wrapped-socket)) (nth-value 0 (socket-name self))))
+
+(defmethods port 
+  (((self socket)) (nth-value 1 (socket-name self)))
+  (((self wrapped-socket)) (nth-value 1 (socket-name self))))
 
 (defmethod socket-close :before ((self wrapped-socket) &key abort)
   (declare (ignore abort))

@@ -9,7 +9,7 @@
 (defvar *skel-client-port-range* (cons 24000 25000))
 (defvar *skel-service-port* *default-skel-service-port*)
 
-(defclass sk-server (net:udp-server) ()
+(defclass sk-server (udp-service) ()
   (:default-initargs
    :id "skel-server"
    :port *skel-service-port*))

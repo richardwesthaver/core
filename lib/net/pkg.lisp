@@ -69,13 +69,14 @@
    :make-server
    :make-client-request
    :make-server-response
-   :default-inet-address-family)
+   :default-inet-address-family
+   :*default-backlog*)
   ;; utils
   (:export :get-address-by-name
    :with-client-server :*localhost*
    :*wildcard-host* :*wildcard-port*
    :*default-mtu* :find-port
-   :*default-connect-timeout*
+   :*default-connect-timeout* :get-address
    :*default-read-timeout*
    :*default-proxy*
    :*default-user-agent*)

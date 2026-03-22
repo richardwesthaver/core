@@ -425,7 +425,6 @@ is called on the service in a separate supervisor thread."
    ;; TODO 2024-12-08: hunchentoot uses read-timeout/write-timeout - figure out if needed (probably)
    (timeout :type fixnum :initarg :timeout :accessor service-timeout)
    (logger :type service-logger :initarg :logger :reader logger)
-   (socket :type (or null socket) :accessor socket :initarg :socket :initform nil)
    (backlog :accessor backlog :initarg :backlog
             :documentation "Number of pending connections allowed before the service will start bouncing.")
    (request-count :type integer :accessor request-count :initarg :request-count)
