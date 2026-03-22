@@ -6,9 +6,8 @@
 ;;; Usage: (in-readtable :std)
 
 ;;; Code:
-(IN-PACKAGE :STD/READTABLE)
-(STD/NAMED-READTABLES:IN-READTABLE :STANDARD)
-
+(in-package :std/readtable)
+(std/named-readtables:in-readtable :standard)
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun |#`-reader| (stream sub-char numarg)
     "Sharp Backquote (#`) reader - quoted lambda shorthand.

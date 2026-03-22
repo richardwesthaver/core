@@ -118,7 +118,8 @@
    :make-socket
    #:with-open-socket)
   ;; address
-  (:export :make-netmask :ensure-netmask :ipv4-network))
+  (:export :make-netmask :ensure-netmask :ipv4-network
+   :address-in-network-p :addresses-in-same-network-p :address-network-class :address-private-p))
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)

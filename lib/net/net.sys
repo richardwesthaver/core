@@ -4,7 +4,7 @@
  :components 
  ((:pkg "pkg" :default :net-user :feature :net :package :net-int)
   (:file "obj")
-  (:file "addr")
+  (:file "address")
   (:file "udp")
   (:file "tcp")
   (:file "unix")

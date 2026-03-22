@@ -41,12 +41,12 @@
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
       (when local-host 
         (apply 'socket-bind sock (etypecase local-host 
-                                   (string (list (get-address-by-name local-host) local-port))
+                                   (string (list (get-address local-host) local-port))
                                    (vector (list local-host local-port))
                                    (list local-host))))
       (when remote-host
         (apply 'socket-connect sock (etypecase remote-host
-                                      (string (list (get-address-by-name remote-host) remote-port))
+                                      (string (list (get-address remote-host) remote-port))
                                       (vector (list remote-host remote-port))
                                       (list remote-host))))
       (if (or local-host remote-host)
@@ -119,6 +119,10 @@
           (addr6 (when host6
                    (car (sb-bsd-sockets::host-ent-addresses host6)))))
       (values addr4 addr6))))
+
+(defun get-address (name &optional (ipv6 *ipv6*))
+  (multiple-value-bind (v4 v6) (get-address-by-name name)
+    (if ipv6 v6 v4)))
 
 ;; from https://github.com/eudoxia0/find-port
 (defun port-open-p (port &key (host *localhost*))

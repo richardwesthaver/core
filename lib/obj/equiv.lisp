@@ -62,6 +62,8 @@
 
 ;; EQUALS > EQUIV > EQV
 (defgeneric equiv (a b)
+  (:method ((a vector) (b vector))
+    (vector-eq a b))
   (:method ((a character) (b string))
     (and (= 1 (length b)) (char= (aref b 0) a)))
   (:method ((a string) (b character))
