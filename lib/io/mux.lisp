@@ -130,7 +130,7 @@ Returns a list of fd/result pairs which have one of these forms:
    :write-interval-threshold 0.0d0
    :exit-when-empty nil))
 
-(defgeneric set-io-handler (base fd &rest args))
+(defgeneric set-io-handler (base fd event-type function &key &allow-other-keys))
 (defgeneric set-error-handler (base fd function))
 (defgeneric add-timer (event-base function timeout &key oneshot))
 (defgeneric remove-fd-handlers (base fd &key read write error)
@@ -180,7 +180,7 @@ within the extent of BODY.  Closes VAR."
        (pqueue-empty-p (timers event-base))))
 
 (defmethod set-io-handler :before
-    ((event-base event-base) fd &key type function timeout oneshot &allow-other-keys)
+    ((event-base event-base) fd type function &key timeout oneshot &allow-other-keys)
   (check-type fd unsigned-byte)
   (check-type type fd-event-type)
   (check-type function function-designator)
@@ -195,9 +195,9 @@ is monitored for EVENT-TYPE."
   (let ((entry (fd-entry event-base fd)))
     (and entry (fd-entry-handler entry event-type))))
 
-(defmethod set-io-handler ((event-base event-base) fd &key type function timeout oneshot)
-  (let ((current-fd-entry (fd-entry event-base fd))
-        (event (make-fd-handler fd type function oneshot)))
+(defmethod set-io-handler ((event-base event-base) fd type function &key timeout oneshot)
+  (let ((current-fd-entry (print (fd-entry event-base fd)))
+        (event (print (make-fd-handler fd type function oneshot))))
     (cond
       (current-fd-entry
        (%set-io-handler event-base fd event current-fd-entry timeout)
@@ -206,14 +206,14 @@ is monitored for EVENT-TYPE."
        (let ((new-fd-entry (make-fd-entry fd)))
          (%set-io-handler event-base fd event new-fd-entry timeout)
          (monitor-fd (mux event-base) new-fd-entry))))
-    (values event)))
+    event))
 
 (defun %set-io-handler (event-base fd event fd-entry timeout)
   (when timeout
     (%set-io-handler-timer event-base event timeout))
   (setf (fd-entry-handler fd-entry (fd-handler-type event)) event)
   (setf (fd-entry event-base fd) fd-entry)
-  (values event))
+  event)
 
 (defun %set-io-handler-timer (event-base event timeout)
   (let ((timer (make-io-timer (lambda () (expire-event event-base event)) timeout)))
@@ -250,8 +250,7 @@ is monitored for EVENT-TYPE."
    (timers event-base)
    (make-io-timer function (when timeout (coercef timeout 'io/sys::timeout)) :oneshot oneshot)))
 
-(defmethod remove-fd-handlers
-    ((event-base event-base) fd &key read write error)
+(defmethod remove-fd-handlers ((event-base event-base) fd &key read write error)
   (unless (or read write error)
     (setf read t write t error t))
   (let ((entry (fd-entry event-base fd)))
@@ -445,7 +444,7 @@ is monitored for EVENT-TYPE."
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-foreign-object (ev 'sys::epoll-event)
-      (bzero ev (alien-size sys:epoll-event))
+      ;; (bzero ev (alien-size sys:epoll-event))
       (setf (slot (sap-alien ev sys::epoll-event) 'sys::events)
             flags)
       (setf (slot
@@ -462,7 +461,7 @@ is monitored for EVENT-TYPE."
   (let ((flags (calc-epoll-flags fd-entry))
         (fd (fd-entry-fd fd-entry)))
     (with-foreign-object (ev 'sys:epoll-event)
-      (bzero ev (alien-size sys:epoll-event))
+      ;; (bzero ev (alien-size sys:epoll-event))
       (setf (slot (sap-alien ev sys:epoll-event) 'sys::events) flags)
       (setf (slot (slot (sap-alien ev sys:epoll-event) 'sys::data) 'sys::fd) fd)
       (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd ev))

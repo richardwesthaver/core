@@ -100,6 +100,10 @@ to be received via connection."))
   (:documentation "Read a message from a CONNECTION. If no
 message is available to read, return NIL."))
 
+;; supplements sb-bsd-sockets - used only for sockets of type :datagram
+(defgeneric socket-disconnect (socket)
+  (:documentation "Disassociate datagram SOCKET from any remote peers."))
+
 ;;; Config
 (defconfig net-config (id) 
   ((host)

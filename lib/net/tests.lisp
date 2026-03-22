@@ -100,22 +100,22 @@ Cookie: name=wookie
     (istype 'client s) 
     (istype 'stream c)))
 
-(defun timeout-cb (fd event)
-  (declare (ignore fd event))
-  (error "timeout"))
+(defun timeout-cb () 
+  #+nil (error "timeout"))
 
 (defmacro waiting-for-event ((base fd event-type) &body body)
   (with-gensyms (fd-arg event-arg error-arg)
     (once-only (base)
       `(progn
-         (set-io-handler ,base ,fd :type ,event-type
-                         :function
-                         (lambda (,fd-arg ,event-arg ,error-arg)
-                           (declare (ignore ,error-arg))
-                           (when (eq ,event-arg :error)
-                             (error "error with ~A" ,fd-arg))
-                           ,@body)
-                         :oneshot t)
+         (set-io-handler 
+          ,base ,fd
+          ,event-type
+          (lambda (,fd-arg ,event-arg ,error-arg)
+            (declare (ignore ,error-arg))
+            (when (eq ,event-arg :error)
+              (error "error with ~A" ,fd-arg))
+            ,@body)                       
+          :oneshot t)
          (event-dispatch ,base :oneshot t)))))
 
 (deftest mux-socket ()
@@ -131,7 +131,7 @@ Cookie: name=wookie
              (waiting-for-event (base (socket-file-descriptor passive) :read)
                (setq peer (socket-accept passive)))
              (is (socket-open-p peer))
-             (socket-send active #(1 2 3 4) 4)
+             (socket-send active (make-octets 4 :initial-contents '(1 2 3 4)) 4)
              (waiting-for-event (base (socket-file-descriptor peer) :read)
                (multiple-value-bind (v n) (receive peer :length 5)
                  (is= n 4)

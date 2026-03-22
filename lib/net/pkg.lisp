@@ -40,6 +40,7 @@
    :socket-open-p
    :socket-make-stream
    :socket-file-descriptor
+   :socket-disconnect
    :ip-address
    :socket
    :port

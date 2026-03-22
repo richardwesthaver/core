@@ -74,7 +74,7 @@
   (check-type addr (or null (cons sequence (cons (unsigned-byte 16)))))
   (let ((host (first addr))
         (port (second addr)))
-    (when (and host port)
+    (if (and host port)
       (ecase (length host)
         (16 (let ((sockaddr (or sockaddr (sockint::allocate-sockaddr-in6))))
               (setf (sockint::sockaddr-in6-family sockaddr)
@@ -109,7 +109,18 @@
                (setf (sb-alien:deref in-addr 1) (elt host 1))
                (setf (sb-alien:deref in-addr 2) (elt host 2))
                (setf (sb-alien:deref in-addr 3) (elt host 3)))
-             sockaddr))))))
+             sockaddr)))
+      (let ((sockaddr (or sockaddr (sockint::allocate-sockaddr-in))))
+        (etypecase sockaddr
+          ((alien (* sockint::sockaddr-in))
+           (with-alien ((addr (array (unsigned 8) 4)))
+             (setf (sockint::sockaddr-in-family sockaddr) sockint::af-unspec
+                   (sockint::sockaddr-in-addr sockaddr) addr)))
+          ((alien (* sockint::sockaddr-in6))
+           (with-alien ((addr (array (unsigned 8) 16)))
+             (setf (sockint::sockaddr-in6-family sockaddr) sockint::af-unspec
+                   (sockint::sockaddr-in6-addr sockaddr) addr))))
+        sockaddr))))
 
 ;; from usocket
 (defun get-address-by-name (name)
@@ -329,6 +340,10 @@ BODY."
 (defmethod free-sockaddr-for ((socket udp-socket) sockaddr)
   (when sockaddr
     (sb-alien:free-alien sockaddr)))
+
+(defmethod socket-disconnect ((self udp-socket))
+  (sockint::connect (socket-file-descriptor self) (%sockaddr) (size-of-sockaddr self))
+  self)
 
 ;;; UNIX
 (defconfig unix-socket-config (socket-config) 
