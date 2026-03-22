@@ -1562,7 +1562,7 @@ keep-alive-stream), and should handle clean-up of it"
 ;;; Client
 (defconfig http-client-config (http-config client-config) ())
 
-(defclass http-client (tcp-client)
+(defclass http-client (tcp-socket)
   ((kernel :type function :accessor kernel
            :initform #'request
            :initarg :kernel

@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv :graph :ast)
+  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv :graph :ast :io/sys)
   (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export
@@ -79,44 +79,30 @@
    :*default-read-timeout*
    :*default-proxy*
    :*default-user-agent*)
-  ;; udp
+  ;; socket
   (:export
-   :udp-server
-   :with-udp-client
-   :with-udp-server
-   :udp-receive-ping
-   :udp-echo
-   :udp-socket
-   :udp-client)
-  ;; tcp
-  (:export
-   :tcp-server
-   :with-tcp-client
-   :tcp-ping-server
-   :*tcp-ping-size*
-   :tcp-echo
-   :tcp-receive-ping
-   :tcp-client
-   :tcp-source
-   :tcp-sink
-   :tcp-socket
-   :tcp-config)
-  ;; unix
-  (:export
-   :unix-server
+   :make-socket
+   #:with-open-socket
+   :netlink-socket
    :with-unix-client
    :with-unix-server
    :unix-receive-ping
    :unix-echo
    :unix-socket
-   :unix-client)
-  ;; netlink
-  (:export 
-   :netlink-socket)
-  ;; socket
-  (:export
-   :make-socket
-   #:with-open-socket)
+   :unix-socket-config
+   :with-tcp-client
+   :tcp-ping-server
+   :*tcp-ping-size*
+   :tcp-echo
+   :tcp-receive-ping
+   :tcp-socket
+   :tcp-config
+   :with-udp-client
+   :with-udp-server
+   :udp-receive-ping
+   :udp-echo
+   :udp-socket
+   :udp-config)
   ;; address
   (:export :make-netmask :ensure-netmask :ipv4-network
    :address-in-network-p :addresses-in-same-network-p :address-network-class :address-private-p))

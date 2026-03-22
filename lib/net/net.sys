@@ -5,10 +5,6 @@
  ((:pkg "pkg" :default :net-user :feature :net :package :net-int)
   (:file "obj")
   (:file "address")
-  (:file "udp")
-  (:file "tcp")
-  (:file "unix")
-  (:file "netlink")
   (:file "socket")
   (:mod "codec"
    :components ((:file "dns")

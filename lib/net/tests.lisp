@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-thread :io/mux))
+  (:use :rt :std :cl :net :sb-thread :io/mux :net/core))
 
 (in-package :net/tests)
 
@@ -123,18 +123,17 @@ Cookie: name=wookie
      (with-event-base (base)
        (with-open-socket (passive :family :ipv4 :class :server)
          (with-open-socket (active :family :ipv4
-                                   :remote-port (local-port passive)
+                                   :remote-port (port passive)
                                    :remote-host *wildcard-host*)
            (add-timer base #'timeout-cb 5)
            (let (peer)
              (waiting-for-event (base (socket-file-descriptor passive) :read)
-               (setq peer (accept passive)))
-             (assert (socket-open-p peer))
+               (setq peer (socket-accept passive)))
+             (is (socket-open-p peer))
              (socket-send active #(1 2 3 4) 4)
              (waiting-for-event (base (socket-file-descriptor peer) :read)
-               (multiple-value-bind (v n)
-                   (receive-from peer :size 5)
-                 (is= n 4))
-                 (isequalp v #(1 2 3 4 0))))
+               (multiple-value-bind (v n) (receive peer :length 5)
+                 (is= n 4)
+                 (isequalp v #(1 2 3 4 0)))))
                (return-from test t)))))))
   

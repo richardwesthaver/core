@@ -9,7 +9,7 @@
 ;; server-socket = passive-socket
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
-                                    (local-host *wildcard-host*) (local-port *wildcard-port*) 
+                                    (host *wildcard-host*) (port *wildcard-port*) 
                                     remote-host remote-port &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL (or :UNIX), :IPV4, :IPV6 or :NETLINK")
@@ -17,7 +17,7 @@
   (check-type class (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
   (when (eql :ipv4 family) (setf ipv6 nil))
   (let ((*ipv6* ipv6)
-        (args (remove-from-plist args :remote-host :local-host :local-port :remote-port :bind :class :connect :ipv6)))
+        (args (remove-from-plist args :remote-host :host :port :remote-port :bind :class :connect :ipv6)))
     (when (or (eql :internet family)
               (eql :inet family))
       (setq family default-inet-address-family-keyword))
@@ -39,17 +39,17 @@
                  (:ipv6 (apply 'make-instance 'inet6-socket args))
                  (:local (apply 'make-instance 'local-socket args))
                  (:netlink (apply 'make-instance 'netlink-socket args)))))))
-      (when local-host 
-        (apply 'socket-bind sock (etypecase local-host 
-                                   (string (list (get-address local-host) local-port))
-                                   (vector (list local-host local-port))
-                                   (list local-host))))
+      (when host 
+        (apply 'socket-bind sock (etypecase host 
+                                   (string (list (get-address host) port))
+                                   (vector (list host port))
+                                   (list host))))
       (when remote-host
         (apply 'socket-connect sock (etypecase remote-host
                                       (string (list (get-address remote-host) remote-port))
                                       (vector (list remote-host remote-port))
                                       (list remote-host))))
-      (if (or local-host remote-host)
+      (if (or host remote-host)
           (values sock (socket-make-stream sock))
           sock))))
 
@@ -218,3 +218,143 @@ BODY."
           (send-to socket frame :end frame-size :remote-host target)
           (wait-until-fd-ready (sb-bsd-sockets::socket-file-descriptor socket) :input)
           (receive-from socket :size (* 64 1024)))))))
+
+;;; TCP
+(defconfig tcp-config (socket-config) 
+  ((nodelay :type boolean)
+   (keepalive :type boolean)
+   (keepcnt)
+   (keepidle)
+   (keepintvl)
+   (user-timeout)))
+
+(defclass tcp-socket (socket) ()
+  (:default-initargs :type :stream :protocol :tcp :family default-inet-address-family))
+
+(defmethod make-sockaddr-for ((socket tcp-socket) &optional sockaddr &rest address)
+  (apply 'net/core::%sockaddr sockaddr address))
+
+(defmethod size-of-sockaddr ((socket tcp-socket))
+  (case (socket-family socket)
+    (#.sockint::af-inet sockint::size-of-sockaddr-in)
+    (#.sockint::af-inet6 sockint::size-of-sockaddr-in6)
+    (t (error "unknown sockaddr size"))))
+
+(defmethod free-sockaddr-for ((socket tcp-socket) sockaddr)
+  (when sockaddr
+    (sb-alien:free-alien sockaddr)))
+
+;;;; Utils
+(defun tcp-echo (port)
+  (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
+    (socket-bind s #(0 0 0 0) port)
+    (loop
+      (multiple-value-bind (buf len addr port) (socket-receive s nil 500)
+        (format t "Received ~A bytes from ~A:~A - ~A ~%"
+                len addr port (subseq buf 0 (min 10 len)))))))
+
+(defvar *tcp-ping-size* 512)
+
+(defun tcp-receive-ping (port &key (count 16))
+  (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
+    (socket-bind s #(0 0 0 0) port)
+    (loop for i from 0 upto count
+          do (multiple-value-bind (buf len address port) (socket-receive s nil *tcp-ping-size*)
+               (format t "(~A) Received ~A bytes from ~A:~A - ~A ~%"
+                       i len address port (subseq buf 0 (min 10 len))))
+          finally (socket-close s))))
+
+(defmacro with-tcp-client ((socket-var &key (addr #(0 0 0 0)) (port 0) peer) &body body)
+  `(let ((,socket-var (make-instance 'inet-socket :type :stream :protocol :tcp)))
+     (unwind-protect
+          (progn
+            (socket-bind ,socket-var ,addr ,port)
+            ,(when peer `(apply #'socket-connect ,socket-var ,peer))
+            ,@body)
+       (socket-close ,socket-var))))
+
+;;; UDP
+(defvar *udp-ping-size* 512)
+
+(defun udp-echo (port)
+  (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
+    (socket-bind s #(0 0 0 0) port)
+    (loop
+          (multiple-value-bind (buf len addr port) (socket-receive s nil 500)
+          (format t "Received ~A bytes from ~A:~A - ~A ~%"
+                  len addr port (subseq buf 0 (min 10 len)))))))
+
+(defun udp-receive-ping (port &key (count 16))
+  (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
+    (socket-bind s #(0 0 0 0) port)
+    (loop for i from 0 upto count
+          do (multiple-value-bind (buf len address port) (socket-receive s nil *udp-ping-size*)
+               (format t "(~A) Received ~A bytes from ~A:~A - ~A ~%"
+                       i len address port (subseq buf 0 (min 10 len))))
+          finally (socket-close s))))
+
+(defmacro with-udp-client ((socket-var &key (addr #(0 0 0 0)) (port 0) peer) &body body)
+  `(let ((,socket-var (make-instance 'inet-socket :type :datagram :protocol :udp)))
+     (unwind-protect
+          (progn
+            (socket-bind ,socket-var ,addr ,port)
+            ,(when peer `(apply #'socket-connect ,socket-var ,peer))
+            ,@body)
+       (socket-close ,socket-var))))
+
+;;; Objects
+(defconfig udp-config (socket-config) 
+  ;; checksum (udplite), anycast/multicast
+  ((broadcast)))
+
+(defclass udp-socket (socket) 
+  ((family :initform default-inet-address-family))
+  (:default-initargs :type :datagram :protocol :udp))
+
+(defmethod make-sockaddr-for ((socket udp-socket) &optional sockaddr &rest address)
+  (apply 'net/core::%sockaddr sockaddr address))
+
+;; MTU Discovery handled in CLI/TOOLS/NET via /sys/class/net/*/mtu
+;; ref: https://www.rfc-editor.org/rfc/rfc9000.html#section-14.3
+;; ref: https://github.com/quinn-rs/quinn/blob/main/quinn-proto/src/config/transport.rs (MtuDiscoveryConfig)
+
+;;; Multicast
+;; range 224.0.0.0 to 239.255.255.255
+;; don't use .1,2,22
+
+;;; UNIX
+(defconfig unix-socket-config (socket-config) 
+  ())
+
+(defclass unix-socket (socket) 
+  ((family :initform sockint::af-local))
+  (:default-initargs :type :stream))
+
+(defmethod make-sockaddr-for ((socket unix-socket) &optional sockaddr &rest address)
+  (apply '%sockaddr sockaddr address))
+
+;;; NETLINK
+(defclass netlink-socket (socket)
+  ((family :initform af-netlink))
+  (:documentation "Class representing NETLINK local sockets.")
+  (:default-initargs :type :datagram))
+
+(defmethod size-of-sockaddr ((self netlink-socket))
+  io/socket::+size-of-sockaddr-nl+)
+
+(defmethod make-sockaddr-for ((self netlink-socket) &optional sockaddr &rest address)
+  (let ((sockaddr (or sockaddr (make-alien sockaddr-nl))))
+    (destructuring-bind (&optional pid groups) address
+      (setf (slot sockaddr 'io/socket::nl-family) af-netlink)
+      (when pid (setf (slot sockaddr 'io/socket::nl-pid) pid))
+      ;; TODO 2026-03-09: parse groups
+      (when groups (setf (slot sockaddr 'io/socket::nl-groups) groups)))
+    (values sockaddr io/socket::+size-of-sockaddr-nl+)))
+
+(defmethod free-sockaddr-for ((socket netlink-socket) sockaddr)
+  (sb-alien:free-alien sockaddr))
+
+(defmethod bits-of-sockaddr ((socket netlink-socket) sockaddr &optional size)
+  "Return the PID of the local socket address SOCKADDR. 0 indicates the kernel's address."
+  (declare (ignore size))
+  (values (slot sockaddr 'io/socket::nl-pid) (slot sockaddr 'io/socket::nl-groups)))

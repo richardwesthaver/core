@@ -60,8 +60,13 @@ the underlying link).")
 (defverb address (self) (:accessor t))
 (defverb connection (self) (:accessor t))
 
+(defverb host (self) (:accessor t))
+(defverb port (self) (:accessor t))
+
 (defverb connect (self &key &allow-other-keys))
 (defverb disconnect (self &key &allow-other-keys))
+
+(defverb accept (self))
 
 (defgeneric make-client (kind &rest initargs &key &allow-other-keys))
 (defgeneric make-client-request (self req &rest args &key &allow-other-keys))
@@ -150,6 +155,12 @@ and ID protocols."))
    (queue :accessor queue)
    (state :accessor state)))
 
+(defmethod socket-file-descriptor ((self wrapped-socket)) (socket-file-descriptor (socket self)))
+
+(defmethods fd 
+  (((self wrapped-socket)) (socket-file-descriptor self))
+  (((self socket)) (socket-file-descriptor self)))
+
 (defmethod socket-close :before ((self wrapped-socket) &key abort)
   (declare (ignore abort))
   (when (slot-boundp self 'queue)
@@ -178,6 +189,30 @@ and ID protocols."))
 
 (defmethod socket-bind ((socket wrapped-socket) &rest sockaddr)
   (apply 'socket-bind (socket socket) sockaddr))
+
+(defmethod socket-send ((socket wrapped-socket) buffer length &rest args)
+  (apply 'socket-send (socket socket) buffer length args))
+
+(defmethod socket-receive ((socket wrapped-socket) buffer length &rest args)
+  (apply 'socket-receive (socket socket) buffer length args))
+
+(defmethod socket-accept ((socket wrapped-socket))
+  (socket-accept (socket socket)))
+
+(defmethod socket-listen ((socket wrapped-socket) backlog)
+  (socket-listen (socket socket) backlog))
+
+(defmethod socket-shutdown ((socket wrapped-socket) &key (direction :io))
+  (socket-shutdown (socket socket) :direction direction))
+
+(defmethod socket-name ((self wrapped-socket))
+  (socket-name (socket self)))
+
+(defmethod socket-peername ((self wrapped-socket))
+  (socket-peername (socket self)))
+
+(defmethod socket-namestring ((self wrapped-socket))
+  (socket-namestring (socket self)))
 
 (defclass stream-socket (wrapped-socket wrapped-stream) ()
   (:documentation "A Streaming socket which may be closed with either SOCKET-CLOSE or by closing

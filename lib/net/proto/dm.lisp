@@ -22,7 +22,7 @@
 
 (defvar *dm-node* nil)
 
-(defclass dm-node (udp-client udp-server worker) ())
+(defclass dm-node (udp-socket worker) ())
 
 (defmethod initialize-instance :after ((self dm-node) &key)
   (setq *dm-node* self))

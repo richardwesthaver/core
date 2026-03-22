@@ -43,4 +43,4 @@
 
 (defclass dictionary-response (obj:response) ())
 
-(defclass dictionary-client (tcp-client) ())
+(defclass dictionary-client (tcp-socket) ())
