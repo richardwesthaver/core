@@ -119,7 +119,16 @@
           ((alien (* sockint::sockaddr-in6))
            (with-alien ((addr (array (unsigned 8) 16)))
              (setf (sockint::sockaddr-in6-family sockaddr) sockint::af-unspec
-                   (sockint::sockaddr-in6-addr sockaddr) addr))))
+                   (sockint::sockaddr-in6-addr sockaddr) addr)))
+          ((alien (* sockint::sockaddr-un))
+           (setf (sockint::sockaddr-un-path sockaddr) ""
+                 (sockint::sockaddr-un-family sockaddr) sockint::af-unspec))
+          ((alien (* sockint::sockaddr-un-abstract))
+           (with-alien ((addr (array (unsigned 8) 108)))
+             (setf (sockint::sockaddr-un-abstract-path sockaddr) addr
+                   (sockint::sockaddr-un-abstract-family sockaddr) sockint::af-unspec)))
+          ((alien (* sockaddr-nl))
+           (setf (slot sockaddr 'io/socket::nl-family) sockint::af-unspec)))
         sockaddr))))
 
 ;; from usocket
@@ -320,7 +329,7 @@ BODY."
   ;; checksum (udplite), anycast/multicast
   ((broadcast)))
 
-(defclass udp-socket (socket) 
+(defclass udp-socket (socket)
   ((family :initform default-inet-address-family :reader socket-family))
   (:default-initargs :type :datagram :protocol :udp))
 
@@ -363,6 +372,14 @@ BODY."
 (defmethod size-of-sockaddr ((socket unix-socket))
   sockint::size-of-sockaddr-un)
 
+(defmethod socket-disconnect ((self unix-socket))
+  (when (eql (socket-type self) :datagram)
+    (sockint::connect 
+     (socket-file-descriptor self) 
+     (%sockaddr (sockint::allocate-sockaddr-un)) 
+     (size-of-sockaddr self))
+    self))
+
 ;;; NETLINK
 (defclass netlink-socket (socket)
   ((family :initform af-netlink))
@@ -388,3 +405,11 @@ BODY."
   "Return the PID of the local socket address SOCKADDR. 0 indicates the kernel's address."
   (declare (ignore size))
   (values (slot sockaddr 'io/socket::nl-pid) (slot sockaddr 'io/socket::nl-groups)))
+
+(defmethod socket-disconnect ((self netlink-socket))
+  (when (eql (socket-type self) :datagram)
+    (sockint::connect 
+     (socket-file-descriptor self) 
+     (%sockaddr (make-alien sockaddr-nl))
+     (size-of-sockaddr self))
+    self))
