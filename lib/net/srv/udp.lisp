@@ -38,8 +38,7 @@ On success two values are returned: (PROTO HEADERS)."
   (:default-initargs
    :request-class 'udp-service-request
    :response-class 'udp-service-response
-   :type :datagram
-   :protocol :udp
+   :socket (make-instance 'inet-socket :type :datagram :protocol :udp)
    :engine (make-instance 'thread-per-connection-engine :name :udp)))
 
 (defmethod accept ((self udp-service)) 

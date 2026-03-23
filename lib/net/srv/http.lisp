@@ -532,8 +532,7 @@ RESPONSE object. If a cookie with the same name
    (chunk-input-p :type boolean :initarg :chunk-input-p)
    (path :type pathname :initarg :path :accessor path))
   (:default-initargs
-   :type :stream
-   :protocol :tcp
+   :socket (make-instance 'inet-socket :type :stream :protocol :tcp)
    :engine (make-instance 'thread-per-connection-engine :name :http)
    :connection-max *default-connection-max*
    :request-class 'http-service-request

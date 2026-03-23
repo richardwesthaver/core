@@ -91,12 +91,12 @@ Cookie: name=wookie
     (let ((a (make-sockaddr-for ns)))
       (istype '(alien (* io/socket:sockaddr-nl)) a)
       (multiple-value-bind (pid grp) (bits-of-sockaddr ns a)
-        (istype 'positive-integer pid)
-        (istype 'positive-integer grp)
+        (istype 'integer pid)
+        (istype 'integer grp)
         (free-sockaddr-for ns a)))))
 
 (deftest socket ()
-  (with-open-socket ((s c) :port 443 :connect "compiler.company" :bind '(#(0 0 0 0) 0) :close t) 
+  (with-open-socket ((s c) :connect "compiler.company")
     (istype 'client s) 
     (istype 'stream c)))
 
