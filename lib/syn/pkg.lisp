@@ -74,21 +74,25 @@
    :cl-reader))
 
 (defpackage :syn/lint
-  (:use :cl :std)
+  (:use :std-lisp)
   (:export :lint))
 
 (defpackage :syn/tempo
-  (:use :cl :std :syn/ts :syn/lang :syn/gen :id :graph :ast))
+  (:nicknames :tempo)
+  (:use :std-lisp :syn/ts :syn/lang :syn/gen :id :graph :ast :val)
+  (:export :*tempo-start* :*tempo-end* :tempo-function 
+   :make-tempo-function :expand-template-tags :*tempo-table* :register-template
+   :getf-tempo :*tempo-package* :execute-template))
 
 (defpackage :syn/grovel
   (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c))
 
 (pkg:defpkg :syn
-  (:use :cl :std)
+  (:use :std-lisp)
   (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))
 
 (defpackage :syn/cli
-  (:use :cl :std :syn :cli :clap :log)
+  (:use :std-lisp :syn :cli :clap :log)
   (:export :*syn-cli*
            :*gen-cli*))
 

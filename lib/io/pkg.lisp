@@ -142,7 +142,7 @@
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
    :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*
-   :fd :poll-error :poll-timeout))
+   :fd :poll-error :poll-timeout :wait-until-fd-ready))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)
@@ -348,7 +348,7 @@
    :remove-timer :exit-event-loop :event-base-empty-p :with-event-base
    :fd-entry :monitor-fd :update-fd :unmonitor-fd
    :epoll-multiplexer :multiplexer :*multiplexers* :*default-multiplexer*
-   :fd-monitored-p :wait-until-fd-ready))
+   :fd-monitored-p))
 
 (defpkg :io
   (:use :cl)

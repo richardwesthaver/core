@@ -233,6 +233,8 @@ BODY."
              `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
              body))))
 
+;; FIX 2026-03-22: 
+#+nil
 (defun ping (target &key (id #xFF) (seqno 1))
   (with-open-socket (socket :family :ipv4 :type :raw :protocol sockint::ipproto_icmp
                             :include-headers t)
