@@ -233,24 +233,23 @@ BODY."
              `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
              body))))
 
-#+todo
 (defun ping (target &key (id #xFF) (seqno 1))
   (with-open-socket (socket :family :ipv4 :type :raw :protocol sockint::ipproto_icmp
                             :include-headers t)
     (let* ((payload-size 4)
-           (icmp-packet-size (+ (alien-size icmp-header) payload-size))
-           (frame-size (+ (alien-size ip-header) icmp-packet-size)))
-      (std:with-foreign-object (frame 'unsigned-char frame-size)
-        (std:memset frame 0 frame-size)
+           (icmp-packet-size (+ (alien-size io/socket::icmp-header) payload-size))
+           (frame-size (+ (alien-size io/socket::ip-header) icmp-packet-size)))
+      (sb-alien:with-alien ((frame (* (unsigned 8)) (make-alien sb-alien:unsigned-char frame-size)))
+        ;; (std:memset frame 0 frame-size)
         (let* ((ip-header frame)
                (icmp-header (sb-sys:sap+ ip-header (alien-size ip-header)))
                (payload (sb-sys:sap+ icmp-header (alien-size icmp-header))))
           (write-ip-header ip-header frame-size (dotted-to-integer target))
-          (setf (std:sap-ref payload unsigned-int) (htonl #x1A2B3C4D))
+          (setf (std:sap-ref payload sb-alien:unsigned-int) (io/swap-bytes::htonl #x1A2B3C4D))
           (write-icmp-header icmp-header icmp-packet-size id seqno)
-          (send-to socket frame :end frame-size :remote-host target)
-          (wait-until-fd-ready (sb-bsd-sockets::socket-file-descriptor socket) :input)
-          (receive-from socket :size (* 64 1024)))))))
+          (send socket frame :end frame-size :remote-host target)
+          (wait-until-fd-ready (socket-file-descriptor socket) :input)
+          (receive socket :size (* 64 1024)))))))
 
 ;;; TCP
 (defconfig tcp-config (socket-config) 

@@ -35,6 +35,10 @@
               do (set-array-value index n))))
     (values addr)))
 
+(defun dotted-to-integer (address)
+  "Convert a dotted IPv4 address to an (UNSIGNED-BYTE 32)."
+  (octets-to-integer (dotted-to-vector address)))
+
 (defun vector-to-dotted (vector)
   "Convert an 4-element vector to a dotted string."
   (coercef vector 'ipv4-array)

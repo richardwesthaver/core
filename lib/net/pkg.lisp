@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :net/core
-  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv :graph :ast :io/sys)
+  (:use :std-lisp :sb-thread :config :id :io/socket :io/mux :equiv :graph :ast :io/sys :io/swap-bytes)
   (:use-reexport :sb-bsd-sockets)
   (:recycle :sb-bsd-sockets)
   (:export

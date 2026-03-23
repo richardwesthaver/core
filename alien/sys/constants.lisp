@@ -2,7 +2,7 @@
  "sys/epoll.h" "sys/syslog.h" "sys/socket.h" "sys/un.h"
  "net/if.h" "netinet/in.h" "netinet/tcp.h" "netinet/ip.h" 
  "linux/icmp.h" "linux/errqueue.h" "linux/netlink.h" "arpa/inet.h"
- "fcntl.h" "netdb.h" "sys/resource.h")
+ "fcntl.h" "netdb.h" "sys/resource.h" "sys/poll.h")
 
 (;; signals
  ;; (:integer sig-ign "SIG_IGN") 1
@@ -212,7 +212,11 @@
  (:integer ipv6-v6only "IPV6_V6ONLY")
  ;; net/if
  (:integer if-namesize "IF_NAMESIZE")
- (:integer if-namsiz "IFNAMSIZ"))
-
-
-
+ (:integer if-namsiz "IFNAMSIZ")
+ ;; sys/poll
+ (:integer epollrdhup "EPOLLRDHUP") ;; can't grovel for pollrdhup, epollrdhup is the same afaik
+ (:integer pollpri "POLLPRI")
+ (:integer pollrdnorm "POLLRDNORM")
+ (:integer pollrdband "POLLRDBAND")
+ (:integer pollwrnorm "POLLWRNORM")
+ (:integer pollwrband "POLLWRBAND"))

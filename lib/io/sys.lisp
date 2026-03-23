@@ -24,16 +24,17 @@
              (format s "Syscall error ~S ~A" (syscall-name c) (syscall-errno c))
              (when (error-message c) (format s ": ~A" (error-message c))))))
 (define-condition poll-error (io-syscall-error)
-  ((type :initarg :type :reader error-type))
+  ((fd :initarg :fd :reader error-fd)
+   (type :initarg :type :reader error-type))
   (:report (lambda (c s)
-             (format s "Poll error(event ~S)" (error-type c))
+             (format s "Poll error(event ~S, fd ~A)" (error-type c) (error-fd c))
              (when (error-message c) (format s ": ~A" (error-message c)))))
   (:documentation
    "Signaled when an error occurs while polling for I/O readiness
 of a file descriptor."))
 (define-condition poll-timeout (poll-error) ()
   (:report (lambda (c s)
-             (format s "Poll timeout(event ~S)" (error-type c))
+             (format s "Poll timeout(event ~S, fd ~A)" (error-type c) (error-fd c))
              (when (error-message c) (format s ": ~A" (error-message c)))))
   (:documentation
    "Signaled when a timeout occurs while polling for I/O readiness

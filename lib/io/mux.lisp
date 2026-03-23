@@ -509,3 +509,65 @@ is monitored for EVENT-TYPE."
        (push :error event)))
     (when event
       (list fd event))))
+
+;;; FD Wait
+(defun compute-poll-flags (type)
+  (ecase type
+    (:input  (logior sb-unix:pollin sys::epollrdhup sys::pollpri))
+    (:output (logior sb-unix:pollout))
+    (:io     (logior sb-unix:pollin sys::epollrdhup sys::pollpri sb-unix:pollout))))
+
+(defun process-poll-revents (revents fd)
+  (let ((readp nil) (writep nil))
+    (flags-case revents
+      ((sb-unix:pollin sys::epollrdhup sys::pollpri)
+       (setf readp t))
+      ((sb-unix:pollout sb-unix:pollhup)
+       (setf writep t))
+      ((sb-unix:pollerr)
+       (error 'poll-error :fd fd))
+      ((sb-unix:pollnval)
+       (error 'poll-error :fd fd :type "Invalid file descriptor")))
+    (values readp writep)))
+
+(defun wait-until-fd-ready (file-descriptor event-type &optional timeout errorp)
+  "Poll file descriptor `FILE-DESCRIPTOR' for I/O readiness.
+`EVENT-TYPE' must be either :INPUT, :OUTPUT, or :IO.
+`TIMEOUT' must be either a non-negative real measured in seconds,
+or `NIL' meaning no timeout at all. If `ERRORP' is not NIL and a timeout
+occurs, then a condition of type `POLL-TIMEOUT' is signaled.
+Returns two boolean values indicating readability and writeability of `FILE-DESCRIPTOR'."
+  (flet ((poll-error (unix-err)
+           (error 'io/sys:poll-error :fd file-descriptor
+                                     :type (io/sys::error-type unix-err))))
+    (with-alien ((pollfd (sb-alien:struct sb-unix::pollfd)))
+      ;; (bzero pollfd (isys:sizeof '(:struct pollfd)))
+      (with-alien-slots (sb-unix::fd sb-unix::events sb-unix::revents) pollfd
+        (setf sb-unix::fd file-descriptor
+              sb-unix::events (compute-poll-flags event-type))
+        (handler-case
+            (let ((ret (io/sys::repeat-upon-condition-decreasing-timeout
+                           ((io/sys::eintr) remaining-time timeout)
+                         (sb-unix:unix-simple-poll pollfd event-type (io/sys::timeout-ms remaining-time)))))
+              (when (zerop ret)
+                (if errorp
+                    (error 'poll-timeout :fd file-descriptor :event-type event-type)
+                    (return-from wait-until-fd-ready (values nil nil)))))
+          (io/sys::syscall-error (err) (poll-error err)))
+        (process-poll-revents sb-unix::revents file-descriptor)))))
+
+(defun fd-ready-p (fd &optional (event-type :input))
+  "Tests file-descriptor `FD' for I/O readiness.
+`EVENT-TYPE' must be either :INPUT, :OUTPUT or :IO ."
+  (multiple-value-bind (readp writep)
+      (wait-until-fd-ready fd event-type 0)
+    (ecase event-type
+      (:input  readp)
+      (:output writep)
+      (:io     (or readp writep)))))
+
+(defun fd-readablep (fd)
+  (nth-value 0 (wait-until-fd-ready fd :input 0)))
+
+(defun fd-writablep (fd)
+  (nth-value 1 (wait-until-fd-ready fd :output 0)))

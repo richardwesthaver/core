@@ -142,20 +142,23 @@
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
    :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*
-   :fd))
+   :fd :poll-error :poll-timeout))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)
   (:export :io-socket-error 
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
    :integer-to-dotted :dotted-to-vector
-   :vector-to-dotted
-   :sockopt-peercred
+   :vector-to-dotted :dotted-to-integer
+   :ip-header :icmp-header
+   :write-ip-header :write-icmp-header
+   :sockopt-peercred :unknown-interface
    :sockaddr-nl :af-netlink
    :netlink-proto :netlink-proto*
    :nlm-f :nlm-f*
    :nlmsg :nlmsg*
-   :nlmsghdr :nlmsgerr))
+   :nlmsghdr :nlmsgerr
+   :list-network-interfaces :lookup-interface))
 
 (defpkg :io/flate
   (:use :cl :io/proto :sb-gray)
@@ -345,7 +348,7 @@
    :remove-timer :exit-event-loop :event-base-empty-p :with-event-base
    :fd-entry :monitor-fd :update-fd :unmonitor-fd
    :epoll-multiplexer :multiplexer :*multiplexers* :*default-multiplexer*
-   :fd-monitored-p))
+   :fd-monitored-p :wait-until-fd-ready))
 
 (defpkg :io
   (:use :cl)
