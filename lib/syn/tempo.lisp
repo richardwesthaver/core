@@ -10,7 +10,7 @@
 ;;; Code:
 (in-package :syn/tempo)
 
-(defvar *tempo-case-sensitivity* nil)
+(defvar *tempo-case-sensitive* nil)
 
 (defvar *tempo-package* *package*)
 
@@ -237,7 +237,7 @@ containing the lisp code that implements that tempo code."
 
 (defmethod getf* ((plist list) key &optional default)
   "Uses getf to get a value from a plist"
-  (if *tempo-case-sensitivity*
+  (if *tempo-case-sensitive*
       (getf plist key default)
       (loop for (k v) on plist by #'cddr
             when (string-equal k key)
@@ -325,3 +325,15 @@ Rebuilds it when text template was a file which has been modified."
                      (ast tempo-function) form))))
     (kernel tempo-function)))
 
+;;; Init
+(defmethod init ((self (eql :tempo)) &key (package *tempo-package*) (case-sensitive *tempo-case-sensitive*))
+  (setf *tempo-package* package
+        *tempo-case-sensitive* case-sensitive))
+
+(defmethod clean ((self (eql :tempo)) &key)
+  (clrhash *tempo-table*))
+
+(defmethod reset ((self (eql :tempo)) &key)
+  (setf *tempo-table* (make-hash-table :test #'equal)
+        *tempo-package* (find-package :syn/tempo)
+        *tempo-case-sensitive* nil))
