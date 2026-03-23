@@ -6,25 +6,24 @@
 (in-package :net/core)
 
 ;;; Vars
+(defconstant +socket-max-backlog+ sys::somaxconn)
+
 (defvar *ipv6* nil
   "When non-nil, automatically defer to ipv6 addresses where possible.")
 
-(defvar *default-inet-protocol* :tcp)
 (defvar *socket-auto-close* t
   "When non-nil arrange for WITH-OPEN-SOCKET to auto-close the socket it opens.")
 
 (defvar *localhost* #(127 0 0 1))
 (defvar *wildcard-host* #(0 0 0 0))
 (defvar *wildcard-port* 0)
-(defparameter *default-user-agent*
-  (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
-          (lisp-implementation-type)
-          (lisp-implementation-version)
-          (software-type)
-          (software-version)))
-(defvar *default-connect-timeout* 10)
-(defvar *default-read-timeout* 10)
-(defvar *default-backlog* 16)
+
+;; defaults
+(defvar *default-connect-timeout* 8)
+(defvar *default-read-timeout* 8)
+(defvar *default-backlog* 8)
+(defvar *default-linger* 16)
+(defvar *default-inet-protocol* :tcp)
 (defvar *default-proxy* nil
   "If specified will be used as the default value of PROXY in calls to REQ.")
 (defvar *default-mtu* 65507
@@ -41,6 +40,13 @@ sizeof(struct udphdr) = 8,  /* netinet/udp.h */
 
 (But for UDP broadcast, the maximum message size is limited by the MTU size of
 the underlying link).")
+
+(defvar *default-user-agent*
+  (format nil "req (~A~@[ ~A~]); ~A;~@[ ~A~]"
+          (lisp-implementation-type)
+          (lisp-implementation-version)
+          (software-type)
+          (software-version)))
 
 (define-symbol-macro default-inet-address-family (if *ipv6* sockint::af-inet6 sockint::af-inet))
 (define-symbol-macro default-inet-address-family-keyword (if *ipv6* :ipv6 :ipv4))
