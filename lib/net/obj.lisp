@@ -259,11 +259,3 @@ in a NETWORK-GRAPH."))
 in a NETWORK-GRAPH."))
 
 (defmethod make-server-response ((self server) res &key) (nyi!))
-
-;;; Macros
-(defmacro with-open-connection ((sym addr &rest args) &body body)
-  `(let ((,sym (connect ,addr ,@args)))
-     (unwind-protect
-          (progn ,@body)
-       (when ,sym
-         (disconnect ,sym)))))

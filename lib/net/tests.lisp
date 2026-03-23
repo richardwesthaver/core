@@ -137,4 +137,3 @@ Cookie: name=wookie
                  (is= n 4)
                  (isequalp v #(1 2 3 4 0)))
                (return-from test t)))))))))
-  

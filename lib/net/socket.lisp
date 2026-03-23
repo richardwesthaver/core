@@ -5,8 +5,12 @@
 ;;; Code:
 (in-package :net/core)
 
+;;; Variables
+(defvar *ping-size* 512)
+
 ;; client-socket = active-socket
 ;; server-socket = passive-socket
+;;; MAKE-SOCKET
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
                                     (host *wildcard-host*) (port *wildcard-port*)
@@ -15,7 +19,7 @@
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL (or :UNIX), :IPV4, :IPV6 or :NETLINK")
   (check-type type (member :stream :datagram :raw) "either :STREAM, :DATAGRAM or :RAW")
-  (check-type class (or null (member :client :server)) "either :CLIENT, :SOCKET or NIL")
+  (check-type class (member :client :server :socket) "either :CLIENT, :SERVER, or :SOCKET")
   (when (eql :ipv4 family) (setf ipv6 nil))
   (let ((*ipv6* ipv6)
         (args (remove-from-plist args :remote-host :host :port :remote-port :bind :class :connect :ipv6)))
@@ -34,7 +38,7 @@
                  (:ipv4 (make-instance 'server :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
                  (:ipv6 (make-instance 'server :socket (apply 'make-instance 'inet6-socket :type type :protocol protocol args)))
                  (:local (make-instance 'server :socket (apply 'make-instance 'local-socket :type type :protocol protocol args)))))
-              (t 
+              (:socket
                (case family
                  (:ipv4 (apply 'make-instance 'inet-socket args))
                  (:ipv6 (apply 'make-instance 'inet6-socket args))
@@ -54,13 +58,6 @@
       (if (or host remote-host)
           (values sock (socket-make-stream sock))
           sock))))
-
-(defmacro with-open-socket ((sock &rest args &key (close *socket-auto-close*) abort &allow-other-keys) &body body)
-  (let ((svar (if (atom sock) sock (car sock))))
-    `(multiple-value-bind (,@(if (atom sock) `(,sock) sock)) (make-socket ,@args)
-       ,@(if (or close abort)
-             `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
-             body))))
 
 ;;; Socket Utils
 (definline %socket-operation-in-progress-p (condition)
@@ -222,6 +219,20 @@ BODY."
        (when ,server-socket-var
          (socket-close ,server-socket-var)))))
 
+(defmacro with-open-connection ((sym addr &rest args) &body body)
+  `(let ((,sym (connect ,addr ,@args)))
+     (unwind-protect
+          (progn ,@body)
+       (when ,sym
+         (disconnect ,sym)))))
+
+(defmacro with-open-socket ((sock &rest args &key (close *socket-auto-close*) abort &allow-other-keys) &body body)
+  (let ((svar (if (atom sock) sock (car sock))))
+    `(multiple-value-bind (,@(if (atom sock) `(,sock) sock)) (make-socket ,@args)
+       ,@(if (or close abort)
+             `((unwind-protect (progn ,@body) (when (socket-open-p ,svar) (socket-close ,svar :abort ,abort))))
+             body))))
+
 #+todo
 (defun ping (target &key (id #xFF) (seqno 1))
   (with-open-socket (socket :family :ipv4 :type :raw :protocol sockint::ipproto_icmp
@@ -276,13 +287,11 @@ BODY."
         (format t "Received ~A bytes from ~A:~A - ~A ~%"
                 len addr port (subseq buf 0 (min 10 len)))))))
 
-(defvar *tcp-ping-size* 512)
-
 (defun tcp-receive-ping (port &key (count 16))
   (let ((s (make-instance 'inet-socket :type :stream :protocol :tcp)))
     (socket-bind s #(0 0 0 0) port)
     (loop for i from 0 upto count
-          do (multiple-value-bind (buf len address port) (socket-receive s nil *tcp-ping-size*)
+          do (multiple-value-bind (buf len address port) (socket-receive s nil *ping-size*)
                (format t "(~A) Received ~A bytes from ~A:~A - ~A ~%"
                        i len address port (subseq buf 0 (min 10 len))))
           finally (socket-close s))))
@@ -297,8 +306,6 @@ BODY."
        (socket-close ,socket-var))))
 
 ;;; UDP
-(defvar *udp-ping-size* 512)
-
 (defun udp-echo (port)
   (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
     (socket-bind s #(0 0 0 0) port)
@@ -311,7 +318,7 @@ BODY."
   (let ((s (make-instance 'inet-socket :type :datagram :protocol :udp)))
     (socket-bind s #(0 0 0 0) port)
     (loop for i from 0 upto count
-          do (multiple-value-bind (buf len address port) (socket-receive s nil *udp-ping-size*)
+          do (multiple-value-bind (buf len address port) (socket-receive s nil *ping-size*)
                (format t "(~A) Received ~A bytes from ~A:~A - ~A ~%"
                        i len address port (subseq buf 0 (min 10 len))))
           finally (socket-close s))))
@@ -381,6 +388,8 @@ BODY."
     self))
 
 ;;; NETLINK
+(defconfig netlink-socket-config (socket-config) ())
+
 (defclass netlink-socket (socket)
   ((family :initform af-netlink))
   (:documentation "Class representing NETLINK local sockets.")
@@ -413,3 +422,20 @@ BODY."
      (%sockaddr (make-alien sockaddr-nl))
      (size-of-sockaddr self))
     self))
+
+;;; SEND/RECEIVE
+(defmethods send 
+  (((self socket) buffer &rest args &key (start 0) (end (length buffer)))
+   (apply 'socket-send self (subseq buffer start end) (- end start)
+          (remove-from-plist args :start :end)))
+  (((self wrapped-socket) buffer &rest args)
+   (apply 'send self buffer args)))
+
+(defmethods receive 
+  (((self socket) &rest args &key buffer (start 0) end length (element-type 'octet))
+   (apply 'socket-receive self (when buffer (subseq buffer start end)) length
+          :element-type element-type
+          (remove-from-plist args :start :end :buffer :length)))
+  (((self wrapped-socket) &rest args)
+   (apply 'receive self args)))
+

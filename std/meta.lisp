@@ -154,7 +154,7 @@ function NAME and be skipped for (setf NAME)."
 (defverb scan (self seq &key))
 
 (defverb send (self buffer &rest args &key start end))
-(defverb receive (self &rest args &key buffer length start end))
+(defverb receive (self &rest args &key buffer length start end &allow-other-keys))
 
 ;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)

@@ -94,7 +94,7 @@
    :unix-socket-config
    :with-tcp-client
    :tcp-ping-server
-   :*tcp-ping-size*
+   :*ping-size*
    :tcp-echo
    :tcp-receive-ping
    :tcp-socket

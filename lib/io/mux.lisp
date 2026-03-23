@@ -196,8 +196,8 @@ is monitored for EVENT-TYPE."
     (and entry (fd-entry-handler entry event-type))))
 
 (defmethod set-io-handler ((event-base event-base) fd type function &key timeout oneshot)
-  (let ((current-fd-entry (print (fd-entry event-base fd)))
-        (event (print (make-fd-handler fd type function oneshot))))
+  (let ((current-fd-entry (fd-entry event-base fd))
+        (event (make-fd-handler fd type function oneshot)))
     (cond
       (current-fd-entry
        (%set-io-handler event-base fd event current-fd-entry timeout)
