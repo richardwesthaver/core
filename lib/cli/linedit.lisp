@@ -224,6 +224,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (deftrans "Home"        (#\Esc #\[ #\7 #\~) (#\Esc #\[ #\1 #\~) (#\Esc #\[ #\H))
 (deftrans "End"         (#\Esc #\[ #\8 #\~) (#\Esc #\[ #\4 #\~) (#\Esc #\[ #\F))
 
+;;; Terminal
 (defclass terminal (backend)
   ((translations :initform *terminal-translations*)
    (dirty-p :initform t :accessor dirty-p)))

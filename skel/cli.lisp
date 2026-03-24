@@ -142,7 +142,7 @@
     (cli/linedit:install-repl 
      :wrap-current t 
      :history (xdg-data-dir :skel "history") 
-     :killring (xdg-data-dir :skel "/killring"))
+     :killring (xdg-data-dir :skel "killring"))
     (cli/repl:make-toplevel-init
      :package :sk-user
      :userinit (lambda () (or (xdg-config-file :core) 
