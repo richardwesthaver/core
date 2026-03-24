@@ -4,7 +4,8 @@
 
 ;;; Code:
 (pkg:defpkg :core 
-  (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math :ast)
+  (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math :ast
+   :cli :skel :homer :mpk :krypt :packy)
   (:import-from :cli/main :define-multi-main)
   (:import-from :cli/repl :make-toplevel-init)
   (:export #:app-config #:dispatch-core))
@@ -14,11 +15,11 @@
 (define-lisp-package :core)
 
 (defreadtable :core
-  (:fuse :modern :std :shell :graph :math))
+  (:fuse :modern :std :shell :graph :math :tempo :time))
 
 (pkg:defpkg :core/user
   (:nicknames :user)
-  (:use :std-lisp :core :cli)
+  (:use :std-lisp :core)
   (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-c)
   (:import-from :tools :with-sbcl))
 
@@ -31,14 +32,21 @@
 (defmethod make-config ((self (eql :core)) &rest args)
   (apply 'make-instance 'core-config args))
 
-(defmethod load-config ((self (eql :core)) (from pathname) &key)
+(defmethod load-config ((self (eql :core)) (from pathname) &key build)
   (let ((c (make-config :core)))
     (with-safe-io-syntax (:core)
       (read-ast c from)
       (load-ast c))
     (setf (ast c) nil)
-    c))
+    (if build (build c) c)))
 
+(defmethod load-config ((self (eql :core)) (from list) &key build)
+  (let ((c (make-config :core :ast from)))
+    (with-safe-io-syntax (:core)
+      (load-ast c))
+    (setf (ast c) nil)
+    (if build (build c) c)))
+  
 (defmethod load-ast ((self core-config))
   (with-slots (ast) self
     (if (formp ast)
@@ -54,12 +62,12 @@
 
 (defmethod build ((self core-config) &key)
   (with-slots (skel homer mpk krypt packy editor) self
-      (setf skel:*skel-user-config* skel
-            homer:*home-config* homer
+      (setf *skel-user-config* skel
+            *home-config* homer
             mpk::*mpk-user-config* mpk
-            krypt:*krypt-user-config* krypt
+            *krypt-user-config* krypt
             packy::*packy-config* packy
-            cli/ed:*editor-config* editor))
+            *editor-config* editor))
   self)
 
 (define-multi-main dispatch-core
@@ -69,3 +77,7 @@
   (:skel (skel/cli::start-skel))
   (:homer (skel/homer/cli::start-homer))
   (:mpk (skel/mpk/cli::start-mpk)))
+
+(defmethod init ((self (eql :core)) &key (readtable :core) config)
+  (setq *readtable* (find-readtable readtable))
+  (when config (load-config :core config :build t)))

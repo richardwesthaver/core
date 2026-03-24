@@ -1497,7 +1497,7 @@
    :make-system
    :find-module
    :*module*
-   :*core-module-table*
+   :*module-table*
    :module
    :use :using
    :refuse :refusing

@@ -1900,7 +1900,12 @@ You can see examples in +ISO-8601-FORMAT+, +ASCTIME-FORMAT+, and +RFC-1123-FORMA
                        do (princ c str)
                        finally (when c (unread-char c stream)))))))
 
-(defun enable-read-macros ()
+(defreadtable :time
+  (:merge :std)
+  (:macro-char #\@ '%read-timestring)
+  (:dispatch-macro-char #\# #\@ '%read-universal-time))
+
+(defun time-read-macros ()
   "Enables the local-time reader macros for literal timestamps and universal time."
   (set-macro-character #\@ '%read-timestring)
   (set-dispatch-macro-character #\# #\@ '%read-universal-time)
