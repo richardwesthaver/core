@@ -80,9 +80,12 @@
 (defpackage :syn/tempo
   (:nicknames :tempo)
   (:use :std-lisp :syn/ts :syn/lang :syn/gen :id :graph :ast :val)
+  (:import-from :dat/xml :escape-for-html)
+  (:import-from :url :url-encode)
   (:export :*tempo-start* :*tempo-end* :tempo-function 
    :make-tempo-function :expand-template-tags :*tempo-table* :register-template
-   :getf-tempo :*tempo-package* :execute-template))
+   :getf-tempo :*tempo-package* :execute-template :deftempo
+   :*tempo-parameters* :*tempo-variables* :*tempo-case-sensitive*))
 
 (defpackage :syn/grovel
   (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c))

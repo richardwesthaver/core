@@ -252,12 +252,13 @@
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag)
   (:import-from :sb-ext :*compiler-print-variable-alist*)
   (:import-from :sb-x86-64-asm :ea :machine-ea)
+  (:import-from :sb-assem :dump-symbolic-asm)
   (:export :deftransform :*compiler-print-variable-alist* :parse-deftransform
    :defoptimizer :defknown :ctypecase :ctypep :ctype-array-dimensions :def-ir1-translator
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
    :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
    :*backend-sbs* :*backend-sc-names* :emit :assemble
-   :without-scheduling :dump-symbolic-asm :inst :inst*
+   :without-scheduling :inst :inst*
    :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
    :*compile-progress* :*emit-cfasl* :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
@@ -847,7 +848,7 @@
    :hide-arena :unhide-arena
    :switch-to-arena :rewind-arena
    :unuse-arena :in-same-arena
-   :dump-arena-objects :arena-contents
+   :arena-contents
    :points-to-arena
    :show-heap->arena
    :lisp-object-info
