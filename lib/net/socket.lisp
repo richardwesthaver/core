@@ -13,7 +13,7 @@
 ;;; MAKE-SOCKET
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
-                                    (host *wildcard-host*) (port *wildcard-port*)
+                                    host (port *wildcard-port*)
                                     remote-host remote-port (listen (when (eql class :server) *default-backlog*))
                     &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
@@ -32,18 +32,18 @@
                (case family
                  (:ipv4 (make-instance 'client :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
                  (:ipv6 (make-instance 'client :socket (apply 'make-instance 'inet6-socket :type type :protocol protocol args)))
-                 (:local (make-instance 'client :socket (apply 'make-instance 'local-socket :type type :protocol protocol args)))))
+                 (:local (make-instance 'client :socket (apply 'make-instance 'local-socket :type type args)))))
               (:server
                (case family
                  (:ipv4 (make-instance 'server :socket (apply 'make-instance 'inet-socket :type type :protocol protocol args)))
                  (:ipv6 (make-instance 'server :socket (apply 'make-instance 'inet6-socket :type type :protocol protocol args)))
-                 (:local (make-instance 'server :socket (apply 'make-instance 'local-socket :type type :protocol protocol args)))))
+                 (:local (make-instance 'server :socket (apply 'make-instance 'local-socket :type type args)))))
               (:socket
                (case family
-                 (:ipv4 (apply 'make-instance 'inet-socket args))
-                 (:ipv6 (apply 'make-instance 'inet6-socket args))
-                 (:local (apply 'make-instance 'local-socket args))
-                 (:netlink (apply 'make-instance 'netlink-socket args)))))))
+                 (:ipv4 (apply 'make-instance 'inet-socket :type type :protocol protocol args))
+                 (:ipv6 (apply 'make-instance 'inet6-socket :type type :protocol protocol args))
+                 (:local (apply 'make-instance 'local-socket :type type args))
+                 (:netlink (apply 'make-instance 'netlink-socket :type type args)))))))
       (when host
         (apply 'socket-bind sock (etypecase host 
                                    (string (list (get-address host) port))
@@ -219,8 +219,8 @@ BODY."
        (when ,server-socket-var
          (socket-close ,server-socket-var)))))
 
-(defmacro with-open-connection ((sym addr &rest args) &body body)
-  `(let ((,sym (connect ,addr ,@args)))
+(defmacro with-open-connection ((sym sock addr &rest args) &body body)
+  `(let ((,sym (print (connect ,sock ,addr ,@args))))
      (unwind-protect
           (progn ,@body)
        (when ,sym
@@ -440,3 +440,10 @@ BODY."
   (((self wrapped-socket) &rest args)
    (apply 'receive self args)))
 
+;;; CONNECT/DISCONNECT
+(defmethod connect ((self socket) (addr t) &key (port *wildcard-port*) &allow-other-keys) 
+  (socket-connect self addr port))
+(defmethod connect ((self local-socket) (addr t) &key)
+  (socket-connect self addr))
+(defmethod disconnect ((self socket)) (socket-disconnect self))
+(defmethod disconnect ((self wrapped-socket)) (socket-disconnect self))

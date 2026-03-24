@@ -40,14 +40,13 @@
   (:documentation "Represents a standard server address with a
 transport name and a table of properties."))
 
-(defmethod connect :around ((server-address standard-server-address) &key (if-failed :error))
+(defmethod connect :around (self (server-address standard-server-address) &key (if-failed :error))
   (with-if-failed-handler if-failed
     (call-next-method)))
 
-(defmethod connect ((addresses list) &key (if-failed :error) event-base)
+(defmethod connect (event-base (addresses list) &key (if-failed :error))
   (with-if-failed-handler if-failed
-    (or (some (lambda (address)
-                (connect address :if-failed nil :event-base event-base))
+    (or (some (lambda (address) (connect event-base address :if-failed nil))
               addresses)
         (error "No server addresses left to try to open."))))
 
@@ -61,7 +60,7 @@ transport name and a table of properties."))
   (:documentation "Represents a server address whose transport is not
 supported by the DBUS system."))
 
-(defmethod connect ((address generic-server-address) &key)
+(defmethod connect (event-base (address generic-server-address) &key)
   (error "Unsupported transport mechanism for ~S." address))
 
 (defun parse-server-addresses-from-stream (in)
@@ -158,16 +157,12 @@ Sockets for transport."))
 
 (setf (find-server-address-class "unix") 'unix-server-address)
 
-#+todo
 (defmethod shared-initialize :after ((address unix-server-address) slot-names &rest initargs)
   (declare (ignore initargs slot-names))
   (let ((abstract (server-address-property "abstract" address :if-does-not-exist nil))
         (path (server-address-property "path" address :if-does-not-exist nil)))
     (with-slots (address) address
-      (setf address
-            (ensure-address (or abstract path)
-                            :family :local
-                            :abstract (if abstract t nil))))))
+      (setf address (or abstract path)))))
 
 ;;; Connections
 (defclass dbus-connection (connection) ()
@@ -313,28 +308,30 @@ returning.  The string should not contain any newline characters."))
   t)
 
 ;;;; Socket-based connection mixin
-(defclass dbus-socket-connection-mixin (connection)
+(defclass dbus-socket-connection-mixin (connection wrapped-socket)
   ((socket :initarg :socket :reader connection-socket)))
 
 (defun open-socket-connection (family address)
   ;; iolib: make-socket connect
   (let ((socket (make-socket 
                  :family family
+                 :class :socket
                  :external-format '(:utf-8 :eol-style :crlf))))
     (unwind-protect
          (progn
-           (connect address :socket socket)
-           (write-byte 0 socket)
-           (force-output socket)
-           (prog1 socket
-             (setf socket nil)))
+           (socket-connect socket address)
+           (let ((s (socket-make-stream socket :input t :output t :element-type 'character)))
+             (write-char #\Nul s)
+             (force-output s)
+             (prog1 s ;; clever..
+               (setf socket nil))))
       (when socket
         (close socket)))))
 
 (defmethod fd ((connection dbus-socket-connection-mixin))
   (socket-file-descriptor (connection-socket connection)))
 
-(defmethod disconnect ((connection dbus-socket-connection-mixin) &key)
+(defmethod disconnect ((connection dbus-socket-connection-mixin))
   (close (connection-socket connection)))
 
 (defmethod receive-message-no-hang ((connection dbus-socket-connection-mixin))
@@ -357,12 +354,12 @@ returning.  The string should not contain any newline characters."))
   (:documentation "Represents a connection to a DBUS server over Unix
 Domain Sockets."))
 
-(defmethod connect ((address unix-server-address) &key (if-failed :error) event-base)
+(defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
   (declare (ignore if-failed))
   (make-instance 'dbus-unix-connection
                  :socket (open-socket-connection :local (address address))
                  :server-address address
-                 :uuid (server-address-property "guid" address :if-does-not-exist nil)
+                 :id (server-address-property "guid" address :if-does-not-exist nil)
                  :event-base event-base))
 
 ;;; Authentication
@@ -822,7 +819,7 @@ return the argument; otherwise, signal an authentication error."
    (name :initarg :name :reader name)))
 
 (defun call-with-open-bus (function event-base server-addresses)
-  (with-open-connection (connection server-addresses :event-base event-base)
+  (with-open-connection (connection event-base server-addresses)
     (authenticate (supported-authenticators connection) connection)
     (funcall function (make-instance 'dbus :name (hello connection) :connection connection))))
 

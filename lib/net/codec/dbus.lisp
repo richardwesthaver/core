@@ -824,7 +824,6 @@ sans dashes."
   (:documentation "Return the introspection document string for
 a particular DBUS  object."))
 
-(in-readtable :std)
 (defmethod introspection-document ((object child-object-mixin))
   (with-output-to-string (s)
     (dat/xml::write-doctype

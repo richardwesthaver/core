@@ -1,5 +1,5 @@
 (defpackage :net/tests
-  (:use :rt :std :cl :net :sb-thread :io/mux :net/core))
+  (:use :rt :std :cl :net :sb-thread :io/mux :net/core :net/proto/dbus :net/codec/dbus))
 
 (in-package :net/tests)
 
@@ -101,7 +101,7 @@ Cookie: name=wookie
     (istype 'stream c)))
 
 (defun timeout-cb () 
-  #+nil (error "timeout"))
+  (error "timeout"))
 
 (defmacro waiting-for-event ((base fd event-type) &body body)
   (with-gensyms (fd-arg event-arg error-arg)
@@ -137,3 +137,32 @@ Cookie: name=wookie
                  (is= n 4)
                  (isequalp v #(1 2 3 4 0)))
                (return-from test t)))))))))
+
+(deftest dbus-notify ()
+  (with-open-bus (bus (session-server-addresses))
+    (with-introspected-object (notifications bus "/org/freedesktop/Notifications" "org.freedesktop.Notifications")
+      (notifications "org.freedesktop.Notifications" "Notify"
+                     "Test" 0 "" "Test" "This is a test; I repeat, this is a test." '() '() -1))))
+
+(define-dbus-object root
+  (:path "/"))
+
+(define-dbus-object my-service
+  (:path "/org/adeht/MyService")
+  (:parent root))
+
+(define-dbus-method (my-service my-method) ((s1 :string) (s2 :string)) (:string)
+  (:interface "org.adeht.MyService")
+  (concatenate 'string s1 s2))
+
+(define-dbus-signal-handler (my-service on-signal) ((s :string))
+  (:interface "org.adeht.MyService")
+  (format t "Got signal with arg ~S~%" s))
+
+(deftest dbus-publish ()
+  (handler-case
+      (with-open-bus (bus (session-server-addresses))
+        (format t "Bus connection name: ~A~%" (name bus))
+        (publish-objects bus))
+    (end-of-file ()
+      :disconnected-by-bus)))

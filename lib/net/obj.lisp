@@ -70,8 +70,14 @@ the underlying link).")
 (defverb host (self) (:accessor t))
 (defverb port (self) (:accessor t))
 
-(defverb connect (self &key &allow-other-keys))
-(defverb disconnect (self &key &allow-other-keys))
+(defverb connect (self addr &key &allow-other-keys)
+  (:documentation
+   "Connect SELF to ADDR which is most often a vector (for ipv4/v6) or
+string/pathname (for fds). May also be implemented for objects (see DBUS, and
+implementation for URLs)."))
+
+(defverb disconnect (self)
+  (:documentation "Disconnect object SELF from any remote addresses."))
 
 (defverb accept (self))
 

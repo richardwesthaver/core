@@ -43,6 +43,9 @@
    :socket-disconnect
    :ip-address
    :socket
+   :wrapped-socket
+   :stream-socket
+   :datagram-socket
    :port
    :privileged-port :unprivileged-port
    :client
@@ -179,7 +182,8 @@
    :output-introspection-fragment :define-dbus-signal-handler
    :register-dbus-signal-handler :dbus-signal-handler
    :*all-dbus-objects* :*authenticator-classes* 
-   :find-authenticator-class :dbus-handler :dbus-signal-handler :dbus-method-handler))
+   :find-authenticator-class :dbus-handler :dbus-signal-handler :dbus-method-handler
+   :define-dbus-method))
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
@@ -218,7 +222,8 @@
    :message-member :message-reply-serial :message-error-name :message-interface
    :signature :valid-body-p :handler-output-signature :handler-function
    :handler-full-lisp-name :handler-input-signature :full-member-name :require-dbus-object)
-  (:export :dbus-error :dbus-auth-error :dbus-method-error))
+  (:export :dbus-error :dbus-auth-error :dbus-method-error
+   :with-open-bus :with-introspected-object :session-server-addresses :publish-objects))
 
 (defpkg :net/proto/ssh
   (:use :std-lisp :net/core)
