@@ -350,7 +350,7 @@ valid according to the signature expression, and false otherwise."
     (with-binary-writers (out endianness)
       (std/io::align 8)
       (let ((body-start (file-position out)))
-        (apply #'pack out endianness (or signature "") body)
+        (apply #'pack-value out endianness (or signature "") body)
         (let ((body-end (file-position out)))
           (file-position out 4)
           (std/io::u32 (- body-end body-start))
@@ -782,36 +782,35 @@ sans dashes."
                        object-path parent-object-path)))))
 
 (defmethod output-introspection-fragment ((thing child-object-mixin))
-  (with-element "node"
-    (attribute "name"
-               (relative-path-string thing))))
+  (make-xml-node :name "node" :attrs `(("name" . ,(relative-path-string thing)))))
 
 (defmethod output-introspection-fragment ((thing dbus-method-handler))
-  (with-element "method"
-    (attribute "name" (name thing))
-    (flet
-        ((one-arg (name dir type)
-           (with-element "arg"
-             (attribute "direction" dir)
-             (if name
-                 (attribute "name" (stringify-lisp-name name)))
-             (attribute "type" (signature (list type))))))
-      (loop for type in (handler-input-signature thing)
-            do (one-arg nil "in" type))
-      (loop for type in (handler-output-signature thing)
-            do (one-arg nil "out" type)))))
+  (make-xml-node 
+   :name "method"
+   :attrs `(("name" ,(name thing)))
+   :children
+   (flet
+       ((one-arg (name dir type)
+          (make-xml-node 
+           :name "arg"
+           :attrs `(("direction" . ,dir)
+                    ("type" . ,(signature (list type)))
+                    . ,(when name
+                         `(("name" . ,(stringify-lisp-name name))))))))
+     (loop for type in (handler-input-signature thing)
+           do (one-arg nil "in" type))
+     (loop for type in (handler-output-signature thing)
+           do (one-arg nil "out" type)))))
 
 (defmethod output-introspection-fragment ((thing dbus-signal-handler))
-  (with-element "signal"
-    (attribute "name" (name thing))
-    (flet
-        ((one-arg (name type)
-           (with-element "arg"
-             (if name
-                 (attribute "name" (stringify-lisp-name name)))
-             (attribute "type" (signature (list type))))))
-      (loop for type in (handler-input-signature thing)
-            do (one-arg nil type)))))
+  (make-xml-node 
+   :name "signal" :attrs `(("name" . ,(name thing)))
+   :children (flet ((one-arg (name type)
+                      (make-xml-node :name "arg"
+                                     :attrs `(("type" . ,(signature (list type)))
+                                              . (when name `(("name" . ,,(stringify-lisp-name name))))))))
+               (loop for type in (handler-input-signature thing)
+                     do (one-arg nil type)))))
 
 (defmethod collect-handlers-by-interface ((object dbus-object))
   (let ((result (make-hash-table :test #'equal)))
@@ -825,21 +824,28 @@ sans dashes."
   (:documentation "Return the introspection document string for
 a particular DBUS  object."))
 
+(in-readtable :std)
 (defmethod introspection-document ((object child-object-mixin))
   ;; (dat/xml:write-xml
   ;; (make-xmlrep
-  (with-xml-output (make-string-sink)
-    (doctype "node"
-             "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
-             "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd")
-    (with-element "node"
+  (with-output-to-string (s)
+    (dat/xml::write-doctype
+     "node" 
+     '(PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" 
+       "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd")
+     s)
+    (write-xml
+     (make-xml-node 
+      :name "node"
+      :children
       (let ((interfaces-handlers (collect-handlers-by-interface object))
             (child-object-names (dbus-object-child-object-names object)))
         (loop for interface-name being the hash-keys of interfaces-handlers
               using (hash-value handlers)
-              do (with-element "interface"
-                   (attribute "name" interface-name)
-                   (loop for h in handlers
-                         do (output-introspection-fragment h))))
+              do (make-xml-node :name "interface"
+                                :attrs `(("name" . ,interface-name))
+                                :children (loop for h in handlers
+                                                do (output-introspection-fragment h))))
         (dolist (child-object-name child-object-names)
-          (output-introspection-fragment (find-dbus-object child-object-name)))))))
+          (output-introspection-fragment (find-dbus-object child-object-name)))))
+     s)))

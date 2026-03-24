@@ -15,7 +15,7 @@
 (define-lisp-package :core)
 
 (defreadtable :core
-  (:fuse :modern :std :shell :graph :math :tempo :time))
+  (:fuse :modern :std :shell :graph :math :tempo :time :organ :tensor))
 
 (pkg:defpkg :core/user
   (:nicknames :user)

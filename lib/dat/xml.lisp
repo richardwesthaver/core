@@ -624,14 +624,19 @@ character translation."
       (toxml e :indent indent)
       (generate-xml e s (if indent 1 0))))
 
+(defun write-doctype (name props s) 
+  (format s "<!DOCTYPE ~A ~{~S~^ ~}>~%" name props))
+
 (defun write-prologue (xml-decl doctype s)
   "Render the leading <?xml ... ?> and <!DOCTYPE ... > tags to an xml stream."
   (format s "<?xml")
   (dolist (attrib xml-decl)
     (format s " ~A=\"~A\"" (car attrib) (cdr attrib)))
   (format s " ?>~%")
-  (when doctype
-    (format s "<!DOCTYPE ~A>~%" doctype)))
+  (when doctype 
+    (typecase doctype
+      (list (write-doctype (car doctype) (cdr doctype) s))
+      (t (write-doctype doctype nil s)))))
 
 (defun toxml (e &key (indent nil))
   "Renders a lisp node tree to an xml string."

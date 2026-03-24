@@ -196,7 +196,7 @@
    :proc-inst-target
    :proc-inst-contents
    :write-prologue
-   :write-prolog
+   :write-doctype
    ;; rpg utils
    :make-xmlrep :xmlrep-add-child!
    :xmlrep-tag :xmlrep-tagmatch
