@@ -27,6 +27,8 @@
                            all-args))))))
 
 ;;; Addresses
+(defclass server-address () ())
+
 (define-class-map
   :class server-address
   :map *server-address-classes*
@@ -461,6 +463,37 @@ return the argument; otherwise, signal an authentication error."
   "Send an authentication command to the server."
   (send-line (apply #'format-authentication-command command arguments)
              connection))
+
+;;; Introspection
+;; TODO 2026-03-23: 
+(defclass dbus-interface ()
+  ((name :initarg :name :reader interface-name)
+   (methods :initform (make-hash-table :test 'equal) :reader interface-methods)
+   (properties :initform (make-hash-table :test 'equal) :reader interface-properties)
+   (signals :initform (make-hash-table :test 'equal) :reader interface-signals)))
+
+(defclass dbus-method ()
+  ((name        :initarg :name      :reader name)
+   (signature   :initarg :signature :reader method-signature)
+   (arg-names   :initarg :args      :reader method-argument-names)
+   (arg-types   :initarg :arg-types :reader method-argument-types)
+   (results     :initarg :res       :reader method-result-types)))
+
+(defclass dbus-property ()
+  ((name        :initarg :name   :reader name)
+   (type        :initarg :type   :reader property-type)
+   (access      :initarg :access :reader property-access)))
+
+(defclass dbus-signal ()
+  ((name        :initarg :name      :reader name)
+   (arg-names   :initarg :args      :reader signal-argument-names)
+   (arg-types   :initarg :arg-types :reader signal-argument-types)))
+
+(defclass object ()
+  ((connection :initarg :connection :reader connection)
+   (path :initarg :path :reader path)
+   (destination :initarg :destination :reader object-destination)
+   (interfaces :initform (make-hash-table :test 'equal) :reader object-interfaces)))
 
 ;;; Publish
 (defgeneric publish-objects (connection &optional object-names))

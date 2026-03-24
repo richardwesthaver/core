@@ -160,26 +160,26 @@ otherwise."
         (multiple-value-bind (,formatter ,parser)
             (make-dbus-type-formatter/parser ',name ',signature ',composite)
           (make-instance 'dbus-type
-                         :name ',name
-                         :signature ',signature
-                         :sigexp-formatter ,formatter
-                         :signature-parser ,parser
-                         :alignment ',alignment
-                         :packer (lambda (stream endianness element-types value)
-                                   (declare (ignorable element-types value))
-                                   (with-binary-writers (stream endianness)
-                                     (align ',alignment)
-                                     ,pack))
-                         :unpacker (lambda (stream endianness element-types)
-                                     (declare (ignorable element-types))
-                                     (with-binary-readers (stream endianness)
-                                       (align ',alignment)
-                                       ,unpack))
-                         :checker ,(if (and (consp checker) (eq (car checker) 'function))
-                                       checker
-                                       `(lambda (value element-types)
-                                          (declare (ignore element-types))
-                                          (typep value ',checker))))))
+            :name ',name
+            :signature ',signature
+            :sigexp-formatter ,formatter
+            :signature-parser ,parser
+            :alignment ',alignment
+            :packer (lambda (stream endianness element-types value)
+                      (declare (ignorable element-types value))
+                      (with-binary-writers (stream endianness)
+                        (align ',alignment)
+                        ,pack))
+            :unpacker (lambda (stream endianness element-types)
+                        (declare (ignorable element-types))
+                        (with-binary-readers (stream endianness)
+                          (align ',alignment)
+                          ,unpack))
+            :checker ,(if (and (consp checker) (eq (car checker) 'function))
+                          checker
+                          `(lambda (value element-types)
+                             (declare (ignore element-types))
+                             (typep value ',checker))))))
        ',name)))
 
 (defun pack-1 (stream endianness type value)
@@ -325,28 +325,28 @@ valid according to the signature expression, and false otherwise."
    (reply-serial :initarg :reply-serial :reader message-reply-serial)))
 
 (defun encode-dbus-message (endianness type flags major-protocol-version
-                       serial path interface member error-name reply-serial
-                       destination sender signature body)
+                            serial path interface member error-name reply-serial
+                            destination sender signature body)
   "Encode a DBUS message and return it as an octet vector."
   (io/stream:with-output-to-sequence (out)
     (pack-value out endianness "yyyyuua(yv)"
-          (ecase endianness
-            (:little-endian (char-code #\l))
-            (:big-endian (char-code #\B)))
-          (ecase type
-            (:method-call 1)
-            (:method-return 2)
-            (:error 3)
-            (:signal 4))
-          flags
-          major-protocol-version
-          0
-          serial
-          (loop for code from 1
-                for value in (list path interface member error-name
-                                   reply-serial destination sender signature)
-                for type across "osssussg"
-                when value collect (list code (list (string type) value))))
+                (ecase endianness
+                  (:little-endian (char-code #\l))
+                  (:big-endian (char-code #\B)))
+                (ecase type
+                  (:method-call 1)
+                  (:method-return 2)
+                  (:error 3)
+                  (:signal 4))
+                flags
+                major-protocol-version
+                0
+                serial
+                (loop for code from 1
+                      for value in (list path interface member error-name
+                                         reply-serial destination sender signature)
+                      for type across "osssussg"
+                      when value collect (list code (list (string type) value))))
     (with-binary-writers (out endianness)
       (std/io::align 8)
       (let ((body-start (file-position out)))
@@ -395,16 +395,16 @@ operator, the stream has to be a bivalent stream."
           (setf body (unpack-value stream endianness signature))
           (macrolet ((make-message (class-name &rest additional-initargs)
                        `(make-instance ,class-name
-                                       :endianness endianness
-                                       :flags flags
-                                       :major-protocol-version major-protocol-version
-                                       :body-length body-length
-                                       :serial serial
-                                       :destination destination
-                                       :sender sender
-                                       :signature signature
-                                       :body body
-                                       ,@additional-initargs)))
+                          :endianness endianness
+                          :flags flags
+                          :major-protocol-version major-protocol-version
+                          :body-length body-length
+                          :serial serial
+                          :destination destination
+                          :sender sender
+                          :signature signature
+                          :body body
+                          ,@additional-initargs)))
             (case type-code
               (1 (make-message 'dbus-method-call-message :path path :interface interface :member member))
               (2 (make-message 'dbus-method-return-message :reply-serial reply-serial))
@@ -418,10 +418,10 @@ operator, the stream has to be a bivalent stream."
   (let ((serial (next-id connection)))
     (send-message
      (encode-dbus-message endianness :method-call
-                     (logior (if no-reply +message-no-reply-expected+ 0)
-                             (if no-auto-start +message-no-auto-start+ 0))
-                     1 serial path interface member nil nil
-                     destination nil signature arguments)
+                          (logior (if no-reply +message-no-reply-expected+ 0)
+                                  (if no-auto-start +message-no-auto-start+ 0))
+                          1 serial path interface member nil nil
+                          destination nil signature arguments)
      connection)
     (if (or no-reply asynchronous)
         serial
@@ -610,12 +610,12 @@ operator, the stream has to be a bivalent stream."
       (if dbus-object-sub-class
           (setf (find-dbus-object name)
                 (make-instance dbus-object-sub-class
-                               :name name
-                               :path path))
+                  :name name
+                  :path path))
           (setf (find-dbus-object name)
                 (make-instance 'dbus-object
-                               :name name
-                               :path path))))
+                  :name name
+                  :path path))))
   name)
 
 (defun require-dbus-object (name)
@@ -640,8 +640,8 @@ operator, the stream has to be a bivalent stream."
                                   (find-dbus-object ',parent)))
        (if (subtypep ',class 'introspection-mixin)
            (define-dbus-method (,name introspect) () (:string)
-                               (:interface "org.freedesktop.DBus.Introspectable")
-                               (introspection-document (find-dbus-object ',name)))))))
+             (:interface "org.freedesktop.DBus.Introspectable")
+             (introspection-document (find-dbus-object ',name)))))))
 
 (defmacro define-dbus-object (name &body options)
   (let ((path nil) (class 'dbus-object))
@@ -688,13 +688,13 @@ sans dashes."
     (setf (gethash (full-member-name interface name-string)
                    (dbus-object-method-handlers object))
           (make-instance 'dbus-method-handler
-                         :object-name object-name
-                         :lisp-name method-name
-                         :name name-string
-                         :interface interface
-                         :input-signature parameter-types
-                         :output-signature return-types
-                         :function handler))
+            :object-name object-name
+            :lisp-name method-name
+            :name name-string
+            :interface interface
+            :input-signature parameter-types
+            :output-signature return-types
+            :function handler))
     (list object-name method-name)))
 
 (defmacro define-dbus-method ((object-name method-name) (&rest parameters) (&rest return-types) &body body)
@@ -732,12 +732,12 @@ sans dashes."
     (setf (gethash (full-member-name interface name-string)
                    (dbus-object-signal-handlers object))
           (make-instance 'dbus-signal-handler
-                         :object-name object-name
-                         :lisp-name handler-name
-                         :name name-string
-                         :interface interface
-                         :input-signature parameter-types
-                         :function handler))
+            :object-name object-name
+            :lisp-name handler-name
+            :name name-string
+            :interface interface
+            :input-signature parameter-types
+            :function handler))
     (list object-name handler-name)))
 
 (defmacro define-dbus-signal-handler ((object-name handler-name) (&rest parameters) &body body)
@@ -826,8 +826,6 @@ a particular DBUS  object."))
 
 (in-readtable :std)
 (defmethod introspection-document ((object child-object-mixin))
-  ;; (dat/xml:write-xml
-  ;; (make-xmlrep
   (with-output-to-string (s)
     (dat/xml::write-doctype
      "node" 
