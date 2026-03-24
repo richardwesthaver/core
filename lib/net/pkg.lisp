@@ -211,7 +211,7 @@
    :with-dns-error-handling))
 
 (defpkg :net/proto/dbus
-  (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux :io/sys :id)
+  (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux :io/sys :id :dat/xml :io/stream)
   (:import-from :net/codec/dbus
    :message-endianness :message-flags :message-major-protocol-version :message-body-length
    :message-serial :message-sender :message-signature :message-body

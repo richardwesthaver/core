@@ -466,11 +466,79 @@ return the argument; otherwise, signal an authentication error."
 
 ;;; Introspection
 ;; TODO 2026-03-23: 
+(defclass object ()
+  ((connection :initarg :connection :reader connection)
+   (path :initarg :path :reader path)
+   (destination :initarg :destination :reader object-destination)
+   (interfaces :initform (make-hash-table :test 'equal) :reader object-interfaces)))
+
+(defmethod print-object ((object object) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream "~S" (path object)))
+  object)
+
+(defun object-interface (name object)
+  (gethash name (object-interfaces object)))
+
+(defun (setf object-interface) (interface name object)
+  (setf (gethash name (object-interfaces object)) interface))
+
+(defun list-object-interfaces (object)
+  (hash-table-values (object-interfaces object)))
+
+(defun make-object (connection path destination interfaces)
+  (let ((object (make-instance 'object :connection connection :path path :destination destination)))
+    (dolist (interface interfaces)
+      (setf (object-interface (name interface) object) interface))
+    object))
+
 (defclass dbus-interface ()
-  ((name :initarg :name :reader interface-name)
+  ((name :initarg :name :reader name)
    (methods :initform (make-hash-table :test 'equal) :reader interface-methods)
    (properties :initform (make-hash-table :test 'equal) :reader interface-properties)
    (signals :initform (make-hash-table :test 'equal) :reader interface-signals)))
+
+(defmethod print-object ((interface dbus-interface) stream)
+  (print-unreadable-object (interface stream :type t)
+    (format stream "~S" (name interface)))
+  interface)
+
+(defun interface-method (name interface)
+  (gethash name (interface-methods interface)))
+
+(defun interface-property (name interface)
+  (gethash name (interface-properties interface)))
+
+(defun interface-signal (name interface)
+  (gethash name (interface-signals interface)))
+
+(defun (setf interface-method) (method name interface)
+  (setf (gethash name (interface-methods interface)) method))
+
+(defun (setf interface-property) (property name interface)
+  (setf (gethash name (interface-properties interface)) property))
+
+(defun (setf interface-signal) (signal name interface)
+  (setf (gethash name (interface-signals interface)) signal))
+
+(defun list-interface-methods (interface)
+  (hash-table-values (interface-methods interface)))
+
+(defun list-interface-properties (interface)
+  (hash-table-values (interface-properties interface)))
+
+(defun list-interface-signals (interface)
+  (hash-table-values (interface-signals interface)))
+
+(defun make-dbus-interface (name methods properties signals)
+  (let ((interface (make-instance 'dbus-interface :name name)))
+    (dolist (method methods)
+      (setf (interface-method (name method) interface) method))
+    (dolist (property properties)
+      (setf (interface-property (name property) interface) property))
+    (dolist (signal signals)
+      (setf (interface-signal (name signal) interface) signal))
+    interface))
 
 (defclass dbus-method ()
   ((name        :initarg :name      :reader name)
@@ -479,21 +547,143 @@ return the argument; otherwise, signal an authentication error."
    (arg-types   :initarg :arg-types :reader method-argument-types)
    (results     :initarg :res       :reader method-result-types)))
 
+(defmethod print-object ((method dbus-method) stream)
+  (print-unreadable-object (method stream :type t)
+    (format stream "~S ~A" (name method) (method-signature method)))
+  method)
+
+(defun make-dbus-method (name signature parm-names parm-types results)
+  (make-instance 'dbus-method
+                 :name name
+                 :signature signature
+                 :args      parm-names
+                 :arg-types parm-types
+                 :res results))
+
 (defclass dbus-property ()
   ((name        :initarg :name   :reader name)
    (type        :initarg :type   :reader property-type)
    (access      :initarg :access :reader property-access)))
+
+(defmethod print-object ((property dbus-property) stream)
+  (print-unreadable-object (property stream :type t)
+    (format stream "~S" (name property)))
+  property)
+
+(defun make-dbus-property (name type access)
+  (make-instance 'dbus-property
+                 :name name
+                 :type type
+                 :access access))
 
 (defclass dbus-signal ()
   ((name        :initarg :name      :reader name)
    (arg-names   :initarg :args      :reader signal-argument-names)
    (arg-types   :initarg :arg-types :reader signal-argument-types)))
 
-(defclass object ()
-  ((connection :initarg :connection :reader connection)
-   (path :initarg :path :reader path)
-   (destination :initarg :destination :reader object-destination)
-   (interfaces :initform (make-hash-table :test 'equal) :reader object-interfaces)))
+(defmethod print-object ((self dbus-signal) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~S" (name self)))
+  self)
+
+(defun make-dbus-signal (name parm-names parm-types)
+  (make-instance 'dbus-signal
+                 :name      name
+                 :args      parm-names
+                 :arg-types parm-types))
+
+(defun dont-resolve-entities (a b)
+  (declare (ignore a b))
+  (make-in-memory-input-stream nil))
+
+(defmacro defaulted-attribute (name default-value &body forms)
+  `(let ((_ (or (optional-attribute ,name _) ,default-value)))
+     ,@forms))
+
+(defun parse-introspection-document (input)
+  (xml-parse input)
+  #+nil
+  (with-xspam-source (make-xspam-source input :entity-resolver #'dont-resolve-entities)
+    (element :node
+      (let (interfaces)
+        (one-or-more
+         (element :interface
+           (let (interface-name)
+             (attribute :name (setf interface-name _))
+             (let (methods properties signals)
+               (zero-or-more
+                (one-of
+                 (element :method
+                   (let (method-name
+                         (signature (make-string-output-stream))
+                         (parm-names ())
+                         (parm-types ())
+                         (result-types ()))
+                     (attribute :name (setf method-name _))
+                     (zero-or-more
+                      ;; TODO: annotation
+                      (element :arg
+                        (defaulted-attribute :direction "in"
+                          (when (equal _ "out")
+                            (attribute :type
+                              (push _ result-types)))
+                          (when (equal _ "in")
+                            (defaulted-attribute :name nil
+                              (push _ parm-names))
+                            (attribute :type
+                              (push _ parm-types)
+                              (write-string _ signature))))))
+                     (push (make-dbus-method method-name
+                                        (get-output-stream-string signature)
+                                        (reverse parm-names)
+                                        (reverse parm-types)
+                                        (reverse result-types))
+                           methods)))
+                 (element :property
+                   (let (property-name property-type property-access)
+                     (attribute :name (setf property-name _))
+                     (attribute :type (setf property-type _))
+                     (attribute :access (setf property-access _))
+                     (push (make-dbus-property property-name property-type property-access) properties)))
+                 (element :signal
+                   (let ((signal-name)
+                         (parm-names ())
+                         (parm-types ()))
+                     (attribute :name (setf signal-name _))
+                     (zero-or-more
+                      (element :arg
+                        (defaulted-attribute :name nil
+                          (push _ parm-names))
+                        (attribute :type (push _ parm-types))))
+                     (push (make-dbus-signal signal-name
+                                        (nreverse parm-names)
+                                        (nreverse parm-types))
+                           signals)))))
+               (push (make-dbus-interface interface-name (nreverse methods) (nreverse properties) (nreverse signals)) interfaces)))))
+        (nreverse interfaces)))))
+
+(defun make-object-from-introspection (connection path destination)
+  (make-object connection path destination
+               (parse-introspection-document
+                (fetch-introspection-document connection path destination))))
+
+(defun fetch-introspection-document (connection path destination)
+  (invoke-method connection "Introspect"
+                 :path path
+                 :destination destination
+                 :interface "org.freedesktop.DBus.Introspectable"))
+
+(defun signature-for-method (method-name interface-name object)
+  (method-signature (interface-method method-name (object-interface interface-name object))))
+
+(defun object-invoke (object interface-name method-name &rest args)
+  (invoke-method (connection object)
+                 method-name
+                 :path (path object)
+                 :interface interface-name
+                 :destination (object-destination object)
+                 :signature (signature-for-method method-name interface-name object)
+                 :arguments args))
 
 ;;; Publish
 (defgeneric publish-objects (connection &optional object-names))
