@@ -316,11 +316,11 @@ returning.  The string should not contain any newline characters."))
   (let ((socket (make-socket 
                  :family family
                  :class :socket
-                 :external-format '(:utf-8 :eol-style :crlf))))
+                 :external-format '(:utf-8 :newline :crlf))))
     (unwind-protect
          (progn
            (socket-connect socket address)
-           (let ((s (socket-make-stream socket :input t :output t :element-type 'character)))
+           (with-socket-stream (s socket :input t :output t :element-type 'character :external-format '(:utf-8 :newline :crlf))
              (write-char #\Nul s)
              (force-output s)
              (prog1 socket
@@ -338,11 +338,12 @@ returning.  The string should not contain any newline characters."))
   (decode-dbus-message (connection-socket connection)))
 
 (defmethod receive-line ((connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (print (connection-socket connection)) :input t)
+  (with-socket-stream (s (print (connection-socket connection)) :input t :external-format '(:utf-8 :newline :crlf))
+    (read-char s)
     (read-line s)))
 
 (defmethod send-line (line (connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :output t)
+  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:utf-8 :newline :crlf))
     (write-line line s)
     (force-output s)))
 
@@ -452,7 +453,7 @@ NIL, just return the response command and argument.  Otherwise,
 compare its value to the response command.  If they are the same, just
 return the argument; otherwise, signal an authentication error."
   (multiple-value-bind (command argument)
-      (parse-authentication-response (receive-line connection)
+      (parse-authentication-response (print (receive-line connection))
                                      :as-string as-string)
     (cond ((null expect) (values command argument))
           ((eq command expect) argument)
