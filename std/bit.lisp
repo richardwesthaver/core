@@ -544,6 +544,9 @@ the element-type of the returned string."
                   (aref hexdigits (ldb (byte 4 0) byte))))
        finally (return string))))
 
+(defun hex-string (object)
+  (octet-vector-to-hex-string (sb-ext:string-to-octets (write-to-string object))))
+
 (defun octets-to-integer (octet-vec &optional (bytes (length octet-vec)))
   "Return the integer representation of OCTET-VEC by reading BYTES number of
 bytes from the start."

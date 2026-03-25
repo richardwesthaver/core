@@ -224,7 +224,8 @@
    :signature :valid-body-p :handler-output-signature :handler-function
    :handler-full-lisp-name :handler-input-signature :full-member-name :require-dbus-object)
   (:export :dbus-error :dbus-auth-error :dbus-method-error
-   :with-open-bus :with-introspected-object :session-server-addresses :publish-objects))
+   :with-open-bus :with-introspected-object :session-server-addresses :publish-objects
+   :system-server-addresses))
 
 (defpkg :net/proto/ssh
   (:use :std-lisp :net/core)

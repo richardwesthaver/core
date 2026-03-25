@@ -892,6 +892,7 @@
    :bitfield-member-slot
    :define-bitfield
    :hex-string-to-octet-vector
+   :hex-string
    :octet-vector-to-hex-string
    :octets-to-integer
    :integer-to-octets

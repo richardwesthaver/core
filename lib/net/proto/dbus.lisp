@@ -235,9 +235,9 @@ returning.  The string should not contain any newline characters."))
   (mapcar (lambda (name)
             (make-instance
                 (or (find-authenticator-class name :if-does-not-exist nil)
-                    'generic-authentication-mechanism)
+                    'generic-authenticator)
               :name name))
-          (print (receive-authentication-response connection :expect :rejected))))
+          (receive-authentication-response connection :expect :rejected)))
 
 (defmethod authenticate :around (mechanisms (connection standard-dbus-connection) &key (if-failed :error))
   (with-if-failed-handler if-failed
@@ -256,9 +256,10 @@ returning.  The string should not contain any newline characters."))
       (tagbody
        initial
          (if (null mechanisms)
-             (error "No more mechanisms to try.")
+             (error "No more authentication mechanism to try. DBUS auth failed.")
              (setf mechanism (pop mechanisms)))
          (multiple-value-setq (op arg) (authenticator-challenge mechanism :initial-response))
+         (mumble "~A ~A" op arg)
          (when (eq op :error)
            (go initial))
          (send :auth (name mechanism) arg)
@@ -274,7 +275,9 @@ returning.  The string should not contain any newline characters."))
               (:continue (send :data arg) (go waiting-for-data))
               (:ok (send :data arg) (go waiting-for-ok))
               (:error (if arg (send :error arg) (send :error)) (go waiting-for-data))))
-           (:rejected (go initial))
+           (:rejected 
+            ;; complication arises here when we lose the initial challenge..
+            (go initial))
            (:error (send :cancel) (go waiting-for-reject))
            (:ok (go got-ok))
            (t (send :error) (go waiting-for-data)))
@@ -316,11 +319,11 @@ returning.  The string should not contain any newline characters."))
   (let ((socket (make-socket 
                  :family family
                  :class :socket
-                 :external-format '(:utf-8 :newline :crlf))))
+                 :external-format '(:default :newline :crlf))))
     (unwind-protect
          (progn
            (socket-connect socket address)
-           (with-socket-stream (s socket :input t :output t :element-type 'character :external-format '(:utf-8 :newline :crlf))
+           (with-socket-stream (s socket :input t :output t :external-format :default)
              (write-char #\Nul s)
              (force-output s)
              (prog1 socket
@@ -335,21 +338,23 @@ returning.  The string should not contain any newline characters."))
   (socket-close (connection-socket connection)))
 
 (defmethod receive-message-no-hang ((connection dbus-socket-connection-mixin))
-  (decode-dbus-message (connection-socket connection)))
+  (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf))
+    (decode-dbus-message s)))
 
 (defmethod receive-line ((connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (print (connection-socket connection)) :input t :external-format '(:utf-8 :newline :crlf))
-    (read-char s)
-    (read-line s)))
+  (with-socket-stream (s (connection-socket connection) :input t)
+    (print (read-line s))))
 
 (defmethod send-line (line (connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:utf-8 :newline :crlf))
+  (with-socket-stream (s (connection-socket connection) :output t)
     (write-line line s)
+    (write-sequence std/string::+crlf+ s)
     (force-output s)))
 
 (defmethod send-message (encoded-message (connection dbus-socket-connection-mixin))
-  (write-sequence encoded-message (connection-socket connection))
-  (force-output (connection-socket connection)))
+  (with-socket-stream (s (connection-socket connection) :output t)
+    (write-sequence encoded-message s)
+    (force-output s)))
 
 ;;;; Unix Connection
 (defclass dbus-unix-connection (dbus-socket-connection-mixin standard-dbus-connection)
@@ -385,6 +390,62 @@ supported by the D-BUS system."))
 (defmethod authenticator-challenge ((mechanism generic-authenticator) challenge)
   (declare (ignore challenge))
   (values :error))
+
+(defclass dbus-external-authenticator (standard-authenticator)
+  ()
+  (:documentation "External SASL authenticator."))
+
+(setf (find-authenticator-class "EXTERNAL")
+      'dbus-external-authenticator)
+
+(defmethod authenticator-challenge ((mechanism dbus-external-authenticator) challenge)
+  (if (eq challenge :initial-response)
+      (values :continue (hex-string (sb-posix:getuid)))
+      (error "More than one response requested for EXTERNAL authentication.")))
+
+(defclass dbus-sha1-cookie-authenticator (standard-authenticator) ()
+  (:default-initargs :textual t)
+  (:documentation "Local SHA1 cookie authenticator."))
+
+(setf (find-authenticator-class "DBUS_COOKIE_SHA1")
+      'dbus-cookie-sha1-authentication-mechanism)
+
+;; TODO 2026-03-25: cry/keyring
+(defvar *keyrings-directory* (xdg-state-dir :dbus "keyrings/")
+  "The directory holding context files containing cookies.")
+
+(defun find-cookie (context-name cookie-id &key (if-does-not-exist :error))
+  "Find the cookie corresponding to COOKIE-ID in the appropriate
+context file."
+  (with-open-file (in (make-pathname :name context-name
+                                     :defaults *keyrings-directory*)
+                      :direction :input)
+    (loop for line = (read-line in nil nil)
+          while line do
+          (destructuring-bind (id ctime cookie)
+              (split-sequence #\Space line)
+            (declare (ignore ctime))
+            (when (equal id cookie-id)
+              (return-from find-cookie cookie)))))
+  (missing-entry (list context-name cookie-id) if-does-not-exist))
+
+(defun random-challenge-string (&optional (num-octets 16))
+  "Return a string containing a hex-encoded representation of a number
+of random octet values."
+  (with-output-to-string (out)
+    (loop repeat (* 2 num-octets) do
+          (write-char (char-downcase (digit-char (random 16) 16)) out))))
+
+(defmethod authenticator-challenge ((mechanism dbus-sha1-cookie-authenticator) challenge)
+  (if (eq challenge :initial-response)
+      (values :continue (hex-string (std/os:current-user)))
+      (destructuring-bind (context-name cookie-id challenge-string)
+          (split-sequence #\Space challenge)
+        (let* ((my-challenge-string (random-challenge-string))
+               (cookie (find-cookie context-name cookie-id))
+               (message (format nil "~A:~A:~A" challenge-string my-challenge-string cookie))
+               (digest (ironclad:digest-sequence :sha1 (string-to-octets message :external-format :utf-8))))
+          (values :ok (format nil "~A ~A" my-challenge-string (hex-string digest)))))))
 
 (defun parse-authentication-response (line &key as-string)
   "Parse authentication response line and return two values:
@@ -453,7 +514,7 @@ NIL, just return the response command and argument.  Otherwise,
 compare its value to the response command.  If they are the same, just
 return the argument; otherwise, signal an authentication error."
   (multiple-value-bind (command argument)
-      (parse-authentication-response (print (receive-line connection))
+      (parse-authentication-response (string-right-trim std/string::+crlf+ (receive-line connection))
                                      :as-string as-string)
     (cond ((null expect) (values command argument))
           ((eq command expect) argument)

@@ -8,7 +8,7 @@
 
 (defconstant +cr+ #\Return "Return char.")
 (defconstant +lf+ #\Linefeed "Linefeed char.")
-(sb-int:defconstant-eqx +crlf+ (coerce #(+cr+ +lf+) 'simple-array) #'equalp
+(sb-int:defconstant-eqx +crlf+ (coerce (vector +cr+ +lf+) 'simple-array) #'equalp
   "Character sequcne #(Return Linefeed) = '\\r\\n'")
 
 (defparameter *omit-nulls* nil
