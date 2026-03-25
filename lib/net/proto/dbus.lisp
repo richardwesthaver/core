@@ -182,7 +182,7 @@ the server.  The operation will force (but not finish) output before
 returning.  The string should not contain any newline characters."))
 
 (defclass standard-dbus-connection (connection id)
-  ((address :initarg :server-address :reader address)
+  ((address :initarg :address :reader address)
    (pending-messages :initform '() :accessor connection-pending-messages)
    (event-base :initarg :event-base :reader connection-event-base)
    (serial :initform 1)
@@ -237,7 +237,7 @@ returning.  The string should not contain any newline characters."))
                 (or (find-authenticator-class name :if-does-not-exist nil)
                     'generic-authentication-mechanism)
               :name name))
-          (receive-authentication-response connection :expect :rejected)))
+          (print (receive-authentication-response connection :expect :rejected))))
 
 (defmethod authenticate :around (mechanisms (connection standard-dbus-connection) &key (if-failed :error))
   (with-if-failed-handler if-failed
@@ -323,26 +323,28 @@ returning.  The string should not contain any newline characters."))
            (let ((s (socket-make-stream socket :input t :output t :element-type 'character)))
              (write-char #\Nul s)
              (force-output s)
-             (prog1 s ;; clever..
+             (prog1 socket
                (setf socket nil))))
       (when socket
-        (close socket)))))
+        (socket-close socket)))))
 
 (defmethod fd ((connection dbus-socket-connection-mixin))
   (socket-file-descriptor (connection-socket connection)))
 
 (defmethod disconnect ((connection dbus-socket-connection-mixin))
-  (close (connection-socket connection)))
+  (socket-close (connection-socket connection)))
 
 (defmethod receive-message-no-hang ((connection dbus-socket-connection-mixin))
   (decode-dbus-message (connection-socket connection)))
 
 (defmethod receive-line ((connection dbus-socket-connection-mixin))
-  (read-line (connection-socket connection)))
+  (with-socket-stream (s (print (connection-socket connection)) :input t)
+    (read-line s)))
 
 (defmethod send-line (line (connection dbus-socket-connection-mixin))
-  (write-line line (connection-socket connection))
-  (force-output (connection-socket connection)))
+  (with-socket-stream (s (connection-socket connection) :output t)
+    (write-line line s)
+    (force-output s)))
 
 (defmethod send-message (encoded-message (connection dbus-socket-connection-mixin))
   (write-sequence encoded-message (connection-socket connection))
@@ -357,8 +359,8 @@ Domain Sockets."))
 (defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
   (declare (ignore if-failed))
   (make-instance 'dbus-unix-connection
-                 :socket (open-socket-connection :local (address address))
-                 :server-address address
+    :socket (open-socket-connection :local (address address))
+                 :address address
                  :id (server-address-property "guid" address :if-does-not-exist nil)
                  :event-base event-base))
 

@@ -62,6 +62,7 @@
    :disconnect
    :with-open-connection
    #:with-socket
+   #:with-socket-stream
    :send-message
    :connection-pending-messages
    :connection-next-serial

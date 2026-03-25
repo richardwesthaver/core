@@ -174,6 +174,11 @@
        (unwind-protect (when ,var . ,body)
          (when ,var (socket-close ,var))))))
 
+(defmacro with-socket-stream ((var socket &rest args) &body body)
+  (once-only (socket)
+    `(let ((,var (socket-make-stream ,socket . ,args)))
+       . ,body)))
+
 (defmacro with-client-socket ((socket-var stream-var &rest args) &body body)
   "Bind the socket resulting from (APPLY 'SOCKET-CONNECT ARGS) to SOCKET-VAR and
 if STREAM-VAR is non-nil, also bind the associated socket stream to it."
@@ -220,7 +225,7 @@ BODY."
          (socket-close ,server-socket-var)))))
 
 (defmacro with-open-connection ((sym sock addr &rest args) &body body)
-  `(let ((,sym (print (connect ,sock ,addr ,@args))))
+  `(let ((,sym (connect ,sock ,addr ,@args)))
      (unwind-protect
           (progn ,@body)
        (when ,sym

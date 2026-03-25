@@ -455,7 +455,7 @@ closed."
   (slime-eval-async nil connection)
   (values))
 
-(defmethod disconnect ((self swank-connection) &key)
+(defmethod disconnect ((self swank-connection))
   (slime-close self))
 
 (defmacro with-slime-connection ((variable host-name port &optional connection-closed-hook)
