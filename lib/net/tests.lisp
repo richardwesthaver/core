@@ -163,6 +163,7 @@ Cookie: name=wookie
   (handler-case
       (with-open-bus (bus (session-server-addresses))
         (format t "Bus connection name: ~A~%" (name bus))
+        (format t "sending all objects: ~A~%" *all-dbus-objects*)
         (publish-objects bus))
     (end-of-file ()
       :disconnected-by-bus)))

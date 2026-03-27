@@ -754,9 +754,9 @@ return the argument; otherwise, signal an authentication error."
 
 (defmethod publish-objects ((connection standard-dbus-connection) &optional (object-names *all-dbus-objects*))
   (let ((objects-by-path (make-object-index object-names)))
-    ;; At this point we have an index by object path.  Note that if we
+    ;; At this point we have an index by object path. Note that if we
     ;; redefine an object with a new path later on, the index will be
-    ;; stale.  Avoid doing that :)
+    ;; stale. Avoid doing that :)
     (loop
       (dolist (message (drain-pending-messages connection))
         (let ((object (gethash (path message) objects-by-path)))
