@@ -380,7 +380,7 @@ an error of type END-OF-FILE is signaled.
 
 Unfortunately, due to Common Lisp not having a READ-BYTE-NO-HANG
 operator, the stream has to be a bivalent stream."
-  (let ((endianness (ecase (read-char-no-hang stream)
+  (let ((endianness (ecase (when (listen stream) (read-char-no-hang stream))
                       (#\l :little-endian)
                       (#\B :big-endian)
                       ((nil) (return-from decode-dbus-message nil)))))

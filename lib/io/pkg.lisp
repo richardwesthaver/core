@@ -142,7 +142,8 @@
    :peek-schedule :reset-io-timer :io-timer-name :timer-reschedulable-p
    :schedule-io-timer :unschedule-io-timer :time-to-next-timer :clamp-timeout
    :reschedule-timer-relative-to-now :expire-pending-timers :io-result :io-syscall*
-   :fd :poll-error :poll-timeout :wait-until-fd-ready))
+   :fd :poll-error :poll-timeout :wait-until-fd-ready
+   :get-monotonic-time))
 
 (defpkg :io/socket
   (:use :cl :io/proto :sb-alien :io/swap-bytes :std)

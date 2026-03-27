@@ -84,6 +84,11 @@ of a file descriptor."))
           (unless (eql sb-posix:eintr e)
             (return (values v e))))))
 
+(defun get-monotonic-time ()
+  "Get the monotonic NON-COARSE realtime. This is twice as slow as COARSE according to SBCL (test)."
+  (multiple-value-bind (seconds nanoseconds) (sb-unix:clock-gettime sb-unix:clock-monotonic)
+    (+ seconds (/ nanoseconds 1d9))))
+
 (defmacro with-eintr-restart (syscall &body body)
   `(handle-eintr (io-syscall ,syscall (progn ,@body))))
 
@@ -98,11 +103,11 @@ of a file descriptor."))
   (with-gensyms (deadline temp-timeout)
     `(let* ((,timeout-var ,timeout)
             (,deadline (when ,timeout-var
-                         (+ ,timeout-var (get-internal-real-time)))))
+                         (+ ,timeout-var (get-monotonic-time)))))
        (loop :named ,block-name :do
                 ,@body
                 (when ,deadline
-                  (let ((,temp-timeout (- ,deadline (get-internal-real-time))))
+                  (let ((,temp-timeout (- ,deadline (get-monotonic-time))))
                     (setf ,timeout-var
                           (if (plusp ,temp-timeout)
                               ,temp-timeout
@@ -246,7 +251,7 @@ value of the syscall NAME, or return the first (actual) value."
 
 (defun make-io-timer (function delay &key name oneshot)
   (flet ((abs-timeout (timeout)
-           (+ (get-internal-real-time)
+           (+ (get-monotonic-time)
               (normalize-timeout timeout))))
     (let ((name (or name "(unnamed)")))
       (%make-io-timer name function (abs-timeout delay) delay oneshot))))

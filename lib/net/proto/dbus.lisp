@@ -675,13 +675,14 @@ return the argument; otherwise, signal an authentication error."
                   (parm-names)
                   (parm-types)
                   (result-types))
-    ("arg" (string-case ((xmlrep-attrib-value "direction" node "in"))
-             ("in" (push (xmlrep-attrib-value "name" node) parm-names)
-                   (push (xmlrep-attrib-value "type" node) parm-types))
-             ("out" (let ((type (xmlrep-attrib-value "type" node)))
-                      (push type result-types)
-                      (write-string type signature)))))
-    (make-dbus-method 
+    ("arg" 
+     (let ((type (xmlrep-attrib-value "type" node)))
+       (write-string type signature)
+       (string-case ((xmlrep-attrib-value "direction" node "in"))
+         ("in" (push (xmlrep-attrib-value "name" node) parm-names)
+               (push type parm-types))
+         ("out" (push type result-types)))))
+    (make-dbus-method
      name
      (get-output-stream-string signature)
      (reverse parm-names)
@@ -694,7 +695,6 @@ return the argument; otherwise, signal an authentication error."
    (xmlrep-attrib-value "type" xml) 
    (xmlrep-attrib-value "access" xml)))
    
-
 (defun parse-dbus-signal (xml)
   (with-dbus-xml (name node xml)
                  ((parm-names)
@@ -714,8 +714,8 @@ return the argument; otherwise, signal an authentication error."
 (defun parse-introspection-document (input)
   (let ((xml (xml-parse input)))
     (collecting
-     (dolist (int (extract-path '("node" *) xml))
-       (collect (parse-dbus-interface int))))))
+      (dolist (int (extract-path '("node" *) xml))
+        (collect (parse-dbus-interface int))))))
              
 (defun make-object-from-introspection (connection path destination)
   (make-object connection path destination
@@ -737,7 +737,7 @@ return the argument; otherwise, signal an authentication error."
                  :path (path object)
                  :interface interface-name
                  :destination (object-destination object)
-                 :signature (signature-for-method method-name interface-name object)
+                 :signature (print (signature-for-method method-name interface-name object))
                  :arguments args))
 
 ;;; Publish

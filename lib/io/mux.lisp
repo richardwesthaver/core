@@ -335,7 +335,7 @@ is monitored for EVENT-TYPE."
                    (and exit-when-empty (event-base-empty-p event-base)))))
       (loop with deletion-list = ()
             with eventsp = nil
-            for now = (get-internal-real-time)
+            for now = (get-monotonic-time)
             for poll-timeout = (poll-timeout now)
             until (must-exit-loop-p)
             do (setf expired-events nil)

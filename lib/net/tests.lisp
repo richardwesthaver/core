@@ -141,8 +141,8 @@ Cookie: name=wookie
 (deftest dbus-notify ()
   (with-open-bus (bus (session-server-addresses))
     (with-introspected-object (notifications bus "/org/freedesktop/Notifications" "org.freedesktop.Notifications")
-      (inspect (notifications "org.freedesktop.Notifications" "Notify"
-                     "Test" 0 "" "Test" "This is a test; I repeat, this is a test." '() '() -1)))))
+      (print (notifications "org.freedesktop.Notifications" "Notify"
+                            "Test" 0 "" "Test" "This is a test; I repeat, this is a test." '() '() -1)))))
 
 (define-dbus-object root
   (:path "/"))
