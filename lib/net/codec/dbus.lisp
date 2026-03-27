@@ -310,6 +310,9 @@ valid according to the signature expression, and false otherwise."
 ;;; Messages
 (defclass dbus-message (message) ())
 
+(defmethod print-object ((self dbus-message) stream)
+  (print-unreadable-object (self stream :type t)))
+
 (defclass dbus-standard-message (dbus-message)
   ((endianness :initarg :endianness :reader message-endianness)
    (flags :initarg :flags :reader message-flags)
@@ -320,6 +323,10 @@ valid according to the signature expression, and false otherwise."
    (sender :initarg :sender :reader message-sender)
    (signature :initarg :signature :reader message-signature)
    (body :initarg :body :reader message-body)))
+
+(defmethod print-object ((self dbus-standard-message) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A ~A ~A" (message-serial self) (message-sender self) (message-destination self))))
 
 (defclass dbus-method-call-message (dbus-standard-message)
   ((path :initarg :path :reader path)

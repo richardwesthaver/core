@@ -172,9 +172,9 @@ string will not contain newline characters."))
 the server.  The operation will force (but not finish) output before
 returning.  The string should not contain any newline characters."))
 
-(defclass standard-dbus-connection (connection id)
+(defclass standard-dbus-connection (dbus-connection id)
   ((address :initarg :address :reader address)
-   (pending-messages :initform '() :accessor connection-pending-messages)
+   (pending-messages :initform nil :accessor connection-pending-messages)
    (event-base :initarg :event-base :reader connection-event-base)
    (serial :initform 1)
    (supports-unix-fd-passing :initform nil :accessor supports-unix-fd-passing-p))
@@ -195,8 +195,8 @@ returning.  The string should not contain any newline characters."))
               (if (zerop x) 1 x))))))
 
 (defmethod drain-pending-messages ((connection standard-dbus-connection))
-  (prog1 (nreverse (connection-pending-messages connection))
-    (setf (connection-pending-messages connection) '())))
+  (prog1 (nreverse (connection-pending-messages (print connection)))
+    (setf (connection-pending-messages connection) nil)))
 
 (defmethod wait-for-reply (serial (connection standard-dbus-connection))
   (loop
@@ -304,9 +304,25 @@ returning.  The string should not contain any newline characters."))
        authenticated)))
   t)
 
-;;;; Socket-based connection mixin
-(defclass dbus-socket-connection-mixin (connection wrapped-socket)
-  ((socket :initarg :socket :reader connection-socket)))
+;;;; Unix Connection
+(defclass dbus-unix-connection (standard-dbus-connection wrapped-socket)
+  ((address :initarg :address :reader address)
+   (pending-messages :initform nil :accessor connection-pending-messages)
+   (event-base :initarg :event-base :reader connection-event-base)
+   (serial :initform 1)
+   (supports-unix-fd-passing :initform nil :accessor supports-unix-fd-passing-p))
+  (:documentation "Represents a connection to a DBUS server over Unix
+Domain Sockets."))
+
+(defaccessor connection-socket ((self dbus-unix-connection)) (socket self))
+
+(defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
+  (declare (ignore if-failed))
+  (make-instance 'dbus-unix-connection
+    :socket (open-socket-connection :local (address address))
+    :address address
+    :id (server-address-property "guid" address :if-does-not-exist nil)
+    :event-base event-base))
 
 (defun open-socket-connection (family address)
   ;; iolib: make-socket connect
@@ -326,48 +342,34 @@ returning.  The string should not contain any newline characters."))
       (when socket
         (socket-close socket)))))
 
-(defmethod fd ((connection dbus-socket-connection-mixin))
+(defmethod fd ((connection dbus-unix-connection))
   (socket-file-descriptor (connection-socket connection)))
 
-(defmethod disconnect ((connection dbus-socket-connection-mixin))
+(defmethod disconnect ((connection dbus-unix-connection))
   (socket-close (connection-socket connection)))
 
-(defmethod receive-message-no-hang ((connection dbus-socket-connection-mixin))
+(defmethod receive-message-no-hang ((connection dbus-unix-connection))
   (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf)
                                                         :element-type :default)
     (decode-dbus-message s)))
 
-(defmethod receive-line ((connection dbus-socket-connection-mixin))
+(defmethod receive-line ((connection dbus-unix-connection))
   (with-socket-stream (s (connection-socket connection) :input t
                                                         :external-format '(:default :newline :crlf)
                                                         :element-type :default)
     (read-line s)))
 
-(defmethod send-line (line (connection dbus-socket-connection-mixin))
+(defmethod send-line (line (connection dbus-unix-connection))
   (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
                                                         :element-type :default)
     (write-line line s)
     (force-output s)))
 
-(defmethod send-message (encoded-message (connection dbus-socket-connection-mixin))
+(defmethod send-message (encoded-message (connection dbus-unix-connection))
   (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
                                                         :element-type :default)
     (write-sequence encoded-message s)
     (force-output s)))
-
-;;;; Unix Connection
-(defclass dbus-unix-connection (dbus-socket-connection-mixin standard-dbus-connection)
-  ()
-  (:documentation "Represents a connection to a DBUS server over Unix
-Domain Sockets."))
-
-(defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
-  (declare (ignore if-failed))
-  (make-instance 'dbus-unix-connection
-    :socket (open-socket-connection :local (address address))
-    :address address
-    :id (server-address-property "guid" address :if-does-not-exist nil)
-    :event-base event-base))
 
 ;;; Authentication
 (define-class-map
@@ -737,7 +739,7 @@ return the argument; otherwise, signal an authentication error."
                  :path (path object)
                  :interface interface-name
                  :destination (object-destination object)
-                 :signature (print (signature-for-method method-name interface-name object))
+                 :signature (signature-for-method method-name interface-name object)
                  :arguments args))
 
 ;;; Publish
@@ -760,9 +762,10 @@ return the argument; otherwise, signal an authentication error."
     (loop
       (dolist (message (drain-pending-messages connection))
         (let ((object (gethash (path message) objects-by-path)))
+          (print object)
           (if (null object)
               (missing-handler message connection)
-              (dispatch-message message object connection))))
+              (print (dispatch-message message object connection)))))
       (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
 
 (defun make-object-index (object-names)
