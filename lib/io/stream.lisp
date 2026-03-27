@@ -192,7 +192,7 @@ associated vector."))
 
 (defmethod stream-element-type ((stream in-memory-stream))
   "The element type is always OCTET by definition."
-  'octet)
+  '(unsigned-byte 8))
 
 (defgeneric peek-byte (stream &optional peek-type eof-err-p eof-value)
   (:documentation
@@ -412,7 +412,7 @@ TRANSFORMER function."
                  :buffer (subseq list start end)
                  :transformer transformer))
 
-(defun make-output-vector (&key (element-type 'octet))
+(defun make-output-vector (&key (element-type '(unsigned-byte 8)))
   "Creates and returns an array which can be used as the underlying
 vector for a VECTOR-OUTPUT-STREAM."
   (declare (optimize (speed 3) (safety 0)))
@@ -420,7 +420,7 @@ vector for a VECTOR-OUTPUT-STREAM."
                 :fill-pointer 0
                 :element-type element-type))
 
-(defun make-in-memory-output-stream (&key (element-type 'octet) transformer)
+(defun make-in-memory-output-stream (&key (element-type '(unsigned-byte 8)) transformer)
   "Returns a binary output stream which accepts objects of type
 ELEMENT-TYPE \(a subtype of OCTET) and makes available a sequence
 that contains the octes that were actually output.  The octets
@@ -474,7 +474,7 @@ of this macro is the return value of BODY."
              ,@body)
          (when ,var (close ,var))))))
 
-(defmacro with-output-to-sequence ((var &key as-list (element-type ''octet) transformer)
+(defmacro with-output-to-sequence ((var &key as-list (element-type ''(unsigned-byte 8)) transformer)
                                    &body body)
   "Creates an IN-MEMORY output stream, binds VAR to this stream
 and then executes the code in BODY.  The stream stores data of
@@ -684,7 +684,7 @@ functions and via PEEKED."))
 
 (defmethod initialize-instance :after ((self peeking-input-stream)
                                        &key stream (count 4)
-                                            (element-type 'octet)
+                                            (element-type '(unsigned-byte 8))
                                             (start (ignore-errors (file-position stream))))
   (unless stream
     (std:required-argument :stream))

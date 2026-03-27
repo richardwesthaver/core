@@ -9,9 +9,23 @@
 (defconstant +message-no-reply-expected+ 1)
 (defconstant +message-no-auto-start+ 2)
 
+;;; Conditions
+(define-condition dbus-error (error)
+  ())
+
+(define-condition dbus-method-error (dbus-error)
+  ((arguments :initarg :arguments))
+  (:report (lambda (condition stream)
+             (format stream "Method error: ~S."
+                     (let ((all-args (slot-value condition 'arguments))
+                           (first-arg (first (slot-value condition 'arguments))))
+                       (if (stringp first-arg)
+                           first-arg
+                           all-args))))))
+
 ;;; Types
 (defclass dbus-type ()
-  ((name :initarg :name :reader dbus-type-name)
+  ((name :initarg :name :reader name)
    (signature :initarg :signature :reader dbus-type-signature)
    (sigexp-formatter :initarg :sigexp-formatter :reader dbus-type-sigexp-formatter)
    (signature-parser :initarg :signature-parser :reader dbus-type-signature-parser)
@@ -22,7 +36,7 @@
 
 (defmethod print-object ((type dbus-type) stream)
   (print-unreadable-object (type stream :type t)
-    (format stream "~S" (dbus-type-name type)))
+    (format stream "~S" (name type)))
   type)
 
 (defclass dbus-type-table ()
@@ -49,7 +63,7 @@
      (values (find-dbus-type (first designator) table) (rest designator)))))
 
 (defun register-dbus-type (type &optional (table *dbus-type-table*))
-  (setf (gethash (dbus-type-name type) (dbus-type-table-by-name table)) type)
+  (setf (gethash (name type) (dbus-type-table-by-name table)) type)
   (setf (gethash (dbus-type-signature type) (dbus-type-table-by-signature table)) type)
   table)
 
@@ -361,7 +375,7 @@ valid according to the signature expression, and false otherwise."
 
 If there are no bytes to be read from the stream, the function
 immediately returns NIL.  Otherwise, the function performs blocking
-reads until a complete message is decoded.  If an end of file occurs,
+reads until a complete message is decoded. If an end of file occurs,
 an error of type END-OF-FILE is signaled.
 
 Unfortunately, due to Common Lisp not having a READ-BYTE-NO-HANG
@@ -429,7 +443,7 @@ operator, the stream has to be a bivalent stream."
             (wait-for-reply serial connection)
           (etypecase message
             (dbus-method-return-message (values-list body))
-            (dbus-error-message (error 'method-error :arguments body)))))))
+            (dbus-error-message (error 'dbus-method-error :arguments body)))))))
 
 (defmethod deserialize ((self stream) (fmt (eql :dbus)) &key)
   (decode-dbus-message self))

@@ -5,9 +5,6 @@
 ;;; Code:
 (in-package :net/proto/dbus)
 ;;; Conditions
-(define-condition dbus-error (error)
-  ())
-
 (define-condition dbus-auth-error (dbus-error)
   ((command :initarg :command)
    (argument :initarg :argument))
@@ -16,21 +13,11 @@
                      (slot-value condition 'command)
                      (slot-value condition 'argument)))))
 
-(define-condition dbus-method-error (dbus-error)
-  ((arguments :initarg :arguments))
-  (:report (lambda (condition stream)
-             (format stream "Method error: ~S."
-                     (let ((all-args (slot-value condition 'arguments))
-                           (first-arg (first (slot-value condition 'arguments))))
-                       (if (stringp first-arg)
-                           first-arg
-                           all-args))))))
-
 ;;; Addresses
 (defclass server-address () ())
 
 (define-class-map
-  :class server-address
+    :class server-address
   :map *server-address-classes*
   :find find-server-address-class)
 
@@ -89,10 +76,10 @@ return a list of server addresses."
                  (destructuring-bind (type &rest plist)
                      (nreverse current-server-address)
                    (push (make-instance
-                          (or (find-server-address-class type :if-does-not-exist nil)
-                              'generic-server-address)
-                          :transport-name type
-                          :properties (plist-hash-table plist :test 'equal))
+                             (or (find-server-address-class type :if-does-not-exist nil)
+                                 'generic-server-address)
+                           :transport-name type
+                           :properties (plist-hash-table plist :test 'equal))
                          server-addresses))
                  (setf current-server-address '())))
              (add-to-token ()
@@ -125,12 +112,12 @@ may be the same as the string supplied if no unescaping is needed."
           (with-input-from-string (in string)
             (loop for char = (read-char in nil nil)
                   while char do
-                  (vector-push
-                   (if (char= #\% char)
-                       (logior (ash (digit-char-p (read-char in) 16) 4)
-                               (digit-char-p (read-char in) 16))
-                       (char-code char))
-                   octets)))
+                     (vector-push
+                      (if (char= #\% char)
+                          (logior (ash (digit-char-p (read-char in) 16) 4)
+                                  (digit-char-p (read-char in) 16))
+                          (char-code char))
+                      octets)))
           (sb-ext:octets-to-string octets :external-format :utf-8)))))
 
 (defun parse-server-addresses-string (string)
@@ -163,6 +150,10 @@ Sockets for transport."))
         (path (server-address-property "path" address :if-does-not-exist nil)))
     (with-slots (address) address
       (setf address (or abstract path)))))
+
+(defmethod print-object ((self standard-server-address) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A" (server-address-transport-name self))))
 
 ;;; Connections
 (defclass dbus-connection (connection) ()
@@ -209,12 +200,12 @@ returning.  The string should not contain any newline characters."))
 
 (defmethod wait-for-reply (serial (connection standard-dbus-connection))
   (loop
-   (dolist (message (connection-pending-messages connection))
-     (when (and (typep message '(or dbus-error-message dbus-method-return-message))
-                (= serial (net/codec/dbus::message-reply-serial message)))
-       (deletef (connection-pending-messages connection) message :count 1)
-       (return-from wait-for-reply
-         (values (net/codec/dbus::message-body message) message))))
+    (dolist (message (connection-pending-messages connection))
+      (when (and (typep message '(or dbus-error-message dbus-method-return-message))
+                 (= serial (net/codec/dbus::message-reply-serial message)))
+        (deletef (connection-pending-messages connection) message :count 1)
+        (return-from wait-for-reply
+          (values (net/codec/dbus::message-body message) message))))
     (io/mux:event-dispatch (connection-event-base connection) :oneshot t)))
 
 (defun activate-io-handlers (connection)
@@ -259,7 +250,7 @@ returning.  The string should not contain any newline characters."))
              (error "No more authentication mechanism to try. DBUS auth failed.")
              (setf mechanism (pop mechanisms)))
          (multiple-value-setq (op arg) (authenticator-challenge mechanism :initial-response))
-         (mumble "~A ~A" op arg)
+         ;; (mumble "~A ~A" op arg)
          (when (eq op :error)
            (go initial))
          (send :auth (name mechanism) arg)
@@ -268,6 +259,7 @@ returning.  The string should not contain any newline characters."))
            (:continue (go waiting-for-data)))
        waiting-for-data
          (multiple-value-setq (op arg) (receive))
+         ;; (mumble "~A ~A" op arg)
          (case op
            (:data
             (multiple-value-setq (op arg) (authenticator-challenge mechanism arg))
@@ -276,13 +268,13 @@ returning.  The string should not contain any newline characters."))
               (:ok (send :data arg) (go waiting-for-ok))
               (:error (if arg (send :error arg) (send :error)) (go waiting-for-data))))
            (:rejected 
-            ;; complication arises here when we lose the initial challenge..
             (go initial))
            (:error (send :cancel) (go waiting-for-reject))
            (:ok (go got-ok))
            (t (send :error) (go waiting-for-data)))
        waiting-for-ok
          (multiple-value-setq (op arg) (receive))
+         ;; (mumble "~A ~A" op arg)
          (case op
            (:ok (go got-ok))
            (:reject (go initial))
@@ -290,21 +282,23 @@ returning.  The string should not contain any newline characters."))
            (t (send :error) (go waiting-for-ok)))
        waiting-for-reject
          (multiple-value-setq (op arg) (receive))
+         ;; (mumble "~A ~A" op arg)
          (case op
            (:reject (go initial))
-           (t (error 'authentication-error :command op :argument arg)))
+           (t (error 'dbus-auth-error :command op :argument arg)))
        got-ok
          (setf (id connection) arg)
          (send :negotiate-unix-fd)
          (go wait-for-unix-fd-passing-agreement)
        wait-for-unix-fd-passing-agreement
          (multiple-value-setq (op arg) (receive))
+         ;; (mumble "~A ~A" op arg)
          (case op
            (:error
             (setf (supports-unix-fd-passing-p connection) nil))
            (:agree-unix-fd
             (setf (supports-unix-fd-passing-p connection) t))
-           (t (error 'authentication-error :command op :argument arg)))
+           (t (error 'dbus-auth-error :command op :argument arg)))
          (send :begin)
          (go authenticated)
        authenticated)))
@@ -318,12 +312,13 @@ returning.  The string should not contain any newline characters."))
   ;; iolib: make-socket connect
   (let ((socket (make-socket 
                  :family family
-                 :class :socket
-                 :external-format '(:default :newline :crlf))))
+                 :class :socket)))
     (unwind-protect
          (progn
            (socket-connect socket address)
-           (with-socket-stream (s socket :input t :output t :external-format :default)
+           (with-socket-stream (s socket :input t :output t 
+                                         :external-format '(:default :newline :crlf)
+                                         :element-type :default)
              (write-char #\Nul s)
              (force-output s)
              (prog1 socket
@@ -338,21 +333,25 @@ returning.  The string should not contain any newline characters."))
   (socket-close (connection-socket connection)))
 
 (defmethod receive-message-no-hang ((connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf))
+  (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf)
+                                                        :element-type :default)
     (decode-dbus-message s)))
 
 (defmethod receive-line ((connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :input t)
-    (print (read-line s))))
+  (with-socket-stream (s (connection-socket connection) :input t
+                                                        :external-format '(:default :newline :crlf)
+                                                        :element-type :default)
+    (read-line s)))
 
 (defmethod send-line (line (connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :output t)
+  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
+                                                        :element-type :default)
     (write-line line s)
-    (write-sequence std/string::+crlf+ s)
     (force-output s)))
 
 (defmethod send-message (encoded-message (connection dbus-socket-connection-mixin))
-  (with-socket-stream (s (connection-socket connection) :output t)
+  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
+                                                        :element-type :default)
     (write-sequence encoded-message s)
     (force-output s)))
 
@@ -366,13 +365,13 @@ Domain Sockets."))
   (declare (ignore if-failed))
   (make-instance 'dbus-unix-connection
     :socket (open-socket-connection :local (address address))
-                 :address address
-                 :id (server-address-property "guid" address :if-does-not-exist nil)
-                 :event-base event-base))
+    :address address
+    :id (server-address-property "guid" address :if-does-not-exist nil)
+    :event-base event-base))
 
 ;;; Authentication
 (define-class-map
-  :class authenticator
+    :class authenticator
   :map *authenticator-classes*
   :find find-authenticator-class)
 
@@ -422,11 +421,11 @@ context file."
                       :direction :input)
     (loop for line = (read-line in nil nil)
           while line do
-          (destructuring-bind (id ctime cookie)
-              (split-sequence #\Space line)
-            (declare (ignore ctime))
-            (when (equal id cookie-id)
-              (return-from find-cookie cookie)))))
+             (destructuring-bind (id ctime cookie)
+                 (split-sequence #\Space line)
+               (declare (ignore ctime))
+               (when (equal id cookie-id)
+                 (return-from find-cookie cookie)))))
   (missing-entry (list context-name cookie-id) if-does-not-exist))
 
 (defun random-challenge-string (&optional (num-octets 16))
@@ -434,7 +433,7 @@ context file."
 of random octet values."
   (with-output-to-string (out)
     (loop repeat (* 2 num-octets) do
-          (write-char (char-downcase (digit-char (random 16) 16)) out))))
+             (write-char (char-downcase (digit-char (random 16) 16)) out))))
 
 (defmethod authenticator-challenge ((mechanism dbus-sha1-cookie-authenticator) challenge)
   (if (eq challenge :initial-response)
@@ -547,9 +546,10 @@ return the argument; otherwise, signal an authentication error."
 (defun list-object-interfaces (object)
   (hash-table-values (object-interfaces object)))
 
+;; TODO 2026-03-25: interfaces is actually an XML-NODE..
 (defun make-object (connection path destination interfaces)
   (let ((object (make-instance 'object :connection connection :path path :destination destination)))
-    (dolist (interface interfaces)
+    (dolist (interface (print interfaces))
       (setf (object-interface (name interface) object) interface))
     object))
 
@@ -615,11 +615,11 @@ return the argument; otherwise, signal an authentication error."
 
 (defun make-dbus-method (name signature parm-names parm-types results)
   (make-instance 'dbus-method
-                 :name name
-                 :signature signature
-                 :args      parm-names
-                 :arg-types parm-types
-                 :res results))
+    :name name
+    :signature signature
+    :args      parm-names
+    :arg-types parm-types
+    :res results))
 
 (defclass dbus-property ()
   ((name        :initarg :name   :reader name)
@@ -633,9 +633,9 @@ return the argument; otherwise, signal an authentication error."
 
 (defun make-dbus-property (name type access)
   (make-instance 'dbus-property
-                 :name name
-                 :type type
-                 :access access))
+    :name name
+    :type type
+    :access access))
 
 (defclass dbus-signal ()
   ((name        :initarg :name      :reader name)
@@ -649,9 +649,9 @@ return the argument; otherwise, signal an authentication error."
 
 (defun make-dbus-signal (name parm-names parm-types)
   (make-instance 'dbus-signal
-                 :name      name
-                 :args      parm-names
-                 :arg-types parm-types))
+    :name      name
+    :args      parm-names
+    :arg-types parm-types))
 
 (defun dont-resolve-entities (a b)
   (declare (ignore a b))
@@ -661,68 +661,62 @@ return the argument; otherwise, signal an authentication error."
   `(let ((_ (or (optional-attribute ,name _) ,default-value)))
      ,@forms))
 
-(defun parse-introspection-document (input)
-  (xml-parse input)
-  #+nil
-  (with-xspam-source (make-xspam-source input :entity-resolver #'dont-resolve-entities)
-    (element :node
-      (let (interfaces)
-        (one-or-more
-         (element :interface
-           (let (interface-name)
-             (attribute :name (setf interface-name _))
-             (let (methods properties signals)
-               (zero-or-more
-                (one-of
-                 (element :method
-                   (let (method-name
-                         (signature (make-string-output-stream))
-                         (parm-names ())
-                         (parm-types ())
-                         (result-types ()))
-                     (attribute :name (setf method-name _))
-                     (zero-or-more
-                      ;; TODO: annotation
-                      (element :arg
-                        (defaulted-attribute :direction "in"
-                          (when (equal _ "out")
-                            (attribute :type
-                              (push _ result-types)))
-                          (when (equal _ "in")
-                            (defaulted-attribute :name nil
-                              (push _ parm-names))
-                            (attribute :type
-                              (push _ parm-types)
-                              (write-string _ signature))))))
-                     (push (make-dbus-method method-name
-                                        (get-output-stream-string signature)
-                                        (reverse parm-names)
-                                        (reverse parm-types)
-                                        (reverse result-types))
-                           methods)))
-                 (element :property
-                   (let (property-name property-type property-access)
-                     (attribute :name (setf property-name _))
-                     (attribute :type (setf property-type _))
-                     (attribute :access (setf property-access _))
-                     (push (make-dbus-property property-name property-type property-access) properties)))
-                 (element :signal
-                   (let ((signal-name)
-                         (parm-names ())
-                         (parm-types ()))
-                     (attribute :name (setf signal-name _))
-                     (zero-or-more
-                      (element :arg
-                        (defaulted-attribute :name nil
-                          (push _ parm-names))
-                        (attribute :type (push _ parm-types))))
-                     (push (make-dbus-signal signal-name
-                                        (nreverse parm-names)
-                                        (nreverse parm-types))
-                           signals)))))
-               (push (make-dbus-interface interface-name (nreverse methods) (nreverse properties) (nreverse signals)) interfaces)))))
-        (nreverse interfaces)))))
+(defmacro with-dbus-xml ((name-sym node-sym xml) args &body body)
+  `(let ((,name-sym (xmlrep-attrib-value "name" ,xml))
+         . ,args)
+     (dolist (,node-sym (xml-node-children xml))
+       (string-case ((xml-node-name ,node-sym))
+         ,@(butlast body)))
+     ,@(last body)))
 
+(defun parse-dbus-method (xml)
+  (with-dbus-xml (name node xml) 
+                 ((signature (make-string-output-stream))
+                  (parm-names)
+                  (parm-types)
+                  (result-types))
+    ("arg" (string-case ((xmlrep-attrib-value "direction" node "in"))
+             ("in" (push (xmlrep-attrib-value "name" node) parm-names)
+                   (push (xmlrep-attrib-value "type" node) parm-types))
+             ("out" (let ((type (xmlrep-attrib-value "type" node)))
+                      (push type result-types)
+                      (write-string type signature)))))
+    (make-dbus-method 
+     name
+     (get-output-stream-string signature)
+     (reverse parm-names)
+     (reverse parm-types)
+     (reverse result-types))))
+        
+(defun parse-dbus-property (xml)
+  (make-dbus-property 
+   (xmlrep-attrib-value "name" xml) 
+   (xmlrep-attrib-value "type" xml) 
+   (xmlrep-attrib-value "access" xml)))
+   
+
+(defun parse-dbus-signal (xml)
+  (with-dbus-xml (name node xml)
+                 ((parm-names)
+                  (parm-types))
+    ("arg" (push (xmlrep-attrib-value "name" node nil) parm-names)
+           (push (xmlrep-attrib-value "type" node) parm-types))
+    (make-dbus-signal name parm-names parm-types)))
+
+(defun parse-dbus-interface (xml)
+  (with-dbus-xml (name node xml)
+                 (methods properties signals)
+    ("method" (push (parse-dbus-method node) methods))
+    ("property" (push (parse-dbus-property node) properties))
+    ("signal" (push (parse-dbus-signal node) signals))
+    (make-dbus-interface name (nreverse methods) (nreverse properties) (nreverse signals))))
+
+(defun parse-introspection-document (input)
+  (let ((xml (xml-parse input)))
+    (collecting
+     (dolist (int (extract-path '("node" *) xml))
+       (collect (parse-dbus-interface int))))))
+             
 (defun make-object-from-introspection (connection path destination)
   (make-object connection path destination
                (parse-introspection-document
@@ -764,12 +758,12 @@ return the argument; otherwise, signal an authentication error."
     ;; redefine an object with a new path later on, the index will be
     ;; stale.  Avoid doing that :)
     (loop
-     (dolist (message (drain-pending-messages connection))
-       (let ((object (gethash (path message) objects-by-path)))
-         (if (null object)
-             (missing-handler message connection)
-             (dispatch-message message object connection))))
-     (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
+      (dolist (message (drain-pending-messages connection))
+        (let ((object (gethash (path message) objects-by-path)))
+          (if (null object)
+              (missing-handler message connection)
+              (dispatch-message message object connection))))
+      (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
 
 (defun make-object-index (object-names)
   (let ((index (make-hash-table :test 'equal)))
@@ -857,9 +851,9 @@ return the argument; otherwise, signal an authentication error."
   (unless (logtest +message-no-reply-expected+ (message-flags message))
     (send-message
      (encode-dbus-message (message-endianness message) :method-return 0 1
-                     (next-id connection) nil nil nil nil
-                     (message-serial message) (message-sender message)
-                     nil (handler-output-signature handler) results)
+                          (next-id connection) nil nil nil nil
+                          (message-serial message) (message-sender message)
+                          nil (handler-output-signature handler) results)
      connection)))
 
 ;; Do nothing; signals don't reply.
@@ -870,11 +864,11 @@ return the argument; otherwise, signal an authentication error."
   (unless (logtest +message-no-reply-expected+ (message-flags message))
     (send-message
      (encode-dbus-message (message-endianness message) :error 0 1
-                     (next-id connection) nil nil nil
-                     ;; TODO: Not invent error names like that.
-                     (concatenate 'string (message-interface message) ".Error." error-name)
-                     (message-serial message) (message-sender message) nil
-                     "s" (list error-description))
+                          (next-id connection) nil nil nil
+                          ;; TODO: Not invent error names like that.
+                          (concatenate 'string (message-interface message) ".Error." error-name)
+                          (message-serial message) (message-sender message) nil
+                          "s" (list error-description))
      connection)))
 
 ;;; DBUS
@@ -979,14 +973,14 @@ return the argument; otherwise, signal an authentication error."
   "Asks DBus to assign a name to the bus.  Valid flags
 are :allow-replacement, :replace-existing, and :do-not-queue."
   (let ((flags-value
-         (reduce #'logior
-                 (mapcar (lambda (flag)
-                           (case flag
-                             (:allow-replacement 1)
-                             (:replace-existing  2)
-                             (:do-not-queue      4)
-                             (t (error "Invalid flag ~A.~%" flag))))
-                         flags))))
+          (reduce #'logior
+                  (mapcar (lambda (flag)
+                            (case flag
+                              (:allow-replacement 1)
+                              (:replace-existing  2)
+                              (:do-not-queue      4)
+                              (t (error "Invalid flag ~A.~%" flag))))
+                          flags))))
     (case (invoke-method (connection bus)
                          "RequestName"
                          :destination "org.freedesktop.DBus"

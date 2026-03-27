@@ -184,7 +184,7 @@
    :register-dbus-signal-handler :dbus-signal-handler
    :*all-dbus-objects* :*authenticator-classes* 
    :find-authenticator-class :dbus-handler :dbus-signal-handler :dbus-method-handler
-   :define-dbus-method))
+   :define-dbus-method :dbus-error :dbus-method-error))
 
 (defpkg :net/proto/whois
   (:nicknames :net/whois)
@@ -223,7 +223,7 @@
    :message-member :message-reply-serial :message-error-name :message-interface
    :signature :valid-body-p :handler-output-signature :handler-function
    :handler-full-lisp-name :handler-input-signature :full-member-name :require-dbus-object)
-  (:export :dbus-error :dbus-auth-error :dbus-method-error
+  (:export :dbus-auth-error 
    :with-open-bus :with-introspected-object :session-server-addresses :publish-objects
    :system-server-addresses))
 
