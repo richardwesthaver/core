@@ -81,6 +81,30 @@
   ;; [[file:/usr/include/asm-generic/socket.h::define SO_REUSEPORT 15][sys/socket.h]]
   (sb-bsd-sockets::define-socket-option-bool sockopt-reuse-port sockint::sol-socket so-reuseport))
 
+;;; raw sockets
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-maxseg sockint::sol-socket sys::tcp-maxseg)
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-cork sockint::sol-socket sys::tcp-cork)
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-defer-accept sockint::sol-socket sys::tcp-defer-accept)
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-linger2 sockint::sol-socket sys::tcp-linger2)
+(sb-bsd-sockets::define-socket-option-bool sockopt-tcp-quickack sockint::sol-socket sys::tcp-quickack)
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-syncnt sockint::sol-socket sys::tcp-syncnt)
+(sb-bsd-sockets::define-socket-option-int sockopt-tcp-window-clamp sockint::sol-socket sys::tcp-window-clamp)
+(sb-bsd-sockets::define-socket-option-bool sockopt-ip-header-include sockint::sol-socket sys::ip-hdrincl)
+(sb-bsd-sockets::define-socket-option-bool sockopt-ip-receive-error sockint::sol-socket sys::ip-recverr)
+(sb-bsd-sockets::define-socket-option-int sockopt-icmp-filter sockint::sol-socket sys::icmp-filter)
+
+(defun check-tcp-info (buffer size)
+  (assert (= size #.(sb-alien:alien-size sys::tcp-info :bytes)))
+  buffer)
+
+(sb-bsd-sockets::define-socket-option sockopt-tcp-info nil sockint::sol-socket sys::tcp-info sys::tcp-info nil check-tcp-info sb-alien:addr)
+
+(defun check-tcp-zerocopy-receive (buffer size)
+  (assert (= size #.(sb-alien:alien-size sys::tcp-zerocopy-receive :bytes)))
+  buffer)
+
+(sb-bsd-sockets::define-socket-option sockopt-zerocopy nil sockint::sol-socket sys::tcp-zerocopy-receive sys::tcp-zerocopy-receive nil check-tcp-zerocopy-receive sb-alien:addr)
+
 ;; ucre
 (define-alien-type ucre
     (struct ucre
@@ -115,19 +139,6 @@
     (struct linger
       (onoff int)
       (linger int)))
-
-(define-alien-enum (tcp-state :type int)
-  :tcp-established 1
-  :tcp-syn-sent 2
-  :tcp-syn-recv 3
-  :tcp-fin-wait1 4
-  :tcp-fin-wait2 5
-  :tcp-time-wait 6
-  :tcp-close 7
-  :tcp-close-wait 8
-  :tcp-last-ack 9
-  :tcp-listen 10
-  :tcp-closing 11)
 
 ;;; NETLINK
 (defconstant af-netlink sockint::af-route)

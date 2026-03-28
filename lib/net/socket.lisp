@@ -14,7 +14,9 @@
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
                                     host (port *wildcard-port*)
-                                    remote-host remote-port (listen (when (eql class :server) *default-backlog*))
+                                    remote-host remote-port
+                                    #+todo :config
+                                    (listen (when (eql class :server) *default-backlog*))
                     &allow-other-keys)
   (check-type family (member :internet :inet :unix :local :ipv4 :ipv6 :netlink)
               "one of :INTERNET(or :INET), :LOCAL (or :UNIX), :IPV4, :IPV6 or :NETLINK")
@@ -22,7 +24,7 @@
   (check-type class (member :client :server :socket) "either :CLIENT, :SERVER, or :SOCKET")
   (when (eql :ipv4 family) (setf ipv6 nil))
   (let ((*ipv6* ipv6)
-        (args (remove-from-plist args :remote-host :host :port :remote-port :bind :class :connect :ipv6)))
+        (args (remove-from-plist args :remote-host :host :port :remote-port :bind :class :ipv6)))
     (when (or (eql :internet family)
               (eql :inet family))
       (setq family default-inet-address-family-keyword))
@@ -241,8 +243,8 @@ BODY."
 ;; FIX 2026-03-22: 
 #+nil
 (defun ping (target &key (id #xFF) (seqno 1))
-  (with-open-socket (socket :family :ipv4 :type :raw :protocol sockint::ipproto_icmp
-                            :include-headers t)
+  (with-open-socket (socket :family :ipv6 :type :raw :protocol sockint::ipproto_icmp
+                            :include-headers t))
     (let* ((payload-size 4)
            (icmp-packet-size (+ (alien-size io/socket::icmp-header) payload-size))
            (frame-size (+ (alien-size io/socket::ip-header) icmp-packet-size)))
@@ -256,7 +258,7 @@ BODY."
           (write-icmp-header icmp-header icmp-packet-size id seqno)
           (send socket frame :end frame-size :remote-host target)
           (wait-until-fd-ready (socket-file-descriptor socket) :input)
-          (receive socket :size (* 64 1024)))))))
+          (receive socket :size (* 64 1024))))))
 
 ;;; TCP
 (defconfig tcp-config (socket-config) 

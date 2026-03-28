@@ -198,3 +198,150 @@
 (define-alien-type ifreq
   (struct ifreq
     (name (* char))))
+
+(define-alien-enum (tcp-state)
+  :established 1
+  :syn-sent 2
+  :syn-recv 3
+  :fin-wait1 4
+  :fin-wait2 5
+  :time-wait 6
+  :close 7
+  :close-wait 8
+  :last-ack 9
+  :listen 10
+  :closing 11)
+
+;; values for tcpi-state
+(define-alien-enum (tc-ca-state)
+  :open 0
+  :disorder 1
+  :cwr 2
+  :recovery 3
+  :loss 4)
+
+(define-alien-type tcp-info
+  (struct tcp-info
+    (tcpi-state unsigned-char)
+    (tcpi-ca-state unsigned-char)
+    (tcpi-retransmits unsigned-char)
+    (tcpi-probes unsigned-char)
+    (tcpi-backoff unsigned-char)
+    (tcpi-options unsigned-char)
+    (tcpi-snd-wscale unsigned-char)
+    (tcpi-rcv-wscale unsigned-char)
+    (tcpi-rto unsigned-int)
+    (tcpi-ato unsigned-int)
+    (tcpi-snd-mss unsigned-int)
+    (tcpi-rcv-mss unsigned-int)
+    (tcpi-unacked unsigned-int)
+    (tcpi-sacked unsigned-int)
+    (tcpi-lost unsigned-int)
+    (tcpi-retrans unsigned-int)
+    (tcpi-fackets unsigned-int)
+    ;; Times
+    (tcpi-last-data-sent unsigned-int)
+    (tcpi-last-ack-sent unsigned-int)
+    (tcpi-last-data-recv unsigned-int)
+    (tcpi-last-ack-recv unsigned-int)
+    ;; Metrics
+    (tcpi-pmtu unsigned-int)
+    (tcpi-rcv-ssthresh unsigned-int)
+    (tcpi-rtt unsigned-int)
+    (tcpi-rttvar unsigned-int)
+    (tcpi-snd-ssthresh unsigned-int)
+    (tcpi-snd-cwnd unsigned-int)
+    (tcpi-advmss unsigned-int)
+    (tcpi-reordering unsigned-int)
+
+    (tcpi-rcv-rtt unsigned-int)
+    (tcpi-rcv-space unsigned-int)
+
+    (tcpi-total-retrans unsigned-int)
+
+    (tcpi-pacing-rate unsigned-long)
+    (tcpi-max-pacing-rate unsigned-long)
+    (tcpi-bytes-acked unsigned-long)
+    (tcpi-bytes-received unsigned-long)
+    (tcpi-segs-out unsigned-int)
+    (tcpi-segs-in unsigned-int)
+
+    (tcpi-notsent-bytes unsigned-int)
+    (tcpi-min-rtt unsigned-int)
+    (tcpi-data-segs-in unsigned-int)
+    (tcpi-data-segs-out unsigned-int)
+
+    (tcpi-delivery-rate unsigned-long)
+
+    (tcpi-busy-time unsigned-long)
+    (tcpi-rwnd-limited unsigned-long)
+    (tcpi-sndbuf-limited unsigned-long)
+
+    (tcpi-delivered unsigned-int)
+    (tcpi-delivered-ce unsigned-int)
+
+    (tcpi-bytes-sent unsigned-long)
+    (tcpi-bytes-retrans unsigned-long)
+    (tcpi-dsack-dups unsigned-int)
+    (tcpi-reord-seen unsigned-int)
+
+
+    (tcpi-rcv-ooopack unsigned-int)
+  ;; Peer's advertised receive window after scaling (bytes)
+    (tcpi-snd-wnd unsigned-int)
+    ;; Local advertised receive window after scaling (bytes)
+    (tcpi-rcv-wnd unsigned-int)
+
+    (tcpi-rehash unsigned-int)
+    ;; Total number of RTO timeouts, including SYN/SYN-ACK and recurring timeouts
+    (tcpi-total-rto unsigned-short)
+  ;; Total number of RTO recoveries, including any unfinished recovery.
+    (tcpi-total-rto-recoveries unsigned-short)
+    ;; Total time spent in RTO recoveries in milliseconds, including any unfinished recovery.
+    (tcpi-total-rto-time unsigned-int)
+    (tcpi-received-ce unsigned-int)
+    (tcpi-delivered-e1-bytes unsigned-int)
+    (tcpi-delivered-e0-bytes unsigned-int)
+    (tcpi-delivered-ce-bytes unsigned-int)
+    (tcpi-received-e1-bytes unsigned-int)
+    (tcpi-received-e0-bytes unsigned-int)
+    (tcpi-received-ce-bytes unsigned-int)
+    (tcpi-accecn-fail-mode unsigned-short)
+    (tcpi-accecn-opt-seen unsigned-short)))
+
+#+todo
+(define-alien-type tcp-md5sig)
+
+(define-alien-type tcp-diag-md5sig
+    (struct tcp-diag-md5sig
+      (tcpm-family unsigned-char)
+      (tcpm-prefixlen unsigned-char)
+      (tcpm-keylen unsigned-int)
+      (tcpm-addr (array unsigned-int 4))
+      (tcpm-key (array unsigned-char #.tcp-md5sig-maxkeylen))))
+
+(define-alien-type tcp-zerocopy-receive
+  (struct tcp-zerocopy-receive
+    ;; In: address of mapping.  
+    (address unsigned-long)
+    ;; In/out: number of bytes to map/mapped.  
+    (length unsigned-int)
+    ;; Out: amount of bytes to skip.  
+    (recv-skip-hint unsigned-int)
+    ;; Out: amount of bytes in read queue.  
+    (inq unsigned-int)
+    ;; Out: socket error.  
+    (err int)
+    ;; On: copybuf address (small reads).  
+    (copybuf-address unsigned-long)
+    ;; In/Out: copybuf bytes avail/used or error.  
+    (copybuf-len int)
+    ;; In: flags.  
+    (flags unsigned-int)
+    ;; Ancillary data.  
+    (msg-control unsigned-long)
+    (msg-controllen unsigned-long)
+    (msg-flag unsigned-int)
+    ;; Set to 0 for now.  
+    (reserved unsigned-int)))
+

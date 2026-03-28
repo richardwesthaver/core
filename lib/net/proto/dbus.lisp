@@ -195,8 +195,8 @@ returning.  The string should not contain any newline characters."))
               (if (zerop x) 1 x))))))
 
 (defmethod drain-pending-messages ((connection standard-dbus-connection))
-  (prog1 (nreverse (connection-pending-messages (print connection)))
-    (setf (connection-pending-messages connection) nil)))
+  (prog1 (nreverse (connection-pending-messages connection))
+    (setf (connection-pending-messages connection) '())))
 
 (defmethod wait-for-reply (serial (connection standard-dbus-connection))
   (loop
@@ -218,8 +218,8 @@ returning.  The string should not contain any newline characters."))
      (when error
        (error "Connection I/O error: ~S." error))
      (loop for message = (receive-message-no-hang connection)
-           while message
-           do (push message (connection-pending-messages connection))))))
+           if (null message) return nil
+           else do (push message (connection-pending-messages connection))))))
 
 (defmethod supported-authenticators ((connection standard-dbus-connection))
   (send-authentication-command connection :auth)
@@ -292,7 +292,7 @@ returning.  The string should not contain any newline characters."))
          (go wait-for-unix-fd-passing-agreement)
        wait-for-unix-fd-passing-agreement
          (multiple-value-setq (op arg) (receive))
-         ;; (mumble "~A ~A" op arg)
+         (mumble "~A ~A" op arg)
          (case op
            (:error
             (setf (supports-unix-fd-passing-p connection) nil))
@@ -310,11 +310,10 @@ returning.  The string should not contain any newline characters."))
    (pending-messages :initform nil :accessor connection-pending-messages)
    (event-base :initarg :event-base :reader connection-event-base)
    (serial :initform 1)
+   (socket :initarg :socket :accessor connection-socket)
    (supports-unix-fd-passing :initform nil :accessor supports-unix-fd-passing-p))
   (:documentation "Represents a connection to a DBUS server over Unix
 Domain Sockets."))
-
-(defaccessor connection-socket ((self dbus-unix-connection)) (socket self))
 
 (defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
   (declare (ignore if-failed))
@@ -335,12 +334,11 @@ Domain Sockets."))
            (with-socket-stream (s socket :input t :output t 
                                          :external-format '(:default :newline :crlf)
                                          :element-type :default)
-             (write-char #\Nul s)
+             (write-byte 0 s)
              (force-output s)
              (prog1 socket
                (setf socket nil))))
-      (when socket
-        (socket-close socket)))))
+      (when socket (socket-close socket)))))
 
 (defmethod fd ((connection dbus-unix-connection))
   (socket-file-descriptor (connection-socket connection)))
@@ -348,7 +346,7 @@ Domain Sockets."))
 (defmethod disconnect ((connection dbus-unix-connection))
   (socket-close (connection-socket connection)))
 
-(defmethod receive-message-no-hang ((connection dbus-unix-connection))
+(defmethod receive-message-no-hang ((connection standard-dbus-connection))
   (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf)
                                                         :element-type :default)
     (decode-dbus-message s)))
@@ -551,7 +549,7 @@ return the argument; otherwise, signal an authentication error."
 ;; TODO 2026-03-25: interfaces is actually an XML-NODE..
 (defun make-object (connection path destination interfaces)
   (let ((object (make-instance 'object :connection connection :path path :destination destination)))
-    (dolist (interface (print interfaces))
+    (dolist (interface interfaces)
       (setf (object-interface (name interface) object) interface))
     object))
 
@@ -608,20 +606,22 @@ return the argument; otherwise, signal an authentication error."
    (signature   :initarg :signature :reader method-signature)
    (arg-names   :initarg :args      :reader method-argument-names)
    (arg-types   :initarg :arg-types :reader method-argument-types)
-   (results     :initarg :res       :reader method-result-types)))
+   (results     :initarg :res       :reader method-result-types)
+   (annotations :initarg :annotations :reader method-annotations)))
 
 (defmethod print-object ((method dbus-method) stream)
   (print-unreadable-object (method stream :type t)
     (format stream "~S ~A" (name method) (method-signature method)))
   method)
 
-(defun make-dbus-method (name signature parm-names parm-types results)
+(defun make-dbus-method (name signature parm-names parm-types results &optional annotations)
   (make-instance 'dbus-method
     :name name
     :signature signature
     :args      parm-names
     :arg-types parm-types
-    :res results))
+    :res results
+    :annotations annotations))
 
 (defclass dbus-property ()
   ((name        :initarg :name   :reader name)
@@ -676,7 +676,8 @@ return the argument; otherwise, signal an authentication error."
                  ((signature (make-string-output-stream))
                   (parm-names)
                   (parm-types)
-                  (result-types))
+                  (result-types)
+                  (annotations))
     ("arg" 
      (let ((type (xmlrep-attrib-value "type" node)))
        (write-string type signature)
@@ -684,19 +685,26 @@ return the argument; otherwise, signal an authentication error."
          ("in" (push (xmlrep-attrib-value "name" node) parm-names)
                (push type parm-types))
          ("out" (push type result-types)))))
+    ("annotation"
+     (let ((n (xmlrep-attrib-value "name" node))
+           (val (xmlrep-attrib-value "value" node)))
+       (string-case (val :default t)
+         ("true" (push (cons n t) annotations))
+         ("false" (push (cons n nil) annotations))
+         (t (push (cons n val) annotations)))))
     (make-dbus-method
      name
      (get-output-stream-string signature)
      (reverse parm-names)
      (reverse parm-types)
      (reverse result-types))))
-        
+
 (defun parse-dbus-property (xml)
   (make-dbus-property 
    (xmlrep-attrib-value "name" xml) 
    (xmlrep-attrib-value "type" xml) 
    (xmlrep-attrib-value "access" xml)))
-   
+
 (defun parse-dbus-signal (xml)
   (with-dbus-xml (name node xml)
                  ((parm-names)
@@ -718,7 +726,7 @@ return the argument; otherwise, signal an authentication error."
     (collecting
       (dolist (int (extract-path '("node" *) xml))
         (collect (parse-dbus-interface int))))))
-             
+
 (defun make-object-from-introspection (connection path destination)
   (make-object connection path destination
                (parse-introspection-document
@@ -762,10 +770,9 @@ return the argument; otherwise, signal an authentication error."
     (loop
       (dolist (message (drain-pending-messages connection))
         (let ((object (gethash (path message) objects-by-path)))
-          (print object)
           (if (null object)
               (missing-handler message connection)
-              (print (dispatch-message message object connection)))))
+              (dispatch-message message object connection))))
       (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
 
 (defun make-object-index (object-names)
@@ -814,13 +821,13 @@ return the argument; otherwise, signal an authentication error."
         (method-handler-bad-results results handler message connection))))
 
 (defmethod missing-handler (message connection)
-  (method-error-reply "MissingHandler"
-                      (format nil "Missing ~A handler at path ~A interface ~A name ~A"
-                              (if (typep message 'dbus-signal-message) "signal" "method-call")
-                              (path message)
-                              (message-interface message)
-                              (message-member message))
-                      message connection))
+  (let ((msg (format nil "Missing ~A handler at path ~A interface ~A name ~A"
+                     (if (typep message 'dbus-signal-message) "signal" "method-call")
+                     (path message)
+                     (message-interface message)
+                     (message-member message))))
+    (warn msg)
+    (method-error-reply "MissingHandler" msg message connection)))
 
 (defmethod signature-mismatch (expected-signature message connection)
   (method-error-reply "SignatureMismatch"
@@ -829,10 +836,10 @@ return the argument; otherwise, signal an authentication error."
                               (signature (message-signature message)))
                       message connection))
 
-(defmethod handler-error (condition (handler dbus-signal-handler) (message message) (connection connection))
+(defmethod handler-error (condition (handler dbus-signal-handler) (message dbus-message) (connection connection))
   (warn "Signal handler signaled an error: ~A." condition))
 
-(defmethod handler-error (condition (handler dbus-method-handler) (message message) (connection connection))
+(defmethod handler-error (condition (handler dbus-method-handler) (message dbus-message) (connection connection))
   (warn "Method handler ~S signaled an error: ~A."
         (handler-full-lisp-name handler) condition)
   (method-error-reply "MethodError"
@@ -878,6 +885,10 @@ return the argument; otherwise, signal an authentication error."
 (defclass dbus (bus)
   ((connection :reader connection :initarg :connection)
    (name :initarg :name :reader name)))
+
+(defmethod disconnect ((self dbus))
+  (disconnect (connection self))
+  self)
 
 (defun call-with-open-bus (function event-base server-addresses)
   (with-open-connection (connection event-base server-addresses)
@@ -971,6 +982,24 @@ return the argument; otherwise, signal an authentication error."
      :signature "s"
      :arguments
      (list (format nil "~{~(~A~)=~A~^,~}" (unlispify-symbols parameters))))))
+
+(defun start-service-by-name (bus name &optional (flags 0))
+  (invoke-method (connection bus)
+                 "StartServiceByName"
+                 :destination "org.freedesktop.DBus"
+                 :path "/org/freedesktop/DBus"
+                 :interface "org.freedesktop.DBus"
+                 :signature "su"
+                 :arguments (list name flags)))
+
+(defun get-name-owner (bus name)
+  (invoke-method (connection bus)
+                 "GetNameOwner"
+                 :destination "org.freedesktop.DBus"
+                 :path "/org/freedesktop/DBus"
+                 :interface "org.freedesktop.DBus"
+                 :signature "s"
+                 :arguments (list name)))
 
 (defun request-name (bus name &rest flags)
   "Asks DBus to assign a name to the bus.  Valid flags

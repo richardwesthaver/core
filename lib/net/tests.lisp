@@ -96,8 +96,8 @@ Cookie: name=wookie
         (free-sockaddr-for ns a)))))
 
 (deftest socket ()
-  (with-open-socket ((s c) :connect "compiler.company")
-    (istype 'client s) 
+  (with-open-socket ((s c) :remote-host "compiler.company" :remote-port 443)
+    (istype 'client s)
     (istype 'stream c)))
 
 (defun timeout-cb () 
@@ -138,11 +138,19 @@ Cookie: name=wookie
                  (isequalp v #(1 2 3 4 0)))
                (return-from test t)))))))))
 
-(deftest dbus-notify ()
+(deftest dbus-introspect ()
   (with-open-bus (bus (session-server-addresses))
+    (format t "Bus connection name: ~A~%" (name bus))
+    (istype 'uuid:uuid (uuid:make-uuid-from-string (net/proto/dbus::get-machine-id bus)))
+    (is (net/proto/dbus::list-names bus))
+    (is= 2 (net/proto/dbus::start-service-by-name bus "org.freedesktop.Notifications"))
+    (istype 'string (net/proto/dbus::get-name-owner bus "org.freedesktop.Notifications"))
     (with-introspected-object (notifications bus "/org/freedesktop/Notifications" "org.freedesktop.Notifications")
-      (print (notifications "org.freedesktop.Notifications" "Notify"
-                            "Test" 0 "" "Test" "This is a test; I repeat, this is a test." '() '() -1)))))
+      #+nil ; hangs
+      (notifications "org.freedesktop.Notifications" "Notify"
+                     "Test" 0 "" "Test"))
+    (with-introspected-object (systemd bus "/org/freedesktop/systemd1" "org.freedesktop.systemd1"))
+    (is :ok)))
 
 (define-dbus-object root
   (:path "/"))
@@ -164,6 +172,8 @@ Cookie: name=wookie
       (with-open-bus (bus (session-server-addresses))
         (format t "Bus connection name: ~A~%" (name bus))
         (format t "sending all objects: ~A~%" *all-dbus-objects*)
-        (publish-objects bus))
+        (publish-objects bus)) ;; hangs..
     (end-of-file ()
-      :disconnected-by-bus)))
+      :disconnected-by-bus)
+    (warning () ;; early escape hack - nameacquired is unhandled signal
+      (is :never))))

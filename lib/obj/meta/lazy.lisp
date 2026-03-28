@@ -11,7 +11,7 @@
 (defgeneric method-cache (sm)
   (:method ((sm standard-method)) nil))
 
-(defclass cached-function (generic-function)
+(defclass cached-function (standard-generic-function)
   ((cache :initarg nil :accessor generic-function-cache))
   (:metaclass funcallable-standard-class))
 
@@ -24,19 +24,15 @@
   (unless qualifiers
     (when-let ((gf-cache (generic-function-cache (method-generic-function method))))
       (setf (slot-value method 'cache) gf-cache)))
-  (when (member (first qualifiers) '(:before :after :around))
-    (pop qualifiers))
-  (when (eq (first qualifiers) :cache)
-    (pop qualifiers)
-    (unless qualifiers
-      (error "Cache qualifier is not followed by a cache designator in method ~S." method))
-    (unless (first qualifiers)
-      (error "NIL is not a valid cache designator in method ~S." method))
-    (setf (slot-value method 'cache) (pop qualifiers)))
+  (when-let ((pos (position :cache qualifiers)))
+    (if-let ((c (nth (1+ pos) qualifiers)))
+      (setf (slot-value method 'cache) c)
+      (error "Cache qualifier is not followed by a valid cache designator in method ~S." method)))
   method)
           
 #|
-(defgeneric c1 (self) (:generic-function-class cached-function) (:method-class cached-method))
+(defgeneric c1 (self) (:generic-function-class cached-function))
 (defvar *cac* (make-hash-table))
-(defmethod c1 :cache *cac* ((self t)) t)
+(defmethod c1 :cache *cac* (self) t)
+(c1 t)
 |#

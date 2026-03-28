@@ -108,7 +108,8 @@
    :udp-receive-ping
    :udp-echo
    :udp-socket
-   :udp-config)
+   :udp-config
+   :ping)
   ;; address
   (:export :make-netmask :ensure-netmask :ipv4-network
    :address-in-network-p :addresses-in-same-network-p :address-network-class :address-private-p))

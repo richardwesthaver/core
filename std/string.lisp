@@ -479,7 +479,7 @@ of a string."
 ;; patterns). Note how we use a local function instead of passing the default
 ;; form directly. This can save a lot on code size, especially when the
 ;; default form is large.
-(defmacro string-case ((string &key (default '(error "No match")))
+(defmacro string-case ((string &key (default :error))
                        &body cases)
   "(string-case (string &key default)
      case*)
@@ -500,7 +500,12 @@ of a string."
                   (rest case)))))
     (let ((input-var (gensym "INPUT"))
           (default-fn (gensym "ON-ERROR"))
-          (default-body (gethash t cases-table (list default))))
+          (default-body (gethash t cases-table (list (if (eql :error default)
+                                                         `(error 'std/condition:invalid-item 
+                                                                 :item ,string 
+                                                                 :reason (format nil "expected one of: ~A"
+                                                                                 (remove t ',(mapcar 'car cases))))
+                                                         default)))))
       `(let ((,input-var ,string))
          (flet ((,default-fn ()
                   ,@default-body))

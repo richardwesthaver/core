@@ -19,8 +19,10 @@ mixins are for simple, dynamic class combinations:
   (delete-from-mix a 'c))   ;; => #<B>                        
 
 This allows objects to be mixed and updated without manually defining many
-permutations.
+permutations, at the cost of runtime dispatch.
 |#
+
+;; TODO 2026-03-27: compile-time mixins - may flag for elision at save-time
 
 ;;; Code:
 (in-package :obj/meta/mix)
