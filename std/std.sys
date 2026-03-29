@@ -135,9 +135,26 @@
    :predicates (queue-empty-p queue-empty-p* queue-full-p queue-full-p*)
    :macros (with-queue-lock)
    :structs (basic-queue raw-queue vector-queue cons-queue priority-queue hnode fib-heap pqueue spin-queue))
-  (:proto :task)
-  (:proto :bitfield)
-  (:proto :foreign-vector)
+  (:proto :task
+   :description "Async units of work."
+   :variables (*tasks* *jobs* *job* *stage* *task* *task-class* *task-priority*)
+   :accessors (status)
+   :methods (jobs tasks results result job task dependencies dependents mark-task-done record-dependency)
+   :functions (make-task make-job)
+   :classes 
+   (async-task simple-task plan plan-traversal simple-plan planner task-pool
+    planned-task descending-task ascending-task sibling-task child-task solo-task)
+   :structs (pressure status)
+   :predicates (task-p job-p task-force-p task-prevented-p))
+  (:proto :bitfield
+   :description "Efficiently store multiple discrete states in an unsigned integer."
+   :types (bitfield)
+   :macros (define-bitfield))
+  (:proto :foreign-vector
+   :description "Foreign octet-vector class wrapper with element-type-based memoization."
+   :classes (foreign-vector-class foreign-vector)
+   :parameters (*fvref-range-check*)
+   :functions (fvref foreign-vector-length foreign-vector-element-type))
   (:proto :template
    :package :std/meta
    :description "Short-circuit CLOS method dispatch with a global hash-table."

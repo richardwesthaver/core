@@ -1333,7 +1333,7 @@
    :make-task
    :make-job
    :run-job
-   :jobp :taskp :task :task-worker
+   :job-p :task-p :task :task-worker
    :plan :status :planner :plan-bits
    :task-pool
    :task-done-p :record-dependency

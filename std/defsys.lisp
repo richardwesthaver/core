@@ -480,10 +480,10 @@ to match all systems and optional KIND (a module designator) specified by KEY."
      (lambda (k v) (when-let ((x (gethash k (hook-value hook)))) (std/list:appendf v x)))
      (hook-value std/sys::*sbcl-hooks*))))
 
-(defvar *protocol-keyword-imports* 
+(defvar *protocol-keyword-imports*
   '(:methods :functions :types :variables 
     :constants :parameters :macros :conditions
-    :restarts :accessors))
+    :restarts :accessors :predicates :classes))
 
 (defun %load-proto (name &optional (system *defsys*))
   "Load a protocol module FORM."

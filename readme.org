@@ -13,7 +13,7 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Sun Mar 29 16:58:30 2026 -0400                  |
+| updated     | Sun Mar 29 18:37:43 2026 -0400                  |
 | langs       | elisp lisp makefile org perl text               |
 | lines       | 268413 :code 218866 :comment 21996 :blank 27551 |
 |-------------+-------------------------------------------------|

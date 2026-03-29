@@ -42,10 +42,10 @@
 (defgeneric results (self)
   (:documentation "Return the results associated with SELF."))
 
-(defgeneric jobp (self)
+(defgeneric job-p (self)
   (:method ((self t)) nil)
   (:documentation "Return Non-nil if SELF is a job."))
-(defgeneric taskp (self)
+(defgeneric task-p (self)
   (:method ((self t)) nil)
   (:documentation "Return Non-nil if SELF is a task."))
 
@@ -69,7 +69,7 @@ responsible for indicating in the state slot the result of the computation."))
   (print-unreadable-object (self stream :type t)
     (format stream ":state ~A" (state self))))
 
-(defmethod taskp ((self task)) t)
+(defmethod task-p ((self task)) t)
 
 (defun make-task (kernel &optional state)
   (let ((task (make-instance 'task :state state)))
@@ -108,8 +108,8 @@ responsible for indicating in the state slot the result of the computation."))
 (defgeneric jobs (self)
   (:documentation "Return the jobs associated with SELF."))
 
-(defmethod jobp ((self job)) t)
-(defmethod taskp ((self job)) t)
+(defmethod job-p ((self job)) t)
+(defmethod task-p ((self job)) t)
   
 (declaim (inline make-job))
 (defun make-job (&rest tasks)
