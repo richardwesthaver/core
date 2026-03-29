@@ -430,19 +430,31 @@ objects of type COMPONENT."
         (init sys)
         (gethash name *module-table*)))) ; no recurse
 
+(defun find-submodule (kind name mod)
+  "Find a submodule of type KIND specified by NAME in a module's plist MOD."
+  (let ((k (getf mod kind)))
+    (if (listp k)
+        (let ((len (length k)))
+          (if (and name (> len 1))
+              (or (find name k :key 'name :test 'string-equal)
+                  (assoc name k :key 'name :test 'string-equal))
+              (if (= len 1)
+                  (car k)
+                  k)))
+        k)))
+
 (defun find-module (name &optional kind key)
-  (when-let ((mod (find-module* name)))
-    (if kind
-        (let ((k (getf mod kind)))
-          (if (listp k)
-              (let ((len (length k)))
-                (if (and key (> len 1))
-                    (find key k :key 'name :test 'equal)
-                    (if (= len 1)
-                        (car k)
-                        k)))
-              k))
-        mod)))
+  "Find the module specified by NAME which should be a system designator or NIL
+to match all systems and optional KIND (a module designator) specified by KEY."
+  (if (null name)
+      (when kind
+        (mapcar 
+         (lambda (x) (find-submodule kind key x))
+         (std/hash:hash-table-values *module-table*)))
+      (when-let ((mod (find-module* name)))
+        (if kind
+            (find-submodule kind key mod)
+            mod))))
 
 ;; (SET-MODULE NAME nil) deletes a module.
 (defun set-module (name val &optional kind key (append t))
@@ -468,14 +480,31 @@ objects of type COMPONENT."
      (lambda (k v) (when-let ((x (gethash k (hook-value hook)))) (std/list:appendf v x)))
      (hook-value std/sys::*sbcl-hooks*))))
 
+(defvar *protocol-keyword-imports* 
+  '(:methods :functions :types :variables 
+    :constants :parameters :macros :conditions
+    :restarts :accessors))
+
+(defun %load-proto (name &optional (system *defsys*))
+  "Load a protocol module FORM."
+  (destructuring-bind (name &rest args) (find-module system :proto name)
+    (declare (ignore name))
+    (let ((pkg (or (getf args :package) system)))
+      (remove-if 'null
+                 (mapcar (lambda (x)
+                           (when-let ((syms (getf args x)))
+                             (import syms pkg)
+                             (cons x syms)))
+                         *protocol-keyword-imports*)))))
+
 ;; templates?
 (defun %load-module (form &rest args)
   (case (car args)
-    ((member :proto) form) ; unevaluated
     ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
     (:io (gethash form *io-table*))
     (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
     (:prelude (use-package form))
+    (:proto (%load-proto form))
     (:tests (load-system form))
     (:sys (load-system form))
     (:bench (load-system form))

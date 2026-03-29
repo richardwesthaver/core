@@ -57,7 +57,7 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- ((:asdf "std.asd")
+ (;(:asdf "std.asd")
   (:io :alien)
   (:readtable :std)
   (:annotations :std)
@@ -81,6 +81,7 @@
    (element sink stream-sink file-sink source stream-source file-source filter bin predicate-filter
     print-filter switch-filter pipe message event bus simple-message condition-message))
   (:proto :kernel
+   :package :std/prim
    :description "Standard funcallable object extensions."
    :variables (*kernel*)
    :conditions (kernel-init-error no-kernel-error)
@@ -91,25 +92,30 @@
    :predicates (kernelp)
    :classes (kernel-class kernel-object))
   (:proto :hook
+   :package :std/prim
    :description "Define funcallable hook objects."
    :methods (add-hook remove-hook)
    :macros (defhook compile-key-hook)
    :classes (hook value-hook key-hook dynamic-hook))
   (:proto :verb
+   :package :std/meta
    :description "Define 'simple' generic functions."
    :variables (*verbs*)
    :functions (register-verb map-verbs)
    :macros (defverb)
    :predicates (verb-p verb-accessor-p))
   (:proto :io
+   :package :std/io
    :description "Define sets of readers and writers for a category of objects."
    :variables (*io-table*)
    :macros (define-io))
   (:proto :printer
+   :package :std/print
    :description "Named pprint-dispatch tables."
    :macros (defprint define-printer with-printer in-printer)
    :functions (find-printer unknown-printer use-printer copy-printer))
   (:proto :readtable
+   :package :std/named-readtables
    :description "Named reader-dispatch tables."
    :variables 
    (*readtables* *standard-readtable* *empty-readtable* *case-preserving-standard-readtable* 
@@ -120,6 +126,7 @@
    (find-readtable ensure-readtable make-readtable copy-readtable readtable-name register-readtable 
     unregister-readtable))
   (:proto :queue
+   :package :std/seq
    :description "High-level queue API."
    :conditions (queue-size-limit-reached)
    :functions 
@@ -132,6 +139,7 @@
   (:proto :bitfield)
   (:proto :foreign-vector)
   (:proto :template
+   :package :std/meta
    :description "Short-circuit CLOS method dispatch with a global hash-table."
    :variables (*template-table*)
    :macros (define-template-generic define-template-method)
@@ -166,7 +174,7 @@
    :open-pipe :pathname-executable-p
    :set-signal-handler)
   (:prelude :meta* 
-   :defverb :*verbs* :verbp :safe-superclasses
+   :defverb :*verbs* :verb-p :safe-superclasses
    :list-class-methods :list-class-slots
    :slot-values :defclass!
    :defmethods :defaccessor
