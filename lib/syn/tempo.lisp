@@ -1,6 +1,6 @@
 ;;; tempo.lisp --- Lisp Template Interpreter
 
-;; Base on Embedded Ruby templates (ERB)
+;; Based on Embedded Ruby templates (ERB)
 
 ;; ref: https://github.com/ruby/erb
 ;; ref: https://gitlab.common-lisp.net/mraskin/cl-emb
@@ -382,6 +382,15 @@ to pass objects to the code. ENV must be a plist."))
                           function
                           form))))
 
+(defmethod register-templates (path)
+  (with-readtable :tempo
+    (doplist (k v) (read-lisp-file path)
+      (let ((tmp (compile-and-eval v)))
+        (setf (path tmp) path
+              (ast tmp) v)
+        (setf (gethash k *tempo-table*)
+              tmp)))))
+
 (defmethod register-template (name (code string))
   (multiple-value-bind (function form)
       (make-tempo-function code)
@@ -431,7 +440,8 @@ Rebuilds it when text template was a file which has been modified."
 ;;; Readtable
 (defun tempo-reader (stream subchar numarg)
   (declare (ignore subchar numarg))
-  `(tempo-function (source-location) (get-universal-time)
+  `(tempo-function (or *compile-file-truename* *load-truename*)
+                   (get-universal-time)
                    (make-tempo-function 
                     ,(concatenate 
                       'string
@@ -444,9 +454,10 @@ Rebuilds it when text template was a file which has been modified."
                                        (progn (collect c) (collect c1))))
                               else do (collect c)))))))
 
-;; #% #% @if t %# OK #% @else %# NOPE #% @endif %# %#
+;; #% <% @if t %> :OK <% @else %> :NOPE <% @endif %> %#
 
 (defreadtable :tempo
   (:merge :std)
   (:dispatch-macro-char #\# #\% #'tempo-reader))
 
+(defun list-all-templates () (hash-table-list *tempo-table*))
