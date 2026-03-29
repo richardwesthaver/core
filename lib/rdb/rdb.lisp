@@ -474,10 +474,10 @@ internal sap slots are initialized."
       (setf sap (destroy-cf-raw sap)))))
 
 (defaccessor* db-opt
-    ((self rdb) key) (db-opt (db-opts self) key)
+    ((self rdb) key) (db-opt (db-opts self) (string-downcase key))
     (new (self rdb) key &key push)
-  (prog1 (setf (db-opt (db-opts self) key) new)
-    (when push (push-sap (db-opts self) key))))
+  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
+    (when push (push-sap (db-opts self) (string-downcase key)))))
 
 (defmethod push-opts ((self rdb))
   (with-slots (opts) self

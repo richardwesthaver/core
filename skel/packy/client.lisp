@@ -33,4 +33,5 @@
     (tree-sitter:load-tree-sitter-bash)))
 
 (defmethod init ((self (eql :packy)) &rest args)
+  (rocksdb:load-rocksdb)
   (apply 'init-packy args))

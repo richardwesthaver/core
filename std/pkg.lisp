@@ -223,7 +223,7 @@
    :register-readtable
    :unregister-readtable
    :copy-named-readtable
-   :list-all-named-readtables
+   :list-all-readtables
    ;; Types
    :named-readtable-designator
    ;; Conditions
@@ -854,7 +854,6 @@
    :lisp-object-info
    ;; system paths
    :*stash*
-   :*store*
    :find-stash-directory
    :stash-pathname
    :find-store-directory
@@ -1048,7 +1047,7 @@
    :copy :assign
    :clean :purge
    :assignee :started-p
-   :verbp :init
+   :verb-p :init
    :reset :state
    :init* :pause
    :install :uninstall

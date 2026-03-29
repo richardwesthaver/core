@@ -127,7 +127,6 @@
    :find-sk-file
    :sk-config-slot
    :sk-project-slot
-   :find-project-root
    :setf-skel-vars
    :sk-search-project
    :project-root

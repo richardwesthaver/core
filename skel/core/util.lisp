@@ -184,8 +184,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
     (init :xdg)
     (setq *user-skelrc* (user-skelrc))
     (%init setq)
-    (setq *stash* *skel-stash*
-          *store* *skel-store*))
+    (setq *stash* *skel-stash*))
   (defun setf-skel-vars () (%init setf)))
 
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))

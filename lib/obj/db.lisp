@@ -308,7 +308,7 @@ in-memory objects."))
 
 ;;; Config
 (defconfig db-config ()
-  ((backend :initform nil :type database-backend-designator :initarg :backend)
+  ((backend :initform nil :initarg :backend)
    (options :initarg :options :accessor db-opts)))
 
 ;; Merge Ops
@@ -361,11 +361,8 @@ column is already closed."))
 
 ;;; Transactions
 
-;; In our system, transactions must be one of the following:
-
-;; - A non-nil list 
-;; - A subclass of TRANSACTION-OBJECT
-;; - Implement a TRANSACTION-DB method which returns an instance of DATABASE
+;; In our system, transactions must at least implement a TRANSACTION-DB method
+;; which returns an instance of DATABASE
 
 ;; Simple transactions are non-nil lists which are handled according to the
 ;; current database backend.

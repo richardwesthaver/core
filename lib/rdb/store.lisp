@@ -13,9 +13,9 @@
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
    (logger :initform (default-logger) :initarg :logger :accessor logger)
-   (metadata :type (or null pointer-void) :accessor controller-metadata)
-   (btrees :type (or null pointer-void) :accessor controller-btrees)
-   (dup-btrees :type (or null pointer-void) :accessor controller-dup-btrees)
+   (metadata :accessor controller-metadata)
+   (btrees :accessor controller-btrees)
+   (dup-btrees :accessor controller-dup-btrees)
    (index :accessor index)
    (rindex :accessor rindex))
   (:default-initargs
@@ -28,8 +28,7 @@
    :class-index (make-instance 'rdb-column-family :type '(cid . oid))
    ;; :root
    :schema-table (make-hash-table :size 100 :weakness :value)
-   :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value)
-   )
+   :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value))
   (:documentation "A RocksDB STORE. Note that the default column family is used to store
 serialized object schemas."))
 
@@ -46,7 +45,8 @@ serialized object schemas."))
          (t nil))))
 
 (defmethod get-value (key (bt rdb-btree))
-  "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB *STORE*)."
+  "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
+*STORE*)."
   (let ((sc (get-store bt)))
     (ensure-transaction (:store sc)
       (with-static-streams ((key-buf) (value-buf))

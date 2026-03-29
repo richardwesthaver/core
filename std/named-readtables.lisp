@@ -84,20 +84,20 @@
 ;;; On Allegro we reuse their named-readtable support so we work
 ;;; nicely on their infrastructure.
 
-(defvar *named-readtables* (make-hash-table :test 'eq))
+(defvar *readtables* (make-hash-table :test 'eq))
 
 (define-cruft %associate-name-with-readtable (name readtable)
   "Associate NAME with READTABLE for FIND-READTABLE to work."
-  #+ :common-lisp (setf (gethash name *named-readtables*) readtable))
+  #+ :common-lisp (setf (gethash name *readtables*) readtable))
 
 (define-cruft %unassociate-name-from-readtable (name readtable)
   "Remove the association between NAME and READTABLE"
-  #+ :common-lisp (progn (assert (eq readtable (gethash name *named-readtables*)))
-                         (remhash name *named-readtables*)))
+  #+ :common-lisp (progn (assert (eq readtable (gethash name *readtables*)))
+                         (remhash name *readtables*)))
 
 (define-cruft %find-readtable (name)
   "Return the readtable named NAME."
-  #+ :common-lisp (values (gethash name *named-readtables* nil)))
+  #+ :common-lisp (values (gethash name *readtables* nil)))
 
 ;;;; Reader-macro related predicates
 

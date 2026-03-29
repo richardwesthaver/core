@@ -57,25 +57,87 @@
   (:file "rand")
   (:file "defsys"))
  :provide
- (;; (:asdf "std.asd")
+ ((:asdf "std.asd")
   (:io :alien)
   (:readtable :std)
   (:annotations :std)
   (:pool :default)
   (:pool :sys)
-  (:proto :serde)
-  (:proto :pipe)
-  (:proto :kernel)
-  (:proto :verb)
-  (:proto :io)
-  (:proto :printer)
-  (:proto :readtable)
+  (:proto :serde
+   :description "SERialize/DEserialize."
+   :conditions (serde-error serializer-error deserializer-errorr)
+   :methods (serialize deserialize serde)
+   :accessors (ser de))
+  (:proto :pipe
+   :description "CLOS-based element pipelines."
+   :conditions (unknown-element invalid-element)
+   :functions (make-pipe defpipe*)
+   :macros (defpipe)
+   :methods 
+   (sink source query resolve-element find-element find-parent-element insert-element*
+    withdraw-element add-element remove-element insert-element replace-element set-element-id
+    move-element msg format-message)
+   :classes 
+   (element sink stream-sink file-sink source stream-source file-source filter bin predicate-filter
+    print-filter switch-filter pipe message event bus simple-message condition-message))
+  (:proto :kernel
+   :description "Standard funcallable object extensions."
+   :variables (*kernel*)
+   :conditions (kernel-init-error no-kernel-error)
+   :accessors (kernel kernel-info kernel-documentation)
+   :methods (kernel-expression)
+   :functions (check-kernel make-kernel)
+   :macros (defkernel)
+   :predicates (kernelp)
+   :classes (kernel-class kernel-object))
+  (:proto :hook
+   :description "Define funcallable hook objects."
+   :methods (add-hook remove-hook)
+   :macros (defhook compile-key-hook)
+   :classes (hook value-hook key-hook dynamic-hook))
+  (:proto :verb
+   :description "Define 'simple' generic functions."
+   :variables (*verbs*)
+   :functions (register-verb map-verbs)
+   :macros (defverb)
+   :predicates (verb-p verb-accessor-p))
+  (:proto :io
+   :description "Define sets of readers and writers for a category of objects."
+   :variables (*io-table*)
+   :macros (define-io))
+  (:proto :printer
+   :description "Named pprint-dispatch tables."
+   :macros (defprint define-printer with-printer in-printer)
+   :functions (find-printer unknown-printer use-printer copy-printer))
+  (:proto :readtable
+   :description "Named reader-dispatch tables."
+   :variables 
+   (*readtables* *standard-readtable* *empty-readtable* *case-preserving-standard-readtable* 
+    *reserved-readtable-names*)
+   :conditions (readtable-error readtable-does-not-exist readtable-does-already-exist reader-macro-conflict)
+   :macros (defreadtable with-readtable in-readtable)
+   :functions 
+   (find-readtable ensure-readtable make-readtable copy-readtable readtable-name register-readtable 
+    unregister-readtable))
+  (:proto :queue
+   :description "High-level queue API."
+   :conditions (queue-size-limit-reached)
+   :functions 
+   (make-queue push-queue push-queue* pop-queue pop-queue* peek-queue peek-queue* queue-count queue-count*
+    try-pop-queue try-pop-queue*)
+   :predicates (queue-empty-p queue-empty-p* queue-full-p queue-full-p*)
+   :macros (with-queue-lock)
+   :structs (basic-queue raw-queue vector-queue cons-queue priority-queue hnode fib-heap pqueue spin-queue))
   (:proto :task)
-  (:proto :hook)
-  (:proto :queue)
   (:proto :bitfield)
   (:proto :foreign-vector)
-  (:proto :template)
+  (:proto :template
+   :description "Short-circuit CLOS method dispatch with a global hash-table."
+   :variables (*template-table*)
+   :macros (define-template-generic define-template-method)
+   :methods (compute-template-dispatch preprocess-template-dispatch)
+   :functions (remove-template-method)
+   :predicates (template-function-p single-arg-template-function-p))
   (:tests
    :require (:std :rt)
    :description "CC Standard Library Tests"

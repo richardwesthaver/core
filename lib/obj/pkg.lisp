@@ -101,6 +101,9 @@
   (:nicknames :meta/stored :stored)
   (:use :cl :std :sb-mop :val)
   (:export
+   :*store*
+   :*stores*
+   :*default-store*
    :stored-class :initialize-stored-class
    :stored-slot
    :stored
@@ -912,7 +915,6 @@
    #:store
    #:next-oid
    #:next-cid
-   #:*store*
    #:spec
    #:stored-object-schema
    #:optimize-layout

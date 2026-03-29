@@ -38,7 +38,7 @@ function NAME and be skipped for (setf NAME)."
   "Map F over *VERBS*."
   (mapcar f *verbs*))
 
-(defun verbp (v)
+(defun verb-p (v)
   "Return T if V is the name of a verb."
   (when (member v *verbs* :key 'generic-function-name :test 'equal) t))
 
@@ -103,12 +103,14 @@ function NAME and be skipped for (setf NAME)."
   (:accessor t)
   (:documentation "Return the state of SELF."))
 (defverb tags (self)
+  (:accessor t)
   (:documentation "Return the tags associated with object SELF."))
 (defverb exec (self)
   (:documentation "Execute object SELF."))
 (defverb explore (self &key &allow-other-keys)
   (:documentation "Explore object SELF."))
 (defverb version (self)
+  (:accessor t)
   (:documentation "Return the version of object SELF."))
 (defverb lock (self)
   (:documentation "Return the lock associated with SELF."))
@@ -468,6 +470,17 @@ subclass of SUPER."
       (push super classes)))
 
 ;;; Template Functions
+;; Derived from MATLISP, this protocol provides a way to short-circuit the
+;; standard method dispatch.
+
+;; *TEMPLATE-TABLE* stores the global mapping of template-function names to a
+;; plist with the following keywords:
+
+;; LAMBDA-LIST - arguments to this function
+;; PREDICATE - dispatch predicate
+;; SORTER - sort predicate (defaults to predicate)
+;; SORT-FUNCTION - sort function (defaults to TOPOSORT)
+
 (defvar *template-table* (make-hash-table)
   "Global hash-table containing a mapping of template-function names to 'specs' (plists).")
 
@@ -577,8 +590,7 @@ given the name and specializer."
 ;;; Class Maps
 ;; inspired by death's dbus::define-name-class-mapping
 (defmacro define-class-map (&key class map find)
-  "Define an interface for mapping names (strings) to classes (or
-class names)."
+  "Define an interface for mapping names (strings) to classes (or class names)."
   (let ((map-docstring (format nil "Map names to ~A classes or class names." class))
         (find-docstring (format nil "Return the ~A class (or class name) corresponding to NAME." class))
         (find-setf-docstring (format nil "Associate a ~A class (or class name) with NAME." class)))

@@ -14,7 +14,7 @@
 
 ;; These paths may be rebound based on application context.
 (defvar *stash* (merge-pathnames ".stash/" (user-homedir-pathname)))
-(defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
+;; (defvar *store* (merge-pathnames ".store/" (user-homedir-pathname)))
 
 (defun find-stash-directory (&optional (path *default-pathname-defaults*))
   "Find the closest STASH directory - first check local, then user, then
