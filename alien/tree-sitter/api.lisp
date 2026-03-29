@@ -79,7 +79,7 @@
   `(let ((,var (ts-query-cursor-new)))
      ,@body))
 
-(defun parse-string (language string &key (start 0) end consume (name-generator #'make-lisp-name))
+(defun parse-string (language string &key (start 0) end)
   "Parse a STRING that represents LANGUAGE code using tree-sitter. START is
 where to start parsing STRING. END is where to stop parsing STRING.
 
@@ -90,16 +90,12 @@ desired name for use in lisp."
       (error 'cant-create-parser))
     (unwind-protect (parse-string-with-language language string parser
                                                 :start start
-                                                :end end
-                                                :consume consume
-                                                :name-generator name-generator)
+                                                :end end)
       (ts-parser-delete parser))))
         
 
 (defun parse-string-with-language (language string parser
-                                   &key (start 0) end
-                                        (consume t)
-                                        (name-generator #'make-lisp-name))
+                                   &key (start 0) end)
   (unless (ts-parser-set-language parser (language-module language))
     (error 'cant-set-language :language language))
   (let* ((string-start start)
@@ -115,9 +111,7 @@ desired name for use in lisp."
              :string-start start
              :string-end end
              :language language))
-    (if consume
-        (convert-foreign-tree-to-list tree :name-generator name-generator)
-        tree)))
+    tree))
 
 (defun ts-point-cons (p)
   (unless (sb-alien:null-alien p)
@@ -136,7 +130,7 @@ desired name for use in lisp."
       (with-alien-slots (tree-sitter::row tree-sitter::column) p
         (cons tree-sitter::row tree-sitter::column)))))
 
-(defun convert-foreign-tree-to-list (tree &key (name-generator #'make-lisp-name)
+(defun convert-ts-tree (tree &key (name-generator #'make-lisp-name)
                                           &aux did-visit-children parse-stack)
   (with-ts-cursor (tc node tree)
     ;; Closely follows tree-sitter-cli parse implementation

@@ -10,6 +10,31 @@
 
 ;; client-socket = active-socket
 ;; server-socket = passive-socket
+;;; SB-BSD-SOCKETS override
+(defmethod shared-initialize :after ((socket socket) slot-names
+                                     &key protocol type
+                                     &allow-other-keys)
+  (let* ((proto-num
+          (cond ((and protocol (keywordp protocol))
+                 (get-protocol-by-name protocol))
+                (protocol protocol)
+                (t 0)))
+         (fd (or (and (slot-boundp socket 'sb-bsd-sockets::file-descriptor)
+                      (socket-file-descriptor socket))
+                 (sockint::socket (socket-family socket)
+                                  (ecase type
+                                    ((:datagram) sockint::sock-dgram)
+                                    ((:stream) sockint::sock-stream)
+                                    ((:raw) sockint::sock-raw))
+                                  proto-num))))
+    (sb-bsd-sockets::socket-error-case ("socket" fd)
+        (progn
+          (setf (slot-value socket 'sb-bsd-sockets::file-descriptor) fd
+                (slot-value socket 'sb-bsd-sockets::protocol) proto-num
+                (slot-value socket 'sb-bsd-sockets::type) type)
+          (sb-ext:finalize socket (lambda () (sockint::close fd))
+                           :dont-save t)))))
+
 ;;; MAKE-SOCKET
 (defun make-socket (&rest args &key (family :internet) (type :stream) (class :client) 
                                     (ipv6 *ipv6*) (protocol *default-inet-protocol*) 
@@ -243,22 +268,20 @@ BODY."
 ;; FIX 2026-03-22: 
 #+nil
 (defun ping (target &key (id #xFF) (seqno 1))
-  (with-open-socket (socket :family :ipv6 :type :raw :protocol sockint::ipproto_icmp
-                            :include-headers t))
-    (let* ((payload-size 4)
-           (icmp-packet-size (+ (alien-size io/socket::icmp-header) payload-size))
+  (with-open-socket (socket :family :ipv4 :class :socket :type :raw :protocol :igmp)
+    (setf (io/socket::sockopt-ip-header-include socket) t)
+    (let* ((icmp-packet-size (+ (alien-size io/socket::icmp-header) 4))
            (frame-size (+ (alien-size io/socket::ip-header) icmp-packet-size)))
       (sb-alien:with-alien ((frame (* (unsigned 8)) (make-alien sb-alien:unsigned-char frame-size)))
         ;; (std:memset frame 0 frame-size)
-        (let* ((ip-header frame)
-               (icmp-header (sb-sys:sap+ ip-header (alien-size ip-header)))
+        (let* ((icmp-header (sb-sys:sap+ frame (alien-size ip-header)))
                (payload (sb-sys:sap+ icmp-header (alien-size icmp-header))))
-          (write-ip-header ip-header frame-size (dotted-to-integer target))
+          (write-ip-header frame frame-size (dotted-to-integer target))
           (setf (std:sap-ref payload sb-alien:unsigned-int) (io/swap-bytes::htonl #x1A2B3C4D))
           (write-icmp-header icmp-header icmp-packet-size id seqno)
-          (send socket frame :end frame-size :remote-host target)
+          (socket-send socket frame nil :end frame-size :address target)
           (wait-until-fd-ready (socket-file-descriptor socket) :input)
-          (receive socket :size (* 64 1024))))))
+          (receive socket :size (* 64 1024)))))))
 
 ;;; TCP
 (defconfig tcp-config (socket-config) 
@@ -401,7 +424,7 @@ BODY."
 (defclass netlink-socket (socket)
   ((family :initform af-netlink))
   (:documentation "Class representing NETLINK local sockets.")
-  (:default-initargs :type :datagram))
+  (:default-initargs :type :raw))
 
 (defmethod size-of-sockaddr ((self netlink-socket))
   io/socket::+size-of-sockaddr-nl+)

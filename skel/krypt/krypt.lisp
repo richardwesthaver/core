@@ -6,8 +6,8 @@
 (in-package :skel/krypt)
 
 ;;; Vars
-(defvar *user-kryptrc*)
-(defvar *krypt-directory* (merge-pathnames ".stash/krypt/" (user-homedir-pathname)))
+(defvar *user-kryptrc* (xdg-config-file :krypt))
+(defvar *krypt-directory* (xdg-data-directory "krypt"))
 (defvar *krypt-key-directory* (merge-pathnames "key/" *krypt-directory*))
 (defvar *krypt-token-directory* (merge-pathnames "token/" *krypt-directory*))
 (defvar *krypt-password-directory* (merge-pathnames "pw/" *krypt-directory*))
@@ -79,8 +79,7 @@
   (mapc 'ensure-directories-exist
         (list *krypt-directory* *krypt-net-directory*
               *krypt-token-directory* *krypt-password-directory*))
-  (setq *krypt-user-config* (load-kryptrc))
-  (values))
+  (setq *krypt-user-config* (load-kryptrc)))
 
 (defmethod init ((self (eql :krypt)) &key)
   (init :xdg)

@@ -18,6 +18,8 @@
 
 (defvar *skel-project* nil)
 (defvar *skel-registry* nil)
+(defvar *skel-user-config* nil)
+(defvar *skel-system-config* nil)
 (defvar *skel-env* (make-hash-table :test 'equal)
   "A hash-table containing active SKEL environment variables. Keys and values are
 strings.
@@ -42,13 +44,13 @@ uninitialized with non-nil :ast slots.")
 (declaim (pathname *skel-stash* *skel-store*
                    *skel-cache* *system-skelrc* 
                    *user-skelrc*))
-(defvar *skel-stash* (merge-homedir-pathnames ".stash/skel/stash/"))
-(defvar *skel-store* (merge-homedir-pathnames  ".stash/skel/store/"))
-(defvar *skel-cache* (merge-homedir-pathnames ".stash/skel/cache/"))
-(defvar *skel-data* (merge-homedir-pathnames ".stash/skel/data/"))
+(defvar *skel-stash* (xdg-data-directory "skel/stash"))
+(defvar *skel-store* (xdg-data-directory  "skel/store"))
+(defvar *skel-cache* (xdg-cache-directory "skel"))
+(defvar *skel-data* (xdg-data-directory "skel"))
 (defvar *skel-path* *default-pathname-defaults*)
 (defvar *system-skelrc* (pathname "/etc/skelrc"))
-(defvar *user-skelrc*)
+(defvar *user-skelrc* (xdg-config-file :skel))
 
 (std:defvar-unbound *default-clean-function*
   "The default function used to clean a SK-PROJECT.")

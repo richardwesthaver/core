@@ -27,9 +27,6 @@
    (pods :initform nil :initarg :pod :type list)
    (services :initform nil :initarg :services :type list :accessor services)))
 
-;; late declaim
-(declaim (type home-config *home-config*))
-
 (defmethod make-config ((self (eql :homer)) &rest args)
   (apply 'make-instance 'home-config args))
 

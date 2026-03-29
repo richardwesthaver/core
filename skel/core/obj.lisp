@@ -186,8 +186,3 @@
   (apply 'make-instance 'sk-user-config args))
 
 (defun default-sk-user-config () (make-instance 'sk-user-config))
-
-(declaim (type (or sk-user-config null) *skel-user-config*))
-(declaim (type (or sk-system-config null) *skel-system-config*))
-(defvar *skel-user-config* nil)
-(defvar *skel-system-config* nil)

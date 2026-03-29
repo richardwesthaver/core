@@ -174,8 +174,8 @@ returning.  The string should not contain any newline characters."))
 
 (defclass standard-dbus-connection (dbus-connection id)
   ((address :initarg :address :reader address)
-   (pending-messages :initform nil :accessor connection-pending-messages)
-   (event-base :initarg :event-base :reader connection-event-base)
+   (queue :initform nil :accessor queue)
+   (event-base :initarg :event-base :reader event-base)
    (serial :initform 1)
    (supports-unix-fd-passing :initform nil :accessor supports-unix-fd-passing-p))
   (:default-initargs :id nil)
@@ -195,22 +195,22 @@ returning.  The string should not contain any newline characters."))
               (if (zerop x) 1 x))))))
 
 (defmethod drain-pending-messages ((connection standard-dbus-connection))
-  (prog1 (nreverse (connection-pending-messages connection))
-    (setf (connection-pending-messages connection) '())))
+  (prog1 (nreverse (queue connection))
+    (setf (queue connection) '())))
 
 (defmethod wait-for-reply (serial (connection standard-dbus-connection))
   (loop
-    (dolist (message (connection-pending-messages connection))
+    (dolist (message (queue connection))
       (when (and (typep message '(or dbus-error-message dbus-method-return-message))
                  (= serial (net/codec/dbus::message-reply-serial message)))
-        (deletef (connection-pending-messages connection) message :count 1)
+        (deletef (queue connection) message :count 1)
         (return-from wait-for-reply
           (values (net/codec/dbus::message-body message) message))))
-    (io/mux:event-dispatch (connection-event-base connection) :oneshot t)))
+    (io/mux:event-dispatch (event-base connection) :oneshot t)))
 
 (defun activate-io-handlers (connection)
   (set-io-handler
-   (connection-event-base connection)
+   (event-base connection)
    (fd connection)
    :read
    (lambda (fd event error)
@@ -219,7 +219,7 @@ returning.  The string should not contain any newline characters."))
        (error "Connection I/O error: ~S." error))
      (loop for message = (receive-message-no-hang connection)
            if (null message) return nil
-           else do (push message (connection-pending-messages connection))))))
+           else do (push message (queue connection))))))
 
 (defmethod supported-authenticators ((connection standard-dbus-connection))
   (send-authentication-command connection :auth)
@@ -305,15 +305,10 @@ returning.  The string should not contain any newline characters."))
   t)
 
 ;;;; Unix Connection
-(defclass dbus-unix-connection (standard-dbus-connection wrapped-socket)
-  ((address :initarg :address :reader address)
-   (pending-messages :initform nil :accessor connection-pending-messages)
-   (event-base :initarg :event-base :reader connection-event-base)
-   (serial :initform 1)
-   (socket :initarg :socket :accessor connection-socket)
-   (supports-unix-fd-passing :initform nil :accessor supports-unix-fd-passing-p))
+(defclass dbus-unix-connection (standard-dbus-connection wrapped-socket) ()
   (:documentation "Represents a connection to a DBUS server over Unix
-Domain Sockets."))
+Domain Sockets.")
+  (:default-initargs :queue nil))
 
 (defmethod connect (event-base (address unix-server-address) &key (if-failed :error))
   (declare (ignore if-failed))
@@ -341,31 +336,30 @@ Domain Sockets."))
       (when socket (socket-close socket)))))
 
 (defmethod fd ((connection dbus-unix-connection))
-  (socket-file-descriptor (connection-socket connection)))
+  (socket-file-descriptor (socket connection)))
 
 (defmethod disconnect ((connection dbus-unix-connection))
-  (socket-close (connection-socket connection)))
+  (socket-close (socket connection)))
 
 (defmethod receive-message-no-hang ((connection standard-dbus-connection))
-  (with-socket-stream (s (connection-socket connection) :input t :external-format '(:default :newline :crlf)
-                                                        :element-type :default)
+  (with-socket-stream (s (socket connection) :input t)
     (decode-dbus-message s)))
 
 (defmethod receive-line ((connection dbus-unix-connection))
-  (with-socket-stream (s (connection-socket connection) :input t
-                                                        :external-format '(:default :newline :crlf)
-                                                        :element-type :default)
+  (with-socket-stream (s (socket connection) :input t
+                                             :external-format '(:default :newline :crlf)
+                                             :element-type :default)
     (read-line s)))
 
 (defmethod send-line (line (connection dbus-unix-connection))
-  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
-                                                        :element-type :default)
+  (with-socket-stream (s (socket connection) :output t 
+                                             :external-format '(:default :newline :crlf)
+                                             :element-type :default)
     (write-line line s)
     (force-output s)))
 
 (defmethod send-message (encoded-message (connection dbus-unix-connection))
-  (with-socket-stream (s (connection-socket connection) :output t :external-format '(:default :newline :crlf)
-                                                        :element-type :default)
+  (with-socket-stream (s (socket connection) :output t)
     (write-sequence encoded-message s)
     (force-output s)))
 
@@ -773,7 +767,7 @@ return the argument; otherwise, signal an authentication error."
           (if (null object)
               (missing-handler message connection)
               (dispatch-message message object connection))))
-      (io/mux:event-dispatch (connection-event-base connection) :oneshot t))))
+      (io/mux:event-dispatch (event-base connection) :oneshot t))))
 
 (defun make-object-index (object-names)
   (let ((index (make-hash-table :test 'equal)))

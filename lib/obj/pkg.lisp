@@ -629,7 +629,7 @@
    :cmd :*command-hook*
    :eval-command :parse-args
    :read-arg :read-args
-   :parse-interactive-lambda-list :*command-input*
+   :parse-interactive-lambda-list :*command-io*
    :command-class :*command-names-p*
    :list-all-commands :*commander*
    :print-command :command-name

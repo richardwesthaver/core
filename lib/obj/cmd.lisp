@@ -68,7 +68,7 @@ Z -- Coding system, nil if no prefix arg.
 
 ;;; Variables
 (defvar *command*)
-(defvar *command-input* (make-synonym-stream '*query-io*)
+(defvar *command-io* (make-synonym-stream '*query-io*)
   "The input stream, string, or arglist of the current *COMMAND*.")
 (defvar *command-class* 'command)
 (defvar *commands* (make-hash-table))
@@ -187,7 +187,7 @@ argument of CALL."
       (loop while args
             for o in opt
             for a = (pop args)
-            do (call-ds-command-type o))
+            do (collect (call-ds-command-type o)))
       (when rest 
         (if args
             (dolist (a args)
@@ -279,7 +279,7 @@ Example:
 (define-command-type :symbol (prompt)
  (or (find-symbol
        (string-upcase
-         (or (read-arg *command-input*)
+         (or (read-arg *command-io*)
              ;; Whitespace messes up find-symbol.
              (string-trim \" \"
                           (completing-read (current-screen)
@@ -301,7 +301,7 @@ Example:
                 `(command-type ,(keywordicate name))
                 `(command-type ,(keywordicate (second name)) (cdr (or (command-table ,(keywordicate (car name))) (make-commands ,(keywordicate (car name)))))))
            (lambda ,args
-             ;; use *COMMAND-INPUT*
+             ;; use *COMMAND-IO*
              ,@body))))
 
 ;; IO
@@ -374,7 +374,7 @@ which is similar to package prefixes and indicates the key of *COMMAND-TABLE* to
 then execute it."
   (declare ((or string symbol command) command))
   (catch 'cmd
-    (let ((*command-input* input))
+    (let ((*command-io* input))
       (multiple-value-bind (cmd args itype) 
           (typecase command
             ((or string symbol)
@@ -587,7 +587,7 @@ with each hook being passed the RESULT."
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format command SELF as a useful string.")
   (:method ((self command) &optional stream)
-    (format stream "~@[~<~A~>~%~]" (kernel-documentation self))))
+    (format stream "~&~A~%" (function-lambda-list (kernel self)))))
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name class copy (load t) names clean)

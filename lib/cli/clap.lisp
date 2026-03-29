@@ -150,11 +150,11 @@ evaluation of BODY."
   (read-args *query-io*))
 
 (define-command-type (:cli y/n) (&optional prompt)
-  (let ((*query-io* (if (streamp *command-input*) *command-input* *query-io*)))
+  (let ((*query-io* (if (streamp *command-io*) *command-io* *query-io*)))
     (y-or-n-p prompt)))
 
 (define-command-type (:cli yes-or-no) (&optional prompt)
-  (let ((*query-io* (if (streamp *command-input*) *command-input* *query-io*)))
+  (let ((*query-io* (if (streamp *command-io*) *command-io* *query-io*)))
     (yes-or-no-p prompt)))
 
 (define-command-type (:cli char) (&optional (prompt "Character: "))
@@ -173,10 +173,11 @@ evaluation of BODY."
   (without-echo
     (string (read-arg *query-io*))))
 
-(define-command-type (:cli command) (&optional (prompt "Command: ") (commands *commands*))
-  (format *query-io* prompt)
-  (force-output *query-io*)
-  (command (read-arg *query-io*) commands))
+(define-command-type (:cli command) (&optional (prompt "Command: "))
+  (format *command-io* prompt)
+  (force-output *command-io*)
+  (when-let ((cmd (read-arg *command-io*)))
+    (command cmd)))
 
 ;; REVIEW 2026-03-03: 
 ;; (define-command-type (:cli key)) ;; typed keyword?
@@ -198,7 +199,9 @@ evaluation of BODY."
 (defcommand (:cli :help) (&optional (arg *cli*))
   "Print help and exit."
   (declare (interactive (ustring "Command: ")))
-  (print-help (if (cli-p arg) arg (command arg))))
+  (if (cli-p arg) 
+      (print-help arg) 
+      (print-help (command arg))))
 
 (defcommand (:cli :version) (&optional (arg *cli*))
   "Print version and exit." 

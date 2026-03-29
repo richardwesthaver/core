@@ -149,7 +149,8 @@ Cookie: name=wookie
       #+nil ; hangs
       (notifications "org.freedesktop.Notifications" "Notify"
                      "Test" 0 "" "Test"))
-    (with-introspected-object (systemd bus "/org/freedesktop/systemd1" "org.freedesktop.systemd1"))
+    (with-introspected-object (systemd bus "/org/freedesktop/systemd1" "org.freedesktop.systemd1")
+      (systemd "org.freedesktop.systemd1" "GetUnit" "emacs"))
     (is :ok)))
 
 (define-dbus-object root

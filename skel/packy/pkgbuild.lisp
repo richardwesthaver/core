@@ -25,9 +25,9 @@
 values: (VARS FUNCTIONS SRC)"
   (let* ((path (probe-file file))
          (str (read-file path))
-         (tree (syn/ts:parse-file :bash path))
+         (tree (copy-list (convert-ts-tree (syn/ts:parse-file :bash path))))
          vars fns)
-    (mapc (lambda (x) 
+    (mapc (lambda (x)
             (case (car x)
               (:function-definition
                (when-let ((body (cadar (member :body (caddr x) :key (lambda (x) (car x)))))

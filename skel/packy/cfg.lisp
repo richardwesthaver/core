@@ -24,3 +24,7 @@
           self)
         ;; invalid ast, signal error
         (error 'syntax-error))))
+
+(defmethod load-config ((self (eql :packy)) (from pathname) &key)
+  (let ((c (make-config :packy)))
+    (load-config c from)))

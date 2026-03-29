@@ -12,3 +12,5 @@
 (defclass sesh-server (sesh-node server) ())
 
 (defclass sesh-client (sesh-node client) ())
+
+(defclass sesh-connection (connection) ())

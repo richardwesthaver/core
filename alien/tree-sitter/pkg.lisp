@@ -93,7 +93,7 @@
    :with-ts-node
    :parse-string
    :with-ts-cursor
-   :convert-foreign-tree-to-list
+   :convert-ts-tree
    :ts-language-next-state
    :ts-language-field-id-for-name
    :ts-language-field-name-for-id

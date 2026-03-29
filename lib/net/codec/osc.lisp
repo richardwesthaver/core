@@ -58,7 +58,6 @@
     :initform nil)))
 
 ;; Constructors
-
 (defun make-osc-message (command args)
   (unless (listp args)
     (setf args (list args)))

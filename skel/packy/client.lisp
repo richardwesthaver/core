@@ -31,3 +31,6 @@
   (when tree-sitter
     (tree-sitter:load-tree-sitter)
     (tree-sitter:load-tree-sitter-bash)))
+
+(defmethod init ((self (eql :packy)) &rest args)
+  (apply 'init-packy args))

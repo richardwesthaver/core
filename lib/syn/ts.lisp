@@ -23,11 +23,10 @@
     `(:symbols ,(ts-language-symbol-count l)
       :fields ,(ts-language-field-count l))))
 
-(defun parse-file (lang path &key (consume t) (start 0) end)
+(defun parse-file (lang path &key (start 0) end)
   (parse-string 
    lang
    (read-file path)
-   :consume consume
    :start start
    :end end))
 
