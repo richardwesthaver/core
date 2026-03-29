@@ -433,24 +433,31 @@ objects of type COMPONENT."
 (defun find-submodule (kind name mod)
   "Find a submodule of type KIND specified by NAME in a module's plist MOD."
   (let ((k (getf mod kind)))
-    (if (listp k)
-        (let ((len (length k)))
-          (if (and name (> len 1))
-              (or (find name k :key 'name :test 'string-equal)
-                  (assoc name k :key 'name :test 'string-equal))
-              (if (= len 1)
-                  (car k)
-                  k)))
-        k)))
+    (cond
+      ((null name) k)
+      ((listp k)
+       (or
+        (find name k :test 'equal)
+        ;; FIX 2026-03-29: use of ignore-errors
+        (ignore-errors (assoc name k :test 'equal)))))))
 
 (defun find-module (name &optional kind key)
   "Find the module specified by NAME which should be a system designator or NIL
 to match all systems and optional KIND (a module designator) specified by KEY."
   (if (null name)
       (when kind
-        (mapcar 
-         (lambda (x) (find-submodule kind key x))
-         (std/hash:hash-table-values *module-table*)))
+        (let* ((parents)
+               (match
+                   (collecting
+                     (maphash
+                      (lambda (k v) (when-let ((y (find-submodule kind key v))) (collect y) (push k parents)))
+                      *module-table*))))
+          (std/list:nreversef parents)
+          (if (> (length match) 1)
+              (progn
+                (warn "Multiple matches found for module ~A ~A" kind key)
+                (values match parents))
+                (values (car match) (car parents)))))
       (when-let ((mod (find-module* name)))
         (if kind
             (find-submodule kind key mod)
@@ -486,16 +493,19 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     :restarts :accessors :predicates :classes))
 
 (defun %load-proto (name &optional (system *defsys*))
-  "Load a protocol module FORM."
-  (destructuring-bind (name &rest args) (find-module system :proto name)
+  "Load a protocol module NAME."
+  (multiple-value-bind (form sys) (find-module system :proto name)
+    (destructuring-bind (name &rest args) form
     (declare (ignore name))
-    (let ((pkg (or (getf args :package) system)))
-      (remove-if 'null
-                 (mapcar (lambda (x)
-                           (when-let ((syms (getf args x)))
-                             (import syms pkg)
-                             (cons x syms)))
-                         *protocol-keyword-imports*)))))
+      (let ((pkg (find-package (or (getf args :package) system sys))))
+        (values
+         (remove-if 'null
+                    (mapcar (lambda (x)
+                              (when-let ((syms (getf args x)))
+                                (import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
+                                (cons x syms)))
+                            *protocol-keyword-imports*))
+         pkg)))))
 
 ;; templates?
 (defun %load-module (form &rest args)

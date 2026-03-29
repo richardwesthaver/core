@@ -1070,7 +1070,6 @@ handle stored in another slot of the same object."))
   (head 0 :type array-index)
   (tail 0 :type array-index))
 
-;; REVIEW 2026-03-11: 
 (deftype iobuf-lisp-array ()
   '(simple-array * (*)))
 

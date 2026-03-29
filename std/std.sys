@@ -136,6 +136,7 @@
    :macros (with-queue-lock)
    :structs (basic-queue raw-queue vector-queue cons-queue priority-queue hnode fib-heap pqueue spin-queue))
   (:proto :task
+   :package :std/task
    :description "Async units of work."
    :variables (*tasks* *jobs* *job* *stage* *task* *task-class* *task-priority*)
    :accessors (status)
