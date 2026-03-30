@@ -114,6 +114,15 @@
    :description "Named pprint-dispatch tables."
    :macros (defprint define-printer with-printer in-printer)
    :functions (find-printer unknown-printer use-printer copy-printer))
+  (:proto :annotations
+   :package :std/print
+   :description "Named annotation tables."
+   :variables (*annotation-table* *annotations* *annotation-mod-left* *annotation-mod-right*)
+   :constants (+annotation-prefix+)
+   :functions 
+   (annotations expand-annotation expand-annotated-string save-annotations 
+    copy-annotations load-annotations aformat)
+   :macros (with-annotations defnotation))
   (:proto :readtable
    :package :std/named-readtables
    :description "Named reader-dispatch tables."

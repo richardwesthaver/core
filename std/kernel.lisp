@@ -40,6 +40,8 @@
   (:metaclass kernel-class)
   (:documentation "Standard kernel object."))
 
+(defmethod sb-impl::object-type-string ((self kernel-object)) "kernel function")
+
 (defmethod kernel ((self sb-mop:funcallable-standard-object))
   (sb-pcl::%funcallable-instance-fun self))
 (defmethod (setf kernel) (new (self sb-mop:funcallable-standard-object))
@@ -92,6 +94,8 @@ restarts is provided. *KERNEL* is returned."
 (defkernel hook () ()
   (:documentation "Hooks are functions or KERNEL objects which call an instance-specific
 collection of functions at a pre-arranged point in time."))
+
+(defmethod sb-impl::object-type-string ((self hook)) "hook function")
 
 (macrolet ((%defhook (name supers slots &rest opts)
              (let ((k (copy-list (find :kernel opts :key #'car))))

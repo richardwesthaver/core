@@ -65,6 +65,8 @@ assigned, the 'owner', i.e. the worker that is assigned this task, may modify
 the object. When the work associated with a task is complete, the owner is
 responsible for indicating in the state slot the result of the computation."))
 
+(defmethod sb-impl::object-type-string ((self task)) "task function")
+
 (defmethod print-object ((self task) stream)
   (print-unreadable-object (self stream :type t)
     (format stream ":state ~A" (state self))))
