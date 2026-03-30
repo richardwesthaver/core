@@ -60,9 +60,10 @@
      ,@body))
 
 (defmacro with-ts-cursor ((cursor node tree) &body forms)
-  `(let* ((,node (ts-tree-root-node ,tree))
-          (,cursor (ts-tree-cursor-new ,node)))
-     ,@forms))
+  `(let* ((,node (ts-tree-root-node ,tree)))
+     (with-alien ((,cursor (* ts-tree-cursor) (make-alien ts-tree-cursor))) 
+       (setf (deref ,cursor) (ts-tree-cursor-new ,node))
+       ,@forms)))
 
 (defmacro with-ts-query (lang (var expr) &body body)
   (with-gensyms (eoff etype exp len)
@@ -126,42 +127,43 @@ desired name for use in lisp."
 (defun ts-node-end (node)
   "Return a cons (ROW . COL) indicating the file-position of the end of NODE."
   (sb-alien:with-alien ((p ts-point (ts-node-end-point node)))
-    (unless (sb-alien:null-alien p)
+    (unless (print (sb-alien:null-alien p))
       (with-alien-slots (tree-sitter::row tree-sitter::column) p
         (cons tree-sitter::row tree-sitter::column)))))
 
 (defun convert-ts-tree (tree &key (name-generator #'make-lisp-name)
-                                          &aux did-visit-children parse-stack)
+                             &aux did-visit-children parse-stack)
   (with-ts-cursor (tc node tree)
     ;; Closely follows tree-sitter-cli parse implementation
-    (let ((cursor (alien-sap tc)))
-      (loop
-        (let ((node (ts-tree-cursor-current-node cursor))
-              (is-named (ts-node-is-named node))
-              (cursor (alien-sap tc)))
-        (cond (did-visit-children
-               (when (and is-named (second parse-stack))
-                 (let ((item (pop parse-stack)))
-                   (setf (node-children item)
-                         (nreverse (node-children item)))
-                   (push item (node-children (first parse-stack)))))
-               (cond ((ts-tree-cursor-goto-next-sibling cursor)
-                      (setf did-visit-children nil))
-                     ((ts-tree-cursor-goto-parent cursor)
-                      (setf did-visit-children t))
-                     (t
-                      (let ((root (first parse-stack)))
-                        (setf (node-children root)
-                              (nreverse (node-children root)))
-                        (return root)))))
-              (t
-               (when is-named
-                 (let ((start-point (ts-node-start-byte node))
-                       (end-point (ts-node-end-byte node))
-                       (type (funcall name-generator (ts-node-type node)))
-                       (field-name (ts-tree-cursor-current-field-name cursor)))
-                   (when field-name (setf type (list (funcall name-generator field-name) type)))
-                   (push (make-node :type type :range (list start-point end-point))
-                         parse-stack)))
-               (setf did-visit-children
-                     (not (ts-tree-cursor-goto-first-child cursor))))))))))
+    ;; (with-ts-node?
+    (loop
+      (let ((node (ts-tree-cursor-current-node tc)))
+        (when (null-alien node) (return parse-stack))
+        (let ((is-named (ts-node-is-named node))
+              (cursor tc))
+          (cond (did-visit-children
+                 (when (and is-named (second parse-stack))
+                   (let ((item (pop parse-stack)))
+                     (setf (node-children item)
+                           (nreverse (node-children item)))
+                     (push item (node-children (first parse-stack)))))
+                 (cond ((ts-tree-cursor-goto-next-sibling cursor)
+                        (setf did-visit-children nil))
+                       ((ts-tree-cursor-goto-parent cursor)
+                        (setf did-visit-children t))
+                       (t
+                        (let ((root (first parse-stack)))
+                          (setf (node-children root)
+                                (nreverse (node-children root)))
+                          (return root)))))
+                (t
+                 (when is-named
+                   (let ((start-point (ts-node-start-byte node))
+                         (end-point (ts-node-end-byte node))
+                         (type (funcall name-generator (ts-node-type node)))
+                         (field-name (ts-tree-cursor-current-field-name cursor)))
+                     (when field-name (setf type (list (funcall name-generator field-name) type)))
+                     (push (make-node :type type :range (list start-point end-point))
+                           parse-stack)))
+                 (setf did-visit-children
+                       (not (ts-tree-cursor-goto-first-child cursor))))))))))

@@ -6,7 +6,7 @@
 
 ;; These functions operate directly on foreign-allocated types. You
 ;; can find all of these in liburing.h. The IOURINGINLINE macro
-;; declares relevant functions as both static and inline. Functions
+;; declares relevant functions as both static and inline. Function
 ;; declarations prefixed by this macro are re-implemented in Lisp
 ;; here.
 

@@ -44,21 +44,20 @@ queue (CQ), and form the foundation of the new interface.
   (:use :cl :std :sb-alien)
   (:import-from :sb-posix :file-descriptor :sap-or-nil)
   (:shadow :build :build-from)
-  (:export :load-uring :io-uring-cq :io-uring-cq*
+  (:export :load-uring :io-uring-cq
    :completion-queue-offsets :completion-queue
    :completion-queue-entry :completion-queue-entry-32
-   :io-uring-sq :io-uring-sq* :submission-queue-offsets :submission-queue
-   :io-uring-cqe :io-uring-cqe* :io-uring-sqe :io-uring-sqe*
+   :io-uring-sq :submission-queue-offsets :submission-queue
+   :io-uring-cqe :io-uring-sqe
    :submission-queue-entry :submission-queue-entry-128
    :io-memory-map :parse-io-uring-params :io-params :io-uring
    :uring :*default-io-params* :uring-builder :setup-uring-queue
-   :make-uring-queue :build-submitter :sigset-t :cpu-set-t
-   :cpu-mask-t :recv-msg-out :cancel-builder :mmapped-region
    :with-io-uring :with-new-io-uring :io-uring-get-sqe :io-uring-sqe-set-flags
    :with-io-sqe :with-new-io-sqe :with-io-cqe :with-new-io-cqe
-   :io-uring-prep-rw :io-uring* :make-io-restriction :io-restriction
+   :io-uring-prep-rw :make-io-restriction :io-restriction
    :io-restriction-p :*default-io-params* :*default-io-entry-count* :io-submitter
-   :make-io-submitter))
+   :make-io-submitter :make-uring-queue :sigset :cpu-set
+   :cpu-mask-t :recv-msg-out :cancel-builder))
    
 (in-package :uring)
 (define-alien-loader uring "/usr/lib/")
@@ -180,9 +179,6 @@ queue (CQ), and form the foundation of the new interface.
           (splice-index-addr (union io-uring-sqe-slot12))
           (addr-or-cmd (union io-uring-sqe-slot13))))
           
-(define-alien-type io-uring-sqe* (* (struct io-uring-sqe)))
-(define-alien-type io-uring-cqe* (* (struct io-uring-cqe)))
-
 ;; NOTE 2024-05-12: alpha and mips use 535,536,537
 (defconstant +nr-io-uring-setup+ 425)
 (defconstant +nr-io-uring-enter+ 426)
@@ -206,8 +202,6 @@ queue (CQ), and form the foundation of the new interface.
           (ring-entries unsigned)
           (pad (array unsigned 2))))
 
-(define-alien-type io-uring-sq* (* (struct io-uring-sq)))
-
 (define-alien-type io-uring-cq
   (struct io-uring-cq
           (khead (* unsigned))
@@ -223,8 +217,6 @@ queue (CQ), and form the foundation of the new interface.
           (ring-entries unsigned)
           (pad (array unsigned-int 2))))
 
-(define-alien-type io-uring-cq* (* (struct io-uring-cq)))
-
 (define-alien-type io-uring
     (struct io-uring
             (sq (struct io-uring-sq))
@@ -236,7 +228,3 @@ queue (CQ), and form the foundation of the new interface.
             (int-flags unsigned-char)
             (pad (array unsigned-char 3))
             (pad2 unsigned)))
-
-(define-alien-type io-uring* (* io-uring))
-
-(define-alien-type io-uring-probe* (* (struct io-uring-probe)))

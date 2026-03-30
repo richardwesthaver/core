@@ -26,9 +26,7 @@
 (defstruct completion-queue
   (head 0 :type fixnum)
   (tail 0 :type fixnum)
-  (queue (make-alien io-uring-cq) :type (alien io-uring-cq*))) ;; io-uring-cq*
-
-;; (define-alien-type io-uring-cqe* (* (struct io-uring-cqe)))
+  (queue (make-alien io-uring-cq) :type (alien (* io-uring-cq))))
 
 ;; 16-byte CQE
 (defstruct completion-queue-entry 

@@ -7,8 +7,7 @@
 
 (defmacro defalien-int (name &body args)
   `(progn
-     (defar ,name int ,@args)
-     (export '(,name) :uring)))
+     (defar ,name int ,@args)))
 
 (defmacro def-with-ring (name &body args)
   `(defalien-int ,name (ring (* io-uring)) ,@args))
@@ -51,15 +50,19 @@
 (defmacro def-io-op (val name slots &body builder)
   "Define a wrapper for an io-uring opcode. This macro will create a
 structure class with NAME and SLOTS. BUILDER is the body of the BUILD
-method for this struct, with CONST bound to VAR."
+method for this struct, with CONST bound to VAR.
+
+SELF, FROM and SQE are all exposed for use in BUILDER."
   (let ((struct-name (symbolicate "IO-OP-" name))
         (const-name (symbolicate "+IO-" name "+"))
         (alien-name (symbolicate "IORING-OP-" name)))
     `(progn
        (defconstant ,const-name ,val)
        (defstruct ,struct-name ,@slots)
-       (defmethod build-from ((self ,struct-name) (from system-area-pointer) &key &allow-other-keys)
-         (with-io-sqe-op (sqe ,const-name (sap-alien from (struct io-uring-sqe)))
+       (defmethod build-from ((self ,struct-name) (from alien-value) &key &allow-other-keys)
+         (with-io-sqe-op (sqe ,const-name from)
            ,@builder))
+       (defmethod build-from ((self ,struct-name) (from system-area-pointer) &key &allow-other-keys)
+         (build-from self (sap-alien from (struct io-uring-sqe))))
        (pushnew ',alien-name *io-opcodes*)
        (export '(,struct-name ,(symbolicate "MAKE-" struct-name) ,const-name ,alien-name)))))

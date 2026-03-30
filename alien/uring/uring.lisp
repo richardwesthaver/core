@@ -11,14 +11,6 @@
 ;; (defconstant +io-syscall-register+ nr-io-uring-register) ;426
 ;; (defconstant +io-syscall-enter+ nr-io-uring-enter) ;427
 
-;; TODO 2024-04-02: tlab? dynamic-space hacks? there's almost
-;; certainly a better way to do this than mmapping regions in
-;; package-local structs.
-(defstruct io-memory-map
-  (sq-mmap (make-mmapped-region) :type mmapped-region)
-  (sqe-mmap (make-mmapped-region) :type mmapped-region)
-  (cq-mmap (make-mmapped-region) :type mmapped-region))
-
 (defun parse-io-uring-params (params)
   "Parse IO-URING-PARAMS foreign struct, return an IO-PARAMS struct."
   (let ((res 0))
@@ -91,16 +83,17 @@ which accepts a boolean value and automatically adjust the slot."
   (sq nil :type submission-queue)
   (cq nil :type completion-queue)
   (fd -1 :type sb-posix:file-descriptor) ;; owned fd
-  (params *default-io-params* :type io-params)
-  (memory nil :type io-memory-map))
+  (enter-fd -1 :type sb-posix:file-descriptor)
+  (params *default-io-params* :type io-params))
 
 (defstruct uring-builder
   (params *default-io-params* :type io-params)
   (dontfork nil :type boolean))
 
 (defmethod build ((self uring-builder) &key (entries *default-io-entry-count*))
-  (make-uring :sq (make-submission-queue) :cq (make-completion-queue) :memory (make-io-memory-map)))
+  (make-uring :sq (make-submission-queue) :cq (make-completion-queue)))
 
+#+todo
 (defun setup-uring-queue (fd p)
   "Setup a URING struct given a reference to a FILE-DESCRIPTOR and IO-PARAMS.")
 
@@ -108,6 +101,3 @@ which accepts a boolean value and automatically adjust the slot."
   "Create a new URING instance with default params. N is the size of the
 queue, which must be a power of two."
   (build (make-uring-builder) :entries entries))
-
-(defmethod build-submitter ((self uring-builder))
-  (make-io-submitter))

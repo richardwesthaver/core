@@ -27,7 +27,7 @@
 (defstruct submission-queue
   (head 0 :type fixnum)
   (tail 0 :type fixnum)
-  (queue (make-alien io-uring-sq) :type (alien io-uring-sq*))) ;; io-uring-sq*
+  (queue (make-alien io-uring-sq) :type (alien (* io-uring-sq))))
 
 ;; 64-byte SQE
 (defstruct submission-queue-entry

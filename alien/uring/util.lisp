@@ -6,13 +6,13 @@
 
 (in-package :uring)
 
-(define-alien-type nil
+(define-alien-type sigset
   (struct sigset-t
     (val (array unsigned-long #.+sigset-nwords+))))
 
 (define-alien-type cpu-mask-t unsigned-long)
 
-(define-alien-type nil
+(define-alien-type cpu-set
   (struct cpu-set-t
     (bits (array cpu-mask-t #.(/ +cpu-setsize+ +ncpu-bits+)))))
 
@@ -54,16 +54,8 @@
 
 ;; any, user_data, fd, all
 
-(defstruct mmapped-region
-  (addr (deref (make-alien (* t))) :type (alien (* t))) ;; (sb-impl::dynamic-space-free-pointer) ;?
-  (len 0 :type fixnum))
-
-;; do-mmap
-;; map len bytes starting from offset from file-descriptor in mmapped-region
-
 ;;; CPU Affinity
-;; it appears this actually crashes SBCL, receiving sig6 from foreign thread
-;; (define-alien-routine sched-setaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
-;; (define-alien-routine sched-getaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
-;; (sched-getaffinity 0 cpu-setsize (make-alien (struct cpu-set-t)))
-;; (sched-setaffinity 0 cpu-setsize (make-alien (struct cpu-set-t)))
+(define-alien-routine sched-setaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
+(define-alien-routine sched-getaffinity int (pid int) (cpusetsize size-t) (set (* (struct cpu-set-t))))
+;; (sched-getaffinity 0 +cpu-setsize+ (make-alien (struct cpu-set-t)))
+;; (sched-setaffinity 0 +cpu-setsize+ (make-alien (struct cpu-set-t)))

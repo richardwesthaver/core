@@ -15,7 +15,7 @@
 ;;; liburing.h
 (defalien-int io-uring-major-version)
 (defalien-int io-uring-minor-version)
-(defalien-int io-uring-check-version (major int) (minor int))
+(defar io-uring-check-version boolean (major int) (minor int))
 
 (defar io-uring-get-probe-ring (* io-uring-probe) (ring (* io-uring)))
 (defar io-uring-get-probe (* io-uring-probe))
@@ -94,13 +94,8 @@
 (def-with-ring io-uring-register-personality)
 (def-with-ring io-uring-unregister-personality (fd int))
 (def-with-ring io-uring-register-restrictions (res (array (struct io-uring-restriction))) (nr-res unsigned-int))
-;; (defalien-int io-uring-register
-;;   (fd int)
-;;   (opcode unsigned-int)
-;;   (args (* t))
-;;   (nr-args unsigned-int))
 (def-with-ring io-uring-enable-rings)
-(def-with-ring __io-uring-sqring-wait) ;;fixme
+(def-with-ring ("__io-uring-sqring-wait" io-uring-sqring-wait))
 (def-with-ring io-uring-register-iowq-aff (cpusz size-t) (mask (* (struct cpu-set-t))))
 (def-with-ring io-uring-unregister-iowq-aff)
 (def-with-ring io-uring-register-iowq-max-workers (values (array unsigned-int)))
@@ -116,37 +111,43 @@
 (def-with-ring io-uring-submit-and-get-events)
 
 ;;; Syscalls
-(defalien-int io-uring-enter
+(defsyscall io-uring-enter int
   (fd int)
   (to-submit unsigned-int)
   (min-complete unsigned-int)
   (flags unsigned-int)
   (sig (* (struct sigset-t))))
 
-(defalien-int io-uring-enter2
+(defsyscall io-uring-enter2 int
   (fd int)
   (to-submit unsigned-int)
   (min-complete unsigned-int)
   (flags unsigned-int)
   (sig (* (struct sigset-t)))
   (sz size-t))
-(defalien-int io-uring-setup
+(defsyscall io-uring-setup int
   (entries unsigned-int)
   (p (* (struct io-uring-params))))
-(defalien-int io-uring-register (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
+(defsyscall io-uring-register int (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 
-(defar io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
+(defsyscall io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
   (ring (* io-uring))
   (nentries unsigned-int)
   (bgid int)
   (flags unsigned-int)
   (ret (* int)))
-(defalien-int io-uring-free-buf-ring
-    (ring (* io-uring))
+(defsyscall io-uring-free-buf-ring int
+  (ring (* io-uring))
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))
 
+;; __io-uring-get-cqe
+(def-with-ring io-uring-set-iowait (enable-iowait boolean))
+
 ;;..
 (defar io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
 (defar io-uring-mlock-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))
+(defar io-uring-memory-size ssize-t (entries unsigned) (flags unsigned))
+(defar io-uring-memory-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))
+

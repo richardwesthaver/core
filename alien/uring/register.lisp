@@ -8,7 +8,7 @@
 (defconstant +io-probe-count+ 256)
 
 (defstruct io-probe
-  (probe (io-uring-get-probe) :type (alien io-uring-probe*))
+  (probe (io-uring-get-probe) :type (alien (* io-uring-probe)))
   (ops (make-array #.+io-probe-count+)
    :type (array (alien io-uring-probe-op) (#.+io-probe-count+))))
 
