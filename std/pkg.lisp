@@ -1447,7 +1447,8 @@
     :std/macs :std/thread :std/task :std/io 
     :std/seq :std/pipe :std/prim :std/condition
     :std/print :std/meta :std/path :std/sym
-    :std/macs :std/type :std/os :std/defpkg)
+    :std/macs :std/type :std/os :std/defpkg
+    :std/list :std/hash)
   (:import-from :std/named-readtables :in-readtable :readtable-name)
   (:import-from :std/comp :checked-compile-file)
   (:import-from :sb-impl :*requiring* :module-provide-contrib)

@@ -441,27 +441,38 @@ objects of type COMPONENT."
         ;; FIX 2026-03-29: use of ignore-errors
         (ignore-errors (assoc name k :test 'equal)))))))
 
+(defun find-submodules (name &optional kind)
+  (let* ((parents)
+         (providers)
+         (match
+             (collecting
+               (labels ((%sub (k v kin) 
+                        (if kin
+                            (when-let ((y (find-submodule kin name v)))
+                              (collect y) 
+                              (push k parents)
+                              (push kin providers))
+                            (mapc (lambda (x) (%sub k v x)) (hash-table-keys  *provider-table*)))))
+                 (maphash (lambda (k v) (%sub k v kind)) *module-table*)))))
+    (nreversef parents)
+    (nreversef providers)
+    (if (> (length match) 1)
+        (progn
+          (warn "Multiple matches found for module ~A ~A" kind name)
+          (values match parents providers))
+        (values (car match) (car parents) (car providers)))))
+
 (defun find-module (name &optional kind key)
   "Find the module specified by NAME which should be a system designator or NIL
 to match all systems and optional KIND (a module designator) specified by KEY."
-  (if (null name)
-      (when kind
-        (let* ((parents)
-               (match
-                   (collecting
-                     (maphash
-                      (lambda (k v) (when-let ((y (find-submodule kind key v))) (collect y) (push k parents)))
-                      *module-table*))))
-          (std/list:nreversef parents)
-          (if (> (length match) 1)
-              (progn
-                (warn "Multiple matches found for module ~A ~A" kind key)
-                (values match parents))
-                (values (car match) (car parents)))))
-      (when-let ((mod (find-module* name)))
-        (if kind
-            (find-submodule kind key mod)
-            mod))))
+  (cond
+    (name
+     (if-let ((mod (find-module* name)))
+       (if kind
+           (find-submodule kind key mod)
+           mod)
+       (find-submodules name kind)))
+    (t (find-submodules key kind))))
 
 ;; (SET-MODULE NAME nil) deletes a module.
 (defun set-module (name val &optional kind key (append t))
@@ -492,24 +503,23 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     :constants :parameters :macros :conditions
     :restarts :accessors :predicates :classes))
 
-(defun %load-proto (name &optional (system *defsys*))
+(defun %load-proto (form &optional (system *defsys*))
   "Load a protocol module NAME."
-  (multiple-value-bind (form sys) (find-module system :proto name)
-    (destructuring-bind (name &rest args) form
+  (destructuring-bind (name &rest args) form
     (declare (ignore name))
-      (let ((pkg (find-package (or (getf args :package) system sys))))
+      (let ((pkg (find-package (or (getf args :package) system))))
         (values
          (remove-if 'null
                     (mapcar (lambda (x)
                               (when-let ((syms (getf args x)))
-                                (import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
+                                (shadowing-import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
                                 (cons x syms)))
                             *protocol-keyword-imports*))
-         pkg)))))
+         pkg))))
 
 ;; templates?
-(defun %load-module (form &rest args)
-  (case (car args)
+(defun %load-module (form kind key sys)
+  (case kind
     ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
     (:io (gethash form *io-table*))
     (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
@@ -521,11 +531,12 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
     (t
      (sb-int:doplist (k v) form
-       (%load-module v k)))))
+       (%load-module v k key sys)))))
 
 (defun load-module (name &optional kind key)
   (let ((*module* name))
-    (%load-module (find-module name kind key) kind key)))
+    (multiple-value-bind (form sys prov) (find-module name kind key)
+      (%load-module form prov (car form) sys))))
 
 (defun load-modules (name &rest args)
   (mapcar (lambda (x) 
@@ -1408,3 +1419,9 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply #'test-system sys args))))
+
+;;; Printer
+(define-printer :sys)
+;;; Explorer
+(defmethod explore ((self system) &key)
+  "Explore a system in the Lisp REPL.")
