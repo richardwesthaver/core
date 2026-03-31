@@ -536,7 +536,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 (defun load-module (name &optional kind key)
   (let ((*module* name))
     (multiple-value-bind (form sys prov) (find-module name kind key)
-      (%load-module form prov (car form) sys))))
+      (%load-module form (or prov kind) (ensure-car form) sys))))
 
 (defun load-modules (name &rest args)
   (mapcar (lambda (x) 

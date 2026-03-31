@@ -13,7 +13,7 @@
   "Initialize the *IO* variable to an io-uring alien-value type using a
 queue size of ENTRIES and settings FLAGS."
   (with-new-io-uring r
-    (if (= 0 (io-uring-queue-init entries (addr r) flags))
+    (if (= 0 (uring::io-uring-queue-init entries (addr r) flags))
         (setf *io* r)
         (error "failed to initialize io-uring"))))
 

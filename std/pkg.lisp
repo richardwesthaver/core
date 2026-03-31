@@ -149,6 +149,7 @@
   (:import-from :std/list :flatten :removef)
   (:import-from :sb-int :simple-style-warning)
   (:import-from :sb-impl :define-error-wrapper)
+  (:shadowing-import-from :sb-ext :retry)
   (:export
    :define-error-wrapper
    :interact
@@ -205,7 +206,10 @@
    :wrapped-condition-value
    :wrap-condition
    :wrapped-error
-   :wrap-error))
+   :wrap-error
+   :with-retry-restart
+   ;; restarts
+   :retry))
 
 (defpkg :std/named-readtables
   (:use :cl :std/prim :std/condition :std/list)

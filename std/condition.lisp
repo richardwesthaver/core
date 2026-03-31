@@ -399,6 +399,14 @@ determines how to find out:
   "Sugar for CALL-WITH-IF-FAILED-HANDLER."
   `(call-with-if-failed-handler ,if-failed-form (lambda () ,@forms)))
 
+(defun call-with-retry-restart (msg thunk)
+  (loop (with-simple-restart (retry "~a" msg)
+          (return (funcall thunk)))))
+
+(defmacro with-retry-restart ((&key (msg "Retry.")) &body body)
+  (check-type msg string)
+  `(call-with-retry-restart ,msg (lambda () ,@body)))
+
 (defun interact (&rest prompt)
   "Read from user and eval."
   (apply #'format *query-io* prompt)

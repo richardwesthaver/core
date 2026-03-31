@@ -410,7 +410,7 @@ is monitored for EVENT-TYPE."
              :timeout)))
 
 ;;; EPOLL
-;; preferred interface
+;; preferred single-threaded backend
 (define-multiplexer epoll-multiplexer (multiplexer)
   ((events :reader events)))
 
@@ -420,14 +420,11 @@ is monitored for EVENT-TYPE."
 
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
   (setf (slot-value mux 'fd) (io-syscall* (sys:epoll-create size)))
-  (setf (slot-value mux 'events) (foreign-alloc 'sys:epoll-event :count (fd-limit mux))))
+  (setf (slot-value mux 'events) (make-alien sys:epoll-event (fd-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
   (declare (ignore abort))
-  (with-slots (events) mux
-    (when events
-      (foreign-free events)
-      (setf events nil))))
+  (setf (slot-value mux 'events) nil))
 
 (defun calc-epoll-flags (fd-entry)
   (logior 
@@ -451,7 +448,7 @@ is monitored for EVENT-TYPE."
              (slot ev 'sys::data)
              'sys::fd)
             fd)
-      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd (alien-sap ev)))
+      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd (addr ev)))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot monitor it." fd))
         (io/sys::eexist () (warn "FD ~A is already monitored." fd))))))
 
@@ -464,7 +461,7 @@ is monitored for EVENT-TYPE."
       ;; (bzero ev (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events) flags)
       (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
-      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (alien-sap ev)))
+      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev)))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot update its status." fd))
         (io/sys::enoent () (warn "FD ~A was not monitored, cannot update its status." fd))))
     (values fd-entry)))
@@ -489,7 +486,7 @@ is monitored for EVENT-TYPE."
         (setf ready-fds (io-syscall* (sys:epoll-wait (fd mux) events fd-limit
                                                      (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
-                   `(slot (sap-ref events 'sys:epoll-event i) ',slot-name)))
+                   `(slot (deref events i) ',slot-name)))
         ;; return* ? need to return from a specific block here, not the harvester
         (return-from harvest-events
           (loop for i below ready-fds
@@ -509,3 +506,7 @@ is monitored for EVENT-TYPE."
        (push :error event)))
     (when event
       (list fd event))))
+
+;;; URING
+(define-multiplexer uring-multiplexer (multiplexer)
+  ((ring :reader ring)))

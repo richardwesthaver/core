@@ -22,7 +22,7 @@
   ;; buffer? currently in dat/serde
   (istype 'bound-input-stream (make-instance 'bound-input-stream))
   (with-input-from-string (s "foobarbaz")
-    (isequal "fo" (concatenate 'string (peeked (make-instance 'peeking-input-stream :stream s :count 2))))))
+    (isequal "fo" (concatenate 'string (peeked (make-instance 'peeking-input-stream :stream s :count 2 :element-type 'character))))))
 
 (deftest chunky ()
   "Tests for CHUNKED-STREAM"
