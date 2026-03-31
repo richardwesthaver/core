@@ -60,10 +60,10 @@ by `&once' are passed to a `once-only' call which surrounds `body'."
                                (t
                                 nil))))
                      params)))
-    (multiple-value-bind (body declares docstring) 
+    (multiple-value-bind (body declares docstring)
         (parse-body body :documentation t)
       `(defmacro ,name ,(remove-once-keywords params)
-         ,@docstring
+         ,@(when docstring (list docstring))
          ,@declares
          (once-only ,(find-once-params params)
            ,@body)))))

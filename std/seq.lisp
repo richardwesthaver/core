@@ -1082,10 +1082,13 @@ associated priority vector."
   (heap-extract heap 0 :key key :test test))
 
 (defstruct (pqueue (:conc-name %pqueue-) (:constructor %make-pqueue))
+  "A simplified Priority Queue similar to the struct of the same name internal to SBCL
+timers."
   contents
   keyfun)
 
 (defun make-pqueue (&key (key #'identity) (element-type t))
+  "Make a new PQUEUE."
   (%make-pqueue 
    :keyfun key 
    :contents (the vector (make-array 100 :adjustable t :fill-pointer 0 :element-type element-type))))
@@ -1095,7 +1098,9 @@ associated priority vector."
     (format stream "~[empty~:;~:*~D item~:P~]"
             (length (%pqueue-contents object)))))
 
-(defmethod data ((self pqueue)) (%pqueue-contents self))
+(defmethod data ((self pqueue)) 
+  "Return the contents of a PQUEUE."
+  (%pqueue-contents self))
 
 (defun pqueue-maximum (pq)
   "Return the item in PRIORITY-QUEUE with the largest key."
@@ -1155,8 +1160,10 @@ associated priority vector."
     (%make-spin-queue dummy dummy)))
 
 (defonce with-spin-lock ((access &once container) &body body)
+  "Eval BODY within a CAS-based spin-lock which calls ACCESS against CONTAINER
+until the value is non-nil."
   `(locally (declare (optimize (speed 3) (safety 0)))
-     (loop until (cas (,access ,container) nil t))
+     (loop until (sb-ext:cas (,access ,container) nil t))
      (unwind-protect (progn ,@body)
        (setf (,access ,container) nil))))
 

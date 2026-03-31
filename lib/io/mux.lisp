@@ -55,16 +55,20 @@
 
 ;;; Multiplexer
 (defclass multiplexer ()
-  ((fd :reader fd)
-   (fd-limit :initform (get-fd-limit)
-             :initarg :fd-limit
-             :reader fd-limit)
-   (closedp :accessor multiplexer-closedp
-            :initform nil))
+  ((io 
+    :reader io
+    :documentation "IO handler of this multiplexer, for epoll, poll, select this is a FD, and for
+uring this is an ALIEN.")
+   (io-limit 
+    :initform (get-fd-limit)
+    :initarg :limit
+    :reader io-limit
+    :documentation "The IO monitoring limit - for FDs or CQEs.")
+   (state :accessor state
+          :initform nil))
   (:documentation "Base class for I/O multiplexers."))
 
 (defgeneric close-multiplexer (mux)
-  ;; (:method-combination progn :most-specific-last)
   (:documentation "Close multiplexer MUX, calling close() on the multiplexer's FD if bound."))
 
 (defgeneric monitor-fd (mux fd-entry)
@@ -88,18 +92,18 @@ Returns a list of fd/result pairs which have one of these forms:
   (fd . :error)"))
 
 (defmethod close-multiplexer :around ((mux multiplexer))
-  (unless (multiplexer-closedp mux)
+  (unless (state mux)
     (call-next-method)
-    (setf (multiplexer-closedp mux) t)))
+    (setf (state mux) t)))
 
 (defmethod close-multiplexer ((mux multiplexer))
-  (when (and (slot-boundp mux 'fd) (not (null (fd mux))))
-    (sb-posix:close (fd mux))
+  (when (and (slot-boundp mux 'fd) (not (null (io mux))))
+    (sb-posix:close (io mux))
     (setf (slot-value mux 'fd) nil))
   (values mux))
 
 (defmethod monitor-fd :before ((mux multiplexer) fd-entry)
-  (with-accessors ((fd-limit fd-limit)) mux
+  (with-accessors ((fd-limit io-limit)) mux
     (let ((fd (fd-entry-fd fd-entry)))
       (when (and fd-limit (> fd fd-limit))
         (error "Cannot add such a large FD: ~A" fd)))))
@@ -420,7 +424,7 @@ is monitored for EVENT-TYPE."
 
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
   (setf (slot-value mux 'fd) (io-syscall* (sys:epoll-create size)))
-  (setf (slot-value mux 'events) (make-alien sys:epoll-event (fd-limit mux))))
+  (setf (slot-value mux 'events) (make-alien sys:epoll-event (io-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
   (declare (ignore abort))
@@ -448,7 +452,7 @@ is monitored for EVENT-TYPE."
              (slot ev 'sys::data)
              'sys::fd)
             fd)
-      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-add fd (addr ev)))
+      (handler-case (io-syscall* (sys:epoll-ctl (io mux) sys::epoll-ctl-add fd (addr ev)))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot monitor it." fd))
         (io/sys::eexist () (warn "FD ~A is already monitored." fd))))))
 
@@ -461,7 +465,7 @@ is monitored for EVENT-TYPE."
       ;; (bzero ev (alien-size sys:epoll-event))
       (setf (slot ev 'sys::events) flags)
       (setf (slot (slot ev 'sys::data) 'sys::fd) fd)
-      (handler-case (io-syscall* (sys:epoll-ctl (fd mux) sys::epoll-ctl-mod fd (addr ev)))
+      (handler-case (io-syscall* (sys:epoll-ctl (io mux) sys::epoll-ctl-mod fd (addr ev)))
         (io/sys::ebadf () (warn "FD ~A is invalid, cannot update its status." fd))
         (io/sys::enoent () (warn "FD ~A was not monitored, cannot update its status." fd))))
     (values fd-entry)))
@@ -469,7 +473,7 @@ is monitored for EVENT-TYPE."
 (defmethod unmonitor-fd ((mux epoll-multiplexer) fd-entry)
   (handler-case
       (io-syscall* (sys:epoll-ctl 
-                   (fd mux)
+                   (io mux)
                    sys::epoll-ctl-del
                    (fd-entry-fd fd-entry)
                    (null-pointer)))
@@ -478,12 +482,12 @@ is monitored for EVENT-TYPE."
 
 (defmethod harvest-events ((mux epoll-multiplexer) timeout)
   ;; (mumble "harvesting events with timeout: ~A" timeout)
-  (with-accessors ((events events) (fd-limit fd-limit)) mux
+  (with-accessors ((events events) (fd-limit io-limit)) mux
     ;; REVIEW 2026-03-18: do we need to zero out the events pointer? causes malloc errors in current state
     ;; (bzero events (* fd-limit (alien-size sys:epoll-event)))
     (let (ready-fds)
       (repeat-upon-condition-decreasing-timeout ((io/sys::eintr) tmp-timeout timeout)
-        (setf ready-fds (io-syscall* (sys:epoll-wait (fd mux) events fd-limit
+        (setf ready-fds (io-syscall* (sys:epoll-wait (io mux) events fd-limit
                                                      (timeout-ms tmp-timeout)))))
       (macrolet ((epoll-slot (slot-name)
                    `(slot (deref events i) ',slot-name)))
