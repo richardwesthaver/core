@@ -1,4 +1,4 @@
-;;; kbd.lisp --- Keyboard-based IO
+;;; kbd.lisp --- Keyboard-driven IO
 
 ;; Keyboard-like devices and input
 

@@ -39,11 +39,29 @@
  ((:tests
    :require (:rt :io :uring)
    :components ((:file "tests")))
-  (:proto :chunky)
-  (:proto :fast)
-  (:proto :flate)
-  (:proto :kbd)
-  (:proto :smart-buffer)
-  (:proto :xsubseq)
-  (:proto :static)
-  (:proto :disk)))
+  (:proto :chunky
+   :description "Chunked streams."
+   :constants ()
+   :conditions 
+   (chunky-condition chunky-error simple-chunky-error chunk-warning simple-chunky-warning
+    chunky-input-unexpected-eof chunky-input-corrupted)
+   :classes 
+   (chunked-stream chunked-input-stream chunked-output-stream simple-chunked-input-stream chunked-io-stream 
+    ;; block-stream
+    block-stream block-input-stream block-output-stream block-io-stream)
+   :predicates (input-chunking-p output-chunking-p expecting-crlf-p))
+  (:proto :fast
+   :description "Fast octet stream IO.")
+  (:proto :flate
+   :description "Compressed IO.")
+  (:proto :kbd
+   :description "Keyboard-driven IO.")
+  (:proto :smart-buffer
+   :description "Smart IO buffers which dynamically allocate to memory or disk based on
+inference.")
+  (:proto :xsubseq
+   :description "Optimized SUBSEQ.")
+  (:proto :static
+   :description "Vectors allocated in static memory which can be shared with C code.")
+  (:proto :disk
+   :description "Disk-driven IO.")))

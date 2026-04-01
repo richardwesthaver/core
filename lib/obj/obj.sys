@@ -106,6 +106,9 @@
   (:proto :id)
   (:proto :time)
   (:proto :uri)
+  (:proto :url
+   :description "URL encoding/decoding."
+   :functions (url-encode url-decode url-encode-params url-decode-params rewrite-urls))
   (:proto :node)
   (:proto :tree)
   (:tests

@@ -57,14 +57,15 @@ definitions.")
          (handler-bind
              ((sb-kernel::package-at-variance #'muffle-warning))
            ,@body))))
-  (defun find-package* (package-designator &optional (error t))
-    "Alternative to FIND-PACKAGE with optional error."
+  (defun find-package* (package-designator &optional (default :error))
+    "Alternative to FIND-PACKAGE with optional default."
     (let ((package (find-package package-designator)))
-      (cond
-        (package package)
-        (error (error "No package named ~S" (string package-designator)))
-        (t nil))))
-  (defun find-symbol* (name package-designator &optional (error t))
+      (if package 
+          package
+          (case default
+            (:error (error "No package named ~S" (string package-designator)))
+            (t default)))))
+  (defun find-symbol* (name package-designator &optional (error :error))
     "Find a symbol in a package of given string'ified NAME;
 unlike CL:FIND-SYMBOL, work well with 'modern' case sensitive syntax
 by letting you supply a symbol or keyword for the name;
@@ -84,7 +85,7 @@ when the symbol is not found."
 with given ARGS. Useful when the call is read before the package is loaded,
 or when loading the package is optional."
     (apply (find-symbol* name package) args))
-  (defun intern* (name package-designator &optional (error t))
+  (defun intern* (name package-designator &optional (error :error))
     "Like INTERN but never create a new package."
     (intern (string name) (find-package* package-designator error)))
   (defun export* (name package-designator)
@@ -107,7 +108,7 @@ instead."
     (etypecase name
       (string (make-symbol name))
       (symbol (copy-symbol name))))
-  (defun unintern* (name package-designator &optional (error t))
+  (defun unintern* (name package-designator &optional (error :error))
     "Like UNINTERN but with optional errors."
     (block nil
       (let ((package (find-package* package-designator error)))
@@ -281,7 +282,7 @@ and optionally nuking all symbols as well."
   (defun package-definition-form (package-designator
                                   &key (nicknamesp t) (usep t)
                                        (shadowp t) (shadowing-import-p t)
-                                       (exportp t) (importp t) internp (error t))
+                                       (exportp t) (importp t) internp (error :error))
     (let* ((package (or (find-package* package-designator error)
                         (return-from package-definition-form nil)))
            (name (package-name package))

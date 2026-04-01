@@ -864,10 +864,11 @@
    :store-pathname))
 
 (defpkg :std/bit
-  (:use :cl)
+  (:use :cl :std/macs)
   (:import-from :std/type :octet :octet-vector)
   (:mix :sb-sys)
   (:export
+   :+hex-digits+
    :read-n-bytes
    :make-bits
    :sign-bit

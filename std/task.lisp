@@ -32,6 +32,7 @@
 ;;; Proto
 (defgeneric task (self)
   (:documentation "Return the task associated with SELF."))
+
 (defgeneric result (self)
   (:documentation "Return the result associated with SELF."))
 
@@ -45,6 +46,7 @@
 (defgeneric job-p (self)
   (:method ((self t)) nil)
   (:documentation "Return Non-nil if SELF is a job."))
+
 (defgeneric task-p (self)
   (:method ((self t)) nil)
   (:documentation "Return Non-nil if SELF is a task."))
@@ -52,18 +54,20 @@
 ;;; Task Worker
 (defclass task-worker (worker)
   ((tasks :accessor tasks :initarg :tasks :type priority-queue))
-  (:documentation "A Worker which stores an additional priority-queue of TASKS."))
+  (:documentation "A Worker capable of performing TASKS."))
 
 ;;; Task
 (defkernel task ()
   ((state :initform nil :initarg :state :accessor state))
-  (:documentation "This object represents a single unit of work to be done in a single thread by
+  (:documentation "A TASK represents a single unit of work to be done in a single thread by
 some worker. Tasks are typically distributed from the pool, but workers may
 also be granted the ability to create and distribute their own tasks, or be
-assigned a single task to call repeatedly until told to stop. Once a task is
-assigned, the 'owner', i.e. the worker that is assigned this task, may modify
-the object. When the work associated with a task is complete, the owner is
-responsible for indicating in the state slot the result of the computation."))
+assigned a single task to call repeatedly. 
+
+Once a task is assigned, the 'owner', i.e. the worker that is assigned this
+task, may modify the object. When the work associated with a task is complete,
+the owner is responsible for indicating in the STATE slot the result of the
+computation."))
 
 (defmethod sb-impl::object-type-string ((self task)) "task function")
 
@@ -79,7 +83,7 @@ responsible for indicating in the state slot the result of the computation."))
     task))
 
 (defun run-task (worker task &optional (priority *task-priority*))
-  "Run TASK in WORKER, which must be a task-worker."
+  "Run TASK in WORKER, which must be a TASK-WORKER."
   (push-priority-queue (tasks worker) task priority)
   (run-worker worker))
 

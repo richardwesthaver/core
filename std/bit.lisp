@@ -10,6 +10,10 @@
 (in-package :std/bit)
 (declaim (optimize (speed 3) (safety 0)))
 
+(define-constant +hex-digits+ #.(coerce "0123456789ABCDEF" 'simple-base-string)
+  :test 'string=
+  :documentation "The hexadecimal digits.")
+
 ;;; Bits
 (defun make-bits (length &rest args)
   "Make an array of bits with dimensions LENGTH and keyword arguments ARGS."
@@ -531,17 +535,16 @@ hexadecimal digits into a byte array."
 subsequence of VECTOR between START and END.  ELEMENT-TYPE controls
 the element-type of the returned string."
   (declare (type (vector (unsigned-byte 8)) vector))
-  (let* ((length (length vector))
-         (hexdigits #.(coerce "0123456789abcdef" 'simple-base-string)))
+  (let* ((length (length vector)))
     (loop with string = (make-string (* length 2) :element-type 'base-char)
        for i from 0 below length
        for j from 0 by 2
        do (let ((byte (aref vector i)))
             (declare (optimize (safety 0)))
             (setf (aref string j)
-                  (aref hexdigits (ldb (byte 4 4) byte))
+                  (aref +hex-digits+ (ldb (byte 4 4) byte))
                   (aref string (1+ j))
-                  (aref hexdigits (ldb (byte 4 0) byte))))
+                  (aref +hex-digits+ (ldb (byte 4 0) byte))))
        finally (return string))))
 
 (defun hex-string (object)

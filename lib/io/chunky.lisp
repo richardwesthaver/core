@@ -10,15 +10,19 @@
 (in-package :io/chunky)
 ;;; Special
 (defconstant +default-chunked-output-size+ 8192)
-(define-constant +crlf+ (coerce #(#\Return #\Newline) 'string)
-  :test 'string=)
-(define-constant +hex-digits+ '#.(coerce "0123456789ABCDEF" 'list)
-  :test 'equalp
-  :documentation "The hexadecimal digits.")
 
 (defvar *char-buffer* nil
   "A `buffer' for one character.  Used by PEEK-CHAR* and
 UNREAD-CHAR*.")
+
+(defvar *accept-bogus-eols* nil)
+
+(defvar *treat-semicolon-as-continuation* nil
+  "According to John Foderaro, Netscape v3 web servers bogusly split
+Set-Cookie headers over multiple lines which means that we'd have to
+treat Set-Cookie headers ending with a semicolon as incomplete and
+combine them with the next header.  This will only be done if this
+variable has a true value, though.")
 
 ;;; Utils
 (defun unexpected-chars (stream last-char expected-chars)
@@ -103,15 +107,6 @@ this to `simulate' READ-CHAR."
 into *CHAR-BUFFER*."
   ;; no error checking, only used internally  
   (setq *char-buffer* (read-char* stream eof-error-p eof-value)))
-
-(defvar *accept-bogus-eols* nil)
-
-(defvar *treat-semicolon-as-continuation* nil
-  "According to John Foderaro, Netscape v3 web servers bogusly split
-Set-Cookie headers over multiple lines which means that we'd have to
-treat Set-Cookie headers ending with a semicolon as incomplete and
-combine them with the next header.  This will only be done if this
-variable has a true value, though.")
 
 (defun read-line* (stream &optional log-stream)
   "Reads and assembles characters from the binary stream STREAM until
@@ -477,7 +472,7 @@ extensions) and returns the size."
           (incf start length)
           (incf input-position length))))))
   
-(defclass chunked-output-stream (wrapped-stream fundamental-binary-output-stream) 
+(defclass chunked-output-stream (wrapped-stream fundamental-binary-output-stream)
   ((output-chunking-p :initform nil
                       :reader output-chunking-p
                       :documentation "Whether output chunking is
@@ -609,8 +604,8 @@ sure to send the last chunk."
             (t 'chunked-io-stream))
     :stream stream))
 
-;;; Blocked Stream
-(defclass blocked-stream (chunked-stream fundamental-binary-stream)
+;;; Block Stream
+(defclass block-stream (chunked-stream fundamental-binary-stream)
   ((block-size
     :initarg :block-size
     :initform 512
@@ -620,7 +615,7 @@ sure to send the last chunk."
    (start
     :accessor start
     :documentation
-    "The FILE-POSITION of the WRAPPED-STREAM when this BLOCKED-STREAM is
+    "The FILE-POSITION of the WRAPPED-STREAM when this BLOCK-STREAM is
     instantiated.")
    (offset
     :initform 0
@@ -645,47 +640,47 @@ START-FILE-POSITION.")
   (:documentation
    "Wraps a binary stream and ensures that all reads from and writes to the
 underlying stream occur in blocks of size BLOCK-SIZE. All blocks are aligned
-with the position of the wrapped stream when this BLOCKED-STREAM is
+with the position of the wrapped stream when this BLOCK-STREAM is
 instantiated. All FILE-POSITIONs of this stream a relative to the FILE-POSITION
 of the wrapped stream when instantiated."))
 
-(defclass blocked-input-stream (blocked-stream fundamental-binary-input-stream)
+(defclass block-input-stream (block-stream fundamental-binary-input-stream)
   ((eof-index
     :initform nil
     :accessor eof-index
     :documentation
     "The index of EOF or NIL."))
   (:documentation
-   "A BLOCKED-STREAM used for input."))
+   "A BLOCK-STREAM used for input."))
 
-(defclass blocked-output-stream (blocked-stream fundamental-binary-output-stream)
+(defclass block-output-stream (block-stream fundamental-binary-output-stream)
   ((dirty-p
     :accessor dirty-p
     :initform nil
     :documentation
     "If non-NIL, the buffer has been modified."))
   (:documentation
-   "A BLOCKED-STREAM used for output."))
+   "A BLOCK-STREAM used for output."))
 
-(defclass blocked-io-stream (blocked-input-stream blocked-output-stream) ()
-  (:documentation "A BLOCKED-STREAM used for both input and output."))
+(defclass block-io-stream (block-input-stream block-output-stream) ()
+  (:documentation "A BLOCK-STREAM used for both input and output."))
 
 ;; From CL-TAR-FILE
-(defmethod initialize-instance :after ((blocked-stream blocked-stream)
+(defmethod initialize-instance :after ((block-stream block-stream)
                                        &key
                                          stream)
   ;; Create the buffer.
-  (setf (buffer blocked-stream) (make-array (block-size blocked-stream)
+  (setf (buffer block-stream) (make-array (block-size block-stream)
                                             :element-type '(unsigned-byte 8)
                                             :initial-element 0)
         ;; Record the START-FILE-POSITION
-        (start blocked-stream) (ignore-errors (file-position stream))))
+        (start block-stream) (ignore-errors (file-position stream))))
 
-(defmethod flush-buffer ((stream blocked-stream))
+(defmethod flush-buffer ((stream block-stream))
   "Invalidate the buffer."
   (setf (buffer-valid-p stream) nil))
 
-(defmethod flush-buffer ((stream blocked-output-stream))
+(defmethod flush-buffer ((stream block-output-stream))
   "Writes the entire buffer to the WRAPPED-STREAM. Assumes the FILE-POSITION of
 the wrapped stream is in the correct place."
   (when (dirty-p stream)
@@ -693,7 +688,7 @@ the wrapped stream is in the correct place."
     (setf (dirty-p stream) nil))
   (call-next-method))
 
-(defmethod flush-buffer :before ((stream blocked-io-stream))
+(defmethod flush-buffer :before ((stream block-io-stream))
   "Ensures the FILE-POSITION of the WRAPPED-STREAM is in the correct place for
 the buffer to be written."
   (when (dirty-p stream)
@@ -703,7 +698,7 @@ the buffer to be written."
         (unless (file-position (stream-of stream) desired-position)
           (simple-chunky-error "Unable to set FILE-POSITION for stream ~A." stream))))))
 
-(defmethod fill-buffer ((stream blocked-input-stream))
+(defmethod fill-buffer ((stream block-input-stream))
   (let ((real-pos (read-sequence (buffer stream) (stream-of stream)))
         (eof-index nil))
     (unless (= real-pos (block-size stream))
@@ -714,7 +709,7 @@ the buffer to be written."
     (setf (buffer-valid-p stream) t
           (eof-index stream) eof-index)))
 
-(defmethod fill-buffer ((stream blocked-output-stream))
+(defmethod fill-buffer ((stream block-output-stream))
   (setf (buffer-valid-p stream) t)
   (fill (buffer stream) 0))
 
@@ -722,7 +717,7 @@ the buffer to be written."
   (:documentation
    "Ensure STREAM's buffer is valid, given the INDEX of the next operation."))
 
-(defmethod ensure-buffer-valid ((stream blocked-stream))
+(defmethod ensure-buffer-valid ((stream block-stream))
   (cond
     ;; We haven't read from the current offset, so just fill it.
     ((not (buffer-valid-p stream))
@@ -743,7 +738,7 @@ the buffer to be written."
               (incf (stream-offset stream) (block-size stream)))
      (fill-buffer stream))))
 
-(defmethod stream-read-byte ((stream blocked-input-stream))
+(defmethod stream-read-byte ((stream block-input-stream))
   (ensure-buffer-valid stream)
   (with-accessors ((eof-index eof-index)
                    (index index)
@@ -756,7 +751,7 @@ the buffer to be written."
         (prog1 (aref buffer index)
           (incf index)))))
 
-(defmethod stream-read-sequence ((stream blocked-input-stream)
+(defmethod stream-read-sequence ((stream block-input-stream)
                                  sequence &optional start end)
   (ensure-buffer-valid stream)
   (let ((start (or start 0))
@@ -775,7 +770,7 @@ the buffer to be written."
                                     (+ start num-bytes-remaining) end)
               (+ num-bytes-remaining start))))))
 
-(defmethod stream-write-byte ((stream blocked-output-stream) byte)
+(defmethod stream-write-byte ((stream block-output-stream) byte)
   (ensure-buffer-valid stream)
   (setf (dirty-p stream) t)
   (with-accessors ((index index)
@@ -785,7 +780,7 @@ the buffer to be written."
     (incf index)
     byte))
 
-(defmethod stream-write-sequence ((stream blocked-output-stream)
+(defmethod stream-write-sequence ((stream block-output-stream)
                                   sequence &optional start end)
   (ensure-buffer-valid stream)
   (setf (dirty-p stream) t)
@@ -800,7 +795,7 @@ the buffer to be written."
         (stream-write-sequence stream sequence
                                (+ start num-bytes-remaining) end))))
 
-(defun set-blocked-stream-file-position (stream newval)
+(defun set-block-stream-file-position (stream newval)
   (multiple-value-bind (chunk-number new-index)
       (floor newval (block-size stream))
     (let ((start-of-chunk-position (* chunk-number (block-size stream))))
@@ -842,15 +837,15 @@ the buffer to be written."
                (ensure-buffer-valid stream)
                t)))))))
 
-(defmethod stream-file-position ((stream blocked-stream) &optional spec)
+(defmethod stream-file-position ((stream block-stream) &optional spec)
   (if spec
-      (set-blocked-stream-file-position stream spec)
+      (set-block-stream-file-position stream spec)
       (+ (index stream) (stream-offset stream))))
 
-(defmethod stream-element-type ((stream blocked-stream))
+(defmethod stream-element-type ((stream block-stream))
   (stream-element-type (stream-of stream)))
 
-(defmethod close ((stream blocked-stream) &key abort)
+(defmethod close ((stream block-stream) &key abort)
   (unless abort
     (flush-buffer stream))
   (call-next-method))

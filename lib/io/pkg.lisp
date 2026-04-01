@@ -117,10 +117,10 @@
    #:expecting-crlf-p
    #:chunked-io-stream
    #:make-chunked-stream
-   #:blocked-stream
-   #:blocked-io-stream
-   #:blocked-output-stream
-   #:blocked-input-stream
+   #:block-stream
+   #:block-io-stream
+   #:block-output-stream
+   #:block-input-stream
    #:read-char*
    #:unread-char*
    #:peek-char*

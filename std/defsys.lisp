@@ -322,6 +322,25 @@ objects of type COMPONENT."
    (compile-and-eval `(pkg::%defpkg* ,root (list ,name ,@args)))
    t))
 
+(defprovider :default-package (root name)
+  (register-module
+   :default-package
+   root
+   (find-package* name name)))
+
+(defprovider :internal-package (root name)
+  (register-module
+   :internal-package
+   root
+   (find-package* name name)))
+
+(defprovider :package (root name)
+  (register-module
+   :package
+   root
+   (find-package* name name)
+   t))
+
 (defprovider :io (root name &rest args)
   (register-module :io root (cons name args) t))
 
@@ -1220,6 +1239,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                     (when-let ((e (and (slot-boundp comp 'export) (slot-value comp 'export))))
                       (unless (find-package e) (make-package e :internal-symbols 0))
                       (reexport-packages *component-packages* e))
+                    (mapc (lambda (x) (call-provider :package (list *module* x))) *component-packages*)
                     (setq pkg:*component-packages* nil
                           pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)
