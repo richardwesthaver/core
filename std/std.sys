@@ -58,8 +58,6 @@
   (:file "defsys"))
  :provide
  (;(:asdf "std.asd")
-  (:default-package :std)
-  (:internal-package :std-int)
   (:io :alien)
   (:readtable :std)
   (:annotations :std)

@@ -169,9 +169,9 @@ in a call to INIT.")
   (:keyword :file))
 
 (defcomponent pkg-component (file-component) 
-  ((package :accessor component-package :initform nil)
+  ((package :accessor internal-package :initform nil)
    (use :accessor component-use :initform *default-pkg-component-use*)
-   default
+   (default :accessor default-package :initform nil)
    (readtable :accessor component-readtable)
    feature
    (export :accessor component-package-export))
@@ -1229,8 +1229,10 @@ internally. On success the path is added to the *SYSDEFS* list."
                 (compile-grovel-component comp) 
                 (load (resolve-fasl-cache-file f) :verbose verbose))
                (pkg-component
-                (let ((*package* (component-package comp))
+                (let ((*package* (internal-package comp))
                       (pkg:*defpkg-hook* (lambda (x) (pushnew (package-name x) pkg:*component-packages* :test 'string=))))
+                  (call-provider :internal-package (list *module* (internal-package comp)))
+                  (call-provider :default-package (list *module* (default-package comp)))
                   (when-let ((f (and (slot-boundp comp 'feature) (slot-value comp 'feature)))) (pushnew f *features*))
                   (when-let ((r (and (slot-boundp comp 'readtable) (slot-value comp 'readtable))))
                     (setf *readtable* (std/named-readtables:ensure-readtable r)))
