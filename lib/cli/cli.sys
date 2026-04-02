@@ -2,7 +2,7 @@
 (defsys :cli
  :require (:std :log :dat :obj :io)
  :components 
- ((:pkg "pkg" :package :cli-int :default :cli-user :feature :cli)
+ ((:pkg "pkg" :internal-package :cli-int :default-package :cli-user :feature :cli)
   (:file "clap")
   (:file "ansi" :require ("pkg"))
   (:file "env" :require ("pkg"))
@@ -15,7 +15,7 @@
   (:file "shell" :require ("env"))
   (:mod "tools"
    :components
-   ((:pkg "pkg" :package :cli-int :feature :tools)
+   ((:pkg "pkg" :internal-package :cli-int :feature :tools)
     (:file "proto" :require ("pkg"))
     (:file "term" :require ("proto"))
     (:file "tmux" :require ("term"))

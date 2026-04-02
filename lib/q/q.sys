@@ -2,7 +2,7 @@
 (defsys :q
  :require (:std :obj :log :dat :parse)
  :components 
- ((:pkg "pkg" :package :q-int :feature :q :export :q)
+ ((:pkg "pkg" :internal-package :q-int :feature :q :export :q)
   (:file "query")
   (:file "parser")
   (:file "engine")

@@ -2,7 +2,7 @@
 (defsys :vc
  :require (:std :cli :obj :net :log :parse)
  :components 
- ((:pkg "pkg" :feature :vc :export :vc :package :vc-int)
+ ((:pkg "pkg" :feature :vc :export :vc :internal-package :vc-int)
   (:file "proto")
   (:file "git")
   (:file "hg")

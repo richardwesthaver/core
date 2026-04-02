@@ -2,7 +2,7 @@
 (defsys :parse
  :require (:std)
  :components 
- ((:pkg "pkg" :package :parse-int :export :parse :feature :parse)
+ ((:pkg "pkg" :internal-package :parse-int :export :parse :feature :parse)
   (:file "bytes")
   (:file "lex")
   (:file "pratt")

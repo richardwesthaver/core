@@ -169,9 +169,9 @@ in a call to INIT.")
   (:keyword :file))
 
 (defcomponent pkg-component (file-component) 
-  ((package :accessor internal-package :initform nil)
+  ((internal-package :accessor internal-package :initform nil)
    (use :accessor component-use :initform *default-pkg-component-use*)
-   (default :accessor default-package :initform nil)
+   (default-package :accessor default-package :initform nil)
    (readtable :accessor component-readtable)
    feature
    (export :accessor component-package-export))
@@ -181,13 +181,13 @@ automatically set to an internal-only package based on the system name and
 supplied keywords. The *DEFPKG-HOOK* is bound to a function which collects new
 package-names defined with DEFPKG inside the specified file."))
 
-(defmethod initialize-instance :after ((self pkg-component) &key package default)
-  (unless (packagep (slot-value self 'std/defsys::package))
+(defmethod initialize-instance :after ((self pkg-component) &key internal-package default-package)
+  (unless (packagep (default-package self))
     ;; TODO: move to load
-    (when default (setq *default-package* default))
-    (setf (slot-value self 'std/defsys::package)
-          (std/macs:ifret (when package (find-package package))
-            (make-package (or package (gensym (name self))) :use (slot-value self 'use))))))
+    (when default-package (setq *default-package* default-package))
+    (setf (internal-package self)
+          (std/macs:ifret (when internal-package (find-package internal-package))
+            (make-package (or internal-package (gensym (name self))) :use (slot-value self 'use))))))
 
 (defcomponent mod-component (component) 
   ((components :accessor components))
@@ -1231,8 +1231,6 @@ internally. On success the path is added to the *SYSDEFS* list."
                (pkg-component
                 (let ((*package* (internal-package comp))
                       (pkg:*defpkg-hook* (lambda (x) (pushnew (package-name x) pkg:*component-packages* :test 'string=))))
-                  (call-provider :internal-package (list *module* (internal-package comp)))
-                  (call-provider :default-package (list *module* (default-package comp)))
                   (when-let ((f (and (slot-boundp comp 'feature) (slot-value comp 'feature)))) (pushnew f *features*))
                   (when-let ((r (and (slot-boundp comp 'readtable) (slot-value comp 'readtable))))
                     (setf *readtable* (std/named-readtables:ensure-readtable r)))
@@ -1242,6 +1240,8 @@ internally. On success the path is added to the *SYSDEFS* list."
                       (unless (find-package e) (make-package e :internal-symbols 0))
                       (reexport-packages *component-packages* e))
                     (mapc (lambda (x) (call-provider :package (list *module* x))) *component-packages*)
+                    (call-provider :internal-package (list *module* (internal-package comp)))
+                    (call-provider :default-package (list *module* (default-package comp)))
                     (setq pkg:*component-packages* nil
                           pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)

@@ -12,7 +12,7 @@
            :btrfs)
  :version "0.1.0"
  :components 
- ((:pkg "pkg" :feature :io :default :io-user :package :io-int)
+ ((:pkg "pkg" :feature :io :default-package :io-user :internal-package :io-int)
   (:file "proto")
   (:file "swap-bytes")
   (:file "sys")
@@ -46,7 +46,7 @@
    (chunky-condition chunky-error simple-chunky-error chunk-warning simple-chunky-warning
     chunky-input-unexpected-eof chunky-input-corrupted)
    :classes 
-   (chunked-stream chunked-input-stream chunked-output-stream simple-chunked-input-stream chunked-io-stream 
+   (chunked-stream chunked-input-stream chunked-output-stream simple-chunked-input-stream chunked-io-stream
     ;; block-stream
     block-stream block-input-stream block-output-stream block-io-stream)
    :predicates (input-chunking-p output-chunking-p expecting-crlf-p))

@@ -2,7 +2,7 @@
 (defsys :syn
  :require (:std :obj :parse :tree-sitter :doc :cli :io :dat :cuda)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:file "ts")
   (:mod "lang"
    :components

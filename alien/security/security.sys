@@ -1,0 +1,16 @@
+;;; security.sys --- Linux Security FFI bindings
+
+;;
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
+(defsys :security
+  :require (:std)
+  :components ((:file "pkg")
+               (:grovel "constants"
+                :package :security)
+               (:file "pam"))
+  :provide ((:tests)))

@@ -2,7 +2,7 @@
 (defsys :net
  :require (:dat :obj :io :parse :rt :cry :std :cli :log)
  :components 
- ((:pkg "pkg" :default :net-user :feature :net :package :net-int)
+ ((:pkg "pkg" :default-package :net-user :feature :net :internal-package :net-int)
   (:file "obj")
   (:file "address")
   (:file "socket")

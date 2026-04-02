@@ -2,7 +2,7 @@
 (defsys :math
  :require (:std :obj :blas :lapack :cuda :syn)
  :components 
- ((:pkg "pkg" :feature :math :package :math-int :default :math-user)
+ ((:pkg "pkg" :feature :math :internal-package :math-int :default-package :math-user)
   (:file "util")
   (:mod "blas"
    :components 
