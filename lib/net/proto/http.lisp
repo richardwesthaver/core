@@ -563,16 +563,16 @@ buffer."
                                        (return-from find-boundary (subseq data start end)))))))
 
 ;;; byte-vector
-(defconstant +cr+ (char-code #\Return))
-(defconstant +lf+ (char-code #\Linefeed))
-(defconstant +space+ (char-code #\Space))
-(defconstant +tab+ (char-code #\Tab))
-(defconstant +page+ (char-code #\Page))
-(defconstant +dash+ #.(char-code #\-))
+(defconstant .cr (char-code #\Return))
+(defconstant .lf (char-code #\Linefeed))
+(defconstant .space (char-code #\Space))
+(defconstant .tab (char-code #\Tab))
+(defconstant .page (char-code #\Page))
+(defconstant .dash #.(char-code #\-))
 
-(define-constant +crlf+
+(define-constant .crlf
   (make-array 2 :element-type '(unsigned-byte 8)
-                :initial-contents (list +cr+ +lf+))
+                :initial-contents (list .cr .lf))
   :test 'equalp)
 
 (deftype octet-vector (&optional (len '*))
@@ -732,12 +732,12 @@ buffer."
                              (go ,tag))))
              (tagcasev (ll-multipart-parser-state parser)
                (+parsing-delimiter-dash-start+
-                (unless (= byte +dash+)
+                (unless (= byte .dash)
                   (go-state +header-field-start+ 0))
                 (go-state +parsing-delimiter-dash+))
 
                (+parsing-delimiter-dash+
-                (unless (= byte +dash+)
+                (unless (= byte .dash)
                   (error 'invalid-multipart-body))
                 (go-state +parsing-delimiter+))
 
@@ -784,9 +784,9 @@ buffer."
 
                (+parsing-delimiter-end+
                 (casev byte
-                  (+cr+ (go-state +parsing-delimiter-almost-done+))
-                  (+lf+ (go-state +parsing-delimiter-almost-done+ 0))
-                  (+dash+ (go-state +body-almost-done+))
+                  (.cr (go-state +parsing-delimiter-almost-done+))
+                  (.lf (go-state +parsing-delimiter-almost-done+ 0))
+                  (.dash (go-state +body-almost-done+))
                   (otherwise
                    ;; Still in the body
                    (when (ll-multipart-parser-body-mark parser)
@@ -796,7 +796,7 @@ buffer."
                    (error 'invalid-boundary))))
 
                (+parsing-delimiter-almost-done+
-                (unless (= byte +lf+)
+                (unless (= byte .lf)
                   (error 'invalid-boundary))
                 (when (ll-multipart-parser-body-mark parser)
                   ;; got a part
@@ -835,32 +835,32 @@ buffer."
                (+looking-for-delimiter+
                 (setf (ll-multipart-parser-boundary-mark parser) nil)
                 (casev byte
-                  (+cr+ (setf (ll-multipart-parser-boundary-mark parser) p)
+                  (.cr (setf (ll-multipart-parser-boundary-mark parser) p)
                         (go-state +maybe-delimiter-start+))
                   (otherwise (go-state +looking-for-delimiter+))))
 
                (+maybe-delimiter-start+
-                (unless (= byte +lf+)
+                (unless (= byte .lf)
                   (go-state +looking-for-delimiter+ 0))
                 (go-state +maybe-delimiter-first-dash+))
 
                (+maybe-delimiter-first-dash+
-                (if (= byte +dash+)
+                (if (= byte .dash)
                     (go-state +maybe-delimiter-second-dash+)
-                    (if (= byte +cr+)
+                    (if (= byte .cr)
                         (progn
                           (setf (ll-multipart-parser-boundary-mark parser) p)
                           (go-state +maybe-delimiter-start+))
                         (go-state +looking-for-delimiter+))))
 
                (+maybe-delimiter-second-dash+
-                (if (= byte +dash+)
+                (if (= byte .dash)
                     (go-state +parsing-delimiter+)
                     (go-state +looking-for-delimiter+)))
 
                (+body-almost-done+
                 (casev byte
-                  (+dash+ (go-state +body-done+ 0))
+                  (.dash (go-state +body-done+ 0))
                   (otherwise (error 'invalid-multipart-body))))
 
                (+body-done+
@@ -1072,7 +1072,7 @@ us a never-ending header that the application keeps buffering.")
             ("UNLOCK"      :UNLOCK)
             ("UNSUBSCRIBE" :UNSUBSCRIBE)
             (otherwise (error 'invalid-method)))
-         (unless (= (current) +space+)
+         (unless (= (current) .space)
            (error 'invalid-method)))
        (pos))))
   (error 'eof))
@@ -1124,7 +1124,7 @@ us a never-ending header that the application keeps buffering.")
                       (digit-byte-char-to-integer (current))))
              (when (< 999 (http-status http))
                (error 'invalid-status :status-code (http-status http))))
-            ((= (current) +space+)
+            ((= (current) .space)
              ;; Reading the status text
              (advance)
              (let ((status-text-start (pos)))
@@ -1133,7 +1133,7 @@ us a never-ending header that the application keeps buffering.")
                (skip #\Newline)
                (callback-data :status http callbacks data status-text-start (- (pos) 1)))
              (return))
-            ((= (current) +cr+)
+            ((= (current) .cr)
              ;; No status text
              (advance)
              (skip #\Newline)
@@ -1155,15 +1155,15 @@ us a never-ending header that the application keeps buffering.")
                        (skip #\:)
                        (skip* #\Space #\Tab)
                        (cond
-                         ((= (current) +cr+)
+                         ((= (current) .cr)
                           ;; continue to the next line
                           (advance)
                           (skip #\Newline)
                           (cond
-                            ((or (= (current) +space+)
-                                 (= (current) +tab+))
+                            ((or (= (current) .space)
+                                 (= (current) .tab))
                              (skip* #\Space #\Tab)
-                             (if (= (current) +cr+)
+                             (if (= (current) .cr)
                                  ;; empty body
                                  (progn
                                    (advance)
@@ -1249,7 +1249,7 @@ us a never-ending header that the application keeps buffering.")
   (with-octets-parsing (data :start start :end end)
     (match-i-case
      ("chunked"
-      (if (= (current) +cr+)
+      (if (= (current) .cr)
           (progn
             (advance)
             (skip #\Newline)
@@ -1285,12 +1285,12 @@ us a never-ending header that the application keeps buffering.")
            (setq content-length
                  (+ (* 10 content-length)
                     (digit-byte-char-to-integer (current)))))
-          ((= (current) +cr+)
+          ((= (current) .cr)
            (advance)
            (skip #\Newline)
            (return-from parse-header-value-content-length
              (values start (- (pos) 2) (pos) content-length)))
-          ((= (current) +space+)
+          ((= (current) .space)
            ;; Discard spaces
            )
           (t (error 'invalid-content-length)))))
@@ -1304,17 +1304,17 @@ us a never-ending header that the application keeps buffering.")
   (let ((current (aref data start)))
     (declare (type (unsigned-byte 8) current))
     (cond
-      ((or (= current +tab+)
-           (= current +space+))
+      ((or (= current .tab)
+           (= current .space))
        (parse-header-value http callbacks data start end))
-      ((/= current +cr+)
+      ((/= current .cr)
        (parse-header-field-and-value http callbacks data start end))
       (t
        (incf start)
        (when (= start end)
          (error 'eof))
        (setq current (aref data start))
-       (unless (= current +lf+)
+       (unless (= current .lf)
          (error 'expect-failed))
        (values (1+ start) t)))))
 
@@ -1324,9 +1324,9 @@ us a never-ending header that the application keeps buffering.")
            (type pointer start end))
   (or (with-octets-parsing (data :start start :end end)
         ;; empty headers
-        (when (= (current) +cr+)
+        (when (= (current) .cr)
           (advance)
-          (if (= (current) +lf+)
+          (if (= (current) .lf)
               (return-from parse-headers (1+ (pos)))
               (error 'expect-failed)))
 
@@ -1455,7 +1455,7 @@ us a never-ending header that the application keeps buffering.")
 
              (loop
                (advance)
-               (if (= (current) +cr+)
+               (if (= (current) .cr)
                    (progn
                      (advance)
                      (tagbody
@@ -1542,7 +1542,7 @@ us a never-ending header that the application keeps buffering.")
 
          first-line
            ;; skip first empty line (some clients add CRLF after POST content)
-           (when (= (current) +cr+)
+           (when (= (current) .cr)
              (advance)
              (tagbody
                 (skip #\Newline)
@@ -1569,7 +1569,7 @@ us a never-ending header that the application keeps buffering.")
 
                 (cond
                   ;; No HTTP version
-                  ((= (current) +cr+)
+                  ((= (current) .cr)
                    (callback-data :url http callbacks data url-start-mark url-end-mark)
                    (advance)
                    (skip #\Newline))
@@ -1658,10 +1658,10 @@ us a never-ending header that the application keeps buffering.")
              (advance-to* next))
 
            (cond
-             ((= (current) +space+)
+             ((= (current) .space)
               (advance)
               (advance-to (parse-status-code http callbacks data (pos) end)))
-             ((= (current) +cr+)
+             ((= (current) .cr)
               (skip #\Newline))
              (T (error 'invalid-version)))
 
@@ -1774,7 +1774,7 @@ us a never-ending header that the application keeps buffering.")
               (setq parameter-value-mark (1+ p))
               (setq parsing-quoted-string-p t)
               (go-state parsing-parameter-quoted-value))
-             ((#.+space+ #.+tab+)
+             ((#..space #..tab)
               (go-state parsing-parameter-value-start))
              (otherwise
               (setq parameter-value-mark p)

@@ -102,7 +102,7 @@
 (defpkg :io/chunky
   (:nicknames :chunky)
   (:use :cl :std/stream :io/proto :io/stream :sb-gray :std/meta)
-  (:import-from :std :deferror :when-let :define-constant :eval-always :+crlf+)
+  (:import-from :std :deferror :when-let :define-constant :eval-always :+crlf+ :+hex-digits+)
   (:export
    #:output-chunking-p
    #:chunked-input-stream
