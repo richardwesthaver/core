@@ -5,4 +5,6 @@
 ;;; Code:
 (defpackage :security
   (:use :cl :std :sb-alien)
-  (:export :linux-pam :linux-pam-minor))
+  (:export :linux-pam :linux-pam-minor :scmp-ver-major
+   :scmp-ver-minor :scmp-ver-micro))
+           

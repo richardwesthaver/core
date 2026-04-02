@@ -6,7 +6,8 @@
   :sndfile :ssh2 :tree-sitter
   :uring :xkb :zstd :jpeg
   :chromaprint :blas :openssl :ffmpeg
-  :sys :jack :keyutils :rocksdb)
+  :sys :jack :keyutils :rocksdb
+  :security)
  :provide
  ((:sys :alien/tests 
    :require
@@ -15,4 +16,5 @@
     :keyutils/tests :rocksdb/tests :alsa/tests :sndfile/tests 
     :ssh2/tests :tree-sitter/tests :sys/tests
     :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
-    :jack/tests :blas/tests :jpeg/tests :openssl/tests :ffmpeg/tests))))
+    :jack/tests :blas/tests :jpeg/tests :openssl/tests 
+    :ffmpeg/tests :security/tests))))

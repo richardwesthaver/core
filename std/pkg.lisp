@@ -411,6 +411,8 @@
   (:import-from :sb-impl :ef-octets-to-string-fun :ef-string-to-octets-fun)
   (:import-from :sb-kernel :character-coding-error :character-encoding-error :character-decoding-error)
   (:export
+   :+cr+ :+lf+
+   :+crlf+
    :ef-octets-to-string-fun :ef-string-to-octets-fun
    :character-coding-error :character-encoding-error
    :character-decoding-error :*suppress-character-coding-errors*
