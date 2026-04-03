@@ -10,7 +10,6 @@
   (:file "spark" :require ("pkg"))
   (:file "terminfo" :require ("pkg"))
   (:file "ed" :require ("env"))
-  (:file "repl" :require ("pkg"))
   (:file "linedit" :require ("pkg" "terminfo" "ed"))
   (:file "shell" :require ("env"))
   (:mod "tools"
@@ -31,7 +30,7 @@
     (:file "mail" :require ("proto"))
     (:file "fs" :require ("proto"))
     (:file "plot" :require ("proto"))))
-  (:file "main" :require ("repl" "clap"))
+  (:file "main" :require ("shell" "clap"))
   (:file "tui" :require ("ansi" "progress" "spark" "linedit"))
   (:file "cli" :require ("pkg" "clap")))
  :provide

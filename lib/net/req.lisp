@@ -97,8 +97,6 @@
                        reason)))))
 
 ;;; utils
-(define-constant +crlf+ (string-to-octets (format nil "~C~C" #\Return #\Newline)) :test 'equalp)
-
 (defparameter *header-buffer* nil)
 
 (defun write-first-line (method uri version &optional (buffer *header-buffer*))
@@ -114,7 +112,7 @@
                          (1.1 (string-to-octets "HTTP/1.1"))
                          (1.0 (string-to-octets "HTTP/1.0")))
                        buffer)
-  (fast-write-sequence +crlf+ buffer))
+  (fast-write-sequence .crlf buffer))
 
 (defun write-header-field (name buffer)
   (fast-write-sequence (if (typep name 'octet-vector)
@@ -132,7 +130,7 @@
   (write-header-field name buffer)
   (fast-write-sequence (string-to-octets ": ") buffer)
   (write-header-value value buffer)
-  (fast-write-sequence +crlf+ buffer))
+  (fast-write-sequence .crlf buffer))
 
 (define-compiler-macro write-header (name value &optional (buffer '*header-buffer*))
   `(progn
@@ -144,7 +142,7 @@
      ,(if (constantp value)
           `(fast-write-sequence (string-to-octets ,(string value)) ,buffer)
           `(write-header-value ,value ,buffer))
-     (fast-write-sequence +crlf+ ,buffer)))
+     (fast-write-sequence .crlf ,buffer)))
 
 (defmacro with-header-output ((buffer &optional output) &body body)
   `(with-fast-output (,buffer ,output)
@@ -164,7 +162,7 @@
                          (1.1 (string-to-octets "HTTP/1.1"))
                          (1.0 (string-to-octets "HTTP/1.0")))
                        buffer)
-  (fast-write-sequence +crlf+ buffer)
+  (fast-write-sequence .crlf buffer)
   (fast-write-sequence (string-to-octets "Host:") buffer)
   (fast-write-byte #.(char-code #\Space) buffer)
   (fast-write-sequence (string-to-octets (format nil "~A:~A"
@@ -172,12 +170,12 @@
                                                  (uri-port uri)))
                        buffer)
   (when proxy-auth
-    (fast-write-sequence +crlf+ buffer)
+    (fast-write-sequence .crlf buffer)
     (fast-write-sequence (string-to-octets "Proxy-Authorization:") buffer)
     (fast-write-byte #.(char-code #\Space) buffer)
     (fast-write-sequence (string-to-octets proxy-auth) buffer))
-  (fast-write-sequence +crlf+ buffer)
-  (fast-write-sequence +crlf+ buffer))
+  (fast-write-sequence .crlf buffer)
+  (fast-write-sequence .crlf buffer))
 
 (defun make-random-string (&optional (length 12))
   (declare (type fixnum length))
@@ -522,7 +520,7 @@ keep-alive-stream), and should handle clean-up of it"
                (when endp
                  (fast-write-sequence (string-to-octets "--") stream))
                (crlf))
-             (crlf () (fast-write-sequence +crlf+ stream)))
+             (crlf () (fast-write-sequence .crlf stream)))
       (loop for (key . val) in content
             do (boundary-line)
                (fast-write-sequence (string-to-octets (content-disposition key val)) stream)
@@ -877,7 +875,7 @@ keep-alive-stream), and should handle clean-up of it"
         (fast-write-sequence
          (string-to-octets (write-cookie-header cookies))
          buffer)
-        (fast-write-sequence +crlf+ buffer)))))
+        (fast-write-sequence .crlf buffer)))))
 
 (defun make-connect-stream (uri version stream &optional proxy-auth)
   (let ((header (with-fast-output (buffer)
@@ -993,7 +991,7 @@ keep-alive-stream), and should handle clean-up of it"
                            ssl-cert-file)
          :password ssl-key-password)))))
 
-(defun request (uri &rest args
+(defun req (uri &rest args
                     &key (method :get) (version 1.1)
                          content headers
                          basic-auth bearer-auth
@@ -1055,12 +1053,12 @@ keep-alive-stream), and should handle clean-up of it"
                          stream))
                  (retry-request ()
                    :report "Retry the same request."
-                   (return-from request
-                     (apply #'request uri :use-connection-pool nil args)))
+                   (return-from req
+                     (apply #'req uri :use-connection-pool nil args)))
                  (retry-insecure ()
                    :report "Retry the same request without checking for SSL certificate validity."
-                   (return-from request
-                     (apply #'request uri :use-connection-pool nil :insecure t args)))))
+                   (return-from req
+                     (apply #'req uri :use-connection-pool nil :insecure t args)))))
              (http-proxy-p (uri)
                (and uri
                     (let ((scheme (uri-scheme uri)))
@@ -1242,7 +1240,7 @@ keep-alive-stream), and should handle clean-up of it"
                                              (maybe-try-again-without-reusing-stream))))
                             ,@body)
                         (retry-request () :report "Retry the same request."
-                          (return-from request (apply #'request uri args)))
+                          (return-from req (apply #'req uri args)))
                         (ignore-and-continue () :report "Ignore the error and continue."))))
           (tagbody
            retry
@@ -1255,7 +1253,7 @@ keep-alive-stream), and should handle clean-up of it"
                (write-sequence headers-data stream)
                (when cookie-headers
                  (write-sequence cookie-headers stream))
-               (write-sequence +crlf+ stream)
+               (write-sequence .crlf stream)
                (force-output stream))
 
              ;; Sending the content
@@ -1292,7 +1290,7 @@ keep-alive-stream), and should handle clean-up of it"
                                             :uri uri
                                             :method method)))
                  (when verbose
-                   (print-verbose-data :outgoing first-line-data headers-data cookie-headers +crlf+)
+                   (print-verbose-data :outgoing first-line-data headers-data cookie-headers .crlf)
                    (print-verbose-data :incoming response-headers-data))
                  (when cookie-jar
                    (when-let ((set-cookies (append (gethash "set-cookie" response-headers)
@@ -1356,8 +1354,8 @@ keep-alive-stream), and should handle clean-up of it"
                            (unless (or (= status 307) (= status 308)
                                        (member method '(:get :head) :test #'eq))
                              (setf (getf args :method) :get))
-                           (return-from request
-                             (apply #'request location-uri (if same-server-p
+                           (return-from req
+                             (apply #'req location-uri (if same-server-p
                                                                args
                                                                (progn (remf args :stream) args))))))))
                  (unwind-protect
@@ -1396,7 +1394,7 @@ keep-alive-stream), and should handle clean-up of it"
                         ;; sockets, so we wrap the returned last value so when it is garbage
                         ;; collected it gets closed.  If the user is getting a stream back as BODY,
                         ;; then we instead add a finalizer to that stream to close it when garbage collected
-                        (return-from request
+                        (return-from req
                           (values body
                                   status
                                   response-headers
@@ -1452,7 +1450,7 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (ignore version headers basic-auth bearer-auth cookie-jar keep-alive use-connection-pool
 		   connect-timeout read-timeout max-redirects force-binary force-string want-stream
 		   ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path content))
-  (apply #'request uri :method :get args))
+  (apply #'req uri :method :get args))
 
 (defun post (uri &rest args
                  &key version content headers basic-auth bearer-auth cookie-jar keep-alive
@@ -1463,14 +1461,14 @@ keep-alive-stream), and should handle clean-up of it"
 		   use-connection-pool connect-timeout read-timeout force-binary force-string
 		   want-stream ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy
 		   insecure ca-path))
-  (apply #'request uri :method :post args))
+  (apply #'req uri :method :post args))
 
 (defun head (uri &rest args
                  &key version headers basic-auth bearer-auth cookie-jar connect-timeout read-timeout max-redirects
                       ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path)
   (declare (ignore version headers basic-auth bearer-auth cookie-jar connect-timeout read-timeout
 		   max-redirects ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path))
-  (apply #'request uri :method :head :use-connection-pool nil args))
+  (apply #'req uri :method :head :use-connection-pool nil args))
 
 (defun put (uri &rest args
                 &key version content headers basic-auth bearer-auth cookie-jar keep-alive
@@ -1481,7 +1479,7 @@ keep-alive-stream), and should handle clean-up of it"
 		   use-connection-pool connect-timeout read-timeout force-binary force-string
 		   want-stream ssl-key-file ssl-cert-file ssl-key-password stream verbose
 		   proxy insecure ca-path))
-  (apply #'request uri :method :put args))
+  (apply #'req uri :method :put args))
 
 (defun patch (uri &rest args
                   &key version content headers basic-auth bearer-auth cookie-jar keep-alive
@@ -1492,7 +1490,7 @@ keep-alive-stream), and should handle clean-up of it"
 		   use-connection-pool connect-timeout read-timeout force-binary force-string
 		   want-stream ssl-key-file ssl-cert-file ssl-key-password stream verbose proxy
 		   insecure ca-path))
-  (apply #'request uri :method :patch args))
+  (apply #'req uri :method :patch args))
 
 (defun delete (uri &rest args
                    &key version headers basic-auth bearer-auth cookie-jar keep-alive
@@ -1502,7 +1500,7 @@ keep-alive-stream), and should handle clean-up of it"
   (declare (ignore version headers basic-auth bearer-auth cookie-jar keep-alive use-connection-pool
 		   connect-timeout read-timeout force-binary force-string want-stream ssl-key-file
 		   ssl-cert-file ssl-key-password stream verbose proxy insecure ca-path content))
-  (apply #'request uri :method :delete args))
+  (apply #'req uri :method :delete args))
 
 (defun fetch (uri destination &rest args
                               &key (if-exists :error)
@@ -1520,7 +1518,7 @@ keep-alive-stream), and should handle clean-up of it"
                          :if-does-not-exist :create
                          :element-type '(unsigned-byte 8))
       (remf args :if-exists)
-      (let ((body (apply #'req:get uri :want-stream t :force-binary t args)))
+      (let ((body (apply #'req uri :want-stream t :force-binary t args)))
         (copy-stream body out)
         ;; Usually the body gets closed, but if keep-alive is nil we need to
         ;; explicitly do it.
@@ -1564,7 +1562,7 @@ keep-alive-stream), and should handle clean-up of it"
 
 (defclass http-client (tcp-socket)
   ((kernel :type function :accessor kernel
-           :initform #'request
+           :initform #'req
            :initarg :kernel
            :documentation "A function which takes a single required argument and a set of keyword
 arguments. By default, a non-specialized HTTP-CLIENT object will expect a

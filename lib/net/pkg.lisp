@@ -116,7 +116,7 @@
 
 (defpkg :net/codec/dns
   (:nicknames :codec/dns)
-  (:use :std-lisp :net/core :punycode)
+  (:use :std-lisp :net/core :punycode :io/socket)
   (:export
    :dns-condition
    :dns-server-failure
@@ -200,7 +200,7 @@
   (:use :std-lisp :net/core :codec/dns)
   (:export
    :dns-servers-exhausted
-   :dns-port
+   :+dns-port+
    :*cloudflare-servers*
    :*dnswatch-servers*
    :*google-servers*
@@ -210,11 +210,7 @@
    :dns-query
    :query-data
    :resolve
-   :hostname
-   :response-code
-   :dns-servers-exhausted
-   :response-code-name
-   :with-dns-error-handling))
+   :hostname))
 
 (defpkg :net/proto/dbus
   (:use :std-lisp :net/core :cry/auth :net/codec/dbus :cry/keyring :io/mux :io/sys :id :dat/xml :io/stream)
@@ -393,6 +389,7 @@
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
   (:import-from :dat/mime :mime)
+  (:import-from :net/proto/http :.crlf)
   (:import-from :chunky :input-chunking-p :make-chunked-stream :output-chunking-p)
   (:import-from :io/fast :make-output-buffer :finish-output-buffer)
   (:import-from :io/stream :decoding-stream :needs-to-fill-buffer-p
@@ -423,8 +420,7 @@
    :clear-connection-pool
    ;; Restarts
    :retry-request
-   :ignore-and-continue
-   :decoding-stream-of))
+   :ignore-and-continue))
 
 (defpkg :net/srv
   (:use :cl :obj/uri :log

@@ -33,9 +33,9 @@
    :load-cli))
 
 (defpkg :cli/shell
-  (:use :cl :std)
+  (:use :cl :std :config :ast)
   (:nicknames :shell)
-  (:export :*shell* :*shell-input*))
+  (:export :*shell* :*shell-input* :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/env
   (:use :cl :std)
@@ -176,10 +176,6 @@
   (:export
    :spark :*ticks*
    :vspark :*vticks*))
-
-(defpkg :cli/repl
-  (:use :cl :std :cli/progress :cli/spark :config :ast :color :cli/term)
-  (:export :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/linedit
   (:nicknames :linedit)

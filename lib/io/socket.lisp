@@ -53,6 +53,32 @@
   (assert (= size #.(alien-size timeval :bytes)))
   buffer)
 
+;;; ipv6
+(defun vector-to-ipv6-host (vector)
+  "Convert a byte vector `vector' of at least 16 bytes into the string
+representation of an IPv6 host."
+  (with-output-to-string (*standard-output*)
+    (loop with zeros-collapsed-p
+          with collapsing-zeros-p
+          for i below 16 by 2
+          for word = (+ (ash (aref vector i) 8)
+                        (aref vector (1+ i)))
+          do (cond
+               ((and (zerop word)
+                     (not collapsing-zeros-p)
+                     (not zeros-collapsed-p))
+                (setf collapsing-zeros-p t))
+               ((or (not (zerop word))
+                    zeros-collapsed-p)
+                (when collapsing-zeros-p
+                  (write-string ":")
+                  (setf collapsing-zeros-p nil
+                        zeros-collapsed-p t))
+                (format t "~:[~;:~]~X" (plusp i) word)))
+          finally (when collapsing-zeros-p
+                    (write-string "::")))))
+
+;;; Socket Options
 ;;timevals
 (defmacro define-socket-option-timeval (name level number &optional features (info ""))
   `(sb-bsd-sockets::define-socket-option ,name nil ,level ,number

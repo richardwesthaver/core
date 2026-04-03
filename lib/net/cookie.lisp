@@ -46,6 +46,10 @@
   (httponly-p nil :type boolean)
   (creation-timestamp (get-universal-time) :type integer :read-only t))
 
+(defaccessor name ((self cookie)) (cookie-name self))
+(defaccessor path ((self cookie)) (cookie-path self))
+(defaccessor value ((self cookie)) (cookie-value self))
+
 (defstruct cookie-jar
   cookies)
 
@@ -70,6 +74,9 @@
        (eq (cookie-partitioned cookie1)
            (cookie-partitioned cookie2))
        (eq (cookie-httponly-p cookie1) (cookie-httponly-p cookie2))))
+
+(defmethod equiv:eqv ((a cookie) (b cookie)) (cookie= a b))
+(defmethod equiv:equiv ((a cookie) (b cookie)) (cookie-equal a b))
 
 (defun expired-cookie-p (cookie)
   "Check if cookie is expired, whereas max-age has priority over expires."
@@ -326,9 +333,10 @@ the respective slots."
   (and universal-time
        (time:rfc-1123-date universal-time)))
 
-(defmethod stringify-cookie ((cookie cookie))
+(defun stringify-cookie (cookie)
   "Converts the COOKIE object COOKIE to a string suitable for a
 'Set-Cookie' header to be sent to a HTTP client."
+  (declare (cookie cookie))
   (format nil
           "~A=~A~@[; Expires=~A~]~@[; Max-Age=~A~]~@[; Domain=~A~]~@[; Path=~A~]~@[; SameSite=~A~]~:[~;; Secure~]~:[~;; HttpOnly~]"
           (cookie-name cookie)
@@ -340,3 +348,6 @@ the respective slots."
           (cookie-same-site cookie)
           (cookie-secure-p cookie)
           (cookie-httponly-p cookie)))
+
+(defmethod serialize ((self cookie) (fmt (eql :string)) &key)
+  (stringify-cookie self))

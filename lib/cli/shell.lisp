@@ -4,27 +4,29 @@
 
 ;;; Commentary:
 
-;;; #$ Read Macro
+;;; #$ Read Macro:
 
-;; A read macro is accessible in the named readtable :SHELL. It has
-;; three modes of operation: read, compile, and eval. In read mode,
-;; input is parsed and embedded lisp forms are expanded. The string is
-;; returned as is. In eval mode, embedded lisp forms are expanded and
-;; the resulting string is wrapped in a call to
-;; SB-EXT:RUN-PROGRAM. Finally, in eval mode the compiled function is
-;; called with default arguments and the result of that call is
+;; A read macro is accessible in the named readtable :SHELL. It has three
+;; modes of operation: read, compile, and eval. In read mode, input is parsed
+;; and embedded lisp forms are expanded. The string is returned as is. In eval
+;; mode, embedded lisp forms are expanded and the resulting string is wrapped
+;; in a call to SB-EXT:RUN-PROGRAM. Finally, in eval mode the compiled
+;; function is called with default arguments and the result of that call is
 ;; returned.
 
 ;;; Code:
 (in-package :cli/shell)
 (in-readtable :std)
 
+;;; Variables
 (defparameter *shell* "/bin/bash")
 (defparameter *shell-input* nil)
 (defparameter *shell-output* t)
 
+;;; Types
 (deftype %shell-state () '(member :sh :dolla :pound))
 
+;;; Readers
 (defun plain-shell-reader (stream)
   (let (out (state :sh))
     (declare (type %shell-state state))
@@ -163,3 +165,20 @@ An escaped form with parens like the following works fine:
   "The shell readtable"
   (:merge :std)
   (:dispatch-macro-char #\# #\$ #'|#$-reader|))
+
+;;; REPL support
+
+;;;; Config
+(defconfig repl-config (ast) 
+  (sysinit userinit package))
+
+;;;; Toplevel
+(defun make-toplevel-init (&key (package *package*)
+                                (userinit #'sb-impl::userinit-pathname)
+                                (sysinit #'sb-impl::sysinit-pathname)
+                                (default #'sb-impl::toplevel-init))
+  "Default toplevel initializer - wraps SBCL init when DEFAULT is T."
+  (setq *package* (find-package package)
+        sb-ext:*userinit-pathname-function* userinit
+        sb-ext:*sysinit-pathname-function* sysinit)
+  (when default (funcall default)))

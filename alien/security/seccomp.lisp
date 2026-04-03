@@ -13,7 +13,20 @@
 
 (define-alien-type scmp-filter-ctx (* t))
 
-;; (define-alien-enum scmp-fltatr)
+(define-alien-enum (scmp-fltatr)
+  :min 0
+  :act-default 1
+  :act-badarch 2
+  :ctl-nnp 3
+  :ctl-tsync 4
+  :api-tskip 5
+  :ctl-log 6
+  :ctl-ssb 7
+  :ctl-optimize 8
+  :api-sysrawrc 9
+  :ctl-waitkill 10
+  :max 11)
+
 (define-alien-enum (scmp-cmp)
   :min 0
   :ne 1

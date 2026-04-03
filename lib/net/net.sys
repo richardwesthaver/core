@@ -34,9 +34,65 @@
     (:file "openapi")
     (:file "ext"))))
  :provide
- ((:proto :net)
-  (:proto :http)
-  (:proto :dns)
-  (:proto :osc)
+ ((:proto :netgraph
+   :description "Network Graph API.")
+  (:proto :connect
+   :description "Network connection protocol."
+   :macros (with-open-connection)
+   :classes (connection)
+   :methods (connect))
+  (:proto :socket
+   :description "Network socket protocol."
+   :macros (with-socket with-open-socket)
+   :classes (socket wrapped-socket stream-socket stream-server-socket datagram-socket))
+  (:proto :client
+   :description "Network client protocol."
+   :classes (client)
+   :methods (make-client-request))
+  (:proto :server
+   :description "Network server protocol."
+   :classes (server)
+   :methods (make-server-response))
+  (:proto :http
+   :description "Generic HTTP protocol."
+   :constants (+known-http-words+ +known-http-versions+ +known-http-methods+)
+   :variables (*http-status-message-map*)
+   :functions (https-status-message http-keyword))
+  (:proto :dns
+   :description "DNS codec and protocol."
+   :variables (*dns-servers*)
+   :constants (+dns-port+)
+   :conditions (dns-condition dns-server-failure dns-error dns-servers-exhausted)
+   :parameters (*record-type-table*)
+   :functions (record-type-id id-record-type encode-host decode-host 
+               encode-header decode-header encode-query decode-query
+               decode-data dns-query query-data resolve
+               hostname response-code))
+  (:proto :osc
+   :description "Open Sound Control Codec."
+   :variables (*default-osc-buffer-size*)
+   :classes (osc-message osc-bundle)
+   :methods (encode-osc-data encode-osc-bundle-elt osc-elements osc-timetag osc-command osc-args)
+   :functions (osc-register osc-remove osc-match osc-dispatch
+               decode-osc-message decode-osc-bundle))
+  (:proto :dbus
+   :description "DBus codec and protocol."
+   :conditions (dbus-error dbus-method-error dbus-auth-error)
+   :classes (dbus-external-authenticator dbus unix-server-address dbus-unix-connection
+             dbus-type dbus-method-call-message dbus-signal-message dbus-method-return-message
+             dbus-error-message dbus-object)
+   :macros (with-introspected-object with-open-bus define-dbus-object define-dbus-method define-dbus-signal-handler)
+   :functions (encode-dbus-message decode-dbus-message))
+  (:proto :cookie
+   :description "HTTP cookie API."
+   :structs (cookie cookie-jar)
+   :predicates (cookie-p cookie-secure-p cookie-httponly-p)
+   :functions (make-cookie))
+  (:proto :req
+   :description "HTTP Request API."
+   :conditions (http-request-failed)
+   :classes (http-client simple-http-client http-client-config)
+   :restarts (retry-request ignore-and-continue)
+   :functions (req get post head put patch delete fetch))
   (:tests)))
 

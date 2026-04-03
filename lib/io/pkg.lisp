@@ -151,6 +151,7 @@
    :io-socket :sockopt-receive-timeout :sockopt-send-timeout :sockopt-linger
    :integer-to-dotted :dotted-to-vector
    :vector-to-dotted :dotted-to-integer
+   :vector-to-ipv6-host
    :ip-header :icmp-header
    :write-ip-header :write-icmp-header
    :sockopt-peercred :unknown-interface

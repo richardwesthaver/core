@@ -38,7 +38,7 @@
 
 (defclass osc-data () ())
 
-(defclass osc-message (osc-data)
+(defclass osc-message (osc-data message)
   ((command
     :reader osc-command
     :initarg :command)
@@ -116,15 +116,15 @@
          (if timetag
              (encode-timetag timetag)
              (encode-timetag :now))
-         (apply #'cat (mapcar #'encode-bundle-elt elements)))))
+         (apply #'cat (mapcar #'encode-osc-bundle-elt elements)))))
 
-(defgeneric encode-bundle-elt (data))
+(defgeneric encode-oscbundle-elt (data))
 
-(defmethod encode-bundle-elt ((data osc-message))
+(defmethod encode-osc-bundle-elt ((data osc-message))
   (let ((bytes (encode-osc-data data)))
     (cat (encode-int32 (length bytes)) bytes)))
 
-(defmethod encode-bundle-elt ((data osc-bundle))
+(defmethod encode-osc-bundle-elt ((data osc-bundle))
   (let ((bytes (encode-osc-data data)))
     (cat (encode-int32 (length bytes)) bytes)))
 
@@ -177,7 +177,7 @@
       lump)))
 
 ;;; Decode
-(defun bundle-p (buffer &optional (start 0))
+(defun osc-bundle-p (buffer &optional (start 0))
   "A bundle begins with '#bundle' (8 bytes). The start argument should
 index the beginning of a bundle in the buffer."
   (= 35 (elt buffer start)))
@@ -232,7 +232,7 @@ pair in the buffer."
   (when *log-level*
     (format t "~%Buffer start: ~a end: ~a~%" start end)
     (print-buffer (subseq buffer start end)))
-  (if (bundle-p buffer start)
+  (if (osc-bundle-p buffer start)
       ;; Bundle
       (let ((timetag (get-timetag buffer start)))
         (incf start (+ 8 8))            ; #bundle, timetag bytes
@@ -263,14 +263,14 @@ pair in the buffer."
     (if (eq x nil)
         (format t "message contains no data.. ")
         (cons (decode-address (subseq message 0 x))
-              (decode-taged-data (subseq message x))))))
+              (decode-tagged-data (subseq message x))))))
 
 (defun decode-address (address)
   (coerce (map 'vector #'code-char
                (delete 0 address))
           'string))
 
-(defun decode-taged-data (data)
+(defun decode-tagged-data (data)
   "decodes data encoded with typetags...
   NOTE: currently handles the following tags
    i => #(105) => int32
@@ -447,7 +447,6 @@ with the current time use (encode-timetag :time)."
 (defun make-osc-tree ()
   (make-hash-table :test 'equalp))
 
-
 ;;; Dispatch
 (defun osc-register (tree address function)
   "Registers a function to respond to incoming osc messages. Since
@@ -488,3 +487,10 @@ timetag of the bundle and the enclosing bundle."
   (declare (ignore timetag parent-bundle))
   (dolist (element (osc-elements data))
     (osc-dispatch tree element device address port (osc-timetag data) data)))
+
+(defmethod serialize ((self osc-data) (format (eql :osc)) &key)
+  (encode-osc-data self))
+(defmethod deserialize ((self vector) (format (eql :osc)) &key bundle (start 0) end)
+  (if bundle
+      (decode-osc-bundle self :start start :end end)
+      (decode-osc-message self)))
