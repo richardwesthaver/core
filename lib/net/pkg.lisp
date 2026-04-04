@@ -306,13 +306,6 @@
    :invalid-parameter-key
    :invalid-parameter-value))
 
-(defpkg :net/proto/transmission
-  (:nicknames :net/transmission)
-  (:import-from :id :id)
-  (:import-from :uri :uri)
-  (:import-from :srv :request :response :service :session :request-protocol :content-stream)
-  (:use :std-lisp :net/core :net/proto/http))
-
 (defpkg :net/proto/dm
   (:nicknames :net/dm)
   (:use :std-lisp :net/core :net/codec/tlv))

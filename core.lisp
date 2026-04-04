@@ -7,7 +7,7 @@
   (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math :ast
    :cli :skel :homer :mpk :krypt :packy)
   (:import-from :cli/main :define-multi-main)
-  (:import-from :cli/repl :make-toplevel-init)
+  (:import-from :cli/shell :make-toplevel-init)
   (:export #:app-config #:dispatch-core))
 
 (in-package :core)

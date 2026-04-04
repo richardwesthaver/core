@@ -30,7 +30,7 @@
    :print-version
    :make-cli :define-cli
    :cli-cd :with-cli
-   :load-cli))
+   :load-cli :args :arg0))
 
 (defpkg :cli/shell
   (:use :cl :std :config :ast)

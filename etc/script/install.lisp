@@ -1,7 +1,7 @@
 #!/usr/bin/env -S core --script
 (in-readtable :shell)
 #$install -C -m 755 .stash/core /usr/bin/core$#
-(let ((apps '("skel" "homer" "mpk" "pod")))
+(let ((apps '("skel" "homer" "mpk")))
   (with-progress-bar ((length apps) "installing core to /usr/bin/core")
     (loop for i in apps
           while i

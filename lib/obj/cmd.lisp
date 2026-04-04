@@ -80,6 +80,10 @@ Z -- Coding system, nil if no prefix arg.
   "A character used to indicate the start of a new command within the same line.")
 (defparameter *command-names-p* nil
   "Indicates whether commands will be defined with LAMBDA (NIL) or DEFUN (T).")
+(defparameter *interactive-optional-args-p* nil "When T enable interactive capture for &OPTIONAL args.")
+(defparameter *interactive-rest-args-p* nil "When T enable interactive capture for &REST args.")
+(defparameter *interactive-key-args-p* nil "When T enable interactive capture for &KEY args.")
+
 (defhook *command-hook* ((:pre) (:post) (:eval)))
 (defconstant +interactive-placeholder-tag+ '_)
 ;;; Conditions
@@ -171,6 +175,8 @@ LAMBDA-LIST at compile-time."
   (multiple-value-bind (fn args) (unparse-ds-command-type r)
     (when fn (apply fn args))))
 
+;; REVIEW 2026-04-03: remove support for optional/rest - may want to make this
+;; configurable..
 (defun fill-args-interactively (args ids)
   "Parse ARGS as the input to a function designated by the
 interactive-ds-lambda-list IDS. Return a list to be applied as the second
@@ -184,19 +190,19 @@ argument of CALL."
             do (collect 
                    (or (call-ds-command-type r)
                        (error "Missing a required argument during an interactive call."))))
-      (loop while args
-            for o in opt
-            for a = (pop args)
-            do (collect (call-ds-command-type o)))
-      (when rest 
+      (when *interactive-optional-args-p*
+        (loop 
+          for o in opt
+          for a = (pop args)
+          do (collect (call-ds-command-type o))))
+      (when *interactive-rest-args-p*
         (if args
             (dolist (a args)
               (collect a))
             (let ((rs (call-ds-command-type rest))) (if (atom rs) (list rs) rs)
               (dolist (a rs)
                 (collect a)))))
-      ;; TODO 2026-01-27: 
-      (when key
+      (when *interactive-key-args-p*
         (loop while args
               for ak = (pop args)
               for k in key
@@ -276,7 +282,7 @@ is a lambda-list which destructures the INTERACTIVE argtype forms.
 
 Example:
 
-(define-command-type :symbol (prompt)
+(define-command-type symbol (prompt)
  (or (find-symbol
        (string-upcase
          (or (read-arg *command-io*)
@@ -293,7 +299,7 @@ Example:
      (throw 'error \"Symbol not in STD package\")))
 
 (defcommand \"symbol\" (sym) 
- (declare (interactive (:symbol \"Pick a symbol: \")))
+ (declare (interactive (symbol \"Pick a symbol: \")))
  (describe sym s))"
   (assert (listp args) nil 'invalid-command-type :name name :args args)
   `(progn
@@ -307,19 +313,22 @@ Example:
 ;; IO
 (deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
 
+(defun maybe-prompt (&optional prompt)
+  (when prompt (princ prompt *query-io*) (force-output *query-io*)))
+
 ;; arg parsing
-(defun read-arg (input)
+(defun read-arg (input &optional prompt)
   (etypecase input
     (string (with-input-from-string (s input) (read s)))
-    (stream (read input))
-    (list (car input))))
+    (stream (maybe-prompt prompt) (read input))
+    (list (or (car input) (read-arg *query-io* prompt)))))
 
-(defun read-args (input)
+(defun read-args (input &optional prompt)
   (declare (values list))
   (etypecase input
     (string (read-lisp-string input))
-    (stream (read-lisp-string (read-line input)))
-    (list input)))
+    (stream (maybe-prompt prompt) (read-lisp-string (read-line input)))
+    (list (or input (read-args *query-io* prompt)))))
 
 (defgeneric parse-args (self input)
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
@@ -375,7 +384,7 @@ then execute it."
   (declare ((or string symbol command) command))
   (catch 'cmd
     (let ((*command-io* input))
-      (multiple-value-bind (cmd args itype) 
+      (multiple-value-bind (cmd args itype)
           (typecase command
             ((or string symbol)
              (if (and input (listp input))
@@ -444,7 +453,11 @@ command."))
 (defmethod sb-impl::object-type-string ((self command)) "command function")
 
 ;; TODO 2026-01-22: apply-itype
-(defmethod parse-args ((self command) (input list)) input)
+;; (defun apply-itype (cmd input))
+
+(defmethod parse-args ((self command) (input list))
+
+  input)
 (defmethod parse-args ((self command) (input string))
   (declare (ignore self))
   (read-args input))

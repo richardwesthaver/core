@@ -613,6 +613,9 @@
    :*command* :*command-class*
    :*command-types* :command-type
    :command-table :command
+   :*interactive-optional-args-p*
+   :*interactive-rest-args-p*
+   :*interactive-key-args-p*
    :with-commands :read-command
    :write-command :parse-command
    :save-commands :copy-commands

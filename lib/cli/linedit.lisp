@@ -498,7 +498,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   "C-a" "move-to-bol"
   "C-b" "move-char-left"
   "C-c" "interrupt-lisp"
-  "C-d" "delete-char-forwards-or-eof"
+  "C-d" "delete-char-forward-or-eof"
   "C-e" "move-to-eol"
   "C-f" "move-char-right"
   "C-k" "kill-to-eol"
@@ -510,12 +510,12 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   "C-U" "kill-to-bol"
   "C-O" "close-all-sexp"
   "C-P" "history-previous"
-  "C-R" "search-history-backwards"
-  "C-S" "search-history-forwards"
+  "C-R" "search-history-backward"
+  "C-S" "search-history-forward"
   "M-A" "apropos-word"
-  "M-B" "move-word-backwards"
-  "M-D" "delete-word-forwards"
-  "M-F" "move-word-forwards"
+  "M-B" "move-word-backward"
+  "M-D" "delete-word-forward"
+  "M-F" "move-word-forward"
   "M-H" "help"
   "M-I" "describe-word"
   "M-J" "inspect-word"
@@ -526,14 +526,14 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   "C-M-b" "backward-sexp"
   "C-M-f" "forward-sexp"
   "C-M-k" "kill-sexp"
-  "M-Backspace" "delete-word-backwards"
+  "M-Backspace" "delete-word-backward"
   "C-Space" "set-mark"
-  "C-Backspace" "delete-word-backwards"
+  "C-Backspace" "delete-word-backward"
   "Tab" "complete"
-  "Backspace" "delete-char-backwards"
+  "Backspace" "delete-char-backward"
   "Return" "finish-input"
   "Insert" "toggle-insert"
-  "Delete" "delete-char-forwards"
+  "Delete" "delete-char-forward"
   "Home" "move-to-bol"
   "End" "move-to-eol")
 
@@ -960,8 +960,8 @@ MAKE-LIST-COMPLETER."
 (defun history-search-needle (editor)
   (let ((text (if *history-search*
                   (cond ((and *history-needle*
-                              (member *last-command* '(search-history-backwards
-                                                       search-history-forwards)))
+                              (member *last-command* '(search-history-backward
+                                                       search-history-forward)))
                          *history-needle*)
                         (t
                          (setf *history-needle* (get-string editor))))
@@ -978,9 +978,9 @@ MAKE-LIST-COMPLETER."
          (test (lambda (old) (search text old)))
          (match (unless (equal "" text)
                   (ecase direction
-                    (:backwards
+                    (:backward
                      (buffer-find-previous-if test history))
-                    (:forwards
+                    (:forward
                      (buffer-find-next-if test history))))))
     (unless match
       (beep editor)
@@ -988,11 +988,11 @@ MAKE-LIST-COMPLETER."
     (setf (get-string editor) match
           (get-point editor) (length match))))
 
-(defcommand search-history-backwards (editor)
-  (history-search editor :backwards))
+(defcommand search-history-backward (editor)
+  (history-search editor :backward))
 
-(defcommand search-history-forwards (editor)
-  (history-search editor :forwards))
+(defcommand search-history-forward (editor)
+  (history-search editor :forward))
 
 ;;; KILLING & YANKING
 (defun %yank (editor)

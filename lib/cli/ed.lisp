@@ -496,7 +496,7 @@ empty string."
 name (usually same as *EDITOR*."))
 
 ;;; BASIC EDITING
-(defcommand delete-char-backwards (editor)
+(defcommand delete-char-backward (editor)
   (with-editor-point-and-string ((point string) editor)
     ;; Can't delegate to editor because of the SUBSEQ index calc.
     (unless (zerop point)
@@ -504,7 +504,7 @@ name (usually same as *EDITOR*."))
                                              (subseq string point))
             (get-point editor) (1- point)))))
 
-(defcommand delete-char-forwards (editor)
+(defcommand delete-char-forward (editor)
   (with-editor-point-and-string ((point string) editor)
     (setf (get-string editor) (concatenate 'simple-string (subseq string 0 point)
                                            (subseq string (min (1+ point) (length string)))))))
@@ -520,12 +520,12 @@ name (usually same as *EDITOR*."))
                              (subseq string (1+ point))))))
     (incf (get-point editor))))
 
-(defcommand delete-char-forwards-or-eof (editor)
+(defcommand delete-char-forward-or-eof (editor)
   (if (equal "" (get-string editor))
       (error 'end-of-file :stream *standard-input*)
-      (delete-char-forwards editor)))
+      (delete-char-forward editor)))
 
-(defcommand delete-word-forwards (editor)
+(defcommand delete-word-forward (editor)
   (with-editor-point-and-string ((point string) editor)
     (declare (ignore point))
     (let ((i (get-point editor))
@@ -533,7 +533,7 @@ name (usually same as *EDITOR*."))
       (setf (get-string editor)
             (concatenate 'simple-string (subseq string 0 i) (subseq string j))))))
 
-(defcommand delete-word-backwards (editor)
+(defcommand delete-word-backward (editor)
   (with-editor-point-and-string ((point string) editor)
     (let ((i (editor-previous-word-start editor)))
       (setf (get-string editor) (concatenate 'simple-string (subseq string 0 i)
@@ -570,10 +570,10 @@ name (usually same as *EDITOR*."))
 (defcommand move-char-left (editor)
   (decf (get-point editor)))
 
-(defcommand move-word-backwards (editor)
+(defcommand move-word-backward (editor)
   (setf (get-point editor) (editor-previous-word-start editor)))
 
-(defcommand move-word-forwards (editor)
+(defcommand move-word-forward (editor)
   (setf (get-point editor) (editor-next-word-end editor)))
 
 (defcommand close-all-sexp (editor)

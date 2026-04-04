@@ -934,7 +934,10 @@ Add this function to appropriate major mode hooks such as
       org-html-head-include-default-style nil
       ;; cc default
       org-ascii-text-width 80
-      org-attach-id-dir (join-paths company-cdn-url "media/"))
+      org-attach-id-dir (join-paths company-cdn-url "media/")
+      org-edit-src-content-indentation 0)
+
+(add-hook 'org-mode-hook 'visual-line-mode)
 
 (org-crypt-use-before-save-magic)
 
@@ -1060,7 +1063,6 @@ Add this function to appropriate major mode hooks such as
 
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 
-;; archive
 (defun extract-org-directory-titles-as-list (&optional dir)
   (interactive "D")
   (print

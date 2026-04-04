@@ -208,6 +208,8 @@ The following keyword parameters can be passed to the info dynamic block:
     (org-create-dblock (list :name "project-info")))
   (org-update-dblock))
 
+(org-dynamic-block-define "project-info" 'org-project-info)
+
 (defun org-dblock-write:lisp-system-info (params)
   "Generate a project-info section.
 
@@ -308,6 +310,8 @@ block:
 	(beginning-of-line))
     (org-create-dblock (list :name "lisp-system-info" :system system)))
   (org-update-dblock))
+
+(org-dynamic-block-define "lisp-system-info" 'org-lisp-system-info)
 
 (provide 'scrum)
 ;;; scrum.el ends here

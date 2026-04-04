@@ -125,14 +125,10 @@ evaluation of BODY."
   (string (read-arg *query-io*)))
 
 (define-command-type (:cli string*) (&optional (prompt "Input: "))
-  (princ prompt *query-io*)
-  (force-output *query-io*)
-  (mapcar 'string (read-args *query-io*)))
+  (mapcar 'string (read-args *command-io* prompt)))
 
 (define-command-type (:cli ustring) (&optional (prompt "INPUT: "))
-  (princ prompt *query-io*)
-  (force-output *query-io*)
-  (string-upcase (read-arg *query-io*)))
+  (string-upcase (read-arg *command-io* prompt)))
 
 (define-command-type (:cli ustring*) (&optional (prompt "Input: "))
   (princ prompt *query-io*)

@@ -143,7 +143,7 @@
      :wrap-current t 
      :history (xdg-data-dir :skel "history") 
      :killring (xdg-data-dir :skel "killring"))
-    (cli/repl:make-toplevel-init
+    (cli/shell:make-toplevel-init
      :package :sk-user
      :userinit (lambda () (or (xdg-config-file :core) 
                               (merge-homedir-pathnames ".config/corerc") 

@@ -55,17 +55,6 @@
 
 (setq org-man-command 'woman)
 
-;;;###autoload
-(defun dblock-insert-links (regexp)
-  "Create dblock to insert links matching REGEXP."
-  (interactive (list (read-regexp "Insert links matching: " nil ulang-link-history)))
-  (org-create-dblock (list :name "links"
-                           :regexp regexp
-                           :id-only nil))
-  (org-update-dblock))
-
-(org-dynamic-block-define "links" 'dblock-insert-links)
-
 (org-export-translate-to-lang (list '("Table of Contents" "⇜")) "ulang")
 
 ;; (setq org-export-global-macros nil)
