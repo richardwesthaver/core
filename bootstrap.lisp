@@ -91,4 +91,5 @@
               :core)))
   (mapc 'load-system build-order))
 (init :kbd :keysyms (stash-pathname "kbd.sxp") :input nil)
+(gc :full t)
 (make-system :core)

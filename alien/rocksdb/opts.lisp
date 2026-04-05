@@ -65,7 +65,6 @@
   (opts (* rocksdb-hyper-clock-cache-options))
   (malloc (* rocksdb-memory-allocator)))
 
-(define-opt rocksdb-fifo-compaction-options)
 (define-opt rocksdb-transactiondb-options)
 (define-opt rocksdb-transaction-options)
 (define-opt rocksdb-optimistictransaction-options)
@@ -139,6 +138,12 @@
   (opt (* rocksdb-block-based-table-options)) (block-cache (* rocksdb-cache)))
 (defar rocksdb-block-based-options-set-format-version void
   (opt (* rocksdb-block-based-table-options)) (val int))
+(define-alien-enum (rocksdb-block-based-table-index-type :type unsigned-char)
+  :binary-search 0
+  :hash-search 1
+  :two-level-index-search 2)
+(defar rocksdb-block-based-options-set-separate-key-value-in-data-block void
+  (opt (* rocksdb-block-based-table-options)) (val rocksdb-block-based-table-index-type))
 (defar rocksdb-block-based-options-set-index-type void
   (opt (* rocksdb-block-based-table-options)) (val int))
 (defar rocksdb-block-based-options-set-data-block-index-type void
@@ -198,8 +203,6 @@
 (define-opt-accessor rocksdb-options enable-blob-gc)
 (define-opt-accessor rocksdb-options allow-ingest-behind)
 (define-opt-accessor rocksdb-options skip-stats-update-on-db-open)
-;; removed
-;; (define-opt-accessor rocksdb-options skip-checking-sst-file-sizes-on-db-open)
 (define-opt-accessor rocksdb-options enable-blob-files)
 (define-opt-accessor rocksdb-options enable-pipelined-write)
 (define-opt-accessor rocksdb-options unordered-write)
@@ -232,6 +235,11 @@
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
 (define-opt-accessor rocksdb-options memtable-op-scan-flush-trigger (unsigned 32))
+;; NOTE 2026-04-04: this option is incompatible with fifo-compaction
+(define-opt-accessor rocksdb-options open-files-async unsigned-char)
+(define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)
+(define-opt-accessor rocksdb-options max-compaction-trigger-wakeup-seconds unsigned-long)
+(define-opt-accessor rocksdb-options min-tombstones-for-range-conversion unsigned-int)
 (define-alien-enum (rocksdb-compression-type)
   :none 0
   :snappy 1
@@ -265,8 +273,6 @@
 (define-opt-accessor rocksdb-options prepopulate-blob-cache int)
 (define-opt-accessor rocksdb-options max-write-buffer-number int)
 (define-opt-accessor rocksdb-options min-write-buffer-number-to-merge int)
-;; deprecated
-;; (define-opt-accessor rocksdb-options max-write-buffer-number-to-maintain int)
 (define-opt-accessor rocksdb-options max-write-buffer-size-to-maintain long)
 (define-opt-accessor rocksdb-options max-subcompactions unsigned-int)
 (define-opt-accessor rocksdb-options max-background-jobs int)
@@ -507,6 +513,16 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-compactoptions target-path-id int)
 (define-opt-accessor rocksdb-compactoptions allow-write-stall unsigned-char)
 (define-opt-accessor rocksdb-compactoptions max-subcompactions int)
+
+(define-opt rocksdb-fifo-compaction-options)
+(defar rocksdb-options-set-fifo-compaction-options void
+  (opt (* rocksdb-options))
+  (opts (* rocksdb-fifo-compaction-options)))
+(define-opt-accessor rocksdb-fifo-compaction-options allow-compaction unsigned-char)
+(define-opt-accessor rocksdb-fifo-compaction-options max-table-files-size unsigned-long)
+(define-opt-accessor rocksdb-fifo-compaction-options max-data-files-size unsigned-long)
+(define-opt-accessor rocksdb-fifo-compaction-options use-kv-ratio-compaction unsigned-char)
+
 ;;; RocksDB LRU Cache Options
 (define-opt rocksdb-lru-cache-options)
 

@@ -1149,7 +1149,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   (etypecase comp
     (mod-component (mapcar 'read-component (components comp)))
     ((or grovel-component pkg-component)
-     (with-safe-io-syntax ((or (when (slot-boundp comp 'std/defsys::package) (slot-value comp 'std/defsys::package))
+     (with-safe-io-syntax ((or (when (slot-boundp comp 'std/defsys::default-package) (slot-value comp 'std/defsys::default-package))
                                *package*) 
                            ;; NOTE: *read-eval* = T
                            t)
@@ -1241,7 +1241,9 @@ internally. On success the path is added to the *SYSDEFS* list."
                       (reexport-packages *component-packages* e))
                     (mapc (lambda (x) (call-provider :package (list *module* x))) *component-packages*)
                     (call-provider :internal-package (list *module* (internal-package comp)))
-                    (call-provider :default-package (list *module* (default-package comp)))
+                    (call-provider :default-package (list *module* (or (default-package comp)
+                                                                       (find-package* *module* nil)
+                                                                       (car *component-packages*))))
                     (setq pkg:*component-packages* nil
                           pkg:*defpkg-hook* nil))))
                (t (compile-and-load f :output-file (ensure-fasl-cache-file f)

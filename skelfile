@@ -18,8 +18,7 @@
   (sh-mode . (sh-indentation . 2))
   (makefile-mode . ((indent-tabs-mode . t))))
  (packy-home :env "/opt/store/packy"))
-:components nil
-#+nil
+:components
 ((:org "readme")
  (:asd "core")
  (:sys "core")

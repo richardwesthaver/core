@@ -2,7 +2,7 @@
 (defsys :rocksdb
  :require (:std :log)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:file "prim")
   (:file "types")
   (:file "opts")

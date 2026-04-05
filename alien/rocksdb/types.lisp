@@ -56,3 +56,8 @@
 (define-opaque rocksdb-subcompactionjobinfo)
 (define-opaque rocksdb-externalfileingestioninfo)
 (define-opaque rocksdb-eventlistener)
+(define-alien-enum (rocksdb-size-approximation-flags)
+  :none 0
+  :include-memtable (ash 1 0)
+  :include-files (ash 1 1)
+  :include-blob-files (ash 1 2))

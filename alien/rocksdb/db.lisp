@@ -653,6 +653,11 @@
   (txn (* rocksdb-transaction))
   (name-len (* size-t)))
 
+(defar rocksdb-transaction-put-log-data void
+  (txn (* rocksdb-transaction))
+  (blob (* char))
+  (len size-t))
+
 (def-with-errptr rocksdb-transaction-prepare void
   (txn (* rocksdb-transaction)))
 

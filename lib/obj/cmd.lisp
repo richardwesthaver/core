@@ -80,9 +80,12 @@ Z -- Coding system, nil if no prefix arg.
   "A character used to indicate the start of a new command within the same line.")
 (defparameter *command-names-p* nil
   "Indicates whether commands will be defined with LAMBDA (NIL) or DEFUN (T).")
-(defparameter *interactive-optional-args-p* nil "When T enable interactive capture for &OPTIONAL args.")
-(defparameter *interactive-rest-args-p* nil "When T enable interactive capture for &REST args.")
-(defparameter *interactive-key-args-p* nil "When T enable interactive capture for &KEY args.")
+
+;; interactive arg capture - by default only &REST args are captured, optional
+;; and keyword args are parsed from lambda arg list.
+(defparameter *interactive-optional-args-p* nil "When T enable interactive capture for &OPTIONAL args, overwriting any default values.")
+(defparameter *interactive-rest-args-p* t "When T enable interactive capture for &REST args.")
+(defparameter *interactive-key-args-p* nil "When T enable interactive capture for &KEY args, overwriting any default values.")
 
 (defhook *command-hook* ((:pre) (:post) (:eval)))
 (defconstant +interactive-placeholder-tag+ '_)

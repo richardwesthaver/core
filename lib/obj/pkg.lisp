@@ -653,6 +653,7 @@
 
 (defpkg :obj/db
   (:nicknames :db)
+  (:import-from :obj/meta/stored :*store*)
   (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :config)
   (:export
    :ensure-transaction

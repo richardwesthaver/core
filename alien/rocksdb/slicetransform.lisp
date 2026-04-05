@@ -56,7 +56,6 @@ by setting prefix_extractor in ColumnFamilyOptions.
   (destructor (* rocksdb-destructor-function))
   (transform (* rocksdb-transform-function))
   (in-domain (* rocksdb-in-domain-function))
-  (in-range (* rocksdb-in-range-function))
   (name (* rocksdb-name-function)))
 
 (defar rocksdb-slicetransform-create-noop (* rocksdb-slicetransform))

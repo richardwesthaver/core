@@ -68,7 +68,14 @@
     blob-read-count blob-read-byte
     blob-read-time blob-checksum-time
     blob-decompress-time internal-range-del-reseek-count
-    block-read-cpu-time total-metric-count))
+    block-read-cpu-time 
+    internal-merge-point-lookup-count
+    data-block-read-byte
+    index-block-read-byte
+    filter-block-read-byte
+    compression-dict-block-read-byte
+    metadata-block-read-byte
+    total-metric-count))
 
 (defvar *rocksdb-perf-levels*
   (%svec uninitialized disable enable-count enable-time-except-for-mutex enable-time out-of-bounds))
@@ -123,7 +130,7 @@
          report-bg-io-stats avoid-unnecessary-blocking-io experimental-mempurge-threshold
          wal-recovery-mode compression bottommost-compression compaction-style 
          atomic-flush manual-wal-flush wal-compression
-         prepopulate-blob-cache)
+         prepopulate-blob-cache open-files-async read-triggered-compaction-threshold max-compaction-trigger-wakeup-seconds min-tombstones-for-range-conversion)
   "Provides early list of options for macros to populate.")
 
 (defvar *rocksdb-set-only-readoptions*

@@ -32,7 +32,7 @@
   "This test replicates a nushell script we've used for a very long time - 'use
 vc.nu; vc mirrors update;'"
   (with-temp-repo :hg
-    (vc-id repo)))
+    (id:id repo)))
 
 (deftest vc-iterator (:skip :todo)
   "Test iteration over a set of VC-REPOs.")

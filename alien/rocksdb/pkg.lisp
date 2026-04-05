@@ -59,7 +59,7 @@ set *errptr to a malloc()ed error message.
 (5) All of the pointer arguments must be non-NULL.|#
 
 ;;; Code:
-(defpackage :rocksdb
+(defpkg :rocksdb
   (:use :cl :std/alien :std/sym :std/macs :sb-alien)
   (:export
    :load-rocksdb

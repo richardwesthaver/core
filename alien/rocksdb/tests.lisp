@@ -447,15 +447,9 @@ DB where K and V are both Lisp strings."
   ;; *rocksdb-properties*
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
-         (db (rocksdb-open opts path nil))
-         (key (genkey))
-         (val (genval))
-         (klen (length key))
-         (vlen (length val))
-         (wopts (rocksdb-writeoptions-create))
-         (ropts (rocksdb-readoptions-create)))
-    (is (stringp (debug! (rocksdb-property-value db (make-alien-string "rocksdb.stats")))))
-    (is (zerop (parse-integer (rocksdb-property-value db (make-alien-string "rocksdb.num-files-at-level3")))))))
+         (db (rocksdb-open opts path nil)))
+    (is (stringp (rocksdb-property-value db "rocksdb.stats")))
+    (is (zerop (parse-integer (rocksdb-property-value db "rocksdb.num-files-at-level3"))))))
 
 ;; (define-merge-operator dummy nil
 ;;   :full nil
@@ -660,9 +654,8 @@ DB where K and V are both Lisp strings."
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
                (transform (* rocksdb-transform-function))
                (in-domain (* rocksdb-in-domain-function))
-               (in-range (* rocksdb-in-range-function))
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-name))))
-    (let ((ret (rocksdb-slicetransform-create state destructor transform in-domain in-range name)))
+    (let ((ret (rocksdb-slicetransform-create state destructor transform in-domain name)))
       (istype '(alien (* rocksdb-slicetransform)) ret)
       (isnt (rocksdb-slicetransform-destroy ret)))))
 
