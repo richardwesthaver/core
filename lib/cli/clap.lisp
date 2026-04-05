@@ -26,6 +26,16 @@ This symbol is bound in the body of the WITH-CLI macro.")
 (defun arg0 () (car sb-ext:*posix-argv*))
 (defun args () (cdr sb-ext:*posix-argv*))
 
+(defun cli-args () 
+  "Like CLI:ARGS but intern arguments start with #\: (unquoted) as keywords to
+support trivially passing to a keyword-aware command with CALL-INTERACTIVELY."
+  (mapcar 
+   (lambda (x) 
+     (if (char= #\: (schar0 x)) 
+         (let ((*read-eval* nil)) (read-from-string x))
+         x))
+   (args)))
+
 (definline long-opt-p (str)
   (declare (simple-string str))
   (and (> (length str) 2)

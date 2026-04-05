@@ -182,3 +182,8 @@ An escaped form with parens like the following works fine:
         sb-ext:*userinit-pathname-function* userinit
         sb-ext:*sysinit-pathname-function* sysinit)
   (when default (funcall default)))
+
+;;; Command Shells
+;; This is an extension of the :REPL protocol which supports direct evaluation
+;; of commands. This interface is to be used to implement non-POSIX, pure-lisp
+;; login shells.

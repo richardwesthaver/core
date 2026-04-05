@@ -459,11 +459,12 @@ command."))
 ;; (defun apply-itype (cmd input))
 
 (defmethod parse-args ((self command) (input list))
-
   input)
+
 (defmethod parse-args ((self command) (input string))
   (declare (ignore self))
   (read-args input))
+
 (defmethod parse-args ((self command) (input stream))
   (read-args input))
 

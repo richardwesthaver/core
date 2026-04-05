@@ -35,6 +35,7 @@
   (:file "cli" :require ("pkg" "clap")))
  :provide
  ((:proto :editor)
+  (:proto :repl)
   (:proto :clap)
   (:proto :main)
   (:proto :tool)
