@@ -523,7 +523,7 @@ name (usually same as *EDITOR*."))
 (defcommand delete-char-forward-or-eof (editor)
   (if (equal "" (get-string editor))
       (error 'end-of-file :stream *standard-input*)
-      (delete-char-forward editor)))
+      (funcall (command :delete-char-forward) editor)))
 
 (defcommand delete-word-forward (editor)
   (with-editor-point-and-string ((point string) editor)
