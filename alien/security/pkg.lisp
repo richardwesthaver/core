@@ -7,5 +7,5 @@
   (:use :cl :std :sb-alien)
   (:export :linux-pam :linux-pam-minor :scmp-ver-major
    :scmp-ver-minor :scmp-ver-micro :with-pam :pam-flags
-   :pam-call :pam-result :pam-flag))
+   :pam-call :pam-result :pam-flag :load-pam))
            

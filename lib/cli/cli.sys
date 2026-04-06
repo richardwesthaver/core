@@ -46,8 +46,9 @@
    :description "CLI tool wrappers.")
   (:proto :tui
    :description "Terminal User Interface.")
-  (:readtable :shell
+  (:proto :shell
    :description "Support for custom Lisp shells.")
+  (:readtable :shell)
   (:tests
    :description "CLI Tests"
    :components

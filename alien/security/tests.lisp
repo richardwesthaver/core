@@ -8,7 +8,7 @@
 
 (defsuite :security)
 (in-suite :security)
-
+(load-pam)
 (deftest pam-sanity ()
   (is (positive-integer-p linux-pam))
   (is (positive-integer-p linux-pam-minor)))
@@ -20,7 +20,7 @@
 
 (deftest pam-creds ()
   (with-pam (s e "")
-    (security::pam-open-session (deref s) (pam-flags))
+    (setf e (security::pam-open-session (deref s) (pam-flags)))
     (security::pam-setcred (deref s) (pam-flags))
     (security::pam-authenticate (deref s) (pam-flags :reinitialize-cred))
     (security::pam-chauthtok (deref s) (pam-flags))))
