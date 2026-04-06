@@ -10,7 +10,7 @@
 (defsys :security
   :require (:std)
   :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:grovel "constants"
    :package :security)
   (:file "pam")

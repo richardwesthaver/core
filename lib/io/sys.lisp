@@ -380,3 +380,18 @@ Returns two boolean values indicating readability and writeability of `FILE-DESC
 
 (defun fd-writablep (fd)
   (nth-value 1 (wait-until-fd-ready fd :output 0)))
+
+;;; PAM
+(define-condition pam-condition (sys-condition) ())
+(define-condition pam-error (sys-condition std-error) 
+  ((name :initarg :name :accessor error-name))
+  (:report (lambda (c s) 
+             (format s "PAM error ~S ~A" (error-name c) (security:pam-result (error-name c)))
+             (when (error-message c) (format s ": ~A" (error-message c))))))
+
+;; TODO 2026-04-05: define pam-errors
+
+#+todo
+(defun pam-unwrap (form)
+  "Unwrap the result of a PAM foreign call in FORM, signaling conditions as
+needed or returning :SUCCESS.")

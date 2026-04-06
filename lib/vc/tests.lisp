@@ -6,7 +6,7 @@
 (in-suite :vc)
 
 (defmacro with-temp-repo (kind &body body)
-  `(let ((repo ,(make-repo ".")))
+  `(let ((repo (make-repo ".")))
      (setf (path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
      (case ,kind
        (:hg (sb-mop::change-class repo 'hg-repo))

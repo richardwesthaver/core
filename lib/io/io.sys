@@ -6,6 +6,7 @@
            :ironclad/digest/crc32
            :zstd
            :sys
+           :security
            :uring
            :xkb
            :evdev

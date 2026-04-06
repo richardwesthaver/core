@@ -12,3 +12,15 @@
 (deftest pam-sanity ()
   (is (positive-integer-p linux-pam))
   (is (positive-integer-p linux-pam-minor)))
+
+(deftest pam-simple ()
+  (iseq :success
+        (with-pam (s c e "")
+          (security::pam-close-session (deref s) (pam-flags)))))
+
+(deftest pam-creds ()
+  (with-pam (s c e "")
+    (security::pam-open-session (deref s) (pam-flags))
+    (security::pam-setcred (deref s) (pam-flags))
+    (security::pam-authenticate (deref s) (pam-flags))
+    (security::pam-chauthtok (deref s) (pam-flags)))
