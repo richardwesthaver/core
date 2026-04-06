@@ -139,6 +139,18 @@
   (pamh (* pam-handle))
   (flags int))
 
+;;; Modules
+(defar pam-set-data pam-result 
+  (pamh (* pam-handle)) (module-data-name c-string) 
+  (data (* t)) (cleanup (* (function void (* pam-handle) (* t) pam-result))))
+  
+(defar pam-get-data pam-result
+  (pamh (* pam-handle)) (module-data-name c-string)
+  (data (* (* t))))
+
+(defar pam-get-user pam-result
+  (pamh (* pam-handle)) (user (* c-string)) (prompt c-string))
+
 ;;; Utils
 (defun pam-flags (&rest flags)
   (apply 'logior (mapcar 'pam-flag flags)))
