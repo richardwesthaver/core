@@ -19,8 +19,9 @@
           (security::pam-close-session (deref s) (pam-flags)))))
 
 (deftest pam-creds ()
-  (with-pam (s e "")
-    (setf e (security::pam-open-session (deref s) (pam-flags)))
+  (with-pam (s e "runuser")
+    ;; calls default-conv
+    (setf e (security::pam-authenticate (deref s) (pam-flags)))
+    (security::pam-open-session (deref s) (pam-flags))
     (security::pam-setcred (deref s) (pam-flags))
-    (security::pam-authenticate (deref s) (pam-flags :reinitialize-cred))
     (security::pam-chauthtok (deref s) (pam-flags))))

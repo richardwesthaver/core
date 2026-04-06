@@ -148,11 +148,6 @@
    :editor-replace-word
    :in-quoted-string-p))
 
-(defpkg :cli/shell
-  (:use :cl :std :config :ast :id :val :log :linedit :cli/ed)
-  (:nicknames :shell)
-  (:export :*shell* :*shell-input* :load-acl-repl :start-rl-repl :make-toplevel-init))
-
 (defpkg :cli/progress
   (:use :cl :std)
   (:nicknames :progress :pbar)
@@ -200,6 +195,11 @@
    #:make-editor
    #:*announce*))
 
+(defpkg :cli/shell
+  (:use :cl :std :config :ast :id :val :log :cli/linedit :cli/ed)
+  (:nicknames :shell)
+  (:export :*shell* :*shell-input* :load-acl-repl :start-rl-repl :make-toplevel-init))
+
 (defpkg :cli/main
   (:use :cl :std :cmd)
   (:import-from :cli/clap :*no-exit* :*no-debug* :with-cli-handlers)
@@ -208,7 +208,7 @@
    #:define-multi-main))
 
 (defpkg :cli/tui
-  (:use :cl :std :ansi :linedit :progress :spark :terminfo :env :cmd :clap :secret)
+  (:use :cl :std :ansi :cli/linedit :progress :spark :terminfo :env :cmd :clap :secret)
   (:export :completing-read :completing-read-form))
 
 (defvar *cli-packages* *component-packages*)
