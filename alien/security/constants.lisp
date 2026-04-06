@@ -36,6 +36,12 @@
  (:integer pam-conv-again "PAM_CONV_AGAIN")
  (:integer pam-incomplete "PAM_INCOMPLETE")
  (:integer pam-return-values "_PAM_RETURN_VALUES")
+ (:integer pam-prompt-echo-off "PAM_PROMPT_ECHO_OFF")
+ (:integer pam-prompt-echo-on "PAM_PROMPT_ECHO_ON")
+ (:integer pam-error-msg "PAM_ERROR_MSG")
+ (:integer pam-text-info "PAM_TEXT_INFO")
+ (:integer pam-radio-type "PAM_RADIO_TYPE")
+ (:integer pam-binary-prompt "PAM_BINARY_PROMPT")
  ;; Linux-PAM flags
  (:integer pam-silent "PAM_SILENT")
  (:integer pam-disallow-null-authtok "PAM_DISALLOW_NULL_AUTHTOK")

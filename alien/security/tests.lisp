@@ -19,8 +19,8 @@
           (security::pam-close-session (deref s) (pam-flags)))))
 
 (deftest pam-creds ()
-  (with-pam (s c e "")
+  (with-pam (s e "")
     (security::pam-open-session (deref s) (pam-flags))
     (security::pam-setcred (deref s) (pam-flags))
-    (security::pam-authenticate (deref s) (pam-flags))
-    (security::pam-chauthtok (deref s) (pam-flags)))
+    (security::pam-authenticate (deref s) (pam-flags :reinitialize-cred))
+    (security::pam-chauthtok (deref s) (pam-flags))))

@@ -66,11 +66,19 @@
   :xauthdata pam-xauthdata
   :authtok-type pam-authtok-type)
 
+(define-alien-enum (pam-message-style)
+  :prompt-echo-off pam-prompt-echo-off
+  :prompt-echo-on pam-prompt-echo-on
+  :error-msg pam-error-msg
+  :text-info pam-text-info
+  :radio-type pam-radio-type
+  :binary-prompt pam-binary-prompt)
+
 (define-opaque pam-handle)
 
 (define-alien-type pam-message
   (struct pam-message
-    (msg-style int)
+    (msg-style pam-message-style)
     (msg c-string)))
 
 (define-alien-type pam-response
@@ -135,14 +143,27 @@
 (defun pam-flags (&rest flags)
   (apply 'logior (mapcar 'pam-flag flags)))
 
-(defmacro with-pam ((sym conv err name &optional (user (current-user))) &body body)
+(defmacro with-pam ((sym err name &optional (user (current-user)) (conv (alien-callable-function 'default-conv)))
+                    &body body)
   "SYM CONV STAT are bound over BODY, NAME is service name, USER current user"
   ;; heap allocate so that PAM may free
-  `(let ((,sym (make-alien (* pam-handle)))
-         (,conv (make-alien pam-conv))
-         (,err))
-     (setf ,err (pam-start ,name ,user ,conv ,sym))
-     ,@body
-     (values 
-      ,err
-      (pam-end (deref ,sym) ,err))))
+  (with-gensyms (pconv)
+    `(let ((,sym (make-alien (* pam-handle)))
+           (,pconv (make-alien pam-conv))
+           (,err))
+       (setf (slot ,pconv 'security::conv) ,(alien-sap conv))
+       (setf ,err (pam-start ,name ,user ,pconv ,sym))
+       ,@body
+       (values ,err (pam-end (deref ,sym) ,err)))))
+
+(define-alien-callable default-conv int 
+    ;; NUM-MSG holds the length of the array of messages, on success the RESP
+    ;; pointer points to an array of PAM-RESPONSE structs holding the
+    ;; app-supplied text. APPDATA-PTR is set to the second element of the
+    ;; corresponding PAM-CONV struct.
+    ((num-msg int) (msg (* (* pam-message))) (resp (* (* pam-response))) (appdata-ptr (* t)))
+  ;; testing
+  (mumble "~S messages at ~A" num-msg msg)
+  (mumble "given response-pointer ~A and appdata pointer ~A" resp appdata-ptr)
+  0)
+  
