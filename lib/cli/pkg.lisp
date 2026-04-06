@@ -32,11 +32,6 @@
    :cli-cd :with-cli
    :load-cli :args :arg0 :cli-args))
 
-(defpkg :cli/shell
-  (:use :cl :std :config :ast)
-  (:nicknames :shell)
-  (:export :*shell* :*shell-input* :load-acl-repl :start-rl-repl :make-toplevel-init))
-
 (defpkg :cli/env
   (:use :cl :std)
   (:nicknames :env)
@@ -152,6 +147,11 @@
    :editor-command
    :editor-replace-word
    :in-quoted-string-p))
+
+(defpkg :cli/shell
+  (:use :cl :std :config :ast :id :val :log :linedit :cli/ed)
+  (:nicknames :shell)
+  (:export :*shell* :*shell-input* :load-acl-repl :start-rl-repl :make-toplevel-init))
 
 (defpkg :cli/progress
   (:use :cl :std)

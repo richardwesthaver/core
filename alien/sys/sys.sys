@@ -9,7 +9,7 @@
 ;;; Code:
 (defsys :sys
   :require (:std)
-  :components ((:file "pkg")
+  :components ((:pkg "pkg")
                (:grovel "constants"
                 :package :sys)
                (:file "types")

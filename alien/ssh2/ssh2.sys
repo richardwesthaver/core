@@ -10,7 +10,7 @@
 (defsys :ssh2
   :require (:std)
   :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:grovel "constants"
    :package :ssh2)
   (:file "ssh2"))

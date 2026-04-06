@@ -34,13 +34,20 @@
   (:file "tui" :require ("ansi" "progress" "spark" "linedit"))
   (:file "cli" :require ("pkg" "clap")))
  :provide
- ((:proto :editor)
-  (:proto :repl)
-  (:proto :clap)
-  (:proto :main)
-  (:proto :tool)
-  (:proto :tui)
-  (:readtable :shell)
+ ((:proto :editor
+   :description "Generic editor.")
+  (:proto :repl
+   :description "Read Eval Print Loop.")
+  (:proto :clap
+   :description "Command Line Argument Parser.")
+  (:proto :main
+   :description "Python-like main function.")
+  (:proto :tool
+   :description "CLI tool wrappers.")
+  (:proto :tui
+   :description "Terminal User Interface.")
+  (:readtable :shell
+   :description "Support for custom Lisp shells.")
   (:tests
    :description "CLI Tests"
    :components

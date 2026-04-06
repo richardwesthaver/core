@@ -5,7 +5,7 @@
 ;;; Code:
 (defsys :tree-sitter
   :require (:std)
-  :components ((:file "pkg")
+  :components ((:pkg "pkg")
                (:file "ffi")
                (:file "lang")
                (:file "api")

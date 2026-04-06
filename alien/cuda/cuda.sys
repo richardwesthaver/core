@@ -1,7 +1,7 @@
 ;;; cuda.sys --- Cuda Sytem Definitions
 (defsys :cuda
   :require (:std :log)
-  :components ((:file "pkg")
+  :components ((:pkg "pkg")
                (:grovel "constants"
                 :package :cuda)
                (:file "type")

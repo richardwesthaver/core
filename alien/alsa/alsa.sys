@@ -8,5 +8,5 @@
 (defsys :alsa
  "ALSA C FFI"
  :require (:std)
- :components ((:file "pkg"))
+ :components ((:pkg "pkg"))
  :provide ((:tests)))

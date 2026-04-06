@@ -1,6 +1,6 @@
 ;;; alien/xkb/xkb.sys --- Xkb Sytem Definitions
 (defsys :xkb
  :require (:std)
- :components ((:file "pkg")
+ :components ((:pkg "pkg")
               (:grovel "constants" :package :xkb))
  :provide ((:tests)))

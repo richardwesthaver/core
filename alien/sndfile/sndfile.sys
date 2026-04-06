@@ -8,7 +8,7 @@
 (defsys :sndfile
  "SNDFILE C FFI"
  :require (:std)
- :components ((:file "pkg")
+ :components ((:pkg "pkg")
               (:grovel "constants"
                :package :sndfile))
  :provide ((:tests)))

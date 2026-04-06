@@ -2,7 +2,7 @@
 (defsys :gstreamer
  :require (:std :log :glib)
  :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:file "object" :require ("pkg"))
   (:file "clock" :require ("object"))
   (:file "mini-object" :require ("pkg"))

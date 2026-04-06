@@ -166,7 +166,6 @@ An escaped form with parens like the following works fine:
   (:merge :std)
   (:dispatch-macro-char #\# #\$ #'|#$-reader|))
 
-;;; REPL support
 
 ;;;; Config
 (defconfig repl-config (ast) 
@@ -183,7 +182,13 @@ An escaped form with parens like the following works fine:
         sb-ext:*sysinit-pathname-function* sysinit)
   (when default (funcall default)))
 
-;;; Command Shells
+;;; Shells
+;; TODO 2026-04-05: 
 ;; This is an extension of the :REPL protocol which supports direct evaluation
 ;; of commands. This interface is to be used to implement non-POSIX, pure-lisp
 ;; login shells.
+(defclass shell () ())
+
+(defclass command-shell (shell) ())
+
+;; (defclass login-shell (command-shell) ())

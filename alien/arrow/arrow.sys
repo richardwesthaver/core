@@ -2,5 +2,5 @@
 (defsys :arrow
  "A thin FFI wrapper for Arrow."
  :require (:std :log)
- :components ((:file "pkg"))
+ :components ((:pkg "pkg"))
  :provide ((:tests)))

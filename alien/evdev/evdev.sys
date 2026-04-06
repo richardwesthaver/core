@@ -1,7 +1,7 @@
 ;;; evdev.sys --- Evdev Sytem Definitions
 (defsys :evdev
  :require (:std)
- :components ((:file "pkg")
+ :components ((:pkg "pkg")
               (:grovel "constants" :package :evdev)
               (:file "input")
               (:file "dev"))

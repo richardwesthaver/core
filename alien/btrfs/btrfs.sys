@@ -1,7 +1,7 @@
 ;;; alien/btrfs/btrfs.sys --- Btrfs Sytem Definitions
 (defsys :btrfs
  :require (:std)
- :components ((:file "pkg")
+ :components ((:pkg "pkg")
               (:grovel "constants" :package :btrfs)
               (:file "util" :require ("pkg" "constants")))
  :provide ((:tests)))

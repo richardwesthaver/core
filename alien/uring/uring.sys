@@ -2,7 +2,7 @@
 (defsys :uring
  :require (:std :obj)
   :components 
- ((:file "pkg")
+ ((:pkg "pkg")
   (:grovel "constants"
    :package :uring)
   (:file "util")

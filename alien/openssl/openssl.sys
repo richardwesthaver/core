@@ -10,7 +10,7 @@
 ;;; Code:
 (defsys :openssl
   :require (:std :io)
-  :components ((:file "pkg")
+  :components ((:pkg "pkg")
                (:grovel "constants" :package :openssl)
                (:file "types")
                (:file "openssl")
