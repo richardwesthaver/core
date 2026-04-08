@@ -13,6 +13,22 @@
     (resv unsigned-long)))
 
 ;; ZCRX
+(define-alien-type zcrx-ctrl-flush-rq
+    (struct zcrx-ctrl-flush-rq
+      (resv (array unsigned-long 6))))
+
+(define-alien-type zcrx-ctrl-export
+    (struct zcrx-ctrl-flush-rq
+      (resv (array unsigned-long 6))))
+
+(define-alien-type io-uring-zcrx-offsets
+    (struct io-uring-zcrx-offsets
+      (head unsigned-int)
+      (tail unsigned-int)
+      (rqes unsigned-int)
+      (resv2 unsigned-int)
+      (resv (array unsigned-long 2))))
+
 (define-alien-type io-uring-zcrx-ifq-reg
     (struct io-uring-zcrx-ifq-reg
       (if-idx unsigned-int)
@@ -20,7 +36,11 @@
       (rq-entries unsigned-int)
       (flags unsigned-int)
       (area-ptr unsigned-long)
-      (region-ptr unsigned-long)))
+      (region-ptr unsigned-long)
+      (offsets io-uring-zcrx-offsets)
+      (zcrx-id unsigned-int)
+      (rx-buf-len unsigned-int)
+      (resv (array unsigned-long 3))))
 
 (define-alien-type io-uring-zcrx-rq
     (struct io-uring-zcrx-rq
@@ -30,6 +50,16 @@
       (ring-entries unsigned)
       (rqes (* io-uring-zcrx-rqe))
       (ring-ptr (* t))))
+
+(define-alien-type zcrx-ctrl-arg
+    (union zcrx-ctrl-arg (zc-export zcrx-ctrl-export) (zc-flush zcrx-ctrl-flush-rq)))
+
+(define-alien-type zcrx-ctrl
+    (struct zcrx-ctrl
+      (zcrx-id unsigned-int)
+      (op unsigned-int)
+      (resv (array unsigned-long 2))
+      (zc-arg zcrx-ctrl-arg)))
 
 ;; (defun io-uring-write-once (var val))
 ;; (defun io-uring-read-once (var))
