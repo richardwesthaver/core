@@ -215,7 +215,21 @@
                                    (unsigned-int payloadlen "__u32" "payloadlen")
                                    (unsigned-int flags "__u32" "flags")))
  ;; (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT") ;; c macro trouble
- (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
-                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")))
+ (:enum io-uring-socket-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
+                            (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")
+                            (socket-uring-op-getsockopt "SOCKET_URING_OP_GETSOCKOPT")
+                            (socket-uring-op-setsockopt "SOCKET_URING_OP_SETSOCKOPT")
+                            (socket-uring-op-tx-timestamp "SOCKET_URING_OP_TX_TIMESTAMP")
+                            (socket-uring-op-getsockname "SOCKET_URING_OP_GETSOCKNAME")))
+ (:structure io-timespec ("struct io_timespec"
+                          (unsigned-long tv-sec "__u64" "tv_sec")
+                          (unsigned-long tv-nsec "__u64" "tv_nsec")))
+ (:structure io-uring-zcrx-rqe ("struct io_uring_zcrx_rqe"
+                                (unsigned-long off "__u64" "off")
+                                (unsigned-int len "__u32" "len")
+                                (unsigned-int __pad "__u32" "__pad")))
+ (:structure io-uring-zcrx-cqe ("struct io_uring_zcrx_cqe"
+                                (unsigned-long off "__u64" "off")
+                                (unsigned-int __pad "__u32" "__pad")))
  (:integer ioring-zcrx-area-shift "IORING_ZCRX_AREA_SHIFT")
  (:integer ioring-zcrx-area-mask "IORING_ZCRX_AREA_MASK"))

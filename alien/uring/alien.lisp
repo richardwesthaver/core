@@ -22,17 +22,6 @@
       (area-ptr unsigned-long)
       (region-ptr unsigned-long)))
 
-(define-alien-type io-uring-zcrx-rqe
-    (struct io-uring-zcrx-rqe
-      (off unsigned-long)
-      (len unsigned-int)
-      (__pad unsigned-int)))
-
-(define-alien-type io-uring-zcrx-cqe
-    (struct io-uring-zcrx-cqe
-      (off unsigned-long)
-      (__pad unsigned-long)))
-
 (define-alien-type io-uring-zcrx-rq
     (struct io-uring-zcrx-rq
       (khead (* unsigned-int))
