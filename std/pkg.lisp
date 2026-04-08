@@ -1491,6 +1491,7 @@
    :read-component
    :compile-component
    :load-component
+   :reload-system-packages
    :component
    :mod-component
    :file-component

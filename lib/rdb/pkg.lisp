@@ -7,9 +7,7 @@
 ;; Commentary:
 
 ;; Code:
-
 (rocksdb:load-rocksdb)
-
 (defpkg :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :schema :btree 

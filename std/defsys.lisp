@@ -494,20 +494,22 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     (t (find-submodules key kind))))
 
 ;; (SET-MODULE NAME nil) deletes a module.
-(defun set-module (name val &optional kind key (append t))
+(defun set-module (name val &optional kind key append)
   (cond 
-    ((and kind key)
+    ((and kind (not append))
      (let* ((ret (find-module name))
             (k (getf ret kind)))
        (when k (remf ret kind))
-       (if val
-           (pushnew val k :test 'string= :key 'name)
-           (setf k (remove key k :test 'string= :key 'name)))
-       (setf (gethash name *module-table*) (nconc ret (list kind k)))))
-    (kind (register-module kind name val append))
+       (cond
+         (val (pushnew val k :test 'string= :key 'name)
+              (setf (gethash name *module-table*) (nconc ret (list kind k))))
+         (key (setf k (remove key k :test 'string= :key 'name))
+              (setf (gethash name *module-table*) (nconc ret (list kind k))))
+         (t (setf (gethash name *module-table*) ret)))))
+    ((and kind val append) (register-module kind name val append))
     (t (setf (gethash name *module-table*) val))))
 
-(defsetf find-module (name &optional kind key (append t)) (val)
+(defsetf find-module (name &optional kind key append) (val)
   `(set-module ,name ,val ,kind ,key ,append))
 
 (defun init-module (mod)
@@ -1292,6 +1294,12 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
       ;; (when verbose (mumble "Loading system ~A~@[ from ~A~]" (name sys) path))
       (load-component sys :force force))
     sys))
+
+(defun reload-system-packages (name &optional (path :pkg))
+  ;; delete :package submods
+  (set-module name nil :package nil nil)
+  ;; reload
+  (load-component (find-component path (find-system name)) :force t))
 
 (defun load-system-requires (sys &optional force)
   (mapc

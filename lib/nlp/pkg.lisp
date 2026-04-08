@@ -39,7 +39,7 @@
    :vector-data))
 
 (defpkg :nlp/textrank
-  (:use :cl :std :nlp/doc :nlp/tokenize)
+  (:use :cl :std :nlp/doc :nlp/tokenize :graph)
   (:export 
    :summarize-text :edges :document-vertex))
 

@@ -114,11 +114,6 @@
    :query-dialect-designator
    :sql :dql))
 
-(defpkg :q/select
-  (:use :cl :std :q/proto :schema :ast)
-  (:shadow :select)
-  (:export :select))
-
 (defpkg :q/sql
   (:nicknames :sql)
   (:use :cl :std :q/proto :parse/pratt :id :schema :parse/proto :ast)
