@@ -76,6 +76,10 @@ which accepts a boolean value and automatically adjust the slot."
 ;;                                (wq-fd wq-fd) (sq-off (deref (build sq-off))) (cq-off (deref (build cq-off))))
 ;;       res)))
 
+;; (with-io-uring-params s ()
+;;   (io-uring-setup 16 s)
+;;   (logand (io-uring-params-features s) ioring-feat-single-mmap))
+
 ;; io-uring instance
 (defvar *default-io-params* (make-io-params))
 

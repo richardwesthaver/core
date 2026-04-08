@@ -8,7 +8,7 @@
 
 ;;; Code:
 (defsys :keyutils
-  :require (:std)
+  :require (:std :sys)
   :components ((:pkg "pkg")
                (:grovel "constants"
                 :package :keyutils)

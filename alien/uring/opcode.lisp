@@ -9,7 +9,18 @@
 ;;; Code:
 (in-package :uring)
 
-(defun io-uring-setup-rw ())
+(defun opcode (name)
+  "Convert a struct name to an opcode as an integer."
+  (symbol-value (find-symbol (format nil "+IO-~A+" (caddr (split-sequence #\- (symbol-name name) :count 3))))))
+
+(defun io-uring-setup-rw (event struct)
+  "Read/Write ops share a common boilerplate setup."
+  (with-slots (fd off addr len) struct
+    (setf (slot event 'opcode) (opcode (type-of struct))
+          (slot event 'fd) fd
+          (slot event 'off-addr-cmd) off
+          (slot event 'len) len
+          (slot event 'addr) addr)))
 
 (def-io-op 0 nop ()
   (setf (slot sqe 'fd) -1))
@@ -17,20 +28,16 @@
 ;; preadv2(2)
 (def-io-op 1 readv
     ((fd -1 :type file-descriptor)
-     (iovec #() :type (array octet-vector))
+     (iovecs #() :type (array octet-vector))
      (len 0 :type fixnum)
      (ioprio 0 :type (unsigned-byte 16))
      (offset 0 :type (unsigned-byte 64))
-     (rw-flags 0 :type fixnum)
-     (buf-group 0 :type (unsigned-byte 16)))
-  (with-slots (fd iovec len ioprio offset rw-flags buf-group) self
-    (setf (slot sqe 'fd) fd)
-    (setf (slot sqe 'ioprio) ioprio)
-    (setf (slot sqe 'len) len)
-      ;; (setf slot s 'iovecs) iovecs)
-      ;; (setf (slot s 'rw-flags) rw-flags)
-      ;; (setf (slot s 'buf-group) buf-group)
-    ))
+     (rw-flags 0)
+     (buf-group 0))
+  ;; split data into iovecs?
+  ;; (setf slot s 'iovecs) iovecs)
+  (with-slots (fd iovecs len offset) self
+    (io-uring-prep-readv sqe fd iovecs len offset)))
 
 ;; pwritev2(2)
 (def-io-op 2 writev
@@ -39,32 +46,43 @@
      (len 0 :type fixnum)
      (ioprio 0 :type (unsigned-byte 16))
      (offset 0 :type (unsigned-byte 64))
-     (rw-flags 0 :type fixnum))
+     (rw-flags 0))
   (with-slots (fd iovec len ioprio offset rw-flags) self
     (setf (slot sqe 'fd) fd)
     (setf (slot sqe 'ioprio) ioprio)
-    (setf (slot sqe 'len) len)))
+    (setf (slot sqe 'len) len)
+    (setf (slot sqe 'flags2) rw-flags)))
 
 ;; fsync(2)     
 (def-io-op 3 fsync
     ((fd -1 :type file-descriptor)
      (flags 0 :type fixnum))
   (with-slots (fd flags) self
-    (setf (slot sqe 'fd) fd)))
+    (setf (slot sqe 'fd) fd)
+    (setf (slot sqe 'flags) flags)))
 
 ;; read from pre-registered buffers
 (def-io-op 4 read-fixed
     ((fd -1 :type file-descriptor)
      (buf #() :type octet-vector)
      (len 0 :type (unsigned-byte 32))
-     (buf-index 0 :type (unsigned-byte 16))
-     (offset 0 :type (unsigned-byte 64))
+     (buf-index 0)
+     (offset 0)
      (ioprio 0 :type (unsigned-byte 16))
-     (rw-flags 0 :type fixnum))
-  (with-slots (fd buf len buf-index offset ioprio rw-flags) self
-    (setf (slot sqe 'fd) fd)
-    (setf (slot sqe 'ioprio) ioprio)
-    (setf (slot sqe 'len) len)))
+     (rw-flags 0))
+  (with-slots (fd buf len buf-index offset) self
+    (io-uring-prep-read-fixed sqe fd buf len offset buf-index)))
+
+(def-io-op 4 readv-fixed
+    ((fd -1 :type file-descriptor)
+     (iovecs #() :type (array octet-vector))
+     (len 0 :type (unsigned-byte 32))
+     (buf-index 0)
+     (offset 0)
+     (ioprio 0 :type (unsigned-byte 16))
+     (rw-flags 0))
+  (with-slots (fd iovecs len buf-index offset rw-flags) self
+    (io-uring-prep-readv-fixed sqe fd iovecs len offset rw-flags buf-index)))
 
 (def-io-op 5 write-fixed
     ((fd -1 :type file-descriptor)
@@ -78,6 +96,17 @@
     (setf (slot sqe 'fd) fd)
     (setf (slot sqe 'ioprio) ioprio)
     (setf (slot sqe 'len) len)))
+
+(def-io-op 5 writev-fixed
+    ((fd -1 :type file-descriptor)
+     (iovecs #() :type (array octet-vector))
+     (len 0 :type (unsigned-byte 32))
+     (buf-index 0 :type (unsigned-byte 16))
+     (ioprio 0 :type (unsigned-byte 16))
+     (offset 0 :type (unsigned-byte 64))
+     (rw-flags 0 :type fixnum))
+  (with-slots (fd buf len buf-index ioprio offset rw-flags) self
+    (io-uring-prep-writev-fixed)))
 
 ;; poll the specified fd
 (def-io-op 6 poll-add nil)

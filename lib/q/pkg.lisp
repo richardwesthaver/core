@@ -3,7 +3,7 @@
 ;;
 
 ;;; Code:
-(defpackage :q/proto
+(defpkg :q/proto
   ;; (:nicknames :query)
   (:use :cl :std :ast :schema :id :srv :config :val)
   (:export 
@@ -114,12 +114,12 @@
    :query-dialect-designator
    :sql :dql))
 
-(defpackage :q/select
+(defpkg :q/select
   (:use :cl :std :q/proto :schema :ast)
   (:shadow :select)
   (:export :select))
 
-(defpackage :q/sql
+(defpkg :q/sql
   (:nicknames :sql)
   (:use :cl :std :q/proto :parse/pratt :id :schema :parse/proto :ast)
   (:export
@@ -165,7 +165,7 @@
    :with-sql
    :make-sql-df))
 
-(defpackage :q/dql
+(defpkg :q/dql
   (:nicknames :dql)
   (:use :cl :std :q/proto :id :ast :schema)
   (:export

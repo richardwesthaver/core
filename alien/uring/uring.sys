@@ -1,6 +1,6 @@
 ;;; alien/uring/uring.sys --- Uring Sytem Definitions
 (defsys :uring
- :require (:std :obj)
+ :require (:std :obj :sys)
   :components 
  ((:pkg "pkg")
   (:grovel "constants"

@@ -19,4 +19,5 @@
    :syslog-priority :syslog-priority*
    :rlimit :if-nameindex
    :if-nametoindex :if-indextoname
-   :if-freenameindex))
+   :if-freenameindex :iovec
+   :msghdr :kernel-timespec))

@@ -5,8 +5,6 @@
 ;;; Code:
 (in-package :keyutils)
 
-(define-alien-type iovec (struct nil))
-
 (define-alien-type key-serial-t (integer 32))
 (define-alien-type key-perm-t (unsigned 32))
 

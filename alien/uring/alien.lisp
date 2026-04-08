@@ -5,14 +5,49 @@
 ;;; Code:
 (in-package :uring)
 
-;;; barrier.h
+(define-alien-type io-uring-napi
+  (struct io-uring-napi
+    (busy-poll-to unsigned-int)
+    (prefer-busy-poll unsigned-char)
+    (pad (array unsigned-char 3))
+    (resv unsigned-long)))
+
+;; ZCRX
+(define-alien-type io-uring-zcrx-ifq-reg
+    (struct io-uring-zcrx-ifq-reg
+      (if-idx unsigned-int)
+      (if-rxq unsigned-int)
+      (rq-entries unsigned-int)
+      (flags unsigned-int)
+      (area-ptr unsigned-long)
+      (region-ptr unsigned-long)))
+
+(define-alien-type io-uring-zcrx-rqe
+    (struct io-uring-zcrx-rqe
+      (off unsigned-long)
+      (len unsigned-int)
+      (__pad unsigned-int)))
+
+(define-alien-type io-uring-zcrx-cqe
+    (struct io-uring-zcrx-cqe
+      (off unsigned-long)
+      (__pad unsigned-long)))
+
+(define-alien-type io-uring-zcrx-rq
+    (struct io-uring-zcrx-rq
+      (khead (* unsigned-int))
+      (ktail (* unsigned-int))
+      (rq-tail unsigned-int)
+      (ring-entries unsigned)
+      (rqes (* io-uring-zcrx-rqe))
+      (ring-ptr (* t))))
+
 ;; (defun io-uring-write-once (var val))
 ;; (defun io-uring-read-once (var))
 ;; (defun io-uring-smp-store-release (p v))
 ;; (defun io-uring-smp-load-acquire (p))
 ;; (defun io-uring-smp-mb ())
 
-;;; liburing.h
 (defalien-int io-uring-major-version)
 (defalien-int io-uring-minor-version)
 (defar io-uring-check-version boolean (major int) (minor int))
@@ -53,6 +88,9 @@
 (def-with-ring io-uring-register-buffers
   (iovecs (* (struct iovec)))
   (nr-iovecs unsigned))
+(def-with-ring io-uring-register-ifq
+  (reg (* io-uring-zcrx-ifq-reg)))
+
 (def-with-ring io-uring-register-buffer-tags
   (iovecs (* (struct iovec)))
   (tags (array unsigned-long))
@@ -106,7 +144,12 @@
   (reg (* (struct io-uring-buf-reg))) (flags unsigned-int))
 (def-with-ring io-uring-unregister-buf-ring (bgid int))
 (def-with-ring io-uring-register-sync-cancel (reg (* (struct io-uring-sync-cancel-reg))))
+(defar io-uring-register-sync-msg int (sqe (* io-uring-sqe)))
 (def-with-ring io-uring-register-file-alloc-range (off unsigned) (len unsigned))
+(def-with-ring io-uring-register-napi (napi (* io-uring-napi)))
+(def-with-ring io-uring-unregister-napi (napi (* io-uring-napi)))
+;; ...
+
 (def-with-ring io-uring-get-events)
 (def-with-ring io-uring-submit-and-get-events)
 

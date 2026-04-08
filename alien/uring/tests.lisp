@@ -10,15 +10,10 @@
 
 (load-uring)
 
-(deftest sanity ()
-  ;; why is this 0 instead of 1..
-  (isnt (uring::io-uring-check-version (uring::io-uring-major-version) (uring::io-uring-minor-version))))
-
-(deftest params ())
-
 (deftest setup ()
-  ;; (io-uring-setup
-  )
+  (uring::with-io-uring-params p ()
+    (is p)
+    (uring::io-uring-setup 16 p)))
 
 (deftest nop-sqe ()
   (with-new-io-sqe sqe

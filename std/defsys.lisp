@@ -522,7 +522,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     :constants :parameters :macros :conditions
     :restarts :accessors :predicates :classes))
 
-(defun %load-proto (form &optional (system *defsys*))
+(defun %load-proto (form &optional (system (or *defsys* *module*)))
   "Load a protocol module NAME."
   (destructuring-bind (name &rest args) form
     (declare (ignore name))

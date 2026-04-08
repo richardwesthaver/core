@@ -7,6 +7,9 @@
 ;; Commentary:
 
 ;; Code:
+
+(rocksdb:load-rocksdb)
+
 (defpkg :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :schema :btree 
@@ -162,6 +165,3 @@
 
 (defpkg :rdb/cli
   (:use :cl :std :cli :clap :rdb :db :std/seq))
-
-(in-package :rdb)
-(load-rocksdb)

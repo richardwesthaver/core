@@ -1,29 +1,11 @@
-("sys/socket.h" "sys/stat.h" "sys/uio.h" "errno.h" "signal.h" "stdbool.h" "stdatomic.h" "linux/openat2.h"
+("sys/socket.h" "sys/stat.h" "errno.h" "signal.h" "stdbool.h" "stdatomic.h" "linux/openat2.h"
                 "inttypes.h" "linux/time_types.h" "time.h" "fcntl.h" "sched.h" "linux/swab.h" "liburing/compat.h"
-                "linux/fs.h" "liburing/io_uring_version.h" "liburing/barrier.h"
-                "linux/types.h" "liburing/io_uring.h")
+                "linux/fs.h" "liburing/barrier.h" "linux/types.h" "linux/io_uring.h")
 
 ( ;; sched.h ;; not found on alpine
  ;; (:integer %cpu-setsize "__CPU_SETSIZE")
  ;; (:integer %ncpu-bits "__NCPUBITS")
  ;; (:integer %sigset-nwords "_SIGSET_NWORDS")
- ;; sys/uio.h
- (:structure iovec ("struct iovec"
-                    (unsigned-long iov-base "ptr_t" "iov_base")
-                    (sb-unix:size-t iov-len "size_t" "iov_len")))
- ;; bits/socket.h
- (:structure msghdr ("struct msghdr"
-                     ((* t) msg-name "void *" "msg_name")
-                     (unsigned-int msg-namelen "socklen_t" "msg_namelen")
-                     ((* iovec) msg-iov "struct iovec *" "msg_iov")
-                     (sb-unix:size-t msg-iovlen "size_t" "msg_iovlen")
-                     ((* t) msg-control "void *" "msg_control")
-                     (sb-unix:size-t msg-controllen "size_t" "msg_controllen")
-                     (int msg-flags "int" "msg_flags")))
- ;; linux/time.h
- (:structure kernel-timespec ("struct __kernel_timespec"
-                              (long-long tv-sec "__kernel_time64_t" "tv_sec")
-                              (long-long tv-nsec "__s64" "tv_nsec")))
  ;; liburing/io_uring.h
  ;; (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
  ;; (:integer nr-io-uring-register "__NR_io_uring_register")
@@ -234,4 +216,6 @@
                                    (unsigned-int flags "__u32" "flags")))
  ;; (:integer liburing-udata-timeout "LIBURING_UDATA_TIMEOUT") ;; c macro trouble
  (:enum socket-uring-op ((socket-uring-op-siocinq "SOCKET_URING_OP_SIOCINQ")
-                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ"))))
+                         (socket-uring-op-siocoutq "SOCKET_URING_OP_SIOCOUTQ")))
+ (:integer ioring-zcrx-area-shift "IORING_ZCRX_AREA_SHIFT")
+ (:integer ioring-zcrx-area-mask "IORING_ZCRX_AREA_MASK"))

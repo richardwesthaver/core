@@ -10,7 +10,7 @@
 
 ;;; Code:
 (defpackage :keyutils
-  (:use :cl :std :sb-alien)
+  (:use :cl :std :sb-alien :sys)
   (:export 
    :load-keyutils
    :keyutils-version-string

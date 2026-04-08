@@ -25,9 +25,7 @@
 - [ ] profiling 
 |#
 ;;; Code:
-(in-package :std-user)
-
-(defpackage :rt
+(defpkg :rt
   (:use :cl :std :log :ast :config :sb-aprof)
   (:export
    :test-error
@@ -123,7 +121,7 @@
    :isor
    :run-all-tests))
 
-(defpackage :rt/tracing
+(defpkg :rt/tracing
   (:nicknames :tracing)
   (:use :cl :std :log :rt)
   (:export
@@ -132,12 +130,12 @@
    :with-tracing
    :save-report))
 
-(defpackage :rt/flamegraph
+(defpkg :rt/flamegraph
   (:nicknames :flamegraph)
   (:use :cl :std :log :rt)
   (:export :with-flamegraph))
 
-(defpackage :rt/fuzz
+(defpkg :rt/fuzz
   (:nicknames :fuzz)
   (:use :cl :std :log :rt)
   (:export :fuzzer :fuzz :fuzz*))

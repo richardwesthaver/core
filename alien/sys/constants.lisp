@@ -2,9 +2,26 @@
  "sys/epoll.h" "sys/syslog.h" "sys/socket.h" "sys/un.h"
  "net/if.h" "netinet/in.h" "netinet/tcp.h" "netinet/ip.h" 
  "linux/icmp.h" "linux/errqueue.h" "linux/netlink.h" "arpa/inet.h"
- "fcntl.h" "netdb.h" "sys/resource.h" "sys/poll.h")
+ "fcntl.h" "netdb.h" "sys/resource.h" "sys/poll.h" "sys/uio.h" "linux/time.h")
 
-(;; signals
+(;; sys/uio.h
+ (:structure iovec ("struct iovec"
+                    (unsigned-long iov-base "ptr_t" "iov_base")
+                    (sb-unix:size-t iov-len "size_t" "iov_len")))
+ ;; bits/socket.h
+ (:structure msghdr ("struct msghdr"
+                     ((* t) msg-name "void *" "msg_name")
+                     (unsigned-int msg-namelen "socklen_t" "msg_namelen")
+                     ((* iovec) msg-iov "struct iovec *" "msg_iov")
+                     (sb-unix:size-t msg-iovlen "size_t" "msg_iovlen")
+                     ((* t) msg-control "void *" "msg_control")
+                     (sb-unix:size-t msg-controllen "size_t" "msg_controllen")
+                     (int msg-flags "int" "msg_flags")))
+ ;; linux/time.h
+ (:structure kernel-timespec ("struct __kernel_timespec"
+                              (long-long tv-sec "__kernel_time64_t" "tv_sec")
+                              (long-long tv-nsec "__s64" "tv_nsec")))
+ ;; signals
  ;; (:integer sig-ign "SIG_IGN") 1
  ;; (:long sig-dfl "SIG_DFL") 0
  (:integer sa-nocldstop "SA_NOCLDSTOP")

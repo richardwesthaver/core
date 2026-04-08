@@ -9,6 +9,8 @@
 
 (defvar *io* nil)
 
+(defun setup-uring ())
+
 (defun init-io (&optional (entries 256) (flags 0))
   "Initialize the *IO* variable to an io-uring alien-value type using a
 queue size of ENTRIES and settings FLAGS."

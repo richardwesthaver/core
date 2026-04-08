@@ -2,7 +2,7 @@
 (defsys :nlp
  :require (:std :rdb :ppcre :parse :obj)
  :components 
- ((:pkg "pkg" :feature :nlp :export :nlp)
+ ((:pkg "pkg" :feature :nlp)
   (:file "data")
   (:file "tokenize")
   (:file "doc")

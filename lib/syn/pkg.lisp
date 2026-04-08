@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :syn/ts
+(defpkg :syn/ts
   (:nicknames :ts)
   (:use :cl :std :tree-sitter)
   (:export 
@@ -13,20 +13,20 @@
    :parse-string
    :lang-counts))
 
-(defpackage :syn/lang
+(defpkg :syn/lang
   (:use :cl :std)
   (:export :language :lang :*language*))
 
-(defpackage :syn/lang/c
+(defpkg :syn/lang/c
   (:nicknames :syn/c)
   (:use :cl :std :syn/lang :parse/pratt :tree-sitter :syn/ts)
   (:export))
 
-(defpackage :syn/fmt
+(defpkg :syn/fmt
   (:use :cl :std :config :ast)
   (:export :fmt :fmt-config))
 
-(defpackage :syn/gen
+(defpkg :syn/gen
   (:use :cl :std :doc :id :graph :ast)
   (:export :gen-designator :gen-condition :gen-condition
    :simple-gen-error :defsyntax
@@ -73,11 +73,11 @@
    :gen-backend
    :cl-reader))
 
-(defpackage :syn/lint
+(defpkg :syn/lint
   (:use :std-lisp)
   (:export :lint))
 
-(defpackage :syn/tempo
+(defpkg :syn/tempo
   (:nicknames :tempo)
   (:use :std-lisp :syn/ts :syn/lang :syn/gen :id :graph :ast :val)
   (:import-from :dat/xml :escape-for-html)
@@ -87,19 +87,18 @@
    :getf-tempo :*tempo-package* :execute-template :deftempo
    :*tempo-parameters* :*tempo-variables* :*tempo-case-sensitive*))
 
-(defpackage :syn/grovel
+(defpkg :syn/grovel
   (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c))
 
-(pkg:defpkg :syn
+(defpkg :syn
   (:use :std-lisp)
   (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))
 
-(defpackage :syn/cli
+(defpkg :syn/cli
   (:use :std-lisp :syn :cli :clap :log)
   (:export :*syn-cli*
            :*gen-cli*))
 
-(in-package :syn)
 (in-package :syn/lang)
 (defclass language () ())
 (defgeneric lang (self))
