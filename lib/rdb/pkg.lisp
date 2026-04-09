@@ -41,11 +41,9 @@
    :make-transaction :commit-transaction
    :begin-transaction :prepare-transaction
    :rollback-transaction :delete-transaction
-   :flush-db :flush-cf
-   :repair-db :write-db
-   :backup-db :restore-db
-   :get-stats :snapshot-db
-   :shutdown-db :print-stats
+   :flush-cf
+   :get-stats
+   :print-stats
    :ingest-db
    ;; sst
    :sst-file-writer :make-sst-file-writer

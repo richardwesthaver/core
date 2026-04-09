@@ -4,12 +4,9 @@
  :version "0.1.0"
  :require
  (:std :obj
-  :io :log :cli
-  :net :nlp :dat :doc
-  :q :dsp :math :parse 
-  :rdb :cry :pod  
-  :box :syn :vc :rt
-  :skel)
+  :io :log :dat :rt :parse :cry :cli
+  :net :q :nlp :rdb :organ :syn :doc
+  :dsp :math :pod :box :vc :skel)
  :components ((:file "core"))
  :provide 
  ((:sys :core/tests

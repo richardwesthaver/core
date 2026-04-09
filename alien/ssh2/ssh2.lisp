@@ -108,19 +108,15 @@
   :quote-paths 3)
 
 (define-alien-enum (libssh2-pollfd)
-  :socket 1
-  :channel 2
   :listener 3
   :pollin #x0001
   :pollpri #x0002
   :pollout #x0004
   :pollerr #x0008
   :pollhup #x0010
-  :session-closed #x0010
   :pollnval #x0020
   :pollex #x0040
-  :channel-closed #x0080
-  :listener-closed #x0080)
+  :closed #x0080)
 
 (define-alien-enum (libssh2-hostkey-type)
   :unknown 0

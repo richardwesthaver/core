@@ -2,7 +2,7 @@
 (defsys :rdb
  :require (:std :rocksdb :obj :log :q :dat :cli :net)
  :components 
- ((:pkg "pkg" :feature :rdb)
+ ((:pkg "pkg" :export :rdb)
   (:file "condition") 
   (:file "macs")
   (:file "rocksdb")
@@ -17,5 +17,6 @@
   (:file "srv")
   (:file "cli"))
  :provide 
- ((:proto :rdb)
+ ((:proto :rdb
+   :description "RocksDB high-level API.")
   (:tests :require (:rt :rocksdb :rdb :log :obj))))

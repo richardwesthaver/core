@@ -3,7 +3,7 @@
  :version "0.1.0"
  :require (:ppcre :std :nlp :parse :cry :obj :rdb :log :cry)
  :components 
- ((:pkg "pkg" :feature :organ)
+ ((:pkg "pkg")
   (:file "vars")
   (:file "condition")
   (:file "proto")

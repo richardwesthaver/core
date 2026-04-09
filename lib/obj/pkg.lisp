@@ -688,7 +688,6 @@
    :backup-db
    :restore-db
    :snapshot-db
-   :write-db
    :shutdown-db
    :ingest-db
    :put-kv

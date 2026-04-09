@@ -291,14 +291,15 @@ objects of type COMPONENT."
   (multiple-value-bind (v f) (gethash name *module-table*)
     (if f
         (setf (gethash name *module-table*) ; v is a plist
-              (let ((w (or (and (not append) (apply 'std/list:remove-from-plist v (list key)))
+              (let ((w (or (and (not append) (std/list:remove-from-plist v key))
                            v)))
+                ;; TODO 2026-04-08: 
                 (if append 
                     (if (getf w key)
                         (progn (pushnew val (getf w key) :test 'equalp) w)
                         (progn (setf (getf w key) (list val)) w))
                     (nconc w (list key val)))))
-        (setf (gethash name *module-table*) (list key val)))))
+        (setf (gethash name *module-table*) (list key (list val))))))
 
 (defprovider :asdf (root path &optional name)
   (unless (find-module root :asdf)
@@ -494,7 +495,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     (t (find-submodules key kind))))
 
 ;; (SET-MODULE NAME nil) deletes a module.
-(defun set-module (name val &optional kind key append)
+(defun set-module (name val &optional kind key (append t))
   (cond 
     ((and kind (not append))
      (let* ((ret (find-module name))
@@ -509,7 +510,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     ((and kind val append) (register-module kind name val append))
     (t (setf (gethash name *module-table*) val))))
 
-(defsetf find-module (name &optional kind key append) (val)
+(defsetf find-module (name &optional kind key (append t)) (val)
   `(set-module ,name ,val ,kind ,key ,append))
 
 (defun init-module (mod)
@@ -524,7 +525,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     :constants :parameters :macros :conditions
     :restarts :accessors :predicates :classes))
 
-(defun %load-proto (form &optional (system (or *defsys* *module*)))
+(defun %load-proto (form &optional (system *module*))
   "Load a protocol module NAME."
   (destructuring-bind (name &rest args) form
     (declare (ignore name))
@@ -1253,7 +1254,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   comp)
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset 
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset
                                         fasl-cache
                                         system-data
                                         system-cache)
@@ -1296,10 +1297,11 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
     sys))
 
 (defun reload-system-packages (name &optional (path :pkg))
-  ;; delete :package submods
-  (set-module name nil :package nil nil)
-  ;; reload
-  (load-component (find-component path (find-system name)) :force t))
+  (let ((*module* name))
+    ;; delete :package submods
+    (set-module name nil :package nil nil)
+    ;; reload
+    (load-component (find-component path (find-system name)) :force t)))
 
 (defun load-system-requires (sys &optional force)
   (mapc

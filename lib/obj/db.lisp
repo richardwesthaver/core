@@ -303,8 +303,8 @@ in-memory objects."))
   (:documentation "Write BATCH to database SELF."))
 (defgeneric shutdown-db (self &key wait &allow-other-keys)
   (:documentation "Shutdown database SELF."))
-(defgeneric ingest-into-db (self file &key)
-  (:documentation "Ingest an external file into the database"))
+(defgeneric ingest-db (self file &key)
+  (:documentation "Ingest external files into a database."))
 
 ;;; Config
 (defconfig db-config ()

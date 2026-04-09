@@ -74,16 +74,16 @@
               :parse
               :cry
               :cli
+              :net
               :q
+              :nlp
               :rdb
               :organ
               :syn
-              :nlp
               :doc
               :vc
               :box
               :pod
-              :net
               :math
               :dsp
               :alien

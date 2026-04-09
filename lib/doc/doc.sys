@@ -2,7 +2,7 @@
 (defsys :doc
  :require (:std :organ :parse :obj :rdb :log)
   :components 
- ((:pkg "pkg" :feature :doc)
+ ((:pkg "pkg")
   (:file "proto")
   (:file "symbol")
   (:file "file")
