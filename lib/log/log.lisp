@@ -97,7 +97,7 @@ function 'NAME-P'."
          (,(intern (concatenate 'string %name "!")) (with-output-to-string (s) (describe arg s)))
          (values)))))
 
-(define-log-level trace (or (eq *log-level* :trace) (eq *log-level* t)))
+(define-log-level trace (eq *log-level* :trace))
 (define-log-level debug (or (trace-p) (eq *log-level* :debug)))
 (define-log-level info (or (debug-p) (eq *log-level* :info)))
 (define-log-level warn (or (info-p) (eq *log-level* :warn)))
@@ -265,7 +265,7 @@ function 'NAME-P'."
 (defclass level-filter (filter)
   ((level :initform *log-level* :accessor level)))
 
-(defmethod initialize-instance :after ((filter level-filter) &key level)
+(defmethod initialize-instance :after ((filter level-filter) &key (level *log-level*))
   (setf (level filter) level))
 
 (defmethod (setf level) :before (level (filter level-filter))

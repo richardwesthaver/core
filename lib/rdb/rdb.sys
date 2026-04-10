@@ -1,8 +1,8 @@
 ;;; ~/comp/core/lib/rdb/rdb.sys --- Rdb Sytem Definitions
 (defsys :rdb
- :require (:std :rocksdb :obj :log :q :dat :cli :net)
+ :require (:std :rocksdb :obj :log :dat :cli :net :q)
  :components 
- ((:pkg "pkg" :export :rdb)
+ ((:pkg "pkg")
   (:file "condition") 
   (:file "macs")
   (:file "rocksdb")

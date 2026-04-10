@@ -22,7 +22,6 @@
   (make-instance 'logger-config :ast (or ast pipe) :size size :level level))
 
 (defun build-logger-config (cfg)
-  (setf *log-level* (level cfg))
   (apply 'defpipe* (make-instance 'logger 
                      :queue (make-array (slot-value cfg 'size) :fill-pointer 0)
                      :queue-back (make-array (slot-value cfg 'size) :fill-pointer 0))
@@ -35,14 +34,14 @@
   (let ((cfg (make-config :logger)))
     (setf (ast cfg)
           `((level-filter :id :level-filter :level ,(level cfg))
-            (tag-tree-filter :id :tag-filter) 
+            ;; (tag-tree-filter :id :tag-filter) 
             ,sink))
     cfg))
 
 (defmethod init ((self (eql :log)) &rest args &key (start t) (timestamp *log-timestamp*) (indent *log-indent*) (level *log-level*) (timestamp-format *log-timestamp-format*) (backtrace *log-show-backtrace*) (message-class *log-message-class*) (message-format *log-message-format*) logger)
   "Initialize the global logger."
   ;; don't remove level, used by MAKE-CONFIG
-  (setf args (remove-from-plist args :start :timestamp :indent :timestamp-format :message-class :backtrace :message-format :logger))
+  (setf args (remove-from-plist args :start :timestamp :indent :timestamp-format :message-class :backtrace :message-format :logger :level))
   (prog1
       (setq 
        *log-show-backtrace* backtrace
