@@ -457,9 +457,9 @@ objects of type COMPONENT."
       ((null name) k)
       ((listp k)
        (or
-        (find name k :test 'equal)
+        (find name k :test 'string-equal :key 'name)
         ;; FIX 2026-03-29: use of ignore-errors
-        (ignore-errors (assoc name k :test 'equal)))))))
+        (ignore-errors (assoc name k :test 'equalp)))))))
 
 (defun find-submodules (name &optional kind)
   (let* ((parents)

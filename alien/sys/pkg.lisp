@@ -20,4 +20,5 @@
    :rlimit :if-nameindex
    :if-nametoindex :if-indextoname
    :if-freenameindex :iovec
-   :msghdr :kernel-timespec))
+   :msghdr :kernel-timespec
+   :at-fdcwd))

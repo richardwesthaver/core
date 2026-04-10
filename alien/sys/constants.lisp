@@ -33,6 +33,8 @@
  (:integer sa-siginfo "SA_SIGINFO")
  ;; fcntl
  (:integer o-cloexec "O_CLOEXEC")
+ ;; special value for dirfd used to indicate openat should use CWD
+ (:integer at-fdcwd "AT_FDCWD")
  ;; stat
  (:integer s-irwxu "S_IRWXU")
  (:integer s-irusr "S_IRUSR")
