@@ -345,3 +345,9 @@
     ;; Set to 0 for now.  
     (reserved unsigned-int)))
 
+;; openat2
+(define-alien-type open-how
+  (struct open-how
+    (flags unsigned-long)
+    (mode unsigned-long)
+    (resolve unsigned-long)))

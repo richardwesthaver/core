@@ -47,7 +47,7 @@
      ,@body))
 
 ;; io_uring_prep_*
-(defmacro def-io-op (val name slots &body builder)
+(defmacro define-io-op (val name slots &body builder)
   "Define a wrapper for an io-uring opcode. This macro will create a
 structure class with NAME and SLOTS. BUILDER is the body of the BUILD
 method for this struct, with CONST bound to VAR.
@@ -66,3 +66,8 @@ SELF, FROM and SQE are all exposed for use in BUILDER."
          (build-from self (sap-alien from (struct io-uring-sqe))))
        (pushnew ',alien-name *io-opcodes*)
        (export '(,struct-name ,(symbolicate "MAKE-" struct-name) ,const-name ,alien-name)))))
+
+(defmacro def-io-op (val name slots &body builder)
+  `(define-io-op ,val ,name ,slots
+     (with-slots ,(mapcar 'ensure-car slots) self
+       ,@builder)))

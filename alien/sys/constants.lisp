@@ -2,9 +2,12 @@
  "sys/epoll.h" "sys/syslog.h" "sys/socket.h" "sys/un.h"
  "net/if.h" "netinet/in.h" "netinet/tcp.h" "netinet/ip.h" 
  "linux/icmp.h" "linux/errqueue.h" "linux/netlink.h" "arpa/inet.h"
- "fcntl.h" "netdb.h" "sys/resource.h" "sys/poll.h" "sys/uio.h" "linux/time.h")
+ "fcntl.h" "netdb.h" "sys/resource.h" "sys/poll.h" "sys/uio.h" "linux/time.h"
+ "linux/blkdev.h")
 
-(;; sys/uio.h
+(;; linux/blkdev.h
+ (:integer block-uring-cmd-discard "BLOCK_URING_CMD_DISCARD")
+ ;; sys/uio.h
  (:structure iovec ("struct iovec"
                     (unsigned-long iov-base "ptr_t" "iov_base")
                     (sb-unix:size-t iov-len "size_t" "iov_len")))

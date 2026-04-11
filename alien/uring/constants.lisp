@@ -2,15 +2,7 @@
                 "inttypes.h" "linux/time_types.h" "time.h" "fcntl.h" "sched.h" "linux/swab.h" "liburing/compat.h"
                 "linux/fs.h" "liburing/barrier.h" "linux/types.h" "linux/io_uring.h")
 
-( ;; sched.h ;; not found on alpine
- ;; (:integer %cpu-setsize "__CPU_SETSIZE")
- ;; (:integer %ncpu-bits "__NCPUBITS")
- ;; (:integer %sigset-nwords "_SIGSET_NWORDS")
- ;; liburing/io_uring.h
- ;; (:integer nr-io-uring-setup "__NR_io_uring_setup") ;; not workin - C macro trouble?
- ;; (:integer nr-io-uring-register "__NR_io_uring_register")
- ;; (:integer nr-io-uring-enter "__NR_io_uring_enter")
- (:integer ioring-file-index-alloc "IORING_FILE_INDEX_ALLOC")
+((:integer ioring-file-index-alloc "IORING_FILE_INDEX_ALLOC")
  (:enum iosqe ((iosqe-fixed-file-bit "IOSQE_FIXED_FILE_BIT")
                (iosqe-io-drain-bit "IOSQE_IO_DRAIN_BIT")
                (iosqe-io-link-bit "IOSQE_IO_LINK_BIT")
@@ -65,6 +57,8 @@
  (:integer ioring-recv-multishot "IORING_RECV_MULTISHOT")
  (:integer ioring-recvsend-fixed-buf "IORING_RECVSEND_FIXED_BUF")
  (:integer ioring-send-zc-report-usage "IORING_SEND_ZC_REPORT_USAGE")
+ (:integer ioring-recvsend-bundle "IORING_RECVSEND_BUNDLE")
+ (:integer ioring-send-vectorized "IORING_SEND_VECTORIZED")
  (:integer ioring-notif-usage-zc-copied "IORING_NOTIF_USAGE_ZC_COPIED")
  (:integer ioring-accept-multishot "IORING_ACCEPT_MULTISHOT")
  (:enum ioring-msg ((ioring-msg-data "IORING_MSG_DATA")

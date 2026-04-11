@@ -1382,7 +1382,7 @@ object SELF remains unmodified."
                 (t (nyi! "Unrecognized PLAN keyword")))
          (when tests (load-module (name self) :tests))))
      (and asdf (asdf:load-system (name self) :verbose verbose :force force)))
-    self)
+    (values self (find-module (name self))))
   (:method (self &rest args &key (default :error) (asdf *asdf-compatibility*))
     (remf args :default)
     (let ((sys (find-system self :default default :asdf asdf)))

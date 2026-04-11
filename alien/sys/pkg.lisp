@@ -21,4 +21,5 @@
    :if-nametoindex :if-indextoname
    :if-freenameindex :iovec
    :msghdr :kernel-timespec
-   :at-fdcwd))
+   :at-fdcwd :block-uring-cmd-discard
+   :open-how))

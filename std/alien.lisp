@@ -545,6 +545,9 @@ to open-code (SETF SAP-REF) forms."
 (defun alien-enum-keys (type)
   (mapcar #'car (sb-alien::alien-enum-type-from (parse-alien-type type nil))))
 
+(defun alien-enum-value (type key)
+  (std/list:assoc-value (sb-alien::alien-enum-type-from (parse-alien-type type nil)) key))
+
 (defmacro define-alien-enum ((name &key (type 'enum) (test 'eql) (default :error)) &body forms)
   "Define a pseudo-enum type, used to work-around difficulties working with
 SB-ALIEN, groveller, typedef enums, etc.

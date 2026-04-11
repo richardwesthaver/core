@@ -227,6 +227,9 @@ instead of a pointer."
 (defun io-uring-prep-connect (sqe fd addr addrlen)
   (io-uring-prep-rw +io-connect+ sqe fd addr 0 addrlen))
 
+(defun io-uring-prep-bind (sqe fd addr addrlen)
+  (io-uring-prep-rw +io-bind+ sqe fd addr 0 addrlen))
+
 (defun io-uring-prep-listen (sqe fd backlog)
   (io-uring-prep-rw +io-listen+ sqe fd 0 backlog 0))
 
@@ -286,7 +289,239 @@ instead of a pointer."
   (io-uring-prep-rw +io-madvise+ sqe -1 addr len 0)
   (setf (slot sqe 'fadvise-advice) advice))
 
-;; ...
+(defun io-uring-prep-fadvise64 (sqe fd offset len advice)
+  (io-uring-prep-rw +io-fadvise+ sqe fd nil 0 offset)
+  (setf  (slot sqe 'addr) len
+         (slot sqe 'fadvise-advice) advice))
+
+(defun io-uring-prep-madvise64 (sqe addr len advice)
+  (io-uring-prep-rw +io-madvise+ sqe -1 addr 0 len)
+  (setf (slot sqe 'fadvise-advice) advice))
+
+(defun io-uring-prep-send (sqe sockfd buf len flags)
+  (io-uring-prep-rw +io-send+ sqe sockfd buf len 0)
+  (setf (slot sqe 'msg-flags) flags))
+
+(defun io-uring-prep-send-bundle (sqe sockfd len flags)
+  (io-uring-prep-send sqe sockfd nil len flags)
+  (setf (slot sqe 'ioprio) (logior (slot sqe 'ioprio) ioring-recvsend-bundle)))
+
+(defun io-uring-prep-send-set-addr (sqe dest-addr addr-len)
+  (setf (slot sqe 'addr2) dest-addr
+        (slot sqe 'addr-len) addr-len))
+
+(defun io-uring-prep-sendto (sqe sockfd buf len flags addr addrlen)
+  (io-uring-prep-send sqe sockfd buf len flags)
+  (io-uring-prep-send-set-addr sqe addr addrlen))
+
+(defun io-uring-prep-send-zc (sqe sockfd buf len flags zc-flags)
+  (io-uring-prep-rw +io-send-zc+ sqe sockfd buf len 0)
+  (setf (slot sqe 'msg-flags) flags
+        (slot sqe 'ioprio) zc-flags))
+
+(defun io-uring-prep-send-zc-fixed (sqe sockfd buf len flags zc-flags buf-index)
+  (io-uring-prep-send-zc sqe sockfd buf len flags zc-flags)
+  (setf (slot sqe 'ioprio) (logior (slot sqe 'ioprio) ioring-recvsend-fixed-buf)
+        (slot sqe 'buf-index) buf-index))
+
+(defun io-uring-prep-sendmsg-zc (sqe fd msg flags)
+  (io-uring-prep-sendmsg sqe fd msg flags)
+  (setf (slot sqe 'opcode) +io-sendmsg-zc+))
+
+(defun io-uring-prep-sendmsg-zc-fixed (sqe fd msg flags buf-index)
+  (io-uring-prep-sendmsg-zc sqe fd msg flags)
+  (setf (slot sqe 'ioprio) (logior (slot sqe 'ioprio) ioring-recvsend-fixed-buf)
+        (slot sqe 'buf-index) buf-index))
+
+(defun io-uring-prep-recv (sqe sockfd buf len flags)
+  (io-uring-prep-rw +io-recv+ sqe sockfd buf len 0)
+  (setf (slot sqe 'msg-flags) flags))
+
+(defun io-uring-prep-recv-multishot (sqe sockfd buf len flags)
+  (io-uring-prep-recv sqe sockfd buf len flags)
+  (setf (slot sqe 'ioprio) (logior (slot sqe 'ioprio) ioring-recv-multishot)))
+
+;; ... recvmsg payload
+
+(defun io-uring-prep-openat2 (sqe dfd path how)
+  ;; REVIEW 2026-04-10: 
+  (io-uring-prep-rw +io-openat2+ sqe dfd path (alien-size open-how) (alien-sap how)))
+
+(defun io-uring-prep-openat2-direct (sqe dfd path how file-index)
+  (io-uring-prep-openat2 sqe dfd path how)
+  (when (= file-index ioring-file-index-alloc) (decf file-index))
+  (%io-uring-set-target-fixed-file sqe file-index))
+
+(defun io-uring-prep-epoll-ctl (sqe epfd fd op ev)
+  (io-uring-prep-rw +io-epoll-ctl+ sqe epfd ev op fd))
+
+(defun io-uring-prep-provide-buffers (sqe addr len nr bgid bid)
+  (io-uring-prep-rw +io-provide-buffers+ sqe nr addr len bid)
+  (setf (slot sqe 'buf-group) bgid))
+
+(defun io-uring-prep-remove-buffers (sqe nr bgid)
+  (io-uring-prep-rw +io-remove-buffers+ sqe nr nil 0 0)
+  (setf (slot sqe 'buf-group) bgid))
+
+(defun io-uring-prep-shutdown (sqe fd how)
+  (io-uring-prep-rw +io-shutdown+ sqe fd nil how 0))
+
+(defun io-uring-prep-unlinkat (sqe dfd path flags)
+  (io-uring-prep-rw +io-unlinkat+ sqe dfd path 0 0)
+  (setf (slot sqe 'unlink-flags) flags))
+
+(defun io-uring-prep-unlink (sqe path flags)
+  (io-uring-prep-unlinkat sqe at-fdcwd path flags))
+
+(defun io-uring-prep-renameat (sqe olddfd oldpath newdfd newpath flags)
+  (io-uring-prep-rw +io-renameat+ sqe olddfd oldpath newdfd newpath)
+  (setf (slot sqe 'rename-flags) flags))
+
+(defun io-uring-prep-rename (sqe oldpath newpath)
+  (io-uring-prep-renameat sqe at-fdcwd oldpath at-fdcwd newpath 0))
+
+(defun io-uring-prep-sync-file-range (sqe fd len offset flags)
+  (io-uring-prep-rw +io-sync-file-range+ sqe fd nil len offset)
+  (setf (slot sqe 'sync-range-flags) flags))
+
+(defun io-uring-prep-mkdirat (sqe dfd path mode)
+  (io-uring-prep-rw +io-mkdirat+ sqe dfd path mode 0))
+
+(defun io-uring-prep-mkdir (sqe path mode)
+  (io-uring-prep-mkdirat sqe at-fdcwd path mode))
+
+(defun io-uring-prep-symlinkat (sqe target newdirfd linkpath)
+  (io-uring-prep-rw +io-symlinkat+ sqe newdirfd target 0 linkpath))
+
+(defun io-uring-prep-linkat (sqe olddfd oldpath newdfd newpath flags)
+  (io-uring-prep-rw +io-linkat+ sqe olddfd oldpath newdfd newpath)
+  (setf (slot sqe 'hardlink-flags) flags))
+
+(defun io-uring-prep-link (sqe oldpath newpath flags)
+  (io-uring-prep-linkat sqe at-fdcwd oldpath at-fdcwd newpath flags))
+
+(defun io-uring-prep-msg-ring-cqe-flags (sqe fd len data flags cqe-flags)
+  (io-uring-prep-rw +io-msg-ring+ sqe fd nil len data)
+  (setf (slot sqe 'msg-ring-flags) (logior ioring-msg-ring-flags-pass flags)
+        (slot sqe 'file-index) cqe-flags))
+
+(defun io-uring-prep-msg-ring (sqe fd len data flags)
+  (io-uring-prep-rw +io-msg-ring+ sqe fd nil len data)
+  (setf (slot sqe 'msg-ring-flags) flags))
+
+(defun io-uring-prep-msg-ring-fd (sqe fd source-fd target-fd data flags)
+  ;; addr = IORING_MSG_SEND_FD
+  (io-uring-prep-rw +io-msg-ring+ sqe fd 1 0 data)
+  (setf (slot sqe 'addr3) source-fd)
+  (when (= target-fd ioring-file-index-alloc) (decf target-fd))
+  (%io-uring-set-target-fixed-file sqe target-fd)
+  (setf (slot sqe 'msg-ring-flags) flags))
+
+(defun io-uring-prep-msg-ring-fd-alloc (sqe fd source-fd data flags)
+  ;; addr = IORING_MSG_SEND_FD
+  (io-uring-prep-msg-ring-fd sqe fd source-fd ioring-file-index-alloc data flags))
+
+(defun io-uring-prep-getxattr (sqe name value path len)
+  (io-uring-prep-rw +io-getxattr+ sqe 0 name len value)
+  (setf (slot sqe 'addr3) path
+        (slot sqe 'xattr-flags) 0))
+
+(defun io-uring-prep-fgetxattr (sqe fd name value len)
+  (io-uring-prep-rw +io-fgetxattr+ sqe fd name len value)
+  (setf (slot sqe 'xattr-flags) 0))
+
+(defun io-uring-prep-setxattr (sqe name value path flags len)
+  (io-uring-prep-rw +io-setxattr+ sqe 0 name len value)
+  (setf (slot sqe 'addr3) path
+        (slot sqe 'xattr-flags) flags))
+
+(defun io-uring-prep-fsetxattr (sqe fd name value flags len)
+  (io-uring-prep-rw +io-fsetxattr+ sqe fd name len value)
+  (setf (slot sqe 'xattr-flags) flags))
+
+(defun io-uring-prep-socket (sqe domain type protocol flags)
+  (io-uring-prep-rw +io-socket+ sqe domain nil protocol type)
+  (setf (slot sqe 'rw-flags) flags))
+
+(defun io-uring-prep-socket-direct (sqe domain type protocol file-index flags)
+  (io-uring-prep-rw +io-socket+ sqe domain nil protocol type)
+  (setf (slot sqe 'rw-flags) flags)
+  (when (= file-index ioring-file-index-alloc) (decf file-index))
+  (%io-uring-set-target-fixed-file sqe file-index))
+
+(defun io-uring-prep-socket-direct-alloc (sqe domain type protocol flags)
+  (io-uring-prep-rw +io-socket+ sqe domain nil protocol type)
+  (setf (slot sqe 'rw-flags) flags)
+  (%io-uring-set-target-fixed-file sqe (1- ioring-file-index-alloc)))
+
+(defun %io-uring-prep-uring-cmd (sqe op cmd-op fd)
+  (setf (slot sqe 'opcode) op
+        (slot sqe 'fd) fd
+        (slot sqe 'cmd-op) cmd-op
+        (slot sqe 'pad) 0
+        (slot sqe 'addr) 0
+        (slot sqe 'len) 0))
+
+(defun io-uring-prep-uring-cmd (sqe cmd-op fd)
+  (%io-uring-prep-uring-cmd sqe +io-uring-cmd+ cmd-op fd))
+
+(defun io-uring-prep-uring-cmd128 (sqe cmd-op fd)
+  (%io-uring-prep-uring-cmd sqe +io-uring-cmd128+ cmd-op fd))
+
+(defun io-uring-prep-cmd-sock (sqe cmd-op fd level optname optval optlen)
+  (io-uring-prep-uring-cmd sqe cmd-op fd)
+  (setf (slot sqe 'optval) optval
+        (slot sqe 'optname) optname
+        (slot sqe 'optlen) optlen
+        (slot sqe 'level) level))
+
+(defun io-uring-prep-cmd-getsockname (sqe fd sockaddr sockaddr-len peer)
+  (io-uring-prep-uring-cmd sqe #.(std/alien::alien-enum-value 'io-uring-socket-op 'socket-uring-op-getsockname) fd)
+  (setf (slot sqe 'addr) sockaddr
+        (slot sqe 'addr3) sockaddr-len
+        (slot sqe 'optlen) peer))
+
+(defun io-uring-prep-waitid (sqe idtype id infop options flags)
+  (io-uring-prep-rw +io-waitid+ sqe id nil idtype 0)
+  (setf (slot sqe 'waitid-flags) flags
+        (slot sqe 'file-index) options
+        (slot sqe 'addr2) infop))
+
+(defun io-uring-prep-futex-wake (sqe futex val mask futex-flags flags)
+  (io-uring-prep-rw +io-futex-wake+ sqe futex-flags futex 0 val)
+  (setf (slot sqe 'futex-flags) flags
+        (slot sqe 'addr3) mask))
+
+(defun io-uring-prep-futex-wait (sqe futex val mask futex-flags flags)
+  (io-uring-prep-rw +io-futex-wait+ sqe futex-flags futex 0 val)
+  (setf (slot sqe 'futex-flags) flags
+        (slot sqe 'addr3) mask))
+
+(defun io-uring-prep-futex-waitv (sqe futex nr-futex flags)
+  (io-uring-prep-rw +io-futex-waitv+ sqe 0 futex nr-futex 0)
+  (setf (slot sqe 'futex-flags) flags))
+
+(defun io-uring-prep-fixed-fd-install (sqe fd flags)
+  (io-uring-prep-rw +io-fixed-fd-install+ sqe fd nil 0 0)
+  (setf (slot sqe 'flags) iosqe-fixed-file
+        (slot sqe 'install-fd-flags) flags))
+
+(defun io-uring-prep-ftruncate (sqe fd len)
+  (io-uring-prep-rw +io-ftruncate+ sqe fd 0 0 len))
+
+(defun io-uring-prep-cmd-discard (sqe fd offset nbytes)
+  (io-uring-prep-cmd sqe sys:block-uring-cmd-discard fd)
+  (setf (slot sqe 'addr) offset
+        (slot sqe 'addr3) nbytes))
+
+(defun io-uring-prep-pipe (sqe fds pipe-flags)
+  (io-uring-prep-rw +io-pipe+ sqe 0 fds 0 0)
+  (setf (slot sqe 'pipe-flags) pipe-flags))
+
+(defun io-uring-prep-pipe-direct (sqe fds pipe-flags file-index)
+  (io-uring-prep-pipe sqe fds pipe-flags)
+  (when (= file-index ioring-file-index-alloc) (decf file-index))
+  (%io-uring-set-target-fixed-file sqe file-index))
 
 ;; (with-io-uring (ring)
 ;;   (io-uring-queue-init 160 ring 1)
