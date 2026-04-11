@@ -32,10 +32,10 @@
   "A list of files containing DEFSYS forms.")
 
 (defvar-unbound *system-cache-directory*
-  "Cached system data directory.")
+    "Cached system data directory.")
 
 (defvar-unbound *system-data-directory*
-  "Persistent system data directory.")
+    "Persistent system data directory.")
 
 (defun system-cache-dir (dir)
   (merge-pathnames dir *system-cache-directory*))
@@ -46,6 +46,8 @@
 (defvar *test-system* :rt)
 (defvar *system-table* (make-hash-table :test 'equal)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
+
+(defvar *system-session-pool* nil)
 
 (defvar *provider-table* (make-hash-table)
   "A hash-table containing PROVIDER functions.")
@@ -95,7 +97,7 @@ in a call to INIT.")
        (retry ()
          :report (lambda (s)
                    (format s "~@<Retry system method.~@:>"))))))
-         
+
 
 ;; (retry)
 ;; (reset-session)
@@ -230,10 +232,10 @@ ending with the target component name."
               if (and (not p) (not (null parents))) ; go back one level
               do (setf c (pop parents))
               else do
-              (progn 
-                (setf c (find p (the list (components c)) :test 'string-equal :key 'name))
-                (when (mod-component-p c)
-                  (push c parents)))
+                 (progn 
+                   (setf c (find p (the list (components c)) :test 'string-equal :key 'name))
+                   (when (mod-component-p c)
+                     (push c parents)))
               finally (return c)))))
 
 #+nil
@@ -342,20 +344,20 @@ objects of type COMPONENT."
    (find-package* name name)
    t))
 
+(defprovider :pool (root name)
+  (register-module :pool root name t))
+
+(defprovider :printer (root name)
+  (register-module :printer root name t)) ;; (compile-and-eval `(find-printer ,name))))
+
+(defprovider :annotations (root name)
+  (register-module :annotations root name t)) ;; (compile-and-eval `(annotations ,name))))
+
 (defprovider :io (root name &rest args)
   (register-module :io root (cons name args) t))
 
 (defprovider :proto (root name &rest args)
   (register-module :proto root (cons name args) t))
-
-(defprovider :pool (root name)
-  (register-module :pool root (compile-and-eval `(find-thread-pool ,name))))
-
-(defprovider :printer (root name)
-  (register-module :printer root (compile-and-eval `(find-printer ,name))))
-
-(defprovider :annotations (root name)
-  (register-module :annotations root (compile-and-eval `(annotations ,name))))
 
 (defprovider :sys (name &rest args)
   (register-module
@@ -456,10 +458,11 @@ objects of type COMPONENT."
     (cond
       ((null name) k)
       ((listp k)
-       (or
-        (find name k :test 'string-equal :key 'name)
-        ;; FIX 2026-03-29: use of ignore-errors
-        (ignore-errors (assoc name k :test 'equalp)))))))
+       ;; FIX 2026-03-29: use of ignore-errors
+       (ignore-errors
+        (or
+         (find name k :test 'string-equal :key 'name)
+         (assoc name k :test 'equalp)))))))
 
 (defun find-submodules (name &optional kind)
   (let* ((parents)
@@ -467,12 +470,12 @@ objects of type COMPONENT."
          (match
              (collecting
                (labels ((%sub (k v kin) 
-                        (if kin
-                            (when-let ((y (find-submodule kin name v)))
-                              (collect y) 
-                              (push k parents)
-                              (push kin providers))
-                            (mapc (lambda (x) (%sub k v x)) (hash-table-keys  *provider-table*)))))
+                          (if kin
+                              (when-let ((y (find-submodule kin name v)))
+                                (collect y) 
+                                (push k parents)
+                                (push kin providers))
+                              (mapc (lambda (x) (%sub k v x)) (hash-table-keys  *provider-table*)))))
                  (maphash (lambda (k v) (%sub k v kind)) *module-table*)))))
     (nreversef parents)
     (nreversef providers)
@@ -529,23 +532,27 @@ to match all systems and optional KIND (a module designator) specified by KEY."
   "Load a protocol module NAME."
   (destructuring-bind (name &rest args) form
     (declare (ignore name))
-      (let ((pkg (find-package (or (getf args :package) system))))
-        (values
-         (remove-if 'null
-                    (mapcar (lambda (x)
-                              (when-let ((syms (getf args x)))
-                                (shadowing-import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
-                                (cons x syms)))
-                            *protocol-keyword-imports*))
-         pkg))))
+    (let ((pkg (find-package (or (getf args :package) system))))
+      (values
+       (remove-if 'null
+                  (mapcar (lambda (x)
+                            (when-let ((syms (getf args x)))
+                              (shadowing-import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
+                              (cons x syms)))
+                          *protocol-keyword-imports*))
+       pkg))))
 
 ;; templates?
 (defun %load-module (form kind key sys)
   (case kind
     ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
     (:io (gethash form *io-table*))
+    (:annotations (load-annotations form))
+    (:printer (use-printer form))
     (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
     (:prelude (use-package form))
+    (:package (use-package form))
+    (:pool (setf *thread-pool* (find-thread-pool form)))
     (:proto (%load-proto form))
     (:tests (load-system form))
     (:sys (load-system form))
@@ -808,7 +815,7 @@ for processing.")
   (system-session-tasks self))
 
 (sb-ext:defglobal *system-session* (make-system-session)
-  "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
+    "Global SYSTEM-SESSION or NIL when no systems have been initialized.")
 
 (defmethod reset ((self system-session) &key)
   (setf *system-session* (make-system-session)))
@@ -848,7 +855,7 @@ to be a system which is pushed to the session queue before BODY."
      (ensure-system-file-cached ,file)
      ,@body
      (update-cached-system-file ,file ,load ,compile)))
-  
+
 ;; TODO 2026-03-03: 
 ;; (defmacro component-case ())
 
@@ -856,7 +863,7 @@ to be a system which is pushed to the session queue before BODY."
   "Given a FILE, return T if it needs to be reloaded."
   (if-let ((f (cached-system-file file)))
     (lety ((w (setf (getf f :write) (file-write-date file)) :type fixnum)
-          (l (or (getf f :load) 0) :type fixnum))
+           (l (or (getf f :load) 0) :type fixnum))
       (> w l))
     t))
 
@@ -988,48 +995,48 @@ inputs."))
   c)
 
 (defun %parse-component-form (form)
-    (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
-        (lety ((dir (make-pathname :defaults form) :type pathname))
-          (if (directory-path-p dir)
-              (make-instance 'dir-component
-                :name (last (pathname-directory dir)))
-              (make-instance 'file-component 
-                :type (or (pathname-type dir) "lisp")
-                :name (pathname-name dir))))
-        (let ((n (cadr form))
-              (kind (gethash (car form) *component-class-table*))
-              (props (cddr form)))
-          (ecase (car form)
-            ((or :file :pkg :grovel)
-             (let ((ty (if (pathnamep n) (pathname-type n) "lisp")))
-               (apply 'make-instance kind
-                      :type (keywordicate (string-upcase ty))
-                      :name n
-                      :path (probe-file (make-pathname :name n :type ty :defaults *default-pathname-defaults*))
-                      props)))
-            (:mod
-             (let* ((%path (make-pathname :name n :defaults *default-pathname-defaults*))
-                    (path (or (std/file:probe-directory %path)
-                              (simple-system-error "Component path not found: ~A" %path)))
-                    (*default-pathname-defaults* path))
-               (%mod-component-walk
-                (make-instance kind
-                  :name n 
-                  :path path
-                  :components 
-                  (mapcar '%parse-component-form (getf props :components))
-                  :require (getf props :require)))))
-            (:dir
-             (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
-                    (inc (or (getf props :include) *wildcard-regexp*))
-                    (exc (getf props :exclude))
-                    (c (make-instance kind
-                         :name n
-                         :path path
-                         :include inc
-                         :exclude exc
-                         :components (mapcar '%parse-component-form (getf props :components)))))
-               (%mod-component-walk c inc exc)))))))
+  (if (atom form) ; atoms will populate a NAME and TYPE but not a PATH
+      (lety ((dir (make-pathname :defaults form) :type pathname))
+        (if (directory-path-p dir)
+            (make-instance 'dir-component
+              :name (last (pathname-directory dir)))
+            (make-instance 'file-component 
+              :type (or (pathname-type dir) "lisp")
+              :name (pathname-name dir))))
+      (let ((n (cadr form))
+            (kind (gethash (car form) *component-class-table*))
+            (props (cddr form)))
+        (ecase (car form)
+          ((or :file :pkg :grovel)
+           (let ((ty (if (pathnamep n) (pathname-type n) "lisp")))
+             (apply 'make-instance kind
+                    :type (keywordicate (string-upcase ty))
+                    :name n
+                    :path (probe-file (make-pathname :name n :type ty :defaults *default-pathname-defaults*))
+                    props)))
+          (:mod
+           (let* ((%path (make-pathname :name n :defaults *default-pathname-defaults*))
+                  (path (or (std/file:probe-directory %path)
+                            (simple-system-error "Component path not found: ~A" %path)))
+                  (*default-pathname-defaults* path))
+             (%mod-component-walk
+              (make-instance kind
+                :name n 
+                :path path
+                :components 
+                (mapcar '%parse-component-form (getf props :components))
+                :require (getf props :require)))))
+          (:dir
+           (let* ((path (std/file:probe-directory (make-pathname :name n :defaults *default-pathname-defaults*)))
+                  (inc (or (getf props :include) *wildcard-regexp*))
+                  (exc (getf props :exclude))
+                  (c (make-instance kind
+                       :name n
+                       :path path
+                       :include inc
+                       :exclude exc
+                       :components (mapcar '%parse-component-form (getf props :components)))))
+             (%mod-component-walk c inc exc)))))))
 
 (defun %parse-components-form (form)
   (let ((*default-pathname-defaults* 
@@ -1097,7 +1104,7 @@ the following extensions:
                                                        (list (car x) 
                                                              (compile (gensym (string (car x)))
                                                                       `(lambda () ,@(cdr x)))))))
-                   ',hooks)
+                 ',hooks)
            (expand-component-requires ,sys)
            (setf (gethash ,name *system-table*) ,sys)
            ,sys)))))
@@ -1129,7 +1136,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                 :report "Load a different file." 
                 :interactive (lambda () 
                                (list (setf %path (interact-line "File: "))))
-              (load p)))
+                (load p)))
           (update-cached-system-file path t)
           (pushnew path *sysdefs* :test 'equal)
           (if name 
@@ -1175,11 +1182,11 @@ internally. On success the path is added to the *SYSDEFS* list."
       (unless (= code 0)
         (error 'sb-grovel::c-compile-failed)))
     (lety ((code (sb-ext:process-exit-code
-                 (sb-ext:run-program (namestring tmp-a-dot-out)
-                                     (list (namestring tmp-constants))
-                                     :search nil
-                                     :input nil
-                                     :output *trace-output*))
+                  (sb-ext:run-program (namestring tmp-a-dot-out)
+                                      (list (namestring tmp-constants))
+                                      :search nil
+                                      :input nil
+                                      :output *trace-output*))
                  :type fixnum))
       (unless (= code 0)
         (error 'sb-grovel::a-dot-out-failed)))
@@ -1254,7 +1261,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   comp)
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) pool reset
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-pool*) reset
                                         fasl-cache
                                         system-data
                                         system-cache)
@@ -1270,7 +1277,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (let ((pool (when pool
                 (make-thread-pool (std/alien:num-cpus) 
-                                  :name :sys
+                                  :name *system-session-pool*
                                   :class 'std/task:task-pool
                                   :worker-class 'system-worker))))
     (cond
@@ -1456,6 +1463,7 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
 
 ;;; Printer
 (define-printer :sys)
+
 ;;; Explorer
 (defmethod explore ((self system) &key)
   "Explore a system in the Lisp REPL.")
