@@ -152,7 +152,7 @@
 (def-with-ring io-uring-unregister-personality (fd int))
 (def-with-ring io-uring-register-restrictions (res (array (struct io-uring-restriction))) (nr-res unsigned-int))
 (def-with-ring io-uring-enable-rings)
-(def-with-ring ("__io-uring-sqring-wait" io-uring-sqring-wait))
+(def-with-ring ("__io-uring-sqring-wait" %io-uring-sqring-wait))
 (def-with-ring io-uring-register-iowq-aff (cpusz size-t) (mask (* (struct cpu-set-t))))
 (def-with-ring io-uring-unregister-iowq-aff)
 (def-with-ring io-uring-register-iowq-max-workers (values (array unsigned-int)))
@@ -187,24 +187,30 @@
   (flags unsigned-int)
   (sig (* (struct sigset-t)))
   (sz size-t))
+
 (defsyscall io-uring-setup int
   (entries unsigned-int)
   (p (* (struct io-uring-params))))
+
 (defsyscall io-uring-register int (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 
-(defsyscall io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
-  (ring (* io-uring))
+(def-with-ring io-uring-setup-buf-ring (* (struct io-uring-buf-ring))
   (nentries unsigned-int)
   (bgid int)
   (flags unsigned-int)
   (ret (* int)))
-(defsyscall io-uring-free-buf-ring int
-  (ring (* io-uring))
+
+(def-with-ring io-uring-free-buf-ring int
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))
 
-;; __io-uring-get-cqe
+(def-with-ring ("__io-uring-get-cqe" %io-uring-get-cqe)
+  (cqe-ptr (* (* io-uring-cqe)))
+  (submit unsigned)
+  (wait-nr unsigned)
+  (sigmask (* sigset)))
+
 (def-with-ring io-uring-set-iowait (enable-iowait boolean))
 
 ;;..

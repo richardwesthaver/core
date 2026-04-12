@@ -17,23 +17,6 @@
     (unless (> op (slot probe 'last-op))
       (not (zerop (logand (slot (deref (slot probe 'ops) op) 'flags) io-uring-op-supported))))))
 
-(defun io-uring-get-sqe (ring)
-  (let* ((sq (addr (slot ring 'sq)))
-         (head 0)
-         (next (1+ (slot sq 'sqe-tail)))
-         (shift 0))
-    (when (= 1 (logand (slot ring 'flags) ioring-setup-sqe128))
-      (setf shift 1))
-    (if (/= 1 (logand (slot ring 'flags) ioring-setup-sqpoll))
-        ;; IO_URING_READ_ONCE
-        (setf head (deref (slot sq 'khead)))
-        (setf head (slot sq 'khead)))
-    (when (<= (- next head) (slot sq 'ring-entries))
-      (prog1
-          (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
-        (setf (slot (deref sq) 'sqe-tail) next)
-        (print (cons head next))))))
-
 ;; io-uring-cqe-shift
 ;; io-uring-cqe-index
 
@@ -576,7 +559,42 @@ instead of a pointer."
 (definline io-uring-sqe-shift (ring)
   (io-uring-sqe-shift-from-flags (slot ring 'flags)))
 
-;; ...
+(definline io-uring-sqring-wait (ring)
+  (unless (or (zerop (logand (slot ring 'flags) ioring-setup-sqpoll))
+              (not (zerop (io-uring-sq-space-left ring))))
+    (%io-uring-sqring-wait ring)))
+
+(definline io-uring-cq-ready (ring)
+  (- (slot (slot ring 'cq) 'ktail) (deref (slot (slot ring 'cq) 'khead))))
+
+(definline io-uring-cq-has-overflow (ring)
+  ;; IO_URING_READ_ONCE()
+  (logand (deref (slot (slot ring 'sq) 'kflags)) ioring-sq-cq-overflow))
+
+(definline io-uring-cq-eventfd-enabled (ring)
+  (or (zerop (slot (slot ring 'cq) 'kflags))
+      (zerop (logand (deref (slot (slot ring 'cq) 'kflags)) ioring-cq-eventfd-disabled))))
+
+(definline io-uring-cq-eventfd-toggle (ring enabled)
+  (unless (and (io-uring-cq-eventfd-enabled ring) enabled)
+    (if (zerop (slot (slot ring 'cq) 'kflags)) 
+        nil ;; -EOPNOTSUPP
+        (let ((flags (deref (slot (slot ring 'cq) 'kflags))))
+          (if enabled
+              (setf flags (lognand flags ioring-cq-eventfd-disabled))
+              (setf flags (logior flags ioring-cq-eventfd-disabled)))
+          ;; IO_URING_WRITE_ONCE()
+          (setf (deref (slot (slot ring 'cq) 'kflags)) flags)))))
+
+(definline io-uring-wait-cqe-nr (ring cqe-ptr wait-nr)
+  (%io-uring-get-cqe ring cqe-ptr 0 wait-nr nil))
+
+#+todo (
+(defun io-uring-skip-cqe (ring cqe err))
+(defun %io-uring-peek-cqe (ring cqe-ptr nr-available))
+(defun io-uring-peek-cqe (ring cqe-ptr))
+(defun io-uring-wait-cqe (ring cqe-ptr))        
+)
 
 (definline io-uring-buf-ring-mask (ring-entries)
   (1- ring-entries))
@@ -585,3 +603,29 @@ instead of a pointer."
   (setf (slot br 'tail) 0))
 
 ;; ...
+#+todo (
+(defun io-uring-buf-ring-add (br addr len bid mask buf-offset))
+(defun io-uring-buf-ring-advance (br count))
+(defun %io-uring-buf-ring-cq-advance (ring br cq-count buf-count))
+(defun io-uring-buf-ring-cq-advance (ring br count))
+(defun io-uring-buf-ring-available (ring br bgid))
+)
+
+(defun io-uring-get-sqe (ring)
+  (let* ((sq (addr (slot ring 'sq)))
+         (head 0)
+         (next (1+ (slot sq 'sqe-tail)))
+         (shift 0))
+    (when (= 1 (logand (slot ring 'flags) ioring-setup-sqe128))
+      (setf shift 1))
+    (if (/= 1 (logand (slot ring 'flags) ioring-setup-sqpoll))
+        ;; IO_URING_READ_ONCE
+        (setf head (deref (slot sq 'khead)))
+        (setf head (slot sq 'khead)))
+    (when (<= (- next head) (slot sq 'ring-entries))
+      (prog1
+          (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
+        (setf (slot (deref sq) 'sqe-tail) next)
+        (print (cons head next))))))
+
+;; (defun io-uring-get-sqe128 (ring))

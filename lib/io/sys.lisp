@@ -141,7 +141,7 @@ of a file descriptor."))
 (defverb fd (self) (:accessor t))
 
 ;;; Syscall wrappers
-;; TODO 2026-03-13: this section will eventuall cover io_uring wrappers too.
+;; TODO 2026-03-13: this section will eventually cover io_uring wrappers too via IO-CALL
 (defmacro io-syscall ((name &rest args) &optional (success-form '(values io-result io-error)))
   "Wrap a syscall which is bound to alien-function NAME, passing it
 ARGS. SUCCESS-FORM is returned when return-type is INT and result is >0,
@@ -165,7 +165,7 @@ value of the syscall NAME, or return the first (actual) value."
        (if-let ((err (get-syscall-error ,code)))
          (error err)
          ,ret))))
-  
+
 ;;; Timeouts
 (deftype timeout ()
   'double-float)

@@ -9,6 +9,9 @@
 
 (defvar *io* nil)
 
+;; (defun iou-send (event ring) "Prepare an io-uring submission.")
+;; (defun iou-recv (event ring) "Receive an io-uring event.")
+
 (defun setup-uring ())
 
 (defun init-io (&optional (entries 256) (flags 0))

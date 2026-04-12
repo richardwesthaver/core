@@ -8,6 +8,7 @@
 (;; linux/blkdev.h
  (:integer block-uring-cmd-discard "BLOCK_URING_CMD_DISCARD")
  ;; sys/uio.h
+ (:integer iov-max "__IOV_MAX")
  (:structure iovec ("struct iovec"
                     (unsigned-long iov-base "ptr_t" "iov_base")
                     (sb-unix:size-t iov-len "size_t" "iov_len")))

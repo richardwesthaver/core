@@ -30,9 +30,9 @@
 
 ;; 16-byte CQE
 (defstruct completion-queue-entry 
-  (user-data 0 :type fixnum)
-  (res 0 :type fixnum)
-  (flags 0 :type fixnum))
+  (user-data nil :type (or null system-area-pointer))
+  (res 0 :type (signed-byte 32))
+  (flags 0 :type (unsigned-byte 32)))
 
 ;; (defmethod build ((self completion-queue-entry) &key &allow-other-keys)
 ;;   (with-slots (user-data res flags) self
