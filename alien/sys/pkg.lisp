@@ -20,6 +20,8 @@
    :rlimit :if-nameindex
    :if-nametoindex :if-indextoname
    :if-freenameindex :iovec
+   :iov-base :iov-len
    :msghdr :kernel-timespec
    :at-fdcwd :block-uring-cmd-discard
-   :open-how :msghdr :cmsghdr :linger))
+   :open-how :msghdr :cmsghdr :linger
+   :io-vector :io-vec))
