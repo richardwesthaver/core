@@ -196,9 +196,9 @@
   (sig (* (struct sigset-t)))
   (sz size-t))
 
-;; (defsyscall io-uring-setup int
-;;   (entries unsigned-int)
-;;   (p (* (struct io-uring-params))))
+(defsyscall io-uring-setup int
+  (entries unsigned-int)
+  (p (* (struct io-uring-params))))
 
 (defsyscall io-uring-register int (fd unsigned-int) (opcode unsigned-int) (arg (* t)) (nr-args unsigned-int))
 

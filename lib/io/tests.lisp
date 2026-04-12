@@ -36,7 +36,7 @@
     (istype 'chunked-input-stream input)
     (istype 'chunked-output-stream output)
     (istype 'chunked-io-stream (make-chunked-stream (make-two-way-stream input output)))
-    (istype 'blocked-input-stream (make-instance 'blocked-input-stream))))
+    (istype 'block-input-stream (make-instance 'block-input-stream))))
 
 (defparameter *data-size* (ash 1024 4))
 
@@ -82,8 +82,8 @@
              (log:info! data)
              (log:info! decompressed)
              (is (equalp data decompressed))))
-      ;; (close (stream-of decompressor))
-      ;; (close (stream-of compressor))
+      (close (stream-of decompressor))
+      (close (stream-of compressor))
       )))
 
 ;;; Deflate

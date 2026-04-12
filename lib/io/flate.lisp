@@ -104,8 +104,7 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 (defmethod std:stream-of ((self compressor))
   (output self))
 
-(defclass compressing-stream (fundamental-binary-output-stream)
-  ((compressor :initarg :compressor :accessor compressor)))
+(defclass compressing-stream (fundamental-binary-output-stream) ())
 
 (defmethod make-compressing-stream (compressor-class stream &rest args)
   (make-instance 'compressing-stream
@@ -126,10 +125,12 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 (defmethod std:stream-of ((self decompressor))
   (input self))
 
-(defclass decompressing-stream (fundamental-binary-input-stream)
-  ((decompressor :initarg :decompressor :accessor decompressor)))
+(defclass decompressing-stream (fundamental-binary-input-stream) ())
 
-(defmethod make-decompressing-stream (decompressor-class stream &rest args)
+(defclass deflate-decompressing-stream (decompressing-stream) 
+  ((decompressor :accessor decompressor)))
+
+(defmethod make-decompressing-stream (decompressor-class (stream deflate-decompressing-stream) &rest args)
   (make-instance 'decompressing-stream :decompressor (apply 'make-instance decompressor-class args)))
 
 ;;; Macros
@@ -150,3 +151,73 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
      (multiple-value-prog1
          (progn ,@body)
        (finish-decompression ,var))))
+
+(defmacro with-compressing-stream ((stream output-stream &rest args
+                                                         &key (level *compression-level*) 
+                                                              (type *preferred-compression-type*))
+                                   &body body)
+  "Within BODY, STREAM is bound to a compressing stream for the given
+compression LEVEL and OUTPUT-STREAM. The result of the last form of BODY is
+returned."
+  `(with-open-stream (,stream (apply 'make-compressing-stream ,type ,output-stream 
+                                     :level ,level
+                                     ',(std:remove-from-plist args :type :level)))
+     ,@body))
+
+(defmacro with-decompressing-stream ((stream input-stream &rest args &key (type *preferred-compression-type*)) &body body)
+  "Within BODY, STREAM is bound to a decompressing stream for the given
+INPUT-STREAM. The result of the last form of BODY is returned."
+  `(with-open-stream (,stream (apply 'make-decompressing-stream 
+                                     ,type ,input-stream 
+                                     ',(std:remove-from-plist args :type)))
+     ,@body))
+
+;;; Compression Functions
+(defun compress-stream (input output &key (level 3) (type *preferred-compression-type*))
+  "Read the data from the INPUT octet stream, compress it, and write the result
+to the OUTPUT octet stream."
+  (with-compressing-stream (stream output :level level :type type)
+    (let ((buffer (make-array *compression-buffer-size* :element-type '(unsigned-byte 8))))
+      (do ((n (read-sequence buffer input) (read-sequence buffer input)))
+          ((zerop n) t)
+        (write-sequence buffer stream :end n)))))
+
+(defun compress-file (input output &key (level 3) (type *preferred-compression-type*))
+  "Read the data from the INPUT file, compress it, and write the result to the
+OUTPUT file."
+  (with-open-file (input-stream input :element-type '(unsigned-byte 8))
+    (with-open-file (output-stream output :direction :output :element-type '(unsigned-byte 8))
+      (compress-stream input-stream output-stream :level level :type type))))
+
+(defun compress-buffer (buffer &key (start 0) end (level 3) (type *preferred-compression-type*))
+  "Read the data between the START and END offsets in the BUFFER, compress it,
+and return the resulting octet vector."
+  (let ((end (or end (length buffer))))
+    (with-octet-output-stream (output)
+      (with-compressing-stream (stream output :level level :type type)
+        (write-sequence buffer stream :start start :end end)))))
+
+;;; Decompression functions
+(defun decompress-stream (input output &key (type *preferred-compression-type*))
+  "Read the data from the INPUT octet stream, decompress it, and write the
+result to the OUTPUT octet stream."
+  (with-decompressing-stream (stream input :type type)
+    (let ((buffer (make-array *compression-buffer-size* :element-type '(unsigned-byte 8))))
+      (do ((n (read-sequence buffer stream) (read-sequence buffer stream)))
+          ((zerop n) t)
+        (write-sequence buffer output :end n)))))
+
+(defun decompress-file (input output &key (type *preferred-compression-type*))
+  "Read the data from the INPUT file, decompress it, and write the result to
+the OUTPUT file."
+  (with-open-file (input-stream input :element-type '(unsigned-byte 8))
+    (with-open-file (output-stream output :direction :output :element-type '(unsigned-byte 8))
+      (decompress-stream input-stream output-stream :type type))))
+
+(defun decompress-buffer (buffer &key (start 0) end (type *preferred-compression-type*))
+  "Read the data between the START and END offsets in the BUFFER, decompress
+it, and return the resulting octet vector."
+  (let ((end (or end (length buffer))))
+    (with-octet-output-stream (output)
+      (with-octet-input-stream (input buffer start end)
+        (decompress-stream input output :type type)))))

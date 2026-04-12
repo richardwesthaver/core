@@ -59,13 +59,13 @@ SELF, FROM and SQE are all exposed for use in BUILDER."
     `(progn
        (defconstant ,const-name ,val)
        (defstruct ,struct-name ,@slots)
+       (defmethod build ((self ,struct-name) &key)
+         (build-from self (make-alien io-uring-sqe)))
        (defmethod build-from ((self ,struct-name) (from alien-value) &key &allow-other-keys)
          (with-io-sqe-op (sqe ,const-name from)
            ,@builder))
        (defmethod build-from ((self ,struct-name) (from system-area-pointer) &key &allow-other-keys)
-         (build-from self (sap-alien from (struct io-uring-sqe))))
-       (defmethod build-from ((self ,struct-name) (from uring) &key &allow-other-keys)
-         (build-from self (io-uring-get-sqe (uring-sap from))))
+         (build-from self (io-uring-get-sqe from)))
        (pushnew ',alien-name *io-opcodes*))))
 
 (defmacro def-io-op (val name slots &body builder)

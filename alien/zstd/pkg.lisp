@@ -177,17 +177,22 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (define-alien-type zstd-cctx (struct zstd-cctx-s))
 
 (defar "ZSTD_createCCtx" (* zstd-cctx))
-(defar "ZSTD_freeCCtx" void (cctx (* zstd-cctx)))
+(defar "ZSTD_freeCCtx" unsigned-long-long (cctx (* zstd-cctx)))
 (defar "ZSTD_compressCCtx" size-t
   (cctx (* zstd-cctx))
   (dst (* t)) (dst-capacity size-t)
   (src (* t)) (src-size size-t)
   (compression-level int))
 
+(defar "ZSTD_CCtx_setParameter" size-t
+  (cctx (* zstd-cctx))
+  (param zstd-cparameter)
+  (value int))
+
 (define-alien-type zstd-dctx (struct zstd-dctx-s))
 
 (defar "ZSTD_createDCtx" (* zstd-dctx))
-(defar "ZSTD_freeDCtx" void (dctx (* zstd-dctx)))
+(defar "ZSTD_freeDCtx" unsigned-long-long (dctx (* zstd-dctx)))
 (defar "ZSTD_decompressDCtx" size-t
   (dctx (* zstd-dctx))
   (dst (* t)) (dst-capacity size-t)

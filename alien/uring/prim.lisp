@@ -667,6 +667,6 @@ instead of a pointer."
       (prog1
           (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
         (setf (slot (deref sq) 'sqe-tail) next)
-        (print (cons head next))))))
+        (cons head next)))))
 
 ;; (defun io-uring-get-sqe128 (ring))

@@ -104,7 +104,8 @@ which accepts a boolean value and automatically adjust the slot."
     (let ((r (make-alien io-uring)))
       (when (uring-builder-dontfork self) (io-uring-ring-dontfork r))
       (io-uring-queue-init-params (uring-builder-entries self) r p)
-      r)))
+      ;; make sure to return a SYSTEM-AREA-POINTER here not an ALIEN-VALUE.
+      (alien-sap r))))
 
 #+todo
 (defun setup-uring-queue (fd p)

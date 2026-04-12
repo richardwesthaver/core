@@ -177,7 +177,10 @@
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector
-   :decompress-octet-vector :flush :compress-octet :with-compressor))
+   :decompress-octet-vector :flush :compress-octet :with-compressor
+   :with-compressing-stream :with-decompressing-stream
+   :compress-stream :compress-file :compress-buffer :decompress-stream
+   :decompress-file :decompress-buffer))
 
 (defpkg :io/zstd
   (:use :cl :std :io/proto :io/flate :sb-alien)

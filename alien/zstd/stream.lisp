@@ -37,14 +37,14 @@ returns the minimum nb of bytes left to flush (if non-zero and not an error).
 (defar "ZSTD_initCStream" size-t (zcs (* zstd-cstream)) (compression-level int))
 (defar "ZSTD_compressStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)) (input (* zstd-inbuffer)))
 
-(defar "ZSTD_compressStream2" size-t
+(defar "ZSTD_compressStream2" unsigned-long-long
   (cctx (* zstd-cctx))
   (output (* zstd-outbuffer))
   (input (* zstd-inbuffer))
   (end-op zstd-enddirective))
 
-(defar "ZSTD_CStreamInSize" size-t)
-(defar "ZSTD_CStreamOutSize" size-t)
+(defar "ZSTD_CStreamInSize" unsigned-long-long)
+(defar "ZSTD_CStreamOutSize" unsigned-long-long)
 
 (defar "ZSTD_flushStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
 (defar "ZSTD_endStream" size-t (zcs (* zstd-cstream)) (output (* zstd-outbuffer)))
@@ -132,7 +132,7 @@ Note: when an operation returns with an error code, the @zds state may be left
             ,@body)
        ,@(when close `((zstd-freedstream ,dv))))))
 
-(defmacro with-zstd-streams ((cv dv &key (init t) (close t) (level (zstd-defaultclevel))) &body body)
+(defmacro with-zstd-streams ((cv dv &key init close (level (zstd-defaultclevel))) &body body)
   `(with-alien ((,cv (* zstd-cstream) (zstd-createcstream))
                 (,dv (* zstd-dstream) (zstd-createdstream)))
      (unwind-protect
@@ -142,8 +142,8 @@ Note: when an operation returns with an error code, the @zds state may be left
                              ;; TODO 2024-09-18: 
                              (unless (zerop (zstd-iserror %cinit))
                                (zstd-cstream-error %cinit))
-                             (unless (zerop (zstd-iserror %cinit))
-                               (zstd-cstream-error %dinit)))))
+                             (unless (zerop (zstd-iserror %dinit))
+                               (zstd-dstream-error %dinit)))))
             ,@body)
        ,@(when close `((zstd-freecstream ,cv)
                        (zstd-freedstream ,dv))))))

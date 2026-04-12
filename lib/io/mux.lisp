@@ -97,9 +97,9 @@ Returns a list of fd/result pairs which have one of these forms:
     (setf (state mux) t)))
 
 (defmethod close-multiplexer ((mux multiplexer))
-  (when (and (slot-boundp mux 'fd) (not (null (io mux))))
+  (when (and (slot-boundp mux 'io) (not (null (io mux))))
     (sb-posix:close (io mux))
-    (setf (slot-value mux 'fd) nil))
+    (setf (slot-value mux 'io) nil))
   (values mux))
 
 (defmethod monitor-fd :before ((mux multiplexer) fd-entry)
@@ -423,7 +423,7 @@ is monitored for EVENT-TYPE."
     (format stream "epoll(4) multiplexer")))
 
 (defmethod initialize-instance :after ((mux epoll-multiplexer) &key (size 25))
-  (setf (slot-value mux 'fd) (io-syscall* (sys:epoll-create size)))
+  (setf (slot-value mux 'io) (io-syscall* (sys:epoll-create size)))
   (setf (slot-value mux 'events) (make-alien sys:epoll-event (io-limit mux))))
 
 (defmethod close :after ((mux epoll-multiplexer) &key abort)
