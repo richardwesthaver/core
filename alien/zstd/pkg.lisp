@@ -147,56 +147,6 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
                    :externalsequences-invalid 107
                    :maxcode 120)
 
-;;; Utils
-(defar "ZSTD_versionNumber" unsigned)
-(defar "ZSTD_versionString" c-string)
-(defar "ZSTD_compressBound" size-t (src-size size-t))
-(defar "ZSTD_isError" unsigned (code size-t))
-(defar "ZSTD_getErrorName" c-string (code size-t))
-;; zstd_errors.h - does this work?
-(defar "ZSTD_getErrorCode" int (function-result size-t))
-(defar "ZSTD_getErrorString" c-string (code int))
-
-(defar "ZSTD_minCLevel" int)
-(defar "ZSTD_maxCLevel" int)
-(defar "ZSTD_defaultCLevel" int)
-
-(defar "ZSTD_findFrameCompressedSize" size-t
-  (src (* t))
-  (src-size size-t))
-
-(defar "ZSTD_getFrameContentSize" unsigned-long-long
-  (src (* t))
-  (src-size size-t))
-
-(defar "ZSTD_decompressBound" unsigned-long-long
-  (src (* t))
-  (src-size size-t))
-
-;;; Explicit Context API
-(define-alien-type zstd-cctx (struct zstd-cctx-s))
-
-(defar "ZSTD_createCCtx" (* zstd-cctx))
-(defar "ZSTD_freeCCtx" unsigned-long-long (cctx (* zstd-cctx)))
-(defar "ZSTD_compressCCtx" size-t
-  (cctx (* zstd-cctx))
-  (dst (* t)) (dst-capacity size-t)
-  (src (* t)) (src-size size-t)
-  (compression-level int))
-
-(defar "ZSTD_CCtx_setParameter" size-t
-  (cctx (* zstd-cctx))
-  (param zstd-cparameter)
-  (value int))
-
-(define-alien-type zstd-dctx (struct zstd-dctx-s))
-
-(defar "ZSTD_createDCtx" (* zstd-dctx))
-(defar "ZSTD_freeDCtx" unsigned-long-long (dctx (* zstd-dctx)))
-(defar "ZSTD_decompressDCtx" size-t
-  (dctx (* zstd-dctx))
-  (dst (* t)) (dst-capacity size-t)
-  (src (* t)) (src-size size-t))
 ;;; Advanced API
 (define-alien-enum (zstd-strategy)
                    :fast 1
@@ -263,3 +213,54 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
                    :experimental4 1003                   
                    :experimental5 1004
                    :experimental6 1005)
+
+;;; Utils
+(defar "ZSTD_versionNumber" unsigned)
+(defar "ZSTD_versionString" c-string)
+(defar "ZSTD_compressBound" size-t (src-size size-t))
+(defar "ZSTD_isError" unsigned (code size-t))
+(defar "ZSTD_getErrorName" c-string (code size-t))
+;; zstd_errors.h - does this work?
+(defar "ZSTD_getErrorCode" int (function-result size-t))
+(defar "ZSTD_getErrorString" c-string (code int))
+
+(defar "ZSTD_minCLevel" int)
+(defar "ZSTD_maxCLevel" int)
+(defar "ZSTD_defaultCLevel" int)
+
+(defar "ZSTD_findFrameCompressedSize" size-t
+  (src (* t))
+  (src-size size-t))
+
+(defar "ZSTD_getFrameContentSize" unsigned-long-long
+  (src (* t))
+  (src-size size-t))
+
+(defar "ZSTD_decompressBound" unsigned-long-long
+  (src (* t))
+  (src-size size-t))
+
+;;; Explicit Context API
+(define-alien-type zstd-cctx (struct zstd-cctx-s))
+
+(defar "ZSTD_createCCtx" (* zstd-cctx))
+(defar "ZSTD_freeCCtx" unsigned-long-long (cctx (* zstd-cctx)))
+(defar "ZSTD_compressCCtx" size-t
+  (cctx (* zstd-cctx))
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (src-size size-t)
+  (compression-level int))
+
+(defar "ZSTD_CCtx_setParameter" size-t
+  (cctx (* zstd-cctx))
+  (param zstd-cparameter)
+  (value int))
+
+(define-alien-type zstd-dctx (struct zstd-dctx-s))
+
+(defar "ZSTD_createDCtx" (* zstd-dctx))
+(defar "ZSTD_freeDCtx" unsigned-long-long (dctx (* zstd-dctx)))
+(defar "ZSTD_decompressDCtx" size-t
+  (dctx (* zstd-dctx))
+  (dst (* t)) (dst-capacity size-t)
+  (src (* t)) (src-size size-t))

@@ -183,7 +183,7 @@
    :decompress-file :decompress-buffer))
 
 (defpkg :io/zstd
-  (:use :cl :std :io/proto :io/flate :sb-alien)
+  (:use :cl :std :io/proto :io/flate :sb-alien :zstd :sb-gray)
   (:import-from :zstd :zstd-createdstream :zstd-createcstream
    :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
    :with-zstd-dstream :with-zstd-cstream :zstd-initcstream :zstd-initdstream
@@ -193,8 +193,6 @@
    :zstd-enddirective :zstd-dstreaminsize :zstd-dstreamoutsize :zstd-cstreaminsize 
    :zstd-cstreamoutsize :zstd-inbuffer-pos :zstd-outbuffer-pos)
   (:import-from :std :deferror :eval-always)
-  (:import-from :sb-gray :stream-force-output :stream-finish-output
-   :stream-write-sequence)
   (:export :zstd-error :zstd-compressor :zstd-decompressor
    :with-zstd-output :with-zstd-input
    :with-zstd-buffer :with-zstd-stream))
