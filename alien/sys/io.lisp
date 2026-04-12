@@ -12,7 +12,7 @@
 (in-package :sys)
 
 (defclass io-vector-class (foreign-vector-class)
-  ((length :initarg :length :initform 0 :type array-index)))
+  ((length :initarg :length :initform 0 :type array-index :reader sequence:length)))
 
 (defclass io-vec () 
   ((sap :initarg :sap :initform nil :accessor sap))
@@ -27,9 +27,12 @@
 (with-memoization ()
   (memoizing
    (defun io-vec (element-type length)
-     (or (if-let ((class (find element-type (class-direct-subclasses (find-class 'io-vec)) :key #'element-type)))
+     (or (if-let ((class (find (cons element-type length)
+                               (std/meta:class-direct-subclasses (find-class 'io-vec))
+                               :key (lambda (k) (cons (element-type k) (sequence:length k)))
+                               :test #'equalp)))
            (class-name class)
-           (let* ((cl-name (intern (format nil "<IO-VEC: ~a>"  element-type) (find-package "SYS"))))
+           (let* ((cl-name (intern (format nil "<IO-VEC:~a.~a>" element-type length) (find-package "SYS"))))
              (compile-and-eval
               `(progn
                  (defclass ,cl-name (io-vec) ()
@@ -45,10 +48,14 @@
 
 (with-memoization ()
   (memoizing
+   ;; note that a length = 0 should mean infinite length/boundless
    (defun io-vector (element-type length)
-     (or (if-let ((class (find element-type (class-direct-subclasses (find-class 'io-vector)) :key #'element-type)))
+     (or (if-let ((class (find (cons element-type length)
+                               (std/meta:class-direct-subclasses (find-class 'io-vector))
+                               :key (lambda (k) (cons (element-type k) (sequence:length k)))
+                               :test #'equalp)))
            (class-name class)
-           (let* ((cl-name (intern (format nil "<IO-VECTOR: ~a>"  element-type) (find-package "SYS"))))
+           (let* ((cl-name (intern (format nil "<IO-VECTOR:~a.~a>" element-type length) (find-package "SYS"))))
              (compile-and-eval
               `(progn
                  (defclass ,cl-name (io-vector) ()
@@ -56,3 +63,5 @@
                  (setf (slot-value (find-class ',cl-name) 'element-type) ',element-type
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
+
+;; io-octet-vector?

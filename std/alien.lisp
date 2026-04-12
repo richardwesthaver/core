@@ -431,7 +431,9 @@ return a pointer instead of its value."
 
 ;;;; SAP-SVREF
 (defun sap-svref (sap type &optional (index 0))
-  "Like SAP-REF except for accessing simple 1d arrays."
+  "Like SAP-REF except for accessing simple 1d arrays. Instead of accepting an
+optional offset in bytes we accept an INDEX in increments equal to the size of
+TYPE."
   (sap-ref sap type (* index (foreign-type-size type))))
 
 (define-compiler-macro sap-svref (&whole form sap type &optional (index 0))
@@ -495,8 +497,8 @@ return a pointer instead of its value."
 
 (define-setf-expander sap-ref (sap type &optional (offset 0) &environment env)
   "SETF expander for SAP-REF that doesn't rebind TYPE.
-This is necessary for the compiler macro on SAP-SET to be able
-to open-code (SETF SAP-REF) forms."
+This is necessary for the compiler macro on SAP-SET to be able to
+open-code (SETF SAP-REF) forms."
   (multiple-value-bind (dummies vals newval setter getter)
       (get-setf-expansion sap env)
     (declare (ignore setter newval))
@@ -588,13 +590,12 @@ variant associated with this value." type name)
 (define-alien-type unsigned-char-pointer (* unsigned-char))
 (define-alien-type char-pointer (* char))
 
-;;; C Char pointer readers and writers
+;;; C pointer readers and writers
 
 ;; inspired by ELEPHANT
 
 ;; FIXME: this is probably inefficient after recent discoveries in
-;; SB-ALIEN-INTERNALS - can be reworked to use direct SAP accessors when
-;; SAP-REF is finished.
+;; SB-ALIEN-INTERNALS - can be reworked to use direct SAP accessors with SAP-REF
 
 ;; all operations are performed on (* unsigned-char)
 (define-io :alien
@@ -826,6 +827,7 @@ The buffer has dynamic extent and may be stack allocated."
      ,@body))
 
 (defmacro with-foreign-objects (bindings &body body)
+  "Like WITH-ALIEN but allocates objects via malloc (on heap)."
   (if bindings
       `(with-foreign-object ,(car bindings)
          (with-foreign-objects ,(cdr bindings)
@@ -947,7 +949,9 @@ such alien exists.")
 (defgeneric free (self)
   (:documentation "Free the SAP associated with object SELF if one exists and return NIL.")
   (:method ((self alien-value)) (free-alien self))
-  (:method ((self t)) nil))
+  (:method ((self t)) 
+    (warn "attempt to free Lisp object: ~A" self)
+    nil))
 
 (defgeneric push-sap (self key)
   (:documentation "Push a value associated with KEY to the sap associated
@@ -955,13 +959,13 @@ with SELF. Typically used to send a value from one slot, to a foreign
 handle stored in another slot of the same object."))
 
 (defgeneric push-sap* (self)
-  (:documentation "Implicitly push values to the sap associated with SELF."))
+  (:documentation "Push all values to the sap associated with SELF."))
 
 (defgeneric pull-sap (self key)
   (:documentation "Pull a foreign value identified by KEY from the sap associated with SELF."))
 
 (defgeneric pull-sap* (self)
-  (:documentation "Implicitly pull foreign values from the sap associated with SELF."))
+  (:documentation "Pull all foreign values from the sap associated with SELF."))
 
 ;;; Foreign Vector
 ;; from MATLISP
@@ -980,7 +984,7 @@ handle stored in another slot of the same object."))
    (defun foreign-vector (element-type)
      (or (std/macs:if-let ((class (find element-type (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'element-type)))
            (class-name class)
-           (let* ((cl-name (intern (format nil "<FOREIGN-VECTOR: ~a>"  element-type) (find-package "STD/ALIEN"))))
+           (let* ((cl-name (intern (format nil "<FOREIGN-VECTOR:~a>"  element-type) (find-package "STD/ALIEN"))))
              (assert (member #1=(element-type-to-alien element-type) '#.'(char unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'std/condition:invalid-argument :item #1# :reason "invalid element type")
              (compile-and-eval
               `(progn

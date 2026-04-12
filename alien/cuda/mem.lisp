@@ -55,7 +55,7 @@ accessed via the SAP slot and is compatible with FVREF."))
    (defun cuda-vector (element-type)
      (or (if-let ((class (find element-type (class-direct-subclasses (find-class 'cuda-vector)) :key #'element-type)))
            (class-name class)
-           (let* ((cl-name (intern (format nil "<CUDA-VECTOR: ~a>"  element-type) (find-package "CUDA"))))
+           (let* ((cl-name (intern (format nil "<CUDA-VECTOR:~a>"  element-type) (find-package "CUDA"))))
              (assert (member #1=(element-type-to-alien element-type) '#.'(char c-string unsigned-char short unsigned-short int unsigned-int long unsigned-long float double)) nil 'invalid-argument :item #1# :reason "invalid element type")
              (compile-and-eval
               `(progn
