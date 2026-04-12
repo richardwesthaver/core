@@ -195,8 +195,8 @@ queue (CQ), and form the foundation of the new interface.
   (struct io-uring-sq
           (khead (* unsigned))
           (ktail (* unsigned))
-          (kring-mask (* unsigned))
-          (kring-entries (* unsigned))
+          (kring-mask (* unsigned)) ;; deprecated
+          (kring-entries (* unsigned)) ;; deprecated
           (kflags (* unsigned))
           (kdropped (* unsigned))
           (array (* unsigned))
@@ -213,8 +213,8 @@ queue (CQ), and form the foundation of the new interface.
   (struct io-uring-cq
           (khead (* unsigned))
           (ktail (* unsigned))
-          (kring-mask (* unsigned))
-          (kring-entries (* unsigned))
+          (kring-mask (* unsigned)) ;; deprecated
+          (kring-entries (* unsigned)) ;; deprecated
           (kflags (* unsigned))
           (koverflow (* unsigned))
           (cqes (* (struct io-uring-cqe)))

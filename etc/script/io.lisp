@@ -6,12 +6,13 @@
 (using :uring :sys :io)
 ;; liburing cat
 ;; io-uring-wait-cqe
-#+todo
 (defun get-completion-and-print (ring)
-  (with-io-cqe c
-    (let ((ret (io-uring-wait-cqe ring (addr c))))
+  (let ((c (allocate-io-uring-cqe)))
+    (let ((ret (io-uring-wait-cqe ring c)))
       (if (minusp ret) (error "~A" ret) (print c)))))
-      
+
+;; (with-io-uring (r) (get-completion-and-print r))
+
 ; file-size 
 ;; (defun cat (&rest files))
 

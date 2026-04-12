@@ -61,6 +61,14 @@
       (resv (array unsigned-long 2))
       (zc-arg zcrx-ctrl-arg)))
 
+(define-alien-type io-uring-cqe-iter 
+    (struct io-uring-cqe-iter
+      (cqes (* (struct io-uring-cqe)))
+      (mask unsigned)
+      (shift unsigned)
+      (head unsigned)
+      (tail unsigned)))
+
 ;; (defun io-uring-write-once (var val))
 ;; (defun io-uring-read-once (var))
 ;; (defun io-uring-smp-store-release (p v))
@@ -200,7 +208,7 @@
   (flags unsigned-int)
   (ret (* int)))
 
-(def-with-ring io-uring-free-buf-ring int
+(def-with-ring io-uring-free-buf-ring
   (br (* (struct io-uring-buf-ring)))
   (nentries unsigned-int)
   (bgid int))
@@ -213,7 +221,6 @@
 
 (def-with-ring io-uring-set-iowait (enable-iowait boolean))
 
-;;..
 (defar io-uring-mlock-size ssize-t (entries unsigned) (flags unsigned))
 (defar io-uring-mlock-size-params ssize-t (entries unsigned) (p (* (struct io-uring-params))))
 (defar io-uring-memory-size ssize-t (entries unsigned) (flags unsigned))

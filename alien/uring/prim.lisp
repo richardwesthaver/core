@@ -17,8 +17,17 @@
     (unless (> op (slot probe 'last-op))
       (not (zerop (logand (slot (deref (slot probe 'ops) op) 'flags) io-uring-op-supported))))))
 
-;; io-uring-cqe-shift
-;; io-uring-cqe-index
+(definline io-uring-cqe-shift-from-flags (flags)
+  (lognot (lognot (logand flags ioring-setup-cqe32))))
+
+(definline io-uring-cqe-shift (ring)
+  (io-uring-cqe-shift-from-flags (slot ring 'flags)))
+
+(definline io-uring-cqe-nr (cqe)
+  (ash 1 (lognot (lognot (logand (slot cqe 'flags) ioring-cqe-f-32)))))
+
+;; io-uring-cqe-iter-init
+;; io-uring-cqe-iter-next
 
 #+todo
 (defmacro io-uring-for-each-cqe (ring head cqe))
@@ -589,12 +598,45 @@ instead of a pointer."
 (definline io-uring-wait-cqe-nr (ring cqe-ptr wait-nr)
   (%io-uring-get-cqe ring cqe-ptr 0 wait-nr nil))
 
-#+todo (
-(defun io-uring-skip-cqe (ring cqe err))
-(defun %io-uring-peek-cqe (ring cqe-ptr nr-available))
-(defun io-uring-peek-cqe (ring cqe-ptr))
-(defun io-uring-wait-cqe (ring cqe-ptr))        
-)
+(definline io-uring-skip-cqe (ring cqe err)
+  (block .check
+    (cond 
+      ((not (zerop (logand (slot cqe 'flags) ioring-cqe-f-skip))) (return-from .check nil))
+      ((or (not (zerop (logand (slot ring 'features) ioring-feat-ext-arg)))
+           (not (= (slot cqe 'user-data) -1)))
+       (return-from io-uring-skip-cqe nil))
+       ((< (slot cqe 'res) 0) (setf (deref err) (slot cqe 'res)))))
+  (io-uring-cq-advance ring (io-uring-cqe-nr cqe))
+  (lognot (deref err)))
+
+(definline %io-uring-peek-cqe (ring cqe-ptr nr-available)
+  (with-alien ((cqe (* io-uring-cqe))
+               (err int 0)
+               (available unsigned)
+               (mask unsigned (slot (slot ring 'cq) 'ring-mask))
+               (shift unsigned (io-uring-cqe-shift ring)))
+    (loop
+      (let ((tail (sap-int (alien-sap (slot (slot ring 'cq) 'ktail))))
+            (head (sap-int (alien-sap (slot (slot ring 'cq) 'khead)))))
+        (setf cqe nil
+              available (- tail head))
+        (when (zerop available) (return nil))
+        (setf cqe (addr (deref (slot (slot ring 'cq) 'cqes) (ash (logand head mask) shift))))
+        (when (not (io-uring-skip-cqe ring cqe (addr err))) (return nil))
+        (setf cqe nil)))
+    (setf (deref cqe-ptr) cqe)
+    (when nr-available (setf (deref nr-available) available))
+    err))
+
+(definline io-uring-peek-cqe (ring cqe-ptr)
+  (if (and (not (plusp (%io-uring-peek-cqe ring cqe-ptr nil))) (deref cqe-ptr))
+      0
+      (io-uring-wait-cqe-nr ring cqe-ptr 0)))
+
+(definline io-uring-wait-cqe (ring cqe-ptr)
+  (if (and (not (plusp (%io-uring-peek-cqe ring cqe-ptr nil))) (not (null-alien (deref cqe-ptr))))
+      0
+      (io-uring-wait-cqe-nr ring cqe-ptr 1)))
 
 (definline io-uring-buf-ring-mask (ring-entries)
   (1- ring-entries))
@@ -602,7 +644,6 @@ instead of a pointer."
 (definline io-uring-buf-ring-init (br)
   (setf (slot br 'tail) 0))
 
-;; ...
 #+todo (
 (defun io-uring-buf-ring-add (br addr len bid mask buf-offset))
 (defun io-uring-buf-ring-advance (br count))

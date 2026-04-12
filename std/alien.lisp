@@ -992,8 +992,12 @@ handle stored in another slot of the same object."))
 (defun foreign-vector-length (fv)
   (slot-value fv 'length))
 
+(defmethod sequence:length ((self foreign-vector)) (foreign-vector-length self))
+
 (defun foreign-vector-element-type (fv)
   (slot-value (class-of fv) 'element-type))
+
+(defmethod element-type ((self foreign-vector)) (foreign-vector-element-type self))
 
 (defmethod alloc ((self foreign-vector))
   (setf (sap self) (foreign-alloc 

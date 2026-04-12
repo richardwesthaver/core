@@ -10,3 +10,31 @@
 
 ;;; Code:
 (in-package :sys)
+
+(defclass io-vector-class (foreign-vector-class)
+  ((length :initarg :length :initform 0 :type array-index)))
+
+(defclass io-vector () ()
+  (:metaclass io-vector-class))
+
+(defun io-vector-length (iv)
+  (slot-value (class-of iv) 'length))
+
+(defmethod sequence:length ((self io-vector)) (io-vector-length self))
+
+;; instead of memoizing based on element-type we 
+(with-memoization ()
+  (memoizing
+   (defun io-vector (element-type length)
+     (or (if-let ((class (find element-type (class-direct-subclasses (find-class 'io-vector)) :key #'element-type)))
+           (class-name class)
+           (let* ((cl-name (intern (format nil "<IO-VECTOR: ~a>"  element-type) (find-package "SYS"))))
+             (compile-and-eval
+              `(progn
+                 (defclass ,cl-name (io-vector) ()
+                   (:metaclass io-vector-class))
+                 (setf (slot-value (find-class ',cl-name) 'element-type) ',element-type
+                       (slot-value (find-class ',cl-name) 'length) ',length)))
+             cl-name))))))
+
+;; io-array-class?
