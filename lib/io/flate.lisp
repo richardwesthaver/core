@@ -106,8 +106,14 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
 (defclass compressing-stream (fundamental-binary-output-stream) ())
 
+(defmethod stream-element-type ((stream compressing-stream))
+  '(unsigned-byte 8))
+
+(defclass compressing-deflate-stream (fundamental-binary-output-stream) 
+  ((compressor :initarg :compressor :accessor compressor)))
+
 (defmethod make-compressing-stream (compressor-class stream &rest args)
-  (make-instance 'compressing-stream
+  (make-instance 'compressing-deflate-stream
     :compressor (apply 'make-instance compressor-class args)))
 
 (defmethod stream-write-sequence ((self compressing-stream) seq &optional start end)
@@ -127,11 +133,14 @@ for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
 (defclass decompressing-stream (fundamental-binary-input-stream) ())
 
+(defmethod stream-element-type ((stream compressing-stream))
+  '(unsigned-byte 8))
+
 (defclass deflate-decompressing-stream (decompressing-stream) 
   ((decompressor :accessor decompressor)))
 
-(defmethod make-decompressing-stream (decompressor-class (stream deflate-decompressing-stream) &rest args)
-  (make-instance 'decompressing-stream :decompressor (apply 'make-instance decompressor-class args)))
+(defmethod make-decompressing-stream (decompressor-class stream &rest args)
+  (make-instance 'deflate-decompressing-stream :decompressor (apply 'make-instance decompressor-class args)))
 
 ;;; Macros
 (defmacro with-compressor ((var class

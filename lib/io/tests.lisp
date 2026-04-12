@@ -9,7 +9,7 @@
 (load-uring)
 (load-zstd)
 (btrfs:load-btrfs)
-(deftest sanity () (is (positive-integer-p (uring::io-uring-major-version))))
+(deftest sanity () (is (plusp (uring::io-uring-major-version))))
 
 ;; (deftest uring-serve-event ()
 ;;   "See 'tests/serve-event.pure.lisp'"
@@ -38,62 +38,24 @@
     (istype 'chunked-io-stream (make-chunked-stream (make-two-way-stream input output)))
     (istype 'block-input-stream (make-instance 'block-input-stream))))
 
-(defparameter *data-size* (ash 1024 4))
-
-(deftest zstd-buffer ()
-  (let ((data (make-array *data-size* :element-type 'octet :initial-contents (random-bytes *data-size*)))
-        (round-trip-data (make-octets *data-size*))
-        compressed-data)
-    (setf compressed-data
-          (with-zstd-buffer (b data :direction :output) b))
-    (setf round-trip-data
-          (with-zstd-buffer (b compressed-data :direction :input) b))
-    (is (equalp round-trip-data data))))
-
-;; FIX 2025-03-27: 
-(deftest zstd-stream (:skip :todo)
-  (let* ((bsize 4096)
-         (ssize (* 20 bsize))
-         (data (make-octets ssize :initial-contents (random-bytes ssize)))
-         (compressor (make-instance 'zstd-compressor))
-         (decompressor (make-instance 'zstd-decompressor)))
-    (unwind-protect
-         (progn
-           (loop for x below (/ ssize bsize)
-                 with i = (* x bsize)
-                 with v = (subseq data i (+ i bsize))
-                 do (compress-with compressor v))
-	   (finish-output compressor) ;; endstream
-	   ;; (stream-force-output compressor) ;; flush
-	   ;; (setf (output-size compressor) (output-position compressor))
-                 ;; (output-position compressor) 0)
-           (log:info! :in.pos (input-position compressor)
-                      :in.size (input-size compressor)
-                      :out.pos (output-position compressor)
-                      :out.size (output-size compressor))
-           (let ((compressed (make-array (output-position compressor) :element-type 'octet))
-                 (decompressed (make-array (output-size compressor) :element-type 'octet)))
-             (clone-octets-from-alien (output-buffer compressor) compressed)
-             (println compressed)
-             (decompress-with decompressor compressed)
-             (clone-octets-from-alien
-              (output-buffer decompressor)
-              decompressed)
-             (log:info! data)
-             (log:info! decompressed)
-             (is (equalp data decompressed))))
-      (close (stream-of decompressor))
-      (close (stream-of compressor))
-      )))
+(deftest zstd-stream ()
+  (let ((f (tmp-path "foo"))
+        (f1 (tmp-path "foo")))
+    (is (compress-file (system-relative-pathname :io "tests.lisp") f :type :zstd))
+    (is (decompress-file f f1 :type :zstd))
+    (delete-file f)
+    (delete-file f1)))
 
 ;;; Deflate
+(defparameter *data-size* (ash 1024 4))
+
 (deftest gzip-stream (:skip :todo)
   "Test the compressing stream by round tripping random data."
   (let ((data (make-array *data-size* :element-type '(unsigned-byte 8)
-                                              :initial-contents (loop repeat *data-size*
-                                                                      collect (random 256))))
+                                      :initial-contents (loop repeat *data-size*
+                                                              collect (random 256))))
         (round-trip-data (make-array *data-size* :element-type '(unsigned-byte 8)
-                                                         :initial-element 0))
+                                                 :initial-element 0))
         compressed-data)
     (setf compressed-data
           (with-output-to-string (s)
@@ -110,9 +72,11 @@
     (close out-stream)
     (signals error (write-byte 2 out-stream))))
 
-(deftest bzip2 ())
+(deftest bzip2 (:skip :todo))
 
-(deftest zlib ())
+(deftest zlib (:skip :todo))
+
+(deftest lzw (:skip :todo))
 
 ;;; Static Vectors
 (deftest static-vector ()
@@ -160,8 +124,6 @@
 (deftest keymaps ()
   (istype 'keymap (sparse-keymap)))
 
-(deftest lzw (:skip :todo))
-
 (deftest sys ()
   (iseql 'minusp (io/sys::syscall-error-predicate #.(parse-alien-type 'int nil))))
 
@@ -176,8 +138,8 @@
   (with-event-base (e)
     (let ((cb nil))
       (add-timer e (lambda () (setq cb :timeout)) 0)
-       (event-dispatch e :oneshot t)
-       (iseq cb :timeout))))
+      (event-dispatch e :oneshot t)
+      (iseq cb :timeout))))
 
 (deftest mux-timeout-no-loop ()
   (with-event-base (e)

@@ -35,9 +35,6 @@
    (output-buffer :accessor output-buffer)
    (zstd-out-buffer :accessor zstd-out-buffer)))
 
-(defmethod stream-element-type ((stream zstd-compressing-stream))
-  '(unsigned-byte 8))
-
 (defun compress-and-write (stream)
   (with-slots (output-stream zstd-context
                input-buffer zstd-in-buffer
@@ -167,28 +164,25 @@ compression LEVEL and write them to the OUTPUT-STREAM."
    (zstd-out-buffer :accessor zstd-out-buffer)
    (frame-complete-p :accessor frame-complete-p)))
 
-(defmethod stream-element-type ((stream zstd-decompressing-stream))
-  '(unsigned-byte 8))
-
 (defun read-and-decompress (stream)
   (with-slots (input-stream zstd-context input-buffer zstd-in-buffer
                zstd-out-buffer frame-complete-p)
       stream
     (let ((end-of-input-p nil))
-      (with-alien-slots (size) zstd-in-buffer
-        (setf size (read-sequence input-buffer input-stream :start size))
-        (setf end-of-input-p (zerop size)))
+      (with-alien-slots (zstd::size) zstd-in-buffer
+        (setf zstd::size (read-sequence input-buffer input-stream :start zstd::size))
+        (setf end-of-input-p (zerop zstd::size)))
       (unless end-of-input-p
         (setf frame-complete-p
               (zerop (zstd-check (zstd-decompressstream 
                                   zstd-context
                                   zstd-out-buffer
                                   zstd-in-buffer))))
-        (with-alien-slots (size pos) zstd-in-buffer
-          (when (plusp pos)
-            (replace input-buffer input-buffer :start2 pos :end2 size)
-            (decf size pos)
-            (setf pos 0))))
+        (with-alien-slots (zstd::size zstd::pos) zstd-in-buffer
+          (when (plusp zstd::pos)
+            (replace input-buffer input-buffer :start2 zstd::pos :end2 zstd::size)
+            (decf zstd::size zstd::pos)
+            (setf zstd::pos 0))))
       end-of-input-p)))
 
 (defmethod stream-listen ((stream zstd-decompressing-stream))
@@ -200,29 +194,30 @@ compression LEVEL and write them to the OUTPUT-STREAM."
 (defmethod stream-read-byte ((stream zstd-decompressing-stream))
   (with-slots (output-buffer zstd-out-buffer) stream
     (let ((end-of-input-p (read-and-decompress stream)))
-      (with-alien-slots (pos) zstd-out-buffer
+      (with-alien-slots (zstd::pos) zstd-out-buffer
         (cond
-          ((plusp pos)
+          ((plusp zstd::pos)
            (let ((byte (aref output-buffer 0)))
-             (replace output-buffer output-buffer :start2 1 :end2 pos)
-             (decf pos)
+             (replace output-buffer output-buffer :start2 1 :end2 zstd::pos)
+             (decf zstd::pos)
              byte))
           ((and end-of-input-p (not (frame-complete-p stream)))
            (zstd-error "Truncated stream."))
           (t
            :eof))))))
 
-(defmethod stream-read-sequence ((stream zstd-decompressing-stream) seq &optional (start 0) (end (length seq)))
+(defmethod stream-read-sequence ((stream zstd-decompressing-stream) seq &optional (start 0) end)
   (with-slots (output-buffer zstd-out-buffer) stream
-    (let ((end-of-input-p nil))
+    (let ((end-of-input-p nil)
+          (end (or end (length seq))))
       (loop until (or (= start end) end-of-input-p) :do
         (setf end-of-input-p (read-and-decompress stream))
-        (with-alien-slots (pos) zstd-out-buffer
-          (loop :while (and (< start end) (plusp pos)) :do
-            (let ((n (min (- end start) pos)))
+        (with-alien-slots (zstd::pos) zstd-out-buffer
+          (loop :while (and (< start end) (plusp zstd::pos)) :do
+            (let ((n (min (- end start) zstd::pos)))
               (replace seq output-buffer :start1 start :end2 n)
-              (replace output-buffer output-buffer :start2 n :end2 pos)
-              (decf pos n)
+              (replace output-buffer output-buffer :start2 n :end2 zstd::pos)
+              (decf zstd::pos n)
               (incf start n)))))
       (when (and end-of-input-p (not (frame-complete-p stream)))
         (zstd-error "Truncated stream."))))

@@ -98,7 +98,7 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
 (deftype zstd-reset-directive ()
   `(or (integer 1 3) (member :session-only :parameters :session-and-parameters)))
 (deftype zstd-end-directive ()
-  `(or (integer 0 2) (member :continue :flus :end)))
+  `(or (integer 0 2) (member :continue :flush :end)))
 
 ;;; Errors
 (define-condition zstd-alien-condition () ()
