@@ -13,7 +13,8 @@
 (deftest setup ()
   (uring::with-io-uring-params p ()
     (is p)
-    (uring::io-uring-setup 16 p)))
+    (uring::io-uring-setup 16 p)
+    (build (uring::make-uring-builder))))
 
 (deftest nop-sqe ()
   (with-new-io-sqe sqe

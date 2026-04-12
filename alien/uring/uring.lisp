@@ -83,25 +83,34 @@ which accepts a boolean value and automatically adjust the slot."
 ;; io-uring instance
 (defvar *default-io-params* (make-io-params))
 
-(defstruct uring
-  (sq nil :type submission-queue)
-  (cq nil :type completion-queue)
-  (fd -1 :type sb-posix:file-descriptor) ;; owned fd
-  (enter-fd -1 :type sb-posix:file-descriptor)
-  (params *default-io-params* :type io-params))
-
 (defstruct uring-builder
-  (params *default-io-params* :type io-params)
+  (entries *default-io-entry-count* :type fixnum)
+  (sqpoll-p nil :type boolean)
+  (iopoll-p nil :type boolean)
+  (single-issuer-p nil :type boolean)
   (dontfork nil :type boolean))
 
-(defmethod build ((self uring-builder) &key (entries *default-io-entry-count*))
-  (make-uring :sq (make-submission-queue) :cq (make-completion-queue)))
+(defmethod build:build ((self uring-builder) &key)
+  (with-io-uring-params p ()
+    (setf (io-uring-params-features p) 
+          (apply 'logand
+                 (io-uring-params-features p)
+                 (flatten
+                  (list
+                   (when (uring-builder-sqpoll-p self) ioring-setup-sqpoll)
+                   (when (uring-builder-iopoll-p self) ioring-setup-iopoll)
+                   (when (uring-builder-single-issuer-p self) ioring-setup-single-issuer)))))
+    (io-uring-setup (uring-builder-entries self) p)
+    (let ((r (make-alien io-uring)))
+      (when (uring-builder-dontfork self) (io-uring-ring-dontfork r))
+      (io-uring-queue-init-params (uring-builder-entries self) r p)
+      r)))
 
 #+todo
 (defun setup-uring-queue (fd p)
   "Setup a URING struct given a reference to a FILE-DESCRIPTOR and IO-PARAMS.")
 
-(defun make-uring-queue (&optional (entries *default-io-entry-count*))
+(defun make-uring (&rest args)
   "Create a new URING instance with default params. N is the size of the
 queue, which must be a power of two."
-  (build (make-uring-builder) :entries entries))
+  (build (apply 'make-uring-builder args)))

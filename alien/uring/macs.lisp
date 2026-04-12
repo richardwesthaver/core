@@ -64,10 +64,12 @@ SELF, FROM and SQE are all exposed for use in BUILDER."
            ,@builder))
        (defmethod build-from ((self ,struct-name) (from system-area-pointer) &key &allow-other-keys)
          (build-from self (sap-alien from (struct io-uring-sqe))))
-       (pushnew ',alien-name *io-opcodes*)
-       (export '(,struct-name ,(symbolicate "MAKE-" struct-name) ,const-name ,alien-name)))))
+       (defmethod build-from ((self ,struct-name) (from uring) &key &allow-other-keys)
+         (build-from self (io-uring-get-sqe (uring-sap from))))
+       (pushnew ',alien-name *io-opcodes*))))
 
 (defmacro def-io-op (val name slots &body builder)
   `(define-io-op ,val ,name ,slots
      (with-slots ,(mapcar 'ensure-car slots) self
        ,@builder)))
+
