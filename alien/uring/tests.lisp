@@ -49,4 +49,6 @@
       (is (= 0 (uring::io-uring-queue-exit (alien-sap r1)))))))
 
 (deftest register ()
-  (is (io-restriction-p (make-io-restriction))))
+  (is (io-restriction-p (make-io-restriction)))
+  (isnt (uring::io-uring-opcode-supported-p 100))
+  (is (uring::io-uring-opcode-supported-p +io-bind+)))

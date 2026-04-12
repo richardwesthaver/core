@@ -19,8 +19,8 @@
 ;; preadv2(2)
 (def-io-op 1 readv
     ((fd -1 :type file-descriptor)
-     (iovecs #() :type (array octet-vector))
-     (len 0 :type fixnum)
+     (iovecs nil :type (or null system-area-pointer))
+     (len 0)
      (ioprio 0 :type (unsigned-byte 16))
      (offset 0 :type (unsigned-byte 64))
      (rw-flags 0)
@@ -32,8 +32,8 @@
 ;; pwritev2(2)
 (def-io-op 2 writev
     ((fd -1 :type file-descriptor)
-     (iovecs #() :type (array octet-vector))
-     (len 0 :type fixnum)
+     (iovecs nil :type (or null system-area-pointer))
+     (len 0)
      (offset 0 :type (unsigned-byte 64)))
   (io-uring-prep-writev sqe fd iovecs len offset))
 
@@ -46,7 +46,7 @@
 ;; read from pre-registered buffers
 (def-io-op 4 read-fixed
     ((fd -1 :type file-descriptor)
-     (buf #() :type octet-vector)
+     (buf nil :type (or null system-area-pointer))
      (len 0 :type (unsigned-byte 32))
      (buf-index 0)
      (offset 0))

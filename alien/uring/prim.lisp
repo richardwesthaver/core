@@ -12,10 +12,10 @@
 ;;; Code:
 (in-package :uring)
 
-(defun io-uring-opcode-supported-p (probe op)
-  (if (> op (slot probe 'last-op)) 
-      0
-      (not (zerop (logand (slot (deref (slot probe 'ops) op) 'flags) io-uring-op-supported)))))
+(defun io-uring-opcode-supported-p (op &optional ring)
+  (let ((probe (if ring (io-uring-get-probe-ring ring) (io-uring-get-probe))))
+    (unless (> op (slot probe 'last-op))
+      (not (zerop (logand (slot (deref (slot probe 'ops) op) 'flags) io-uring-op-supported))))))
 
 (defun io-uring-get-sqe (ring)
   (let* ((sq (addr (slot ring 'sq)))
@@ -79,11 +79,11 @@ instead of a pointer."
         (slot sqe 'off-addr-cmd) offset
         (slot sqe 'addr-or-splice-off-in) addr
         (slot sqe 'len) len
-        (slot sqe 'flags2) (deref (make-alien io-uring-sqe-slot8))
-        (slot sqe 'buf-opt) (deref (make-alien io-uring-sqe-slot10))
+        (slot sqe 'flags2) 0
+        (slot sqe 'buf-opt) 0
         (slot sqe 'personality) 0
-        (slot sqe 'splice-index-addr) (deref (make-alien io-uring-sqe-slot12))
-        (slot sqe 'addr-or-cmd) (deref (make-alien io-uring-sqe-slot13)))
+        (slot sqe 'splice-index-addr) 0
+        (slot sqe 'addr-or-cmd) (deref (make-alien io-uring-sqe-addr3-and-pad)))
   sqe)
 
 (defun io-uring-prep-splice (sqe fd-in off-in fd-out off-out nbytes splice-flags)
@@ -342,6 +342,38 @@ instead of a pointer."
   (setf (slot sqe 'ioprio) (logior (slot sqe 'ioprio) ioring-recv-multishot)))
 
 ;; ... recvmsg payload
+(defun io-uring-recvmsg-validate (buf buf-len msgh)
+  (let ((hdr (alien-size io-uring-recvmsg-out))
+        (namelen (slot msgh 'msg-namelen))
+        (controllen (slot msgh 'msg-controllen)))
+    (unless (or (< buf-len 0) (< buf-len hdr)
+                (> namelen (- buf-len hdr))
+                (> controllen (- buf-len hdr namelen)))
+      (sap-alien buf (* io-uring-recvmsg-out)))))
+
+(defun io-uring-recvmsg-name (o)
+  (deref o 1))
+
+(defun io-uring-recvmsg-cmsg-firsthdr (o msgh)
+  (unless (< (slot o 'controllen) (alien-size cmsghdr))
+    (sap-alien (int-sap (+ (sap-int (io-uring-recvmsg-name o)) (sap-int (slot msgh 'msg-namelen)))) (* cmsghdr))))
+
+(defun io-uring-recvmsg-cmsg-nexthdr (o msgh cmsg)
+  (unless (< (slot cmsg 'len) (alien-size cmsghdr))
+    (let ((end (+ (sap-int (alien-sap (io-uring-recvmsg-cmsg-firsthdr o msgh))) (slot o 'controllen))) ;; (* unsigned-char)
+          (cmsg (sap-alien (int-sap (+ (sap-int (alien-sap cmsg)) (slot cmsg 'cmsg-len))) (* cmsghdr))))
+      (unless (or (> (1+ (sap-int (alien-sap cmsg)))  end) (> (+ (sap-int (alien-sap cmsg)) (slot cmsg 'sys::len)) end))
+        cmsg))))
+
+(defun io-uring-recvmsg-payload (o msgh)
+  (int-sap (+ (sap-int (alien-sap (io-uring-recvmsg-name o))) (slot msgh 'namelen) (slot msgh 'controllen))))
+
+(defun io-uring-recvmsg-payload-length (o buf-len msgh)
+  (if (< buf-len 0)
+      0
+      (let ((start (sap-int (io-uring-recvmsg-payload o msgh)))
+            (end (+ o buf-len)))
+        (if (>= start end) 0 (- end start)))))
 
 (defun io-uring-prep-openat2 (sqe dfd path how)
   ;; REVIEW 2026-04-10: 
@@ -510,7 +542,7 @@ instead of a pointer."
   (io-uring-prep-rw +io-ftruncate+ sqe fd 0 0 len))
 
 (defun io-uring-prep-cmd-discard (sqe fd offset nbytes)
-  (io-uring-prep-cmd sqe sys:block-uring-cmd-discard fd)
+  (io-uring-prep-uring-cmd sqe sys:block-uring-cmd-discard fd)
   (setf (slot sqe 'addr) offset
         (slot sqe 'addr3) nbytes))
 

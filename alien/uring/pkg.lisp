@@ -155,8 +155,8 @@ queue (CQ), and form the foundation of the new interface.
 
 (define-alien-type io-uring-sqe-addr3-and-pad
   (struct io-uring-sqe-addr3-and-pad
-          (addr3 unsigned-long)
-          (pad2 (array unsigned-long 1))))
+    (addr3 (* t))
+    (pad2 (array unsigned-long 1))))
 
 (define-alien-type io-uring-sqe-slot13
   (union io-uring-sqe-slot13
@@ -165,19 +165,26 @@ queue (CQ), and form the foundation of the new interface.
 
 (define-alien-type io-uring-sqe
   (struct io-uring-sqe
-          (opcode unsigned-char)
-          (flags unsigned-char)
-          (ioprio unsigned-short)
-          (fd int)
-          (off-addr-cmd (union io-uring-sqe-slot5))
-          (addr-or-splice-off-in (union io-uring-sqe-slot6))
-          (len unsigned-int)
-          (flags2 (union io-uring-sqe-slot8))
-          (user-data unsigned-long)
-          (buf-opt (union io-uring-sqe-slot10))
-          (personality unsigned-short)
-          (splice-index-addr (union io-uring-sqe-slot12))
-          (addr-or-cmd (union io-uring-sqe-slot13))))
+    (opcode unsigned-char)
+    (flags unsigned-char)
+    (ioprio unsigned-short)
+    (fd int)
+    ;; (off-addr-cmd io-uring-sqe-slot5)
+    (off-addr-cmd unsigned-long)
+    ;; (addr-or-splice-off-in io-uring-sqe-slot6)
+    (addr-or-splice-off-in (* t))
+    (len unsigned-int)
+    ;; (flags2 (union io-uring-sqe-slot8))
+    (flags2 unsigned-int)
+    (user-data (* t))
+    ;; (buf-opt (union io-uring-sqe-slot10))
+    (buf-opt unsigned-short)
+    (personality unsigned-short)
+    ;; (splice-index-addr (union io-uring-sqe-slot12))
+    (splice-index-addr unsigned-int)
+    ;; (addr-or-cmd (union io-uring-sqe-slot13))
+    ;; 2x u64
+    (addr-or-cmd io-uring-sqe-addr3-and-pad)))
           
 ;; NOTE 2024-05-12: alpha and mips use 535,536,537
 (defconstant +nr-io-uring-setup+ 425)

@@ -22,4 +22,4 @@
    :if-freenameindex :iovec
    :msghdr :kernel-timespec
    :at-fdcwd :block-uring-cmd-discard
-   :open-how))
+   :open-how :msghdr :cmsghdr :linger))

@@ -351,3 +351,15 @@
     (flags unsigned-long)
     (mode unsigned-long)
     (resolve unsigned-long)))
+
+;; msghdr
+(define-alien-type cmsghdr 
+  (struct cmsghdr
+    (len sockint::socklen-t)
+    (level int)
+    (type int)))
+
+(define-alien-type linger
+    (struct linger
+      (onoff int)
+      (linger int)))

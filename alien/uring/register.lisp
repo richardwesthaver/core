@@ -10,9 +10,7 @@
 (defstruct io-probe
   (probe (io-uring-get-probe) :type (alien (* io-uring-probe)))
   (ops (make-array #.+io-probe-count+)
-   :type (array (alien io-uring-probe-op) (#.+io-probe-count+))))
-
-;; op-supported-p
+   :type (simple-array (alien io-uring-probe-op) (#.+io-probe-count+))))
 
 ;; An allowed feature of io_uring. Set allowed features with register_restrictions.
 (defstruct io-restriction (restriction (make-alien io-uring-restriction) :type (alien (* io-uring-restriction))))

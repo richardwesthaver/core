@@ -145,27 +145,6 @@ representation of an IPv6 host."
 (sb-bsd-sockets::define-socket-option sockopt-peercred nil sockint::sol-socket sockint::so-linger
   ucre nil check-ucre sb-alien:addr)
 
-(define-alien-type msghdr 
-    (struct msghdr
-      (name (* t))
-      (namelen sockint::socklen-t)
-      (iov (* t))
-      (iovlen size-t)
-      (control (* t))
-      (controllen sockint::socklen-t)
-      (flags int)))
-
-(define-alien-type cmsghdr 
-  (struct cmsghdr
-    (len sockint::socklen-t)
-    (level int)
-    (type int)))
-
-(define-alien-type linger
-    (struct linger
-      (onoff int)
-      (linger int)))
-
 ;;; NETLINK
 (defconstant af-netlink sockint::af-route)
 
