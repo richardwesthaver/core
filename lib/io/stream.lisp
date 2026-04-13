@@ -130,6 +130,10 @@ stream will behave as if no more input is available."
          (std:remove-from-plist args :external-format)))
 
 ;;; In-memory streams
+
+;; REVIEW 2026-04-12: octet-streams? already in IRONCLAD - could impl with
+;; ring-buffer and add as fast-path here.
+
 (defclass in-memory-stream ()
   ((transformer 
     :initarg :transformer

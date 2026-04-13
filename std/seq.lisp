@@ -1336,6 +1336,8 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
     call-with-cons-queue-lock
     call-with-vector-queue-lock))
 
+;;; Ring Buffer
+
 ;;; Accumulator
 
 ;; originally part of q/query, may serve useful in other contexts.

@@ -202,7 +202,7 @@ OUTPUT file."
   "Read the data between the START and END offsets in the BUFFER, compress it,
 and return the resulting octet vector."
   (let ((end (or end (length buffer))))
-    (with-octet-output-stream (output)
+    (io/stream:with-output-to-sequence (output)
       (with-compressing-stream (stream output :level level :type type)
         (write-sequence buffer stream :start start :end end)))))
 
@@ -227,6 +227,6 @@ the OUTPUT file."
   "Read the data between the START and END offsets in the BUFFER, decompress
 it, and return the resulting octet vector."
   (let ((end (or end (length buffer))))
-    (with-octet-output-stream (output)
-      (with-octet-input-stream (input buffer start end)
+    (io/stream:with-output-to-sequence (output)
+      (io/stream:with-input-from-sequence (input buffer :start start :end end)
         (decompress-stream input output :type type)))))

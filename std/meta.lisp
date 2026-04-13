@@ -73,6 +73,8 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Purge object SELF."))
 (defverb reset (self &rest args &key &allow-other-keys)
   (:documentation "Reset object SELF."))
+(defverb resize (self size)
+  (:documentation "Resize object SELF."))
 (defverb data (self)
   (:accessor t)
   (:documentation "Return the data associated with SELF."))

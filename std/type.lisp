@@ -39,6 +39,9 @@ destructuring lambda list."
   (defs s1 s2 s3 s4 s5 s6 s7 s8 s16 s24 s32 s64))
                                          
 
+(deftype simple-octet-vector ()
+  `(simple-array (unsigned-byte 8) (*)))
+
 (deftype octet-vector (&optional length)
   "A simple-array of OCTETs."
   (if length `(simple-array octet (,length))

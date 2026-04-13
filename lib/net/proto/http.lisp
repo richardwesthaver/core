@@ -575,9 +575,6 @@ buffer."
                 :initial-contents (list .cr .lf))
   :test 'equalp)
 
-(deftype octet-vector (&optional (len '*))
-  `(simple-array (unsigned-byte 8) (,len)))
-
 (declaim (inline digit-byte-char-p
                  digit-byte-char-to-integer
                  alpha-byte-char-p
