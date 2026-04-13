@@ -237,6 +237,7 @@
    :evdev-bit-p :kbd-code-name
    :get-keyboards :undefine-keysym
    :key :keymap
+   :keyseq
    :keybind :keymod
    :keymod-control :keymod-meta :keymod-alt :keymod-shift
    :keymod-super :keymod-hyper :keymod-altgr :keymod-numlock

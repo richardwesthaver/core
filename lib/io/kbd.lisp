@@ -533,10 +533,11 @@ computations) and by the keysym-downcase function."
 (defmethod make-load-form ((self keybind) &optional env)
   (make-load-form-saving-slots self :environment env))
 
-(deftype keyseq () '(vector key)
+(deftype keyseq () 
   "We store key sequences as vectors of KEYs where possible - internally lists
 are used in functions such as PARSE-KEYSEQ and PRINT-KEYSEQ, but LOOKUP-KEYSEQ
-accepts this type.")
+accepts this type."
+  '(vector key))
 
 (deftype keymap () '(vector keybind))
 (definline keymap-p (obj) (typep obj 'keymap))
