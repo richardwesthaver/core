@@ -3,7 +3,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(defpackage :security
+(defpkg :security
   (:use :cl :std :sb-alien :sys)
   (:export :linux-pam :linux-pam-minor :scmp-ver-major
    :scmp-ver-minor :scmp-ver-micro :with-pam :pam-flags

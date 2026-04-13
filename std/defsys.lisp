@@ -297,9 +297,11 @@ objects of type COMPONENT."
                            v)))
                 ;; TODO 2026-04-08: 
                 (if append 
-                    (if (getf w key)
-                        (progn (pushnew val (getf w key) :test 'equalp) w)
-                        (progn (setf (getf w key) (list val)) w))
+                    (progn
+                      (if (getf w key)
+                          (pushnew val (getf w key) :test 'equalp)
+                          (setf (getf w key) (list val)))
+                      w)
                     (nconc w (list key val)))))
         (setf (gethash name *module-table*) (list key (list val))))))
 
@@ -359,12 +361,12 @@ objects of type COMPONENT."
 (defprovider :proto (root name &rest args)
   (register-module :proto root (cons name args) t))
 
-(defprovider :sys (name &rest args)
+(defprovider :sys (root name &rest args)
   (register-module
    :sys
-   name
-   (compile-and-eval 
-    `(defsys ,@args :path ,(or (system-path name) *compile-file-truename* *load-truename*)))))
+   root
+   `(defsys ,name ,@args :path ,(or (system-path name) *compile-file-truename* *load-truename*))
+   t))
 
 (defprovider :bin (root &rest args)
   (let* ((namep (oddp (length args)))
@@ -409,7 +411,8 @@ objects of type COMPONENT."
          :components ,(or comp '((:file "tests")))
          :path ,(or (system-path name)
                     *compile-file-truename* 
-                    *load-truename*))))))
+                    *load-truename*)))
+     t)))
 
 (defprovider :bench (name &rest args)
   (register-module 

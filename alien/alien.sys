@@ -9,7 +9,7 @@
   :sys :jack :keyutils :rocksdb
   :security)
  :provide
- ((:sys :alien/tests 
+ ((:tests
    :require
    (:arrow/tests :btrfs/tests
     :cuda/tests :evdev/tests :glib/tests :gstreamer/tests

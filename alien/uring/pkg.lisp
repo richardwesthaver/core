@@ -40,7 +40,7 @@ queue (CQ), and form the foundation of the new interface.
 
 |#
 ;;; Code:
-(defpackage :uring
+(defpkg :uring
   (:use :cl :std :sb-alien :sys)
   (:import-from :sb-posix :file-descriptor :sap-or-nil)
   (:shadow :build :build-from)

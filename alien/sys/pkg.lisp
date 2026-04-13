@@ -7,7 +7,7 @@
 ;; gettid
 
 ;;; Code:
-(defpackage :sys
+(defpkg :sys
   (:use :cl :std :sb-alien)
   (:export :sigaction
    :err :err* :sig :sig*
