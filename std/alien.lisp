@@ -1029,9 +1029,9 @@ handle stored in another slot of the same object."))
            (with-gensyms (obj-v i-v n-v)
              `(lety ((,obj-v ,obj :type ,fv)
                      (,i-v ,i :type fixnum))
-                ,@(if *fvref-range-check*
-                      `((let ((,n-v (slot-value ,obj-v 'length)))
-                          (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
+                ,@(when *fvref-range-check*
+                    `((let ((,n-v (slot-value ,obj-v 'length)))
+                        (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
                 (sap-ref (slot-value (the ,fv ,obj-v) 'sap) ,alien-type (the fixnum (* (the fixnum ,i-v) (the fixnum ,(foreign-type-size alien-type)))))))))
         ((t) form))
       form))
@@ -1067,12 +1067,12 @@ handle stored in another slot of the same object."))
       form))
 
 ;;; IOBUF
+
 ;; based on the struct of the same name in IOLib
 
 ;; SBCL implements a BUFFER of its own internally with the same basic concept,
 ;; but much more complex as it provisions ANSI-STREAM and thus
 ;; FD-STREAM. IOBUFs are simpler and designed for in-app IO.
-
 (defconstant +bytes-per-iobuf+ (* 4 1024))
 
 (defstruct (iobuf (:constructor %make-iobuf ()))

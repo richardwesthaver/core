@@ -76,5 +76,7 @@ accessed via the SAP slot and is compatible with FVREF."))
       (:device-to-host
        (memcpy-device-to-host host-ptr device-ptr type size)))))
 
+;; alloc free?
+
 ;; (defun curef (x i))
 ;; (defun (setf curef) (val x i))

@@ -5,8 +5,19 @@
 ;;; Commentary:
 
 ;; This file provides support for IOVECs as used by Linux syscalls and
-;; io_uring. IO-VECTORs are based on FOREIGN-VECTORs but may refer to
-;; discontinuous slices of memory.
+;; io_uring. IO-VECs/IO-VECTORs are based on FOREIGN-VECTORs but may refer to
+;; discontinuous slices of memory. The IO-VECTOR-CLASS is similar to
+;; FOREIGN-VECTOR-CLASS but in addition to dispatching on element-type we
+;; dispatch on length too.
+
+;; Note that IO-VEC refers to a single IOVEC instance, whereas an IO-VECTOR
+;; refers to an array of IOVEC instances.
+
+;; The ELEMENT-TYPE of IO-VECs and IO-VECTORs are effectively the same,
+;; referring to the underlying element type itself (usually (unsigned-byte
+;; 8)). The LENGTH for IO-VECs is self-evident, and for IO-VECTORs it is the
+;; count of IOVECs (NOT the total count of elements, or the length of each
+;; individual IOVEC).
 
 ;;; Code:
 (in-package :sys)
@@ -23,7 +34,7 @@
 
 (defmethod sequence:length ((self io-vec)) (io-vector-length self))
 
-;; instead of memoizing based on element-type we 
+;; memoize on element-type and length
 (with-memoization ()
   (memoizing
    (defun io-vec (element-type length)
@@ -49,6 +60,7 @@
 (with-memoization ()
   (memoizing
    ;; note that a length = 0 should mean infinite length/boundless
+   ;; REVIEW 2026-04-13: maybe make this '* and align with simple-array
    (defun io-vector (element-type length)
      (or (if-let ((class (find (cons element-type length)
                                (std/meta:class-direct-subclasses (find-class 'io-vector))
@@ -64,4 +76,9 @@
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
-;; io-octet-vector?
+(defun io-octet-vector (length) 
+  (make-instance (io-vector 'octet length) :sap (alien-sap (make-alien unsigned-char length))))
+
+;; alloc free
+;; (defun ioref (x i))
+;; (defun (setf ioref) (val x i))
