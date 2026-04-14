@@ -35,7 +35,7 @@
 (defun io-uring-cq-advance (ring nr)
   (when (< 0 nr)
     (let* ((cq (addr (slot ring 'cq)))
-          (head (slot cq 'khead)))
+           (head (slot cq 'khead)))
       ;; smp-store-release
       (setf head (+ nr (deref head))))))
 
@@ -557,37 +557,44 @@ instead of a pointer."
       (deref (slot (slot ring 'sq) 'khead))))
 
 (definline io-uring-sq-ready (ring)
+  (declare ((alien (* io-uring)) ring))
   (- (slot (slot ring 'sq) 'sqe-tail) (io-uring-load-sq-head ring)))
 
 (definline io-uring-sq-space-left (ring)
+  (declare ((alien (* io-uring)) ring))
   (- (slot (slot ring 'sq) 'ring-entries) (io-uring-sq-ready ring)))
 
 (definline io-uring-sqe-shift-from-flags (flags)
   (lognot (lognot (logand flags ioring-setup-sqe128))))
 
 (definline io-uring-sqe-shift (ring)
+  (declare ((alien (* io-uring)) ring))
   (io-uring-sqe-shift-from-flags (slot ring 'flags)))
 
 (definline io-uring-sqring-wait (ring)
+  (declare ((alien (* io-uring)) ring))
   (unless (or (zerop (logand (slot ring 'flags) ioring-setup-sqpoll))
               (not (zerop (io-uring-sq-space-left ring))))
     (%io-uring-sqring-wait ring)))
 
 (definline io-uring-cq-ready (ring)
-  (- (slot (slot ring 'cq) 'ktail) (deref (slot (slot ring 'cq) 'khead))))
+  (declare ((alien (* io-uring)) ring))
+  (- (deref (slot (slot ring 'cq) 'ktail)) (deref (slot (slot ring 'cq) 'khead))))
 
 (definline io-uring-cq-has-overflow (ring)
   ;; IO_URING_READ_ONCE()
   (logand (deref (slot (slot ring 'sq) 'kflags)) ioring-sq-cq-overflow))
 
 (definline io-uring-cq-eventfd-enabled (ring)
-  (or (zerop (slot (slot ring 'cq) 'kflags))
+  (declare ((alien (* io-uring)) ring))
+  (or (zerop (deref (slot (slot ring 'cq) 'kflags)))
       (zerop (logand (deref (slot (slot ring 'cq) 'kflags)) ioring-cq-eventfd-disabled))))
 
 (definline io-uring-cq-eventfd-toggle (ring enabled)
+  (declare ((alien (* io-uring)) ring))
   (unless (and (io-uring-cq-eventfd-enabled ring) enabled)
-    (if (zerop (slot (slot ring 'cq) 'kflags)) 
-        nil ;; -EOPNOTSUPP
+    (if (zerop (deref (slot (slot ring 'cq) 'kflags)))
+        (- sb-posix:eopnotsupp)
         (let ((flags (deref (slot (slot ring 'cq) 'kflags))))
           (if enabled
               (setf flags (lognand flags ioring-cq-eventfd-disabled))
@@ -596,16 +603,18 @@ instead of a pointer."
           (setf (deref (slot (slot ring 'cq) 'kflags)) flags)))))
 
 (definline io-uring-wait-cqe-nr (ring cqe-ptr wait-nr)
+  (declare ((alien (* io-uring)) ring))
   (%io-uring-get-cqe ring cqe-ptr 0 wait-nr nil))
 
 (definline io-uring-skip-cqe (ring cqe err)
+  (declare ((alien (* io-uring)) ring))
   (block .check
     (cond 
       ((not (zerop (logand (slot cqe 'flags) ioring-cqe-f-skip))) (return-from .check nil))
       ((or (not (zerop (logand (slot ring 'features) ioring-feat-ext-arg)))
            (not (= (slot cqe 'user-data) -1)))
        (return-from io-uring-skip-cqe nil))
-       ((< (slot cqe 'res) 0) (setf (deref err) (slot cqe 'res)))))
+      ((< (slot cqe 'res) 0) (setf (deref err) (slot cqe 'res)))))
   (io-uring-cq-advance ring (io-uring-cqe-nr cqe))
   (lognot (deref err)))
 
@@ -634,7 +643,8 @@ instead of a pointer."
       (io-uring-wait-cqe-nr ring cqe-ptr 0)))
 
 (definline io-uring-wait-cqe (ring cqe-ptr)
-  (if (and (not (plusp (%io-uring-peek-cqe ring cqe-ptr nil))) (not (null-alien (deref cqe-ptr))))
+  (declare ((alien (* io-uring)) ring) ((alien (* (* io-uring-cqe))) cqe-ptr))
+  (if (and (not (plusp (%io-uring-peek-cqe ring cqe-ptr nil))) (not (null-alien (deref (deref cqe-ptr)))))
       0
       (io-uring-wait-cqe-nr ring cqe-ptr 1)))
 
@@ -644,15 +654,40 @@ instead of a pointer."
 (definline io-uring-buf-ring-init (br)
   (setf (slot br 'tail) 0))
 
-#+todo (
-(defun io-uring-buf-ring-add (br addr len bid mask buf-offset))
-(defun io-uring-buf-ring-advance (br count))
-(defun %io-uring-buf-ring-cq-advance (ring br cq-count buf-count))
-(defun io-uring-buf-ring-cq-advance (ring br count))
-(defun io-uring-buf-ring-available (ring br bgid))
-)
+(defun io-uring-buf-ring-add (br addr len bid mask buf-offset)
+  (with-alien ((buf (* io-uring-buf) (addr (deref (slot br 'bufs) (logand (+ (slot br 'tail) buf-offset) mask)))))
+    (setf (slot buf 'addr) addr
+          (slot buf 'len) len
+          (slot buf 'bid) bid)))
 
+(defun io-uring-buf-ring-advance (br count)
+  (with-alien ((new-tail unsigned-short (+ (slot br 'tail) count)))
+    ;; io-uring-smp-store-release
+    (setf (slot br 'tail) new-tail)))
+
+(defun %io-uring-buf-ring-cq-advance (ring br cq-count buf-count)
+  (io-uring-buf-ring-advance br buf-count)
+  (io-uring-cq-advance ring cq-count))
+
+(defun io-uring-buf-ring-cq-advance (ring br count)
+  (%io-uring-buf-ring-cq-advance ring br count count))
+
+(defun io-uring-buf-ring-available (ring br bgid)
+  (with-alien ((head unsigned-short)
+               (ret int))
+    (setf ret (io-uring-buf-ring-head ring bgid (addr head)))
+    (if (plusp ret) ret (- (slot br 'tail) head))))
+
+#|
+* Return an sqe to fill. Application must later call io_uring_submit()
+* when it's ready to tell the kernel about it. The caller may call this
+* function multiple times before calling io_uring_submit().
+*
+* Returns a vacant sqe, or NULL if we're full.
+|#
+;; FIX 2026-04-13: 
 (defun io-uring-get-sqe (ring)
+  (declare ((alien (* io-uring)) ring))
   (let* ((sq (addr (slot ring 'sq)))
          (head 0)
          (next (1+ (slot sq 'sqe-tail)))
@@ -666,7 +701,35 @@ instead of a pointer."
     (when (<= (- next head) (slot sq 'ring-entries))
       (prog1
           (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
+        (setf (slot (deref sq) 'sqe-tail) next)))))
+
+#|
+* Return a 128B sqe to fill. Applications must later call io_uring_submit()
+* when it's ready to tell the kernel about it. The caller may call this
+* function multiple times before calling io_uring_submit().
+*
+* Returns a vacant 128B sqe, or NULL if we're full. If the current tail is the
+* last entry in the ring, this function will insert a nop + skip complete such
+* that the 128b entry wraps back to the beginning of the queue for a
+* contiguous big sq entry. It's up to the caller to use a 128b opcode in order
+* for the kernel to know how to advance its sq head pointer.
+|#
+;; FIX 2026-04-13: 
+(defun io-uring-get-sqe128 (ring)
+  (declare ((alien (* io-uring)) ring))
+  (let* ((sq (addr (slot ring 'sq)))
+         (head (io-uring-load-sq-head ring))
+         (tail (slot sq 'sqe-tail))
+         (sqe (make-alien io-uring-sqe)))
+    (when (= 1 (logand (slot ring 'flags) ioring-setup-sqe128))
+      (setf shift 1))
+    (if (/= 1 (logand (slot ring 'flags) ioring-setup-sqpoll))
+        ;; IO_URING_READ_ONCE
+        (setf head (deref (slot sq 'khead)))
+        (setf head (slot sq 'khead)))
+    (when (<= (- next head) (slot sq 'ring-entries))
+      (prog1
+          (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
         (setf (slot (deref sq) 'sqe-tail) next)
         (cons head next)))))
 
-;; (defun io-uring-get-sqe128 (ring))

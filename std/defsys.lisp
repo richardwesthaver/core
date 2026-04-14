@@ -1262,7 +1262,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   comp)
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-pool*) reset
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-pool*) (reset t)
                                         fasl-cache
                                         system-data
                                         system-cache)

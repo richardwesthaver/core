@@ -213,7 +213,11 @@
   (nentries unsigned-int)
   (bgid int))
 
-(def-with-ring ("__io-uring-get-cqe" %io-uring-get-cqe)
+(def-with-ring io-uring-buf-ring-head
+  (buf-group int)
+  (head (* unsigned-short)))
+
+(def-with-ring ("__io_uring_get_cqe" %io-uring-get-cqe)
   (cqe-ptr (* (* io-uring-cqe)))
   (submit unsigned)
   (wait-nr unsigned)
