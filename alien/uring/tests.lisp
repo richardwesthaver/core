@@ -43,7 +43,7 @@
 (deftest submit ()
   (with-new-io-uring r1
     (uring::io-uring-queue-init 16 (alien-sap r1) 0)
-    (let ((sqe (io-uring-get-sqe r1)))
+    (let ((sqe (io-uring-get-sqe (addr r1))))
       (is (typep sqe '(alien (* io-uring-sqe))))
       (is (= 0 (uring::io-uring-submit (alien-sap r1))))
       (uring::build-from (uring::make-io-op-nop) (deref sqe))

@@ -185,6 +185,17 @@ instead of a pointer."
 (defun %io-uring-set-target-fixed-file (sqe index)
   (setf (slot sqe 'file-index) (1+ index)))
 
+(defun io-uring-initialize-sqe (sqe)
+  (declare ((alien (* io-uring-sqe)) sqe))
+  (let ((addr (make-alien io-uring-sqe-addr3-and-pad)))
+    (setf (slot sqe 'flags) 0
+          (slot sqe 'ioprio) 0
+          (slot sqe 'flags2) 0
+          (slot sqe 'buf-opt) 0
+          (slot sqe 'personality) 0
+          (slot sqe 'splice-index-addr) 0
+          (slot sqe 'addr-or-cmd) (deref addr))))
+
 (defun io-uring-prep-accept-direct (sqe fd addr addrlen flags file-index)
   (io-uring-prep-accept sqe fd addr addrlen flags)
   ;; offset by 1 for allocation
@@ -685,23 +696,17 @@ instead of a pointer."
 *
 * Returns a vacant sqe, or NULL if we're full.
 |#
-;; FIX 2026-04-13: 
 (defun io-uring-get-sqe (ring)
   (declare ((alien (* io-uring)) ring))
   (let* ((sq (addr (slot ring 'sq)))
-         (head 0)
-         (next (1+ (slot sq 'sqe-tail)))
-         (shift 0))
-    (when (= 1 (logand (slot ring 'flags) ioring-setup-sqe128))
-      (setf shift 1))
-    (if (/= 1 (logand (slot ring 'flags) ioring-setup-sqpoll))
-        ;; IO_URING_READ_ONCE
-        (setf head (deref (slot sq 'khead)))
-        (setf head (slot sq 'khead)))
-    (when (<= (- next head) (slot sq 'ring-entries))
-      (prog1
-          (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
-        (setf (slot (deref sq) 'sqe-tail) next)))))
+         (head (io-uring-load-sq-head ring))
+         (tail (slot sq 'sqe-tail))
+         (sqe (make-alien io-uring-sqe)))
+    (unless (>= (- tail head) (slot sq 'ring-entries))
+      (setf sqe (addr (deref (slot sq 'sqes) (ash (logand tail (slot sq 'ring-mask)) (io-uring-sqe-shift ring))))
+            (slot sq 'sqe-tail) (1+ tail))
+      (io-uring-initialize-sqe sqe)
+      sqe)))
 
 #|
 * Return a 128B sqe to fill. Applications must later call io_uring_submit()
@@ -721,15 +726,18 @@ instead of a pointer."
          (head (io-uring-load-sq-head ring))
          (tail (slot sq 'sqe-tail))
          (sqe (make-alien io-uring-sqe)))
-    (when (= 1 (logand (slot ring 'flags) ioring-setup-sqe128))
-      (setf shift 1))
-    (if (/= 1 (logand (slot ring 'flags) ioring-setup-sqpoll))
-        ;; IO_URING_READ_ONCE
-        (setf head (deref (slot sq 'khead)))
-        (setf head (slot sq 'khead)))
-    (when (<= (- next head) (slot sq 'ring-entries))
-      (prog1
-          (addr (deref (slot sq 'sqes) (* (alien-size io-uring-sqe) (ash (logand (slot sq 'sqe-tail) (slot sq 'ring-mask)) shift))))
-        (setf (slot (deref sq) 'sqe-tail) next)
-        (cons head next)))))
+    (cond 
+      ((= 1 (logand (slot ring 'flags) ioring-setup-sqe128)) (return-from io-uring-get-sqe128 (io-uring-get-sqe ring)))
+      ((/= 1 (logand (slot ring 'flags) ioring-setup-sqe-mixed)) (return-from io-uring-get-sqe128 nil))
+      ((zerop (logand (1+ tail) (slot sq 'ring-mask)))
+       (when (>= (- (+ tail 2) head) (slot sq 'ring-entries)) (return-from io-uring-get-sqe128 nil))
+       (setf sqe (io-uring-get-sqe ring))
+       (io-uring-prep-nop sqe)
+       (setf (slot sqe 'flags) (logior (slot sqe 'flags) iosqe-cqe-skip-success)
+             tail (slot sq 'sqe-tail)))
+      ((>= (- (1+ tail) head) (slot sq 'ring-entries)) (return-from io-uring-get-sqe128 nil)))
+    (setf sqe (addr (deref (slot sq 'sqes) (logand tail (slot sq 'ring-mask))))
+          (slot sq 'sqe-tail) (+ tail 2))
+    (io-uring-initialize-sqe sqe)
+    sqe))
 

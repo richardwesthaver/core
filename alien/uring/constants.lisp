@@ -28,6 +28,7 @@
  (:integer ioring-setup-coop-taskrun "IORING_SETUP_COOP_TASKRUN")
  (:integer ioring-setup-taskrun-flag "IORING_SETUP_TASKRUN_FLAG")
  (:integer ioring-setup-sqe128 "IORING_SETUP_SQE128")
+ (:integer ioring-setup-sqe-mixed "IORING_SETUP_SQE_MIXED")
  (:integer ioring-setup-cqe32 "IORING_SETUP_CQE32")
  (:integer ioring-setup-single-issuer "IORING_SETUP_SINGLE_ISSUER")
  (:integer ioring-setup-defer-taskrun "IORING_SETUP_DEFER_TASKRUN")
