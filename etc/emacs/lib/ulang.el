@@ -178,7 +178,7 @@
   (let ((%eq (lambda (a b) (equal (car a) (car b)))))
     (mapcar (lambda (x) 
 	      (cl-pushnew x org-info-other-documents :test %eq)
-	      (cl-pushnew x Info-url-alist :test %eq))
+	      (cl-pushnew x browse-url-filename-alist :test %eq))
 	    ulang-info-url-alist)
     (message "Initialized ULANG.")))
 
