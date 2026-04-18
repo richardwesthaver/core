@@ -17,20 +17,19 @@
               ((* t) ctime "struct timespec" "ctime")
               ((* t) otime "struct timespec" "otime")
               ((* t) stime "struct timespec" "stime")
-              ((* t) rtime "struct timespec" "rtime"))
-             nil t)
- (:integer +btrfs-lib-major+ "BTRFS_LIB_MAJOR" t t)
- (:integer +btrfs-lib-minor+ "BTRFS_LIB_MINOR" t t)
- (:integer +btrfs-lib-patchlevel+ "BTRFS_LIB_PATCHLEVEL" t t)
- (:integer +btrfs-lib-version+ "BTRFS_LIB_VERSION" t t)
- (:integer +btrfs-subvol-rdonly+ "BTRFS_SUBVOL_RDONLY" t t)
- (:integer +btrfs-subvol-qgroup-inherit+ "BTRFS_SUBVOL_QGROUP_INHERIT" t t)
- (:integer +btrfs-device-spec-by-id+ "BTRFS_DEVICE_SPEC_BY_ID" t t)
- (:integer +btrfs-subvol-spec-by-id+ "BTRFS_SUBVOL_SPEC_BY_ID" t t)
- (:integer +btrfs-vol-arg-v2-flags-supported+ "BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED" t t)
- ;; (:integer +btrfs-fsize-size+ "BTRFS_FSIZE_SIZE" t t) ;; grovel can't find
- (:integer +btrfs-fsize-size+ "BTRFS_UUID_SIZE" t t)
- (:integer +btrfs-qgroup-inherit-set-limits+ "BTRFS_QGROUP_INHERIT_SET_LIMITS" t t)
+              ((* t) rtime "struct timespec" "rtime")))
+ (:integer +btrfs-lib-major+ "BTRFS_LIB_MAJOR")
+ (:integer +btrfs-lib-minor+ "BTRFS_LIB_MINOR")
+ (:integer +btrfs-lib-patchlevel+ "BTRFS_LIB_PATCHLEVEL")
+ (:integer +btrfs-lib-version+ "BTRFS_LIB_VERSION")
+ (:integer +btrfs-subvol-rdonly+ "BTRFS_SUBVOL_RDONLY")
+ (:integer +btrfs-subvol-qgroup-inherit+ "BTRFS_SUBVOL_QGROUP_INHERIT")
+ (:integer +btrfs-device-spec-by-id+ "BTRFS_DEVICE_SPEC_BY_ID")
+ (:integer +btrfs-subvol-spec-by-id+ "BTRFS_SUBVOL_SPEC_BY_ID")
+ (:integer +btrfs-vol-arg-v2-flags-supported+ "BTRFS_VOL_ARG_V2_FLAGS_SUPPORTED")
+ ;; (:integer +btrfs-fsize-size+ "BTRFS_FSIZE_SIZE") ;; grovel can't find
+ (:integer +btrfs-fsize-size+ "BTRFS_UUID_SIZE")
+ (:integer +btrfs-qgroup-inherit-set-limits+ "BTRFS_QGROUP_INHERIT_SET_LIMITS")
  ;; ioctl
  (:structure btrfs-qgroup-limit 
              ("struct btrfs_qgroup_limit"
@@ -38,6 +37,4 @@
               ((unsigned 64) max-referenced "__u64" "max_referenced")
               ((unsigned 64) max-exclusive "__u64" "max_exclusive")
               ((unsigned 64) rsv-referenced "__u64" "rsv_referenced")
-              ((unsigned 64) rsv-exclusive "__u64" "rsv_exclusive"))
-             nil t))
-
+              ((unsigned 64) rsv-exclusive "__u64" "rsv_exclusive"))))

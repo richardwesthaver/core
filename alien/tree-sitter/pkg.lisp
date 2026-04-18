@@ -19,6 +19,28 @@
   (:use :cl :std :sb-alien :std/alien)
   (:export 
    :load-tree-sitter
+   :tree-sitter-c
+   :load-tree-sitter-c
+   :tree-sitter-rust
+   :load-tree-sitter-rust
+   :tree-sitter-bash
+   :load-tree-sitter-bash
+   :tree-sitter-cpp
+   :load-tree-sitter-cpp
+   :tree-sitter-go
+   :load-tree-sitter-go
+   :tree-sitter-javascript
+   :load-tree-sitter-javascript
+   :tree-sitter-python
+   :load-tree-sitter-python
+   :tree-sitter-typescript-tsx
+   :load-tree-sitter-typescript-tsx
+   :tree-sitter-typescript-typescript
+   :load-tree-sitter-typescript-typescript
+   :tree-sitter-yaml
+   :load-tree-sitter-yaml
+   :+tree-sitter-language-version+
+   :+tree-sitter-min-compatible-language-version+
    :tree-sitter-language-files
    :*ts-langs*
    :list-ts-langs

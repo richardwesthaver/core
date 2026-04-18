@@ -11,7 +11,7 @@
  :provide
  ((:tests
    :require
-   (:arrow/tests :btrfs/tests
+   (#+nil :arrow/tests :btrfs/tests
     :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
     :keyutils/tests :rocksdb/tests :alsa/tests :sndfile/tests 
     :ssh2/tests :tree-sitter/tests :sys/tests

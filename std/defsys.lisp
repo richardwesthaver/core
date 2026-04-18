@@ -298,7 +298,12 @@ objects of type COMPONENT."
                 ;; TODO 2026-04-08: 
                 (if append 
                     (if (getf w key)
-                        (progn (pushnew val (getf w key) :test 'equalp) w)
+                        (progn (pushnew val (getf w key) 
+                                        :test (lambda (x y) 
+                                                (cart-typecase (x y)
+                                                  ((list list) (equalp x y))
+                                                  ((t t) (string-equal (name x) (name y))))))
+                               w)
                         (progn (setf (getf w key) (list val)) w))
                     (nconc w (list key val)))))
         (setf (gethash name *module-table*) (list key (list val))))))
@@ -364,8 +369,7 @@ objects of type COMPONENT."
    :sys
    root
    (compile-and-eval 
-    `(defsys ,@args :path ,(or (system-path root) *compile-file-truename* *load-truename*)))
-   t))
+    `(defsys ,@args :path ,(or (system-path root) *compile-file-truename* *load-truename*)))))
 
 (defprovider :bin (root &rest args)
   (let* ((namep (oddp (length args)))
@@ -401,16 +405,18 @@ objects of type COMPONENT."
       (push name req))
     (unless (member *test-system* req :test 'string-equal)
       (push *test-system* req))
-    (register-module
-     :tests
-     name 
-     (compile-and-eval
-      `(defsys ,(%test-system-name name) ,@args 
-         :require ,req :class 'test-system 
-         :components ,(or comp '((:file "tests")))
-         :path ,(or (system-path name)
-                    *compile-file-truename* 
-                    *load-truename*))))))
+    (let ((sys (compile-and-eval
+                `(defsys ,(%test-system-name name) ,@args 
+                   :require ,req :class 'test-system 
+                   :components ,(or comp '((:file "tests")))
+                   :path ,(or (system-path name)
+                              *compile-file-truename* 
+                              *load-truename*)))))
+      (register-module
+       :tests
+       name
+       sys
+       t))))
 
 (defprovider :bench (name &rest args)
   (register-module 
@@ -566,7 +572,15 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 (defun load-module (name &optional kind key)
   (let ((*module* name))
     (multiple-value-bind (form sys prov) (find-module name kind key)
-      (%load-module form (or prov kind) (ensure-car form) sys))))
+      (let ((kind (or prov kind)))
+        (typecase form
+          (list
+           (%load-module
+            (case (length form)
+              (1 (car form))
+              (t form))
+            kind (ensure-car form) sys))
+          (t (%load-module form kind form sys)))))))
 
 (defun load-modules (name &rest args)
   (mapcar (lambda (x) 

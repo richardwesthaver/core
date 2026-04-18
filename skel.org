@@ -1,0 +1,350 @@
+#+title: skel
+#+author: Richard Westhaver
+#+setupfile: ../../../clean.theme
+#+OPTIONS: num:nil
+
+=skel= is /a hacker's development tool/. It is an extensible software
+library designed for managing a development environment.
+
+The [[id:08ab0042-8f9d-48f1-aa9d-1ae92e50fdfc][CLI]] is the main entry point for typical users. This documentation
+is for library developers and internal use.
+
+#+BEGIN: lisp-system-info :system skel :tests nil
+- packages
+  #+CALL: lisp-system-packages[:post transpose]("skel")
+
+  #+RESULTS:
+
+- dependencies
+  #+CALL: lisp-system-dependencies[:post transpose]("skel")
+
+  #+RESULTS:
+
+- dependents
+  #+CALL: lisp-system-dependents[:post transpose]("skel")
+
+  #+RESULTS:
+
+- files
+  #+CALL: lisp-system-files[:post transpose]("skel")
+
+  #+RESULTS:
+
+- symbols
+  #+CALL: lisp-package-symbols[:post transpose]("SKEL")
+
+  #+RESULTS:
+
+#+END:
+
+* Architecture
+:PROPERTIES:
+:ID:       4fd2d7eb-e738-4e2f-8de1-3b8f5671d488
+:END:
+
+** Core
+:PROPERTIES:
+:ID:       35a5aa3b-1ff1-46ea-9ec7-1d6c9a2386f2
+:CREATED:  <2026-01-03 Sat 20:09>
+:END:
+The library core is built on CLOS. Most important data structures are
+represented with classes, slots, and methods such as the ~sk-project~
+class which has a slot named ~:components~ and a method specialized on
+it called ~load-ast~.
+
+** Components
+:PROPERTIES:
+:ID:       c86d03b4-dc7d-4836-8bdb-58498bd84e46
+:CREATED:  <2026-01-03 Sat 20:09>
+:END:
+In addition to the core objects we provide a set of ~sk-component~
+definitions which convert core objects to a corresponding external
+representation. For example the ~makefile~ and ~mk-*~ classes defined
+in ~comp/makefile~ can be built from a ~sk-project~ and ~sk-*~
+instances or may be used to ingest Makefiles into your project.
+
+** Network
+:PROPERTIES:
+:ID:       ad4583d9-9e83-402d-87a9-8da27c6064ac
+:CREATED:  <2026-01-03 Sat 20:10>
+:END:
+The skel network is based on the objects provided in the NET library
+and includes a modular client/server protocol base on NET/PROTO/SESH.
+
+* Configuration
+:PROPERTIES:
+:ID:       2658a3d1-cfa5-436e-b2b0-9cf42a6f66c6
+:END:
+The ~skel~ tool can be configured at runtime using the CLI flags, or
+via local configuration files. The configuration files are in the
+~skelfile~ format and are assigned the following locations by default:
+- ~*default-user-skelrc*~ :: =$HOME/.skelrc=
+- ~*default-system-skelrc*~ :: =/etc/skel/skelrc=
+
+Both files are optional and the user skelrc takes precedence over
+system.
+
+Example =~/.config/skelrc=:
+#+begin_src shell :results output :exports both
+cat ~/.config/skelrc
+#+end_src
+
+#+RESULTS:
+#+begin_example
+;;; skelrc @ 2023-10-12.02:58:08 -*- mode: skel; -*-
+:name "Richard Westhaver"
+:email "richard.westhaver@gmail.com"
+:version "0.1.0"
+:fmt :pretty
+:vc :hg
+:auto-insert t
+:license :mpl2
+:logger (:level :info)
+:stash ".stash"
+:store "/opt/store"
+:scripts ("~/.stash/scripts")
+#+end_example
+
+* Projects
+:PROPERTIES:
+:ID:       359441da-1b61-4d73-8563-605ea7262b58
+:END:
+Projects are the highest-level objects int the ~skel~ system. A
+project consists of a list of slots which are populated automatically
+or by the user. Once a project is initialized the slots can be
+accessed and a set of high-level operations can be performed.
+
+The easiest way to initialize a project is with a ~skelfile~. These
+files are parsed as a simplified Lisp dialect and generate
+~sk-project~ objects based on their contents.
+
+The simplest project looks like this:
+
+#+begin_src lisp :eval never
+:name hello-world
+#+end_src
+
+Don't worry, this is still lisp - the parentheses are implied. All we
+actually need is a name to generate an object, and we can fill in the
+blanks later as the project develops.
+
+Here is a more verbose example, still with only metadata:
+
+#+begin_src lisp :eval never
+;;; skelfile --- core skelfile -*- mode: skel; -*-
+:name "core"
+:author "Richard Westhaver <ellis@rwest.io>"
+:version "0.1.0"
+:license "MPL"
+:description "The Compiler Company Core"
+:vc :hg
+:tags ("core")
+:docs ((:org "readme") (:org "install") (:org "tests") (:org "todo"))
+:include ("emacs/emacs.sk")
+#+end_src
+
+Another example with rules and components:
+
+#+begin_src lisp :eval never
+;;; skelfile @ 2023-10-08.02:37:25 -*- mode: skel; -*-
+:name skel
+:author "ellis"
+:version "0.1.0"
+:description "a hacker's project compiler"
+:license "MPL"
+:vc :hg
+:tags ("lisp")
+:rules ((build () (print (asdf:make :skel/cli)))
+        (clean () #$rm -rf */*.fasl$#))
+:docs ((:org "readme"))
+:components
+((:elisp "sk"))
+:stash "~/.stash"
+#+end_src
+
+* Features
+:PROPERTIES:
+:ID:       90d78420-e6d9-4f18-8222-89c4670633b4
+:END:
+** Emacs Integration
+:PROPERTIES:
+:ID:       3df22a04-3f6b-4738-bd5f-3eb91977d3af
+:END:
+=sk.el= is the Emacs support package for skel. It contains a
+=skel-mode= for working with skelfiles, =skel-minor-mode= for
+projects, and more.
+** Homer
+:PROPERTIES:
+:CREATED:  <2025-11-03 Mon 20:47>
+:ID:       b6bc36cb-5999-4f2e-b8f0-b751ce1f73ed
+:END:
+=homer= is the CC home management application for Unix users.
+- TODO
+  - launched on login
+  - runs under systemd
+  - maintains user configs, repos, services, applications
+  - other lispy endpoints
+
+*** help
+:PROPERTIES:
+:ID:       c7d8f1e6-cbcf-4736-b48b-d76f70c3a745
+:END:
+#+begin_src shell :results pp replace :exports both
+homer -h
+#+end_src
+
+#+RESULTS:
+#+begin_example
+
+Type HELP for debugger help, or (SB-EXT:EXIT) to exit from SBCL.
+
+restarts (invokable by number or by possibly-abbreviated name):
+  0: [ABORT] Skip to toplevel REPL.
+  1: [EXIT ] Exit SBCL (calling #'EXIT, killing the process).
+
+(READ-COMMAND #<SB-IMPL::STRING-INPUT-STREAM {7FFA4E3479B3}>)
+   source: (UNDEFINED-COMMAND C ARGS)
+0] 
+#+end_example
+** Packy
+:PROPERTIES:
+:CREATED:  <2025-11-03 Mon 20:48>
+:ID:       8588217f-2844-42f9-9377-ea8840ee4d04
+:END:
+#+begin_center
+The universal package manager
+#+end_center
+- why
+  - we have standards for everything nowadays.. container images
+    (OCI), language servers (LSP), Emoji codes.. why not packages and
+    package managers?
+  - what happens if upstream package registries go down during release CI? (ur fukt)    
+  - decent amount of external traffic comes from package registry streams (CITE)
+    - ezpz - cache it locally, and reduce cost at the same time
+  - data proximity matters
+  - public registries are ripe for supply-chain attacks
+  - there are too many package managers, and it's unreasonable to
+    demand our clients rely on them
+    - needless external footprint - keep this traffic away from bad
+      actors and inside the corporate VPN
+  - traffic control matters
+- how
+  - sexps
+    + define spec in CLOS (lisp objects)
+    + define validation tools
+    + use tools to validate implementations
+  - compilers
+    + functionality composed of lambdas and closures
+      - insert hooks, custom settings, flags
+    + ability to define optimization passes
+    + dependency traversal, cycle detection
+    + macros
+- goals
+  - simple design
+  - extensibility
+  - introspectable (from client and server)
+- inspiration
+  - [[https://www.gnu.org/software/emacs/manual/html_mono/ede.html#EDE-Project-Concepts][EDE]]
+  - [[https://elpa.gnu.org/][ELPA]]
+  - [[https://www.gnu.org/software/emacs/manual/html_node/org/Configuration.html][org-publish.el]]
+  - [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Packages.html][package.el]]
+  - [[https://firefox-source-docs.mozilla.org/contributing/vcs/mercurial_bundles.html][Mercurial]]
+  - [[https://doc.rust-lang.org/book/ch07-01-packages-and-crates.html][Crates]]
+  - [[https://archlinux.org/pacman/][Pacman]]
+  - [[https://brew.sh/][Homebrew]]
+  - [[https://ultralisp.org/][Ultralisp]]
+- resources
+  - [[https://github.com/cargo-generate/cargo-generate][cargo-generate]]
+  - [[https://doc.rust-lang.org/book/ch14-05-extending-cargo.html][extending cargo]]
+  - [[https://github.com/quicklisp/quicklisp-projects][quicklisp-projects]]
+  - [[https://github.com/quicklisp/quicklisp-client][quicklisp-client]]
+  - [[https://github.com/ultralisp/ultralisp][ultralisp]]
+  - [[https://github.com/ultralisp/quickdist][quickdist]]
+
+:notes: design
+- core classes
+  - source
+  - collection
+  - op
+  - env
+- mixed
+  - registry
+    source + collection
+  - dependency
+    source + package
+  - client
+    - op+env
+  - server
+    - op+collection+env
+  - peer
+    - client+server
+:end:
+*** targets
+:PROPERTIES:
+:ID:       0cbf014a-6fef-4d64-9b53-046cd2b0cce8
+:END:
+The following package registries will be supported in v1.
+**** pack
+:PROPERTIES:
+:ID:       473c47a2-05b5-4650-a80d-0d9d18c07eec
+:CREATED:  <2025-11-03 Mon 20:51>
+:END:
+Native package format - typically exports to a Zstandard-compressed
+tar file with an extension of '.pack'.
+**** elpa
+:PROPERTIES:
+:ID:       559d141a-8e48-4cd9-ba48-1c0d8f590724
+:END:
+Emacs Lisp packages (tarballs)
+**** vc
+:PROPERTIES:
+:ID:       8b327ea1-e4ee-443a-9b80-09d478c1c02d
+:END:
+Version Control Repo bundles (tar.zst)
+**** pkgfile
+:PROPERTIES:
+:ID:       fd429060-c6df-4611-8bd1-a6080f720906
+:CREATED:  <2025-11-03 Mon 20:51>
+:END:
+Archlinux package format (PKGFILE)
+** TODO Krypt
+:PROPERTIES:
+:ID:       ca72d883-a12f-4732-b95f-4862aa012e0c
+:CREATED:  <2025-11-03 Mon 20:58>
+:END:
+:LOGBOOK:
+- State "TODO"       from              [2025-11-03 Mon 20:59]
+:END:
+Crypto utility.
+- Keyrings
+  - system, gpg-agent
+- Secrets management
+  - password suggester
+- Certificate management
+- Encryption/Decryption/Validation/Signing
+- Obfuscate
+* CLI
+:PROPERTIES:
+:ID:       08ab0042-8f9d-48f1-aa9d-1ae92e50fdfc
+:END:
+** help
+:PROPERTIES:
+:ID:       f8e9fab4-67dc-4e7f-b172-7e0fc21047ad
+:END:
+#+begin_src shell :results pp replace :exports both
+skel -h
+#+end_src
+
+#+RESULTS:
+#+begin_example
+#:fatal 0.037999
+unknown argument: -h
+Backtrace for: #<THREAD tid=223775 "main thread" RUNNING {12036D0003}>
+0: (FATAL! "-h")
+1: ((LAMBDA (&REST ARGS) :IN "/home/ellis/comp/core/skel/cli.lisp") "-h")
+2: (SKEL/CLI::START-SKEL)
+3: (CORE:DISPATCH-CORE)
+4: ((FLET SB-UNIX::BODY :IN SB-IMPL::START-LISP))
+5: ((FLET "WITHOUT-INTERRUPTS-BODY-3" :IN SB-IMPL::START-LISP))
+6: (SB-IMPL::%START-LISP)
+#+end_example

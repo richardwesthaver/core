@@ -6,19 +6,11 @@
 (in-package :keyutils)
 
 (macrolet ((def (name &rest args)
-               `(progn
-                  (defar ,name key-serial-t ,@args)
-                  ,@(if (atom name)
-                        `((export ',name))
-                        `((export ',(cadr name))))))
+               `(defar ,name key-serial-t ,@args))
            (defint (name &rest args)
-             `(progn
-                (defar ,name int ,@args)
-                (export ',name)))
+             `(defar ,name int ,@args))
            (deflong (name &rest args)
-             `(progn
-                (defar ,name long ,@args)
-                (export ',name))))
+             `(defar ,name long ,@args)))
   (def add-key 
       (type c-string) 
       (description c-string) (payload (* t)) (plen size-t) (ringid key-serial-t))

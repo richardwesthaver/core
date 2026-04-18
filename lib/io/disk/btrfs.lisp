@@ -25,26 +25,26 @@
 
 (defmethods sync 
   (((self btrfs-subvolume) &key)
-   (btrfs:btrfs-util-fs-sync (namestring (path self))))
+   (btrfs::btrfs-util-fs-sync (namestring (path self))))
   (((self btrfs-disk) &key)
-   (btrfs:btrfs-util-fs-sync (namestring (path self)))))
+   (btrfs::btrfs-util-fs-sync (namestring (path self)))))
          
 (defun btrfs-subvolumes (path)
   (when (subvolume-valid-p path)
     (sb-alien:with-alien ((iter (* btrfs-util-subvolume-iterator)))
       (unwind-protect
            (progn
-             (btrfs-util-subvolume-iter-create path 0 0 (sb-alien:addr iter))
+             (btrfs::btrfs-util-subvolume-iter-create path 0 0 (sb-alien:addr iter))
              (with-alien ((path c-string)
                           (id (unsigned 64)))
-               (loop while (eql :ok (btrfs-util-subvolume-iter-next 
+               (loop while (eql :ok (btrfs::btrfs-util-subvolume-iter-next 
                                      iter (addr path) (addr id)))
                      collect (cons path id))))
         (btrfs-util-subvolume-iter-destroy iter)))))
 
 (defun btrfs-default-subvolume (path)
   (with-alien ((id (unsigned 64)))
-    (let ((res (btrfs-util-subvolume-get-default path (addr id))))
+    (let ((res (btrfs::btrfs-util-subvolume-get-default path (addr id))))
       (if (eql res :ok)
           id
           (btrfs-simple-error (btrfs-util-strerror res))))))

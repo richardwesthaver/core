@@ -49,9 +49,7 @@
   (inherit (* btrfs-util-qgroup-inherit)))
 
 (macrolet ((def (name &rest args)
-               `(progn
-                  (defar ,name btrfs-util-error ,@args)
-                  (export ',name))))
+               `(defar ,name btrfs-util-error ,@args)))
   (def btrfs-util-fs-sync (path c-string))
   (def btrfs-util-fs-sync-fd (fd int))
   (def btrfs-util-fs-start-sync
