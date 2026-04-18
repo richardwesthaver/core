@@ -116,7 +116,7 @@ appended."
 Note that this operation is usually NOT thread-safe."
   (if dir
       (let* ((dir (directory-path (probe-file dir)))
-             (cwd (sb-posix:getcwd))
+             (cwd *default-pathname-defaults*)
              (*default-pathname-defaults* dir))
         (sb-posix:chdir dir)
         (unwind-protect
