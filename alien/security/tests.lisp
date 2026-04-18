@@ -15,7 +15,7 @@
 
 (deftest pam-simple ()
   (iseq :success
-        (with-pam (s c e "")
+        (with-pam (s e "")
           (security::pam-close-session (deref s) (pam-flags)))))
 
 (deftest pam-creds ()

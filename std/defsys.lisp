@@ -398,7 +398,7 @@ objects of type COMPONENT."
 
 (defprovider :tests (name &rest args)
   (let ((req (getf args :require))
-        (comp (getf args :components)))
+        (comp (getf args :components :null)))
     (remf args :require)
     (remf args :components)
     (unless (member name req :test 'string-equal)
@@ -408,7 +408,7 @@ objects of type COMPONENT."
     (let ((sys (compile-and-eval
                 `(defsys ,(%test-system-name name) ,@args 
                    :require ,req :class 'test-system 
-                   :components ,(or comp '((:file "tests")))
+                   :components ,(when (eql comp :null) '((:file "tests")))
                    :path ,(or (system-path name)
                               *compile-file-truename* 
                               *load-truename*)))))
@@ -495,6 +495,8 @@ objects of type COMPONENT."
 (defun find-module (name &optional kind key)
   "Find the module specified by NAME which should be a system designator or NIL
 to match all systems and optional KIND (a module designator) specified by KEY."
+  (when name (setf name (keywordicate name)))
+  (when kind (setf kind (keywordicate kind)))
   (cond
     (name
      (if-let ((mod (find-module* name)))
@@ -983,7 +985,8 @@ inputs."))
   (mapc
    (lambda (x)
      (let ((y (if (atom x) x (car x))))
-       (if-let ((z (find-system y)))
+       (if-let ((z (or (find-system y) 
+                       (ensure-car (apply 'find-module (mapcar 'keywordicate (split-sequence #\/ (string-upcase x))))))))
          (init z)
          (simple-system-error "System not found: ~A" y))))
    form)
@@ -1332,7 +1335,8 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
          (if-let ((s (find-system x)))
            (when (component-reload-p s)
              (%load-system s force))
-           (simple-system-error "System not found: ~A" x))
+           (or (apply 'load-module (mapcar 'keywordicate (split-sequence #\/ (string-upcase x))))
+               (simple-system-error "System not found: ~A" x)))
          (apply 'load-module x)))
    (slot-value sys 'std/defsys::require)))
 
@@ -1372,7 +1376,7 @@ object SELF remains unmodified."
 
 (defgeneric find-system (self &key &allow-other-keys)
   (:method ((self t) &key default (asdf *asdf-compatibility*))
-    (multiple-value-bind (val found) (gethash (keywordicate (string-upcase self)) *system-table*)
+    (multiple-value-bind (val found) (gethash (keywordicate (string-upcase (name (ensure-car self)))) *system-table*)
       (cond
         (found (values val found))
         (asdf (asdf:find-system self (eql default :error)))

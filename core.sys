@@ -9,9 +9,9 @@
   :dsp :math :pod :box :vc :skel)
  :components ((:file "core"))
  :provide 
- ((:sys :core/tests
+ ((:tests
    :require
-   (:rt :std/tests :log/tests :rt/tests
+   (:std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
     :doc/tests :nlp/tests :box/tests
     :syn/tests :organ/tests :obj/tests :math/tests

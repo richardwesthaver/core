@@ -5,4 +5,4 @@
               (:grovel "constants" :package :evdev)
               (:file "input")
               (:file "dev"))
- :provide ((:tests :require (:rt :evdev :xkb))))
+ :provide ((:tests :require (:xkb))))
