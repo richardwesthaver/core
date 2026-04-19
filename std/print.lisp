@@ -196,7 +196,10 @@ be produced by `sxhash'."
                              (node-formatter #'write-to-string))
   "Format ROOT as a tree of nodes, printing to STREAM."
   (multiple-value-bind (u r l)
-      (format-tree-segments (if plist (cons (car root) (group (cdr root) 2)) root)
+      (format-tree-segments (if plist 
+                                (let ((grps (group (cdr root) 2)))
+                                  (cons (car root) (mapcar (lambda (x) (list (car x) (list (cadr x)))) grps)))
+                                root)
                             :layout layout
                             :node-formatter node-formatter)
     (format stream "~{~A~%~}" (nconc u (list r) l))))

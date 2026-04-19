@@ -281,6 +281,8 @@ objects of type COMPONENT."
 (defun find-provider (key)
   (gethash key *provider-table*))
 
+;; TODO 2026-04-18: describe-module
+
 (defmacro defprovider (key args &body body)
   "Define a provider function which processes forms where the car is (eql KEY)."
   `(register-provider ,key (lambda ,args ,@body)))
