@@ -169,7 +169,7 @@
     (load-system :core)
     (make-system :core)))
   (:compile () (compile-lisp :core :force t :verbose t))
-  (:install (install-emacs) (funcall #0$sudo etc/script/install.lisp$# :input t)))
+  (:install () (funcall #0$sudo etc/script/install.lisp$# :input t)))
  (tests ()
   (:run ()
    (asdf:load-system :core/tests)
