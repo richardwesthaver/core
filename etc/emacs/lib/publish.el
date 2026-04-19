@@ -297,7 +297,7 @@ targets and targets."
     (let ((dirs '("graph/app" "graph/comp" "graph/lang" "graph/hw" "graph/math" "graph/os" 
 		  "graph/proto" "graph/sys" "graph/theory" "graph/web"
 		  "plan/tasks"
-		  "docs/core/app" "docs/core/lib")))
+		  "docs/core/lib")))
       (while dirs
 	(let* ((dir (pop dirs))
 	       (default-directory (join-paths project-dir dir))

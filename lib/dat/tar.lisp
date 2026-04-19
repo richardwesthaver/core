@@ -530,7 +530,7 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
     (:zstd
      (ecase direction
        (:input (io/flate:make-decompressing-stream :zstd stream))
-       (:output (inspect (io/flate:make-compressing-stream :zstd stream)))))
+       (:output (io/flate:make-compressing-stream :zstd stream))))
     (:auto
      (let ((file-name (ignore-errors (pathname stream))))
        (ecase direction
@@ -577,21 +577,21 @@ or by peeking at the stream for magic numbers (for :INPUT)."
   (multiple-value-bind
         (compression-stream other-streams-to-close)
       (make-compression-stream stream direction compression)
-    (let ((blocked-stream (make-instance (case direction
-                                           (:input 'blocked-input-stream)
-                                           (:output 'blocked-output-stream))
+    (let ((block-stream (make-instance (case direction
+                                           (:input 'block-input-stream)
+                                           (:output 'block-output-stream))
                                          :stream compression-stream
                                          :block-size (* *tar-block-bytes* blocking-factor))))
       (flet ((read-buffer ()
                (let ((buffer (make-array *tar-block-bytes* :initial-element 0
                                                              :element-type '(unsigned-byte 8))))
-                 (assert (= *tar-block-bytes* (read-sequence buffer blocked-stream)))
+                 (assert (= *tar-block-bytes* (read-sequence buffer block-stream :end *tar-block-bytes*)))
                  buffer)))
         (make-instance (if (and (eql type :auto) (eql direction :input))
                            (detect-type
                             (read-buffer))
                            *default-type*)
-          :stream blocked-stream
+          :stream block-stream
           :other-streams-to-close (append (unless (eql compression-stream stream)
                                             (list compression-stream))
                                           other-streams-to-close)
@@ -647,7 +647,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
       (declare (dynamic-extent buffer))
       ;; write the entry
       (write-header-to-buffer entry buffer (header-encoding tar-file) 0)
-      (write-sequence buffer tar-file-stream))
+      (write-sequence buffer tar-file-stream :end (length buffer)))
     ;; write any associated data
     (write-entry-data tar-file entry stream)
     (values)))
@@ -665,7 +665,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
         (buffer (make-array *tar-block-bytes* :element-type '(unsigned-byte 8))))
     (declare (dynamic-extent buffer))
     (with-slots (stream) tar-file
-      (let ((nbytes (read-sequence buffer stream)))
+      (let ((nbytes (read-sequence buffer stream :end *tar-block-bytes*)))
         (unless (= nbytes *tar-block-bytes*)
           (error "Corrupt tar-file"))))
     (if (null-block-p buffer 0)
@@ -695,15 +695,17 @@ or by peeking at the stream for magic numbers (for :INPUT)."
          (bytes-remaining (- rounded-bytes bytes-copied)))
     (write-sequence (make-array bytes-remaining :element-type '(unsigned-byte 8)
                                                 :initial-element 0)
-                    (tar-file-stream tar-file))))
+                    (tar-file-stream tar-file)
+                    :end bytes-remaining)))
 
 (defun transfer-octets-to-tar-file (tar-file octets)
   (let* ((rounded-bytes (round-up-to-tar-block (length octets)))
          (bytes-remaining (- rounded-bytes (length octets))))
-    (write-sequence octets (tar-file-stream tar-file))
+    (write-sequence octets (tar-file-stream tar-file) :end (length octets))
     (write-sequence (make-array bytes-remaining :element-type '(unsigned-byte 8)
                                                 :initial-element 0)
-                    (tar-file-stream tar-file))))
+                    (tar-file-stream tar-file)
+                    :end bytes-remaining)))
 
 (defmethod finalize-tar-file ((tar-file tar-file))
   (let ((null-block (make-array *tar-block-bytes*
@@ -711,7 +713,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
                                 :initial-element 0)))
     (declare (dynamic-extent null-block))
     (dotimes (i 2)
-      (write-sequence null-block (tar-file-stream tar-file)))
+      (write-sequence null-block (tar-file-stream tar-file) :end *tar-block-bytes*))
     (values)))
 
 (define-octet-header v7-header
@@ -1180,19 +1182,20 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
           kv-string
           =-position)
       (unless (eql num-bytes :eof)
-        (setf buffer (make-array (- num-bytes bytes-read) :element-type '(unsigned-byte 8) :initial-element 0))
-        (setf num-read (read-sequence buffer stream))
-        (unless (= num-read (- num-bytes bytes-read))
-          (error 'malformed-pax-attribute-entry))
-        (setf kv-string (octets-to-string buffer :external-format :utf-8))
-        (unless (= (aref buffer (1- num-read)) +ascii-newline+)
-          (error 'malformed-pax-attribute-entry))
-        (setf =-position (position #\= kv-string))
-        (when (null =-position)
-          (error 'malformed-pax-attribute-entry))
-        (values (subseq kv-string 0 =-position)
-                (subseq kv-string (1+ =-position) (1- num-read))
-                t)))))
+        (let ((n (- num-bytes bytes-read)))
+          (setf buffer (make-array n :element-type '(unsigned-byte 8) :initial-element 0))
+          (setf num-read (read-sequence buffer stream :end n))
+          (unless (= num-read (- num-bytes bytes-read))
+            (error 'malformed-pax-attribute-entry))
+          (setf kv-string (octets-to-string buffer :external-format :utf-8))
+          (unless (= (aref buffer (1- num-read)) +ascii-newline+)
+            (error 'malformed-pax-attribute-entry))
+          (setf =-position (position #\= kv-string))
+          (when (null =-position)
+            (error 'malformed-pax-attribute-entry))
+          (values (subseq kv-string 0 =-position)
+                  (subseq kv-string (1+ =-position) (1- num-read))
+                  t))))))
 
 (defun populate-pax-attributes (entry)
   (let ((stream (make-entry-stream entry))
@@ -1288,7 +1291,7 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
   (let ((buffer (make-array (size entry) :element-type '(unsigned-byte 8)
                                          :initial-element 0))
         (stream (make-entry-stream entry)))
-    (read-sequence buffer stream)
+    (read-sequence buffer stream :end (size entry))
     (setf (long-link-name entry) (octets-to-string buffer :external-format :utf-8))))
 
 (defmethod write-gnu-long-link-name-entry (tar-file name &rest args &key data)
@@ -1321,7 +1324,7 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
   (let ((buffer (make-array (size entry) :element-type '(unsigned-byte 8)
                                          :initial-element 0))
         (stream (make-entry-stream entry)))
-    (read-sequence buffer stream)
+    (read-sequence buffer stream :end (size entry))
     (setf (long-name entry) (octets-to-string buffer :external-format :utf-8))))
 
 (defmethod write-gnu-long-name-entry (tar-file name &rest args &key data)
@@ -1443,12 +1446,12 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
 ;;; External Macros
 (defun call-with-open-tar-file (thunk pathname-or-stream
                                 &key (direction :input)
-                                  (if-exists nil)
-                                  (if-does-not-exist :create)
-                                  (type :auto)
-                                  (blocking-factor 20)
-                                  (compression :auto)
-                                  (header-encoding :utf-8))
+                                     if-exists 
+                                     if-does-not-exist
+                                     (type :auto)
+                                     (blocking-factor 20)
+                                     (compression :auto)
+                                     (header-encoding :utf-8))
   (declare ((member :input :output) direction))
   (let (tar-file
         stream
@@ -1458,15 +1461,12 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
          (progn
            (when (streamp pathname-or-stream) (setf should-close nil))
            (setf stream (if should-close
-                            (apply #'open
-                                   pathname-or-stream
-                                   :direction direction
-                                   :element-type '(unsigned-byte 8)
-                                   (append
-                                    (when if-exists
-                                      (list :if-exists if-exists))
-                                    (when if-does-not-exist
-                                      (list :if-does-not-exist if-does-not-exist))))
+                            (open
+                             pathname-or-stream
+                             :direction direction
+                             :element-type '(unsigned-byte 8)
+                             :if-exists if-exists
+                             :if-does-not-exist if-does-not-exist)
                             pathname-or-stream))
            (setf tar-file (open-tar-file stream :direction direction
                                                 :type type
@@ -1486,12 +1486,12 @@ NAME bound to the attribute name and VALUE bound to the attribute value."
 
 (defmacro with-open-tar-file ((tar-file-var pathname-or-stream
                                &key (direction :input)
-                                 (if-exists nil)
-                                 (if-does-not-exist nil)
-                                 (type :auto)
-                                 (compression :auto)
-                                 (blocking-factor 20)
-                                 (header-encoding :utf-8))
+                                    if-exists
+                                    (if-does-not-exist :create)
+                                    (type :auto)
+                                    (compression :auto)
+                                    (blocking-factor 20)
+                                    (header-encoding :utf-8))
                               &body body)
   "Bind TAR-FILE-VAR to a newly opened TAR-FILE, backed by
 PATHNAME-OR-STREAM. If PATHNAME-OR-STREAM evaluates to a stream, that stream

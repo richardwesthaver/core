@@ -448,29 +448,27 @@ extensions) and returns the size."
       (incf input-position))))
 
 (defmethod stream-read-sequence ((stream chunked-input-stream)
-                                 sequence &optional start end)
-  (let ((start (or start 0))
-         (end (or end (length sequence))))
-    (unless (input-chunking-p stream)
-      (return-from stream-read-sequence
-        (if (eq (signal-eof stream) :eof)
-            0
-            (read-sequence sequence (stream-of stream) :start start :end end))))
-    (loop
-      (when (>= start end)
-        (return-from stream-read-sequence start))   
-      (unless (input-available-p stream)
-        (unless (fill-buffer stream)
-          (return-from stream-read-sequence start)))
-      (with-slots (input-buffer input-size input-position)
-          stream
-        (replace sequence input-buffer
-                 :start1 start :end1 end
-                 :start2 input-position :end2 input-size)
-        (let ((length (min (- input-size input-position)
-                           (- end start))))
-          (incf start length)
-          (incf input-position length))))))
+                                 sequence &optional (start 0) (end (length sequence)))
+  (unless (input-chunking-p stream)
+    (return-from stream-read-sequence
+      (if (eq (signal-eof stream) :eof)
+          0
+          (read-sequence sequence (stream-of stream) :start start :end end))))
+  (loop
+    (when (>= start end)
+      (return-from stream-read-sequence start))   
+    (unless (input-available-p stream)
+      (unless (fill-buffer stream)
+        (return-from stream-read-sequence start)))
+    (with-slots (input-buffer input-size input-position)
+        stream
+      (replace sequence input-buffer
+               :start1 start :end1 end
+               :start2 input-position :end2 input-size)
+      (let ((length (min (- input-size input-position)
+                         (- end start))))
+        (incf start length)
+        (incf input-position length)))))
   
 (defclass chunked-output-stream (wrapped-stream fundamental-binary-output-stream)
   ((output-chunking-p :initform nil
@@ -560,7 +558,7 @@ if necessary."
     (incf output-position)
     byte))
 
-(defmethod stream-write-sequence ((stream chunked-output-stream) sequence &optional start end)
+(defmethod stream-write-sequence ((stream chunked-output-stream) sequence &optional (start 0) (end (length sequence)))
   "Outputs SEQUENCE by appending it to the output buffer if it's
 small enough.  Large sequences are written directly using
 WRITE-CHUNK."
@@ -684,7 +682,7 @@ of the wrapped stream when instantiated."))
   "Writes the entire buffer to the WRAPPED-STREAM. Assumes the FILE-POSITION of
 the wrapped stream is in the correct place."
   (when (dirty-p stream)
-    (write-sequence (buffer stream) (stream-of stream))
+    (write-sequence (buffer stream) (stream-of stream) :end (length (buffer stream)))
     (setf (dirty-p stream) nil))
   (call-next-method))
 
@@ -752,23 +750,21 @@ the buffer to be written."
           (incf index)))))
 
 (defmethod stream-read-sequence ((stream block-input-stream)
-                                 sequence &optional start end)
+                                 sequence &optional (start 0) (end (length sequence)))
   (ensure-buffer-valid stream)
-  (let ((start (or start 0))
-        (end (or end (length sequence))))
-    (let ((num-bytes (- end start))
-          (num-bytes-remaining (- (or (eof-index stream) (block-size stream))
-                                  (index stream))))
-      (replace sequence (buffer stream)
-               :start1 start :end1 end
-               :start2 (index stream) :end2 (eof-index stream))
-      (incf (index stream) (min num-bytes num-bytes-remaining))
-      (if (<= num-bytes num-bytes-remaining)
-          (+ num-bytes start)
-          (if (null (eof-index stream))
-              (stream-read-sequence stream sequence
-                                    (+ start num-bytes-remaining) end)
-              (+ num-bytes-remaining start))))))
+  (let ((num-bytes (- end start))
+        (num-bytes-remaining (- (or (eof-index stream) (block-size stream))
+                                (index stream))))
+    (replace sequence (buffer stream)
+             :start1 start :end1 end
+             :start2 (index stream) :end2 (eof-index stream))
+    (incf (index stream) (min num-bytes num-bytes-remaining))
+    (if (<= num-bytes num-bytes-remaining)
+        (+ num-bytes start)
+        (if (null (eof-index stream))
+            (stream-read-sequence stream sequence
+                                  (+ start num-bytes-remaining) end)
+            (+ num-bytes-remaining start)))))
 
 (defmethod stream-write-byte ((stream block-output-stream) byte)
   (ensure-buffer-valid stream)
@@ -781,10 +777,10 @@ the buffer to be written."
     byte))
 
 (defmethod stream-write-sequence ((stream block-output-stream)
-                                  sequence &optional start end)
+                                  sequence &optional (start 0) (end (length sequence)))
   (ensure-buffer-valid stream)
   (setf (dirty-p stream) t)
-  (let ((num-bytes (- (or end (length sequence)) start))
+  (let ((num-bytes (- end start))
         (num-bytes-remaining (- (block-size stream) (index stream))))
     (replace (buffer stream) sequence
              :start1 (index stream)

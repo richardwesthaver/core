@@ -183,7 +183,7 @@
    :decompress-file :decompress-buffer))
 
 (defpkg :io/zstd
-  (:use :cl :std :io/proto :io/flate :sb-alien :zstd :sb-gray)
+  (:use :cl :std :io/proto :io/flate :sb-alien :zstd :sb-gray :io/static)
   (:import-from :zstd :zstd-createdstream :zstd-createcstream
    :zstd-dstream :zstd-cstream :zstd-freecstream :zstd-freedstream
    :with-zstd-dstream :with-zstd-cstream :zstd-initcstream :zstd-initdstream

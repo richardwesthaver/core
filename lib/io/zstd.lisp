@@ -62,7 +62,7 @@
   (compress-and-write stream)
   byte)
 
-(defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional start end)
+(defmethod stream-write-sequence ((stream zstd-compressing-stream) seq &optional (start 0) (end (length seq)))
   (with-slots (input-buffer zstd-in-buffer) stream
     (loop while (< start end) 
           do (with-alien-slots (zstd::size) zstd-in-buffer
@@ -83,20 +83,20 @@
         (frame-complete-p)
       (setf frame-complete-p
             (zerop (zstd-check (zstd-compressstream2 zstd-context
-                                                      zstd-out-buffer
-                                                      zstd-in-buffer
-                                                      :end))))
-      (with-alien-slots (zstd::pos) zstd-out-buffer
-        (when (plusp zstd::pos)
-          (write-sequence output-buffer output-stream :end zstd::pos)
-          (setf zstd::pos 0))))
-    (with-alien-slots (zstd::size zstd::pos) zstd-in-buffer
-      (setf zstd::pos 0)
-      (setf zstd::size 0))
-    (with-alien-slots (zstd::pos) zstd-out-buffer
-      (setf zstd::pos 0))
-    (finish-output output-stream))
-  nil)
+                                                     zstd-out-buffer
+                                                     zstd-in-buffer
+                                                     :end))))
+      (when (plusp (slot zstd-out-buffer 'zstd::pos))
+        (write-sequence output-buffer output-stream :end (slot zstd-out-buffer 'zstd::pos))
+        (setf (slot zstd-out-buffer 'zstd::pos) 0)))
+
+    (setf (slot zstd-in-buffer 'zstd::pos) 0
+          (slot zstd-in-buffer 'zstd::size) 0)
+    (setf (slot zstd-out-buffer 'zstd::pos) 0)
+    (print :ok)
+    ;; don't close the output-stream (FD-STREAM)
+    ;; (finish-output output-stream)
+    ))
 
 (defmethod close ((stream compressing-stream) &key &allow-other-keys)
   (when (open-stream-p stream)
@@ -105,13 +105,14 @@
                  output-buffer zstd-out-buffer)
         stream
       (zstd-check (zstd::zstd-freecctx zstd-context))
-      (setf zstd-context nil)
-      (setf input-buffer nil)
-      (free-alien zstd-in-buffer)
-      (setf zstd-in-buffer nil)
-      (setf output-buffer nil)
-      (free-alien zstd-out-buffer)
-      (setf zstd-out-buffer nil)))
+      ;; (setf zstd-context nil)
+      ;; (setf input-buffer nil)
+      ;; (free-alien zstd-in-buffer)
+      ;; (setf zstd-in-buffer nil)
+      ;; (setf output-buffer nil)
+      ;; (free-alien zstd-out-buffer)
+      ;; (setf zstd-out-buffer nil))
+      ))
   t)
 
 (defun initialize-context (context level)
@@ -120,7 +121,7 @@
   (zstd-check (zstd::zstd-cctx-setparameter context :checksum-flag 1))
   context)
 
-(defmethod make-compressing-stream ((key (eql :zstd)) output-stream &key (level 3))
+(defmethod make-compressing-stream ((key (eql :zstd)) output-stream &key (level *compression-level*))
   "Return a stream that will compress the bytes written to it at the given
 compression LEVEL and write them to the OUTPUT-STREAM."
   (let ((stream (make-instance 'zstd-compressing-stream))
@@ -138,16 +139,16 @@ compression LEVEL and write them to the OUTPUT-STREAM."
                 (zstd-error "Failed to create compression context.")
                 (setf zstd-context (initialize-context context level))))
           (zstd-error "LEVEL must be between ~d and ~d." min-level max-level))
-      (setf input-buffer (io/static:make-static-vector input-buffer-size))
+      (setf input-buffer (io/static:make-static-vector input-buffer-size :initial-element 0))
       (setf zstd-in-buffer (make-alien zstd-inbuffer))
-      (with-vector-sap (ffi-input-buffer input-buffer)
+      (let ((ffi-input-buffer (io/static:static-vector-pointer input-buffer)))
         (with-alien-slots (zstd::src zstd::size zstd::pos) zstd-in-buffer
           (setf zstd::src ffi-input-buffer)
           (setf zstd::size 0)
           (setf zstd::pos 0)))
-      (setf output-buffer (io/static:make-static-vector output-buffer-size))
+      (setf output-buffer (io/static:make-static-vector output-buffer-size :initial-element 0))
       (setf zstd-out-buffer (make-alien zstd-outbuffer))
-      (with-vector-sap (ffi-output-buffer output-buffer)
+      (let ((ffi-output-buffer (io/static:static-vector-pointer output-buffer)))
         (with-alien-slots (zstd::dst zstd::size zstd::pos) (zstd-out-buffer stream)
           (setf zstd::dst ffi-output-buffer)
           (setf zstd::size output-buffer-size)
@@ -252,16 +253,16 @@ of the data read from the INPUT-STREAM."
         (if (null-alien context)
             (zstd-error "Failed to create decompression context.")
             (setf zstd-context context)))
-      (setf input-buffer (io/static:make-static-vector input-buffer-size))
+      (setf input-buffer (io/static:make-static-vector input-buffer-size :initial-element 0))
       (setf zstd-in-buffer (make-alien zstd-inbuffer))
-      (with-vector-sap (ffi-input-buffer input-buffer)
+      (let ((ffi-input-buffer (io/static:static-vector-pointer input-buffer)))
         (with-alien-slots (zstd::src zstd::size zstd::pos) zstd-in-buffer
           (setf zstd::src ffi-input-buffer)
           (setf zstd::size 0)
           (setf zstd::pos 0)))
-      (setf output-buffer (io/static:make-static-vector output-buffer-size))
+      (setf output-buffer (io/static:make-static-vector output-buffer-size :initial-element 0))
       (setf zstd-out-buffer (make-alien zstd-outbuffer))
-      (with-vector-sap (ffi-output-buffer output-buffer)
+      (let ((ffi-output-buffer (io/static:static-vector-pointer output-buffer)))
         (with-alien-slots (zstd::dst zstd::size zstd::pos) zstd-out-buffer
           (setf zstd::dst ffi-output-buffer)
           (setf zstd::size output-buffer-size)

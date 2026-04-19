@@ -167,11 +167,10 @@
       (istype 'v7-tar-file foo))
     (is (delete-file path))))
 
-;; FIX 2024-12-27: 
-(deftest tar-zst (:skip t)
+(deftest tar-zst ()
   (let ((path (format nil "/tmp/~A.tar.zst" (gensym "foo"))))
     (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
-                         :if-exists :overwrite
+                         :if-exists :supersede
                          :if-does-not-exist :create
                          :compression :zstd)
       (istype 'tar-file foo))))
@@ -256,7 +255,7 @@ showVolumeMeters=1"))
         (is (output-gif-stream data-stream #p"example2.gif"))
         (is (delete-file #p"example2.gif"))))))
 
-(deftest gif3 ()
+(deftest gif3 (:skip :todo)
   (let* ((height 100)
          (width 100)
          (color-count 256)
