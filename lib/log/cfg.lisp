@@ -58,4 +58,4 @@
                          (apply 'make-config :logger args)))))
     (when start 
       (start *logger*)
-      (info! "logger initialized"))))
+      (trace! "logger initialized: ~A" *logger*))))

@@ -89,3 +89,6 @@ values: (VARS FUNCTIONS SRC)"
 ;; pre_remove, post_remove
 
 ;;; Meta-packages
+
+;;; Arch Build System (ABS)
+;; makepkg, makepkg-template

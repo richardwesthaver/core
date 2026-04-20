@@ -50,6 +50,8 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (makepkg-error "Pacman command failed: ~A ~A" *makepkg* (sb-ext:process-error proc)))))
 
+;; TODO 2026-04-19: makepkg-template
+
 (defconfig makepkg-config (ast) ())
 
 (defun read-makepkg-string (stream &optional c)

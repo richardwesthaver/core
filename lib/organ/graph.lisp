@@ -229,29 +229,30 @@ expansion. See EXPAND-FILES.")
 (defun expand-files (&optional (files *org-graph-files*) (nodes *org-graph-nodes*) (edges *org-graph-edges*))
   (mapc 
    (lambda (x) 
-     (pushnew x nodes :test 'equiv)
-     (let ((stack))
-       (flet ((.push (a b)
-                (pushnew
-                 (make-instance 'org-graph-implicit-edge
-                   :type :child 
-                   :in (or (id a) (id x)) :out (or (id b) (id x))
-                   :timestamp (time:now)
-                   :point (or (idx a) (idx b)))
-                 edges
-                 :test 'equiv)))
-         (loop for h across (ast x)
-             if (or (null stack) (< (org-stars h) (org-stars (car stack))))
-             do (progn 
-                  (push h stack) 
-                  (.push x h))
-             else if (> (org-stars h) (org-stars (car stack)))
-             do (progn 
-                  (push h stack) 
-                  (.push (cadr stack) (car stack)))
-             else do (progn 
-                       (setf (car stack) h)
-                       (.push (or (cadr stack) x) h))))))
+     (when x
+       (pushnew x nodes :test 'equiv)
+       (let (stack)
+         (flet ((.push (a b)
+                  (pushnew
+                   (make-instance 'org-graph-implicit-edge
+                     :type :child 
+                     :in (or (id a) (id x)) :out (or (id b) (id x))
+                     :timestamp (time:now)
+                     :point (or (idx a) (idx b)))
+                   edges
+                   :test 'equiv)))
+           (loop for h across (ast x)
+                 if (or (null stack) (< (org-stars h) (org-stars (car stack))))
+                 do (progn 
+                      (push h stack) 
+                      (.push x h))
+                 else if (> (org-stars h) (org-stars (car stack)))
+                 do (progn 
+                      (push h stack) 
+                      (.push (cadr stack) (car stack)))
+                 else do (progn 
+                           (setf (car stack) h)
+                           (.push (or (cadr stack) x) h)))))))
    files)
   (values nodes edges))
 
@@ -352,7 +353,7 @@ new ID to be serialized on export.")
 (defun org-graph-minisearch-json (&key (files *org-graph-files*) (if-exists :supersede) path)
   "Generate a Minisearch json search index based on FILES."
   (let ((*org-graph-export-id* -1))
-    (serialize (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)) :json
+    (serialize (flatten (mapcar (lambda (x) (when x (coerce (ast x) 'list))) files)) :json
                :path path
                :if-exists if-exists)))
 
@@ -365,7 +366,7 @@ new ID to be serialized on export.")
                      (gethash "url" tbl) (when-let ((y (find x *org-graph-nodes* :test 'equiv))) (path y))
                      (gethash "body" tbl) (org-contents (org-contents (org-contents x))))
                tbl))
-           (flatten (mapcar (lambda (x) (coerce (ast x) 'list)) files)))
+           (flatten (mapcar (lambda (x) (when x (coerce (ast x) 'list))) files)))
    :json
    :path path
    :if-exists if-exists))
