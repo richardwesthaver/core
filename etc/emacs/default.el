@@ -1059,7 +1059,7 @@ Add this function to appropriate major mode hooks such as
         org-log-redeadline 'time
         org-log-states-order-reversed nil
         org-clock-persist 'history
-	org-clock-persist-file (join-paths user-emacs-directory "org-clock-save.sxp"))
+	org-clock-persist-file (join-paths user-emacs-directory "org-clock-save"))
 
 (add-hook 'after-init-hook #'org-clock-persistence-insinuate)
 

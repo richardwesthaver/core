@@ -133,7 +133,9 @@ The following keyword parameters can be passed to the info dynamic block:
 :vc      when non-nil include the vc files table.
 :files   when non-nil include the local files table.
 :html    when non-nil include the html files table.
-:links   when non-nil include the links list."
+
+:links when non-nil include the links list. The argument is passed
+       via project-links(include=ARG)."
   (with-dblock-defaults
    (let ((html (when-let* ((val (plist-member params :html)))
 		 (cadr val)))
@@ -193,7 +195,9 @@ The following keyword parameters can be passed to the info dynamic block:
 		     (insert "#+CALL: project-files() :dir " project-root "\n")))
 	   ('links (when links
 		     (message "building project links...")
-		     (insert "#+CALL: project-links() :dir " project-root "\n")))))
+		     ;; note that LINKS is quoted
+		     (insert "#+CALL: project-links(include=" 
+			     (format "'%s" links) ") :dir " project-root "\n")))))
        (org-babel-execute-region point (point))))))
 
 (defun org-project-info ()

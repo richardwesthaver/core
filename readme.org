@@ -2,7 +2,7 @@
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
-#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :links t
+#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :links all
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
@@ -13,15 +13,17 @@
 | id          | 4611004031049662566                             |
 | root        | ~/comp/core/                                    |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Sat Apr 18 23:45:39 2026 -0400                  |
+| updated     | Sun Apr 19 20:16:36 2026 -0400                  |
 | langs       | elisp lisp makefile org perl text               |
-| lines       | 270149 :code 220272 :comment 22100 :blank 27777 |
+| lines       | 270159 :code 220280 :comment 22101 :blank 27778 |
 |-------------+-------------------------------------------------|
 
-#+CALL: project-links() :dir ~/comp/core/
+#+CALL: project-links(include='all) :dir ~/comp/core/
 
 #+RESULTS:
-- [[https://compiler.company/docs/core/index.html][Docs]]
+- [[https://compiler.company/docs/core/index.html][Documentation]] 
+  - [[https://compiler.company/docs/core/man.html][Manual]]
+  - [[https://compiler.company/docs/core/api.html][API]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]
 
 #+END:
@@ -33,6 +35,6 @@ and no guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
 #+begin_src shell :eval never
-  sbcl --script bootstrap.lisp
+  ./bootstrap.lisp
   sudo .stash/core --script etc/script/install.lisp # prefix=/usr
 #+end_src
