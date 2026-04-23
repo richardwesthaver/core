@@ -59,10 +59,10 @@
 ;;; Task
 (defkernel task ()
   ((state :initform nil :initarg :state :accessor state))
-  (:documentation "A TASK represents a single unit of work to be done in a single thread by
-some worker. Tasks are typically distributed from the pool, but workers may
-also be granted the ability to create and distribute their own tasks, or be
-assigned a single task to call repeatedly. 
+  (:documentation "A TASK represents a single unit of work owned by a single thread. Tasks are
+typically distributed from the pool, but workers may also be granted the
+ability to create and distribute their own tasks, or be assigned a single task
+to call repeatedly.
 
 Once a task is assigned, the 'owner', i.e. the worker that is assigned this
 task, may modify the object. When the work associated with a task is complete,
@@ -276,12 +276,14 @@ wasn't visited yet."))
 (defclass planner (scheduler) ())
 
 ;;;; planned tasks
+
 ;; propagators 
 (defkernel planned-task (task) ())
 (defkernel descending-task (planned-task) ())
 (defkernel ascending-task (planned-task) ())
 (defkernel sibling-task (planned-task) ())
 (defkernel child-task (planned-task) ())
+
 ;; non-propagating
 (defkernel solo-task (planned-task) ())
 

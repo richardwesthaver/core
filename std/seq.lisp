@@ -1394,7 +1394,8 @@ make-sequence-iterator to create an iteration state and receive functions to
 query and mutate it. These functions allow, among other things, moving to,
 retrieving or modifying elements of the sequence. An iteration state consists
 of a state object, a limit object, a from-end indicator and the following six
-functions to query or mutate this state: step endp element (setf element) index copy
+functions to query or mutate this state: step endp element (setf element)
+index copy
 
 See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-functions
 

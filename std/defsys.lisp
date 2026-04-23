@@ -47,7 +47,8 @@
 (defvar *system-table* (make-hash-table :test 'equal)
   "An EQL hash-table containing NAME:SYSTEM pairs.")
 
-(defvar *system-session-pool* nil)
+(defvar *system-session-async-p* nil
+  "When non-nil enable the :system-session thread-pool.")
 
 (defvar *provider-table* (make-hash-table)
   "A hash-table containing PROVIDER functions.")
@@ -1280,8 +1281,14 @@ internally. On success the path is added to the *SYSDEFS* list."
                                       :verbose verbose)))))))))
   comp)
 
+(defun make-system-session-pool (&optional (thread-count (std/alien:num-cpus)))
+  (make-thread-pool thread-count
+                    :name :system-session
+                    :class 'std/task:task-pool
+                    :worker-class 'system-worker))
+
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-pool*) (reset t)
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-async-p*) (reset t)
                                         fasl-cache
                                         system-data
                                         system-cache)
@@ -1295,11 +1302,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
         (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") *user-fasl-cache*)
   (ensure-directories-exist (system-data-dir "bin/"))
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
-  (let ((pool (when pool
-                (make-thread-pool (std/alien:num-cpus) 
-                                  :name *system-session-pool*
-                                  :class 'std/task:task-pool
-                                  :worker-class 'system-worker))))
+  (let ((pool (when pool (make-system-session-pool))))
     (cond
       ((or reset (not *system-session*)) 
        (setf *system-session* (make-system-session :pool pool)

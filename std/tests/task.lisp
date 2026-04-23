@@ -11,9 +11,9 @@
   (let ((t1 (make-instance 'task))
         (t2 (make-instance 'scheduled-task))
         (t3 (make-instance 'async-task)))
-    (is (taskp t1))
-    (is (taskp t2))
-    (is (taskp t3))))
+    (is (task-p t1))
+    (is (task-p t2))
+    (is (task-p t3))))
 
 (deftest simple-task ()
   "Test simple tasks in sync/async contexts.")
@@ -22,8 +22,8 @@
 (deftest job ()
   "Basic JOB functionality."
   (let ((j1 (apply 'make-job (collecting (do ((i 0 (incf i))) ((= i 10)) (collect (make-task (constantly t) t)))))))
-    (is (jobp j1))
-    (is (taskp (aref (tasks j1) 0)))
+    (is (job-p j1))
+    (is (task-p (aref (tasks j1) 0)))
     (is (vectorp (tasks j1)))
     (is= (length (tasks j1)) 10)
     #+nil
