@@ -587,12 +587,15 @@ to match all systems and optional KIND (a module designator) specified by KEY."
             kind (ensure-car form) sys))
           (t (%load-module form kind form sys)))))))
 
-(defun load-modules (name &rest args)
+(defun load-module* (name &rest args)
   (mapcar (lambda (x) 
             (if (atom x)
                 (load-module name x)
                 (apply 'load-module name x)))
           args))
+
+(defun load-modules (&rest args)
+  (mapcar 'load-modules args))
 
 (defun unload-module (name &optional kind key)
   (setf (find-module name kind key nil) nil)
@@ -614,7 +617,7 @@ USE should be called in order to load and activate a module."
 (defmacro use (name &body body)
   "Load and activate a package or module by NAME with the provider forms in BODY."
   (if body
-      `(load-modules ,name ,@body)
+      `(load-module* ,name ,@body)
       (if (find-package name)
           `(use-package ,name)
           `(load-module ,name))))

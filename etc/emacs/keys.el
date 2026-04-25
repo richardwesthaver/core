@@ -13,11 +13,14 @@
 
 (defvar-keymap parens-map
   :doc "parens-minor-mode keymap."
+  :repeat (:exit (kill-sexp undo))
   :prefix 'parens-map
-  "u" #'backward-up-list
   "f" #'forward-sexp
   "b" #'backward-sexp
-  "d" #'down-list
+  "C-n" #'down-list
+  "C-p" #'backward-up-list
+  "n" #'forward-list
+  "p" #'backward-list
   "k" #'kill-sexp
   "\\" #'indent-sexp
   "C-\\" #'prog-indent-sexp
@@ -178,6 +181,7 @@
 
 ;;; C-x
 (keymap-set ctl-x-map "C-b" #'ibuffer)
+(keymap-set ctl-x-map "C-M-e" #'eval-last-sexp)
 
 ;;; C-x r
 (keymap-set ctl-x-r-map "SPC" #'point-to-register)

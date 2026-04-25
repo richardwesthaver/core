@@ -1511,6 +1511,7 @@
    :use :using
    :refuse :refusing
    :load-module
+   :load-modules
    :unload-module
    :with-module
    :load-system
