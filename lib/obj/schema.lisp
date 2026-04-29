@@ -235,11 +235,15 @@ SCHEMA."
   ((name :accessor name :initarg :name))
   (:documentation "A simple schema contains at least a NAME slot and supports the ID protocol."))
 
+(defmethod id ((self simple-schema)) (name self))
+(defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
+
 (defun make-simple-schema (name &rest fields)
   (make-instance 'simple-schema :name name :fields (coerce fields 'field-vector)))
 
-(defmethod id ((self simple-schema)) (name self))
-(defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
+(defmethod print-object ((self simple-schema) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :fields ~A" (name self) (map 'list 'obj/schema::%field-name (fields self)))))
 
 ;;; Dynamic Schema
 ;; RESEARCH 2025-09-17: 

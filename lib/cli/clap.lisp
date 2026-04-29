@@ -141,9 +141,10 @@ evaluation of BODY."
   (string-upcase (read-arg *command-io* prompt)))
 
 (define-command-type (:cli ustring*) (&optional (prompt "Input: "))
-  (princ prompt *query-io*)
-  (force-output *query-io*)
-  (mapcar 'string-upcase (read-args *query-io*)))
+  (let ((*query-io* (if (streamp *command-io*) *command-io* *query-io*)))
+    (princ prompt *query-io*)
+    (force-output *query-io*)
+    (mapcar 'string-upcase (read-args *query-io*))))
 
 (define-command-type (:cli dstring) (&optional (prompt "input: "))
   (princ prompt *query-io*)

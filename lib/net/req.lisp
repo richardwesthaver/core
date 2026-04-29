@@ -1025,7 +1025,7 @@ keep-alive-stream), and should handle clean-up of it"
                                     :protocol :tcp))
                           (connection (socket-connect
                                        socket
-                                       (make-inet-address (or (net/proto/dns:resolve (uri-host con-uri)) (uri-host con-uri)))
+                                       (get-address (uri-host con-uri))
                                        (or (uri-port con-uri) (when (or insecure (string-equal (uri-scheme con-uri) "http")) 80) 443)))
                           (stream (socket-make-stream connection
                                                       :input t

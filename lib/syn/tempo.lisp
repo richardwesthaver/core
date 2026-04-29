@@ -425,7 +425,7 @@ Rebuilds it when text template was a file which has been modified."
   `(register-template ',name ,@body))
 
 ;;; Init
-(defmethod init ((self (eql :tempo)) &key (package *tempo-package*) (case-sensitive *tempo-case-sensitive*))
+y(defmethod init ((self (eql :tempo)) &key (package *tempo-package*) (case-sensitive *tempo-case-sensitive*))
   (setf *tempo-package* package
         *tempo-case-sensitive* case-sensitive))
 

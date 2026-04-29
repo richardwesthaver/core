@@ -133,37 +133,39 @@ desired name for use in lisp."
 
 (defun convert-ts-tree (tree &key (name-generator #'make-lisp-name)
                              &aux did-visit-children parse-stack)
-  (with-ts-cursor (tc node tree)
-    ;; Closely follows tree-sitter-cli parse implementation
-    ;; (with-ts-node?
-    (loop
-      (let ((node (ts-tree-cursor-current-node tc)))
-        (when (null-alien node) (return parse-stack))
-        (let ((is-named (ts-node-is-named node))
-              (cursor tc))
-          (cond (did-visit-children
-                 (when (and is-named (second parse-stack))
-                   (let ((item (pop parse-stack)))
-                     (setf (node-children item)
-                           (nreverse (node-children item)))
-                     (push item (node-children (first parse-stack)))))
-                 (cond ((ts-tree-cursor-goto-next-sibling cursor)
-                        (setf did-visit-children nil))
-                       ((ts-tree-cursor-goto-parent cursor)
-                        (setf did-visit-children t))
-                       (t
-                        (let ((root (first parse-stack)))
-                          (setf (node-children root)
-                                (nreverse (node-children root)))
-                          (return root)))))
-                (t
-                 (when is-named
-                   (let ((start-point (ts-node-start-byte node))
-                         (end-point (ts-node-end-byte node))
-                         (type (funcall name-generator (ts-node-type node)))
-                         (field-name (ts-tree-cursor-current-field-name cursor)))
-                     (when field-name (setf type (list (funcall name-generator field-name) type)))
-                     (push (make-node :type type :range (list start-point end-point))
-                           parse-stack)))
-                 (setf did-visit-children
-                       (not (ts-tree-cursor-goto-first-child cursor))))))))))
+  (unwind-protect
+       (with-ts-cursor (tc node tree)
+         ;; Closely follows tree-sitter-cli parse implementation
+         ;; (with-ts-node?
+         (loop
+           (let ((node (ts-tree-cursor-current-node tc)))
+             (when (null-alien node) (return parse-stack))
+             (let ((is-named (ts-node-is-named node))
+                   (cursor tc))
+               (cond (did-visit-children
+                      (when (and is-named (second parse-stack))
+                        (let ((item (pop parse-stack)))
+                          (setf (node-children item)
+                                (nreverse (node-children item)))
+                          (push item (node-children (first parse-stack)))))
+                      (cond ((ts-tree-cursor-goto-next-sibling cursor)
+                             (setf did-visit-children nil))
+                            ((ts-tree-cursor-goto-parent cursor)
+                             (setf did-visit-children t))
+                            (t
+                             (let ((root (first parse-stack)))
+                               (setf (node-children root)
+                                     (nreverse (node-children root)))
+                               (return root)))))
+                     (t
+                      (when is-named
+                        (let ((start-point (ts-node-start-byte node))
+                              (end-point (ts-node-end-byte node))
+                              (type (funcall name-generator (ts-node-type node)))
+                              (field-name (ts-tree-cursor-current-field-name cursor)))
+                          (when field-name (setf type (list (funcall name-generator field-name) type)))
+                          (push (make-node :type type :range (list start-point end-point))
+                                parse-stack)))
+                      (setf did-visit-children
+                            (not (ts-tree-cursor-goto-first-child cursor)))))))))
+    (ts-tree-delete tree)))

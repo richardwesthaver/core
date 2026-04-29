@@ -10,22 +10,35 @@
 
 ;;; Code:
 (in-package :skel/packy/pkgbuild)
-
+(load-tree-sitter)
+(load-tree-sitter-bash)
 (defparameter *pkgbuild-filename* "PKGBUILD")
 
 (defun parse-pkgbuild-value (l s)
   (destructuring-bind (n1 n2 b1 b2) l
     (cons (keywordicate (string-upcase (subseq s n1 n2)))
-          (trim (subseq s b1 b2)))))
+          (let ((val (subseq s b1 b2)))
+            (unless (or (string= "()" val)
+                        (string= "\"\"" val))
+              (let ((v (trim (subseq s b1 b2))))
+                (if (simple-string-p v)
+                    (let ((l (1- (length v))))
+                      ;; \"val\" 'val'
+                      (if (or (char= #\" (schar v 0) (schar v l))
+                              (char= #\' (schar v 0) (schar v l)))
+                          (subseq s 1 (1- l))
+                          (or (ignore-errors (parse-number v))
+                              v)))
+                    v)))))))
 
 ;; (parse-pkgbuild #p"/usr/share/pacman/PKGBUILD.proto")
-
+;; (convert-ts-tree (syn/ts::parse-file :bash #p"/usr/share/pacman/PKGBUILD.proto"))
 (defun parse-pkgbuild (&optional (file *pkgbuild-filename*))
   "Parse FILE as a pkgbuild script using tree-sitter. Returns multiple
 values: (VARS FUNCTIONS SRC)"
   (let* ((path (probe-file file))
          (str (read-file path))
-         (tree (copy-list (convert-ts-tree (syn/ts:parse-file :bash path))))
+         (tree (convert-ts-tree (syn/ts:parse-file :bash path)))
          vars fns)
     (mapc (lambda (x)
             (case (car x)
@@ -37,16 +50,20 @@ values: (VARS FUNCTIONS SRC)"
                (when-let ((name (cadar (member :name (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x))))))
                           (val (cadar (member :value (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x)))))))
                  (push (nconc name val) vars)))))
-          (caddr tree))
+          (when tree (caddr tree)))
     (values
-     (flatten (mapcar (lambda (x) (parse-pkgbuild-value x str)) vars))
-     (flatten (mapcar (lambda (x) (parse-pkgbuild-value x str)) fns)))))
+     (collecting (mapcar (lambda (x) 
+                           (when-let ((y (parse-pkgbuild-value x str)))
+                             (destructuring-bind (k . v) y
+                               (collect k) (collect v))))
+                         vars))
+     (mapcar (lambda (x) (parse-pkgbuild-value x str)) fns))))
 
 (defmethod deserialize ((from pathname) (format (eql :pkgbuild)) &key)
   (multiple-value-bind (config fns) (parse-pkgbuild from)
     (apply 'make-instance 'pkgbuild :functions fns config)))
 
-(defclass pkgbuild ()
+(defclass pkgbuild (ast)
   ((pkgname :initarg :pkgname)
    (pkgver :initarg :pkgver)
    (pkgrel :initarg :pkgrel)
@@ -55,6 +72,7 @@ values: (VARS FUNCTIONS SRC)"
    (desc :initarg :desc)
    (url :initarg :url)
    (license :initarg :license)
+   (validpgpkeys :initarg :validpgpkeys)
    (groups :initarg :groups)
    (provides :initarg :provides)
    (options :initarg :options)
@@ -66,14 +84,27 @@ values: (VARS FUNCTIONS SRC)"
    (optdepends :initarg :optdepends)
    (checkdepends :initarg :checkdepends)
    (sha256sums :initarg :sha256sums)
+   (sha512sums :initarg :sha512sums)
    (noextract :initarg :noextract)
    (source :initarg :source)
    (install :initarg :install)
    (functions :initarg :functions)))
 
+(defvar *pkgbuild-slots* 
+  (mapcar (lambda (x) (keywordicate (slot-definition-name x)))
+          (class-direct-slots (find-class 'pkgbuild))))
+
+(defmethod initialize-instance :before ((self pkgbuild) &rest initargs &key &allow-other-keys)
+  (setf (ast self)
+        (collecting
+          (doplist (k v) initargs
+            (unless (memq k *pkgbuild-slots*)
+              (remove-from-plist initargs k)
+              (collect k) (collect v))))))
+
 (defmethod serde ((self pkgbuild) (path pathname))
   "Serialize a pkgbuild SELF to PATH."
-  (let* ((vars (remove 'functions (mapcar 'slot-definition-name (class-slots (find-class 'pkgbuild)))))
+  (let* ((vars (remove 'functions *pkgbuild-slots*))
          (vals (slot-values self vars))
          (fns (slot-value self 'functions)))
     (with-open-file (f path :direction :output)

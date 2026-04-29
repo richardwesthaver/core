@@ -75,10 +75,6 @@
 
 (defvar org-graph-target-maxlevel 4)
 
-(defcustom org-graph-db-init-script (join-paths company-source-directory "infra/scripts/org-db-init.lisp")
-  "Path to a lisp script responsible for initializing the `org-graph-db-directory'."
-  :type 'file)
-
 (defcustom org-graph-file (join-paths user-emacs-directory "graph.sxp")
   "Path to the default output location of 'org-graph-save'."
   :type 'file)
@@ -135,6 +131,7 @@ non-nil visit each node and collect all edges found."
 					   i total)))
 	(maphash
 	 (lambda (k v)
+	   (message "org-graph-node: %s:%s" v k)
 	   (progress-reporter-update prog (incf i) v)
            (let ((pos (cdr (org-id-find-id-in-file k v))))
              (if pos
@@ -791,7 +788,8 @@ either side, and deletes both sides of a link."
   (interactive)
   (org-graph-kill-all no-readme)
   (org-id-update-id-locations (org-graph-files))
-  (org-graph-from-files))
+  (org-id-locations-save)
+  (org-graph-from-id-locations t))
 
 ;;;###autoload
 (defun org-graph-load ()

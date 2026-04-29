@@ -36,6 +36,8 @@ that the input is passed to READ-FROM-STRING."
       (val val)
       (t default))))
 
+;; TODO 2026-04-26: completing-read-sequence - list without parens
+
 (define-command-type cmd (input &optional (prompt "Command: ") completions (default :error))
   (let ((*query-io* input))
     (completing-read prompt (or completions (mapcar (lambda (x) (string-downcase (car x))) (commands))) default)))

@@ -14,6 +14,8 @@ which is executed in order to fulfill the rule."
   (source nil :type list)
   (recipe nil :type list))
 
+(defmethod name ((self sk-rule)) (sk-rule-target self))
+
 (definline make-sk-rule (target &optional source recipe)
   (%make-sk-rule
    (etypecase target 

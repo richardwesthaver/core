@@ -7,6 +7,19 @@
 
 (init :commands :name :skel :copy :cli :clean t)
 
+(define-command-type rule (&optional 
+                           (prompt "Rule: ") 
+                           (completions (map 'list #'sk-rule-target (skel/core::rules *skel-project*)))
+                           (default :error))
+  (let ((*query-io* (if (streamp *command-io*) *command-io* *query-io*)))
+    (cli/tui:completing-read prompt completions default)))
+
+(define-command-type rule* (&optional (prompt "Rules: ")
+                                      (completions (map 'list #'sk-rule-target (skel/core::rules *skel-project*))))
+  (loop for x = (cli/tui:completing-read prompt completions nil)
+        while x
+        collect x))
+
 (defcommand (:skel init) (&optional file name)
   (handler-bind
       ((sb-ext:file-exists
@@ -112,7 +125,7 @@
     (cli/ed:run-emacsclient (namestring file))))
 
 (defcommand (:skel make) (&rest args)
-  (declare (interactive (ustring* "Make what? ")))
+  (declare (interactive (ustring* "Rules: ")))
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
       (if args
