@@ -13,6 +13,12 @@
                 (= 3 #1#))
       (systemctl-error "SYSTEMCTL command failed: ~A ~A" *systemctl* (or args "")))))
 
+(defun systemctl-enable (&rest args)
+  (run-systemctl `("enable" ,@args)))
+
+(defun systemctl-disable (&rest args)
+  (run-systemctl `("disable" ,@args)))
+
 (defun systemctl-start (&rest args)
   (run-systemctl `("start" ,@args)))
 
