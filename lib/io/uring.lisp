@@ -4,9 +4,7 @@
 
 ;;; Code:
 (in-package :io/uring)
-
 (load-uring)
-
 (defvar *io* nil)
 
 ;; (defun iou-send (event ring) "Prepare an io-uring submission.")

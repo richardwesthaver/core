@@ -1,5 +1,8 @@
 ;;; ~/comp/core/lib/doc/doc.sys --- Doc Sytem Definitions
 (defsys :doc
+ "DOC is the official documentation system of the core. It contains all modules
+necessary for building complete API reference documents."
+ :version "0.1.0"
  :require (:std :organ :parse :obj :rdb :log)
   :components 
  ((:pkg "pkg")
@@ -12,4 +15,5 @@
   (:file "reprex"))
  :provide 
  ((:proto :doc)
+  (:readtable :doc)
   (:tests :require (:rt :doc :rdb :obj))))

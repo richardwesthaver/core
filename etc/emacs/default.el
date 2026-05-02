@@ -310,7 +310,20 @@ buffer should appear."
       (setq slime-toggle (current-buffer))
       (slime))))
 
+(defun slime-load-script (filename)
+  "Like `slime-load-file' but for script files containing a shebang
+line (which is skipped)."
+  (interactive (list
+                (read-file-name "Load file: " nil nil
+                                nil (if (buffer-file-name)
+                                        (file-name-nondirectory
+                                         (buffer-file-name))))))
+  (let ((lisp-filename (slime-to-lisp-filename (expand-file-name filename))))
+    ;; TODO 2026-05-01: 
+    (slime-eval-with-transcript `(swank:load-script-file ,lisp-filename))))
+
 (defvar lisp-toggle nil)
+
 (defun lisp-toggle (&optional cmd)
   "Toggle between current buffer and inferior-lisp process buffer."
   (interactive)

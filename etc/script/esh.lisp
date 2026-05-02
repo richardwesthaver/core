@@ -1,4 +1,5 @@
-#!/bin/core --script
+#!/usr/bin/env -S core --script
+#|Remote Eshell Client|#
 (in-package :user)
 (make-thread-pool (num-cpus) :name :emacs)
 

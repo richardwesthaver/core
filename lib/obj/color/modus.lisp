@@ -1,4 +1,4 @@
-;;; modus.lisp --- Modus Operandi and Vivendi color themes
+;;; modus.lisp --- Modus Operandi and Vivendi palettes
 
 ;; Credits to Protesilaos for showing us that themes can be functional and beautiful.
 
@@ -381,7 +381,6 @@
   ;; :overline-heading-7 :unspecified
   ;; :overline-heading-8 :unspecified
   )
-
 
 (make-palette :modus-vivendi
   ;; Basic values

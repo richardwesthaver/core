@@ -1,4 +1,4 @@
-#!/bin/core --script
+#!/usr/bin/env -S core --script
 #|A dummy command script for interactive testing.
 |#
 (use-package :cmd)

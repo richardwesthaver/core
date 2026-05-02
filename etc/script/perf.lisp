@@ -1,5 +1,5 @@
 #!/bin/core --script
-;; Record Linux perf data and run benchmarks.
+#|Record Linux perf data|#
 (in-package :user)
 (require 'sb-perf)
 (sb-perf:write-jitdump)

@@ -560,11 +560,12 @@
 
 (defpkg :std/readtable
   (:use :cl :std/prim)
-  (:import-from :std/named-readtables :defreadtable)
+  (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
   (:import-from :std/prim :defmacro!)
   (:export
+   :ignore-numarg
    ;; readtable
    :|#"-reader|
    :|#`-reader|

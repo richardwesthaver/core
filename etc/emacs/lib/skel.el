@@ -290,21 +290,24 @@ project's skelfile, if any. Typically added to
 	(lisp-mode))
       (organ-minor-mode-setup))))
 
+;; FIX 2026-05-01: 
 (defun organ-update-mode ()
   (let ((lm -1)
-        (rm -1))
+        (rm -1)
+	(vbar nil))
     (save-excursion 
-      (if (search-backward "#&" nil t)
+      (if (or (search-backward "#&" nil t)
+	      (and (search-backward "#| org" nil t) (setf vbar t)))
           (setq lm (point))
         (setq lm -1)))
     (save-excursion
-      (if (search-backward "&#" nil t)
+      (if (or (and (not vbar) (search-forward "&#" nil t))
+	      (and vbar (search-forward "|#" nil t)))
           (setq rm (point))
         (setq rm -1)))
-    (if (and (= lm -1) (= rm -1))
+    (if (or (= lm -1) (= rm -1))
         (organ-change-mode nil)
-      (if (>= lm rm)
-          (organ-change-mode 'org-mode)))))
+      (organ-change-mode 'org-mode))))
 
 (define-minor-mode organ-minor-mode nil
   :lighter " organ"

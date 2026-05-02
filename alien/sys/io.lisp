@@ -23,11 +23,13 @@
 (in-package :sys)
 
 (defclass io-vector-class (foreign-vector-class)
-  ((length :initarg :length :initform 0 :type array-index :reader sequence:length)))
+  ((length :initarg :length :initform 0 :type array-index :reader sequence:length))
+  (:documentation "Foreign vectors which point to IOVEC alien types."))
 
-(defclass io-vec () 
+(defclass io-vec ()
   ((sap :initarg :sap :initform nil :accessor sap))
-  (:metaclass io-vector-class))
+  (:metaclass io-vector-class)
+  (:documentation "Lisp representation of the iovec C type consisting of an address and a length."))
 
 (defun io-vector-length (iv)
   (slot-value (class-of iv) 'length))
@@ -52,10 +54,10 @@
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
-;; An alien array of IOVECs with the same length and element type
 (defclass io-vector ()
   ((sap :initarg :sap :initform nil :accessor sap))
-  (:metaclass io-vector-class))
+  (:metaclass io-vector-class)
+  (:documentation "An alien array of IOVECs with the same length and element type."))
 
 (with-memoization ()
   (memoizing
@@ -76,7 +78,8 @@
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
-(defun io-octet-vector (length) 
+(defun io-octet-vector (length)
+  "Create a new IO-VECTOR of type OCTET with the provided LENGTH. The result is memoized."
   (make-instance (io-vector 'octet length) :sap (alien-sap (make-alien unsigned-char length))))
 
 ;; alloc free

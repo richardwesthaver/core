@@ -20,24 +20,22 @@
 
 ;; The way we treat them at the read stage is almost identical. The
 ;; only difference being that Emacs Lisp does not support the inline
-;; comment syntax '#| some comment |#'.
+;; comment syntax.
 
 ;; In any case the idea is to do 'something' with comments instead of
 ;; getting rid of them at read-time.
 
 ;;;; Headers
 
-;; Special consideration is given to source-code 'header' blocks. In
-;; our own code, we use them as much as possible but haven't been
-;; using them to their full potential just yet.
+;; Special consideration is given to source-code 'headers'. In our own
+;; code, we use them often.
 
-;; You will find most code, including this file begins with a block of
-;; the following form:
+;; Source Headers have the form:
 
 #|
- ;;; PATH --- SHORT-DESCRIPTION
+;;; FILENAME --- SUMMARY
 
- ;; LONG-DESCRIPTION
+ ;; DESCRIPTION
 
  ;;; Commentary:
 
@@ -47,12 +45,13 @@
  CODE
 |#
 
-;; Note the difference in comment characters used between the
-;; lines. Headings start with 3, and the contents of those Headings
-;; start with 2. The first heading/section is an 'anonymous' or 'meta'
-;; section that should be considered required. All headings beneath it
-;; are 'named' sections. 'Code:' is the only required named section,
-;; so in the example above, we may exclude the 'Commentary:' section.
+;; Note the difference in comment characters used between the lines. Headings
+;; start with 3, and the contents of those Headings start with 2. The first
+;; heading/section is an 'anonymous' or 'meta' section that should be
+;; considered required. All headings beneath it are 'named' sections. 'Code:'
+;; is the only required named section and marks the end of a header. In the
+;; example above, we may exclude the 'Commentary:' section or add additional
+;; ones before and after it.
 
 ;;;; Headings
 
@@ -74,12 +73,38 @@
 ;; 'Headings' of level 2, inside a subheading of level 1, inside a
 ;; heading named 'Commentary'.
 
-;;;; Ulang Comments
+;;;; Keyword Comments
 
-;; Some comment blocks starts with a keyword followed by a timestamp and colon
-;; - these are known as 'ulang comments' which are similar to Org-mode inline
-;; tasks. The keyword is equivalent to a todo-state, the timestamp the CREATED
-;; property, and the remainder of the first line after the colon the title.
+;; Some comment blocks starts with a keyword followed by an optional timestamp
+;; and colon - these are known as 'keyword comments' which are similar to
+;; Org-mode inline tasks. The keyword is equivalent to a todo-state, the
+;; timestamp the CREATED property, and the remainder of the first line after
+;; the colon the title. Keyword comments with a timestamp should never be
+;; considered permanent, and often denote the action which will result in its
+;; removal.
+
+;;;; Comment Blocks
+
+;; The vertical bar comment syntax has special meaning when compiled with the
+;; DOC reader active, which overloads the standard reader with additional
+;; capabilities. Conceptually they are quite similar to Org source blocks. The
+;; following comment block will be compiled as an ORGAN:ORG-ELEMENT and saved
+;; for use in our API documentation generator:
+
+#| org
+- *foo*
+- /bar/
+- _baz_
+- [[comp:][a link]]
+|#
+
+;; The parsing function is determined by the first line (in this case 'org'),
+;; and the parser input is a string which starts at the next line and ends at
+;; the matching comment block end sequence.
+
+;; When using the core emacs distribution you may also activate
+;; `organ-minor-mode' to swith to `org-mode' highlighting and bindings while
+;; point is inside an org comment block or an organ block '#&&#'
 
 ;;; Code:
 (in-package :doc)

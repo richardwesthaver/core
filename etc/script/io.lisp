@@ -1,10 +1,43 @@
-#!/bin/core --script
-#|IO Testing Utility
-|#
-(using :uring :sys :io)
+#|IO Testing Utility - based on liburing examples (cat and cp).|#
+(using :uring :sys :io :sb-alien)
 
 (defparameter *block-size* 1024)
 (defparameter *queue-depth* 1)
+
+(defclass file-info ()
+  ((size :initarg :size :type array-index)
+   (iovecs :initarg :iovecs :type io-vector)))
+
+(define-alien-type file-info
+  (struct nil
+    (size sys::off-t)
+    (iovecs (* iovec))))
+
+(defmethod pull-sap ((self file-info) (sap system-area-pointer))
+  (unless (null-pointer-p sap)
+    (with-alien ((finfo file-info (sap-alien sap file-info)))
+      (let ((size (slot finfo 'size)))
+        (make-instance 'file-info
+          :size size
+          :iovecs (make-instance (io-vector 'character (mod size *block-size*))
+                    :sap (slot finfo 'iovecs)))))))
+
+(defmethod push-sap* ((self file-info))
+  (let ((fi (make-alien file-info)))
+    (setf (slot fi 'size) (slot-value self 'size)
+          (slot fi 'iovecs) (sap (slot-value self 'iovecs)))
+    (alien-sap (deref fi))))
+
+(defmethod push-sap ((self file-info) (sap system-area-pointer))
+  (setf sap (push-sap* self)))
+
+#|
+(push-sap*
+ (make-instance 'file-info 
+   :size 420
+   :iovecs (make-instance (io-vector 'octet 420)
+             :sap (make-alien iovec 420))))
+|#
 
 ;; liburing cat
 ;; io-uring-wait-cqe
@@ -15,14 +48,16 @@
       (when (minusp (slot (print (deref (deref c))) 'uring::res))
         (error "async readv failed: ~A" ret))
       (print :ok)
-      (uring::io-uring-cqe-get-data c))))
+      (pull-sap (make-instance 'file-info) (alien-sap (uring::io-uring-cqe-get-data c))))))
 
 (defun submit-read-request (path ring)
-  (let* ((size (file-size path))
-         (remaining size)
-         (offset 0)
-         (current-block 0)
-         (blocks (/ size *block-size*)))
+  (with-open-file (f path :direction :probe)
+    (let* ((file-fd (stream-fd f))
+           (size (file-length path))
+           (remaining size)
+           (offset 0)
+           (current-block 0)
+           (blocks (/ size *block-size*)))
     (when (mod size *block-size*) (incf blocks))
     ;; allocate file-info..
     ;; allocate input buffer..
@@ -36,10 +71,10 @@
           do (incf current-block)
           do (decf remaining bytes-to-read))
     ;; set file-size of file-info..
-    (with-alien ((sqe (* io-uring-sqe) (io-uring-get-sqe ring)))
-      #+todo (uring::io-uring-prep-readv sqe file-fd iovecs blocks 0)
-      #+todo (uring::io-uring-sqe-set-data sqe fi)
-      (uring::io-uring-submit ring))))
+    (with-alien ((sqe (* uring::io-uring-sqe) (uring::io-uring-get-sqe ring)))
+      (uring::io-uring-prep-readv sqe file-fd iovecs blocks 0)
+      (uring::io-uring-sqe-set-data sqe fi)
+      (uring::io-uring-submit ring)))))
 
 (defun cat (&rest files)
   (with-new-io-uring r

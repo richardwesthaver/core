@@ -7,7 +7,11 @@
 
 ;;; Code:
 (in-package :std/readtable)
-(std/named-readtables:in-readtable :standard)
+
+(defmacro ignore-numarg (sub-char numarg &optional (error t))
+  `(when ,numarg
+     (,(if error 'error 'warn) "A numeric argument was ignored in #~W~A." ,numarg ,sub-char)))
+
 (eval-when (:compile-toplevel :execute :load-toplevel)
   (defun |#`-reader| (stream sub-char numarg)
     "Sharp Backquote (#`) reader - quoted lambda shorthand.
@@ -24,7 +28,7 @@ Defines a lambda with the arg count determined by the numeric reader arg.
 
   (defun |#l-reader| (stream sub num)
     "Sharp L reader - logical pathname translation."
-    (declare (ignore sub num))
+    (ignore-numarg sub num)
     `(translate-logical-pathname (pathname ,(read stream))))
 
   ;; Nestable suggestion from Daniel Herring
@@ -33,7 +37,7 @@ Defines a lambda with the arg count determined by the numeric reader arg.
 
 Output is quoted appropriated - simply wrap outer-most double-quotes in
 sharps."
-    (declare (ignore sub-char numarg))
+    (ignore-numarg sub-char numarg)
     (let (chars (state 'normal) (depth 1))
       (loop do
                (let ((curr (read-char stream)))
@@ -182,6 +186,7 @@ indicates a recursive call (RCURRY instead of CURRY).
 
 ;; f-strings
 ;; ref: https://realpython.com/python-f-strings/
+#+todo
 (eval-when (:compile-toplevel :load-toplevel :execute)
   ;; TODO 2025-06-23: 
   (defun |#f-reader| (stream subchar num)
