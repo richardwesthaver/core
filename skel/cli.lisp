@@ -20,7 +20,9 @@
         while x
         collect x))
 
+;; TODO 2026-05-03: 
 (defcommand (:skel init) (&optional file name)
+  "Intialize a SK-PROJECT."
   (handler-bind
       ((sb-ext:file-exists
          #'(lambda (s)
@@ -32,13 +34,8 @@
                    (use-value f2 s))))))
     (init-skelfile file name)))
 
-(defcommand (:skel describe) (&optional arg)
-  (describe
-   (if arg
-       (find-skelfile (pathname arg) :load t)
-       (or *skel-project* *skel-user-config* *skel-system-config*))))
-
 (defcommand (:skel inspect) ()
+  "Inspect the current project."
   (setq *exit* nil)
   (inspect (or *skel-project* *skel-user-config*)))
 
@@ -91,6 +88,7 @@
         (required-argument 'name))))
 
 (defcommand (:skel show) (&rest args)
+  "Print project or configuration values."
   (declare (interactive *))
   (if args
       (mapc (lambda (x) 
@@ -118,13 +116,16 @@
   (values))
 
 (defcommand (:skel id) ()
+  "Print the current project ID as a hexstring and exit."
   (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
 
 (defcommand (:skel edit) (&optional arg)
+  "Edit a project file using ED."
   (let ((file (or arg (path *skel-project*))))
-    (cli/ed:run-emacsclient (namestring file))))
+    (ed (namestring file))))
 
 (defcommand (:skel make) (&rest args)
+  "Make project rules."
   (declare (interactive (ustring* "Rules: ")))
   (let ((sk *skel-project*))
     (with-directory (project-root sk)
@@ -138,13 +139,16 @@
           (sk-make sk (aref (skel/core::rules sk) 0))))))
 
 (defcommand (:skel status) ()
+  "Print the VC status of the current project."
   (vc:vc-status (vc:vc *skel-project*)))
 
 (defcommand (:skel search) (&rest args)
+  "Search the current project and print results."
   (dolist (a args)
     (println (sk-search-project a))))
 
 (defcommand (:skel shell) ()
+  "Start the interactive skel REPL."
   (trace! "starting skel shell")
   ;; TODO 2025-11-16: consolidate usage of *exit* vs *interactive* etc
   (setq *exit* nil)
@@ -172,6 +176,6 @@
 
 (define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))
-  :description "The hackable devtool.")
+  :description "A universal project development tool.")
 
 (save :commands :skel)
