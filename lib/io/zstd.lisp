@@ -98,7 +98,7 @@
     ;; (finish-output output-stream)
     ))
 
-(defmethod close ((stream compressing-stream) &key &allow-other-keys)
+(defmethod close ((stream zstd-compressing-stream) &key &allow-other-keys)
   (when (open-stream-p stream)
     (finish-output stream)
     (with-slots (zstd-context input-buffer zstd-in-buffer

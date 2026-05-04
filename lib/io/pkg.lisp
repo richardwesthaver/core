@@ -171,9 +171,11 @@
    :reset-compressor :reset-decompressor
    :compress-object :decompress-object :compress :decompress
    :compressor :compressing-stream :decompressor :decompressing-stream
+   :decompressing-deflate-stream :compressing-deflate-stream
    :make-decompressing-stream :make-compressing-stream
    :*decompression-buffer-size* :*compression-level*
    :compress-with :decompress-with
+   :dfun :dstate
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector

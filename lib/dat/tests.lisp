@@ -175,6 +175,16 @@
                          :compression :zstd)
       (istype 'tar-file foo))))
 
+(deftest tar-gz ()
+  (let ((path (format nil "/tmp/~A.tar.gz" (gensym "foo"))))
+    (with-open-tar-file (foo path :direction :output
+                         :if-exists :supersede
+                         :if-does-not-exist :create
+                         :compression :auto)
+      (istype 'tar-file foo))))
+
+;; (with-open-tar-file (foo "/var/lib/var_lib_symbolics.tar.gz" :direction :input) (inspect (read-entry foo)))
+
 ;;; INI
 (deftest ini ()
   (let ((str "[window]

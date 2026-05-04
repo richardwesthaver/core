@@ -529,8 +529,12 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
   (ecase compression
     (:zstd
      (ecase direction
-       (:input (io/flate:make-decompressing-stream :zstd stream))
-       (:output (io/flate:make-compressing-stream :zstd stream))))
+       (:input (make-decompressing-stream :zstd stream))
+       (:output (make-compressing-stream :zstd stream))))
+    (:gzip
+     (ecase direction
+       (:input (make-decompressing-stream :gzip stream))
+       (:output (make-compressing-stream 'io/deflate:gzip-compressor stream))))
     (:auto
      (let ((file-name (ignore-errors (pathname stream))))
        (ecase direction
@@ -538,16 +542,18 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
           (if (null file-name)
               stream
               (let ((type (pathname-type file-name)))
-                (if (or (null type) (not (uiop:string-suffix-p type "zst")))
-                    stream
-                    (make-compression-stream stream direction :zstd)))))
+                (cond
+                  ((null type) stream)
+                  ((uiop:string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
+                  ((uiop:string-suffix-p type "gz") (make-compression-stream stream direction :gzip))))))
          (:input 
           (if (null file-name)
               stream
               (let ((type (pathname-type file-name)))
-                (if (or (null type) (not (uiop:string-suffix-p type "zst")))
-                    stream
-                    (make-compression-stream stream direction :zstd))))))))
+                (cond 
+                  ((null type) stream) 
+                  ((uiop:string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
+                  ((uiop:string-suffix-p type "gz") (make-compression-stream stream direction :gzip)))))))))
     ((nil) stream)))
 
 (defun open-tar-file (stream &key (direction :input)
@@ -569,7 +575,7 @@ the appropriate class will be determined by looking at the first tar header.
 HEADER-ENCODING is an encoding specifier recognized by Babel.
 
 COMPRESSION determines what compression scheme is used, if any. It can be
-either :AUTO (the default), NIL (no compression), or :ZSTD. If :AUTO, the
+either :AUTO (the default), NIL (no compression), :GZIP or :ZSTD. If :AUTO, the
 compression type is determined using the PATHNAME of the stream (for :OUTPUT)
 or by peeking at the stream for magic numbers (for :INPUT)."
   (declare (type (member :input :output) direction))

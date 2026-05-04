@@ -501,6 +501,12 @@
    #:write-gnu-long-link-name-entry
    #:write-gnu-long-name-entry))
 
+(defpkg :dat/zip
+  (:nicknames :zip)
+  (:use :cl :std 
+   :io/proto :io/chunky :sb-ext :io/stream
+   :std/stream :std/macs :std/ht :io/flate))
+
 (defpkg :dat/parquet
   (:use :cl :std :obj/id :dat/json)
   (:export

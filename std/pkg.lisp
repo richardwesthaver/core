@@ -389,6 +389,7 @@
    #:coercef
    #:octet
    #:octet-vector
+   #:simple-octet-vector
    #:octet-vector-p
    #:positive-integer-p
    #:positive-long-float

@@ -535,12 +535,12 @@ decompressing BZIP2-related formats."))
   "Return a structure suitable for uncompressing data in DATA-FORMAT;
 DATA-FORMAT should be:
 
-  :BZIP2 or CHIPZ:BZIP2      For decompressing data in the `bzip2' format;
-  :GZIP or CHIPZ:GZIP        For decompressing data in the `gzip' format;
-  :ZLIB or CHIPZ:ZLIB        For decompressing data in the `zlib' format;
-  :DEFLATE or CHIPZ:DEFLATE  For decompressing data in the `deflate' format.
+  :BZIP2      For decompressing data in the `bzip2' format;
+  :GZIP       For decompressing data in the `gzip' format;
+  :ZLIB       For decompressing data in the `zlib' format;
+  :DEFLATE    For decompressing data in the `deflate' format.
 
-The usual value of DATA-FORMAT will be one of CHIPZ:BZIP2 or CHIPZ:GZIP."
+The usual value of DATA-FORMAT will be one of :BZIP2 or :GZIP."
   (case format
     ((:deflate :zlib :gzip
        deflate zlib gzip)
@@ -596,11 +596,11 @@ The usual value of DATA-FORMAT will be one of CHIPZ:BZIP2 or CHIPZ:GZIP."
   "Return a INFLATE-STATE structure suitable for uncompressing data in
 FORMAT; FORMAT should be:
 
-  :GZIP or CHIPZ:GZIP        For decompressing data in the `gzip' format;
-  :ZLIB or CHIPZ:ZLIB        For decompressing data in the `zlib' format;
-  :DEFLATE or CHIPZ:DEFLATE  For decompressing data in the `deflate' format.
+  :GZIP        For decompressing data in the `gzip' format;
+  :ZLIB        For decompressing data in the `zlib' format;
+  :DEFLATE     For decompressing data in the `deflate' format.
 
-The usual value of FORMAT will be one of CHIPZ:GZIP or CHIPZ:ZLIB."
+The usual value of FORMAT will be one of :GZIP or :ZLIB."
   (let* ((f (case format
               ((:gzip gzip) 'gzip)
               ((:zlib zlib) 'zlib)
@@ -750,8 +750,9 @@ the input and the number of bytes written to the output."
     (update-window state)
     (when (dstate-update-checksum state)
       (funcall (dstate-update-checksum state)
-               (dstate-checksum state) output output-start
-               (inflate-state-output-index state)))
+               (dstate-checksum state) output 
+               :start output-start
+               :end (inflate-state-output-index state)))
     (values (- (inflate-state-input-index state) input-start)
             (- (inflate-state-output-index state) output-start))))
 
@@ -1213,15 +1214,14 @@ the input and the number of bytes written to the output."
                      ;; FIXME: would be good to perform integrity checking here
                      (declare (ignore crc16))))
                  (transition-to block-type)))
-
              (gzip-crc32 (state)
                (declare (type inflate-state state))
                (let ((stored (ensure-and-read-bits 32 state))
                      (crc32 (copy-digest (inflate-state-checksum state))))
                  (update-digest crc32
-                               (inflate-state-output state)
-                               :start (inflate-state-output-start state)
-                               :end (inflate-state-output-index state))
+                                (inflate-state-output state)
+                                :start (inflate-state-output-start state)
+                                :end (inflate-state-output-index state))
                  (unless (= stored (produce-digest crc32))
                    (error 'invalid-checksum-error
                           :stored stored
@@ -2458,11 +2458,10 @@ the input and the number of bytes written to the output."
            (values (make-inflate-state format) #'%inflate))
           ((:bzip2 bzip2)
            (values (make-bzip2-state) #'%bzip2-decompress)))
-      (make-instance 'decompressing-stream
-        :decompressor (make-instance 'decompressor :input stream))))
-
-;; :dstate state
-;; :dfun dfun))
+      (make-instance 'decompressing-deflate-stream
+        :stream stream
+        :dstate state
+        :dfun dfun)))
 
 (defmethods make-decompressing-stream 
   (((key (eql :deflate)) stream &key)
@@ -2471,6 +2470,103 @@ the input and the number of bytes written to the output."
    (make-decompressing-deflate-stream key stream))
   (((key (eql :gzip)) stream &key)
    (make-decompressing-deflate-stream key stream)))
+
+
+(defmethod output-available-p ((stream decompressing-deflate-stream))
+  (/= (output-position stream) (output-size stream)))
+
+(defmethod input-available-p ((stream decompressing-deflate-stream))
+  (/= (input-position stream) (input-size stream)))
+
+(defun refill-stream-input-buffer (stream)
+  (with-slots (input-buffer stream
+               input-position input-size)
+      stream
+    (let ((n-bytes-read (read-sequence input-buffer stream)))
+      (setf input-position 0 input-size n-bytes-read)
+      #+nil
+      (format *trace-output* "index: ~D | n-bytes ~D~%"
+              input-buffer-index input-buffer-n-bytes)
+      (values))))
+
+(defun refill-stream-output-buffer (stream)
+  (unless (input-available-p stream)
+    (refill-stream-input-buffer stream))
+  (multiple-value-bind (bytes-read bytes-output)
+      (funcall (the function (dfun stream))
+               (dstate stream)
+               (input-buffer stream)
+               (output-buffer stream)
+               :input-start (input-position stream)
+               :input-end (input-size stream))
+    (setf (output-position stream) 0
+          (output-size stream) bytes-output
+          (input-position stream) (+ (input-position stream) bytes-read))
+    (assert (<= (input-position stream) (input-size stream)))))
+
+;;;; methods
+(defun read-and-decompress-byte (stream)
+  (flet ((maybe-done ()
+           (when (output-available-p stream)
+             (return-from read-and-decompress-byte
+               (aref (output-buffer stream)
+                     (prog1 (output-position stream)
+                       (incf (output-position stream))))))))
+    ;; several input buffers may be used up before output is available
+    ;; => read-byte should refill "something" while at all possible,
+    ;; like read-sequence already does.
+    (loop initially (maybe-done)
+          do (refill-stream-output-buffer stream)
+             (maybe-done)
+             (unless (input-available-p stream)
+               (refill-stream-input-buffer stream))
+             ;; If we didn't refill, then we must be all done.
+             (unless (input-available-p stream)
+               (finish-dstate (dstate stream))
+               (return :eof)))))
+
+(defun copy-existing-output (stream seq start end)
+  (declare (type simple-octet-vector seq))
+  (let ((amount (min (- end start)
+                     (- (output-size stream)
+                        (output-position stream)))))
+    (replace seq (output-buffer stream)
+             :start1 start :end1 end
+             :start2 (output-position stream)
+             :end2 (output-size stream))
+    (incf (output-position stream) amount)
+    (+ start amount)))
+
+(defmethod sb-gray:stream-read-sequence ((stream decompressing-deflate-stream) seq &optional (start 0) end)
+  (unless (typep seq 'simple-octet-vector)
+    (return-from sb-gray:stream-read-sequence (call-next-method)))
+  (unless end (setf end (length seq)))
+  (loop initially (when (output-available-p stream)
+                    (setf start (copy-existing-output stream seq
+                                                      start end)))
+        while (< start end)
+        do (unless (input-available-p stream)
+             (refill-stream-input-buffer stream))
+           ;; If we didn't refill, then we must be all done.
+           (unless (input-available-p stream)
+             (finish-dstate (dstate stream))
+             (loop-finish))
+           ;; Decompress directly into the user-provided buffer.
+           (multiple-value-bind (bytes-read bytes-output)
+               (funcall (the function (dfun stream))
+                        (dstate stream)
+                        (input-buffer stream)
+                        seq
+                        :input-start (input-position stream)
+                        :input-end (input-size stream)
+                        :output-start start
+                        :output-end end)
+         (incf (input-position stream) bytes-read)
+         (incf start bytes-output))
+     finally (return start)))
+
+(defmethod sb-gray:stream-read-byte ((stream decompressing-stream))
+  (read-and-decompress-byte stream))
 
 ;;; COMPRESSION (salza2)
 (defconstant +input-limit+ 32768)
@@ -3088,7 +3184,7 @@ the decompressor.")
 (defmethod process-input :after ((compressor gzip-compressor)
                                  input start count)
   (incf (data-length compressor) count)
-  (update-digest (checksum compressor) input :start start :end count))
+  (update-digest (checksum compressor) input :start (or start 0) :end count))
 
 (defmethod finish-data-format :after ((compressor gzip-compressor))
   (gzip-write-u32 (produce-digest (checksum compressor)) compressor)
@@ -3097,7 +3193,6 @@ the decompressor.")
 (defmethod reset :after ((compressor gzip-compressor) &key)
   (reset (checksum compressor))
   (setf (data-length compressor) 0))
-
 
 (defmacro %with-compressor ((var class
                                 &rest initargs
@@ -3120,10 +3215,10 @@ writes all compressed data to STREAM."
     (%with-compressor (compressor 'gzip-compressor
                                  :callback callback)
       (loop
-       (let ((end (read-sequence buffer input)))
-         (when (zerop end)
-           (return))
-         (compress-octet-vector buffer compressor :end end))))))
+        (let ((end (read-sequence buffer input :end +default-deflate-buffer-size+)))
+          (when (zerop end)
+            (return))
+          (compress-octet-vector buffer compressor :end end))))))
 
 (defun gzip-file (input output &key (if-exists :supersede))
   (with-open-file (istream input :element-type '(unsigned-byte 8))
