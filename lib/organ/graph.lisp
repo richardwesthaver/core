@@ -28,9 +28,9 @@
          (edges (mapcar (lambda (x) (add-edge graph (wrap-edge x))) (getf ast :edges))))
     (values graph nodes edges)))
 
-(defmethod build-ast ((self org-graph) &key)
-  `(:nodes ,(mapcar 'build-ast (nodes self))
-    :edges ,(mapcar 'build-ast (edges self))))
+(defmethod build ((self org-graph) &key)
+  `(:nodes ,(mapcar 'build (nodes self))
+    :edges ,(mapcar 'build (edges self))))
 
 (defun read-org-graph-file (&optional (file *org-graph-file*))
   (with-open-file (f file) 
@@ -91,7 +91,7 @@ extracted from and share the inherits an ID from the OUT slot."
 (defmethod add-node ((graph graph) (node org-graph-node))
   (add-node graph (uuid-to-string (id node))))
 
-(defmethod build-ast ((self org-graph-node) &key)
+(defmethod build ((self org-graph-node) &key)
   `(,(uuid-to-string (id self)) ,(name self) ,(path self) ,(idx self)))
 
 (defclass org-graph-edge (edge) 
@@ -124,7 +124,7 @@ expansion. See EXPAND-FILES.")
     :point (pop form)
     :properties (pop form)))
 
-(defmethod build-ast ((self org-graph-edge) &key)
+(defmethod build ((self org-graph-edge) &key)
   `(,(keywordicate (edge-type self)) ,(uuid-to-string (edge-in self)) ,(edge-properties self)
     ,(timestamp-to-universal (timestamp self)) ,(idx self) ,(format nil "~A" (edge-out self))))
 
@@ -260,7 +260,7 @@ expansion. See EXPAND-FILES.")
 
 ;;; Serde
 (defmethod serialize ((self org-graph) format &key stream)
-  (serialize (build-ast self) format :stream stream))
+  (serialize (build self) format :stream stream))
 
 (defmethod serialize ((self org-graph) (format (eql :dot)) &key path)
   (dat/dot:graph-to-dot-file self path :attributes '((layout . "sfdp") (beautify . "true"))))

@@ -37,8 +37,8 @@
                    &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
-    (let ((*no-exit* (not exit))
-          (*no-debug* (not debug))
+    (let ((*exit* exit)
+          (*verbose* debug)
           (*package* (find-package package)))
       `(defun ,name ()
          ,(or docs (format nil "~A toplevel." (package-name *package*)))

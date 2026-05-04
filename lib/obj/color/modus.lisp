@@ -522,6 +522,7 @@
   :fg-removed-intense "ff9095"
 
   :bg-diff-context    "1a1a1a"
+  ;; TODO 2026-05-02: align with cli/linedit
   ;; Paren match
   :bg-paren-match        "2f7f9f"
   :fg-paren-match        :fg-main

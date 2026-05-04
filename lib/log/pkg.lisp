@@ -48,7 +48,7 @@
 
 ;;; Code:
 (defpkg :log
-  (:use :cl :std :std/meta :std/thread :time :db :config :ast :id :build :schema)
+  (:use :cl :std :std/meta :std/thread :time :db :config :ast :id :schema)
   (:export :*log-level* :*logger* :get-real-time-since 
    :init-log-timestamp
    :*log-timestamp* :log-level-designator :log-timestamp-source :logger

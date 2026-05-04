@@ -7,9 +7,10 @@
 
 ;;; Pack
 (declaim (inline %make-sk-pack))
+
 (defstruct (sk-pack (:constructor %make-sk-pack))
   "Skel Package Object"
-  (name (gensym "PKG"))
+  (name (gensym "PACK"))
   (version 0 :type fixnum :read-only t)
   (sys nil :type (or null system)))
 

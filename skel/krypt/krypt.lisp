@@ -54,7 +54,7 @@
         ;; invalid ast, signal error
         (error 'syntax-error))))
 
-(defmethod build-ast ((self krypt-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build ((self krypt-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
         (unwrap-object self
                        :slots t

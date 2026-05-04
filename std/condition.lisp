@@ -16,6 +16,12 @@
   "A list of condition handlers - often useful in asynchronous contexts.")
 (defvar *verbose* nil
   "When T indicates that this Lisp should print verbose output unless advised otherwise.")
+(defvar *exit* nil
+  "When T indicates that this Lisp should exit instead of entering the debugger,
+preventing the process from waiting for user input.")
+(defvar *verbose* nil
+  "When T indicates that this Lisp should print verbose output unless advised otherwise.")
+
 (defvar *uninteresting-conditions*
    '(sb-c::simple-compiler-note
      "&OPTIONAL and &KEY found in the same lambda list: ~S"

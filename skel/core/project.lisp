@@ -241,7 +241,7 @@ directory."))
 ;; obj -> ast
 
 ;; need to define a method for SK-PROJECT to add PHASES to the exclusion list.
-(defmethod build-ast ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
+(defmethod build ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -261,7 +261,7 @@ directory."))
 			  &key 
 			  (path *default-skelfile*) (nullp nil) (comment t) (pretty t)
 			  (if-exists :error))
-  (build-ast self :nullp nullp)
+  (build self :nullp nullp)
   (prog1 
       (with-open-file (out path
 			   :direction :output

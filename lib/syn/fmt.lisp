@@ -31,7 +31,7 @@
 
 (defun write-fmt (fmt output)
   (declare (fmt fmt))
-  (write-ast (build-ast fmt) output))
+  (write-ast (build fmt) output))
 
 (defun read-fmt (input)
   (let ((obj (read-ast (make-instance 'fmt) input)))

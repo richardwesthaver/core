@@ -68,7 +68,7 @@
               (load-systemd-unit-file (id self))))
       self)))
 
-(defmethod build-ast ((self homer-service) &key)
+(defmethod build ((self homer-service) &key)
   (unless (equal (id self) (car (ast self)))
     (setf (ast self)
           `(,(id self) (:engine ,(slot-value self 'engine)) ,@(ast self)))))

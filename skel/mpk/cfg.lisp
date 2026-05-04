@@ -21,7 +21,7 @@
   (apply 'make-instance 'mpk-config args))
 
 ;; obj -> ast
-(defmethod build-ast ((self mpk-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build ((self mpk-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast:ast self)
 	(ast:unwrap-object self
 		       :slots t
@@ -53,7 +53,7 @@
         
 (defun init-mpkrc (&optional (file *user-mpkrc*))
   (let ((cfg (make-instance 'mpk-config)))
-    (build-ast cfg :exclude '(ast id logger))
+    (build cfg :exclude '(ast id logger))
     (with-open-file (out file 
                          :direction :output
                          :if-does-not-exist :create)

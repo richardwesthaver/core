@@ -120,17 +120,16 @@ example."
   ((ast :initarg :ast :accessor ast)))
 
 ;;; AST Protocol
-(defgeneric build-ast (self &key &allow-other-keys)
-  (:documentation "Build an AST of SELF and store it in the :ast
-slot.")
-  (:method ((self ast) &key (nullp nil) (exclude '(ast id)))
-    (setf (ast self)
-          (unwrap-object self
-                         :slots t
-                         :methods nil
-                         :nullp nullp
-                         :exclude exclude))
-    self))
+(defmethod build ((self ast) &key (nullp nil) (exclude '(ast id)))
+  "Build an AST of SELF and store it in the :ast
+slot."
+  (setf (ast self)
+        (unwrap-object self
+                       :slots t
+                       :methods nil
+                       :nullp nullp
+                       :exclude exclude))
+  self)
 
 (defgeneric load-ast (self)
   (:documentation "Load the object SELF from the :ast slot.")

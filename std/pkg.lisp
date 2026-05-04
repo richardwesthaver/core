@@ -158,6 +158,7 @@
    :*error-message*
    :*handlers*
    :*verbose*
+   :*exit*
    :*uninteresting-conditions*
    :std-error :error-message
    :define-error-reporter
@@ -1060,6 +1061,7 @@
    :init* :pause
    :install :uninstall
    :send :receive
+   :build :build-from
    :class-equalp :slots-boundp
    :*standard-metaobjects* :find-slot-def-by-name
    :find-direct-slot-def-by-name :find-slot-defs-by-type

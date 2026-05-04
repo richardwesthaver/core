@@ -90,7 +90,7 @@ which accepts a boolean value and automatically adjust the slot."
   (single-issuer-p nil :type boolean)
   (dontfork nil :type boolean))
 
-(defmethod build:build ((self uring-builder) &key)
+(defmethod build ((self uring-builder) &key)
   (with-io-uring-params p ()
     (setf (io-uring-params-features p) 
           (apply 'logand

@@ -73,7 +73,6 @@
    :components ((:file "local")
                 (:file "util")))
   (:file "uuid")
-  (:file "build")
   (:file "ast")
   (:file "config")
   (:file "schema")
@@ -88,20 +87,50 @@
   (:file "obj"))
  :provide
  ((:proto :tensor)
-  (:proto :ast)
+  (:proto :ast
+   :description "Abstract Syntax Trees."
+   :classes (ast node)
+   :accessors (ast)
+   :conditions (syntax-condition syntax-warning invalid-ast)
+   :variables (*ast* *keep-ast*)
+   :predicates (formp)
+   :types (form)
+   :macros (defnode)
+   :functions (wrap-object unwrap-object))
   (:proto :sxp)
   (:proto :db)
   (:proto :graph)
   (:proto :config)
   (:proto :schema)
-  (:proto :project)
-  (:proto :cmd)
+  (:proto :project
+   :description "Project base protocol."
+   :functions (make-project register-project)
+   :globals (*project-table*)
+   :classes (project-config project-metadata project simple-project)
+   :variables (*default-project-class*))
+  (:proto :cmd
+   :description "Command object definition framework."
+   :methods (parse-args command-class interactive)
+   :classes (command)
+   :functions (read-args run-commands call-commands eval-command compile-command icount icount* check-itype
+               list-commands list-all-commands list-command-types command command-type command-table make-commands)
+   :declarations (interactive)
+   :parameters (*command-names-p* *interactive-optional-args-p* *interactive-rest-args-p* *interactive-key-args-p*)
+   :variables (*command* *command-io* *command-class* *commands* *commands-types* *command-table* *commander*
+               *command-delimiter* *command-hook*)
+   :constants (+interactive-place-hoder-tag+)
+   :conditions (undefined-command undefined-command-type invalid-command-type command-eval-error invalid-itype)
+   :types (interactive-ds-lambda-list)
+   :macros (defcommand define-command-type cmd))
+  (:proto :help
+   :package :obj/cmd
+   :description "Interactive command help and usage printing."
+   :methods (print-help print-usage))
   (:proto :secret)
   (:proto :store)
   (:proto :cache)
   (:proto :srv)
   (:proto :color)
-  (:proto :build)
   (:proto :val)
   (:proto :id)
   (:proto :time)

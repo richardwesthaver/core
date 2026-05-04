@@ -480,7 +480,6 @@ command."))
     (call cmd args)))
 
 ;; RESEARCH 2026-03-05: self-call? - commands with additional slots
-
 (defmethod exec ((self command)) 
   (if *interactive*
       (call-interactively self)

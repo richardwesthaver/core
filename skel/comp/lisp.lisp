@@ -73,5 +73,3 @@
       (prog1 (sk-run self)
         (setf (ast self) nil))
       (sk-load self)))
-      
-      

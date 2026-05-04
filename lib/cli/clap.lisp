@@ -7,12 +7,6 @@
 (init :commands :name :cli :class 'cli-command :clean t)
 
 ;;; Variables
-(defparameter *no-exit* nil
-  "Indicate whether the WITH-CLI-HANDLERS form should exit on completion.")
-
-(defparameter *no-debug* nil
-  "Indicate whether the WITH-CLI-HANDLERS form should enable the debugger.")
-
 (defvar *cli* nil
   "The current CLI object.
 This symbol is bound in the body of the WITH-CLI macro.")
@@ -83,34 +77,23 @@ containing multiple characters."
   "A wrapper which handles common cli errors that may occur during
 evaluation of BODY."
   `(progn
-     (if *no-debug*
+     (if (not *interactive*)
          (sb-ext:disable-debugger)
          (sb-ext:enable-debugger))
      (unwind-protect
           (restart-case 
               (handler-case (progn ,@body)
                 (sb-sys:interactive-interrupt (c)
-                  (if *no-debug*
+                  (if *exit*
                       (sb-ext:exit :code 130)
-                      c))
-                (error (c)
-                  (println c)
-                  (sb-ext:exit :code 1)))
-            (abort ()
-              :report (lambda (s)
-                        (write-string
-                         "Skip to toplevel REPL."
-                         s)
-                        (log:debug! "CONTINUEing from pre-REPL RESTART-CASE")
-                        (values)))
+                      c)))
             (exit ()
-              :report "Exit SBCL (calling #'EXIT, killing the process)."
+              :report "Exit SBCL (killing the process)."
               ;; :test (lambda (c) (declare (ignore c)) t)
-              (log:debug! "falling through to EXIT from pre-REPL RESTART-CASE~&")
+              (log:trace! "falling through to EXIT from pre-REPL RESTART-CASE~&")
               (sb-ext:exit :code 1))))
      (sb-impl::flush-standard-output-streams)
-     (unless *no-exit*
-       (sb-ext:exit :code 0))
+     (when *exit* (sb-ext:exit :code 0))
      ;; reset terminal state
      #+nil (.ris)))
 

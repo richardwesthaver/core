@@ -43,7 +43,7 @@
         ;; invalid ast, signal error
         (error 'syntax-error :ast ast))))
 
-(defmethod build-ast ((self rdb-config) &key (nullp nil) (exclude '(ast id schema logger options)))
+(defmethod build ((self rdb-config) &key (nullp nil) (exclude '(ast id schema logger options)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -53,12 +53,12 @@
   (when (slot-boundp self 'schema) 
     (appendf (ast self) (list :schema (ast (slot-value self 'schema)))))
   (when (slot-boundp self 'logger) 
-    (appendf (ast self) (list :logger (ast (build-ast (slot-value self 'logger))))))
+    (appendf (ast self) (list :logger (ast (build (slot-value self 'logger))))))
   (when (slot-boundp self 'options)
     (appendf (ast self) (list :options (ast (slot-value self 'options)))))
   self)
 
-(defmethod build ((self rdb-config) &key)
+(defun build-rdb-config (self)
   (make-db (slot-value self 'backend)
            :opts (slot-value self 'options)
            :logger (when-let ((l (slot-value self 'logger))) (build l))
@@ -69,7 +69,7 @@
 
 (defun init-rdbrc (&optional (file (merge-homedir-pathnames ".rdbrc")))
   (let ((cfg (make-instance 'rdb-config)))
-    (build-ast cfg)
+    (build-rdb-config cfg)
     (with-open-file (out file
 			 :direction :output
 			 :if-does-not-exist :create)

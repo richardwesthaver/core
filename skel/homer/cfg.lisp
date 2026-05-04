@@ -83,7 +83,7 @@
         (error 'syntax-error))))
 
 ;; obj -> ast
-(defmethod build-ast ((self home-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build ((self home-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast:ast self)
         (ast:unwrap-object self
                        :slots t
@@ -93,7 +93,7 @@
 
 (defun init-homerc (&optional (file *user-homerc*))
   (let ((cfg (make-instance 'home-config)))
-    (build-ast cfg :exclude '(ast id skel krypt #+mpk mpk logger))
+    (build cfg :exclude '(ast id skel krypt #+mpk mpk logger))
     (with-open-file (out file
                          :direction :output
                          :if-does-not-exist :create)

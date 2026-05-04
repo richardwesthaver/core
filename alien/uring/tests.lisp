@@ -1,7 +1,6 @@
 ;;; uring/tests.lisp --- URING Alien Tests
 (defpackage :uring/tests 
-  (:use :cl :rt :std :uring :sb-alien)
-  (:import-from :obj/build :build :build-from))
+  (:use :cl :rt :std :uring :sb-alien))
 
 (in-package :uring/tests)
 
@@ -18,15 +17,15 @@
 
 (deftest nop-sqe ()
   (with-new-io-sqe sqe
-    (let ((op (uring::build-from (uring::make-io-op-nop) sqe)))
+    (let ((op (build-from (uring::make-io-op-nop) sqe)))
       (is (typep op '(alien uring::io-uring-sqe)))
       (is (= (slot op 'uring::fd) -1)))))
 
 (deftest simple-vectored ()
   (with-new-io-sqe rop
     (with-new-io-sqe wop
-      (let ((rop (uring::build-from (uring::make-io-op-readv) rop))
-            (wop (uring::build-from (uring::make-io-op-writev) wop)))
+      (let ((rop (build-from (uring::make-io-op-readv) rop))
+            (wop (build-from (uring::make-io-op-writev) wop)))
         (istype '(alien uring::io-uring-sqe) rop)
         (istype '(alien uring::io-uring-sqe) wop)))))
 
@@ -46,7 +45,7 @@
     (let ((sqe (io-uring-get-sqe (addr r1))))
       (is (typep sqe '(alien (* io-uring-sqe))))
       (is (= 0 (uring::io-uring-submit (alien-sap r1))))
-      (uring::build-from (uring::make-io-op-nop) (deref sqe))
+      (build-from (uring::make-io-op-nop) (deref sqe))
       (is (= 0 (uring::io-uring-queue-exit (alien-sap r1)))))))
 
 (deftest register ()

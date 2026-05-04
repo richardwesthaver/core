@@ -39,7 +39,7 @@
        (or *skel-project* *skel-user-config* *skel-system-config*))))
 
 (defcommand (:skel inspect) ()
-  (setq *no-exit* t)
+  (setq *exit* nil)
   (inspect (or *skel-project* *skel-user-config*)))
 
 (flet ((call-with-args (action args)
@@ -146,8 +146,8 @@
 
 (defcommand (:skel shell) ()
   (trace! "starting skel shell")
-  ;; TODO 2025-11-16: consolidate usage of *no-exit* vs *interactive* etc
-  (setq *no-exit* t)
+  ;; TODO 2025-11-16: consolidate usage of *exit* vs *interactive* etc
+  (setq *exit* nil)
   (progn
     (in-package :sk-user)
     (using :cl-user :sb-ext :std-user)

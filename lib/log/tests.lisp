@@ -1,5 +1,5 @@
 (defpackage :log/tests
-  (:use :cl :std :rt :log :config :build))
+  (:use :cl :std :rt :log :config))
 
 (in-package :log/tests)
 

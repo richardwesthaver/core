@@ -186,7 +186,6 @@ indicates a recursive call (RCURRY instead of CURRY).
 
 ;; f-strings
 ;; ref: https://realpython.com/python-f-strings/
-#+todo
 (eval-when (:compile-toplevel :load-toplevel :execute)
   ;; TODO 2025-06-23: 
   (defun |#f-reader| (stream subchar num)

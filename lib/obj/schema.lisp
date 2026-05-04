@@ -61,11 +61,11 @@
   (apply 'make-fields (read stream))
   self)
 
-(defmethod build-ast ((self field) &key)
+(defmethod build ((self field) &key)
   `(,(keywordicate (string-upcase (%field-name self))) ,(field-type self)))
 
 (defmethod write-ast ((self field) stream &key)
-  (write (build-ast self) :stream stream))
+  (write (build self) :stream stream))
 
 (defaccessor name ((self field)) (%field-name self))
 
@@ -170,17 +170,17 @@ SCHEMA."
   (setf (fields self) (apply 'make-fields (read stream)))
   self)
 
-(defmethod build-ast ((self schema) &key)
+(defmethod build ((self schema) &key)
   (let ((ret))
-    (map nil (lambda (x) (appendf ret (build-ast x))) (fields self))
+    (map nil (lambda (x) (appendf ret (build x))) (fields self))
     ret))
 
 (defmethod write-ast ((self schema) stream &key)
-  (write (build-ast self) :stream stream))
+  (write (build self) :stream stream))
 
 (defmethod ast ((self schema))
   "SCHEMA does not have an AST slot, so instead the accessor always builds a fresh list."
-  (build-ast self))
+  (build self))
 
 (defun make-schema (&rest fields)
   (make-instance 'schema :fields (coerce fields 'field-vector)))

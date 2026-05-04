@@ -33,7 +33,7 @@ the appropriate restarts."
     (let ((p (make-instance 'sk-project :name "nada" :path "test" :vc :hg)))
       (is (sk-write-file p :path *tmp* :if-exists :supersede))
       (is (load-skelfile *tmp*))
-      (is (build-ast (apply 'make-instance 'sk-project (std:file-read-forms *tmp*)))))))
+      (is (build (apply 'make-instance 'sk-project (std:file-read-forms *tmp*)))))))
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."

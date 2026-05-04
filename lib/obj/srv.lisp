@@ -149,7 +149,7 @@ logging, etc."))
     (setf ast nil)
     self))
 
-(defmethod build-ast ((self service-config) &key (nullp nil) (exclude '(ast id)))
+(defmethod build ((self service-config) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -157,7 +157,7 @@ logging, etc."))
                        :nullp nullp
                        :exclude exclude)))
 
-(defmethod build ((self service-config) &key)
+(defun build-service (self)
   (make-instance (service self)
     :request-class (slot-value self 'request-class)
     :response-class (slot-value self 'response-class)))

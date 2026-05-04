@@ -22,9 +22,9 @@
   (:nicknames :clap)
   (:use :cl :std :log :cmd :ast :equiv)
   (:use-reexport :log :cmd :ast)
-  (:export :*no-exit*
+  (:export
    :*default-cli-class* :*cli*
-   :*cli-table* :*no-debug*
+   :*cli-table*
    :schar0 :with-cli-handlers 
    :cli-command :cli
    :print-version
@@ -202,7 +202,7 @@
 
 (defpkg :cli/main
   (:use :cl :std :cmd)
-  (:import-from :cli/clap :*no-exit* :*no-debug* :with-cli-handlers)
+  (:import-from :cli/clap :with-cli-handlers)
   (:export
    #:defmain
    #:define-multi-main))

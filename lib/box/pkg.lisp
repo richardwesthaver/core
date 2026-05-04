@@ -12,7 +12,7 @@
 
 ;;; Code:
 (defpkg :box
-  (:use :cl :std :cli :net :dat/json :config :obj :build :ast)
+  (:use :cl :std :cli :net :dat/json :config :obj)
   (:export
    :box-config
    :archiso-config

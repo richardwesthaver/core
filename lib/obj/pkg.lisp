@@ -340,7 +340,7 @@
   (:nicknames :ast)
   (:use :cl :std :std/seq)
   (:export :ast 
-   :build-ast :load-ast
+   :load-ast
    :wrap :unwrap
    :unwrap-or :form
    :formp :unwrap-object
@@ -516,15 +516,10 @@
    :uuid-to-octet-vector :octet-vector-to-uuid
    :uuid-to-string))
 
-(defpkg :obj/build
-  (:nicknames :build)
-  (:use :cl :std)
-  (:export :build :build-from))
-
 (defpkg :obj/schema
   (:nicknames :schema)
   (:import-from :obj/tensor :field-type)
-  (:use :cl :std :config :build :stored :sb-mop :id :ast :dynamic)
+  (:use :cl :std :config :stored :sb-mop :id :ast :dynamic)
   (:export
    #:schema
    #:object-schema
@@ -860,7 +855,7 @@
 
 (defpkg :obj/srv
   (:nicknames :srv)
-  (:use :cl :std :config :id :ast :build)
+  (:use :cl :std :config :id :ast)
   (:export
    #:service
    #:response-ok-p

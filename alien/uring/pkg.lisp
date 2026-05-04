@@ -43,7 +43,6 @@ queue (CQ), and form the foundation of the new interface.
 (defpkg :uring
   (:use :cl :std :sb-alien :sys)
   (:import-from :sb-posix :file-descriptor :sap-or-nil)
-  (:shadow :build :build-from)
   (:export :load-uring :io-uring-cq
            :completion-queue-offsets :completion-queue
            :completion-queue-entry :completion-queue-entry-32

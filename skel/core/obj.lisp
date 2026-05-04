@@ -123,7 +123,7 @@
     (unless *keep-ast* (setf (ast self) nil))
     self))
 
-(defmethod build-ast ((self sk-config) &key (nullp nil) (exclude '(ast id author version user)))
+(defmethod sk-build ((self sk-config) &key (nullp nil) (exclude '(ast id author version user)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -137,7 +137,7 @@
                                comment
                                (pretty t)
                                (if-exists :error))
-  (build-ast self :nullp nullp)
+  (sk-build self :nullp nullp)
   (prog1 
       (with-open-file (out path
                            :direction :output

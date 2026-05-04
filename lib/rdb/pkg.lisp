@@ -12,7 +12,7 @@
   (:use :cl :std :rocksdb 
    :sb-alien :db :schema :btree 
    :store :stored :log :io/static 
-   :time :config :build :ast 
+   :time :config :ast 
    :id :std/seq :srv :net/srv :val :q/proto)
   (:import-from :db :backend :options)
   (:import-from :sb-ext :string-to-octets :octets-to-string)

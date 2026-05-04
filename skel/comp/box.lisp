@@ -33,10 +33,10 @@
     ret))
 
 (defmethod sk-build ((self sk-box-file) &key (path (find-stash-directory)))
-  (build:build self :path path))
+  (build self :path path))
                      
 (defmethod sk-write-file ((self sk-box-file) &key (path (stash-pathname (name self))))
-  (ast:write-ast (ast:build-ast self) (when path (pathname path))))
+  (ast:write-ast (build self) (when path (pathname path))))
 
 (defmethod sk-read-file ((self sk-box-file) path)
   (sk-load-component :box path))

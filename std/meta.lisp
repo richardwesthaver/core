@@ -156,6 +156,9 @@ function NAME and be skipped for (setf NAME)."
 (defverb uninstall (self &key)
   (:documentation "Uninstall object SELF."))
 
+(defverb build (self &key &allow-other-keys))
+(defgeneric build-from (self from &key &allow-other-keys))
+
 (definline init* (&rest keys)
   "Call the default initializer on each arg."
   (mapc 'init keys))

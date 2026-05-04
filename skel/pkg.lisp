@@ -36,7 +36,7 @@
 
 ;;; Code:
 (defpkg :skel/core
-  (:use :cl :std :ast :doc :log :config :project :schema :rdb :db :store :stored :build :id :vc)
+  (:use :cl :std :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
   (:export
@@ -143,7 +143,7 @@
    :makefile))
 
 (defpkg :skel/comp/cargo
-  (:use :cl :std :skel/core :toml :build :config :cli/tools/rust)
+  (:use :cl :std :skel/core :toml :config :cli/tools/rust)
   (:export :sk-rust-system :parse-sk-rust-system))
 
 (defpkg :skel/comp/sys
@@ -201,7 +201,7 @@
 
 (defpkg :skel/srv
   (:use :cl :std :db 
-   :store :build :config :skel/core
+   :store :config :skel/core
    :net/srv/udp :net/srv/http :srv)
   (:export #:sk-service
            #:sk-request

@@ -538,7 +538,8 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 (defvar *protocol-keyword-imports*
   '(:methods :functions :types :variables 
     :constants :parameters :macros :conditions
-    :restarts :accessors :predicates :classes))
+    :restarts :accessors :predicates :classes
+    :declarations :globals))
 
 (defun %load-proto (form &optional (system *module*))
   "Load a protocol module NAME."
