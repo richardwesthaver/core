@@ -195,7 +195,7 @@ arrange for FVAR to be closed after BODY."
 
 (defun init-xdg-logical-pathnames ()
   ;; only the XDG_*_HOME paths we care about for user apps
-    (define-logical-pathname "XDG" (user-homedir-pathname)
+    (define-logical-pathname "XDG"
       ("CONFIG;**;*.*.*" (xdg-dir :config-home))
       ("DATA;**;*.*.*" (xdg-dir :data-home))
       ("STATE;**;*.*.*" (xdg-dir :state-home))
