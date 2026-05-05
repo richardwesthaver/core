@@ -357,7 +357,7 @@ PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
 	 ',(mapcar (lambda (x)
-                     (setf (cadr x) (pathname (eval (cadr x))))
+                     (setf (cadr x) (eval (cadr x)))
                      x)
                    translations)))
 
