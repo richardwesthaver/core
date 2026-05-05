@@ -342,20 +342,22 @@ we can't determine endianness at compile-time.")
          ,@body))))
 
 ;;; Logical Pathnames
-(defun list-all-logical-host-names ()
-  "Return a list of currently available logical hosts."
-  (map 'list (lambda (x) (slot-value x 'sb-impl::name)) *logical-hosts*))
+(defun list-all-logical-host-names (&optional trees)
+  "Return a list of currently available logical hosts. When TREES is non-nil
+print the paths of each host as a list in addition to the host name."
+  (map 'list 
+       (if trees
+           (lambda (x) (cons (slot-value x 'sb-impl::name) (logical-pathname-translations x)))
+           (lambda (x) (slot-value x 'sb-impl::name)))
+       *logical-hosts*))
 
-(defmacro define-logical-pathname (host path &rest translations)
+(defmacro define-logical-pathname (host #+nil path &rest translations)
   "Define a new LOGICAL-PATHNAME associated with HOST and defaulting to
 PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
-  (unless (null path)
-    (setf translations 
-	  (append `((,(format nil "~A;" host) ,path)) translations)))
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
 	 ',(mapcar (lambda (x)
-                     (setf (cadr x) (eval (cadr x)))
+                     (setf (cadr x) (pathname (eval (cadr x))))
                      x)
                    translations)))
 
@@ -376,30 +378,40 @@ accessible."
 accessible."
   (map nil #'check-logical-host hosts))
 
-(define-logical-pathname "STASH" "/opt/stash/**/*.*"
+(define-logical-pathname "VAR"
+  ("**;*.*.*" "/var/**/*.*"))
+
+(define-logical-pathname "USR"
+  ("**;*.*.*" "/usr/**/*.*"))
+
+(define-logical-pathname "SRV"
+  ("**;*.*.*" "/srv/**/*.*"))
+
+(define-logical-pathname "ETC"
+  ("**;*.*.*" "/etc/**/*.*"))
+
+(define-logical-pathname "STASH"
   ("**;*.*.*" "/opt/stash/**/*.*"))
 
-(define-logical-pathname "USER" "~/**/*.*"
+(define-logical-pathname "USER"
   ("ORG;**;*.*.*" "~/org/**/*.*")
   ("SRC;**;*.*.*" "~/src/**/*.*")
   ("STASH;**;*.*.*" "~/.stash/**/*.*")
   ("STORE;**;*.*.*" "~/.store/**/*.*")
+  ("HOME;**;*.*.*" "~/**/*.*")
   ("**;*.*.*" "~/**/*.*"))
 
-(define-logical-pathname "STORE" "/opt/store/**/*.*"
+(define-logical-pathname "STORE"
   ("**;*.*.*" "/opt/store/**/*.*"))
 
-(define-logical-pathname "SCRATCH" "/opt/scratch/**/*.*"
+(define-logical-pathname "SCRATCH"
   ("**;*.*.*" "/opt/scratch/**/*.*"))
 
 ;; redefine the sys table
-(define-logical-pathname "SYS" "/usr/lib/sbcl/**/*.*"
-  ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
-  ("CONTRIB;**;*.*.*"
-   #P"/usr/src/sbcl/contrib/**/*.*")
-  ("OUTPUT;**;*.*.*"
-   (translate-logical-pathname "STASH:CACHE;lisp;**;*.*.*"))
-  ("TMP;**;*.*.*" "/tmp/**/*.*"))
+;; (define-logical-pathname "SYS"
+;;   ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
+;;   ("CONTRIB;**;*.*.*"
+;;    #P"/usr/src/sbcl/contrib/**/*.*"))
 
 (defun logical-pathname-translation (host name)
   (car (std/list:assoc-value 
@@ -412,9 +424,6 @@ accessible."
     (logical-pathname-translations host) name 
     :test 'string=)
    (list new)))
-
-(setf (logical-pathname-translation "SYS" "LIB;**;*.*")
-      (logical-pathname-translation "SYS" "SYS;"))
 
 ;;; Hexdump
 ;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565

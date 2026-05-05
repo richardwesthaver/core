@@ -5,13 +5,12 @@
 ;;; Code:
 (in-package :mpk)
 
-(define-logical-pathname "MPK" *mpk-user-directory*
-  ;; ("**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
-  ("MEDIA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-media-directory*))
-  ("USER;**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
-  ("DATA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-data-directory*))
-  ("DB;**;*.*.*" (merge-pathnames "**/*.*" *mpk-db-directory*))
-  ("CACHE;**;*.*.*" (merge-pathnames "**/*.*" *mpk-cache-directory*)))
+;; (define-logical-pathname "MPK"
+;;   ("MEDIA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-media-directory*))
+;;   ("HOME;**;*.*.*" (merge-pathnames "**/*.*" *mpk-user-directory*))
+;;   ("DATA;**;*.*.*" (merge-pathnames "**/*.*" *mpk-data-directory*))
+;;   ("DB;**;*.*.*" (merge-pathnames "**/*.*" *mpk-db-directory*))
+;;   ("CACHE;**;*.*.*" (merge-pathnames "**/*.*" *mpk-cache-directory*)))
 
 (defclass mpk-object (id) ())
 

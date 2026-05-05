@@ -1,4 +1,4 @@
-;;; srv.lisp --- Sans-IO Service Protocol
+;;; srv.lisp --- Service Protocol
 
 ;; Base Protocol used by any type of managed/stateful service.
 

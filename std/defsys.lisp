@@ -539,7 +539,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
   '(:methods :functions :types :variables 
     :constants :parameters :macros :conditions
     :restarts :accessors :predicates :classes
-    :declarations :globals))
+    :structs :declarations :globals))
 
 (defun %load-proto (form &optional (system *module*))
   "Load a protocol module NAME."
