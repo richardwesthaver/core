@@ -193,25 +193,29 @@ directory."))
 		(dolist (b bind ret)
 		  ;; if this is a list of length > 2 we parse the form as either
 		  ;; (key &rest val) or (var param &rest val)
-		  (let ((sym (car b))
-			(form (cdr b)))
-		    ;; (form (cddr b)))
-		    (let ((key (car form))
-			  (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
-		      (if (keywordp key)
-			  (sk-case-bind key val sym)
-			  (cond
-			    ;; (sym param &rest val) detected
-			    ((> (length (cdr form)) 0)
-			     (let ((key (cadr b)))
-			       (if (keywordp key)
-				   (sk-case-bind key (cdr form) sym)
-				   ;; if nothing else must be a lambda
-				   (push `(,sym 
-					   ,(compile sym `(lambda ,(car b) ,@(cddr b))))
-					 ret))))
-			    (t
-			     (push b ret))))))))))
+                  (if (= 2 (length b))
+                      ;; FIX 2026-05-08: protect against use of eval?
+                      ;; WARN 2026-05-08: use of eval
+                      (push b ret)
+		      (let ((sym (car b))
+			    (form (cdr b)))
+		        ;; (form (cddr b)))
+		        (let ((key (car form))
+			      (val (if (= (length #1=(print (cdr form))) 1) (cadr form) #1#)))
+		          (if (keywordp key)
+			      (sk-case-bind key val sym)
+			      (cond
+			        ;; (sym param &rest val) detected
+			        ((> (length (cdr form)) 0)
+			         (let ((key (cadr b)))
+			           (if (keywordp key)
+				       (sk-case-bind key (cdr form) sym)
+				       ;; if nothing else must be a lambda
+				       (push `(,sym 
+					       ,(compile sym `(lambda ,(car b) ,@(cddr b))))
+					     ret))))
+			        (t
+			         (push b ret)))))))))))
       ;; RULES
       (when-let ((rules (rules self)))
 	(setf (rules self)

@@ -49,13 +49,14 @@ which is executed in order to fulfill the rule."
        (macrolet ,*skel-project-macros*
          (labels ,*skel-project-functions*
            (progv (mapcar 'car ,binds)
-               (mapcar 'cdr ,binds)
+               ;; WARN 2026-05-08: use of eval
+               (mapcar (lambda (x) (eval (cadr x))) ,binds)
              ,@body))))))
 
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
   (with-sk-rule-env (bind *skel-project*)
-    (compile-and-eval* 
+    (compile-and-eval*
      (sk-rule-recipe self))))
 
 (defmethod sk-write ((self sk-rule) stream)
