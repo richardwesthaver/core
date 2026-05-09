@@ -29,8 +29,9 @@
                         (prog1 (sb-alien:load-shared-object ,(format nil "/usr/lib/libtree-sitter-~(~a~).so" lang)
                                                             :dont-save (not save))
                           (pushnew ,(sb-int:keywordicate name) *features*)))
-                    (defar ,name (* ts-language))
-                    (setf (gethash ,(sb-int:keywordicate lang) *ts-langs*) ',name))))))
+                    (define-alien-routine ,name (* ts-language))
+                    (setf (gethash ,(sb-int:keywordicate lang) *ts-langs*) ',name
+                          (gethash ,(keywordicate name) *alien-load-table*) (function ,fname)))))))
   (def-ts-lang-loader c)
   (def-ts-lang-loader rust)
   (def-ts-lang-loader bash)

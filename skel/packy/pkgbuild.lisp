@@ -10,9 +10,10 @@
 
 ;;; Code:
 (in-package :skel/packy/pkgbuild)
-(load-tree-sitter)
-(load-tree-sitter-bash)
-(defparameter *pkgbuild-filename* "PKGBUILD")
+(load-aliens :tree-sitter :tree-sitter-bash)
+
+(defparameter *pkgbuild-filename* "PKGBUILD"
+  "Default filename of Arch Linux PKGBUILD files.")
 
 (defun parse-pkgbuild-value (l s)
   (destructuring-bind (n1 n2 b1 b2) l
@@ -49,8 +50,8 @@ values: (VARS FUNCTIONS SRC)"
               (:variable-assignment
                (when-let ((name (cadar (member :name (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x))))))
                           (val (cadar (member :value (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x)))))))
-                 (push (nconc name val) vars)))))
-          (when tree (caddr tree)))
+                 (push (cons name val) vars)))))
+          (when tree (print (caddr tree))))
     (values
      (collecting (mapcar (lambda (x) 
                            (when-let ((y (parse-pkgbuild-value x str)))
@@ -91,7 +92,7 @@ values: (VARS FUNCTIONS SRC)"
    (functions :initarg :functions)))
 
 (defvar *pkgbuild-slots* 
-  (mapcar (lambda (x) (keywordicate (slot-definition-name x)))
+  (mapcar (lambda (x) (slot-definition-name x))
           (class-direct-slots (find-class 'pkgbuild))))
 
 (defmethod initialize-instance :before ((self pkgbuild) &rest initargs &key &allow-other-keys)

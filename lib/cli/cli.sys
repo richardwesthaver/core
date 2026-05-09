@@ -23,7 +23,6 @@
     (:file "build" :require ("proto"))
     (:file "virt" :require ("proto"))
     (:file "sys" :require ("proto"))
-    (:file "rust" :require ("proto"))
     (:file "sbcl" :require ("proto"))
     (:file "net" :require ("proto"))
     (:file "media" :require ("proto"))

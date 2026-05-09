@@ -143,8 +143,12 @@
    :makefile))
 
 (defpkg :skel/comp/cargo
-  (:use :cl :std :skel/core :toml :config :cli/tools/rust)
+  (:use :cl :std :skel/core :toml :config :cli/tools/build)
   (:export :sk-rust-system :parse-sk-rust-system))
+
+(defpkg :skel/comp/pyproject
+  (:use :cl :std :skel/core :toml :config :cli/tools/build)
+  (:export :sk-python-system :parse-sk-python-system))
 
 (defpkg :skel/comp/sys
   (:use :cl :skel/core :std/defsys))

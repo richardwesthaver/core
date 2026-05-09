@@ -9,8 +9,7 @@
 ;;; Code:
 (in-package :skel/comp/cargo)
 
-(defparameter *default-cargo-manifest* "Cargo.toml")
-(defparameter *cargo-manifest-extension* "toml")
+(defparameter *cargo-manifest-filename* "Cargo.toml")
 
 (defclass sk-rust-system (sk-mod) 
   ((config :initarg :config)))

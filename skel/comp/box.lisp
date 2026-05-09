@@ -19,7 +19,7 @@
      (update-id ret)
      ret))
   (((self qemu-image-config))
-   (let ((ret (change-class self 'sk-archiso-file)))
+   (let ((ret (change-class self 'sk-qemu-image-file)))
      (update-id ret)
      ret)))
 

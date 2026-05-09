@@ -69,7 +69,15 @@
    :*meson*
    :run-meson
    :*ninja*
-   :run-ninja))
+   :run-ninja
+   #:cargo-error
+   #:*cargo*
+   #:*rustup*
+   #:run-cargo
+   #:rustup-error
+   #:run-rustup
+   #:cargo-install
+   #:cargo-clean))
 
 (defpkg :cli/tools/media
   (:use :cl :std :cli/tools/proto :cli/env :config :ini :ast)
@@ -213,19 +221,6 @@
    :*journalctl* :run-journalctl
    :*busctl* :run-busctl
    :*perf* :run-perf :perf-record :perf-inject-jit))
-
-(defpkg :cli/tools/rust
-  (:nicknames :tools/rust)
-  (:use :cl :std :cli/tools/proto :cli/env)
-  (:export
-   #:cargo-error
-   #:*cargo*
-   #:*rustup*
-   #:run-cargo
-   #:rustup-error
-   #:run-rustup
-   #:cargo-install
-   #:cargo-clean))
 
 (defpkg :cli/tools/sbcl
   (:use :cl :std :cli/tools/proto :cli/env)

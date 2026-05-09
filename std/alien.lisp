@@ -234,7 +234,16 @@
 
 (defvar *alien-load-table* (make-hash-table))
 
-(std/prim:definline load-alien (name) (funcall (gethash name *alien-load-table*)))
+(define-condition undefined-alien-loader (invalid-item) ())
+
+(std/prim:definline load-alien (name) 
+  (let ((fn (gethash name *alien-load-table*)))
+    (if fn
+        (funcall fn)
+        (error 'undefined-alien-loader :item name :reason "Alien loader is undefined"))))
+
+(defun load-aliens (&rest names)
+  (mapcar 'load-alien names))
 
 (defmacro define-alien-loader (name &optional (root "/usr/lib/") path (package *package*))
   "Define a default loader function named load-NAME which calls

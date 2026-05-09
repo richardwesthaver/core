@@ -935,7 +935,7 @@
   (:import-from :std/sym :symbolicate :keywordicate :with-gensyms)
   (:import-from :std/array :element-type)
   (:import-from :std/sys :little-endian-p :32-bit-p)
-  (:import-from :std/condition :out-of-bounds-error)
+  (:import-from :std/condition :out-of-bounds-error :invalid-item)
   (:import-from :std/bit :make-octets)
   (:import-from :std/macs :with-memoization :memoizing :destructuring-case :once-only :compile-and-eval)
   (:import-from :std/type :octet-vector :octet :array-index)
@@ -976,6 +976,7 @@
    :compute-lisp-rep-type :compute-alien-rep-type
    :alien-value :lisp-for-c-symbol
    :*alien-load-table* :load-alien
+   :load-aliens
    :define-alien-variable :setfa
    :alien-size :alien-size*
    :*alien-type-classes* :*linkage-info*
