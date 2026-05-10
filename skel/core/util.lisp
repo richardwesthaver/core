@@ -122,21 +122,27 @@ skelfile if found."
 (defun sk-config-slot (slot &optional (default :error))
   "First check *SKEL-USER-CONFIG* for a slot value, and if a valid value
 isn't found check *SKEL-SYSTEM-CONFIG*."
-  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core)))
+  (if-let ((slot (find-symbol (string-upcase (string slot)) :skel/core)))
     (if (or (null *skel-user-config*) (not (slot-boundp* *skel-user-config* slot)))
         (if (or (null *skel-system-config*) (not (slot-boundp* *skel-system-config* slot)))
             (if (eql default :error)
                 (skel-simple-error "slot is unbound in skelrc")
                 default)
             (slot-value *skel-system-config* slot))
-        (slot-value *skel-user-config* slot))))
+        (slot-value *skel-user-config* slot))
+    (if (eql default :error)
+        (skel-simple-error "slot is unbound in skelrc")
+        default)))
 
 (defun sk-project-slot (slot &optional (default :error))
-  (let ((slot (find-symbol (string-upcase (string slot)) :skel/core)))
+  (if-let ((slot (find-symbol* (string-upcase (string slot)) :skel/core nil)))
     (if (or (null *skel-project*) (not (slot-boundp* *skel-project* slot)))
         ;; Not found in project, search config files instead
         (sk-config-slot slot default)
-        (slot-value *skel-project* slot))))
+        (slot-value *skel-project* slot))
+    (if (eql default :error)
+        (skel-simple-error "slot is unbound in skel project")
+        default)))
 
 (defun sk-search-project (query &optional (project *skel-project*) 
                                           (user-config *skel-user-config*)

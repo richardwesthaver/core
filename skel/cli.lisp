@@ -168,11 +168,12 @@
 
 (defmain start-skel (:package :sk-user :readtable :shell :commands :skel :cli :skel)
   (init :skel)
-  (let ((a1 (second *posix-argv*))
-        (a2 (cddr *posix-argv*)))
-    (if (command a1)
-        (if a2 (call-interactively a1 a2) (exec a1))
-        (call "show" (cdr *posix-argv*)))))
+  (if-let ((args (cli-args)))
+    (destructuring-bind (a1 &rest a2) args
+      (if (command a1)
+          (if a2 (call-interactively a1 a2) (exec a1))
+          (call "show" (cdr *posix-argv*))))
+    (call "show" nil)))
 
 (define-cli "skel" #'start-skel
   :version (format nil "0.1.1:~A" (read-line (sb-ext:process-output (vc:run-hg-command "id" '("-i") :stream))))

@@ -291,7 +291,6 @@
   (:import-from :std/list :ensure-car)
   (:import-from :std/prim :definline)
   (:import-from :sb-impl :sfunction)
-  (:import-from :sb-int :unsigned-byte*)
   (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
    :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/comp :*primitive-objects* :primitive-object-size 
@@ -304,7 +303,7 @@
    :function-designator)
   (:shadowing-import-from :sb-ext :word)
   (:export :+default-element-type+ :function-designator :type-class-of 
-   :unsigned-byte* :type-class-id :find-classoid :classoid 
+   :type-class-id :find-classoid :classoid #:sfunction
    :type-class-id-of :classoid-of :layout-of :type-id<= 
    :type-id< :type-id= :array-type= :type-id->type-class 
    :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
@@ -314,7 +313,6 @@
    :ds-lambda-list-matcher :parse-ds-lambda-list
    :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
    :parse-meta-ds-lambda-list
-   #:sfunction
    #:negative-double-float :*ctype-hashsets*
    #:abstract-ds-lambda-list
    #:negative-fixnum-p

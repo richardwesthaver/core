@@ -54,3 +54,19 @@
   (let ((proc (sb-ext:run-program *uv* (or args nil) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (uv-error "UV command failed: ~A ~A" *uv* (or args "")))))
+
+;;; Go
+(define-cli-tool :go (&rest args)
+  (let ((proc (sb-ext:run-program *go* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc)) 
+      (go-error "go command failed: ~A ~A" *go* (or args "")))))
+
+(defun go-install (&rest args)
+  "Install a go package."
+  (apply 'run-go "install" args))
+
+;;; Javascript
+(define-cli-tool :npx (&rest args)
+  (let ((proc (sb-ext:run-program *npx* (or args nil) :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (go-error "npx command failed: ~A ~A" *npx* (or args "")))))

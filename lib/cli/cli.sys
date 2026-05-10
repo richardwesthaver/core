@@ -17,7 +17,6 @@
    ((:pkg "pkg" :internal-package :cli-int :feature :tools)
     (:file "proto" :require ("pkg"))
     (:file "term" :require ("proto"))
-    (:file "tmux" :require ("term"))
     (:file "pacman" :require ("proto"))
     (:file "cc" :require ("proto"))
     (:file "build" :require ("proto"))

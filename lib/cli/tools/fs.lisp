@@ -17,3 +17,8 @@
       (btrfs-error "BTRFS command failed: ~A ~A" *btrfs* (or args "")))))
 
 ;; (run-btrfs "filesystem" "usage" "/")
+
+(define-cli-tool :rclone (&rest args)
+  (let ((proc (sb-ext:run-program *rclone* args :wait t :output t)))
+    (unless (eq 0 (sb-ext:process-exit-code proc))
+      (rclone-error "rclone command failed: ~A ~A" *rclone* (or args "")))))

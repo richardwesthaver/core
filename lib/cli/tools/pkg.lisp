@@ -9,6 +9,7 @@
    :cli-tool-error))
 
 (defpkg :cli/tools/term
+  (:nicknames :tools/term)
   (:use :cl :std :cli/tools/proto :cli/env :config :toml :ast)
   (:export
    :*term* :*alacritty-config-path*
@@ -18,18 +19,7 @@
    :*scriptreplay*
    :*script*
    :run-script :run-scriptreplay
-   :run-fbterm :*fbterm* :fbterm-error))
-
-(defpkg :cli/tools/fs
-  (:use :cl :std :cli/tools/proto :cli/env)
-  (:export
-   #:fs-error))
-
-(defpkg :cli/tools/tmux
-  (:use :cl :std :cli/tools/proto :cli/env :cli/tools/term)
-  (:import-from :obj/config
-   :defconfig :make-config :find-config)
-  (:export
+   :run-fbterm :*fbterm* :fbterm-error
    :*tmux-user-config-path*
    :*tmux-system-config-path*
    :*default-tmux-socket*
@@ -41,7 +31,14 @@
    :simple-tmux-error
    :tmux-config))
 
+(defpkg :cli/tools/fs
+  (:nicknames :tools/fs)
+  (:use :cl :std :cli/tools/proto :cli/env)
+  (:export
+   #:fs-error))
+
 (defpkg :cli/tools/cc
+  (:nicknames :tools/cc)
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*cc*
@@ -60,6 +57,7 @@
    :nvcc-error))
 
 (defpkg :cli/tools/build
+  (:nicknames :tools/build)
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export
    :*make*
@@ -77,7 +75,11 @@
    #:rustup-error
    #:run-rustup
    #:cargo-install
-   #:cargo-clean))
+   #:cargo-clean
+   #:*go*
+   #:run-go
+   #:go-install
+   #:go-error))
 
 (defpkg :cli/tools/media
   (:use :cl :std :cli/tools/proto :cli/env :config :ini :ast)
@@ -106,15 +108,6 @@
    :wireplumber-error
    :mpv-config
    :*mpv-config-path*))
-
-(defpkg :cli/tools/go
-  (:nicknames :tools/go)
-  (:use :cl :std :cli/tools/proto :cli/env)
-  (:export
-   :*go*
-   :run-go
-   :go-install
-   :go-error))
 
 (defpkg :cli/tools/plot
   (:nicknames :tools/plot)

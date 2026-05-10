@@ -48,6 +48,8 @@
    :podman-build
    :podman-stop
    :podman-cp
+   :podman-save
+   :podman-import
    :podman-exec
    :buildah-copy
    :with-container

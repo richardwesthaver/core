@@ -201,7 +201,7 @@ directory."))
 			    (form (cdr b)))
 		        ;; (form (cddr b)))
 		        (let ((key (car form))
-			      (val (if (= (length #1=(print (cdr form))) 1) (cadr form) #1#)))
+			      (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
 		          (if (keywordp key)
 			      (sk-case-bind key val sym)
 			      (cond

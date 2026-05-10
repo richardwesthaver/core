@@ -596,14 +596,15 @@ with each hook being passed the RESULT."
 (defgeneric print-help (self &optional stream)
   (:documentation "Format command SELF as a helpful string.")
   (:method ((self command) &optional stream)
-    (print-usage self stream)
     (when-let ((doc (kernel-documentation self)))
-      (println doc stream))))
+      (println doc stream))
+    (princ (format nil "Lambda-list: ~A~%" (print-usage self)) stream)
+    (values)))
 
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format command SELF as a useful string.")
   (:method ((self command) &optional stream)
-    (format stream "~&~A~%" (function-lambda-list (kernel self)))))
+    (format stream "~A" (function-lambda-list (kernel self)))))
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name class copy (load t) names clean)

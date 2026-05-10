@@ -25,6 +25,15 @@
            ,container
            ,@(if (atom cmd) `(,cmd) cmd))))
 
+(defun podman-save (output &key (container *container*))
+  "Save a podman CONTAINER to OUTPUT, which should be a tar file path."
+  (apply 'run-podman "save"
+         `(,container "-o" ,output)))
+
+(defun podman-import (input)
+  (apply 'run-podman "import"
+         `(,container ,@(when compress '("-c")) "-o" ,output)))
+
 (defun podman-run (args &key dir (container *container*) name (tty t) (detach t) cmd (replace t) systemd ports)
   ;; attach cpu 
   ;; gpu health network 
