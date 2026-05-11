@@ -99,34 +99,38 @@
 (defun toml-read-string (stream)
   "TOML supports basic, multi-line basic, literal, and multi-line literal
 strings. All strings are UTF-8."
-  (let ((q (read-char stream)))
-    (with-output-to-string (s)
-      (if (eql q (peek-char t stream nil nil)) ;; 2 quotes
-          (if (eql q (peek-char t stream nil nil)) ;; 3 quotes (multi-line)
-              (progn 
-                ;; first we consume the first 2 multi-line quote chars
-                (read-sequence (make-string 2) stream)
+  (let ((y (peek-char t stream)))
+    ;; attempt to read unquoted strings
+    (if (alphabetic-p y) 
+        (read-line stream)
+        (let ((q (read-char stream)))
+          (with-output-to-string (s)
+            (if (eql q (peek-char t stream nil nil)) ;; 2 quotes
+                (if (eql q (peek-char t stream nil nil)) ;; 3 quotes (multi-line)
+                    (progn 
+                      ;; first we consume the first 2 multi-line quote chars
+                      (read-sequence (make-string 2) stream)
+                      (loop for c = (read-char stream nil nil)
+                            while c
+                            if (eql q c)
+                            do (let ((c1 (read-char stream nil nil))
+                                     (c2 (read-char stream nil nil)))
+                                 (if (char= q c1 c2) ;; 3 quotes
+                                     (return s)
+                                     (progn
+                                       (write-char c s)
+                                       (write-char c1 s)
+                                       (write-char c2 s))))
+                            else do (write-char c s)))
+                    ;; empty string (2 quotes)
+                    (progn
+                      (read-char stream nil nil) ;; q
+                      s))
                 (loop for c = (read-char stream nil nil)
                       while c
                       if (eql q c)
-                      do (let ((c1 (read-char stream nil nil))
-                               (c2 (read-char stream nil nil)))
-                           (if (char= q c1 c2) ;; 3 quotes
-                               (return s)
-                               (progn
-                                 (write-char c s)
-                                 (write-char c1 s)
-                                 (write-char c2 s))))
-                      else do (write-char c s)))
-              ;; empty string (2 quotes)
-              (progn
-                (read-char stream nil nil) ;; q
-                s))
-          (loop for c = (read-char stream nil nil)
-                while c
-                if (eql q c)
-                return s
-                else do (write-char c s))))))
+                      return s
+                      else do (write-char c s))))))))
 
 (defun toml-read-simple-string (stream)
   "Read a single-quoted string."
@@ -196,12 +200,14 @@ strings. All strings are UTF-8."
         t
         (error "TOML error: expected 'true', got ~A" s))))
 
-(defun toml-read-false (stream)
+(defun toml-read-false (stream &optional (default :error))
   (let ((s (make-string 5)))
     (read-sequence s stream)
     (if (equal s "false")
         t
-        (error "TOML error: expected 'false', got ~A" s))))
+        (if (eql default :error)
+            (error "TOML error: expected 'false', got ~A" s)
+            (toml-read-string stream)))))
 
 (defun toml-read-number-or-datetime (stream)
   (let ((c (peek-char t stream nil nil)))
@@ -210,14 +216,18 @@ strings. All strings are UTF-8."
       (#\- (read-char stream) (toml-read-negative stream))
       (#\n (toml-read-nan stream))
       (#\i (toml-read-inf stream))
-      (t (let ((n (read stream)))
-           (if (stringp n)
-               ;; junk allowed for parsing time values
-               (if-let ((%n (ignore-errors (parse-number n)))) 
-                 %n
-                 ;; if we can't parse as a number try it as a datetime
-                 (toml-parse-datetime stream))
-               n))))))
+      (t 
+       ;; REVIEW 2026-05-10: 
+       (if (alphabetic-p c) ;; may not be spec compliant
+           (return-from toml-read-number-or-datetime (toml-read-string stream))
+       (let ((n (read stream)))
+         (if (stringp n)
+             ;; junk allowed for parsing time values
+             (if-let ((%n (ignore-errors (parse-number n))))
+               %n
+               ;; if we can't parse as a number try it as a datetime
+               (toml-parse-datetime stream))
+             n)))))))
 
 (defun toml-read-positive (stream)
   (let ((c (peek-char t stream nil nil)))
@@ -286,7 +296,6 @@ strings. All strings are UTF-8."
 ;;; Serde
 
 ;; TODO 2023-12-23: 
-;; (deserialize "[test]" :toml)
 ;; (serialize '("test") :toml)
 
 (defmethod serialize ((table toml-table) (format (eql :toml)) &key (style :alist))

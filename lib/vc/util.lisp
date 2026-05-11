@@ -23,7 +23,8 @@
 
 (defun directory-repos (&optional (path *default-pathname-defaults*) type)
   (let ((path (probe-directory path)))
-    (loop for p in (directory (merge-pathnames "*/" (namestring path)))
+    (loop for p in (remove-if (lambda (p) (starts-with #\. (car (last (pathname-directory p)))))
+                                     (directory (merge-pathnames "*/" (namestring path))))
           collect (make-repo p :type type))))
 
 (defun bundle-repo (path output)

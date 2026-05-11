@@ -46,3 +46,4 @@ vc.nu; vc mirrors update;'"
     (let ((out #p"/tmp/bundle.hg.zst"))
       (isequal out (vc-bundle repo out :type "zstd-v2"))
       (delete-file out))))
+

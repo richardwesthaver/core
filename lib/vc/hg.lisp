@@ -121,8 +121,10 @@ first value and 'stuff' as the second."
     (string
      (if (char= (schar obj 0) #\[)
          (let ((end (position #\] obj)))
-           (values (uri (subseq obj (1+ end))) (keywordicate (string-upcase (subseq obj 1 end)))))
-         (values (uri obj) :hg)))))
+           (handler-case
+               (values (uri (subseq obj (1+ end))) (keywordicate (string-upcase (subseq obj 1 end))))
+             (uri-parse-error () (values obj :hg))))))
+    (t (values (uri obj) :hg))))
 
 (defun find-hgrc (&optional (root *default-pathname-defaults*) (load t))
   (when-let ((config (probe-file (merge-pathnames ".hg/hgrc" root))))
