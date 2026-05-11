@@ -94,6 +94,24 @@ and we may query the user for input.")
 (defun lisp-machine-id ()
   (format nil "~(~A-lisp-linux-~A-~A~)" (substitute #\_ #\- (machine-type)) (lisp-implementation-type) (lisp-implementation-version)))
 
+(defun machine-target ()
+  "Return the current machine target string which may be one of the following:
+
+- x86_64
+- x86_64-amd
+- aarch64"
+  (let ((ty (machine-type)))
+    (std/string:string-case (ty)
+      ("X86" "x86")
+      ("X86-64"
+       (let ((arch "x86_64"))
+         (cond 
+           ((equal (subseq (machine-version) 0 3) "AMD")
+            (concatenate 'string arch "-amd"))
+           (t arch))))
+      ("ARM" "arm")
+      ("ARM64" "arm64"))))
+
 (defun current-machine ()
   "Return the current machine spec as a list: (HOST TYPE VERSION)"
   (list

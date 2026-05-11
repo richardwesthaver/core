@@ -756,6 +756,7 @@
    :primitive-type-of
    :lisp-implementation-id
    :lisp-machine-id
+   :machine-target
    :+lowtags+ :+widetags+
    :open-fasl-output :close-fasl-output
    :check-fasl-header

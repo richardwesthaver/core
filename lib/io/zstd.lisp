@@ -93,7 +93,6 @@
     (setf (slot zstd-in-buffer 'zstd::pos) 0
           (slot zstd-in-buffer 'zstd::size) 0)
     (setf (slot zstd-out-buffer 'zstd::pos) 0)
-    (print :ok)
     ;; don't close the output-stream (FD-STREAM)
     ;; (finish-output output-stream)
     ))
