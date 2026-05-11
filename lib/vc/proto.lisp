@@ -12,6 +12,8 @@
 (defvar *repo-registry* (make-hash-table :test 'equal))
 (defvar *repo-auto-register* t
   "When non-nil, register all VC-REPO objects when they are created.")
+(defvar *default-vc-remote* "default")
+(defvar *default-vc-branch* "default")
 
 ;;; Conditions
 (define-condition vc-error (std-error) ())

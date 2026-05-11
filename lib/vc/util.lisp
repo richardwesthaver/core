@@ -37,9 +37,11 @@
 
 (defun update-repo (repo &optional push (pull t))
   (when pull
-    (vc-pull repo (when (stringp pull) pull)))
+    (vc-pull repo (if (stringp pull) pull *default-vc-remote*)))
   (when push
-    (vc-push repo :remote (when (stringp push) push))))
+    (handler-case
+        (vc-push repo :remote (if (stringp push) push *default-vc-remote*))
+      (hg-error () nil))))
 
 (defun update-repos (path &key push (pull t) type)
   (loop for repo in (directory-repos path type)

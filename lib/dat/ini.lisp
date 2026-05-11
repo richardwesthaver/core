@@ -14,7 +14,8 @@
 
 (defmethod print-object ((self ini-object) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A" (car (ast self)))))
+    (when (slot-boundp self 'ast)
+      (format stream "~A" (car (ast self))))))
 
 (defun ini-peek-char (stream expected &key skip-ws)
   (when (equal (peek-char skip-ws stream nil) expected)

@@ -29,6 +29,8 @@
    :vc-type
    :*repo*
    :*default-vc-kind*
+   :*default-vc-remote*
+   :*default-vc-branch*
    :*repo-roots*
    :*repo-registry*
    :*repo-auto-register*

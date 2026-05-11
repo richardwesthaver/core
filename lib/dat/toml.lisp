@@ -38,7 +38,8 @@
 
 (defmethod print-object ((self toml-object) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A" (car (ast self)))))
+    (when (slot-boundp* self 'ast)
+      (format stream "~A" (car (ast self))))))
 
 (defclass toml-table (toml-object) ())
 
@@ -200,14 +201,12 @@ strings. All strings are UTF-8."
         t
         (error "TOML error: expected 'true', got ~A" s))))
 
-(defun toml-read-false (stream &optional (default :error))
+(defun toml-read-false (stream)
   (let ((s (make-string 5)))
     (read-sequence s stream)
     (if (equal s "false")
         t
-        (if (eql default :error)
-            (error "TOML error: expected 'false', got ~A" s)
-            (toml-read-string stream)))))
+        (error "TOML error: expected 'false', got ~A" s))))
 
 (defun toml-read-number-or-datetime (stream)
   (let ((c (peek-char t stream nil nil)))
@@ -217,9 +216,8 @@ strings. All strings are UTF-8."
       (#\n (toml-read-nan stream))
       (#\i (toml-read-inf stream))
       (t 
-       ;; REVIEW 2026-05-10: 
-       (if (alphabetic-p c) ;; may not be spec compliant
-           (return-from toml-read-number-or-datetime (toml-read-string stream))
+       ;; (if (alphabetic-p c) ;; may not be spec compliant
+       ;;     (return-from toml-read-number-or-datetime (toml-read-string stream))
        (let ((n (read stream)))
          (if (stringp n)
              ;; junk allowed for parsing time values
@@ -227,7 +225,7 @@ strings. All strings are UTF-8."
                %n
                ;; if we can't parse as a number try it as a datetime
                (toml-parse-datetime stream))
-             n)))))))
+             n))))))
 
 (defun toml-read-positive (stream)
   (let ((c (peek-char t stream nil nil)))

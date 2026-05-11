@@ -119,23 +119,24 @@ first value and 'stuff' as the second."
     (uri (values obj :hg))
     (pathname (values obj :hg))
     (string
-     (if (char= (schar obj 0) #\[)
-         (let ((end (position #\] obj)))
-           (handler-case
-               (values (uri (subseq obj (1+ end))) (keywordicate (string-upcase (subseq obj 1 end))))
-             (uri-parse-error () (values obj :hg))))))
+     (handler-case
+         (if (char= (schar obj 0) #\[)
+             (let ((end (position #\] obj)))
+               (values (uri (subseq obj (1+ end))) (keywordicate (string-upcase (subseq obj 1 end)))))             
+             (values (uri obj) :hg))
+       (uri-parse-error () (return-from parse-hg-uri (values obj :hg)))))
     (t (values (uri obj) :hg))))
 
 (defun find-hgrc (&optional (root *default-pathname-defaults*) (load t))
   (when-let ((config (probe-file (merge-pathnames ".hg/hgrc" root))))
-    (let ((cfg (deserialize config :toml)))
+    (let ((cfg (deserialize config :ini)))
       (if load
           (let ((ret (make-config :hg)))
             (dolist (c (unwrap cfg) ret)
               (unless (null c)
-                (string-case ((car c))
-                  ("paths" (setf (slot-value ret 'paths) (cdr c)))
-                  ("ui" (setf (slot-value ret 'ui) (cdr c)))))))
+                (string-case ((name c))
+                  ("paths" (setf (slot-value ret 'paths) (cdr (ast c))))
+                  ("ui" (setf (slot-value ret 'ui) (cdr (ast c))))))))
           cfg))))
 
 (defun find-hg-bookmarks (&optional (root *default-pathname-defaults*))
