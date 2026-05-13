@@ -189,9 +189,9 @@ evaluation of BODY."
 (defcommand (:cli :help) (&optional (arg *cli*))
   "Print help and exit."
   (declare (interactive (ustring "Command: ")))
-  (if (cli-p arg) 
-      (print-help arg) 
-      (print-help (command arg))))
+  (print-help
+   (if (cli-p arg) arg
+       (ifret (command arg) (undefined-command arg)))))
 
 (defcommand (:cli :version) (&optional (arg *cli*))
   "Print version and exit." 
