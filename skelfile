@@ -51,7 +51,7 @@
    (with-repo (r :path "/tmp/core" :type :git :delete t)
     (loop for remote across (setf (vc-remotes r) (remotes "core"))
      do (vc-remote r :add :name (name remote) :url (uri remote)))
-    (vc-update r)
+    (update-repo r :push t)
     (vc-submodule r :add :url "https://github.com/richardwesthaver/ppcre")
     (vc-submodule r :add :url "https://github.com/richardwesthaver/ironclad")
     (vc-submodule r :add :url "https://github.com/richardwesthaver/slime")

@@ -9,7 +9,7 @@
 (defclass sk-project (skel sk-meta simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
-   (vc :initarg :vc :initform (vc-init *default-vc-kind*) 
+   (vc :initarg :vc :initform (vc-init *default-vc-kind*)
        :type vc-repo :accessor vc)
    (src :initarg :src :type pathname :accessor src)
    (stash :initarg :stash :accessor stash :initform ".stash/")
@@ -134,7 +134,8 @@ directory."))
 	(when-let ((vc (vc self)))
 	  (etypecase vc
 	    ((or vc-repo null) nil)
-	    (vc-designator (setf (vc self) (vc-init vc)))
+            ;; WARNING: slow path - recurses submodules, parses configs
+	    (vc-designator (setf (vc self) (make-repo *skel-path* :type vc)))
 	    (list
 	     (flet ((%vc-scan (lst)
 		      (let* ((%type (if (typep (car lst) 'vc-designator)
@@ -189,7 +190,6 @@ directory."))
       (when-let ((bind (bind self)))
 	(setf (bind self)
 	      (let ((ret))
-		;; TODO 2024-09-21: 
 		(dolist (b bind ret)
 		  ;; if this is a list of length > 2 we parse the form as either
 		  ;; (key &rest val) or (var param &rest val)
