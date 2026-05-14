@@ -28,3 +28,6 @@
 (defmethod load-config ((self (eql :packy)) (from pathname) &key)
   (let ((c (make-config :packy)))
     (load-ast c)))
+
+(defconfig target-config (packy-config)
+  ((name :accessor name)))

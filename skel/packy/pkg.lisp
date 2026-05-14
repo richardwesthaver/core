@@ -37,8 +37,7 @@
    :*packy-home*
    :packy-condition
    :packy-error
-   :*packy-dist-targets*
-   :*default-packy-dist-targets*
+   :*machine-target-table*
    :package-database
    :init-packy-db
    :package-id))

@@ -411,11 +411,11 @@ NAME *COMMAND-TABLE*)."
 (defun copy-commands (name1 name2)
   "Copy all commands and types from NAME1 to NAME2."
   (setf (command-table name2) 
-        (destructuring-bind (cmds . types) (command-table name1)
+        (destructuring-bind (cmds &rest types) (command-table name1)
           (cons (copy-hash cmds) (copy-hash types)))))
 
 (defun load-commands (name)
-  (destructuring-bind (cmds . types) (gethash name *command-table*)
+  (destructuring-bind (cmds &rest types) (gethash name *command-table*)
     (setq *commands* cmds
           *command-types* types
           *commander* name)))

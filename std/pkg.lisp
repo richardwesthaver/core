@@ -826,6 +826,9 @@
    :*default-arena-size*
    :current-lisp-implementation
    :current-machine
+   :*machine-target*
+   :*machine-targets*
+   :machine-target
    :list-package-symbols
    :list-all-symbols
    :do-internal-symbols
