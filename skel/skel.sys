@@ -36,11 +36,13 @@
   (:file "srv")
   (:mod "packy"
    :components
-   ((:pkg "pkg" :feature :packy :internal-package :skel-int)
+   ((:pkg "pkg" 
+     :feature :packy 
+     :internal-package :skel-int 
+     :default-package :pk-user)
     (:file "var")
     (:file "proto")
     (:file "pkgbuild")
-    (:file "apkbuild")
     (:file "db")
     (:file "client")
     (:file "srv")
@@ -48,13 +50,19 @@
     (:file "cli")))
   (:mod "krypt"
    :components 
-   ((:pkg "pkg" :feature :krypt :internal-package :skel-int)
+   ((:pkg "pkg" 
+     :feature :krypt
+     :internal-package :skel-int
+     :default-package :kr-user)
     (:file "condition")
     (:file "krypt")
     (:file "cli")))
   (:mod "homer"
    :components 
-   ((:pkg "pkg" :feature :homer :internal-package :skel-int)
+   ((:pkg "pkg" 
+     :feature :homer 
+     :internal-package :skel-int
+     :default-package :hr-user)
     (:file "var")
     (:file "log")
     (:file "util")
@@ -64,7 +72,10 @@
     (:file "cli")))
   (:mod "mpk"
    :components
-   ((:pkg "pkg" :feature :mpk :internal-package :skel-int)
+   ((:pkg "pkg" 
+     :feature :mpk 
+     :internal-package :skel-int
+     :default-package :mk-user)
     (:file "mpd")
     (:file "var")
     (:file "proto" :require ("proto"))

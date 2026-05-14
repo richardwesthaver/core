@@ -35,14 +35,18 @@
   ((directory :initarg :directory :accessor dir)))
 
 (defun packed-path-p (path)
-  "Return non-nil if PATH is a ZSTD compressed file or otherwise complete
-package-descriptor."
-  (and (probe-file path) (equal "zst" (pathname-type path))))
+  "Return non-nil if PATH is a valid package (.pkg.tar.zst)."
+  (when-let ((name (pathname-name path))
+             (type (pathname-type path)))
+    (and (probe-file path) 
+         (string-equal "zst" type)
+         (let ((len (length name)))
+           (string-equal "pkg.tar" (subseq name (- len 7)))))))
 
 (defgeneric pack (self &key &allow-other-keys)
   (:method ((self pathname) &key)
     (when (packed-path-p self)
-      (packy-error "Package is already compressed: ~A" self))))
+      (packy-error "Already a finalized package: ~A" self))))
 
 (defgeneric unpack (self &key &allow-other-keys))
 (defgeneric install-package (self &key &allow-other-keys))

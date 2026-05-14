@@ -28,9 +28,7 @@
       (db:open-db *packy-db*)
       (when columns
         (apply 'db:open-columns *packy-db* columns))))
-  (when tree-sitter
-    (tree-sitter:load-tree-sitter)
-    (tree-sitter:load-tree-sitter-bash)))
+  (when tree-sitter (load-aliens :tree-sitter :tree-sitter-bash)))
 
 (defmethod init ((self (eql :packy)) &rest args)
   (rocksdb:load-rocksdb)

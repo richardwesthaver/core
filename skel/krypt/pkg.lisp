@@ -19,7 +19,7 @@
 
 ;;; Code:
 
-(defpackage :skel/krypt
+(defpkg :skel/krypt
   (:nicknames :krypt)
   (:use :cl :std :cry/crc64 :id :ast :config :secret :cli :clap :cry/ssh :cry/gpg)
   (:export :krypt-error :*user-kryptrc* :krypt-config 
@@ -28,3 +28,7 @@
    :init-krypt :krypt-condition
    :*krypt-user-config* :*krypt-cli*
    :b3-cmd))
+
+(defpkg :kr-user
+  (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
+  (:use :krypt))

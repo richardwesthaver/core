@@ -1,6 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :cl :skel :rt :log :obj :std/path :skel/packy :skel/krypt)
+  (:use :std-lisp :skel :rt :log :obj :skel/packy :skel/krypt)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -15,23 +15,23 @@
 
 This covers variations of make-source-header-comment, make-source-file-header,
 make-shebang-comment, and make-shebang-file-header."
-  (is (eq (type-of (make-shebang-file-header 
-		    (make-shebang-comment "/dev/null")))
-	  'file-header))
-  (is (subtypep (type-of (make-source-file-header 
-		          (make-source-header-comment 
-		           "foo-test"
-		           :timestamp t
-		           :description "nothing to see here"
-		           :opts '("Definitely-Not_Emacs: T;"))))
-	        'file-header)))
+  (issubtype 'file-header 
+             (type-of (make-shebang-file-header 
+		       (make-shebang-comment "/dev/null"))))
+  (issubtype 'file-header 
+             (type-of (make-source-file-header 
+		       (make-source-header-comment 
+		        "foo-test"
+		        :timestamp t
+		        :description "nothing to see here"
+		        :opts '("Definitely-Not_Emacs: T;"))))))
 
 (deftest skelfile ()
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
   (with-tmp-file (f :type "sk")
     (let ((p (make-instance 'sk-project :name "nada" :path "test" :vc :hg)))
-      (is (sk-write-file p :path *tmp* :if-exists :supersede))
+      (sk-write-file p :path *tmp* :if-exists :supersede)
       (is (load-skelfile *tmp*))
       (is (build (apply 'make-instance 'sk-project (std:file-read-forms *tmp*)))))))
 

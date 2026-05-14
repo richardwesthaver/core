@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/packy)
 
-(defconfig packy-config (ast)
+(defconfig packy-config (ast id)
   ((path :initarg :path :accessor path)))
 
 (defconfig packy-user-config (packy-config) ())
@@ -27,4 +27,4 @@
 
 (defmethod load-config ((self (eql :packy)) (from pathname) &key)
   (let ((c (make-config :packy)))
-    (load-config c from)))
+    (load-ast c)))

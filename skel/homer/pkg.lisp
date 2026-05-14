@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(defpackage :skel/homer/core
+(defpkg :skel/homer/core
   (:use :cl :std :log :skel/krypt :skel/core :config :io/kbd :ast :id :time :pod :box :cli/tools/sys)
   (:import-from :srv :request :response :service :engine)
   ;; (:import-from :mpk :mpk-config :load-mpkrc)
@@ -35,10 +35,14 @@
    #:systemd-stop
    #:systemd-status))
 
-(defpackage :skel/homer/cli
+(defpkg :skel/homer/cli
   (:use :cl :std :log :skel/homer/core :cli :ast :clap :cmd :sb-ext))
 
-(pkg:defpkg :skel/homer
+(defpkg :skel/homer
   (:nicknames :homer)
   (:use :cl :std :log :cli)
   (:use-reexport :skel/homer/core))
+
+(defpkg :hr-user
+  (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
+  (:use :homer))

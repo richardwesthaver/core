@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(defpackage :skel/packy
+(defpkg :skel/packy
   (:nicknames :packy)
   (:use :cl :std :id :io :ast :log :config :db :rdb :schema :time :net/core :net/srv)
   (:export
@@ -43,13 +43,13 @@
    :init-packy-db
    :package-id))
 
-(defpackage :skel/packy/pkgbuild
+(defpkg :skel/packy/pkgbuild
   (:use :cl :std :ast :syn/ts :tree-sitter)
   (:export))
 
-(defpackage :skel/packy/apkbuild
-  (:use :cl :std :ast :syn/ts :tree-sitter)
-  (:export))
-
-(defpackage :skel/packy/cli
+(defpkg :skel/packy/cli
   (:use :cl :std :clap :cmd :skel/packy :cli/main))
+
+(defpkg :pk-user
+  (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
+  (:use :packy))

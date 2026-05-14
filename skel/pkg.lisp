@@ -153,7 +153,7 @@
 (defpkg :skel/comp/sys
   (:use :cl :skel/core :std/defsys))
 
-(pkg:defpkg :skel/comp/asd
+(defpkg :skel/comp/asd
   (:shadowing-import-from :std :version)
   (:import-from :std :defmethods :when-let)
   (:use :cl :skel/core :std/macs :asdf)
@@ -215,7 +215,7 @@
   (:nicknames :sk-net)
   (:use :cl :std :net/srv/udp :skel/core :srv :log :skel/srv))
 
-(pkg:defpkg :skel
+(defpkg :skel
   (:nicknames :sk)
   (:use :cl :std)
   (:use-reexport 
@@ -223,10 +223,8 @@
    :skel/net)
   (:export :with-project))
 
-(pkg:defpkg :sk-user
-  (:use :cl :std :cli :clap :tools
+(defpkg :sk-user
+  (:use :std-lisp :cli :tools
    :cl-user :log :sb-debug :sb-ext
-   :obj/ast :vc :rdb :io :net :pod)
-  (:import-from :uri :uri)
-  (:use :skel :skel/core :skel/comp :skel/net))
-
+   :obj/ast :vc :rdb :io :net :pod :uri)
+  (:use :skel))
