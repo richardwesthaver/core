@@ -11,7 +11,7 @@
       (slot-value instance slot-name)))
 
 (deferror value-error (invalid-argument) ()
-  (:auto t)
+  (:reporter t)
   (:default-initargs :reason "GET-VAL does not handle this type of object. Specialize your own method."))
 
 (defgeneric rem-val (object element &key)

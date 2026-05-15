@@ -9,7 +9,7 @@
 
 (deferror log-error (log-condition error) ()
   (:documentation "Base class for all LOG-related errors.") 
-  (:auto t))
+  (:reporter t))
 
-(deferror simple-log-error (log-condition simple-error) () (:auto t))
+(deferror simple-log-error (log-condition simple-error) () (:reporter t))
           

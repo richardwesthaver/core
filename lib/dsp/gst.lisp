@@ -12,7 +12,7 @@
 ;; (load-gst-play)
 
 (define-condition gst-condition (dsp-condition) ())
-(deferror gst-error (gst-condition dsp-error) () (:auto t))
+(deferror gst-error (gst-condition dsp-error) () (:reporter t))
 
 ;; (gst-version-string)
 

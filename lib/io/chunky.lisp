@@ -269,7 +269,7 @@ READ-NAME-VALUE-PAIR.  Stops reading in case of END-OF-FILE
 (eval-always
   (deferror chunky-error (chunky-condition stream-error) ()))
 
-(deferror simple-chunky-error (chunky-condition simple-error) () (:auto t))
+(deferror simple-chunky-error (chunky-condition simple-error) () (:reporter t))
 
 (define-condition chunky-warning (chunky-condition warning) ())
 

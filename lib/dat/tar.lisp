@@ -58,7 +58,7 @@
 
 ;;; Conditions
 (define-condition tar-error () ())
-(deferror simple-tar-error (tar-error simple-error) () (:auto t))
+(deferror simple-tar-error (tar-error simple-error) () (:reporter t))
 (deferror invalid-checksum-error (tar-error)
     ((provided :initarg :provided :reader error-provided)
      (computed :initarg :computed :reader error-computed))

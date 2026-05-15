@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :io/proto)
 
-(deferror io-error () () (:auto t))
+(deferror io-error () () (:reporter t))
 
 (defgeneric input (self))
 (defgeneric (setf input) (new self))

@@ -92,7 +92,7 @@ Z -- Coding system, nil if no prefix arg.
 ;;; Conditions
 (define-condition command-condition () ())
 (eval-always
-  (defwarning command-warning (command-condition simple-warning) () (:auto t)))
+  (defwarning command-warning (command-condition simple-warning) () (:reporter t)))
 
 (define-condition command-error (command-condition)
   ((name :initarg :name :reader error-name)
@@ -188,7 +188,10 @@ LAMBDA-LIST at compile-time."
                                                  (typecase x
                                                    (list (append x y))
                                                    (atom (cons x y)))))
-                              (when rest (cons rest irest))
+                              (when rest 
+                                (if irest
+                                    (list (append rest irest))
+                                    rest))
                               (when key (loop for x in key
                                               for y in ikey
                                               collect 

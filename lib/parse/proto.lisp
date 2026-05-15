@@ -8,8 +8,8 @@
 ;; note that PARSE-ERROR is defined by CL
 (define-condition parser-condition () ())
 
-(deferror parser-error (parser-condition) () (:auto t))
+(deferror parser-error (parser-condition) () (:reporter t))
 
-(deferror simple-parser-error (parser-error simple-error) () (:auto t))
+(deferror simple-parser-error (parser-error simple-error) () (:reporter t))
 
 (defgeneric parse (self &optional precedence))

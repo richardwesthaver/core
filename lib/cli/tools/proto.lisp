@@ -28,7 +28,7 @@ ARGS and BODY are parsed as the args and body of the run-NAME function."
                         (string name)
                         (symbol (string-downcase %name)))))
          ,@(when var `((pushnew ,name *cli-tools*)))
-         (deferror ,err (cli-tool-error) () (:auto t))
+         (deferror ,err (cli-tool-error) () (:reporter t))
          ,@(when args `((defun ,run ,args ,@body)))))))
 
 (defun tool-function (n) `(function ,(intern (format nil "RUN-~A" n) :cli/tools)))

@@ -7,8 +7,8 @@
 
 ;;; Conditions
 (define-condition math-condition () ())
-(deferror math-error (math-condition error) () (:auto t))
-(defwarning math-warning (math-condition warning) () (:auto t))
+(deferror math-error (math-condition error) () (:reporter t))
+(defwarning math-warning (math-condition warning) () (:reporter t))
 
 ;;; BLAS/LAPACK
 (defun blasfunc (name type)

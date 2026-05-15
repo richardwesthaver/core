@@ -13,4 +13,4 @@
   ()
   (:documentation "Error signaled from the KRYPT package."))
 
-(deferror simple-krypt-error (krypt-error simple-error) () (:auto t))
+(deferror simple-krypt-error (krypt-error simple-error) () (:reporter t))

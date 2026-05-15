@@ -92,7 +92,7 @@
 ;; IGMP
 
 ;;; Browser
-(deferror simple-browser-error (simple-error) () (:auto t))
+(deferror simple-browser-error (simple-error) () (:reporter t))
 
 (define-cli-tool :chromium)
 (define-cli-tool :firefox)

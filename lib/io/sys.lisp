@@ -132,7 +132,7 @@ of a file descriptor."))
                        `(progn
                           (deferror ,cond-name (io-syscall-error) ()
                             (:default-initargs :errno ,code :name ,kw :message ,(strerror code))
-                            (:auto t))
+                            (:reporter t))
                           (setf (gethash ,code *syscall-error-table*) ',cond-name)))))))
   (define-syscall-errors
       #.(alien-enum-keys 'err)))

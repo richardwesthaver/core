@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :vc/git)
 
-(deferror git-error (vc-error) () (:auto t))
+(deferror git-error (vc-error) () (:reporter t))
 
 (defvar *git-program* (cli:find-exe "git"))
 

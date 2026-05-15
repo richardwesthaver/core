@@ -6,7 +6,7 @@
 (in-package :skel/packy)
 
 (define-condition packy-condition () ())
-(deferror packy-error (simple-error packy-condition) () (:auto t))
+(deferror packy-error (simple-error packy-condition) () (:reporter t))
 
 (defclass package-id (id)
   ((id :initform (make-array 16 :element-type 'octet) :initarg :id :type (octet-vector 16) :accessor id)))

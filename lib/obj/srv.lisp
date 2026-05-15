@@ -52,12 +52,12 @@
 ;;; Conditions
 (define-condition service-condition (condition) ())
 (eval-always
-  (deferror service-error (service-condition error) () (:auto t)))
-(deferror simple-service-error (service-error simple-condition) () (:auto t))
+  (deferror service-error (service-condition error) () (:reporter t)))
+(deferror simple-service-error (service-error simple-condition) () (:reporter t))
 
 (define-condition service-warning (service-condition warning) ())
 
-(defwarning simple-service-warning (service-warning simple-warning) () (:auto t))
+(defwarning simple-service-warning (service-warning simple-warning) () (:reporter t))
 
 (deferror bad-request (service-error) ())
 

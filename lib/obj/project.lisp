@@ -19,7 +19,23 @@
 ;;; Code:
 (in-package :obj/project)
 
-;;; Meta
+;;; Vars
+(defvar *default-project-class* 'simple-project)
+
+(defglobal *project-table* (make-hash-table)
+  "An EQL hash-table containing all registered projects.")
+
+(defvar *project* nil
+  "The currently active PROJECT instance.")
+
+;;; Conditions
+(define-condition project-condition () 
+  ((project :initform *project* :accessor error-project :initarg :project)))
+
+(deferror project-error (project-condition error) () (:reporter t))
+(defwarning project-warning (project-condition warning) () (:reporter t))
+
+;;; Protocol
 (defclass project-metadata ()
   ((name :initarg :name :initform nil :type (or null string) :accessor name)
    (path :initarg :path :initform nil :type (or null pathname) :accessor path)
@@ -37,10 +53,16 @@ project-like objects."))
 (defclass simple-project (project project-metadata) ()
   (:documentation "A PROJECT with optional metadata."))
 
-(defvar *default-project-class* 'simple-project)
+(defun project (name)
+  "Find a registered project by NAME."
+  (gethash name *project-table*))
 
-(defglobal *project-table* (make-hash-table)
-  "An EQL hash-table containing all registered projects.")
+(defun (setf project) (project name)
+  "Find a registered project by NAME."
+  (setf (gethash name *project-table*) project))
+
+(defun register-project (project)
+  (setf (project (name project)) project))
 
 (defconfig project-config (project-metadata ast) ()
   (:documentation "A generic project configuration."))
@@ -48,9 +70,9 @@ project-like objects."))
 (defun make-project (name &rest args &key (class *default-project-class*) &allow-other-keys)
   (apply 'make-instance class :name name (remove-from-plist args :class)))
 
-(defun register-project (project)
-  (setf (gethash (name project) *project-table*) project))
-
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
+
+;;; Macros
+(defwith project (name) (*project* (project name)))

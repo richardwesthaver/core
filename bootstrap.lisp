@@ -30,6 +30,7 @@
 (shadowing-import '(reset) :std)
 (in-package :std-user)
 (setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))
+(ensure-directories-exist *stash*)
 (init :sys)
 (let ((build-order 
         (list :std

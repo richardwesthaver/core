@@ -77,10 +77,10 @@
   (is (equal (ensure-cons 0) (ensure-cons 0))))
 
 ;; STD-* prints all arguments
-(deferror testing-error (std-error) nil (:auto t) (:documentation "testing"))
+(deferror testing-error (std-error) nil (:reporter t) (:documentation "testing"))
 
 ;; simple-* prints a control string and format args
-(defwarning testing-warning (simple-warning) () (:auto t))
+(defwarning testing-warning (simple-warning) () (:reporter t))
 
 (deftest conditions ()
   "Test standard error handlers"

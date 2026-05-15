@@ -46,10 +46,10 @@
 ;;; Utils
 
 ;;; Conditions
-(eval-always (deferror flate-error () () (:auto t)))
+(eval-always (deferror flate-error () () (:reporter t)))
 
-(deferror compression-error (flate-error) () (:auto t))
-(deferror decompression-error (flate-error) () (:auto t))
+(deferror compression-error (flate-error) () (:reporter t))
+(deferror decompression-error (flate-error) () (:reporter t))
 
 ;;; Proto
 (defgeneric decompress (output state input &key &allow-other-keys)

@@ -10,19 +10,19 @@
 (eval-always
   (deferror simple-rdb-error (rdb-condition simple-error)
     ()
-    (:auto t)
+    (:reporter t)
     (:documentation "Simple RDB Error."))
   (deferror rdb-error (rdb-condition std-error)
     ()
-    (:auto t)
+    (:reporter t)
     (:documentation "Error signaled by the RDB system."))
   (defwarning simple-rdb-warning (rdb-condition simple-warning)
     () 
     (:default-initargs 
      :format-control "RDB warning: ~A")
-    (:auto t)))
+    (:reporter t)))
 
-(defwarning rdb-default-column-warning (simple-rdb-warning simple-warning) () (:auto t))
+(defwarning rdb-default-column-warning (simple-rdb-warning simple-warning) () (:reporter t))
 
 (define-condition rdb-alien-error (rdb-error rocksdb-c-error)
   ((db :initarg :db :reader error-db))

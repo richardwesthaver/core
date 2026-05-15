@@ -87,6 +87,5 @@
     (:file "metro")
     (:file "mpk")
     (:file "cli")))
-  (:file "cli")
-  (:file "skel"))
+  (:file "cli"))
  :provide ((:tests) (:bin)))

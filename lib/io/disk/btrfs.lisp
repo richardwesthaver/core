@@ -7,7 +7,7 @@
 
 (define-condition btrfs-error (io-error) ())
 
-(deferror btrfs-simple-error (simple-error btrfs-error) () (:auto t))
+(deferror btrfs-simple-error (simple-error btrfs-error) () (:reporter t))
 
 (defclass btrfs-disk (disk) ())
 

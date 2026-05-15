@@ -14,7 +14,7 @@
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (cc-error "CC command failed: ~A ~A" *cc* (or args "")))))
 
-(deferror ld-error (simple-error) () (:auto t))
+(deferror ld-error (simple-error) () (:reporter t))
 
 (defparameter *ld*
   (or

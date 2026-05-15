@@ -96,10 +96,54 @@ control (or not)."
 (defun std-warning (&optional message)
   (warn 'std-warning :message message))
 
-;;; Deferror
+;;; Defcondition
+(macrolet ((%opt (name)
+             (sb-int:with-unique-names (f)
+               `(defun ,(sb-int:symbolicate "%" (symbol-name name)) (opts)
+                  (let ((,f (member ,(sb-int:keywordicate name) opts :test #'car-eql)))
+                     (cadar ,f))))))
+  (%opt reporter)
+  (%opt handler))
+
+(defun remove-options (alist &rest keys)
+  "Removes the defclass options KEYS from ALIST."
+  (remove-if (lambda (x) (member x keys :test #'eql)) alist :key #'car))
+
+(defun %ancestors (parent-types)
+  (flatten 
+   (mapcar 
+    (lambda (x) 
+      (mapcar 'sb-mop:class-name 
+              (sb-mop:class-precedence-list (find-class x))))
+    parent-types)))
+
+(defmacro define-condition-reporter (name)
+  `(defun ,name (&rest args)
+     ,(format nil "Signal a condition of type ~A with ARGS." name)
+     (apply 'signal ',name args)))
+
+(defmacro defcondition (name (&rest parent-types) (&rest slot-specs) &rest options)
+"extended DEFINE-CONDITION. 
+
+This macro takes the same arguments with some additional OPTIONs:
+
+:REPORTER - define a reporter function with the same name as the condition
+class. Also supported by the DEFERROR and DEFWARNING macros. By default wraps
+a call to SIGNAL.
+
+:HANDLER - define a handler macro with the specified bindings. unevaluated."
+  (let ((reporter (%reporter options))
+        (handler (%handler options)))
+    (setf options (remove-options options :handler :reporter))
+    `(progn 
+       ,@(when reporter `((define-condition-reporter ,(if (eql reporter t) name reporter))))
+       ,@(when handler `((define-condition-handler ,name handler)))
+       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
+
+;;;; Deferror
 (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an error condition."
-  (let ((fun (member :auto options :test #'car-eql))
+  (let ((fun (member :reporter options :test #'car-eql))
         (%ancestors (flatten (mapcar (lambda (x) 
                                        (mapcar 'sb-mop:class-name 
                                                (sb-mop:class-precedence-list (find-class x))))
@@ -152,10 +196,10 @@ control (or not)."
               :item item
               (when reason (list :reason reason))))))
 
-;;; Defwarning      
+;;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an warning condition."
-  (let ((fun (member :auto options :test #'car-eql)))
+  (let ((fun (%reporter options)))
     (when fun (setq options (remove (car fun) options)))
     `(prog1
          (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -182,6 +226,15 @@ control (or not)."
         ',name
         :format-control fmt
         :format-arguments args))))
+
+
+;;;; Macros
+
+(defmacro with-handlers (bindings &body body)
+  "Like HANDLER-BIND but also accept atoms in BINDINGS, which are treated as the
+name of a condition with an associated HANDLER macro, which is applied to BODY."
+  `(handler-bind ,bindings
+     ,@body))
 
 ;;; Conditions
 (defun required-argument (&optional name)

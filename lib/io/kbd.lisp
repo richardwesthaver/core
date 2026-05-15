@@ -45,7 +45,7 @@
 
 ;;; Conditions
 (define-condition kbd-error (error) ())
-(eval-always (deferror simple-kbd-error (simple-error kbd-error) () (:auto t)))
+(eval-always (deferror simple-kbd-error (simple-error kbd-error) () (:reporter t)))
   
 (define-condition kbd-parse-error (kbd-error invalid-item) ()
   (:default-initargs :reason nil)

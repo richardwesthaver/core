@@ -212,7 +212,7 @@ of the predicate. On success returns the arity or T for varargs."
 (define-condition dql-condition () ())
 (define-condition dql-error (dql-condition error) ())
 
-(deferror simple-dql-error (dql-error simple-error) () (:auto t))
+(deferror simple-dql-error (dql-error simple-error) () (:reporter t))
 
 (define-condition invalid-dql-anonymous (dql-error) ())
 
