@@ -271,6 +271,7 @@
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
    :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
    :print-arguments :ea
+   :with-ds-lambda-list-parts
    :without-compiler-notes
    :checked-compile :runtime :asm-search :inspect-ir
    :compile-condition :compile-condition-context-format

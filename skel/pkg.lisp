@@ -228,3 +228,5 @@
    :cl-user :log :sb-debug :sb-ext
    :obj/ast :vc :rdb :io :net :pod :uri)
   (:use :skel))
+
+(init :commands :name :skel :copy :cli :clean t)

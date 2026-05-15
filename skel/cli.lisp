@@ -4,8 +4,7 @@
 
 ;;; Code:
 (in-package :skel/cli)
-
-(init :commands :name :skel :copy :cli :clean t)
+(init :commands :name :skel)
 
 (define-command-type rule (&optional 
                            (prompt "Rule: ") 

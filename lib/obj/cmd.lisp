@@ -178,8 +178,24 @@ LAMBDA-LIST at compile-time."
   (multiple-value-bind (fn args) (unparse-ds-command-type r)
     (when fn (apply fn args))))
 
-;; REVIEW 2026-04-03: remove support for optional/rest - may want to make this
-;; configurable..
+(defun unparse-interactive-lambda-list (itype &optional ll)
+  (cmd::with-interactive-ds-lambda-list-parts (ireq iopt irest ikey) itype
+    (std/comp::with-ds-lambda-list-parts (llks whole req opt rest key) (parse-ds-lambda-list ll)
+      (sb-c::make-lambda-list llks whole (when req (pairlis req ireq)) 
+                              (when opt (loop for x in opt 
+                                              for y in iopt
+                                              collect 
+                                                 (typecase x
+                                                   (list (append x y))
+                                                   (atom (cons x y)))))
+                              (when rest (cons rest irest))
+                              (when key (loop for x in key
+                                              for y in ikey
+                                              collect 
+                                                 (typecase x
+                                                   (list (append x y))
+                                                   (atom (cons x y)))))))))
+
 (defun fill-args-interactively (args ids)
   "Parse ARGS as the input to a function designated by the
 interactive-ds-lambda-list IDS. Return a list to be applied as the second
@@ -411,11 +427,11 @@ NAME *COMMAND-TABLE*)."
 (defun copy-commands (name1 name2)
   "Copy all commands and types from NAME1 to NAME2."
   (setf (command-table name2) 
-        (destructuring-bind (cmds &rest types) (command-table name1)
+        (destructuring-bind (cmds . types) (command-table name1)
           (cons (copy-hash cmds) (copy-hash types)))))
 
 (defun load-commands (name)
-  (destructuring-bind (cmds &rest types) (gethash name *command-table*)
+  (destructuring-bind (cmds . types) (gethash name *command-table*)
     (setq *commands* cmds
           *command-types* types
           *commander* name)))
@@ -598,13 +614,19 @@ with each hook being passed the RESULT."
   (:method ((self command) &optional stream)
     (when-let ((doc (kernel-documentation self)))
       (println doc stream))
-    (princ (format nil "Lambda-list: ~A~%" (print-usage self)) stream)
+    (princ (format nil "Arg-list: ~A~%" (print-usage self)) stream)
     (values)))
+
+(defun command-arg-list (cmd)
+  (unparse-interactive-lambda-list (interactive cmd) (function-lambda-list cmd)))
 
 (defgeneric print-usage (self &optional stream)
   (:documentation "Format command SELF as a useful string.")
-  (:method ((self command) &optional stream)
-    (format stream "~A" (function-lambda-list (kernel self)))))
+  (:method ((self command) &optional stream)    
+    (format stream "~S"
+            (if (zerop (interactive-total-count (interactive self)))
+                (function-lambda-list (kernel self))
+                (command-arg-list self)))))
 
 ;;; Init
 (defmethod init ((self (eql :commands)) &key name class copy (load t) names clean)

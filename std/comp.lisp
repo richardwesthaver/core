@@ -804,3 +804,10 @@ possibly in a different process. Otherwise just call THUNK."
 
 (defmacro without-compiler-notes (&body body)
   `(locally (declare (sb-ext:muffle-conditions sb-ext:compiler-note)) ,@body))
+
+;; copied from SB-C, without aver
+(defmacro with-ds-lambda-list-parts ((&rest parts-names) parts &body body)
+  (std/macs:once-only ((parts `(the (simple-vector 7) ,parts)))
+    `(let ,(loop for i from 0 for sym in parts-names
+                 when sym collect `(,sym (svref ,parts ,i)))
+       ,@body)))
