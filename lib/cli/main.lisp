@@ -32,12 +32,12 @@
 ;;; Main
 (defvar *main*)
 
-(defmacro defmain (name (&key (exit t) (debug t) (package *package*) cli
+(defmacro defmain (name (&key (interactive *interactive*) (debug t) (package *package*) cli
                               commands readtable printer annotations)
                    &body body)
   "Define a CLI main function in the current package."
   (multiple-value-bind (body decls docs) (parse-body body :documentation t)
-    (let ((*exit* exit)
+    (let ((*interactive* interactive)
           (*verbose* debug)
           (*package* (find-package package)))
       `(defun ,name ()

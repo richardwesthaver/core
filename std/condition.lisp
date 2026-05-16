@@ -16,11 +16,9 @@
   "A list of condition handlers - often useful in asynchronous contexts.")
 (defvar *verbose* nil
   "When T indicates that this Lisp should print verbose output unless advised otherwise.")
-(defvar *exit* nil
-  "When T indicates that this Lisp should exit instead of entering the debugger,
-preventing the process from waiting for user input.")
-(defvar *verbose* nil
-  "When T indicates that this Lisp should print verbose output unless advised otherwise.")
+(defvar *interactive* t
+  "When non-nil (the default) specifies that this is an interactive REPL session
+and we may query the user for input.")
 
 (defvar *uninteresting-conditions*
    '(sb-c::simple-compiler-note
@@ -101,7 +99,7 @@ control (or not)."
              (sb-int:with-unique-names (f)
                `(defun ,(sb-int:symbolicate "%" (symbol-name name)) (opts)
                   (let ((,f (member ,(sb-int:keywordicate name) opts :test #'car-eql)))
-                     (cadar ,f))))))
+                     (cdar ,f))))))
   (%opt reporter)
   (%opt handler))
 
@@ -122,6 +120,11 @@ control (or not)."
      ,(format nil "Signal a condition of type ~A with ARGS." name)
      (apply 'signal ',name args)))
 
+(defmacro define-condition-handler (name bindings)
+  `(defmacro ,(sb-int:symbolicate "HANDLE-" name) (&body body)
+     ,(format nil "Handle conditions specified by ~A." name)
+     `(handler-case (progn ,@body) ,@,bindings)))
+
 (defmacro defcondition (name (&rest parent-types) (&rest slot-specs) &rest options)
 "extended DEFINE-CONDITION. 
 
@@ -132,40 +135,45 @@ class. Also supported by the DEFERROR and DEFWARNING macros. By default wraps
 a call to SIGNAL.
 
 :HANDLER - define a handler macro with the specified bindings. unevaluated."
-  (let ((reporter (%reporter options))
+  (let ((reporter (car (%reporter options)))
         (handler (%handler options)))
+    (assert (listp handler))
     (setf options (remove-options options :handler :reporter))
     `(progn 
        ,@(when reporter `((define-condition-reporter ,(if (eql reporter t) name reporter))))
-       ,@(when handler `((define-condition-handler ,name handler)))
+       ,@(when handler `((define-condition-handler ,name ',handler)))
        (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
+
+#|
+(defcondition foo () () (:reporter t) (:handler (error () (print t))))
+(handle-foo (signal 'error))
+|#
 
 ;;;; Deferror
 (defmacro deferror (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an error condition."
-  (let ((fun (member :reporter options :test #'car-eql))
+  (let ((reporter (car (%reporter options)))
+        (handler (%handler options))
         (%ancestors (flatten (mapcar (lambda (x) 
                                        (mapcar 'sb-mop:class-name 
                                                (sb-mop:class-precedence-list (find-class x))))
                                      parent-types))))
-    (when fun
-      (setf options (remove (car fun) options))
-      (setf fun (cadar fun)))
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (prog1
-           (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
-         (when ',fun
-           (cond 
-             ((or
-               (member 'invalid-item ',%ancestors)
-               (member 'invalid-argument ',%ancestors))
-              (def-invalid-item-reporter ,name))
-             ((or (member 'simple-error ',%ancestors)
-                  (member 'simple-condition ',%ancestors))
-              (def-simple-error-reporter ,name))
-             ((stringp ',fun)
-              (define-error-reporter ,name ',fun))
-             (t (define-error-reporter ,name))))))))
+    (assert (listp handler))
+    (setf options (remove-options options :reporter :handler))
+    `(progn
+       ,@(when reporter
+           `((cond 
+               ((or
+                 (member 'invalid-item ',%ancestors)
+                 (member 'invalid-argument ',%ancestors))
+                (def-invalid-item-reporter ,name))
+               ((or (member 'simple-error ',%ancestors)
+                    (member 'simple-condition ',%ancestors))
+                (def-simple-error-reporter ,(if (eql reporter t) name reporter))
+                ((stringp ',reporter)
+                 (define-error-reporter ,name ',reporter))
+                (t (define-error-reporter ,(if (eql reporter t) name reporter)))))))
+       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
 
 (defmacro define-error-reporter (err &optional (message *error-message*))
     `(eval-when (:compile-toplevel :load-toplevel :execute)
@@ -199,16 +207,17 @@ a call to SIGNAL.
 ;;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
   "Define an warning condition."
-  (let ((fun (%reporter options)))
-    (when fun (setq options (remove (car fun) options)))
-    `(prog1
-         (eval-when (:compile-toplevel :load-toplevel :execute)
-           (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))
-       (when ',fun
-         (if (or (find 'simple-warning ',parent-types)
-                 (find 'simple-condition ',parent-types))
-             (def-simple-warning-reporter ,name)
-             (def-warning-reporter ,name))))))
+  (let ((reporter (%reporter options))
+        (handler (%handler options)))
+    (assert (listp handler))
+    (setf options (remove-options options :reporter :handler))
+    `(progn
+       ,@(when reporter
+           `((if (or (find 'simple-warning ',parent-types)
+                     (find 'simple-condition ',parent-types))
+                 (def-simple-warning-reporter ,name)
+                 (def-warning-reporter ,name))))
+       (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))))
 
 (defmacro def-warning-reporter (name)
   `(eval-when (:compile-toplevel :load-toplevel :execute)

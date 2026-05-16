@@ -35,7 +35,7 @@
 
 (defcommand (:skel inspect) ()
   "Inspect the current project."
-  (setq *exit* nil)
+  (setq *interactive* t)
   (inspect (or *skel-project* *skel-user-config*)))
 
 (flet ((call-with-args (action args)
@@ -149,8 +149,7 @@
 (defcommand (:skel shell) ()
   "Start the interactive skel REPL."
   (trace! "starting skel shell")
-  ;; TODO 2025-11-16: consolidate usage of *exit* vs *interactive* etc
-  (setq *exit* nil)
+  (setq *interactive* t)
   (progn
     (in-package :sk-user)
     (using :cl-user :sb-ext :std-user)

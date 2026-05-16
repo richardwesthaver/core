@@ -47,10 +47,6 @@ global."
 (defun backend-primitive-type (name)
   (gethash name *backend-primitive-type-names*))
 
-(defvar *interactive* t
-  "When non-nil (the default) specifies that this is an interactive REPL session
-and we may query the user for input.")
-
 (define-symbol-macro .i sb-ext:*inspected*)
 
 (defhook *sbcl-hooks*

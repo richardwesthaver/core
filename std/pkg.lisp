@@ -158,7 +158,7 @@
    :*error-message*
    :*handlers*
    :*verbose*
-   :*exit*
+   :*interactive*
    :*uninteresting-conditions*
    :std-error :error-message
    :define-error-reporter
@@ -699,6 +699,7 @@
 
 (defpkg :std/sys
   (:use :cl :sb-int)
+  (:import-from :std/condition :*interactive*)
   (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
    :unbound-marker-p :generation-of
    :current-sp :current-fp 
@@ -747,7 +748,6 @@
   (:import-from :sb-vm :primitive-type-of)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
-   :*interactive*
    :*backend-primitive-type-names* 
    :*backend-primitive-type-aliases* 
    :*backend-predicate-types* 

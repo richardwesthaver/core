@@ -77,23 +77,23 @@ containing multiple characters."
   "A wrapper which handles common cli errors that may occur during
 evaluation of BODY."
   `(progn
-     (if (not *interactive*)
-         (sb-ext:disable-debugger)
-         (sb-ext:enable-debugger))
+     (if *interactive*
+         (sb-ext:enable-debugger)
+         (sb-ext:disable-debugger))
      (unwind-protect
           (restart-case 
               (handler-case (progn ,@body)
                 (sb-sys:interactive-interrupt (c)
-                  (if *exit*
-                      (sb-ext:exit :code 130)
-                      c)))
+                  (if *interactive*
+                      c
+                      (sb-ext:exit :code 130))))
             (exit ()
               :report "Exit SBCL (killing the process)."
               ;; :test (lambda (c) (declare (ignore c)) t)
               (log:trace! "falling through to EXIT from pre-REPL RESTART-CASE~&")
               (sb-ext:exit :code 1))))
      (sb-impl::flush-standard-output-streams)
-     (when *exit* (sb-ext:exit :code 0))
+     (unless *interactive* (sb-ext:exit :code 0))
      ;; reset terminal state
      #+nil (.ris)))
 
