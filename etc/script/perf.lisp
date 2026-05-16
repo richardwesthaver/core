@@ -8,11 +8,10 @@
   (sb-perf:write-perfmap)
   (quit))
 ;; initialize the default thread-pool
-(start
- (or (find-thread-pool :default)
-     (make-thread-pool (num-cpus) :name :default :alive t)))
+;; (start
+;;  (or (find-thread-pool :default)
+;;      (make-thread-pool (num-cpus) :name :default :alive t)))
 (cli/tools:perf-record "-k" "mono" "-g" "-p" (format nil "~A" (sb-posix:getpid)))
-(test-system :std)
-(exit-thread-pools)
+(load-system :std/tests)
 (quit)
 ;; perf report -i perf.jit.data

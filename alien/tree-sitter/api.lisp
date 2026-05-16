@@ -61,8 +61,7 @@
 
 (defmacro with-ts-cursor ((cursor node tree) &body forms)
   `(let* ((,node (ts-tree-root-node ,tree)))
-     (with-alien ((,cursor (* ts-tree-cursor) (make-alien ts-tree-cursor))) 
-       (setf (deref ,cursor) (ts-tree-cursor-new ,node))
+     (with-alien ((,cursor ts-tree-cursor (ts-tree-cursor-new ,node)))
        ,@forms)))
 
 (defmacro with-ts-query (lang (var expr) &body body)
@@ -138,10 +137,10 @@ desired name for use in lisp."
          ;; Closely follows tree-sitter-cli parse implementation
          ;; (with-ts-node?
          (loop
-           (let ((node (ts-tree-cursor-current-node tc)))
+           (let ((node (ts-tree-cursor-current-node (addr tc))))
              (when (null-alien node) (return parse-stack))
              (let ((is-named (ts-node-is-named node))
-                   (cursor tc))
+                   (cursor (addr tc)))
                (cond (did-visit-children
                       (when (and is-named (second parse-stack))
                         (let ((item (pop parse-stack)))

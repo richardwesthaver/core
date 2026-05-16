@@ -16,8 +16,8 @@
   "Default filename of Arch Linux PKGBUILD files.")
 
 (defun parse-pkgbuild-value (l s)
-  (destructuring-bind (n1 n2 b1 b2) l
-    (cons (keywordicate (string-upcase (subseq s n1 n2)))
+  (destructuring-bind ((n1 n2) b1 b2) l
+    (list (print (keywordicate (string-upcase (subseq s n1 n2))))
           (let ((val (subseq s b1 b2)))
             (unless (or (string= "()" val)
                         (string= "\"\"" val))
@@ -51,7 +51,7 @@ values: (VARS FUNCTIONS SRC)"
                (when-let ((name (cadar (member :name (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x))))))
                           (val (cadar (member :value (caddr x) :key (lambda (x) (and (listp x) (listp (car x)) (caar x)))))))
                  (push (cons name val) vars)))))
-          (when tree (print (caddr tree))))
+          (when tree (caddr (print tree))))
     (values
      (collecting (mapcar (lambda (x) 
                            (when-let ((y (parse-pkgbuild-value x str)))
