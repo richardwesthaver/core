@@ -541,6 +541,7 @@
    #:define-simple-schema
    #:invalid-database
    #:db-condition
+   #:db-error
    #:apply-schema-change-fn
    #:match-schemas
    #:schema-diff
@@ -641,7 +642,7 @@
 
 (defpkg :obj/project
   (:nicknames :project)
-  (:use :cl :std :id :schema :config :ast)
+  (:use :cl :std :id :schema :config :ast :cmd)
   (:export :project :project-config :make-project
    :*default-project-class* :simple-project :project-metadata :author
    :version :tags :description :license))

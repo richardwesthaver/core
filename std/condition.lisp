@@ -101,7 +101,10 @@ control (or not)."
                   (let ((,f (member ,(sb-int:keywordicate name) opts :test #'car-eql)))
                      (cdar ,f))))))
   (%opt reporter)
-  (%opt handler))
+  (%opt handler)
+  (%opt error-class)
+  (%opt warning-class)
+  (%opt restarts))
 
 (defun remove-options (alist &rest keys)
   "Removes the defclass options KEYS from ALIST."
@@ -120,10 +123,16 @@ control (or not)."
      ,(format nil "Signal a condition of type ~A with ARGS." name)
      (apply 'signal ',name args)))
 
-(defmacro define-condition-handler (name bindings)
+(defmacro define-condition-handler (name bindings restarts)
   `(defmacro ,(sb-int:symbolicate "HANDLE-" name) (&body body)
      ,(format nil "Handle conditions specified by ~A." name)
-     `(handler-case (progn ,@body) ,@,bindings)))
+     `(,(if ',restarts 'restart-case 'progn)
+       ,(if (car-eql t ',bindings) ;; skip handlers
+            `(progn ,@body)
+            `(handler-case (progn ,@body) ,',@bindings))
+       ,@(when ',restarts ',restarts))))
+
+;; (define-condition-handler foo (t) ((error ())))
 
 (defmacro defcondition (name (&rest parent-types) (&rest slot-specs) &rest options)
 "extended DEFINE-CONDITION. 
@@ -134,19 +143,36 @@ This macro takes the same arguments with some additional OPTIONs:
 class. Also supported by the DEFERROR and DEFWARNING macros. By default wraps
 a call to SIGNAL.
 
-:HANDLER - define a handler macro with the specified bindings. unevaluated."
+:HANDLER - define a handler macro with the specified HANDLER-CASE bindings.
+
+:RESTARTS - specify restart bindings to be wrapped around the handler function
+with RESTART-CASE.
+
+:ERROR-CLASS - define a default error class - takes the same options as
+DEFERROR.
+
+:WARNING-CLASS - define a default warning class - takes the same options as
+DEFWARNING."
   (let ((reporter (car (%reporter options)))
-        (handler (%handler options)))
-    (assert (listp handler))
-    (setf options (remove-options options :handler :reporter))
+        (handler (%handler options))
+        (error-class (%error-class options))
+        (warning-class (%warning-class options))
+        (restarts (%restarts options)))
+    (setf options (remove-options options :handler :reporter :error-class :warning-class :restarts))
     `(progn 
-       ,@(when reporter `((define-condition-reporter ,(if (eql reporter t) name reporter))))
-       ,@(when handler `((define-condition-handler ,name ',handler)))
-       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
+       (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options)
+       ,(when error-class
+          (pushnew name (cadr error-class))
+          `(deferror ,@error-class))
+       ,(when warning-class 
+          (pushnew name (cadr error-class))
+          `(defwarning ,@warning-class))
+       ,(when reporter `(define-condition-reporter ,(if (eql reporter t) name reporter)))
+       ,(when handler `(define-condition-handler ,name ,handler ,restarts)))))
 
 #|
-(defcondition foo () () (:reporter t) (:handler (error () (print t))))
-(handle-foo (signal 'error))
+(defcondition foo () () (:reporter t) (:handler (error ())) (:restarts (never ())))
+(macroexpand (handle-foo (error 'error)))
 |#
 
 ;;;; Deferror
@@ -154,9 +180,12 @@ a call to SIGNAL.
   "Define an error condition."
   (let ((reporter (car (%reporter options)))
         (handler (%handler options))
-        (%ancestors (flatten (mapcar (lambda (x) 
-                                       (mapcar 'sb-mop:class-name 
-                                               (sb-mop:class-precedence-list (find-class x))))
+        (%ancestors (flatten (mapcar (lambda (x)
+                                       (ignore-errors 
+                                        ;; ignore errors caused by parent
+                                        ;; classes missing at macro-expansion
+                                        (mapcar 'sb-mop:class-name 
+                                                (sb-mop:class-precedence-list (find-class x)))))
                                      parent-types))))
     (assert (listp handler))
     (setf options (remove-options options :reporter :handler))
@@ -176,33 +205,30 @@ a call to SIGNAL.
        (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
 
 (defmacro define-error-reporter (err &optional (message *error-message*))
-    `(eval-when (:compile-toplevel :load-toplevel :execute)
-       (defun ,err (&rest args)
-         ,(format nil "Signal an error of type ~A with ARGS." err)
-         (cerror
-          "Ignore and continue"
-          ',err
-          :message (format nil "~A: ~A" ,message args)))))
-
-(defmacro def-simple-error-reporter (name)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defun ,name (fmt &rest args)
-       ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+    `(defun ,err (&rest args)
+       ,(format nil "Signal an error of type ~A with ARGS." err)
        (cerror
         "Ignore and continue"
-        ',name
-        :format-control fmt
-        :format-arguments args))))
+        ',err
+        :message (format nil "~A: ~A" ,message args))))
+
+(defmacro def-simple-error-reporter (name)
+  `(defun ,name (fmt &rest args)
+     ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+     (cerror
+      "Ignore and continue"
+      ',name
+      :format-control fmt
+      :format-arguments args)))
 
 (defmacro def-invalid-item-reporter (name)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defun ,name (item &optional reason)
-       ,(format nil "Signal an error of type ~A." name)
-       (apply 'cerror
-              "Ignore and continue"
-              ',name
-              :item item
-              (when reason (list :reason reason))))))
+  `(defun ,name (item &optional reason)
+     ,(format nil "Signal an error of type ~A." name)
+     (apply 'cerror
+            "Ignore and continue"
+            ',name
+            :item item
+            (when reason (list :reason reason)))))
 
 ;;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)
@@ -220,22 +246,19 @@ a call to SIGNAL.
        (define-condition ,name ,(or parent-types '(std-warning)) ,slot-specs ,@options))))
 
 (defmacro def-warning-reporter (name)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defun ,name (&optional message)
-       ,(format nil "Signal a warning of type ~A with optional MESSAGE." name)
-       (warn
-        ',name
-        :message message))))
+  `(defun ,name (&optional message)
+     ,(format nil "Signal a warning of type ~A with optional MESSAGE." name)
+     (warn
+      ',name
+      :message message)))
 
 (defmacro def-simple-warning-reporter (name)
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (defun ,name (fmt &rest args)
-       ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
-       (warn
-        ',name
-        :format-control fmt
-        :format-arguments args))))
-
+  `(defun ,name (fmt &rest args)
+     ,(format nil "Signal an error of type ~A with FMT string and ARGS." name)
+     (warn
+      ',name
+      :format-control fmt
+      :format-arguments args)))
 
 ;;;; Macros
 

@@ -2,6 +2,10 @@
 
 ;; 
 
+;;; Commentary:
+
+;; TODO 2026-05-16: impl cmd protocol - RULE commands associated with projects.
+
 ;;; Code:
 (in-package :skel/core)
 
@@ -44,20 +48,19 @@ which is executed in order to fulfill the rule."
       (format stream " ~A" (mapcar 'string-downcase source)))))
 
 (eval-always
-  (defmacro with-sk-rule-env (&body body)
-    `(symbol-macrolet ,*skel-project-symbol-macros*
-       (macrolet ,*skel-project-macros*
-         (labels ,*skel-project-functions*
-           ,@body)))))
+  (defmacro with-sk-rule-env (binds &body body)
+    `(let (,@binds)
+       (symbol-macrolet ,*skel-project-symbol-macros*
+         (macrolet ,*skel-project-macros*
+           (labels ,*skel-project-functions*
+             ,@body))))))
 
+;(mapcar (lambda (x) (eval (cadr x))) binds)
 ;; Note that SK-RUN directly on a rule currently does NOT touch the sources.
 (defmethod sk-run ((self sk-rule))
-  (with-sk-rule-env 
-    (let ((binds (bind *skel-project*)))
-      (progv (mapcar 'car binds)
-          ;; WARN 2026-05-08: use of eval
-          (mapcar (lambda (x) (eval (cadr x))) binds)
-        (eval `(progn ,@(sk-rule-recipe self)))))))
+  (compile-and-eval
+   `(with-sk-rule-env ,(bind *skel-project*)
+      ,@(sk-rule-recipe self))))
 
 (defmethod sk-write ((self sk-rule) stream)
   (write-string (sk-rule-target self) stream) ;; target isn't typep SK-OBJECT

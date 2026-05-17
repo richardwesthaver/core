@@ -129,10 +129,11 @@ saved."
           options)))
 
 ;;; Conditions
-(define-condition db-condition () ()
-  (:documentation "Superclass for DB conditions."))
+(defcondition db-condition () ()
+  (:documentation "Superclass for DB conditions.")
+  (:error-class db-error (error) ()))
 
-(deferror invalid-database (db-condition invalid-argument) ()
+(deferror invalid-database (db-error invalid-argument) ()
   (:documentation "Error signaled when an invalid DB is detected.")
   (:default-initargs
    :reason "Object is not a database"))

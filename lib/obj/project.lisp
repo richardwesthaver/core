@@ -29,11 +29,10 @@
   "The currently active PROJECT instance.")
 
 ;;; Conditions
-(define-condition project-condition () 
-  ((project :initform *project* :accessor error-project :initarg :project)))
-
-(deferror project-error (project-condition error) () (:reporter t))
-(defwarning project-warning (project-condition warning) () (:reporter t))
+(defcondition project-condition () 
+  ((project :initform *project* :accessor error-project :initarg :project))
+  (:error-class project-error (error) () (:reporter t))
+  (:warning-class project-warning (warning) () (:reporter t)))
 
 ;;; Protocol
 (defclass project-metadata ()
@@ -73,6 +72,20 @@ project-like objects."))
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
+
+;;; Rules
+(defkernel rule (kernel-object ast id) ())
+
+(defaccessor name ((self rule)) (id self))
+
+(defkernel simple-rule (rule)
+  ((source :initform nil :type list :accessor source)
+   (target :initform nil :type list :accessor rule-target)))
+
+(defaccessor sink ((self simple-rule)) (rule-target self))
+
+(defkernel interactive-rule (rule command)
+  ((args :initform nil :type list)))
 
 ;;; Macros
 (defwith project (name) (*project* (project name)))

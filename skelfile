@@ -209,6 +209,8 @@
  (dist-source ()
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
+ (docs ()
+  (:build ()))
  (deploy (dist dist-repo)
   (move-file ".stash/core.zst" "/opt/store/packy/dist/x86_64/core.zst")
   (sk-make *skel-project* :dist-source)

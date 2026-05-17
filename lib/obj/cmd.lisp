@@ -90,13 +90,11 @@ Z -- Coding system, nil if no prefix arg.
 (defhook *command-hook* ((:pre) (:post) (:eval)))
 (defconstant +interactive-placeholder-tag+ '_)
 ;;; Conditions
-(define-condition command-condition () ())
-(eval-always
-  (defwarning command-warning (command-condition simple-warning) () (:reporter t)))
-
-(define-condition command-error (command-condition)
-  ((name :initarg :name :reader error-name)
-   (args :initarg :args :reader error-args :initform nil)))
+(defcondition command-condition () ()
+  (:warning-class command-warning (simple-warning) () (:reporter t))
+  (:error-class command-error ()
+                ((name :initarg :name :reader error-name)
+                 (args :initarg :args :reader error-args :initform nil))))
 
 (define-condition undefined-command (command-error) ()
   (:report (lambda (c s) 
