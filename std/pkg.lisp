@@ -170,6 +170,7 @@
    :replace-entry-p
    :with-if-failed-handler
    :deferror
+   :defcondition
    :car-eql
    :nyi!
    :get-backtrace

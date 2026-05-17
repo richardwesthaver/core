@@ -14,15 +14,6 @@
 (in-package :syn/ts)
 (load-tree-sitter)
 
-(defmacro with-lang (lang &body body)
-  `(with-ts-lang syn/lang:*language* ,lang
-     ,@body))
-
-(defun lang-stats (lang)
-  (with-ts-lang lang l
-    `(:symbols ,(ts-language-symbol-count l)
-      :fields ,(ts-language-field-count l))))
-
 (defun parse-file (lang path &key (start 0) end)
   (parse-string 
    lang

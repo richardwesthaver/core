@@ -405,6 +405,7 @@ function: '(ql:quickload :clouseau)'."
   (letv (as let))
   (letv* (as let*))
   (deferror (as define-condition))
+  (defcondition (as define-condition))
   (plet (as let))
   (acase (as case))
   (atypecase (as typecase))

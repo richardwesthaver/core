@@ -7,9 +7,9 @@
 (defvar *gen* nil)
 
 (eval-always
-  (defvar *gen-designators* (list :c :cpp :cu :py :js)))
+  (defvar *gen-langs* (list :c :cpp :cu :py :js)))
 
-(deftype gen-designator () `(or (member ,@*gen-designators*) null))
+(deftype gen-designator () `(or (member ,@*gen-langs*) null))
 
 (defparameter *gen-backend-table* (make-hash-table))
 

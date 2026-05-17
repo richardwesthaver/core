@@ -14,9 +14,10 @@
    :lang-counts))
 
 (defpkg :syn/lang
-  (:use :cl :std :config :ast :id :project :cmd)
+  (:use :cl :std :config :ast :id :project :cmd :tree-sitter :syn/ts)
   (:export :lang :*lang* :lang-config 
-   :deflang :lang-condition :lang-error :lang-warning))
+   :deflang :lang-condition :lang-error :lang-warning
+   :*langs* :langp :with-lang :lang-stats))
 
 (defpkg :syn/lang/c
   (:nicknames :syn/c)
@@ -43,14 +44,14 @@
 
 (defpkg :syn/gen
   (:use :cl :std :doc :id :graph :ast)
-  (:export :gen-designator :gen-condition :gen-condition
+  (:export :gen-designator :gen-condition :gen-error
    :simple-gen-error :defsyntax
    :function-call :src-location
    :ident :str-literal
    :cintern
    :num-literal :char-literal
    :load-gen :init-gen
-   :*gen* :*gen-designators*
+   :*gen* :*gen-langs*
    :*cl-symbols* :*code-reader*
    :*backup-readtable* :define-code-switches
    :define-code-switch :print-code
@@ -103,18 +104,14 @@
    :*tempo-parameters* :*tempo-variables* :*tempo-case-sensitive*))
 
 (defpkg :syn/grovel
-  (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c))
+  (:use :cl :std :syn/ts :syn/lang :syn/tempo :syn/lint :syn/lang/c)
+  (:export))
 
 (defpkg :syn
   (:use :std-lisp)
-  (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo))
+  (:use-reexport :syn/lint :syn/ts :syn/lang :syn/gen :syn/tempo :syn/grovel))
 
 (defpkg :syn/cli
   (:use :std-lisp :syn :cli :clap :log)
   (:export :*syn-cli*
            :*gen-cli*))
-
-(in-package :syn/lang)
-(defclass language () ())
-(defgeneric lang (self))
-(sb-ext:define-load-time-global *language* nil)

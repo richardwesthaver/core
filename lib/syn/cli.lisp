@@ -13,7 +13,7 @@
 	  (print-code (syn/gen/c::read-c-string f)))
       (terpri))))
 
-(define-command-type (:syn syntax) (input &optional (prompt "select a language: ") (completions *gen-designators*))
+(define-command-type (:syn syntax) (input &optional (prompt "select a language: ") (completions *gen-langs*))
   (declare (ignore input))
   (let ((syn (keywordicate (string-upcase (completing-read prompt completions)))))
     (syn/gen:load-gen syn)

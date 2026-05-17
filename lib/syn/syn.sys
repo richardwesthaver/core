@@ -53,10 +53,29 @@
   (:file "grovel")
   (:file "cli"))
  :provide 
- ((:proto :syn) ; ts
-  (:proto :lang)
-  (:proto :gen)
-  (:proto :tempo)
+ ((:readtable :tempo)
+  (:proto :syn
+   :description "Basic syntax.")
+  (:proto :lang
+   :description "Programming Languages."
+   :conditions (lang-condition lang-error lang-warning)
+   :classes (lang-config)
+   :type (lang)
+   :variables (*lang*))
+  (:proto :gen
+   :description "Code Generator."
+   :variables (*gen* *indent* *cl-symbols* *code-reader* *gen-backend-table* *gen-warnings*)
+   :macros (defsyntax)
+   :types (gen-designator)
+   :conditions (gen-condition gen-error simple-gen-error)
+   :methods (gen-package gen-reader gen-reader-switch load-gen unload-gen))
+  (:proto :tempo
+   :description "Lisp Templates."
+   :variables (*tempo-case-sensitive* *tempo-package* *tempo-table* *tempo-start* *tempo-end*
+               *tempo-variables* *escape-type* *tempo-parameters* *template-tag-expand*)
+   :methods (execute-template register-template)
+   :functions (make-tempo-function expand-template-tags)
+   :macros (deftempo getf-tempo))
   (:proto :grovel)
   (:proto :fmt)
   (:tests 
