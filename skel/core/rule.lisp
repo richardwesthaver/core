@@ -50,6 +50,7 @@ which is executed in order to fulfill the rule."
 (eval-always
   (defmacro with-sk-rule-env (binds &body body)
     `(let (,@binds)
+       (declare (ignorable ,@(mapcar 'car binds)))
        (symbol-macrolet ,*skel-project-symbol-macros*
          (macrolet ,*skel-project-macros*
            (labels ,*skel-project-functions*
