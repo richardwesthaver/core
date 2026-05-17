@@ -59,7 +59,7 @@
   (print-unreadable-object (obj stream :type "ID")
     (format stream "~A" (id obj))))
 
-(defclass id-factory () ())
+(defclass identifier () ())
 
 (defgeneric identify (self)
   (:documentation "Return the identity of object SELF - usually meant for objects which don't

@@ -332,7 +332,10 @@ Example:
              ;; use *COMMAND-IO*
              ,@body))))
 
-;; IO
+(defun map-command-types (name function)
+  (maphash-values function (command-types name)))
+
+;;; Args
 (deffmt fmt-command "~(~A~)~@[ ~{~S~^ ~}~]" "Format a COMMAND string given a name and list of args.")
 
 (defun maybe-prompt (&optional prompt)
@@ -354,6 +357,15 @@ Example:
 
 (defgeneric parse-args (self input)
   (:documentation "Parse INPUT as the arguments to a call to SELF."))
+
+;;; Command
+(defkernel command (kernel-object)
+  ((interactive :initarg :interactive :reader interactive))
+  (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.
+
+The INTERACTIVE declaration corresponds to the slot of the same name in this
+class - both may be used to specify the ITYPE (interaction typespec) of the
+command."))
 
 (defun read-command (&optional (stream *standard-input*))
   "Read a COMMAND from STREAM and return three values:
@@ -442,16 +454,6 @@ NAME *COMMAND-TABLE*)."
 (defun map-commands (name function)
   (maphash-values function (commands name)))
 
-(defun map-command-types (name function)
-  (maphash-values function (command-types name)))
-
-(defkernel command (kernel-object)
-  ((interactive :initarg :interactive :reader interactive))
-  (:documentation "Commands are INTERACTIVE-FUNCTIONs or instances of this class.
-
-The INTERACTIVE declaration corresponds to the slot of the same name in this
-class - both may be used to specify the ITYPE (interaction typespec) of the
-command."))
 
 (defmethod initialize-instance :after ((self command) &key kernel)
   (when kernel
@@ -473,9 +475,6 @@ command."))
 
 ;; internal method
 (defmethod sb-impl::object-type-string ((self command)) "command function")
-
-;; TODO 2026-01-22: apply-itype
-;; (defun apply-itype (cmd input))
 
 (defmethod parse-args ((self command) (input list))
   input)
@@ -503,17 +502,27 @@ command."))
   (if *interactive*
       (call-interactively self)
       (call self nil)))
+
 (defmethod exec ((self string)) 
     (if *interactive*
         (call-interactively self)
         (multiple-value-bind (cmd args) (parse-command self)
           (call cmd args))))
+
 (defmethod exec ((self symbol))
   (call (command self) nil))
 
+;; TODO 2026-05-16: command pipes
+#+nil (defclass command-pipe (pipe id) ())
 #+nil
 (defgeneric command-pipe (self output)
-  (:documentation "Pipe the output of command SELF to OUTPUT."))
+  (:documentation "Pipe the output of command SELF to OUTPUT"))
+#+nil
+(defgeneric command-input (self input)
+  (:documentation "Return the input associated with command SELF."))
+#+nil
+(defgeneric command-output (self output)
+  (:documentation "Return the output associated with command SELF."))
 
 (defgeneric command-class (self)
   (:documentation "Return the class indicator of command SELF.")

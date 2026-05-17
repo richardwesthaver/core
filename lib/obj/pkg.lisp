@@ -206,7 +206,7 @@
   (:use :cl :std :equiv)
   (:export 
    :id :reset-id :update-id :make-id
-   :id-factory :*global-id-table* :global-id :global-id-value
+   :identifier :*global-id-table* :global-id :global-id-value
    :update-global-id :reset-global-id :identify :id=
    :next-id))
 

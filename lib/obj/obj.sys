@@ -133,7 +133,8 @@
   (:proto :color)
   (:proto :val)
   (:proto :id)
-  (:proto :time)
+  (:proto :time
+   :description "Time parsing and arithmetic.")
   (:proto :uri)
   (:proto :url
    :description "URL encoding/decoding."
