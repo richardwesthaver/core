@@ -25,7 +25,7 @@
   (print-unreadable-object (self stream)
     (format stream "~A" (octet-vector-to-hex-string (id self)))))
 
-(defclass package-stream (pack io-stream) ())
+(defclass package-stream (io-stream) ())
 
 (defclass compressed-package (package-stream decompressing-stream) ())
 

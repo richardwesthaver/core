@@ -14,12 +14,27 @@
    :lang-counts))
 
 (defpkg :syn/lang
-  (:use :cl :std)
-  (:export :language :lang :*language*))
+  (:use :cl :std :config :ast :id :project :cmd)
+  (:export :lang :*lang* :lang-config 
+   :deflang :lang-condition :lang-error :lang-warning))
 
 (defpkg :syn/lang/c
   (:nicknames :syn/c)
   (:use :cl :std :syn/lang :parse/pratt :tree-sitter :syn/ts)
+  (:export))
+
+(defpkg :syn/lang/js
+  (:nicknames :syn/js)
+  (:use :cl :std :syn/lang :tree-sitter)
+  (:export))
+
+(defpkg :syn/lang/py
+  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
+  (:export))
+
+(defpkg :syn/lang/rs
+  (:nicknames :syn/rs)
+  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
   (:export))
 
 (defpkg :syn/fmt

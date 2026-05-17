@@ -52,6 +52,8 @@
     `(let ((,sym (ts-parser-new))
            ,@(if (atom lang) nil `(,(pop lang) ,%lang)))
        ,@(when lang `(ts-parser-set-language ,%lang))
+       ,@body
+       #+nil
        (unwind-protect (progn ,@body)
          (ts-parser-delete ,sym)))))
 
@@ -60,7 +62,7 @@
      ,@body))
 
 (defmacro with-ts-cursor ((cursor node tree) &body forms)
-  `(let* ((,node (ts-tree-root-node ,tree)))
+  `(let ((,node (ts-tree-root-node ,tree)))
      (with-alien ((,cursor ts-tree-cursor (ts-tree-cursor-new ,node)))
        ,@forms)))
 
@@ -167,4 +169,5 @@ desired name for use in lisp."
                                 parse-stack)))
                       (setf did-visit-children
                             (not (ts-tree-cursor-goto-first-child cursor)))))))))
-    (ts-tree-delete tree)))
+    ;; (ts-tree-delete tree)
+    ))

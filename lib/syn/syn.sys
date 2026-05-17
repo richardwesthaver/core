@@ -6,7 +6,8 @@
   (:file "ts")
   (:mod "lang"
    :components
-   ((:file "c")
+   ((:file "proto")
+    (:file "c")
     (:file "js")
     (:file "py")))
   (:mod "gen"
