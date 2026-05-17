@@ -98,6 +98,8 @@ function NAME and be skipped for (setf NAME)."
     (package-name self))
   (:method ((self readtable))
     (readtable-name self))
+  (:method ((self slot-definition))
+    (slot-definition-name self))
   (:documentation "Return the name of object SELF."))
 (defverb validate (obj self &key &allow-other-keys)
   (:documentation "Validate OBJ against SELF."))

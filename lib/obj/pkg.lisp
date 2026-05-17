@@ -645,7 +645,8 @@
   (:use :cl :std :id :schema :config :ast :cmd)
   (:export :project :project-config :make-project
    :*default-project-class* :simple-project :project-metadata :author
-   :version :tags :description :license))
+   :version :tags :description :license
+   :rule :simple-rule :interactive-rule))
 
 (defpkg :obj/db
   (:nicknames :db)
