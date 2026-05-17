@@ -8,9 +8,9 @@
   (:file "env" :require ("pkg"))
   (:file "progress" :require ("pkg"))
   (:file "spark" :require ("pkg"))
-  (:file "terminfo" :require ("pkg"))
+  (:file "term" :require ("pkg"))
   (:file "ed" :require ("env"))
-  (:file "linedit" :require ("pkg" "terminfo" "ed"))
+  (:file "linedit" :require ("pkg" "term" "ed"))
   (:file "shell" :require ("env"))
   (:mod "tools"
    :components
@@ -33,7 +33,9 @@
   (:file "cli" :require ("pkg" "clap")))
  :provide
  ((:proto :editor
-   :description "Generic editor.")
+   :description "Generic editor interface.")
+  (:proto :term
+   :description "Primitive terminal API.")
   (:proto :repl
    :description "Read Eval Print Loop.")
   (:proto :clap

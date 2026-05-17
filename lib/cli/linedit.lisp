@@ -54,7 +54,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 :BLUE, :MAGENTA, :CYAN, and :WHITE.")
 
 ;;; Backend
-(defclass backend ()
+(defclass terminal-backend ()
   ((ready-p :accessor backend-ready-p :initform nil)
    (translations :reader backend-translations)
    (start :initform 0 :accessor get-start)))
@@ -225,7 +225,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 (deftrans "End"         (#\Esc #\[ #\8 #\~) (#\Esc #\[ #\4 #\~) (#\Esc #\[ #\F))
 
 ;;; Terminal
-(defclass terminal (backend)
+(defclass terminal (terminal-backend)
   ((translations :initform *terminal-translations*)
    (dirty-p :initform t :accessor dirty-p)))
 
@@ -256,8 +256,8 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (invariant (zerop (c-terminal-close)))
   (setf (backend-ready-p backend) nil))
 
-;;; FIXME: Use read-char-no-hang to detect pastes, and set an
-;;; apropriate flag, or something.
+;; FIXME: Use read-char-no-hang to detect pastes, and set an
+;; apropriate flag, or something.
 (defmethod read-chord ((backend terminal))
   (assert (backend-ready-p backend))
   (flet ((read-open-chord ()
@@ -285,9 +285,9 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
 		   chord
 		   (list 'untranslated chord))))))
 
-;;; ASCII 7 should ring the terminal bell. This is hopefully marginally more
-;;; robust than #\Bel -- some implementations might eg. call it #\Bell, which
-;;; is unicode character in eg. SBCL.
+;; ASCII 7 should ring the terminal bell. This is hopefully marginally more
+;; robust than #\Bel -- some implementations might eg. call it #\Bell, which
+;; is unicode character in eg. SBCL.
 (defconstant +terminal-bell+ (code-char 7))
 
 (defmethod beep ((b terminal))
@@ -302,7 +302,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (write-char #\Return)
     (not (equal #\q q))))
 
-;;; FIXME: Explicit line-wrap needed
+;; FIXME: Explicit line-wrap needed
 (defmethod print-in-columns ((backend terminal) list &key width)
   (let ((max-col (truncate (backend-columns backend) width))
 	(col 0)
@@ -1201,6 +1201,6 @@ MAKE-LIST-COMPLETER."
 			  (values)))))))
 	t))))
 
-;;; Prologue
+;;; PS
 (save :commands :linedit)
 (setq *command-names-p* nil)

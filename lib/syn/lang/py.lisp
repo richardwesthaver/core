@@ -4,4 +4,4 @@
 
 ;;; Code:
 (in-package :syn/lang/py)
-(load-tree-sitter-python)
+(load-alien :tree-sitter-python)

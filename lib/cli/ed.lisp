@@ -596,12 +596,9 @@ name (usually same as *EDITOR*."))
   (setf (get-point editor) (editor-sexp-start editor)))
 
 ;;; Editor Functions
-;; TODO 2025-09-19: 
-;; (defun edit-line (file &key line start end)
-;;   "A simple lisp line editor.")
 (defun edit-file (file) (run-emacsclient (list (namestring file))))
 
-;;; Prologue
+;;; PS
 (pushnew #'run-emacs sb-ext:*ed-functions*)
 (pushnew #'run-emacsclient sb-ext:*ed-functions*)
 (save :commands :ed)

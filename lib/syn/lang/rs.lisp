@@ -4,5 +4,5 @@
 
 ;;; Code:
 (in-package :syn/rs)
-(load-tree-sitter-rust)
+(load-alien :tree-sitter-rust)
   

@@ -12,7 +12,7 @@
 
 ;;; Code:
 (in-package :syn/ts)
-(load-tree-sitter)
+(load-alien :tree-sitter)
 
 (defun parse-file (lang path &key (start 0) end)
   (parse-string 

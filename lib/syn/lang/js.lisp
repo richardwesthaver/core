@@ -4,4 +4,4 @@
 
 ;;; Code:
 (in-package :syn/lang/js)
-(load-tree-sitter-javascript)
+(load-alien :tree-sitter-javascript)

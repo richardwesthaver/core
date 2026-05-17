@@ -275,6 +275,7 @@ including the scrollback buffer."
 (defun erase-above ()
   "Erases all characters from the beginning of the screen to the cursor."
   (.ed 1))
+
 (eval-always
   (defun erase ()
     "Erase all characters on the screen."

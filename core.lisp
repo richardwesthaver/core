@@ -20,7 +20,6 @@
 (pkg:defpkg :core/user
   (:nicknames :user)
   (:use :std-lisp :core)
-  (:import-from :tree-sitter :load-tree-sitter :load-tree-sitter-c)
   (:import-from :tools :with-sbcl))
 
 (eval-when (:compile-toplevel)
