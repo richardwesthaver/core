@@ -175,7 +175,6 @@
    :make-decompressing-stream :make-compressing-stream
    :*decompression-buffer-size* :*compression-level*
    :compress-with :decompress-with
-   :dfun :dstate
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector

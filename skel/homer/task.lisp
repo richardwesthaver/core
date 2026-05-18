@@ -4,8 +4,8 @@
 
 ;;; Commentary:
 
-;; The goal here is to provide a simple CRON-like API for running re-occuring
-;; tasks concurrently
+;; The goal here is to provide a simple CRON-like API and runtime for
+;; executing tasks.
 
 #|
 :tasks

@@ -5,12 +5,9 @@
 ;;; Code:
 (in-package :skel/krypt)
 
-(define-condition krypt-condition ()
+(defcondition krypt-condition ()
   ()
-  (:documentation "Condition signaled in the KRYPT package."))
-
-(define-condition krypt-error (error krypt-condition)
-  ()
-  (:documentation "Error signaled from the KRYPT package."))
-
-(deferror simple-krypt-error (krypt-error simple-error) () (:reporter t))
+  (:handler t)
+  (:documentation "Condition signaled in the KRYPT system.")
+  (:error-class krypt-error (error) ())
+  (:warning-class krypt-warning (warning) ()))

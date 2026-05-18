@@ -492,7 +492,7 @@ NAME *COMMAND-TABLE*)."
 (defmethod call ((self command) (args string))
   (apply self (parse-args self args)))
 (defmethod call ((self string) (args list))
-  (multiple-value-bind (cmd args) (apply 'parse-command self args)
+  (multiple-value-bind (cmd args) (apply 'parse-command* self args)
     (call cmd args)))
 
 ;; RESEARCH 2026-03-05: self-call? - commands with additional slots
@@ -504,7 +504,7 @@ NAME *COMMAND-TABLE*)."
 (defmethod exec ((self string)) 
     (if *interactive*
         (call-interactively self)
-        (multiple-value-bind (cmd args) (parse-command self)
+        (multiple-value-bind (cmd args) (parse-command* self)
           (call cmd args))))
 
 (defmethod exec ((self symbol))

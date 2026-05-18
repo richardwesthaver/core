@@ -1,20 +1,10 @@
-;;; krypt/krypt.lisp --- Krypt API
+;;; cfg.lisp --- Krypt Configs
 
-;;
+;; 
 
 ;;; Code:
-(in-package :skel/krypt)
+(in-package :krypt)
 
-;;; Vars
-(defvar *user-kryptrc* (xdg-config-file :krypt))
-(defvar *krypt-directory* (xdg-data-directory "krypt"))
-(defvar *krypt-key-directory* (merge-pathnames "key/" *krypt-directory*))
-(defvar *krypt-token-directory* (merge-pathnames "token/" *krypt-directory*))
-(defvar *krypt-password-directory* (merge-pathnames "pw/" *krypt-directory*))
-(defvar *krypt-net-directory* (merge-pathnames "net/" *krypt-directory*))
-(defvar *krypt-user-config* nil)
-
-;;; Config
 (defconfig krypt-config (ast id)
   ((path :initform nil :initarg :path :type (or pathname null))
    (keyrings :initform nil :initarg :keyrings)
@@ -70,18 +60,3 @@
 
 (defmethod make-config ((self (eql :krypt)) &rest args)
   (apply 'make-instance 'krypt-config args))
-  
-(defun init-krypt ()
-  "Initialize the global KRYPT environment:
-
-*KRYPT-USER-CONFIG*"
-  (setq *user-kryptrc* (xdg-config-file "kryptrc"))
-  (mapc 'ensure-directories-exist
-        (list *krypt-directory* *krypt-net-directory*
-              *krypt-token-directory* *krypt-password-directory*))
-  (setq *krypt-user-config* (load-kryptrc)))
-
-(defmethod init ((self (eql :krypt)) &key)
-  (init :xdg)
-  (init-crc64 +improved-polynomial+)
-  (init-krypt))

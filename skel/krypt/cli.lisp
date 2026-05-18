@@ -16,6 +16,8 @@
   (init-krypt)
   (println *krypt-user-config*))
 
+(defcommand (:krypt gpg) ())
+  
 #+todo
 (define-cli "krypt" (with-commands :krypt (command :show))
   :description "Crypto Utils")

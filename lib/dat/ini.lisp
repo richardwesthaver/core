@@ -8,7 +8,6 @@
 (defclass ini-object (ast) ())
 (defclass ini-document (ini-object) ())
 (defclass ini-section (ini-object) ())
-;; (defun ini-write (value &optional stream))
 
 (defaccessor name ((self ini-section)) (car (ast self)))
 
@@ -17,6 +16,7 @@
     (when (slot-boundp self 'ast)
       (format stream "~A" (car (ast self))))))
 
+;;; Read
 (defun ini-peek-char (stream expected &key skip-ws)
   (when (equal (peek-char skip-ws stream nil) expected)
     (read-char stream)))
@@ -83,6 +83,20 @@
           while x
           collect x)))
 
+;;; Write
+(defun ini-write-pair (k v stream)
+  (format stream "~A=~A~%" k v))
+
+(defun ini-write-section (section stream)
+  (let ((ast (ast section)))
+    (format stream "[~:(~A~)]~%" (car ast))
+    (loop for (k . v) in (cdr ast)
+          do (ini-write-pair k v stream))))
+
+(defun ini-write-document (document stream)
+  (loop for section in (ast document)
+        do (ini-write-section section stream)))
+
 ;;; Serde
 (defmethod deserialize ((from stream) (format (eql :ini)) &key)
   (ini-read-document from))
@@ -94,6 +108,27 @@
 (defmethod deserialize ((from pathname) (format (eql :ini)) &key)
   (with-open-file (f from)
     (ini-read-document f)))
+
+(defmethod serde ((from ini-document) (to stream))
+  (ini-write-document from to))
+
+(defmethod serde ((from ini-document) (to pathname))
+  (with-open-file (f to :direction :output)
+    (ini-write-document from f)))
+
+(defmethod serde ((from ini-section) (to stream))
+  (ini-write-section from to))
+
+(defmethod serialize ((from list) (format (eql :ini)) &key output)
+  "Parse a list with each element marking an individual alist where the car is
+the section name and the cdr is the list of KV pairs."
+  (let ((ret
+          (make-instance 'ini-document
+            :ast (mapcar (lambda (x) (make-instance 'ini-section :ast x)) from))))
+    (when output (serde ret output))
+    ret))
+
+;; (serialize '((a (1 . 2) (3 . 4))) :ini :output #p"/tmp/foo")
 
 ;;; Desktop Entry
 (defclass desktop-entry (ini-document)

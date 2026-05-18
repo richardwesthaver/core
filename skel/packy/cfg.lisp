@@ -24,7 +24,7 @@
    (langs :initarg :langs :type (vector lang-config))))
 
 (defmethod make-config ((self (eql :packy)) &key ast path)
-  (make-instance 'packy-user-config :ast ast :path path))
+  (make-instance 'packy-config :ast ast :path path))
 
 (defmethod load-ast ((self packy-config))
   (with-slots (ast) self
@@ -39,5 +39,11 @@
         (error 'syntax-error))))
 
 (defmethod load-config ((self (eql :packy)) (from pathname) &key)
-  (let ((c (make-config :packy)))
+  (let ((c (make-config :packy :path from)))
     (load-ast c)))
+
+(defun write-pacman-conf (cfg output)
+  "Write a pacman.conf file based on a PACKY-CONFIG.")
+
+(defun write-makepkg-conf (cfg output)
+  "Write a makepkg.conf file based on a PACKY-CONFIG.")

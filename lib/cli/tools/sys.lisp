@@ -53,7 +53,10 @@
     (setf (slot-value ret 'type) typ
           (name ret) name)
     ret))
-             
+
+(defmethod ser ((from systemd-unit))
+  (serde from (make-pathname :name (name from) :type (slot-value from 'type))))
+
 (defun parse-json-unit (json)
   (let ((ast (ast:ast json)))
     (assert (string-equal "unit" (caar ast)))

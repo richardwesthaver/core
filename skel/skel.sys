@@ -55,7 +55,9 @@
      :internal-package :skel-int
      :default-package :kr-user)
     (:file "condition")
-    (:file "krypt")
+    (:file "var")
+    (:file "cfg")
+    (:file "util")
     (:file "cli")))
   (:mod "homer"
    :components 

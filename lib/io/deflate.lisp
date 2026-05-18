@@ -2460,8 +2460,8 @@ the input and the number of bytes written to the output."
            (values (make-bzip2-state) #'%bzip2-decompress)))
       (make-instance 'decompressing-deflate-stream
         :stream stream
-        :dstate state
-        :dfun dfun)))
+        :state state
+        :kernel dfun)))
 
 (defmethods make-decompressing-stream 
   (((key (eql :deflate)) stream &key)
@@ -2493,8 +2493,8 @@ the input and the number of bytes written to the output."
   (unless (input-available-p stream)
     (refill-stream-input-buffer stream))
   (multiple-value-bind (bytes-read bytes-output)
-      (funcall (the function (dfun stream))
-               (dstate stream)
+      (funcall (the function (kernel stream))
+               (state stream)
                (input-buffer stream)
                (output-buffer stream)
                :input-start (input-position stream)
@@ -2522,7 +2522,7 @@ the input and the number of bytes written to the output."
                (refill-stream-input-buffer stream))
              ;; If we didn't refill, then we must be all done.
              (unless (input-available-p stream)
-               (finish-dstate (dstate stream))
+               (finish-dstate (state stream))
                (return :eof)))))
 
 (defun copy-existing-output (stream seq start end)
@@ -2549,12 +2549,12 @@ the input and the number of bytes written to the output."
              (refill-stream-input-buffer stream))
            ;; If we didn't refill, then we must be all done.
            (unless (input-available-p stream)
-             (finish-dstate (dstate stream))
+             (finish-dstate (state stream))
              (loop-finish))
            ;; Decompress directly into the user-provided buffer.
            (multiple-value-bind (bytes-read bytes-output)
-               (funcall (the function (dfun stream))
-                        (dstate stream)
+               (funcall (the function (kernel stream))
+                        (state stream)
                         (input-buffer stream)
                         seq
                         :input-start (input-position stream)

@@ -18,7 +18,7 @@
 (defstruct packy-server)
 
 (defun ensure-packy-directories (&optional (path *packy-home*))
-  (dolist (p '("dist/" "data/" "doc/" "report/" "vc/"))
+  (dolist (p '("dist/" "doc/" "report/" "vc/"))
     (ensure-directories-exist (merge-pathnames p path))))
 
 (defun ensure-dist-target-directories (&optional (path *packy-home*) (targets *machine-targets*))
