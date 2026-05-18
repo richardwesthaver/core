@@ -92,7 +92,7 @@ desired name for use in lisp."
       (error 'cant-create-parser))
     (unwind-protect (parse-string-with-language language string parser
                                                 :start start
-                                                :end end)
+                                                :end (or end (length string)))
       (ts-parser-delete parser))))
         
 

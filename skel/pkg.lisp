@@ -97,7 +97,7 @@
    :sk-user-config :sk-system-config
    :*skel-user-config* :*skel-system-config*
    :sk-component :sk-mod
-   :sk-parent :skel-store :with-skel-ast :sk-pack
+   :sk-parent :skel-store :with-skel-ast
    :print-skel-object
    ;; schema
    :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*

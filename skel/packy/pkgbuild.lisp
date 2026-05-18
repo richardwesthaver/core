@@ -84,14 +84,17 @@ values: (VARS FUNCTIONS SRC)"
    (makedepends :initarg :makedepends)
    (optdepends :initarg :optdepends)
    (checkdepends :initarg :checkdepends)
+   ;; TODO 2026-05-18: consolidate checksums
+   ;; (checksums :initarg :checksums)
    (sha256sums :initarg :sha256sums)
    (sha512sums :initarg :sha512sums)
+   (b2sums :initarg :b2sums)
    (noextract :initarg :noextract)
    (source :initarg :source)
    (install :initarg :install)
    (functions :initarg :functions)))
 
-(defvar *pkgbuild-slots* 
+(defvar *pkgbuild-slots*
   (mapcar (lambda (x) (slot-definition-name x))
           (class-direct-slots (find-class 'pkgbuild))))
 
