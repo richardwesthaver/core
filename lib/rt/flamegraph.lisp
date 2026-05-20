@@ -169,3 +169,8 @@ which is only sent to WITH-OPEN-FILE when it's not NIL."
          (print-graph (make-graph)
                       :stream s))
        (values-list ,result-var))))
+
+;;; Serde
+(defmethod serde ((self flamegraph-node) (file pathname))
+  (%with-output-to-file (f file :if-exists :supersede)
+    (print-graph self :stream f)))

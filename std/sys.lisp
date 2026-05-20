@@ -64,8 +64,8 @@ global."
      (:executing-breakpoint sb-di::*executing-breakpoint-hooks*)
      (:defstruct sb-kernel::*defstruct-hooks*)
      (:define-condition sb-kernel::*define-condition-hooks*)
-     #+sb-fasteval :apply #+sb-fasteval sb-interpreter::*applyhook*
-     #+sb-fasteval :self-apply #+sb-fasteval sb-interpreter::*self-applyhook*
+     ;; #+sb-fasteval :apply #+sb-fasteval sb-interpreter::*applyhook*
+     ;; #+sb-fasteval :self-apply #+sb-fasteval sb-interpreter::*self-applyhook*
      (:stepper sb-ext:*stepper-hook*)
      (:save sb-ext:*save-hooks*)
      (:exit sb-ext:*exit-hooks*)))

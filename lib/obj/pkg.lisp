@@ -569,7 +569,7 @@
    #:diff-type
    #:diff-recs
    #:apply-schema
-   #:dynamic-schema
+   ;; #:dynamic-schema
    #:literal-value-vector
    #:column-vector
    #:literal-value-type

@@ -107,7 +107,7 @@
          num-levels level0-file-num-compaction-trigger level0-slowdown-writes-trigger
          level0-stop-writes-trigger target-file-size-base target-file-size-multiplier 
          max-bytes-for-level-base level-compaction-dynamic-level-bytes max-bytes-for-level-multiplier
-         compaction-pri
+         compaction-pri async-wal-precreate
          allow-ingest-behind statistics-level
          skip-stats-update-on-db-open enable-blob-files
          min-blob-size blob-file-size blob-compression-type enable-blob-gc blob-gc-age-cutoff

@@ -110,7 +110,7 @@ backend such as RocksDB."))
 ;; Useful for query abstractions and SQL-based backends where variations on
 ;; the COLUMN object are amortized.
 (defstruct record-batch
-  "An object representing the structure of a batch of records with a shared
+  "An object representing a batch of records with a shared
 SCHEMA."
   (schema (make-simple-schema (gensym "RECORD")) :type schema)
   (fields #() :type field-vector))
@@ -247,11 +247,11 @@ SCHEMA."
 
 ;;; Dynamic Schema
 ;; RESEARCH 2025-09-17: 
-(defclass dynamic-schema (schema id) 
-  ((fields :initarg :fields :accessor fields :dynamic t))
-  (:metaclass dynamic-class)
-  (:documentation "A schema which binds fields dynamically and prevents excessive thread-local
-binding of field values."))
+;; (defclass dynamic-schema (schema id) 
+;;   ((fields :initarg :fields :accessor fields :dynamic t))
+;;   (:metaclass dynamic-class)
+;;   (:documentation "A schema which binds fields dynamically and prevents excessive thread-local
+;; binding of field values."))
 
 ;;; Object Schema
 (defclass object-schema (schema)

@@ -596,7 +596,11 @@ to match all systems and optional KIND (a module designator) specified by KEY."
           args))
 
 (defun load-modules (&rest args)
-  (mapcar 'load-modules args))
+  (mapcar (lambda (x) 
+            (if (atom x) 
+                (load-module x)
+                (apply 'load-module* x)))
+          args))
 
 (defun unload-module (name &optional kind key)
   (setf (find-module name kind key nil) nil)

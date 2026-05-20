@@ -216,6 +216,7 @@
 (define-opt-accessor rocksdb-options advise-random-on-open)
 (define-opt-accessor rocksdb-options atomic-flush)
 (define-opt-accessor rocksdb-options manual-wal-flush)
+(define-opt-accessor rocksdb-options async-wal-precreate)
 (define-opt-accessor rocksdb-options avoid-unnecessary-blocking-io)
 (define-opt-accessor rocksdb-options writable-file-max-buffer-size (unsigned 64))
 (define-opt-accessor rocksdb-options info-log-level int)

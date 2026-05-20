@@ -4,8 +4,10 @@
 
 ;;; Code:
 (pkg:defpkg :core 
-  (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math :ast
-   :cli :skel :homer :mpk :krypt :packy)
+  (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math
+   :cli :skel :homer :mpk :krypt :packy :rdb :nlp :syn :cry :q :vc :box 
+   :doc :dsp :pod :organ
+   :rt)
   (:import-from :cli/main :define-multi-main)
   (:import-from :cli/shell :make-toplevel-init)
   (:export #:app-config #:dispatch-core))

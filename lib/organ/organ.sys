@@ -56,6 +56,7 @@
   (:file "document")
   (:file "readtable")
   (:file "graph")
+  (:file "db")
   (:file "cli"))
  :provide 
  ((:proto :org)

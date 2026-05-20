@@ -592,7 +592,6 @@
 
 ;; The Query Planner is effectively a compiler which translates logical
 ;; expressions and plans into their physical counterparts.
-
 (defclass query-planner (planner) ())
 
 (defgeneric make-physical-expression (expr input)
@@ -627,28 +626,28 @@
 (defgeneric make-physical-plan (plan)
   (:documentation "Create a physical plan from logical plan."))
 
-;; ;; Control Stack dies here?
-;; (defmethod make-physical-plan ((plan logical-query-plan))
-;;   (etypecase plan
-;;     (scan-data (make-instance 'scan-exec
-;;                  :data-source (slot-value plan 'data-source)
-;;                  :projection (slot-value plan 'projection)))
-;;     (projection (make-instance 'projection-exec
-;;                   :schema (make-instance 'schema
-;;                             :fields
-;;                             (map 'field-vector
-;;                                  (lambda (x) (to-field x (slot-value plan 'input)))
-;;                                  (slot-value plan 'expr)))
-;;                   :input (make-physical-plan (slot-value plan 'input))
-;;                   :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
-;;                              (slot-value plan 'expr))))
-;;     (selection (make-instance 'selection-exec
-;;                  :input (make-physical-plan (slot-value plan 'input))
-;;                  :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
-;;     (aggregate (make-instance 'hash-aggregate-exec
-;;                  :input (make-physical-plan (slot-value plan 'input))
-;;                  :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
-;;                  :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input))))))
+;; ;; Control Stack dies here? (not AO <2026-05-19 Tue>)
+(defmethod make-physical-plan ((plan logical-query-plan))
+  (etypecase plan
+    (scan-data (make-instance 'scan-exec
+                 :data-source (slot-value plan 'data-source)
+                 :projection (slot-value plan 'projection)))
+    (projection (make-instance 'projection-exec
+                  :schema (make-instance 'schema
+                            :fields
+                            (map 'field-vector
+                                 (lambda (x) (to-field x (slot-value plan 'input)))
+                                 (slot-value plan 'expr)))
+                  :input (make-physical-plan (slot-value plan 'input))
+                  :expr (map 'vector (lambda (x) (make-physical-expression x (slot-value plan 'input)))
+                             (slot-value plan 'expr))))
+    (selection (make-instance 'selection-exec
+                 :input (make-physical-plan (slot-value plan 'input))
+                 :expr (make-physical-expression (slot-value plan 'expr) (slot-value plan 'input))))
+    (aggregate (make-instance 'hash-aggregate-exec
+                 :input (make-physical-plan (slot-value plan 'input))
+                 :group-expr (make-physical-expression (slot-value plan 'group-expr) (slot-value plan 'input))
+                 :agg-expr (make-physical-expression (slot-value plan 'agg-expr) (slot-value plan 'input))))))
 
 ;;; Optimizer
 
