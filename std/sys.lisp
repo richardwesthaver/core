@@ -402,44 +402,25 @@ accessible."
 accessible."
   (map nil #'check-logical-host hosts))
 
-(define-logical-pathname "VAR"
-  ("**;*.*.*" "/var/**/*.*"))
+;; (define-logical-pathname "PROJECT")
+;; (define-logical-pathname "VAR")
+;; (define-logical-pathname "USR")
+;; (define-logical-pathname "SRV")
+;; (define-logical-pathname "STASH")
+;; (define-logical-pathname "STORE")
+;; (define-logical-pathname "SCRATCH")
 
-(define-logical-pathname "USR"
-  ("**;*.*.*" "/usr/**/*.*"))
-
-(define-logical-pathname "SRV"
-  ("**;*.*.*" "/srv/**/*.*"))
-
-(define-logical-pathname "ETC"
-  ("**;*.*.*" "/etc/**/*.*"))
-
-(define-logical-pathname "STASH"
-  ("**;*.*.*" "/opt/stash/**/*.*"))
-
-(define-logical-pathname "USER"
-  ("ORG;**;*.*.*" "~/org/**/*.*")
-  ("SRC;**;*.*.*" "~/src/**/*.*")
-  ("STASH;**;*.*.*" "~/.stash/**/*.*")
-  ("STORE;**;*.*.*" "~/.store/**/*.*")
-  ("HOME;**;*.*.*" "~/**/*.*")
-  ("**;*.*.*" "~/**/*.*"))
-
-(define-logical-pathname "STORE"
-  ("**;*.*.*" "/opt/store/**/*.*"))
-
-(define-logical-pathname "SCRATCH"
-  ("**;*.*.*" "/opt/scratch/**/*.*"))
-
-;; redefine the sys table
-;; (define-logical-pathname "SYS"
-;;   ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
-;;   ("CONTRIB;**;*.*.*"
-;;    #P"/usr/src/sbcl/contrib/**/*.*"))
+(define-logical-pathname "SYS"
+  ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
+  ("CONTRIB;**;*.*.*" #P"/usr/src/sbcl/contrib/**/*.*")
+  ("OUTPUT;**;*.*.*" #P"/var/local/lisp/output/**/*.*")
+  ("CACHE;**;*.*.*" #P"/var/cache/lisp/**/*.*")
+  ("SITE;**;*.*.*" #P"/etc/lisp/**/*.*")
+  ("LIB;**;*.*.*" #P"/var/lib/lisp/**/*.*."))
 
 (defun logical-pathname-translation (host name)
   (car (std/list:assoc-value 
-        (logical-pathname-translations host) name 
+        (logical-pathname-translations host) name
         :test 'string=)))
 
 (defun (setf logical-pathname-translation) (new host name)

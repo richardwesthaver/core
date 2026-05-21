@@ -173,7 +173,7 @@
 (defparameter *progress-bar-enabled* nil)
 
 (declaim (inline update))
-(defun update! (unit-count &optional (progress-bar *progress-bar*))
+(defun update! (&optional (unit-count 1) (progress-bar *progress-bar*))
   (check-type unit-count (integer 1 *))
   (check-type progress-bar (or null progress-bar))
   (unless (null progress-bar)

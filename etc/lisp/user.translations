@@ -1,0 +1,6 @@
+;;; user.translations --- USER logical pathname translations -*- mode: common-lisp; -*-
+(("ORG;**;*.*.*" "~/org/**/*.*")
+ ("SRC;**;*.*.*" "~/src/**/*.*")
+ ("STASH;**;*.*.*" "~/.stash/**/*.*")
+ ("STORE;**;*.*.*" "~/.store/**/*.*")
+ ("HOME;**;*.*.*" "~/**/*.*"))

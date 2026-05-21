@@ -29,9 +29,15 @@
 (asdf:load-system :std)
 (shadowing-import '(reset) :std)
 (in-package :std-user)
+
 (setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))
 (ensure-directories-exist *stash*)
+
+;; set source location, then reset system paths
+(when #1=(sb-posix:getenv "SBCL_SRC") (sb-ext:set-sbcl-source-location (pathname #1#)))
+
 (init :sys)
+
 (let ((build-order 
         (list :std
               :ironclad/core
