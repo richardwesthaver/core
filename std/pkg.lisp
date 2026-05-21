@@ -706,7 +706,7 @@
    :current-sp :current-fp 
    :make-unbound-marker)
   (:import-from :std/prim :definline :defhook)
-  (:import-from :sb-impl :*external-formats*)
+  (:import-from :sb-impl :*external-formats* :*physical-host*)
   (:import-from :sb-vm :list-allocated-objects :fun-signature=
    :map-allocated-objects :fset :*linkage-name-map* :ldb-monitor
    :map-immobile-objects :memory-usage :references-p :show-ctype-ctor-cache-metrics
@@ -749,6 +749,7 @@
   (:import-from :sb-vm :primitive-type-of)
   (:import-from :std/macs :if-let :defmacro! :eval-always)
   (:export
+   :*physical-host*
    :*backend-primitive-type-names* 
    :*backend-primitive-type-aliases* 
    :*backend-predicate-types* 
