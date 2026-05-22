@@ -419,12 +419,7 @@ accessible."
   (setf
    (std/list:assoc-value
     (logical-pathname-translations host) name
-    :test (lambda (a b)
-            (let ((la (length a))
-                  (lb (length b)))
-              (cond ;; should never be =
-                ((< la lb) (string-equal a (subseq b 0 la)))
-                ((< lb la) (string-equal b (subseq a 0 lb)))))))
+    :test 'string=)
     (list new)))
 
 ;;; Hexdump

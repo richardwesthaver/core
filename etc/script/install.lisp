@@ -4,7 +4,7 @@
 (let ((apps '("skel" "homer" "mpk" "krypt" "packy")))
   (with-progress-bar ((+ (length apps) 4) "installing core to /usr/bin/core")
     (setf (logical-pathname-translation "SYS" "SITE;*.*.*") (merge-pathnames "etc/lisp/*.*"))
-    (mapcar 'load-logical-pathname-translations '("ETC" "USR" "VAR" "SRV" "USER" "SKEL" "MPK" "PACKY"))
+    (mapcar 'load-logical-pathname-translations '("SYS" "ETC" "USR" "VAR" "SRV" "USER" "SKEL" "MPK" "PACKY"))
     (update!)
     (check-logical-hosts)
     (update!)

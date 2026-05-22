@@ -1065,6 +1065,7 @@
    :assignee :started-p
    :verb-p :init
    :reset :state
+   :stat
    :init* :pause
    :install :uninstall
    :send :receive

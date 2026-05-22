@@ -56,6 +56,7 @@
 (add-packages
  ;; eglot-x ;; LSP extensions
  org-web-tools ;; web parsing
+ system-packages
  ol-notmuch ;; mail links
  htmlize ;; html export
  citeproc
@@ -178,12 +179,18 @@
                                         (eglot (styles orderless))
                                         (eglot-capf (styles orderless)))))
 
+(add-hook 'expand-expand-hook 'indent-according-to-mode)
+(add-hook 'expand-jump-hook 'indent-according-to-mode)
+
+(global-completion-preview-mode)
+
 (use-package corfu
   :ensure t
   :config
   (global-corfu-mode)
-  ;; (corfu-popupinfo-mode)
-  ;; (corfu-echo-mode)
+  (corfu-popupinfo-mode)
+  (setq corfu-popupinfo-delay (cons 0.8 0.2))
+  (corfu-echo-mode)
   (dolist (c (list (cons "SPC" " ")
                    (cons "." ".")
                    (cons "," ",")
@@ -195,9 +202,9 @@
                                            (interactive)
                                            (corfu-insert)
                                            (insert ,(cdr c)))))
-  ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-  ;; (add-to-list 'completion-at-point-functions #'cape-abbrev t)
-  ;; (add-to-list 'completion-at-point-functions #'cape-file)
+  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
+  (add-to-list 'completion-at-point-functions #'cape-abbrev t) 
+  (add-to-list 'completion-at-point-functions #'cape-file)
   (defun corfu-move-to-minibuffer ()
     (interactive)
     (pcase completion-in-region--data
@@ -212,15 +219,15 @@
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
 
 ;;; Multisession
-(setq multisession-storage 'sqlite)
+;; (setq multisession-storage 'files)
 
 ;;; Kill Ring
 (kill-ring-deindent-mode)
 
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
-(if (file-exists-p "~/.local/bin/rhg")
-    (setq hg-binary "~/.local/bin/rhg"))
+;; (if (file-exists-p "~/.local/bin/rhg")
+;;     (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
 (setq dired-dwim-target t
@@ -231,8 +238,6 @@
 (setq speedbar-sort-tags t
       speedbar-prefer-window t
       speedbar-track-mouse-flag t)
-
-(add-hook 'speedbar-after-create-hook 'turn-on-hide-mode-line-mode)
 
 ;;; Projects
 (setopt  project-list-file (expand-file-name "projects" user-emacs-directory)

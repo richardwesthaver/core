@@ -97,6 +97,8 @@
 (add-hook 'org-after-todo-state-change-hook #'org-clock-in-wip)
 
 ;; link abbrevs
+(require 'ol-irc)
+
 (setq org-link-abbrev-alist
       `(("vc" . ,(concat (string-trim-right company-vc-url "[/]") "/%s"))
         ("comp" . ,(format "https://%s/%%s" company-domain))

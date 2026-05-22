@@ -106,7 +106,7 @@ function NAME and be skipped for (setf NAME)."
 (defverb state (self)
   (:accessor t)
   (:documentation "Return the state of SELF."))
-(defverb stat (self)
+(defverb stat (self &key)
   (:documentation "Return a short status message."))
 (defverb tags (self)
   (:accessor t)

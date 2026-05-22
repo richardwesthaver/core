@@ -35,7 +35,7 @@
   "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
   :prefix 'toggle-map
   "v" #'global-visual-line-mode
-  "b" #'bar-toggle
+  "b" #'speedbar
   "h" #'global-hl-line-mode
   "i" #'imenu-list-smart-toggle
   "N" #'global-display-line-numbers-mode
