@@ -74,7 +74,8 @@
 (define-multi-main dispatch-core
     (make-toplevel-init
      :package :user
-     :userinit (lambda () (init :xdg) (xdg-config-file "corerc")))
+     :userinit (lambda () (xdg-config-file :core))
+     :sysinit (lambda () #p"/etc/corerc"))
   (:skel (skel/cli::start-skel))
   (:homer (skel/homer/cli::start-homer))
   (:mpk (skel/mpk/cli::start-mpk)))

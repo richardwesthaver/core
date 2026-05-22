@@ -1,0 +1,8 @@
+;;; mpk.translations --- MPK logical pathname translations -*- mode: common-lisp; -*-
+(("HOME;**;*.*.*" "/var/local/mpk/**/*.*")
+ ("MEDIA;**;*.*.*" "/var/opt/media/**/*.*")
+ ("DATA;**;*.*.*" "/var/local/mpk/data/**/*.*")
+ ("DB;**;*.*.*" "/var/db/mpk/**/*.*")
+ ("CACHE;**;*.*.*" "/var/cache/mpk/**/*.*")
+ ("LOG;**;*.*.*" "/var/log/mpk/**/*.*")
+ ("TMP;**;*.*.*" "/var/tmp/mpk/**/*.*"))

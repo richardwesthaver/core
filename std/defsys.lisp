@@ -1307,7 +1307,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (setf *user-fasl-cache* (ensure-directories-exist (or fasl-cache (std/os:user-fasl-cache)))
         *system-data-directory* (or system-data (xdg-data-directory "lisp/sys"))
         *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
-        (std/sys:logical-pathname-translation "SYS" "SYS:CACHE;**;*.*.*") *user-fasl-cache*)
+        (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") (merge-pathnames "**/*.*" *user-fasl-cache*))
   (ensure-directories-exist (system-data-dir "bin/"))
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (let ((pool (when pool (make-system-session-pool))))

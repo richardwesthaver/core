@@ -410,14 +410,6 @@ accessible."
 ;; (define-logical-pathname "STORE")
 ;; (define-logical-pathname "SCRATCH")
 
-(define-logical-pathname "SYS"
-  ("SRC;**;*.*.*" #P"/usr/src/sbcl/src/**/*.*")
-  ("CONTRIB;**;*.*.*" #P"/usr/src/sbcl/contrib/**/*.*")
-  ("OUTPUT;**;*.*.*" #P"/var/local/lisp/output/**/*.*")
-  ("CACHE;**;*.*.*" #P"/var/cache/lisp/**/*.*")
-  ("SITE;**;*.*.*" #P"/etc/lisp/**/*.*")
-  ("LIB;**;*.*.*" #P"/var/lib/lisp/**/*.*."))
-
 (defun logical-pathname-translation (host name)
   (car (std/list:assoc-value 
         (logical-pathname-translations host) name
@@ -425,10 +417,15 @@ accessible."
 
 (defun (setf logical-pathname-translation) (new host name)
   (setf
-   (std/list:assoc-value 
-    (logical-pathname-translations host) name 
-    :test 'string=)
-   (list new)))
+   (std/list:assoc-value
+    (logical-pathname-translations host) name
+    :test (lambda (a b)
+            (let ((la (length a))
+                  (lb (length b)))
+              (cond ;; should never be =
+                ((< la lb) (string-equal a (subseq b 0 la)))
+                ((< lb la) (string-equal b (subseq a 0 lb)))))))
+    (list new)))
 
 ;;; Hexdump
 ;; https://stackoverflow.com/questions/69974963/object-memory-layout-in-common-lisp#70019565

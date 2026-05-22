@@ -1,0 +1,7 @@
+;;; skel.translations --- SKEL logical pathname translations -*- mode: common-lisp; -*-
+(("HOME;**;*.*.*" "/var/local/skel/**/*.*")
+ ("DATA;**;*.*.*" "/var/local/skel/data/**/*.*")
+ ("DB;**;*.*.*" "/var/db/skel/**/*.*")
+ ("CACHE;**;*.*.*" "/var/cache/skel/**/*.*")
+ ("LOG;**;*.*.*" "/var/log/skel/**/*.*")
+ ("TMP;**;*.*.*" "/var/tmp/skel/**/*.*"))

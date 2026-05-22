@@ -1404,7 +1404,7 @@
   (:use :cl :sb-alien :std/string)
   (:import-from :std/macs :with-gensyms :if-let :when-let :eval-always)
   (:import-from :std/prim :definline)
-  (:import-from :std/sys :define-logical-pathname :add-logical-pathname-translation)
+  (:import-from :std/sys :define-logical-pathname :logical-pathname-translation)
   (:import-from :std/file :probe-directory)
   (:import-from :std/path :directory-path :merge-homedir-pathnames)
   (:import-from :std/hash :hash-table-keys)

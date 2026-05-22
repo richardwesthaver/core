@@ -1,0 +1,7 @@
+;;; sys.translations --- SYS logical pathname translations -*- mode: common-lisp; -*-
+(("SRC;**;*.*.*" "/usr/src/sbcl/src/**/*.*")
+ ("CONTRIB;**;*.*.*" "/usr/src/sbcl/contrib/**/*.*")
+ ("OUTPUT;**;*.*.*" "/var/local/lisp/output/**/*.*")
+ ("CACHE;**;*.*.*" "/var/cache/lisp/**/*.*")
+ ("SITE;**;*.*.*" "/etc/lisp/**/*.*")
+ ("LIB;**;*.*.*" "/var/lib/lisp/**/*.*."))

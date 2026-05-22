@@ -1,0 +1,8 @@
+;;; packy.translations --- PACKY logical pathname translations -*- mode: common-lisp; -*-
+(("HOME;**;*.*.*" "/var/local/packy/**/*.*")
+ ("DATA;**;*.*.*" "/var/local/packy/data/**/*.*")
+ ("DB;**;*.*.*" "/var/db/packy/**/*.*")
+ ("CACHE;**;*.*.*" "/var/cache/packy/**/*.*")
+ ("LOG;**;*.*.*" "/var/log/packy/**/*.*")
+ ("PKG;**;*.*.*" "/srv/pkg/**/*.*")
+ ("TMP;**;*.*.*" "/var/tmp/packy/**/*.*"))

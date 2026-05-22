@@ -1,0 +1,10 @@
+;;; usr.translations --- USR logical pathname translations -*- mode: common-lisp; -*-
+(("SRC;*.*.*" "/usr/src/*.*")
+ ("BIN;*.*.*" "/usr/bin/*.*")
+ ("LIB;*.*.*" "/usr/lib/*.*")
+ ("LIB32;*.*.*" "/usr/lib32/*.*")
+ ("LIB64;*.*.*" "/usr/lib64/*.*")
+ ("LOCAL;*.*.*" "/usr/local/*.*")
+ ("MAN;*.*.*" "/usr/man/*.*")
+ ("SBIN;*.*.*" "/usr/sbin/*.*")
+ ("SHARE;*.*.*" "/usr/share/*.*"))
