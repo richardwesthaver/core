@@ -766,6 +766,8 @@
    :check-fasl-file-header
    :load-as-fasl
    :featurep
+   :define-logical-host-loader
+   :load-logical-host
    :*show-fops-p*
    :make-unbound-marker
    :*external-formats*

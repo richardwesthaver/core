@@ -1,43 +1,45 @@
 #!/usr/bin/env -S sbcl --script
-;; Bootstrap the core from a fresh SBCL installation.
+#|Bootstrap the core from a fresh SBCL installation.
 
-;;; Commentary:
+This script is intended for use with latest public release of SBCL.
 
-;; This script is intended for use with latest public release of SBCL.
+from the project root:
 
-;; from the project root:
-
-;; sbcl --script bootstrap.lisp 
-
-;;; Code:
+$ sbcl --script bootstrap.lisp 
+|#
 (in-package :cl-user)
-(require 'sb-md5)
-(require 'sb-sprof)
-(require 'sb-cover)
-(require 'sb-grovel)
-(require 'sb-posix)
-(require 'sb-bsd-sockets)
-(require 'sb-cltl2)
-(require 'sb-concurrency)
-(require 'sb-introspect)
-(require 'sb-rotate-byte)
-(require 'asdf)
-(require 'uiop)
-(asdf:load-asd (probe-file "ppcre/ppcre.asd"))
-(asdf:load-asd (probe-file "std/std.asd"))
-(asdf:load-system :ppcre)
-(asdf:load-system :std)
-(shadowing-import '(reset) :std)
-(in-package :std-user)
+;; required sbcl features
+(mapcar 
+ 'require 
+ '(sb-md5 sb-sprof sb-cover sb-grovel 
+   sb-posix sb-bsd-sockets sb-cltl2 sb-concurrency
+   sb-introspect sb-rotate-byte asdf uiop))
 
+;; load ppcre
+(asdf:load-asd (probe-file "ppcre/ppcre.asd"))
+(asdf:load-system :ppcre)
+
+;; load std
+(asdf:load-asd (probe-file "std/std.asd"))
+(asdf:load-system :std)
+#+nil (shadowing-import '(reset) :std)
+
+(in-package :std-user)
+(in-readtable :std)
+
+;; initialize local *STASH*
 (setq *stash* (make-pathname :directory (append (pathname-directory *default-pathname-defaults*) '(".stash"))))
 (ensure-directories-exist *stash*)
 
-;; set source location, then reset system paths
+;; set source location
 (when #1=(sb-posix:getenv "SBCL_SRC") (sb-ext:set-sbcl-source-location (pathname #1#)))
 
-(init :sys)
+;; set local SYS:SITE for interop with LOAD-LOGICAL-PATHNAME-TRANSLATIONS
+(setf (logical-pathname-translation "SYS" "SITE;*.*.*") (merge-pathnames "etc/lisp/*.*"))
+;; overwrite all logical paths
+(mapcar 'load-logical-host '("SYS" "ETC" "USR" "VAR" "SRV" "USER" "SKEL" "MPK" "PACKY"))
 
+(init :sys)
 (let ((build-order 
         (list :std
               :ironclad/core
@@ -97,6 +99,16 @@
               :skel
               :core)))
   (mapc 'load-system build-order))
+
+;; remap MEDIA logical host
+(dsp:load-media-logical-host #l"mpk:media;")
+
+;; init keyboard support
 (init :kbd :keysyms (stash-pathname "kbd.sxp") :input nil)
-(gc :full t)
+
+;; perform full gc
+(dotimes (i 10)
+  (gc :full t))
+
+;; save the core and exit
 (make-system :core)

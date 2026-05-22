@@ -6,6 +6,7 @@
 (defpkg :dsp/core
   (:use :cl :std :log :config)
   (:export
+   #:load-media-logical-host
    #:media-codec
    #:audio-codec
    #:video-codec
@@ -47,3 +48,6 @@
    :gst-error
    #:load-gst
    #:gst-pipe))
+
+(defpkg :dsp
+  (:use-reexport :dsp/core :dsp/av :dsp/gst))

@@ -243,6 +243,7 @@
              (t (setq ,new (+ ,new ,val))))
            ,setter)))))
 
+;; FIX 2026-05-22: 
 (define-parser *linfix-parser*
   (:start-symbol expr)
   (:terminals (⟼ ^ .^ ./ / * .* @ ⊗ + - := ← = .= |(| |)| [ ] |:| |.| |,| ctranspose transpose id number))
@@ -291,6 +292,7 @@
   (1+args
    (expr |,| expr #'(lambda (a b c) (declare (ignore b)) (list a c)))
    (expr |,| 1+args #'(lambda (a b c) (declare (ignore b)) (if (consp c) (list* a c) (list a c)))))
+  #+nil
   (list
    ([ args ] #'(lambda (a b c) (declare (ignore a c)) (list* 'list b)))
    #+nil
@@ -323,6 +325,7 @@
    (slice [ ] #'(lambda (a b c) (declare (ignore b c)) (list 'generic-ref a)))
    (slice [ sargs ] #'(lambda (a b c d) (declare (ignore b d)) (list* 'generic-ref a c))))
   ;;
+  #+nil
   (term
    number lid
    (ctranspose id #'(lambda (a b) (declare (ignore a)) (list 'quote b)))

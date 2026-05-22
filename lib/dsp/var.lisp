@@ -12,9 +12,10 @@
 T = probe all slot values.
 NIL = probe path and mime-type only.")
 
-(define-logical-pathname "MEDIA"
-  ("MEDIA:MUSIC;**;*.*.*" (merge-pathnames "music/**/*.*" *media-directory*))
-  ("MEDIA:AUD;**;*.*.*" (merge-pathnames "aud/**/*.*" *media-directory*))
-  ("MEDIA:VID;**;*.*.*" (merge-pathnames "vid/**/*.*" *media-directory*))
-  ("MEDIA:IMG;**;*.*.*" (merge-pathnames "img/**/*.*" *media-directory*))
-  ("MEDIA:SCREENSHOT;**;*.*.*" (merge-pathnames "screenshot/**/*.*" *media-directory*)))
+(define-logical-host-loader "MEDIA" (&optional (home *media-directory*))
+  `(("HOME;**;*.*.*" ,home)
+    ("MUSIC;**;*.*.*" (merge-pathnames "music/**/*.*" ,home))
+    ("AUD;**;*.*.*" (merge-pathnames "aud/**/*.*" ,home))
+    ("VID;**;*.*.*" (merge-pathnames "vid/**/*.*" ,home))
+    ("IMG;**;*.*.*" (merge-pathnames "img/**/*.*" ,home))
+    ("SCREENSHOT;**;*.*.*" (merge-pathnames "screenshot/**/*.*" ,home))))

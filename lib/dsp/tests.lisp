@@ -5,7 +5,9 @@
 ;;; Code:
 (defpackage :dsp/tests
   (:use :cl :std :rt :log :dsp))
+
 (in-package :dsp/tests)
+
 (defsuite :dsp)
 (in-suite :dsp)
 

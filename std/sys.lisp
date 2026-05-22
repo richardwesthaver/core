@@ -380,10 +380,13 @@ print the paths of each host as a list in addition to the host name."
 PATH. TRANSLATIONS is a list of (MATCH TRANSLATION) pairs."
   `(setf (logical-pathname-translations ,host)
          ;; eval second element only
-	 ',(mapcar (lambda (x)
-                     (setf (cadr x) (eval (cadr x)))
-                     x)
+	 ',(mapcar (lambda (x) `(,(car x) ,(eval (cadr x))))
                    translations)))
+
+(defmacro define-logical-host-loader (name args body)
+  "Define a function which resets a logical-host according to ARG."
+  `(defmacro ,(symbolicate "LOAD-" name "-LOGICAL-HOST") ,args
+     `(define-logical-pathname ,,name ,@,body)))
 
 (defun check-logical-host (host)
   "Check a single LOGICAL-HOST, making sure all directories exist and are
@@ -401,6 +404,17 @@ accessible."
   "Check each member of *LOGICAL-HOSTS*, ensuring all directories exist and are
 accessible."
   (map nil #'check-logical-host hosts))
+
+(defun load-logical-host (host)
+  "Like LOAD-LOGICAL-PATHNAME-TRANSLATIONS but always reset the host values."
+  (prog1 t
+    (setf (logical-pathname-translations host)
+          (with-open-file (lpt (make-pathname :host "SYS"
+                                              :directory '(:absolute "SITE")
+                                              :name host
+                                              :type "TRANSLATIONS"
+                                              :version :newest))
+            (read lpt)))))
 
 ;; (define-logical-pathname "PROJECT")
 ;; (define-logical-pathname "VAR")
