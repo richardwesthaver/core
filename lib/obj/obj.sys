@@ -56,10 +56,8 @@
     (:file "rand")
     (:file "map")
     (:file "misc")))
-  (:mod "tree"
-   :components 
-   ((:file "node")
-    (:file "btree")))
+  (:file "node")
+  (:file "btree")
   (:file "equiv")
   (:mod "color"
    :components 
@@ -99,13 +97,14 @@
    :types (form)
    :macros (defnode)
    :functions (wrap-object unwrap-object))
-  (:proto :sxp)
+  (:proto :node)
+  (:proto :btree)
   (:proto :db)
   (:proto :graph)
   (:proto :config)
   (:proto :schema)
   (:proto :project
-   :description "Project base protocol."
+   :description "Simple Project API."
    :functions (make-project register-project)
    :globals (*project-table*)
    :classes (project-config project-metadata project simple-project)
@@ -128,21 +127,29 @@
    :package :obj/cmd
    :description "Interactive command help and usage printing."
    :methods (print-help print-usage))
-  (:proto :secret)
+  (:proto :secret
+   :description "Secret Object API."
+   :classes (secret)
+   :methods (conceal reveal ensure-concealed ensure-revealed))
   (:proto :store)
   (:proto :cache)
   (:proto :srv)
   (:proto :color)
-  (:proto :val)
-  (:proto :id)
+  (:proto :val
+   :description "Simple Value API."
+   :accessors (rem-val get-val get-value val)
+   :conditions (value-error)
+   :functions (slot-val))
+  (:proto :id
+   :description "Base Identity API."
+   :accessors (id)
+   :classes (id))
   (:proto :time
    :description "Time parsing and arithmetic.")
   (:proto :uri)
   (:proto :url
    :description "URL encoding/decoding."
    :functions (url-encode url-decode url-encode-params url-decode-params rewrite-urls))
-  (:proto :node)
-  (:proto :tree)
   (:tests
    :components 
    ((:mod "tests" 

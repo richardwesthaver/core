@@ -1,9 +1,9 @@
-;;; lib/obj/tree/node.lisp --- Tree Node Structs
+;;; lib/obj/node.lisp --- Node Structures
 
 ;; Basic Tree Node Structs
 
 ;;; Code:
-(in-package :obj/tree)
+(in-package :obj/node)
 
 (deftype keytype () 'sb-vm:word)
 

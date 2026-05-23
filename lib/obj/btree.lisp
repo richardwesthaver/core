@@ -15,7 +15,7 @@
 ;; https://planetscale.com/blog/btrees-and-database-indexes
 
 ;;; Code:
-(in-package :obj/tree/btree)
+(in-package :obj/btree)
 
 (defgeneric existsp (key tree)
   (:documentation "Test existence of a key in a tree."))

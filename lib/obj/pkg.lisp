@@ -777,15 +777,15 @@
    :indegree :outdegree
    :shortest-path :min-cut))
 
-(defpkg :obj/tree
-  (:nicknames :tree)
+(defpkg :obj/node
+  (:nicknames :node)
   (:use :cl :std :obj/id)
   (:export :keytype :tree-node :binary-node :unary-node :ternary-node :avl-node
            :make-tree-node :make-binary-node :make-unary-node :make-ternary-node :make-avl-node))
 
-(defpkg :obj/tree/btree
-  (:nicknames :obj/btree :btree)
-  (:use :cl :std :obj/tree :stored :db :val)
+(defpkg :obj/btree
+  (:nicknames :btree)
+  (:use :cl :std :node :stored :db :val)
   (:export
    #:primary
    #:key-form
