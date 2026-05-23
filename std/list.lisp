@@ -532,6 +532,8 @@ be used with SETF.")
     "RASSOC-VALUE is an alist accessor very much like RASSOC, but it can
 be used with SETF."))
 
+;; TODO 2026-05-22: add-to-list
+
 ;;; DLIST
 ;; Simple doubly-linked lists
 ;; ref: matlisp/src/utilities/dlist.lisp

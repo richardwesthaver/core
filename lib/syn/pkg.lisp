@@ -13,31 +13,6 @@
    :parse-string
    :lang-counts))
 
-(defpkg :syn/lang
-  (:use :cl :std :config :ast :id :project :cmd :tree-sitter :syn/ts)
-  (:export :lang :*lang* :lang-config 
-   :deflang :lang-condition :lang-error :lang-warning
-   :*langs* :langp :with-lang :lang-stats))
-
-(defpkg :syn/lang/c
-  (:nicknames :syn/c)
-  (:use :cl :std :syn/lang :parse/pratt :tree-sitter :syn/ts)
-  (:export))
-
-(defpkg :syn/lang/js
-  (:nicknames :syn/js)
-  (:use :cl :std :syn/lang :tree-sitter)
-  (:export))
-
-(defpkg :syn/lang/py
-  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
-  (:export))
-
-(defpkg :syn/lang/rs
-  (:nicknames :syn/rs)
-  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
-  (:export))
-
 (defpkg :syn/fmt
   (:use :cl :std :config :ast)
   (:export :fmt :fmt-config))
@@ -92,6 +67,35 @@
 (defpkg :syn/lint
   (:use :std-lisp)
   (:export :lint))
+
+(defpkg :syn/srv
+  (:use :cl :std :config :ast :srv)
+  (:export))
+
+(defpkg :syn/lang
+  (:use :cl :std :config :ast :id :project :cmd :tree-sitter :syn/ts)
+  (:export :lang :*lang* :lang-config 
+   :deflang :lang-condition :lang-error :lang-warning
+   :*langs* :langp :with-lang :lang-stats))
+
+(defpkg :syn/lang/c
+  (:nicknames :syn/c)
+  (:use :cl :std :syn/lang :parse/pratt :tree-sitter :syn/ts)
+  (:export))
+
+(defpkg :syn/lang/js
+  (:nicknames :syn/js)
+  (:use :cl :std :syn/lang :tree-sitter)
+  (:export))
+
+(defpkg :syn/lang/py
+  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
+  (:export))
+
+(defpkg :syn/lang/rs
+  (:nicknames :syn/rs)
+  (:use :cl :std :syn/lang :tree-sitter :syn/ts)
+  (:export))
 
 (defpkg :syn/tempo
   (:nicknames :tempo)

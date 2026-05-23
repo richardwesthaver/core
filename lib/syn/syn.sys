@@ -4,12 +4,7 @@
  :components 
  ((:pkg "pkg")
   (:file "ts")
-  (:mod "lang"
-   :components
-   ((:file "proto")
-    (:file "c")
-    (:file "js")
-    (:file "py")))
+  (:file "fmt")
   (:mod "gen"
    :components
    ((:file "condition")
@@ -47,8 +42,14 @@
       (:file "sym")
       (:file "print")
       (:file "macs")))))
-  (:file "fmt")
   (:file "lint")
+  (:file "srv")
+  (:mod "lang"
+   :components
+   ((:file "proto")
+    (:file "c")
+    (:file "js")
+    (:file "py")))
   (:file "tempo")
   (:file "grovel")
   (:file "cli"))
@@ -95,4 +96,3 @@
         (:file "c")
         (:file "js")
         (:file "py")))))))))
-
