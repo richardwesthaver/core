@@ -4,28 +4,30 @@
  :components 
  ((:pkg "pkg" :feature :obj :internal-package :obj-int)
   (:mod "meta"
-   :components ((:file "sealed")
-                (:file "stealth")
-                (:file "filtered")
-                (:file "fast")
-                (:file "lazy")
-                (:file "overloaded")
-                (:file "stored")
-                (:file "dynamic")
-                (:file "mix")
-                (:file "method")))
+   :components 
+   ((:file "sealed")
+    (:file "stealth")
+    (:file "filtered")
+    (:file "fast")
+    (:file "lazy")
+    (:file "overloaded")
+    (:file "stored")
+    (:file "dynamic")
+    (:file "mix")
+    (:file "method")))
   (:file "val")
   (:file "id")
   (:mod "uri"
-   :components ((:file "punycode")
-                (:file "domain")
-                (:file "uri")
-                (:file "mask")
-                (:file "state")
-                (:file "parse")
-                (:file "print")
-                (:file "path")
-                (:file "intern")))
+   :components 
+   ((:file "punycode")
+    (:file "domain")
+    (:file "uri")
+    (:file "mask")
+    (:file "state")
+    (:file "parse")
+    (:file "print")
+    (:file "path")
+    (:file "intern")))
   (:file "url")
   (:mod "tensor"
    :components 
@@ -68,10 +70,7 @@
     (:file "modus")
     (:file "theme")
     (:file "print")))
-  (:mod "time"
-   :components 
-   ((:file "local")
-    (:file "util")))
+  (:file "time")
   (:file "uuid")
   (:file "ast")
   (:file "config")
@@ -86,8 +85,7 @@
   (:file "srv")
   (:file "obj"))
  :provide
- ((:proto :tensor)
-  (:proto :ast
+ ((:proto :ast
    :description "Abstract Syntax Trees."
    :classes (ast node)
    :accessors (ast)
@@ -146,15 +144,28 @@
    :classes (id))
   (:proto :time
    :description "Time parsing and arithmetic.")
-  (:proto :uri)
+  (:proto :uri
+   :constants (+uri-max-string-length+)
+   :variables (*uris* *default-etld-names* *etlds* *render-include-slash-on-null-path* *uri-scheme-print-case*)
+   :classes (uri iri)
+   :conditions (uri-condition uri-error uri-parse-error)
+   :accessors (uri-space)
+   :methods (uri uri= intern-uri render-uri uri-to-string iri-to-string merge-uris enough-uri)
+   :functions (percent-encode-string percent-decode-string parse-uri parse-path
+               make-uri-space uri-hash unintern-uri load-etld-data
+               parse-domain uri-tld uri-domain ip-addr=
+               uri-pathname pathname-to-uri)
+   :macros (do-all-uris)
+   :predicates (uri-p iri-p ipv4-addr-p ipv6-addr-p ip-addr-p cookie-domain-p))
   (:proto :url
    :description "URL encoding/decoding."
    :functions (url-encode url-decode url-encode-params url-decode-params rewrite-urls))
+  (:proto :tensor)
   (:tests
    :components 
    ((:mod "tests" 
      :components 
-     ((:file "pkg")
+     ((:pkg "pkg")
       (:file "sealed")
       (:file "meta")
       (:file "tensor")))))))

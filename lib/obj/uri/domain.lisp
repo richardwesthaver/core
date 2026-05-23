@@ -101,7 +101,7 @@
 
 (defun ipv4-addr-p (host)
   (declare (optimize (speed 3) (safety 2))
-           #+sbcl (sb-ext:muffle-conditions sb-ext:compiler-note))
+           (sb-ext:muffle-conditions sb-ext:compiler-note))
   (check-type host string)
   (flet ((read-byte-string (string start)
            (declare (type fixnum start))
@@ -153,7 +153,6 @@
   (check-type host string)
   (when (= (length host) 0)
     (return-from ipv6-addr-p nil))
-
   (labels ((read-section (string start &optional read-colons)
              (declare (type string string)
                       (type fixnum start))
@@ -193,11 +192,9 @@
                    (if (char= (aref string end) #\:)
                        (values end read-colons endp)
                        nil)))))
-
     (setq host (trim-brackets host))
     (unless host
       (return-from ipv6-addr-p nil))
-
     (let ((start 0)
           (read-colons-p nil))
       (dotimes (i 8 t)

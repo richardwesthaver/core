@@ -167,3 +167,9 @@
 
 (eval-when (:load-toplevel)
   (pushnew :rfc3492 *features*))
+
+;;; Serde
+(defmethod std:serialize ((self string) (format (eql :punycode)) &key stream)
+  (encode-punycode self stream))
+(defmethod std:deserialize ((self string) (format (eql :punycode)) &key stream)
+  (decode-punycode self stream))

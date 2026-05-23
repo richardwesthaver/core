@@ -1,4 +1,4 @@
-(defpackage :obj/tests
+(defpkg :obj/tests
   (:use :cl :std :rt :obj :uuid :url :std/macs :id :ast
     :dynamic :fast :sealed :stealth :stored :store :uri :color 
     :tree :db :store :schema :cmd))

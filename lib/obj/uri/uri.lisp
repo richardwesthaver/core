@@ -25,6 +25,8 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 
 ;;; Code:
 (in-package :obj/uri)
+
+#+nil
 (eval-when (:load-toplevel)
   (pushnew :rfc3986 *features*)
   (pushnew :rfc6874 *features*)
@@ -35,7 +37,6 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 
 (eval-always
   (defvar *strict-parse* t))
-
 
 ;; uri-host is computed and cached.  See the hand-written method below.
 ;; uri-ipv6 and uri-zone-id are read-only by users, so they are in the

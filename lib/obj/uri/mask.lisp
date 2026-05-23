@@ -4,18 +4,19 @@
 
 ;;; Code:
 (in-package :obj/uri)
-;; To match sets of characters, the parser uses bit vectors constructed
-;; from lists of characters.
-;; The size of bit vectors are defined to check for characters in the
-;; range 0 to 126 (~).  We use location 0 and 1, which are never set by
-;; any generated character list, as boolean.
+;; To match sets of characters, the parser uses bit vectors constructed from
+;; lists of characters.
+
+;; The size of bit vectors are defined to check for characters in the range 0
+;; to 126 (~). We use location 0 and 1, which are never set by any generated
+;; character list, as boolean.
 (eval-always
 (defparameter +uri-bit-vector-size+ 127)
-;; The is the index at which we store the boolean: does this bitvector
-;; allow `ucschar' (from the grammar)?
+;; The is the index at which we store the boolean: does this bitvector allow
+;; `ucschar' (from the grammar)?
 (defparameter +bitvector-index-ucschar+  0)
-;; The is the index at which we store the boolean: does this bitvector
-;; allow `iprivate' (from the grammar)?
+;; The is the index at which we store the boolean: does this bitvector allow
+;; `iprivate' (from the grammar)?
 (defparameter +bitvector-index-iprivate+ 1)
 
 (defun generate-character-list (char-start char-end)

@@ -8,9 +8,9 @@
 (eval-when (:compile-toplevel :execute :load-toplevel)
   ;; Generate the parser for URI or IRI.  The only difference is the name
   ;; of the parser and for IRIs the binding of %iri-mode to T.
-  (defmacro gen-xri-parser (name irip)
+  (defmacro gen-xri-parser (name iri-p)
     `(defun ,name (string
-                   &aux ,@(when irip '((%iri-mode t)))
+                   &aux ,@(when iri-p '((%iri-mode t)))
                         (end (length string))
                         (.pct-encoded. nil)
                         real-host ipv6 zone-id)
