@@ -1,4 +1,4 @@
-;;; template.lisp --- Tensor Template
+;;; template.lisp --- Tensor Templates
 
 ;; 
 

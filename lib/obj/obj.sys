@@ -36,7 +36,7 @@
     (:file "meta")
     (:file "base")
     (:file "num")
-    (:file "tensor")
+    (:file "template")
     (:file "loop")
     (:file "zeros")
     (:file "ref")
@@ -145,6 +145,7 @@
   (:proto :time
    :description "Time parsing and arithmetic.")
   (:proto :uri
+   :description "URI/IRI/URN support library."
    :constants (+uri-max-string-length+)
    :variables (*uris* *default-etld-names* *etlds* *render-include-slash-on-null-path* *uri-scheme-print-case*)
    :classes (uri iri)
