@@ -194,27 +194,11 @@ TABLE."
   (package-install-selected-packages (not ask))
   (package-upgrade-all ask))
 
-(defmacro defcmd (name &rest body) `(defun ,name nil (interactive) ,@body))
-
 ;;; Theme
 (defun load-default-theme (&optional theme)
   (interactive)
   (when theme (setq default-theme theme))
   (load-theme default-theme t))
-
-
-;;; Tags
-;;;###autoload
-(defun refresh-tags ()
-  "Refresh TAGS database in `user-emacs-directory'."
-  (interactive)
-  (let ((default-directory user-emacs-directory))
-    (async-shell-command 
-     "etags ./*.el \\
-./lib/*.el \\
-~/comp/core/emacs/*.el \\
-~/comp/core/emacs/lib/*.el \\
--o TAGS")))
 
 (provide 'util)
 ;; util.el ends here

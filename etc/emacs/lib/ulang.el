@@ -22,7 +22,6 @@
 
 ;; 
 
-
 ;;; Code:
 (require 'org)
 (require 'org-element)
@@ -32,12 +31,9 @@
 (defgroup ulang nil
   "CC Universal Language.")
 
-(defvar ulang-link-history nil)
-(defvar ulang-file-history nil)
-;; 
 (defvar ulang-special-properties
   "See 'org-special-properties'."
-  '("VERSION"))
+  '("VERSION" "LOCATION"))
 
 (defvar ulang-info-url-alist
   '(("sbcl" . "https://www.sbcl.org/manual/")

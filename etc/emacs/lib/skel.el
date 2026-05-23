@@ -27,7 +27,6 @@
 ;;; Code:
 (eval-and-compile (require 'eieio)
 		  (require 'cl-lib)
-		  (require 'sxp (expand-file-name "sxp.el" (join-paths user-emacs-directory "lib/")))
                   (require 'skeleton)
                   (require 'project)
                   (require 'org)
@@ -162,12 +161,12 @@ be enabled. This function is added as a hook to
 	 (current-time-list nil))
      (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
 
-(defclass sk (sxp)
+(defclass sk ()
   ((id :initarg :id :initform (make-id)))
-  :documentation "Base class for skeleton objects. Inherits from `sxp'."
+  :documentation "Base class for skeleton objects."
   :abstract t)
 
-(defcmd sk-classes (eieio-class-children 'sk))
+(defun sk-classes () (eieio-class-children 'sk))
 
 (defmacro def-sk-class (name doc &optional slots superclasses)
   "Define a new class with superclass of `skel'+SUPERCLASSES, SLOTS,

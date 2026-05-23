@@ -30,7 +30,6 @@
 (require 'org)
 (require 'org-agenda)
 (require 'default)
-;; (require 'uml-mode)
 (require 'org-expiry)
 
 (defgroup inbox nil

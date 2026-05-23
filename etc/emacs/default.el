@@ -12,6 +12,7 @@
 (setq
  org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
  ;; tabs = bad (unless in makefile..)
+ switch-to-buffer-obey-display-actions t
  indent-tabs-mode nil
  make-backup-files nil
  save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
@@ -44,10 +45,9 @@
  tab-always-indent 'complete
  shr-cookie-policy nil
  ;; NOTE 2023-11-04: EXPERIMENTAL
- ediff-floating-control-frame t
- register-use-preview nil
+ ;; ediff-floating-control-frame t
+ register-use-preview t
  shr-use-xwidgets-for-media t
- which-key-mode t
  view-read-only t
  org-publish-timestamp-directory (join-paths user-emacs-directory ".org-timestamps/"))
 
@@ -59,23 +59,20 @@
  system-packages
  ol-notmuch ;; mail links
  htmlize ;; html export
- citeproc
  cape
  consult
- embark-consult
- embark
+ ;; embark-consult
+ ;; embark
  auctex
  ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
- nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion
- nerd-icons-ibuffer
- hide-mode-line) ;; ui
+ nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion nerd-icons-grep
+ nerd-icons-ibuffer nerd-icons-xref nerd-icons-ivy-rich tab-line-nerd-icons
+ hide-mode-line)
 ;; bbdb
 (package-refresh-contents)
 (package-install-selected-packages t)
 
 ;;; Treesitter
-
-;;(add-to-list 'treesit-extra-load-path "/usr/lib/")
 
 ;; (let ((grammar-dir "/usr/share/tree-sitter/"))
 ;;   (when (file-exists-p grammar-dir)
@@ -119,10 +116,12 @@
   (require 'inbox)
   (require 'graph)
   (require 'skel)
+  (require 'gen)
   (require 'c2))
 
 ;;; Env
-(require 'exec-path-from-shell)
+(use-package use-package-ensure-system-package)
+(use-package exec-path-from-shell)
 (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
                                       "SSH_AUTH_SOCK"
                                       "PATH"
@@ -284,9 +283,10 @@
       guile-program "guile"
       cmulisp-program "lisp"
       scsh-program "scsh")
-(require 'slime-company "slime-company")
-(require 'slime-cape "slime-cape")
-(require 'slime-repl-ansi-color "slime-repl-ansi-color")
+;; (require 'slime-company "slime-company")
+;; (require 'slime-cape "slime-cape")
+;; (require 'slime-repl-ansi-color "slime-repl-ansi-color")
+
 (defvar slime-toggle nil)
 (defun slime-switch-to-output (&optional same-window)
   "Select the output buffer, when possible in an existing window. When
@@ -489,9 +489,10 @@ as the first argument to SWANK:START-SERVER on the Lisp side."
 ;;     (eglot-x-setup)))
 
 ;;; Asm
-(require 'x86-lookup "x86-lookup")
-(setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf")
-(use-package nasm-mode :ensure t)
+(use-package nasm-mode)
+(use-package x86-lookup
+  :config
+  (setq  x86-lookup-pdf "/opt/store/data/doc/64-iA32-isa.pdf"))
 (add-hook 'asm-mode-hook 'nasm-mode)
 
 ;;; Rust
@@ -939,7 +940,7 @@ Add this function to appropriate major mode hooks such as
         tramp-default-host "localhost")
 
 ;;; Imenu
-;; (use-package imenu-list :ensure t)
+(use-package imenu-list)
 
 ;;; Org
 (require 'org)
@@ -947,7 +948,7 @@ Add this function to appropriate major mode hooks such as
 (require 'org-id)
 (require 'org-protocol)
 
-(use-package citeproc :ensure t)
+(use-package citeproc)
 
 (setq org-html-htmlize-output-type 'css
       org-html-head-include-default-style nil
@@ -1645,8 +1646,7 @@ EXT is a list of the extensions of files to be included."
     files))
 
 ;;; Dictionary
-(setq dictionary-server "compiler.company"
-      switch-to-buffer-obey-display-actions t)
+(setq dictionary-server "dict.compiler.company")
 
 ;;; Ispell
 ;; requires aspell and a hunspell dictionary (hunspell-en_us)

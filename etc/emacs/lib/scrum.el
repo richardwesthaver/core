@@ -67,7 +67,6 @@
 
 ;;; Code:
 (require 'ulang)
-(require 'uml-mode)
 
 (defgroup scrum nil
   "CC Scrum Framework.")
