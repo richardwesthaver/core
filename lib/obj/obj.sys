@@ -62,16 +62,18 @@
     (:file "btree")))
   (:file "equiv")
   (:mod "color"
-   :components ((:file "color")
-                (:file "palette")
-                (:file "x11")
-                (:file "base16")
-                (:file "modus")
-                (:file "theme")
-                (:file "print")))
+   :components 
+   ((:file "color")
+    (:file "palette")
+    (:file "x11")
+    (:file "base16")
+    (:file "modus")
+    (:file "theme")
+    (:file "print")))
   (:mod "time"
-   :components ((:file "local")
-                (:file "util")))
+   :components 
+   ((:file "local")
+    (:file "util")))
   (:file "uuid")
   (:file "ast")
   (:file "config")
@@ -142,8 +144,10 @@
   (:proto :node)
   (:proto :tree)
   (:tests
-   :components ((:mod "tests" 
-                 :components ((:file "pkg")
-                              (:file "sealed")
-                              (:file "meta")
-                              (:file "tensor")))))))
+   :components 
+   ((:mod "tests" 
+     :components 
+     ((:file "pkg")
+      (:file "sealed")
+      (:file "meta")
+      (:file "tensor")))))))

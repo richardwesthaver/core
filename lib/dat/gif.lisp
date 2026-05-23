@@ -8,6 +8,36 @@
 ;;; Conditions
 (define-condition gif-error (image-error) ())
 
+(define-condition unexpected-value (gif-error)
+  ((description
+    :initarg :description
+    :reader unexpected-value-description
+    :initform nil)
+   (actual-value
+    :initarg :actual-value
+    :reader unexpected-value-actual-value)
+   (expected-value
+    :initarg :expected-value
+    :initform nil
+    :reader unexpected-value-expected-value)
+   (source
+    :initarg :source
+    :initform nil
+    :reader unexpected-value-source)
+   (source-position
+    :initarg :source-position
+    :initform nil
+    :reader unexpected-value-source-position))
+  (:report
+   (lambda (condition stream)
+     (format stream "Unexpected~@[ ~A~] value ~A~@[ at position ~D~]~
+                     ~@[ in ~A~]~@[ (expected ~A) ~]"
+             (unexpected-value-description condition)
+             (unexpected-value-actual-value condition)
+             (unexpected-value-source-position condition)
+             (unexpected-value-source condition)
+             (unexpected-value-expected-value condition)))))
+
 (define-condition signature-error (gif-error)
   ((source
     :initarg :source
@@ -331,10 +361,10 @@ an error if no color table is available."
     (cond (color-table)
           ((or (not (slot-boundp image 'stream))
                (not (stream-of image)))
-           (error 'missing-color-table image))
+           (error 'missing-color-table :item image))
           ((color-table (stream-of image)))
           (t
-           (error 'missing-color-table image)))))
+           (error 'missing-color-table :item image)))))
 
 (defun compression-code-size (image)
   "Return the number of bits needed to represent the largest index in

@@ -8,8 +8,17 @@
   (:file "pratt")
   (:file "yacc"))
  :provide 
- ((:proto :yacc)
-  (:proto :lex)
-  (:proto :parse)
+ ((:proto :parse)
+  (:proto :lex 
+   :functions (make-matcher)
+   :macros (with-lexer-environment define-matcher))
+  (:proto :bytes
+   :macros (with-vector-parsing with-string-parsing with-octets-parsing))
+  (:proto :pratt 
+   :classes (pratt-parser)
+   :methods (parse-prefix parse-infix next-precedence))
+  (:proto :yacc
+   :macros (define-parser)
+   :functions (parse-with-lexer))
   (:tests)))
 

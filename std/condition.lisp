@@ -191,17 +191,19 @@ DEFWARNING."
     (setf options (remove-options options :reporter :handler))
     `(progn
        ,@(when reporter
-           `((cond 
+           (let ((%name (if (eql reporter t) name reporter)))
+           `((cond
                ((or
                  (member 'invalid-item ',%ancestors)
                  (member 'invalid-argument ',%ancestors))
-                (def-invalid-item-reporter ,name))
+                (def-invalid-item-reporter ,%name))
+               ((member 'missing-argument ',%ancestors)
+                (def-missing-argument-reporter ,%name))
                ((or (member 'simple-error ',%ancestors)
                     (member 'simple-condition ',%ancestors))
-                (def-simple-error-reporter ,(if (eql reporter t) name reporter)))
+                (def-simple-error-reporter ,%name))
                ((stringp ',reporter)
-                (define-error-reporter ,name ',reporter))
-               (t (define-error-reporter ,(if (eql reporter t) name reporter))))))
+                (define-error-reporter ,name ',reporter))))))
        (define-condition ,name ,(or parent-types '(std-error)) ,slot-specs ,@options))))
 
 (defmacro define-error-reporter (err &optional (message *error-message*))
@@ -229,6 +231,14 @@ DEFWARNING."
             ',name
             :item item
             (when reason (list :reason reason)))))
+
+(defmacro def-missing-argument-reporter (name)
+  `(defun ,name (item)
+     ,(format nil "Signal an error of type ~A." name)
+     (cerror
+      "Ignore and continue"
+      ',name
+      :item item)))
 
 ;;;; Defwarning      
 (defmacro defwarning (name (&rest parent-types) (&rest slot-specs) &rest options)

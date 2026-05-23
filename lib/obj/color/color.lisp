@@ -433,11 +433,12 @@ and an alpha component if present."
 (defgeneric color-table (self))
 (defgeneric (setf color-table) (new self))
 
-(define-condition missing-color-table (color-error invalid-item) ()
+(deferror missing-color-table (color-error missing-argument) ()
   (:report
    (lambda (condition stream)
      (format stream "No color-table available for ~A"
-             (error-item condition)))))
+             (error-item condition))))
+  (:reporter t))
 
 (define-condition color-table-full (color-error)
   ((color-table

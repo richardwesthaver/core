@@ -169,10 +169,8 @@
   (declare (ignorable env))
   (cond
     ((constantp var) (type-of var))
-    #+(or sbcl openmcl cmu allegro)
     ((and (symbolp var)
-          #+allegro (cadr (assoc 'type (nth-value 2 (variable-information var env))))
-          #-allegro (cdr (assoc 'type (nth-value 2 (variable-information var env))))))
+          (cdr (assoc 'type (nth-value 2 (variable-information var env))))))
     ((and (listp var)
           (eq (car var) 'the)
           (cadr var)))))
@@ -201,7 +199,6 @@
                         (stringp (car case)))))
              cases)
       (error "'match-case' takes only constant strings at the car position.~%  ~S" cases)))
-
 
 (defmacro bind* ((symb &body bind-forms) &body body)
   (declare (ignore symb bind-forms body)))
@@ -324,7 +321,7 @@
                   ,@(loop for vec in vectors
                           collect `(,vec))))
               ,@macros)
-     #+sbcl (declare (sb-ext:muffle-conditions sb-ext:code-deletion-note))
+     (declare (sb-ext:muffle-conditions sb-ext:code-deletion-note))
      (labels ((eofp ()
                 (declare (optimize (speed 3) (safety 0) (debug 0)))
                 (<= ,end ,p))

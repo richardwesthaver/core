@@ -54,6 +54,7 @@
      (format s "Failed to parse key string: ~s" (error-item c))
      (when-let ((reason (error-reason c)))
        (format s "~%Reason: ~A" reason)))))
+
 (definline kbd-parse-error (str &optional reason) (error 'kbd-parse-error :item str :reason reason))
 
 ;;; Keysym

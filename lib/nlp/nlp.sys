@@ -6,9 +6,7 @@
   (:file "data")
   (:file "tokenize")
   (:file "doc")
-  (:mod "stem"
-   :components
-   ((:file "porter")))
+  (:file "porter")
   (:file "textrank")
   (:file "dbscan")
   (:file "section")
