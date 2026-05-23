@@ -98,9 +98,18 @@
 
 ;; link abbrevs
 (require 'ol-irc)
+(defun ol-vc-expand (tag)
+  "Expand the tag of an org-link where linkkey is `vc'."
+  (let ((f (split-string tag ":" "/")))
+    (concat (string-trim-right company-vc-url "[/]")
+	    (cl-case (length f)
+	      (0 "")
+	      (1 (format "/%s" (car f)))
+	      (2 (apply 'format "/%s/file/tip/%s" f))
+	      (t (apply 'format "/%s/file/%s/%s" f))))))
 
 (setq org-link-abbrev-alist
-      `(("vc" . ,(concat (string-trim-right company-vc-url "[/]") "/%s"))
+      `(("vc" . ol-vc-expand)
         ("comp" . ,(format "https://%s/%%s" company-domain))
 	("cdn" . ,(format "%s/%%s" company-cdn-url))
         ("packy" . ,(format "%s/%%s" packy-url))

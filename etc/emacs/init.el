@@ -22,9 +22,10 @@
       company-domain "compiler.company"
       company-cdn-url "https://cdn.compiler.company")
 
-(dolist (x '("util.el" "default.el" "keys.el"))
+(dolist (x '("util.el" "default.el" "keys.el" "config.el"))
   (let ((y (concat user-emacs-directory x)))
-    (load y nil t)))
+    (when (file-exists-p y)
+      (load y nil t))))
 
 (add-hook 'after-init-hook (load-keys))
 
