@@ -127,7 +127,7 @@
       `(("vc" . ol-vc-expand)
         ("comp" . ,(format "https://%s/%%s" company-domain))
 	("cdn" . ,(format "%s/%%s" company-cdn-url))
-        ("packy" . ,(format "%s/%%s" packy-url))
+        ("packy" . ,(format "%s/%%s" company-packy-url))
         ("yt" . "https://youtube.com/watch?v=%s")
 	("gh" . "https://github.com/%s")
 	("cb" . "https://codeberg.org/%s")
@@ -269,7 +269,6 @@ or file at point."
      ((string-match-p org-link-any-re loc) (org-link-open-from-string loc))
      ;; TODO 2024-08-29: handle other location types (physical, etc)
      (t (find-file loc t)))))
-
 
 ;;; Comments
 (defcustom prog-comment-keywords

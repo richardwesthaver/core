@@ -24,31 +24,6 @@
 ;;          :online-suffix ".html"
 ;;          :working-suffix ".org")))
 
-;; TODO 2025-10-08: 
-(defun org-html-format-drawer (name contents)
-  "Default function used as value for `org-html-format-drawer-function'."
-  (let ((name (downcase name)))
-    (format "<details class='edges'><summary>%s</summary>%s</details>"
-	    name
-	    (pcase name
-	      ("edges"
-	       (unless (null contents)
-		 (let ((es (intersperse "<br>" (s-lines contents))))
-		   (if (> (length es) 3)
-		       (progn
-			 (setf (cadr es) nil
-			       (nth (1- (length es)) es) nil)
-			 (apply 'concat (flatten es)))
-		     (apply 'concat es)))))
-	      (t contents)))))
-
-;; replace hardcoded value
-(defun org-html-property-drawer (_drawer contents _info)
-  "Transcode a PROPERTY-DRAWER element from Org to HTML.
-CONTENTS holds the contents of the drawer.  INFO is a plist holding
-contextual information."
-  (format "<details class='properties'><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
-
 (setq org-html-style-default ""
       org-html-scripts nil
       org-html-htmlize-output-type 'css
@@ -62,7 +37,7 @@ contextual information."
       ;; org-export-in-background t
       org-html-divs '((preamble "section" "preamble") (content "main" "content") (postamble "section" "postamble"))
       org-html-container-element "div"
-      ;; org-html-viewport '((width "device-width") (initial-scale 1))
+      org-html-viewport '((width "device-width") (initial-scale 1))
       org-html-doctype "html5"
       org-html-html5-fancy t
       org-src-fontify-natively t
@@ -180,114 +155,6 @@ contextual information."
          :publishing-function org-html-publish-to-html
          :htmlized-source t
          :html-postamble ,html-foot)))
-
-;; (defun org-export-get-reference-title (datum info)
-;;   "Like `org-export-get-reference', except uses heading titles instead of random numbers."
-;;   (let ((cache (plist-get info :internal-references)))
-;;     (or (car (rassq datum cache))
-;;         (let* ((crossrefs (plist-get info :crossrefs))
-;;                (cells (org-export-search-cells datum))
-;;                ;; Preserve any pre-existing association between
-;;                ;; a search cell and a reference, i.e., when some
-;;                ;; previously published document referenced a location
-;;                ;; within current file (see
-;;                ;; `org-publish-resolve-external-link').
-;;                ;;
-;;                ;; However, there is no guarantee that search cells are
-;;                ;; unique, e.g., there might be duplicate custom ID or
-;;                ;; two headings with the same title in the file.
-;;                ;;
-;;                ;; As a consequence, before re-using any reference to
-;;                ;; an element or object, we check that it doesn't refer
-;;                ;; to a previous element or object.
-;;                (new (or (cl-some
-;;                          (lambda (cell)
-;;                            (let ((stored (cdr (assoc cell crossrefs))))
-;;                              (when stored
-;;                                (let ((old (org-export-format-reference stored)))
-;;                                  (and (not (assoc old cache)) stored)))))
-;;                          cells)
-;;                         (when (org-element-property :raw-value datum)
-;;                           ;; Heading with a title
-;;                           (org-export-new-title-reference datum cache))
-;;                         ;; NOTE: This probably breaks some Org Export
-;;                         ;; feature, but if it does what I need, fine.
-;;                         (org-export-format-reference
-;;                          (org-export-new-reference cache))))
-;;                (reference-string new))
-;;           ;; Cache contains both data already associated to
-;;           ;; a reference and in-use internal references, so as to make
-;;           ;; unique references.
-;;           (dolist (cell cells) (push (cons cell new) cache))
-;;           ;; Retain a direct association between reference string and
-;;           ;; DATUM since (1) not every object or element can be given
-;;           ;; a search cell (2) it permits quick lookup.
-;;           (push (cons reference-string datum) cache)
-;;           (plist-put info :internal-references cache)
-;;           reference-string))))
-
-;; (defun org-export-new-title-reference (datum cache)
-;;   "Return new reference for DATUM that is unique in CACHE."
-;;   (cl-macrolet ((inc-suffixf (place)
-;;                              `(progn
-;;                                 (string-match (rx bos
-;;                                                   (minimal-match (group (1+ anything)))
-;;                                                   (optional "--" (group (1+ digit)))
-;;                                                   eos)
-;;                                               ,place)
-;;                                 ;; HACK: `s1' instead of a gensym.
-;;                                 (-let* (((s1 suffix) (list (match-string 1 ,place)
-;;                                                            (match-string 2 ,place)))
-;;                                         (suffix (if suffix
-;;                                                     (string-to-number suffix)
-;;                                                   0)))
-;;                                   (setf ,place (format "%s--%s" s1 (cl-incf suffix)))))))
-;;     (let* ((title (org-element-property :raw-value datum))
-;;            (ref (url-hexify-string (substring-no-properties title)))
-;;            (parent (org-element-property :parent datum)))
-;;       (while (--any (equal ref (car it))
-;;                     cache)
-;;         ;; Title not unique: make it so.
-;;         (if parent
-;;             ;; Append ancestor title.
-;;             (setf title (concat (org-element-property :raw-value parent)
-;;                                 "--" title)
-;;                   ref (url-hexify-string (substring-no-properties title))
-;;                   parent (org-element-property :parent parent))
-;;           ;; No more ancestors: add and increment a number.
-;;           (inc-suffixf ref)))
-;;       ref)))
-
-(defun org-html--reference (datum info &optional named-only)
-  "Return an appropriate reference for DATUM.
-DATUM is an element or a `target' type object.  INFO is the
-current export state, as a plist.
-When NAMED-ONLY is non-nil and DATUM has no NAME keyword, return
-nil.  This doesn't apply to headlines, inline tasks, radio
-targets and targets."
-  (let* ((type (org-element-type datum))
-	 (user-label
-	  (org-element-property
-	   (pcase type
-	     ((or `headline `inlinetask) :CUSTOM_ID)
-	     ((or `radio-target `target) :value)
-	     (_ :name))
-	   datum))
-	 (user-label (or user-label
-			 (when-let* ((path (org-element-property :ID datum)))
-			   path))))
-    (cond
-     ((and user-label
-	   (or (plist-get info :html-prefer-user-labels)
-	       ;; Used CUSTOM_ID property unconditionally.
-	       (memq type '(headline inlinetask))))
-      user-label)
-     ((and named-only
-	   (not (memq type '(headline inlinetask radio-target target)))
-	   (not user-label))
-      nil)
-     (t
-      (org-export-get-reference datum info)))))
 
 ;;;###autoload
 (defun update-sitemap ()

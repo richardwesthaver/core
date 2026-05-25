@@ -46,6 +46,8 @@
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
 (defvar company-vc-url (format "https://%s" company-vc-domain))
+(defvar company-packy-domain "packy.compiler.company")
+(defvar company-packy-url (format "https://%s" company-packy-domain))
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 (defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
