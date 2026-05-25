@@ -27,6 +27,25 @@
              (setq result (concat (file-name-as-directory result) dir)))
     result))
 
+(defun mkstr (&rest args)
+  "Paul Graham's mkstr utility from On Lisp.
+
+Coerce ARGS into a single string and return it."
+  (let* ((s ""))
+    (dolist (a args)
+      (cond
+       ((null a) nil)
+       ((sequencep a) (setq s (concat s a)))
+       ((numberp a) (setq s(concat s (number-to-string a))))
+       ((symbolp a) (setq s(concat s (symbol-name a))))))
+    s))
+
+(defun symb (&rest args)
+  "Paul Graham's symb utility from On Lisp.
+
+Concat ARGS and return a newly interned symbol."
+  (intern (apply #'mkstr args)))
+
 ;;; Variables
 (defvar user-emacs-site-lisp-directory (expand-file-name (join-paths user-emacs-directory "site-lisp")))
 (defvar user-emacs-lisp-directory (expand-file-name (join-paths user-emacs-directory "lisp")))
@@ -54,7 +73,7 @@
 (defvar core-lisp-program "/usr/bin/core")
 
 ;;; Settings
-(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory)
+(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
 
 ;;; Load Path
 (add-to-load-path 
@@ -73,7 +92,7 @@
 (use-package diminish)
 (use-package delight)
 (setopt 
- use-package-always-defer t
+ ;; use-package-always-defer t
  use-package-expand-minimally t)
 
 ;;; Enable Commands
@@ -85,12 +104,13 @@
 (kill-ring-deindent-mode)
 
 ;;; Load default.el
-(dolist (x '("util.el" "default.el" "keys.el" "config.el"))
-  (let ((y (concat user-emacs-directory x)))
-    (when (file-exists-p y)
-      (load y nil t))))
 
-(add-hook 'after-init-hook (load-keys))
-(add-hook 'after-init-hook (if (and (boundp 'user-custom-file) (file-exists-p user-custom-file))
-	                           (load-file user-custom-file)))
+(let ((default (join-paths user-emacs-directory "default.el"))
+      (config (join-paths user-emacs-directory "config.el")))
+  (load default)
+  (load config))
+
+(when (file-exists-p user-custom-file) (load-file user-custom-file))
+	                       
+;; (add-hook 'after-init-hook (load-keys))
 (add-hook 'after-init-hook 'load-default-theme)

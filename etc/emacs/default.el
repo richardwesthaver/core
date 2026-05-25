@@ -4,20 +4,17 @@
 
 ;;; Code:
 ;;; Settings
-(require 'util)  
 (setq
  org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
  ;; tabs = bad (unless in makefile..)
  tab-width 4
  switch-to-buffer-obey-display-actions t
-show-paren-context-when-offscreen 'overlay
+ show-paren-context-when-offscreen 'overlay
  indent-tabs-mode nil
  make-backup-files nil
  save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
  tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)
- dired-free-space nil
  mml-attach-file-at-the-end t
- dired-mouse-drag-files t
  confirm-kill-emacs nil
  confirm-kill-processes nil
  use-short-answers t
@@ -43,18 +40,12 @@ show-paren-context-when-offscreen 'overlay
 
 ;;;; Icons
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
-(use-package icons
-  :ensure t
-  :config
-  (use-package nerd-icons)
-  (use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
-  (use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode))
-  (use-package nerd-icons-corfu :hook (corfu-mode . nerd-icons-corfu-mode))
-  (use-package nerd-icons-completion :hook (completion-mode . nerd-icons-completion-mode))
-  (use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode))
-  (use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode))
-  (use-package nerd-icons-xref :hook (xref-mode . nerd-icons-xref-mode))
-  (use-package tab-line-nerd-icons :hook (tab-line-mode . tab-line-nerd-icons-global-mode)))
+(use-package nerd-icons :ensure t)
+(use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode) :after (ibuffer))
+(use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode) :after (dired))
+(use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode))
+(use-package nerd-icons-xref :hook (xref-mode . nerd-icons-xref-mode))
+(use-package tab-line-nerd-icons :hook (tab-line-mode . tab-line-nerd-icons-global-mode))
 
 ;;; Whitespace
 (use-package whitespace
@@ -65,6 +56,7 @@ show-paren-context-when-offscreen 'overlay
 
 ;;; Env
 (use-package exec-path-from-shell
+  :ensure t
   :init
   (add-to-list 'exec-path "/usr/bin/")
   (add-to-list 'exec-path "/usr/sbin/")
@@ -95,11 +87,9 @@ show-paren-context-when-offscreen 'overlay
   (setq
    completion-ignore-case t
    tab-always-indent 'complete))
-(use-package corfu)
-(use-package cape)
-(use-package consult)
-(use-package marginalia
-  :config (marginalia-mode))
+(use-package cape :ensure t)
+;; (use-package consult)
+(use-package marginalia)
 (use-package vertico
   :ensure t
   :config (vertico-mode)
@@ -120,7 +110,6 @@ show-paren-context-when-offscreen 'overlay
 (use-package completion-preview
   :config (global-completion-preview-mode))
 (use-package corfu
-  :after (completion)
   :config
   (global-corfu-mode)
   (corfu-popupinfo-mode)
@@ -146,15 +135,24 @@ show-paren-context-when-offscreen 'overlay
       (`(,beg ,end ,table ,pred ,extras)
        (let ((completion-extra-properties extras)
              completion-cycle-threshold completion-cycling)
-         (consult-completion-in-region beg end table pred)))))
+         (completion-in-region beg end table pred)))))
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
+
+(use-package nerd-icons-corfu
+ :after (corfu)
+ :config (add-to-list 'corfu-margin-formatters #'nerd-icons-corfu-formatter))
+
+(use-package nerd-icons-completion :hook (completion-mode . nerd-icons-completion-mode))
 
 ;;; Dired
 (use-package dired
   :config
   (setq dired-dwim-target t
-	dired-free-space 'separate))
+	dired-free-space 'separate
+	dired-free-space nil
+	dired-mouse-drag-files t)
+  (when (linux-p) (setq dired-listing-switches "-alsh")))
 
 ;;; Speedbar
 (use-package speedbar
@@ -167,8 +165,8 @@ show-paren-context-when-offscreen 'overlay
 (use-package package
   :init
   (setq project-list-file (expand-file-name "projects" user-emacs-directory)
-          project-mode-line t
-          project-file-history-behavior 'relativize)
+        project-mode-line t
+        project-file-history-behavior 'relativize)
   :config
   (defun remember-project ()
     (interactive)
@@ -186,81 +184,19 @@ show-paren-context-when-offscreen 'overlay
   (inferior-lisp . inferior-slime-mode)
   (slime-repl . slime-cape-enable)
   :init
-  (setq inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size=32"
-				    (default-lisp))
-      scheme-program-name "gsi"
-      slime-auto-start t
-      guile-program "guile"
-      cmulisp-program "lisp"
-      scsh-program "scsh"
-      ;; rebind the defpackage-regexp function to include DEFPKG
-      slime-defpackage-regexp
-      "^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
-      common-lisp-style-default "core"
-      slime-threads-update-interval 1)
-
-  :config
-  (defun default-lisp ()
-    (if (file-exists-p core-lisp-program)
-	core-lisp-program
-      "sbcl"))
-
-  (defvar slime-toggle nil)
-  (defun slime-switch-to-output (&optional same-window)
-    "Select the output buffer, when possible in an existing window. When
-SAME-WINDOW is non-nil open in the current window.
-
-Hint: You can use `display-buffer-reuse-frames' and
-`special-display-buffer-names' to customize the frame in which the
-buffer should appear."
-    (interactive)
-    (let ((buffer (slime-output-buffer)))
-      (if same-window
-          (pop-to-buffer-same-window buffer)
-	(pop-to-buffer buffer))))
-
-  (defun slime-toggle ()
-    "Toggle between current buffer and slime-repl."
-    (interactive)
-    (if (eq major-mode 'slime-repl-mode)
-	(setq slime-toggle
-              (pop-to-buffer-same-window
-               (or slime-toggle (read-buffer "lisp buffer: "))))
-      (if (slime-connected-p)
-          (progn
-            (setq slime-toggle (current-buffer))
-            (slime-switch-to-output t))
-	(setq slime-toggle (current-buffer))
-	(slime))))
-
-  (defun slime-load-script (filename)
-    "Like `slime-load-file' but for script files containing a shebang
-line (which is skipped)."
-    (interactive (list
-                  (read-file-name "Load file: " nil nil
-                                  nil (if (buffer-file-name)
-                                          (file-name-nondirectory
-                                           (buffer-file-name))))))
-    (let ((lisp-filename (slime-to-lisp-filename (expand-file-name filename))))
-      ;; TODO 2026-05-01: 
-      (slime-eval-with-transcript `(swank:load-script-file ,lisp-filename))))
-
-  (defvar lisp-toggle nil)
-
-  (defun lisp-toggle (&optional cmd)
-    "Toggle between current buffer and inferior-lisp process buffer."
-    (interactive)
-    (if (eq major-mode 'inferior-lisp-mode)
-	(pop-to-buffer-same-window
-	 (or lisp-toggle (read-buffer "lisp buffer: ")))
-      (if inferior-lisp-buffer
-          (progn
-            (setq lisp-toggle (current-buffer))
-            (inferior-lisp (or cmd inferior-lisp-program)))
-	(setq lisp-toggle (current-buffer))
-	(inferior-lisp (or cmd inferior-lisp-program)))))
-
-  (setq slime-contribs '(slime-fancy
+  (setq scheme-program-name "gsi"
+	slime-auto-start t
+	guile-program "guile"
+	cmulisp-program "lisp"
+	scsh-program "scsh"
+	;; rebind the defpackage-regexp function to include DEFPKG
+	slime-defpackage-regexp
+	"^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
+	common-lisp-style-default "core"
+	slime-threads-update-interval 1
+	inferior-lisp-program (format "%s --dynamic-space-size=8G --control-stack-size=32"
+				      (if (file-exists-p "/bin/core") "/bin/core" "/bin/sbcl"))
+	slime-contribs '(slime-fancy
 			 slime-quicklisp
 			 slime-hyperdoc
 			 ;; slime-listener-hooks
@@ -279,64 +215,8 @@ line (which is skipped)."
 			 slime-xref-browser
 			 ;; slime-highlight-edits
 			 slime-repl-ansi-color))
-  (slime-setup slime-contribs)
-  (define-common-lisp-style
-   "core"
-   "Core Common Lisp Indentation Style"
-   (:inherit "sbcl")
-   (:indentation
-    (defpkg (as defpackage))
-    (make-instance 1)
-    (reinitialize-instance 1)
-    (ensure-package 1)
-    (init 1)
-    (defpackage* (as defpackage))
-    (blasfunc 2)
-    (symbol-call 2)
-    (org-parse 2)
-    (lety (as let))
-    (lety* (as let*))
-    (letv (as let))
-    (letv* (as let*))
-    (deferror (as define-condition))
-    (defcondition (as define-condition))
-    (plet (as let))
-    (acase (as case))
-    (atypecase (as typecase))
-    (defwarning (as define-condition))
-    (make-db (as make-instance))
-    (make-schema (as make-instance))
-    (make-simple-schema (as make-instance))
-    (make-palette (as defpackage))
-    (define-package (as defpackage))
-    (defkernel (as defclass))
-    (defhook (as defmacro))
-    (defcommand (as defun))
-    (define-cli (as make-instance))
-    (walk-directory 1)
-    (using-gensyms (as with-gensyms))
-    (binding-gensyms (as with-gensyms))
-    (if-let* (as if-let))
-    (when-let* (as when-let))
-    (load-config 1)
-    (with-db 1)
-    (incf 1)
-    (decf 1)
-    (make-load-form-saving-slots 1)
-    (defconfig (as defclass))
-    (defclass* (as defclass))
-    (defsclass (as defclass))))
-
-  (defun slime-connect-file (file &optional host)
-    "Connect to the port number stored in FILE which should be the same value
-as the first argument to SWANK:START-SERVER on the Lisp side."
-    (interactive "fswank file: ")
-    (slime-connect
-     (or host "localhost")
-     (string-to-number
-      (with-temp-buffer
-	(insert-file-contents file)
-	(buffer-string))))))
+  :config
+  (slime-setup slime-contribs))
 
 ;;; Asm
 (use-package nasm-mode
@@ -490,8 +370,8 @@ Interactively, NUMBER is the prefix arg."
 
   (add-hook 'eshell-mode-hook
             (lambda ()
-            (bind-keys :map eshell-mode-map
-                       ("C-d" . eshell-quit-or-delete-char))))
+              (bind-keys :map eshell-mode-map
+			 ("C-d" . eshell-quit-or-delete-char))))
 
   (defun eshell-next-prompt (n)
     "Move to end of Nth next prompt in the buffer. See `eshell-prompt-regexp'."
@@ -689,52 +569,51 @@ Add this function to appropriate major mode hooks such as
 (use-package org-agenda
   :after (org)
   :hook (hl-line-mode)
-  :init
+  :config
   (add-to-list 
    'org-agenda-custom-commands 
    '("i" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
-  :config
   (defun org-agenda-reschedule-to-today ()
     (interactive)
     (cl-flet ((org-read-date (&rest rest) (current-time)))
       (call-interactively 'org-agenda-schedule)))
 
-(defun org-agenda-current-subtree-or-region (only-todos)
-  "Display an agenda view for the current subtree or region.
+  (defun org-agenda-current-subtree-or-region (only-todos)
+    "Display an agenda view for the current subtree or region.
  With prefix, display only TODO-keyword items."
-  (interactive "P")
-  (let ((starting-point (point))
-	header)
-    (with-current-buffer (or (buffer-base-buffer (current-buffer))
-			     (current-buffer))
-      (if (use-region-p)
-	  (progn
-	    (setq header "Region")
-	    (put 'org-agenda-files 'org-restrict (list (buffer-file-name (current-buffer))))
-	    (setq org-agenda-restrict (current-buffer))
-	    (move-marker org-agenda-restrict-begin (region-beginning))
-	    (move-marker org-agenda-restrict-end
-			 (save-excursion
-			   ;; If point is at beginning of line, include
-			   ;; heading on that line by moving forward 1.
-			   (goto-char (1+ (region-end)))
-			   (org-end-of-subtree))))
-	;; No region; restrict to subtree.
-	(save-excursion
-	  (save-restriction
-	    ;; In case the command was called from an indirect buffer, set point
-	    ;; in the base buffer to the same position while setting restriction.
-	    (widen)
-	    (goto-char starting-point)
-	    (setq header "Subtree")
-	    (org-agenda-set-restriction-lock))))
-      ;; NOTE: Unlike other agenda commands, binding `org-agenda-sorting-strategy'
-      ;; around `org-search-view' seems to have no effect.
-      (let ((org-agenda-sorting-strategy '(priority-down timestamp-up))
-	    (org-agenda-overriding-header header))
-	(org-search-view (if only-todos t nil) "*"))
-      (org-agenda-remove-restriction-lock t)
-      (message nil)))))
+    (interactive "P")
+    (let ((starting-point (point))
+	  header)
+      (with-current-buffer (or (buffer-base-buffer (current-buffer))
+			       (current-buffer))
+	(if (use-region-p)
+	    (progn
+	      (setq header "Region")
+	      (put 'org-agenda-files 'org-restrict (list (buffer-file-name (current-buffer))))
+	      (setq org-agenda-restrict (current-buffer))
+	      (move-marker org-agenda-restrict-begin (region-beginning))
+	      (move-marker org-agenda-restrict-end
+			   (save-excursion
+			     ;; If point is at beginning of line, include
+			     ;; heading on that line by moving forward 1.
+			     (goto-char (1+ (region-end)))
+			     (org-end-of-subtree))))
+	  ;; No region; restrict to subtree.
+	  (save-excursion
+	    (save-restriction
+	      ;; In case the command was called from an indirect buffer, set point
+	      ;; in the base buffer to the same position while setting restriction.
+	      (widen)
+	      (goto-char starting-point)
+	      (setq header "Subtree")
+	      (org-agenda-set-restriction-lock))))
+	;; NOTE: Unlike other agenda commands, binding `org-agenda-sorting-strategy'
+	;; around `org-search-view' seems to have no effect.
+	(let ((org-agenda-sorting-strategy '(priority-down timestamp-up))
+	      (org-agenda-overriding-header header))
+	  (org-search-view (if only-todos t nil) "*"))
+	(org-agenda-remove-restriction-lock t)
+	(message nil)))))
 
 (use-package org-id
   :after (org))
@@ -765,7 +644,7 @@ Add this function to appropriate major mode hooks such as
 				 (nth (1- (length es)) es) nil)
 			   (apply 'concat (flatten es)))
 		       (apply 'concat es)))))
-		(t contents)))))
+		(_ contents)))))
 
   ;; replace hardcoded value
   (defun org-html-property-drawer (_drawer contents _info)
@@ -915,7 +794,7 @@ unique when necessary."
 (use-package scratch :load-path user-emacs-site-lisp-directory)
 
 (use-package skel :load-path user-emacs-site-lisp-directory)
-  
+
 (use-package skt
   :load-path user-emacs-site-lisp-directory
   :after (skel))

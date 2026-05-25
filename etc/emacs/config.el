@@ -275,7 +275,7 @@ inherited by a parent headline."
 	(org-remove-empty-drawer-at "PROPERTIES" (match-beginning 0))))))
 
 ;;;; Links
-; to include mm-url-decode-entities-string
+					; to include mm-url-decode-entities-string
 (use-package mm-url
   :autoload (mm-url-decode-entities-string))
 
@@ -307,3 +307,114 @@ inherited by a parent headline."
   (interactive (list (get-first-url (rx bol "https://" (* anychar) "stackoverflow.com"))))
   (let ((title (get-html-title-from-url url)))
     (org-insert-link nil url title)))
+
+;;; Lisp
+(with-eval-after-load 'slime
+  (defvar slime-toggle nil)
+  (defun slime-switch-to-output (&optional same-window)
+    "Select the output buffer, when possible in an existing window. When
+SAME-WINDOW is non-nil open in the current window.
+
+Hint: You can use `display-buffer-reuse-frames' and
+`special-display-buffer-names' to customize the frame in which the
+buffer should appear."
+    (interactive)
+    (let ((buffer (slime-output-buffer)))
+      (if same-window
+	  (pop-to-buffer-same-window buffer)
+	(pop-to-buffer buffer))))
+
+  (defun slime-toggle ()
+    "Toggle between current buffer and slime-repl."
+    (interactive)
+    (if (eq major-mode 'slime-repl-mode)
+	(setq slime-toggle
+	      (pop-to-buffer-same-window
+	       (or slime-toggle (read-buffer "lisp buffer: "))))
+      (if (slime-connected-p)
+	  (progn
+	    (setq slime-toggle (current-buffer))
+	    (slime-switch-to-output t))
+	(setq slime-toggle (current-buffer))
+	(slime))))
+
+  (defun slime-load-script (filename)
+    "Like `slime-load-file' but for script files containing a shebang
+line (which is skipped)."
+    (interactive (list
+		  (read-file-name "Load file: " nil nil
+				  nil (if (buffer-file-name)
+					  (file-name-nondirectory
+					   (buffer-file-name))))))
+    (let ((lisp-filename (slime-to-lisp-filename (expand-file-name filename))))
+      ;; TODO 2026-05-01: 
+      (slime-eval-with-transcript `(swank:load-script-file ,lisp-filename))))
+  (defvar lisp-toggle nil)
+  (defun lisp-toggle (&optional cmd)
+    "Toggle between current buffer and inferior-lisp process buffer."
+    (interactive)
+    (if (eq major-mode 'inferior-lisp-mode)
+	(pop-to-buffer-same-window
+	 (or lisp-toggle (read-buffer "lisp buffer: ")))
+      (if inferior-lisp-buffer
+	  (progn
+	    (setq lisp-toggle (current-buffer))
+	    (inferior-lisp (or cmd inferior-lisp-program)))
+	(setq lisp-toggle (current-buffer))
+	(inferior-lisp (or cmd inferior-lisp-program)))))
+  (define-common-lisp-style "core"
+   "Core Common Lisp Indentation Style"
+   (:inherit "sbcl")
+   (:indentation
+    (defpkg (as defpackage))
+    (make-instance 1)
+    (reinitialize-instance 1)
+    (ensure-package 1)
+    (init 1)
+    (defpackage* (as defpackage))
+    (blasfunc 2)
+    (symbol-call 2)
+    (org-parse 2)
+    (lety (as let))
+    (lety* (as let*))
+    (letv (as let))
+    (letv* (as let*))
+    (deferror (as define-condition))
+    (defcondition (as define-condition))
+    (plet (as let))
+    (acase (as case))
+    (atypecase (as typecase))
+    (defwarning (as define-condition))
+    (make-db (as make-instance))
+    (make-schema (as make-instance))
+    (make-simple-schema (as make-instance))
+    (make-palette (as defpackage))
+    (define-package (as defpackage))
+    (defkernel (as defclass))
+    (defhook (as defmacro))
+    (defcommand (as defun))
+    (define-cli (as make-instance))
+    (walk-directory 1)
+    (using-gensyms (as with-gensyms))
+    (binding-gensyms (as with-gensyms))
+    (if-let* (as if-let))
+    (when-let* (as when-let))
+    (load-config 1)
+    (with-db 1)
+    (incf 1)
+    (decf 1)
+    (make-load-form-saving-slots 1)
+    (defconfig (as defclass))
+    (defclass* (as defclass))
+    (defsclass (as defclass))))
+
+  (defun slime-connect-file (file &optional host)
+    "Connect to the port number stored in FILE which should be the same value
+as the first argument to SWANK:START-SERVER on the Lisp side."
+    (interactive "fswank file: ")
+    (slime-connect
+     (or host "localhost")
+     (string-to-number
+      (with-temp-buffer
+	(insert-file-contents file)
+	(buffer-string))))))

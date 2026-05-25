@@ -39,25 +39,6 @@ Given a tree X, return all the leaves of the tree."
                              (rec (cdr x) acc))))))
     (rec x nil)))
 
-(defun mkstr (&rest args)
-  "Paul Graham's mkstr utility from On Lisp.
-
-Coerce ARGS into a single string and return it."
-  (let* ((s ""))
-    (dolist (a args)
-      (cond
-       ((null a) nil)
-       ((sequencep a) (setq s (concat s a)))
-       ((numberp a) (setq s(concat s (number-to-string a))))
-       ((symbolp a) (setq s(concat s (symbol-name a))))))
-    s))
-
-(defun symb (&rest args)
-  "Paul Graham's symb utility from On Lisp.
-
-Concat ARGS and return a newly interned symbol."
-  (intern (apply #'mkstr args)))
-
 ;; from slime
 (defun intersperse (element list)
   "Intersperse ELEMENT between each element of LIST."

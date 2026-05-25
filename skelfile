@@ -154,7 +154,7 @@
        (el-write el 
         (merge-pathnames (file-namestring el)
          (ensure-directories-exist 
-          (merge-pathnames "lib/" dotemacs)))))
+          (merge-pathnames "site-lisp/" dotemacs)))))
       lib))))
   (:purge () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
