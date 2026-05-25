@@ -20,37 +20,6 @@
 
 ;;; Commentary:
 
-;; The point of this package is to enable an Emacs-native scrum
-;; workflow. Many years ago I used to use the org-jira package and
-;; mirror an external scrum/agile system (Jira).
-
-;; Mind you, I wouldn't dare take a shot at Jira. As far as Products
-;; go, when you need to work with hundreds of humans on software and
-;; are given a short list you must choose from, it's often the best of
-;; the worst.
-
-;; The problem is however, that we don't need Products. What we need,
-;; is a plan. How we achieve that end should be via the best and most
-;; powerful tools possible.
-
-;; In my opinion, Emacs Org Mode is the most powerful tool
-;; available. It is not quite the best tool for the job, but this
-;; isn't a problem because it is not a Product. We are given the
-;; opportunity to make it the best tool possible, in the only way
-;; possible - by doing it ourselves.
-
-;; And yes, the aura of NIH syndrome may be strong here. Most of the
-;; time you need to work with lots of folks who don't have the need or
-;; patience to learn Org-mode. This package isn't for them. It's for
-;; small groups of like-minded Lispers :).
-
-;;;; Refs
-;; scrum: https://www.scrum.org/resources/what-scrum-module
-
-;; roadmap: https://compiler.company/plan/roadmap.html
-
-;; tasks: https://compiler.company/plan/tasks
-
 ;;;; API
 
 ;; The API is still very much a WIP. Assume everything below to be
@@ -211,8 +180,6 @@ The following keyword parameters can be passed to the info dynamic block:
     (org-create-dblock (list :name "project-info")))
   (org-update-dblock))
 
-(org-dynamic-block-define "project-info" 'org-project-info)
-
 (defun org-dblock-write:lisp-system-info (params)
   "Generate a project-info section.
 
@@ -314,6 +281,7 @@ block:
     (org-create-dblock (list :name "lisp-system-info" :system system)))
   (org-update-dblock))
 
+(org-dynamic-block-define "project-info" 'org-project-info)
 (org-dynamic-block-define "lisp-system-info" 'org-lisp-system-info)
 
 (provide 'scrum)

@@ -30,8 +30,8 @@
 
 This repository contains the monolothic core of [[comp:][The Compiler Company]].
 
-The core is a Lisp hacking environment. It is bootstrapped from SBCL
-and no guarantees are made with respect to compatibility with other
+The core is a [[id:af0ed8bb-4b45-42f9-b8be-82b8ea7935a3][Common Lisp]] hacking environment bootstrapped from SBCL.
+No guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
 #+begin_src shell :eval never

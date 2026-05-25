@@ -522,6 +522,7 @@ Add this function to appropriate major mode hooks such as
 
 (use-package eww
   :after (shr)
+  :autoload (eww)
   :hook ((eww-mode .shr-heading-setup-imenu)
 	 (eww-mode . (lambda () (define-key eww-mode-map "i" shr-heading-map))))
   :config
@@ -601,7 +602,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 	org-attach-id-dir (join-paths company-cdn-url "media/")
 	org-edit-src-content-indentation 0
 	org-archive-location "archive.org::"
-	org-default-notes-file (join-paths org-directory "inbox.org")
 	org-structure-template-alist '(("s" . "src")
 				       ("e" . "src emacs-lisp")
 				       ("x" . "src shell")
@@ -694,7 +694,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 	  org-latex-image-default-width "8cm"
 	  org-refile-use-cache t
 	  org-refile-allow-creating-parent-nodes 'confirm
-
+	  org-default-notes-file (join-paths org-directory "inbox.org")
 	  org-refile-targets '((org-agenda-files :maxlevel . 4))
 	  ;; org-agenda-files (list "inbox.org")
 	  org-agenda-include-diary t
@@ -790,7 +790,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-expiry
   :load-path user-emacs-site-lisp-directory
   :after (org org-id)
-  :hook (org-after-todo-state-change org-id-get-create org-expiry-insert-created))
+  :hook (org-after-todo-state-change-hook . (org-expiry-insert-created org-id-get-create)))
 
 (use-package org-web-tools
   :ensure t
@@ -837,14 +837,17 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package graph :load-path user-emacs-site-lisp-directory
   :hook (org-mode . org-graph-maybe-enable))
 
-(use-package inbox 
+(use-package inbox
   :load-path user-emacs-site-lisp-directory
   :after (org-expiry)
   :config (load-org-inbox-capture-templates))
 
 (use-package gen :load-path user-emacs-site-lisp-directory)
 
-(use-package scrum :load-path user-emacs-site-lisp-directory)
+(use-package scrum :load-path user-emacs-site-lisp-directory
+  ;; used in org/meta/babel.org, called via org-dblocks in project
+  ;; readmes.
+  :ensure-system-package tokei)
 
 (use-package skel :load-path user-emacs-site-lisp-directory)
 
