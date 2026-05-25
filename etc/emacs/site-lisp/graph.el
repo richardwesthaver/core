@@ -24,10 +24,10 @@
 
 ;;; Code:
 (require 'org)
-(require 'org-agenda)
 (require 'org-web-tools)
 (require 'ulang)
-
+(require 'organ)
+;;; Custom
 (defgroup graph nil
   "CC Graph"
   :group 'org)
@@ -72,24 +72,14 @@
   :type 'hook
   :group 'graph)
 
-(defvar org-graph-target-maxlevel 4)
-
+(defcustom org-graph-target-maxlevel 4 "The max node depth to consider for org-graph refile and link targets."
+  :type 'integer
+  :group 'graph)
 (defcustom org-graph-file (join-paths user-emacs-directory "graph.sxp")
   "Path to the default output location of 'org-graph-save'."
   :type 'file)
 
-(cl-defstruct org-graph-db-handle
-  (type :rocksdb)
-  (name "org-graph-db")
-  init
-  get
-  put
-  delete
-  merge
-  compact
-  shutdown)
-
-(defcustom org-graph-db (make-org-graph-db-handle)
+(defcustom org-graph-db nil
   "A handle to the database backend which stores nodes and edges."
   :type 'org-graph-db-handle
   :group 'graph)
@@ -99,53 +89,7 @@
   :type 'file
   :group 'graph)
 
-(defun org-graph-from-files (&optional files)
-  (interactive)
-  (let ((files (or files (org-graph-files t))))
-    (cl-loop for c in files
-	     do (org-graph-buffer-update c))))
-
-(defun org-graph-file-p (v)
-  (when v
-    (cl-loop for l in org-graph-locations
-	     when (string-prefix-p l (file-truename v))
-	     return t)))
-
-(defun org-graph-from-id-locations (&optional edges local)
-  "Populate the `org-graph' from `org-id-locations', filtering out any
-entries not under a member of `org-graph-locations'. When EDGES is
-non-nil visit each node and collect all edges found."
-  (interactive "P")
-  (save-excursion
-    (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
-           (graph (make-org-graph :nodes node-ids)))
-      (maphash
-       (lambda (k v) 
-	 (unless (org-graph-file-p v)
-	   (remhash k node-ids)))
-       node-ids)
-      (let* ((total (hash-table-count node-ids))
-	     (i 0)
-	     (prog (make-progress-reporter "Building org-graph..."
-					   i total)))
-	(maphash
-	 (lambda (k v)
-	   (message "org-graph-node: %s:%s" v k)
-	   (progress-reporter-update prog (incf i) v)
-           (let ((pos (cdr (org-id-find-id-in-file k v))))
-             (if pos
-		 (progn
-                   (org-with-file-buffer v   
-                     (goto-char pos)
-                     (org-graph-node-at-point graph)
-                     (org-graph-edges-at-point graph)))
-               (warn "couldn't find node %s %s" k v))))
-	 (org-graph-nodes graph))
-	(progress-reporter-done prog))
-      (if local
-          (setq-local org-graph graph)
-        (setq org-graph graph)))))
-
+;;; EIEIO
 (cl-defstruct org-graph
   ;; TODO 2024-09-17: use integers instead of string?
   (nodes (make-hash-table :test 'equal))
@@ -171,6 +115,7 @@ non-nil visit each node and collect all edges found."
     (oset self s (pop form))))
 
 ;; TODO 2025-03-03: b3hash
+;;; Utils
 (defun org-graph--file-hash (file)
   "Compute the hash of FILE."
   (with-temp-buffer
@@ -330,6 +275,99 @@ currently active org-graph."
        (lambda ()
 	 (org-graph-node-at-point t)
 	 (org-graph-edges-at-point t))))))
+
+(defun org-graph-files (&optional clean)
+  (let ((files 
+	 (flatten 
+	  (mapcar (lambda (x) 
+		    (let ((paths 
+			   (cl-remove-if 
+			    (lambda (y) (string-prefix-p "." y))
+			    (directory-files x)))
+			  (ret))
+		      (dolist (d paths ret)
+			(let ((xd (join-paths x d))) 
+			  (if (file-directory-p xd)
+			      (push (directory-files-recursively xd "**/*.org$") ret)
+			    (push xd ret))))))
+		  org-graph-locations))))
+    (if clean
+	(cl-remove-if '(lambda (x) 
+			 (or
+			  (string= (file-name-base x) "readme")
+			  (string= (file-name-base x) "index")
+			  (string= x org-graph-ui-file)
+			  (not (string= (file-name-extension x) "org"))))
+		      files)
+      files)))
+
+(defun org-graph--targets ()
+  (cons (org-graph-files t) (cons :maxlevel org-graph-target-maxlevel)))
+(defun org-graph-from-files (&optional files)
+  (interactive)
+  (let ((files (or files (org-graph-files t))))
+    (cl-loop for c in files
+	     do (org-graph-buffer-update c))))
+
+(defun org-graph-file-p (v)
+  (when v
+    (cl-loop for l in org-graph-locations
+	     when (string-prefix-p l (file-truename v))
+	     return t)))
+
+(defun org-graph-from-id-locations (&optional edges local)
+  "Populate the `org-graph' from `org-id-locations', filtering out any
+entries not under a member of `org-graph-locations'. When EDGES is
+non-nil visit each node and collect all edges found."
+  (interactive "P")
+  (save-excursion
+    (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
+	   (graph (make-org-graph :nodes node-ids)))
+      (maphash
+       (lambda (k v) 
+	 (unless (org-graph-file-p v)
+	   (remhash k node-ids)))
+       node-ids)
+      (let* ((total (hash-table-count node-ids))
+	     (i 0)
+	     (prog (make-progress-reporter "Building org-graph..."
+					   i total)))
+	(maphash
+	 (lambda (k v)
+	   (message "org-graph-node: %s:%s" v k)
+	   (progress-reporter-update prog (incf i) v)
+	   (let ((pos (cdr (org-id-find-id-in-file k v))))
+	     (if pos
+		 (progn
+		   (org-with-file-buffer v   
+		     (goto-char pos)
+		     (org-graph-node-at-point graph)
+		     (org-graph-edges-at-point graph)))
+	       (warn "couldn't find node %s %s" k v))))
+	 (org-graph-nodes graph))
+	(progress-reporter-done prog))
+      (if local
+	  (setq-local org-graph graph)
+	(setq org-graph graph)))))
+
+(defun org-graph-narrow-to-node ()
+  "Narrow to current heading, excluding subheadings."
+  (org-narrow-to-subtree)
+  (save-excursion
+    (org-next-visible-heading 1)
+    (narrow-to-region (point-min) (point))))
+
+;; delete related functions
+(defun org-graph-find-links (id)
+  "Return link elements for ID."
+  (org-graph-narrow-to-node)
+  (let ((links
+	 (org-element-map (org-element-parse-buffer) 'link
+	   (lambda (link)
+	     (when (string= (org-element-property :path link) id)
+	       link)))))
+    (widen)
+    links))
 
 ;;; Edges
 ;; See https://github.com/toshism/org-super-links/blob/develop/org-super-links.el
@@ -499,25 +537,6 @@ used instead of the default value."
     (cond ((stringp p) p)
           (t org-graph-edge-drawer))))
 
-(defun org-graph-narrow-to-node ()
-  "Narrow to current heading, excluding subheadings."
-  (org-narrow-to-subtree)
-  (save-excursion
-    (org-next-visible-heading 1)
-    (narrow-to-region (point-min) (point))))
-
-;; delete related functions
-(defun org-graph-find-links (id)
-  "Return link elements for ID."
-  (org-graph-narrow-to-node)
-  (let ((links
-         (org-element-map (org-element-parse-buffer) 'link
-           (lambda (link)
-             (when (string= (org-element-property :path link) id)
-               link)))))
-    (widen)
-    links))
-
 (defun org-graph-edge--in-drawer-p ()
   "Return non-nil if point is in drawer. Value is element at point."
   (let ((element (org-element-at-point)))
@@ -672,6 +691,7 @@ is non-nil skip creating the backlink."
           (print target-formatted-link)
           (org-graph-edge-insert-link (car target-formatted-link) (cdr target-formatted-link)))))))
 
+;;; Commands
 ;;;###autoload
 (defun org-graph-edge-convert-link (&optional arg)
   "Convert a normal `org-mode' link at `point' to a graph link, ARG prefix.
@@ -728,41 +748,12 @@ either side, and deletes both sides of a link."
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-link-marker target nil no-backlink)))
 
-
 ;;;###autoload
 (defun org-graph-node (&optional arg invisible-ok level)
   (interactive "P")
   (org-insert-heading arg invisible-ok level)
   (org-id-get-create)
   (org-expiry-insert-created))
-
-(defun org-graph-files (&optional clean)
-  (let ((files 
-	 (flatten 
-	  (mapcar (lambda (x) 
-		    (let ((paths 
-			   (cl-remove-if 
-			    (lambda (y) (string-prefix-p "." y))
-			    (directory-files x)))
-			  (ret))
-		      (dolist (d paths ret)
-			(let ((xd (join-paths x d))) 
-			  (if (file-directory-p xd)
-			      (push (directory-files-recursively xd "**/*.org$") ret)
-			    (push xd ret))))))
-		  org-graph-locations))))
-    (if clean
-	(cl-remove-if '(lambda (x) 
-			 (or
-			  (string= (file-name-base x) "readme")
-			  (string= (file-name-base x) "index")
-			  (string= x org-graph-ui-file)
-			  (not (string= (file-name-extension x) "org"))))
-		      files)
-      files)))
-
-(defun org-graph--targets ()
-  (cons (org-graph-files t) (cons :maxlevel org-graph-target-maxlevel)))
 
 ;;;###autoload
 (defun org-graph-kill-all (&optional exclude-readme)
@@ -825,6 +816,7 @@ either side, and deletes both sides of a link."
 (defun org-graph-json ()
   (json-encode-plist (org-graph-plist)))
 
+;;;###autoload
 (defun org-graph-save (&optional output json)
   "Save the org-graph to a sxp file."
   (interactive)
@@ -840,13 +832,11 @@ either side, and deletes both sides of a link."
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-link-marker target t)))
 
-
 (defun org-graph-edge-child (&optional no-parent)
   "Insert a child edge from the target to the current heading."
   (interactive "P")
   (let ((target (org-graph-edge-search-function)))
     (org-graph-edge-insert-child-marker target no-parent)))
-
 
 (defun org-graph-edge-parent (&optional no-child)
   "Insert a parent edge to the current heading from the target."
@@ -896,13 +886,15 @@ either side, and deletes both sides of a link."
   (when link (org-graph-edge-insert-related (format "github:%s" link) (or desc "src"))))
 
 ;;; Dynamic Blocks
+;; TODO 2026-05-25: 
 (defun org-dblock-write:links ()
   "Generate a 'links' block for the designated node.")
 
 (defun org-dblock-write:graph ()
   "Generate a 'graph' block for the designated set of nodes.")
 
-;;; Keys
+
+;;; Keymap
 (defvar org-graph-map-prefix "C-c g")
 
 (defvar-keymap org-graph-map
@@ -928,38 +920,39 @@ either side, and deletes both sides of a link."
 (defun org-graph-maybe-enable ()
   (when (org-graph-file-p buffer-file-name) (org-graph-minor-mode 1)))
 
-(add-hook 'org-mode-hook 'org-graph-maybe-enable)
-
 ;;; Graph Menu Mode
+(defgroup graph-menu nil "Graph Menu"
+  :group 'graph)
+
 (defcustom node-title-column-width 30
   "Column width for the Node title in the graph menu."
   :type 'natnum
-  :group 'graph)
+  :group 'graph-menu)
 
 (defcustom node-edges-column-width 14
   "Column width for the Node edges in the graph menu."
   :type 'natnum
-  :group 'graph)
+  :group 'graph-menu)
 
 (defcustom node-tags-column-width 14
   "Column width for the Node tags in the graph menu."
   :type 'natnum
-  :group 'graph)
+  :group 'graph-menu)
 
 (defcustom node-file-column-width 32
   "Column width for the Node properties in the graph menu."
   :type 'natnum
-  :group 'graph)
+  :group 'graph-menu)
 
 (defcustom node-properties-column-width 12
   "Column width for the Node properties in the graph menu."
   :type 'natnum
-  :group 'graph)
+  :group 'graph-menu)
 
 (defcustom graph-async t
   "If non-nil, graph-menu will use async operations when possible."
   :type 'boolean
-  :group 'graph)
+  :group 'graph-menu)
 
 (defun graph-menu--title-predicate (a b)
   (string< (aref (cadr a) 0) (aref (cadr b) 0)))
@@ -999,7 +992,7 @@ either side, and deletes both sides of a link."
   (interactive)
   (let ((buf (get-buffer-create "*Graph*")))
     (with-current-buffer buf
-      ;; (setq buffer-file-coding-system 'utf-8)
+      (setq buffer-file-coding-system 'utf-8)
       (graph-menu-mode))
     (pop-to-buffer-same-window buf)))
 

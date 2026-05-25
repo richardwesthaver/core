@@ -32,9 +32,10 @@
 (require 'org-expiry)
 
 (defgroup inbox nil
-  "CC Inbox")
+  "CC Inbox"
+  :group 'org)
 
-;;; Vars
+;;; Custom
 (defcustom org-inbox-file
   (concat (file-name-as-directory org-directory) "inbox.org")
   "Custom inbox file location."
@@ -47,69 +48,40 @@
   :type 'string
   :group 'inbox)
 
-(defvar org-inbox-buffer-name "*Inbox*"
-  "The name of the org-inbox buffer.")
+(defcustom org-inbox-buffer-name "*Inbox*"
+  "The name of the org-inbox buffer."
+  :group 'inbox)
 
-(defvar org-inbox-config-buffer-name "*Inbox Config*"
-  "Then name of the org-inbox configuration buffer.")
+(defcustom org-inbox-config-buffer-name "*Inbox Config*"
+  "Then name of the org-inbox configuration buffer."
+  :group 'inbox)
 
+(defcustom org-inbox-buffer-name "*Inbox*"
+  "The name of the org-inbox buffer."
+  :group 'inbox)
+
+;;; Variables
 (defvar org-inbox-properties
-  '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKER" "VERSION"))
+  '("NEXT" "PREV" "FROM" "TO" "OWNER" "PROJECT" "BLOCKS" "VERSION"))
 
 (defvar org-inbox-db-schema
   '(id file node edge contents properties schedule))
 
-;;; Capture
-(setq org-id-link-to-org-use-id t
-      org-protocol-default-template-key "L")
-
-;; capture templates
-(setq org-capture-templates
-      `(("i" "inbox-item" entry (file ,org-inbox-file)
-         "* %?\n%i"
-         :empty-lines 1)
-        ("t" "inbox-task" entry (file ,org-inbox-file) "* TODO %^{item}\n")
-        ("n" "inbox-note" entry (file ,org-inbox-file) "* %^{item}\n%a")
-        ("w" "inbox-web-link" entry (file ,org-inbox-file)
-         "* %?"
-         :hook (lambda ()
-                 (goto-char (pos-eol))
-                 (org-web-tools-insert-link-for-url (org-web-tools--get-first-url))))
-        ("1" "current-task-item" item (clock) "%i%?")
-        ("2" "current-task-checkbox" checkitem (clock) "%i%?")
-        ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-        ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1)
-        ("l" "log" item (org-ask-location) "%U %?" :empty-lines 1)
-        ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t)))
-
-(add-hook 'org-after-todo-state-change-hook #'org-id-get-create)
-(add-hook 'org-after-todo-state-change-hook #'org-expiry-insert-created)
-
-(setq org-default-notes-file (join-paths org-directory "inbox.org")
-      org-capture-use-agenda-date t
-      org-archive-location "archive.org::")
-
-;;; Utils
-;; `org-archive-all-done' doesn't work the way we want. This function
-;; will archive all done tasks in the current subtree, or the whole file
-;; if prefix arg is given.
-(defun org-archive-done (&optional scope)
-  "archive all tasks with todo-state of 'DONE' or 'NOPE'."
-  (interactive "P")
-  (org-map-entries
-   (lambda ()
-     (org-archive-subtree)
-     (setq org-map-continue-from (org-element-property :begin (org-element-at-point))))
-   "/+DONE|NOPE" scope))
-
-(defun org-children-done ()
-  "Mark all sub-tasks in this heading as 'DONE'."
-  (interactive)
-  (org-map-entries
-   (lambda ()
-     (unless (= (org-current-level) 1)
-       (org-todo "DONE"))
-     nil 'tree)))
+(defcustom org-inbox-capture-templates
+  `(("i" "inbox-item" entry (file ,org-inbox-file)
+     "* %?\n%i"
+     :empty-lines 1)
+    ("t" "inbox-task" entry (file ,org-inbox-file) "* TODO %^{item}\n")
+    ("n" "inbox-note" entry (file ,org-inbox-file) "* %^{item}\n%a")
+    ("w" "inbox-web-link" entry (file ,org-inbox-file)
+     "* %?"
+     :hook (lambda ()
+             (goto-char (pos-eol))
+             (org-web-tools-insert-link-for-url (org-web-tools--get-first-url))))
+    ("l" "log" item (org-ask-location) "%U %?" :empty-lines 1)
+    ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t))
+  "List of additional capture templates loaded by 'inbox'."
+  :group 'inbox)
 
 (defmacro with-inbox-buffer (&rest body)
   `(save-excursion
@@ -128,7 +100,7 @@
                  ("A" 1)
                  ("B" 2)
                  ("C" 3)
-                 (_ 2)))
+                 (_ 4)))
          (res))
     ;; FIXME todo states shouldn't be hardcoded
     (cond
@@ -140,8 +112,8 @@
      ((string= todo "GOTO") (setq res (cons 2 prio)))
      ((string= todo "TODO") (setq res (cons 2 prio)))
      ((string= todo "RESEARCH") (setq res (cons 3 prio)))
-     ((string= todo "DONE") (setq res (cons 4 prio)))
-     ((string= todo "NOPE") (setq res (cons 4 prio))))
+     ((string= todo "DONE") (setq res (cons 5 prio)))
+     ((string= todo "NOPE") (setq res (cons 5 prio))))
     (unless res (setq res (cons 0 prio)))
     res))
 
@@ -156,7 +128,6 @@
     (cond
      ((< (cdr a) (cdr b)) t)
      ((> (cdr a) (cdr b)) nil)))))
-
 
 (defun org-inbox-sort ()
   "Sort the current heading by todo order followed by priority."
@@ -188,46 +159,9 @@
   (when-let* ((inbox (get-buffer org-inbox-buffer-name)))
     (kill-buffer inbox)))
 
-;;; dblocks
-
-;; summary
-(defun org-dblock-write:summary (params)
-  "Generate a file or heading summary section.")
-
-(defun org-summary ()
-  "Insert or update a summary section.")
-
-(defun org-inbox-configure-dblock ()
-  "Configure the current org-inbox-dblock at point."
-  (interactive)
-  (with-demoted-errors "Error: %S"
-    (let* ((beginning (org-beginning-of-dblock))
-           (parameters (org-prepare-dblock)))
-      (org-inbox-show-config-buffer (current-buffer) beginning parameters))))
-
-;;; ui
-;; org-inbox-dashboard?
-(defun org-inbox-show-config (&optional buffer position parameters)
-  (interactive)
-  (switch-to-buffer org-inbox-config-buffer-name)
-  (erase-buffer)
-  (remove-overlays)
-  (widget-insert "\n\n")
-  (widget-create 'push-button
-                 :notify (lambda(_widget &rest _ignore)
-                           (with-current-buffer buffer
-                             (goto-char position)
-                             )
-                           (kill-buffer)
-                           (org-ctrl-c-ctrl-c))
-                 (propertize "Apply" 'face 'font-lock-comment-face))
-  (widget-insert " ")
-  (widget-create 'push-button
-                 :notify (lambda (_widget &rest _ignore)
-                           (kill-buffer))
-                 (propertize "Cancel" 'face 'font-lock-string-face))
-  (use-local-map widget-keymap)
-  (widget-setup))
+;;;###autoload
+(defun load-org-inbox-capture-templates ()
+  (mapcar (lambda (x) (add-to-list 'org-capture-templates x)) org-inbox-capture-templates))
 
 (provide 'inbox)
 ;; inbox.el ends here

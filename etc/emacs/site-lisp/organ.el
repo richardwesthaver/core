@@ -101,6 +101,66 @@ EXT is a list of the extensions of files to be included."
   (org-babel-execute-buffer arg)
   (widen))
 
+;;; IDs
+(defun org-title-to-filename (title)
+  "Convert TITLE to a reasonable filename."
+  ;; Based on the slug logic in org-roam, but org-roam also uses a
+  ;; timestamp.
+  (setq title (downcase title))
+  (setq title (s-replace-regexp "[^a-zA-Z0-9]+" "-" title))
+  (setq title (s-replace-regexp "-+" "-" title))
+  (setq title (s-replace-regexp "^-" "" title))
+  (setq title (s-replace-regexp "-$" "" title))
+  title)
+
+(defun org-get-custom-id-list ()
+  (flatten
+   (org-map-entries
+    (lambda ()
+      (org-entry-get nil "CUSTOM_ID")))))
+
+(defun org-generate-custom-id (&optional id-list)
+  (let* ((custom-id (org-entry-get nil "CUSTOM_ID"))
+	 (heading (org-heading-components))
+	 (level (nth 0 heading))            
+	 (todo (nth 2 heading))                       
+	 (headline (nth 4 heading))
+	 (slug (org-title-to-filename headline))
+	 (duplicate-id (when id-list (member slug id-list))))
+    (when (not duplicate-id)
+      (message "Adding CUSTOM_ID %s to %s" slug headline)
+      (org-entry-put nil "CUSTOM_ID" slug))))
+
+(defun org-generate-custom-ids ()                              
+  "Generate CUSTOM_ID for any headings that are missing one"   
+    (save-excursion                                            
+      (org-with-wide-buffer                                    
+       (let ((existing-ids (org-get-custom-id-list)))          
+	 (org-map-entries                                      
+	  (lambda ()                                           
+	    (org-generate-custom-id existing-ids)))))))
+
+;;;###autoload
+(defun org-id-add-to-headlines-in-file ()
+  "Add ID properties to all headlines in the
+   current file which do not already have one."
+  (interactive)
+  (org-map-entries (lambda () (org-id-get (point) 'create))))
+
+(defun org-id-add-to-headlines-in-files (&optional files)
+  (interactive)
+  (with-temp-buffer
+    (dolist (f (or files org-agenda-files))
+      (find-file f)
+      (org-id-add-to-headlines-in-file)
+      (save-buffer))))
+
+(defun org-id-add-to-headlines-in-directory (&optional dir)
+  (interactive)
+  (let ((dir (or dir org-directory)))
+    (org-id-add-to-headlines-in-files
+     (directory-files-recursively dir "[.]org$"))))
+
 ;;; Agenda
 (defun org-schedule-effort ()
   (interactive)
@@ -202,6 +262,32 @@ EXT is a list of the extensions of files to be included."
   "Copies the selected text to the currently clocked in org-mode task."
   (interactive "r")
   (org-capture-string (buffer-substring-no-properties start end) "3"))
+(defun org-clock-in-wip ()
+  "Clock in when todo state is changed to WIP."
+  (when (string= (org-get-todo-state) "WIP")
+    (unless (org-clocking-buffer)
+      (org-clock-in))))
+;;; Archive
+;; `org-archive-all-done' doesn't work the way we want. This function
+;; will archive all done tasks in the current subtree, or the whole file
+;; if prefix arg is given.
+(defun org-archive-done (&optional scope)
+  "archive all tasks with todo-state of 'DONE' or 'NOPE'."
+  (interactive "P")
+  (org-map-entries
+   (lambda ()
+     (org-archive-subtree)
+     (setq org-map-continue-from (org-element-property :begin (org-element-at-point))))
+   "/+DONE|NOPE" scope))
+
+(defun org-children-done ()
+  "Mark all sub-tasks in this heading as 'DONE'."
+  (interactive)
+  (org-map-entries
+   (lambda ()
+     (unless (= (org-current-level) 1)
+       (org-todo "DONE"))
+     nil 'tree)))
 
 ;;; Check
 (defun org-adjust-tags-column-reset-tags ()
@@ -316,6 +402,148 @@ inherited by a parent headline."
   (interactive (list (get-first-url (rx bol "https://" (* anychar) "stackoverflow.com"))))
   (let ((title (get-html-title-from-url url)))
     (org-insert-link nil url title)))
+
+;;; Export
+(defun org-html-format-drawer (name contents)
+  "Default function used as value for `org-html-format-drawer-function'."
+  (let ((name (downcase name)))
+    (format "<details class='edges'><summary>%s</summary>%s</details>"
+	    name
+	    (pcase name
+	      ("edges"
+	       (unless (null contents)
+		 (let ((es (intersperse "<br>" (s-lines contents))))
+		   (if (> (length es) 3)
+		       (progn
+			 (setf (cadr es) nil
+			       (nth (1- (length es)) es) nil)
+			 (apply 'concat (flatten es)))
+		     (apply 'concat es)))))
+	      (_ contents)))))
+
+;; replace hardcoded value
+(defun org-html-property-drawer (_drawer contents _info)
+  "Transcode a PROPERTY-DRAWER element from Org to HTML.
+CONTENTS holds the contents of the drawer.  INFO is a plist holding
+contextual information."
+  (format "<details class='properties'><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
+
+(defun org-export-get-reference-title (datum info)
+  "Like `org-export-get-reference', except uses heading titles instead of random numbers."
+  (let ((cache (plist-get info :internal-references)))
+    (or (car (rassq datum cache))
+	(let* ((crossrefs (plist-get info :crossrefs))
+	       (cells (org-export-search-cells datum))
+	       ;; Preserve any pre-existing association between
+	       ;; a search cell and a reference, i.e., when some
+	       ;; previously published document referenced a location
+	       ;; within current file (see
+	       ;; `org-publish-resolve-external-link').
+
+	       ;; However, there is no guarantee that search cells are
+	       ;; unique, e.g., there might be duplicate custom ID or
+	       ;; two headings with the same title in the file.
+
+	       ;; As a consequence, before re-using any reference to
+	       ;; an element or object, we check that it doesn't refer
+	       ;; to a previous element or object.
+	       (new (or (cl-some
+			 (lambda (cell)
+			   (let ((stored (cdr (assoc cell crossrefs))))
+			     (when stored
+			       (let ((old (org-export-format-reference stored)))
+				 (and (not (assoc old cache)) stored)))))
+			 cells)
+			(when (org-element-property :raw-value datum)
+			  ;; Heading with a title
+			  (org-export-new-title-reference datum cache))
+			;; NOTE: This probably breaks some Org Export
+			;; feature, but if it does what I need, fine.
+			(org-export-format-reference
+			 (org-export-new-reference cache))))
+	       (reference-string new))
+	  ;; Cache contains both data already associated to
+	  ;; a reference and in-use internal references, so as to make
+	  ;; unique references.
+	  (dolist (cell cells) (push (cons cell new) cache))
+	  ;; Retain a direct association between reference string and
+	  ;; DATUM since (1) not every object or element can be given
+	  ;; a search cell (2) it permits quick lookup.
+	  (push (cons reference-string datum) cache)
+	  (plist-put info :internal-references cache)
+	  reference-string))))
+
+(defun org-export-new-title-reference (datum cache)
+  "Return new reference for DATUM that is unique in CACHE."
+  (cl-macrolet ((inc-suffixf (place)
+		  `(progn
+		     (string-match (rx bos
+				       (minimal-match (group (1+ anything)))
+				       (optional "--" (group (1+ digit)))
+				       eos)
+				   ,place)
+		     ;; HACK: `s1' instead of a gensym.
+		     (-let* (((s1 suffix) (list (match-string 1 ,place)
+						(match-string 2 ,place)))
+			     (suffix (if suffix
+					 (string-to-number suffix)
+				       0)))
+		       (setf ,place (format "%s--%s" s1 (cl-incf suffix)))))))
+    (let* ((title (org-element-property :raw-value datum))
+	   (ref (url-hexify-string (substring-no-properties title)))
+	   (parent (org-element-property :parent datum)))
+      (while (--any (equal ref (car it))
+		    cache)
+	;; Title not unique: make it so.
+	(if parent
+	    ;; Append ancestor title.
+	    (setf title (concat (org-element-property :raw-value parent)
+				"--" title)
+		  ref (url-hexify-string (substring-no-properties title))
+		  parent (org-element-property :parent parent))
+	  ;; No more ancestors: add and increment a number.
+	  (inc-suffixf ref)))
+      ref)))
+
+(defun org-html--reference (datum info &optional named-only)
+  "Return an appropriate reference for DATUM.
+DATUM is an element or a `target' type object.  INFO is the
+current export state, as a plist.
+When NAMED-ONLY is non-nil and DATUM has no NAME keyword, return
+nil.  This doesn't apply to headlines, inline tasks, radio
+targets and targets."
+  (let* ((type (org-element-type datum))
+	 (user-label
+	  (org-element-property
+	   (pcase type
+	     ((or `headline `inlinetask) :CUSTOM_ID)
+	     ((or `radio-target `target) :value)
+	     (_ :name))
+	   datum))
+	 (user-label (or user-label
+			 (when-let* ((path (org-element-property :ID datum)))
+			   path))))
+    (cond
+     ((and user-label
+	   (or (plist-get info :html-prefer-user-labels)
+	       ;; Used CUSTOM_ID property unconditionally.
+	       (memq type '(headline inlinetask))))
+      user-label)
+     ((and named-only
+	   (not (memq type '(headline inlinetask radio-target target)))
+	   (not user-label))
+      nil)
+     (t
+      (org-export-get-reference datum info)))))
+
+(define-minor-mode org-id-export-mode
+  "Attempt to export Org as HTML with useful link IDs.
+Instead of random IDs like \"#orga1b2c3\", use heading titles, made
+unique when necessary."
+  :global t
+  (if org-id-export-mode
+      (advice-add #'org-export-get-reference :override #'org-export-get-reference)
+    (advice-remove #'org-export-get-reference #'org-export-get-reference)))
 
 (provide 'organ)
 ;;; organ.el ends here

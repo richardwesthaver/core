@@ -24,19 +24,15 @@
 
 ;;; Code:
 (require 'org)
-(require 'org-element)
-(require 'ox)
-(require 'ol-man)
-(require 'ol-info)
-(require 'calendar)
-(defgroup ulang nil
-  "CC Universal Language.")
 
-(defvar ulang-special-properties
+(defgroup ulang nil "ULANG")
+
+(defcustom ulang-special-properties
+  '("VERSION" "LOCATION")
   "See 'org-special-properties'."
-  '("VERSION" "LOCATION"))
+  :group 'ulang)
 
-(defvar ulang-info-url-alist
+(defcustom ulang-info-url-alist
   '(("sbcl" . "https://www.sbcl.org/manual/")
     ("asdf" . "https://asdf.common-lisp.dev/asdf/")
     ("tar" . "https://www.gnu.org/software/tar/manual/")
@@ -48,10 +44,14 @@
     ("ecl" . "https://ecl.common-lisp.dev/static/manual/")
     ("notmuch" . "https://notmuchmail.org/doc/latest/man1/")
     ("guile" . "https://www.gnu.org/software/guile/manual/html_node/"))
-  "See 'org-info-other-documents'.")
+  "See 'org-info-other-documents'."
+  :group 'ulang)
 
-(setq org-man-command 'woman)
-
+(defcustom ulang-export-dictionary
+  (list '("Table of Contents" "⇜"))
+  "See 'org-export-dictionary'."
+  :group 'ulang)
+  
 (defun org-export-translate-to-lang (term-translations &optional lang)
   "Adds desired translations to `org-export-dictionary'.
    TERM-TRANSLATIONS is alist consisted of term you want to translate
@@ -71,144 +71,21 @@
 				       :html translation-html
 				       :utf-8 translation-utf-8)))))))
 
-(org-export-translate-to-lang (list '("Table of Contents" "⇜")) "ulang")
-
-;; (setq org-export-global-macros nil)
-
-;; todo keywords
-(setq org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
-
-(setq org-todo-keywords
-      '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
-        (sequence "HOLD(H@/!)" "WIP(!)" "|")
-        (sequence "WAIT(W@/!)" "WIP(!)" "|")
-        (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
-        (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-        (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
-        (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
-              "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
-              "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
-        (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
-        (sequence "|" "DONE(d!)" "NOPE(x@!)")))
-
-(setq org-todo-keyword-faces
-      '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
-        ("PRODUCT" . (:foreground "olivedrab" :weight bold))
-        ("RELEASE" . (:foreground "maroon3" :weight bold))
-        ("RESEARCH" . (:foreground "maroon2" :weight bold))
-        ("HACK" . (:foreground "maroon3" :weight bold))
-        ("TBD" . (:foreground "brown" :weight bold))
-        ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
-        ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
-        ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
-        ("WIP" . (:foreground "darkorchid2" :weight bold))
-        ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen"))))
-
-(defun org-clock-in-wip ()
-  "Clock in when todo state is changed to WIP."
-  (when (string= (org-get-todo-state) "WIP")
-    (unless (org-clocking-buffer)
-      (org-clock-in))))
-
-(add-hook 'org-after-todo-state-change-hook #'org-clock-in-wip)
-
-;; link abbrevs
-(require 'ol-irc)
-(defun ol-vc-expand (tag)
-  "Expand the tag of an org-link where linkkey is `vc'."
-  (let ((f (split-string tag ":" "/")))
-    (concat (string-trim-right company-vc-url "[/]")
-	    (cl-case (length f)
-	      (0 "")
-	      (1 (format "/%s" (car f)))
-	      (2 (apply 'format "/%s/file/tip/%s" f))
-	      (t (apply 'format "/%s/file/%s/%s" f))))))
-
-(setq org-link-abbrev-alist
-      `(("vc" . ol-vc-expand)
-        ("comp" . ,(format "https://%s/%%s" company-domain))
-	("cdn" . ,(format "%s/%%s" company-cdn-url))
-        ("packy" . ,(format "%s/%%s" company-packy-url))
-        ("yt" . "https://youtube.com/watch?v=%s")
-	("gh" . "https://github.com/%s")
-	("cb" . "https://codeberg.org/%s")
-	("wikipedia" . "https://en.wikipedia.org/wiki/%s")
-	("archwiki" . "https://wiki.archlinux.org/title/%s")
-        ("reddit" . "https://reddit.com/%s")
-        ("hn" . "https://news.ycombinator.com/%s")
-	("archive" . "https://web.archive.org/web/%s")
-        ("so" . "https://stackoverflow.com/%s")))
-
-;;; IDs
-(defun org-title-to-filename (title)
-  "Convert TITLE to a reasonable filename."
-  ;; Based on the slug logic in org-roam, but org-roam also uses a
-  ;; timestamp.
-  (setq title (downcase title))
-  (setq title (s-replace-regexp "[^a-zA-Z0-9]+" "-" title))
-  (setq title (s-replace-regexp "-+" "-" title))
-  (setq title (s-replace-regexp "^-" "" title))
-  (setq title (s-replace-regexp "-$" "" title))
-  title)
-
-(defun org-get-custom-id-list ()
-  (flatten
-   (org-map-entries
-    (lambda ()
-      (org-entry-get nil "CUSTOM_ID")))))
-
-(defun org-generate-custom-id (&optional id-list)
-  (let* ((custom-id (org-entry-get nil "CUSTOM_ID"))
-         (heading (org-heading-components))
-         (level (nth 0 heading))            
-         (todo (nth 2 heading))                       
-         (headline (nth 4 heading))
-         (slug (org-title-to-filename headline))
-         (duplicate-id (when id-list (member slug id-list))))
-    (when (not duplicate-id)
-      (message "Adding CUSTOM_ID %s to %s" slug headline)
-      (org-entry-put nil "CUSTOM_ID" slug))))
-
-(defun org-generate-custom-ids ()                              
-  "Generate CUSTOM_ID for any headings that are missing one"   
-    (save-excursion                                            
-      (org-with-wide-buffer                                    
-       (let ((existing-ids (org-get-custom-id-list)))          
-         (org-map-entries                                      
-          (lambda ()                                           
-            (org-generate-custom-id existing-ids)))))))
-
 ;;;###autoload
-(defun org-id-add-to-headlines-in-file ()
-  "Add ID properties to all headlines in the
-   current file which do not already have one."
-  (interactive)
-  (org-map-entries (lambda () (org-id-get (point) 'create))))
-
-(defun org-id-add-to-headlines-in-files (&optional files)
-  (interactive)
-  (with-temp-buffer
-    (dolist (f (or files org-agenda-files))
-      (find-file f)
-      (org-id-add-to-headlines-in-file)
-      (save-buffer))))
-
-(defun org-id-add-to-headlines-in-directory (&optional dir)
-  (interactive)
-  (let ((dir (or dir org-directory)))
-    (org-id-add-to-headlines-in-files
-     (directory-files-recursively dir "[.]org$"))))
-
 (defun ulang-init ()
   (interactive)
   (org-babel-lob-ingest company-babel-file)
-  (let ((%eq (lambda (a b) (equal (car a) (car b)))))
-    (mapcar (lambda (x) 
-	      (cl-pushnew x org-info-other-documents :test %eq)
-	      (cl-pushnew x browse-url-filename-alist :test %eq))
-	    ulang-info-url-alist)))
+  (org-export-translate-to-lang ulang-export-dictionary "ulang")
+  (mapcar 
+   (lambda (x) 
+     (add-to-list 'org-info-other-documents x)
+     (add-to-list 'browse-url-filename-alist x))
+   ulang-info-url-alist)
+  (mapcar 
+   (lambda (y) (add-to-list 'org-special-properties y))
+   ulang-special-properties))
 
-;;; Commands
+;;; Location
 
 ;; (org-property-inherit-p "LOCATION")
 
@@ -275,19 +152,19 @@ or file at point."
 (defcustom prog-comment-keywords
   '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
   "List of strings with comment keywords."
-  :group 'default
+  :group 'ulang
   :type '(list string))
 
 (defcustom prog-comment-timestamp-format-concise "%F"
   "Specifier for date in `prog-comment-timestamp-keyword'.
 Refer to the doc string of `format-time-string' for the available
 options."
-  :group 'default
+  :group 'ulang
   :type 'string)
 
 (defcustom prog-comment-timestamp-format-verbose "%F %T %z"
   "Like `prog-comment-timestamp-format-concise', but longer."
-  :group 'default
+  :group 'ulang
   :type 'string)
 
 ;;;###autoload
@@ -385,7 +262,6 @@ specified by `prog-comment-timestamp-format-verbose'."
      (t
       (comment-indent t)
       (insert (concat " " string))))))
-
 
 ;;; Regexps
 (defvar default-line-regexp-alist
