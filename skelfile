@@ -144,7 +144,7 @@
             (std:copy-stream in out :finish-output t))))
     (let ((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
           (config (directory "etc/emacs/*.el"))
-          (lib (directory "etc/emacs/lib/*.el")))
+          (lib (directory "etc/emacs/site-lisp/*.el")))
      (mapcar
       (lambda (el)
        (el-write el (merge-pathnames (file-namestring el) dotemacs)))

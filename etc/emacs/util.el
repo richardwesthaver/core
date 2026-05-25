@@ -67,21 +67,6 @@ Concat ARGS and return a newly interned symbol."
           (cl-mapcan (lambda (x) (list element x)) (cdr list)))))
 
 ;;; Config
-(defun join-paths (root &rest dirs)
-  "helper function for joining strings to a path."
-  (let ((result root))
-    (cl-loop for dir in dirs do
-             (setq result (concat (file-name-as-directory result) dir)))
-    result))
-
-(defun add-to-load-path (&rest paths)
-  "Add PATHS to `load-path'."
-  (mapc (lambda (x)
-          (cond
-           ((listp x) (mapc #'add-to-load-path x))
-           ('_ (cl-pushnew x load-path))))
-        paths))
-
 (defmacro add-packages (&rest pkgs)
   "add list of packages PKGS to `package-selected-packages'"
   `(mapc (lambda (x) (add-to-list 'package-selected-packages x)) ',pkgs))
@@ -94,9 +79,6 @@ Concat ARGS and return a newly interned symbol."
 (defmacro when-sys= (name body)
   "(when (string= (system-name) NAME) BODY)"
   `(when ,(string= (system-name) name) ,body))
-
-(defun darwin-p () (string= system-type "darwin"))
-(defun linux-p () (string= system-type "gnu/linux"))
 
 (defun wc ()
   "Return a 3-element list with lines, words and characters in

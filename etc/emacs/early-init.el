@@ -17,12 +17,6 @@
 ;; 
 ;; You should have received a copy of the GNU General Public License
 ;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
-;; 
-;; Commentary:
-;; 
-;; A few snippets are added here that need to be loaded ASAP on
-;; startup, such as UI elements that would otherwise be loaded for a
-;; second and then disappear when the `init.el` file is loaded.
 ;;
 ;;; Code:
 (setopt inhibit-startup-buffer-menu nil
@@ -31,13 +25,9 @@
         use-file-dialog nil
         tool-bar-mode nil
         menu-bar-mode nil
-        scroll-bar-mode nil)
-
-(setq explicit-shell-file-name "/usr/bin/bash"
-      shell-file-name "/usr/bin/bash")
-
-(when (and (fboundp 'native-comp-available-p)
-           (native-comp-available-p))
-  (setopt native-comp-async-report-warnings-errors nil
+        scroll-bar-mode nil
+	explicit-shell-file-name "/usr/bin/bash"
+	shell-file-name "/usr/bin/bash"
+	native-comp-async-report-warnings-errors nil
 	comp-deferred-compilation t
-	package-native-compile t))
+	package-native-compile t)

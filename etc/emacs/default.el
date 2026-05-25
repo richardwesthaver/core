@@ -5,14 +5,15 @@
 ;;; Code:
 ;;; Settings
 (require 'util)
-(put 'upcase-region 'disabled nil)
-(put 'list-threads 'disabled nil)
-(put 'list-timers 'disabled nil)
-(setq show-paren-context-when-offscreen 'overlay)
+;;; Whitespace
+(setq-default
+ whitespace-style '(face tabs trailing lines-tail indentation::space)
+ whitespace-line-column 88)
 (setq
  org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
  ;; tabs = bad (unless in makefile..)
  switch-to-buffer-obey-display-actions t
+show-paren-context-when-offscreen 'overlay
  indent-tabs-mode nil
  make-backup-files nil
  save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
@@ -39,128 +40,83 @@
  bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
  set-mark-command-repeat-pop t
  tempo-interactive t
- emms-directory (expand-file-name "emms" user-emacs-directory)
  gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
  url-cache-directory (expand-file-name "url" user-emacs-directory)
  tab-always-indent 'complete
- shr-cookie-policy nil
- ;; NOTE 2023-11-04: EXPERIMENTAL
- ;; ediff-floating-control-frame t
  register-use-preview t
  shr-use-xwidgets-for-media t
  view-read-only t
  org-publish-timestamp-directory (join-paths user-emacs-directory ".org-timestamps/"))
 
-(cl-pushnew (cons "melpa" "https://melpa.org/packages/") package-archives :test 'cl-equalp)
+;;; Site Lisp
+(use-package ulang
+  :load-path user-emacs-site-lisp-directory
+  :config (ulang-init))
 
 (add-packages
- ;; eglot-x ;; LSP extensions
  org-web-tools ;; web parsing
  system-packages
  ol-notmuch ;; mail links
  htmlize ;; html export
- cape
- consult
- ;; embark-consult
- ;; embark
- auctex
- ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
- nerd-icons nerd-icons-dired nerd-icons-corfu nerd-icons-completion nerd-icons-grep
- nerd-icons-ibuffer nerd-icons-xref nerd-icons-ivy-rich tab-line-nerd-icons
- hide-mode-line)
-;; bbdb
-(package-refresh-contents)
-(package-install-selected-packages t)
+ auctex)
 
-;;; Treesitter
+;;; UI
+(use-package hide-mode-line
+  :hook (speedbar-mode . hide-mode-line-mode))
 
-;; (let ((grammar-dir "/usr/share/tree-sitter/"))
-;;   (when (file-exists-p grammar-dir)
-;;     (setq treesit-extra-load-path
-;;           (append
-;;            (flatten
-;;             (mapcar
-;;              (lambda (f)
-;;                (unless (or (string= "." f) (string= ".." f))
-;;                  (concat grammar-dir f)))
-;;              (directory-files "/usr/share/tree-sitter")))
-;;            treesit-extra-load-path))))
-
-;;; Variables
-(defvar user-emacs-lib-directory (expand-file-name (join-paths user-emacs-directory "lib")))
-(defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
-(defvar user-home-directory (expand-file-name "~"))
-(defvar user-lab-directory (expand-file-name "lab" user-home-directory))
-(defvar user-stash-directory (expand-file-name ".stash" user-home-directory))
-(defvar user-store-directory (expand-file-name ".store" user-home-directory))
-(defvar user-mail-directory (expand-file-name "mail" user-home-directory))
-(defvar user-org-stash-directory (expand-file-name "org" user-stash-directory))
-(defvar default-theme 'modus-vivendi)
-(defvar company-source-directory (join-paths user-home-directory "comp"))
-(defvar company-org-directory (join-paths company-source-directory "org"))
-(defvar company-babel-file (join-paths company-org-directory "meta/babel.org"))
-(defvar company-bibliography (join-paths company-org-directory "graph/refs.bib"))
-(defvar company-domain "compiler.company")
-(defvar company-name "The Compiler Company, LLC")
-(defvar company-vc-domain "vc.compiler.company")
-(defvar company-vc-url (format "https://%s" company-vc-domain))
-(defvar company-home "the.compiler.company")
-(defvar company-cdn-url "https://cdn.compiler.company")
-(defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
-(add-to-load-path user-emacs-lib-directory (join-paths company-source-directory "core/slime"))
-
-(with-eval-after-load 'default
-  (require 'ulang)
-  (ulang-init)
-  (require 'scrum)
-  (require 'inbox)
-  (require 'graph)
-  (require 'skel)
-  (require 'gen)
-  (require 'c2))
-
+;;;; Icons
+;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+(use-package nerd-icons)
+(use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode))
+(use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode))
+(use-package nerd-icons-corfu :hook (corfu-mode . nerd-icons-corfu-mode))
+(use-package nerd-icons-completion :hook (completion-mode . nerd-icons-completion-mode))
+(use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode))
+(use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode))
+(use-package nerd-icons-xref :hook (xref-mode . nerd-icons-xref-mode))
+(use-package tab-line-nerd-icons :hook (tab-line-mode . tab-line-nerd-icons-global-mode))
+  
 ;;; Env
-(use-package use-package-ensure-system-package)
-(use-package exec-path-from-shell)
-(exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
-                                      "SSH_AUTH_SOCK"
-                                      "PATH"
-                                      "CARGO_HOME"
-                                      "CC"
-                                      "LD"
-                                      "LD_LIBRARY_PATH"
-                                      "RUSTUP_HOME"
-                                      "QUICKLISP_HOME"
-                                      "DEV" "DEV_ID" "DEV_HOME"
-                                      "WORKER" "WORKER_ID" "WORKER_HOME"
-                                      "SBCL_HOME"
-                                      "STASH"
-                                      "STORE"
-                                      "LISP_HOME"))
-(add-to-list 'exec-path "/usr/bin/")
-(add-to-list 'exec-path "/usr/sbin/")
-(add-to-list 'exec-path "/usr/local/bin/")
-(add-to-list 'exec-path "/usr/local/share/lisp/")
-(add-to-list 'exec-path "/usr/share/lisp/")
+(use-package exec-path-from-shell
+  :init
+  (add-to-list 'exec-path "/usr/bin/")
+  (add-to-list 'exec-path "/usr/sbin/")
+  (add-to-list 'exec-path "/usr/local/bin/")
+  (add-to-list 'exec-path "/usr/local/share/lisp/")
+  (add-to-list 'exec-path "/usr/share/lisp/")
+  (add-to-list 'exec-path (join-paths user-home-directory ".local/bin/"))
+  :config
+  (exec-path-from-shell-copy-envs (list "SSH_AGENT_PID"
+					"SSH_AUTH_SOCK"
+					"PATH"
+					"CARGO_HOME"
+					"CC"
+					"LD"
+					"LD_LIBRARY_PATH"
+					"RUSTUP_HOME"
+					"QUICKLISP_HOME"
+					"DEV" "DEV_ID" "DEV_HOME"
+					"WORKER" "WORKER_ID" "WORKER_HOME"
+					"SBCL_HOME"
+					"STASH"
+					"STORE"
+					"LISP_HOME")))
 
-;;; Util
-;;;###autoload
-(defun edit-emacs-config (&optional src)
-  (interactive (list current-prefix-arg))
-  (let ((file (if src
-                  (expand-file-name "default.el" emacs-config-source)
-                user-custom-file)))
-    (find-file file)))
+;;; Completion
+(use-package corfu)
+(use-package cape)
+(use-package consult)
 
-;;; Completions
-(use-package marginalia :ensure t
+(use-package marginalia
   :config (marginalia-mode))
-;; avoid obsolete warnings about if-let -> if-let* etc
+
 (use-package vertico
   :ensure t
   :config (vertico-mode)
-  (keymap-set vertico-map "M-q" #'vertico-quick-insert)
-  (keymap-set vertico-map "C-q" #'vertico-quick-exit))
+  :bind 
+  (("M-q" . #'vertico-quick-insert)
+   ("C-q" . #'vertico-quick-exit)))
+
 ;; (use-package kind-icon
 ;;   :ensure t
 ;;   :after corfu
@@ -178,10 +134,12 @@
                                         (eglot (styles orderless))
                                         (eglot-capf (styles orderless)))))
 
-(add-hook 'expand-expand-hook 'indent-according-to-mode)
-(add-hook 'expand-jump-hook 'indent-according-to-mode)
+(use-package expand
+  :hook ((expand-expand . indent-according-to-mode)
+	 (expand-jump . indent-according-to-mode)))
 
-(global-completion-preview-mode)
+(use-package completion-preview
+  :config (global-completion-preview-mode))
 
 (use-package corfu
   :ensure t
@@ -214,55 +172,39 @@
   (keymap-set corfu-map "M-m" #'corfu-move-to-minibuffer)
   (add-to-list 'corfu-continue-commands #'corfu-move-to-minibuffer))
 
-;;; Desktop
-(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
-
-;;; Multisession
-;; (setq multisession-storage 'files)
-
-;;; Kill Ring
-(kill-ring-deindent-mode)
-
 ;;; VC
 ;; use rhg, fallback to hg. see hgrc
 ;; (if (file-exists-p "~/.local/bin/rhg")
 ;;     (setq hg-binary "~/.local/bin/rhg"))
 
 ;;; Dired
-(setq dired-dwim-target t
-      dired-free-space 'separate)
+(use-package dired
+  :config
+  (setq dired-dwim-target t
+	dired-free-space 'separate))
 
 ;;; Speedbar
-(require 'speedbar)
-(setq speedbar-sort-tags t
-      speedbar-prefer-window t
-      speedbar-track-mouse-flag t)
+(use-package speedbar
+  :config
+  (setq speedbar-sort-tags t
+	speedbar-prefer-window t
+	speedbar-track-mouse-flag t))
 
 ;;; Projects
-(setopt  project-list-file (expand-file-name "projects" user-emacs-directory)
-         project-mode-line t
-         project-file-history-behavior 'relativize)
-
-(defun remember-project ()
-  (interactive)
-  (project-remember-project (project-current))
-  project--list)
-
-(defun remember-lab-projects ()
-  (interactive)
-  (project-remember-projects-under user-lab-directory t))
-
-(defun remember-comp-projects ()
-  (interactive)
-  (project-remember-projects-under company-source-directory t))
+(use-package package
+  :init
+  (setopt project-list-file (expand-file-name "projects" user-emacs-directory)
+          project-mode-line t
+          project-file-history-behavior 'relativize)
+  :config
+  (defun remember-project ()
+    (interactive)
+    (project-remember-project (project-current))
+    project--list))
 
 ;;; Tabs
-(add-hook 'tab-bar-mode-hook #'tab-bar-history-mode)
-
-;;; Whitespace
-(setq-default
- whitespace-style '(face tabs trailing lines-tail indentation::space)
- whitespace-line-column 88)
+(use-package tab-bar
+  :hook #'tab-bar-history)
 
 ;;; Lisp
 (use-package company :ensure t)
@@ -1646,16 +1588,21 @@ EXT is a list of the extensions of files to be included."
     files))
 
 ;;; Dictionary
-(setq dictionary-server "dict.compiler.company")
+(use-package dictionary
+  :init (setq dictionary-server "dict.compiler.company"))
 
 ;;; Ispell
-;; requires aspell and a hunspell dictionary (hunspell-en_us)
-(setq-default ispell-program-name "hunspell")
-(add-hook 'mail-send-hook  #'ispell-message)
+(use-package ispell
+  :init ;; requires aspell and a hunspell dictionary (hunspell-en_us)
+  (setq-default ispell-program-name "hunspell")
+  :hook (mail-send-hook . ispell-message))
 
 ;;; Skel
-(require 'skel)
-(require 'skt)
+(use-package skel :load-path user-emacs-site-lisp-directory)
+  
+(use-package skt
+  :load-path user-emacs-site-lisp-directory
+  :after (skel))
 
 (provide 'default)
 ;; default.el ends here
