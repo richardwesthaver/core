@@ -41,15 +41,86 @@ Coerce ARGS into a single string and return it."
     s))
 
 (defun symb (&rest args)
-  "Paul Graham's symb utility from On Lisp.
-
-Concat ARGS and return a newly interned symbol."
+  "Concat ARGS and return a newly interned symbol."
   (intern (apply #'mkstr args)))
+
+(defun group (source n)
+  "Group a list of arguments SOURCE by any provided grouping amount N.
+
+For example:
+(group (quote (foo 2 bar 4)) 2) ;=> ((foo 2) (bar 4))
+(group (quote (a b c d e f)) 3) ;=> ((a b c) (d e f))
+"
+  (when (zerop n) (error "zero length"))
+  (cl-labels ((rec (source acc)
+		   (let ((rest (nthcdr n source)))
+		     (if (consp rest)
+			 (rec rest (cons
+				    (cl-subseq source 0 n)
+				    acc))
+		       (nreverse
+			(cons source acc))))))
+    (when source (rec source nil))))
+
+(defun flatten (x)
+  "Given a tree X, return all the leaves of the tree."
+  (cl-labels ((rec (x acc)
+		   (cond ((null x) acc)
+			 ((atom x) (cons x acc))
+			 (t (rec
+			     (car x)
+			     (rec (cdr x) acc))))))
+    (rec x nil)))
+
+(defun intersperse (element list)
+  "Intersperse ELEMENT between each element of LIST."
+  (if (null list)
+      nil
+    (cons (car list)
+	  (cl-mapcan (lambda (x) (list element x)) (cdr list)))))
+
+(defun hash-table-alist (table)
+  "Returns an association list containing the keys and values of hash table
+TABLE."
+  (let ((alist nil))
+    (maphash (lambda (k v)
+	       (push (cons k v) alist))
+	     table)
+    (nreverse alist)))
+
+(defun load-default-theme (&optional theme)
+  (interactive)
+  (when theme (setq default-theme theme))
+  (load-theme default-theme t))
+
+(defun load-keys (&optional custom)
+  (let ((keydefs (or custom (join-paths user-emacs-site-lisp-directory "keymaps.el"))))
+    (load keydefs nil t)))
+
+(defun gen-site-lisp-autoloads ()
+  (interactive)
+  (loaddefs-generate 
+   (list
+    user-emacs-site-lisp-directory
+    (join-paths user-emacs-site-lisp-directory "slime"))
+   (join-paths user-emacs-site-lisp-directory "autoloads.el")))
+
+(defun gen-lisp-autoloads ()
+  (interactive)
+  (loaddefs-generate user-emacs-lisp-directory
+   (join-paths user-emacs-lisp-directory "autoloads.el")))
+
+(defun upgrade-emacs (&optional ask)
+  (interactive)
+  (package-refresh-contents)
+  (package-install-selected-packages (not ask))
+  (package-upgrade-all ask))
 
 ;;; Variables
 (defvar user-emacs-site-lisp-directory (expand-file-name (join-paths user-emacs-directory "site-lisp")))
 (defvar user-emacs-lisp-directory (expand-file-name (join-paths user-emacs-directory "lisp")))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
+(defvar user-config-file (join-paths user-emacs-directory "config.el"))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
 (defvar user-stash-directory (expand-file-name ".stash" user-home-directory))
@@ -73,26 +144,54 @@ Concat ARGS and return a newly interned symbol."
 (defvar core-lisp-program "/usr/bin/core")
 
 ;;; Settings
-(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory))
+(setq desktop-dirname (expand-file-name "sessions" user-emacs-directory)
+      tab-width 4
+      switch-to-buffer-obey-display-actions t
+      show-paren-context-when-offscreen 'overlay
+      indent-tabs-mode nil
+      make-backup-files nil
+      save-list-file-prefix (expand-file-name "auto-save/." user-emacs-directory)
+      mml-attach-file-at-the-end t
+      confirm-kill-emacs nil
+      confirm-kill-processes nil
+      use-short-answers t
+      display-time-format "%Y-%m-%d %H:%M"
+      ring-bell-function 'ignore
+      kill-region-dwim nil
+      ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
+      ;; allow-emacs-pinentry
+      ;; allow-loopback-pinentry
+      epg-pinentry-mode 'loopback
+      bookmark-default-file (expand-file-name "bookmarks" user-emacs-directory)
+      set-mark-command-repeat-pop t
+      tempo-interactive t
+      gnus-cache-directory (expand-file-name "gnus" user-emacs-directory)
+      url-cache-directory (expand-file-name "url" user-emacs-directory)
+      register-use-preview t
+      view-read-only t)
 
 ;;; Load Path
 (add-to-load-path 
  (expand-file-name "site-lisp" user-emacs-directory)
- user-emacs-site-lisp-directory (join-paths company-source-directory "core/slime"))
+ user-emacs-lisp-directory
+ user-emacs-site-lisp-directory 
+ (join-paths user-emacs-site-lisp-directory "slime"))
+
+;; Load autoloads if they exist
+(require 'autoloads (join-paths user-emacs-site-lisp-directory "autoloads") t)
 
 ;;; Package Setup
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
 	("nongnu" . "https://elpa.nongnu.org/nongnu/")
-	("melpa" . "https://melpa.org/packages/")
-	))
+	("melpa" . "https://melpa.org/packages/")))
 
-;; use-pacakge defaults
-(use-package use-package-ensure-system-package)
-(use-package diminish)
-(use-package delight)
-(setopt 
- ;; use-package-always-defer t
+;; use-package defaults
+(use-package system-packages :ensure t)
+(use-package diminish :ensure t)
+(use-package delight :ensure t)
+(setq
+ use-package-always-defer t
  use-package-expand-minimally t)
 
 ;;; Enable Commands
@@ -101,16 +200,16 @@ Concat ARGS and return a newly interned symbol."
 (put 'list-timers 'disabled nil)
 
 ;;; Global Modes
-(kill-ring-deindent-mode)
+(kill-ring-deindent-mode 1)
+(repeat-mode 1)
 
 ;;; Load default.el
+(load (join-paths user-emacs-directory "default.el"))
 
-(let ((default (join-paths user-emacs-directory "default.el"))
-      (config (join-paths user-emacs-directory "config.el")))
-  (load default)
-  (load config))
-
+;;; Load user customizations
+(when (file-exists-p user-config-file) (load-file user-config-file))
 (when (file-exists-p user-custom-file) (load-file user-custom-file))
-	                       
-;; (add-hook 'after-init-hook (load-keys))
+
+;;; After-init hooks
 (add-hook 'after-init-hook 'load-default-theme)
+(add-hook 'after-init-hook 'load-keys)

@@ -26,7 +26,6 @@
 (require 'org)
 (require 'org-agenda)
 (require 'org-web-tools)
-(require 'default)
 (require 'ulang)
 
 (defgroup graph nil

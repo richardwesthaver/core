@@ -1,18 +1,30 @@
-;;; keys.el --- emacs keys -*- lexical-binding: t; -*-
+;;; keymaps.el --- Default Keymaps -*- lexical-binding: t; -*-
 
-;; default keybinds
+;; Copyright (C) 2026  The Compiler Company
+
+;; Author:  <ellis@zor>
+;; Keywords: convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
-;; I encourage you to remap these keys as you see fit. Where possible,
-;; wrap your custom bindings in a keymap instead of redefining the
-;; global defaults defined here.
+;; 
 
 ;;; Code:
-(require 'default)
-
 (defvar-keymap parens-map
-  :doc "parens-minor-mode keymap."
+  :doc "User keymap for working with parens."
   :repeat (:exit (kill-sexp undo))
   :prefix 'parens-map
   "f" #'forward-sexp
@@ -31,8 +43,7 @@
   "x" #'eval-defun)
 
 (defvar-keymap toggle-map
-  :doc
-  "User-specified keymap for mode toggles. Usually bound to 'C-c c SPC'."
+  :doc "User keymap for mode toggles. Usually bound to 'C-c c SPC'."
   :prefix 'toggle-map
   "v" #'global-visual-line-mode
   "b" #'speedbar
@@ -56,8 +67,7 @@
   "W" #'global-whitespace-toggle-options)
 
 (defvar-keymap status-map
-  :doc
-  "User-specified keymap for status functions. Usually bound to 'C-c c .'."
+  :doc "User keymap for status functions. Usually bound to 'C-c c .'."
   "l" #'eglot-list-connections
   "p" #'list-processes
   "t" #'list-threads
@@ -68,14 +78,12 @@
   "P" #'list-packages)
 
 (defvar-keymap server-map
-  :doc
-  "User-specified keymap for server functions. Usually bound to 'C-c c q'."
+  :doc "User keymap for server functions. Usually bound to 'C-c c q'."
   "q"  #'kill-emacs
   "r" #'kill-emacs-restart)
 
 (defvar-keymap review-map
-  :doc
-  "User-specified keymap for review functions. Usually bound to 'C-c c r'."
+  :doc "User keymap for review functions. Usually bound to 'C-c c r'."
   "s" #'flyspell-buffer
   "SPC" #'whitespace-cleanup
   "C-s" #'org-schedule-effort
@@ -83,8 +91,7 @@
   "q" #'query-replace-regexp)
 
 (defvar-keymap search-map
-  :doc
-  "User-specified keymap for search functions. Usually bound to 'C-c c s'."
+  :doc "User keymap for search functions. Usually bound to 'C-c c s'."
   "g" #'grep
   "r" #'rgrep
   "z" #'zrgrep
@@ -95,8 +102,7 @@
   "SPC" #'whitespace-cleanup)
 
 (defvar-keymap clock-map
-  :doc
-  "User-specified keymap for org-clock functions. Usually bound to 'C-c c t'."
+  :doc "User keymap for org-clock functions. Usually bound to 'C-c c t'."
   "j" #'org-clock-goto
   "i" #'org-clock-in
   "o" #'org-clock-out
@@ -107,8 +113,7 @@
   "m" #'org-clock-mark-default-task)
 
 (defvar-keymap user-map
-  :doc
-  "User-specified keymap usually bound to 'C-c c' and populated in 'custom.el'."
+  :doc "User keymap. Usually bound to 'C-c c' and populated in 'custom.el'."
   :prefix 'user-map
   "c" #'org-capture
   "1" #'org-inbox-open
@@ -118,6 +123,7 @@
   "u" #'compile
   "a" #'org-agenda
   "A" #'org-agenda-show-week-all
+  ;; (keymap-set user-map "<return>" #'eshell)
   "RET" #'eshell
   "C-<return>" #'eshell-new
   "s-<return>" #'term
@@ -143,32 +149,33 @@
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 
-;;;_. MPC
-(defun mpc-mark ()
-  "Mark mpc song at point and move to next line."
-  (interactive)
-  (mpc-select-toggle)
-  (next-line))
-
-(with-eval-after-load "mpc"
-  (keymap-set mpc-mode-map "v" 'mpc-tagbrowser)
-  (keymap-set mpc-mode-map "a" 'mpc-playlist-add)
-  (keymap-set mpc-mode-map "c" 'mpc-playlist-create)
-  (keymap-set mpc-mode-map "." 'mpc-play-at-point)
-  (keymap-set mpc-mode-map "P" 'mpc-resume)
-  (keymap-set mpc-mode-map "f" 'mpc-ffwd)
-  (keymap-set mpc-mode-map "b" 'mpc-rewind)
-  (keymap-set mpc-mode-map "x" 'mpc-playlist-delete)
-  (keymap-set mpc-mode-map "m" 'mpc-mark)
-  (keymap-set mpc-mode-map "1" 'mpc-playlist))
+(use-package mpc
+  :bind
+  (:map mpc-mode-map
+	("v" . mpc-tagbrowser)
+	("a" . mpc-playlist-add)
+	("c" . mpc-playlist-create)
+	("." . mpc-play-at-point)
+	("P" . mpc-resume)
+	("f" . mpc-ffwd)
+	("b" . mpc-rewind)
+	("x" . mpc-playlist-delete)
+	("m" . mpc-mark)
+	("1" . mpc-playlist))
+  :config
+  (defun mpc-mark ()
+    "Mark mpc song at point and move to next line."
+    (interactive)
+    (mpc-select-toggle)
+    (next-line)))
 
 ;;; Modes
-(add-hook
- 'conf-toml-mode-hook
- (lambda ()
-   (keymap-set conf-toml-mode-map "C-c C-c C-r" #'rust-run)
-   (keymap-set conf-toml-mode-map "C-c C-c C-u" #'rust-compile)
-   (keymap-set conf-toml-mode-map "C-c C-c C-t" #'rust-test)))
+
+(use-package conf-mode
+  :bind (:map conf-toml-mode-map
+	      ("C-c C-c C-r" . #'rust-run)
+	      ("C-c C-c C-u" . #'rust-compile)
+	      ("C-c C-c C-t" . #'rust-test)))
 
 (keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
@@ -201,5 +208,5 @@
 (keymap-global-set "C-c a" #'org-agenda)
 (keymap-global-set "C-c t" #'org-todo)
 
-(provide 'keys)
-;; keys.el ends here
+(provide 'keymaps)
+;; keymaps.el ends here

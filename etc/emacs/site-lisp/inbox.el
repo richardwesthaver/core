@@ -29,7 +29,6 @@
 ;;; Code:
 (require 'org)
 (require 'org-agenda)
-(require 'default)
 (require 'org-expiry)
 
 (defgroup inbox nil

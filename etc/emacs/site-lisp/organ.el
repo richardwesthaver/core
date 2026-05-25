@@ -1,9 +1,9 @@
-;;; config.el --- Default User Configuration         -*- lexical-binding: t; -*-
+;;; organ.el --- Org Extensions -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2026  The Compiler Company
 
-;; Author: Richard Westhaver <richard.westhaver@gmail.com>
-;; Keywords: 
+;; Author:  <ellis@zor>
+;; Keywords: docs, outlines
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -20,13 +20,12 @@
 
 ;;; Commentary:
 
-;; 
+;; Handful of org-specific extensions
 
 ;;; Code:
+(require 'org)
 
-;;; Org
-
-;;;; Directories
+;;; Directories
 (defun extract-org-directory-titles-as-list (&optional dir)
   (interactive "D")
   (print
@@ -62,36 +61,47 @@
     (dolist (f files)
       (insert (concat "#+INCLUDE: " f "\n")))))
 
-;;;; Babel
-;; org-sbx [[https://list.orgmode.org/d429d29b-42fa-7d7b-6f3a-9fe692fd6dc7@grinta.net/T/]]
-(defun %org-sbx (name header args)
-  (let* ((args (mapconcat
-		(lambda (x)
-		  (format "%s=%S" (symbol-name (car x)) (cadr x)))
-		args ", "))
-	 (ctx (list 'babel-call (list :call name
-				      :name name
-				      :inside-header header
-				      :arguments args
-				      :end-header ":results silent")))
-	 (info (org-babel-lob-get-info ctx)))
-    (when info (org-babel-execute-src-block nil info))))
+(defun org-list-files (dirs ext)
+  "Function to create list of org files in multiple subdirectories.
+This can be called to generate a list of files for
+org-agenda-files or org-refile-targets.
 
-(defmacro org-sbx (name &rest args)
-  (let* ((header (if (stringp (car args)) (car args) nil))
-	 (args (if (stringp (car args)) (cdr args) args)))
-    (unless (stringp name)
-      (setq name (symbol-name name)))
-    (let ((result (%org-sbx name header args)))
-      (org-trim (if (stringp result) result (format "%S" result))))))
+DIRS is a list of directories.
 
+EXT is a list of the extensions of files to be included."
+  (let ((dirs (if (listp dirs)
+		  dirs
+		(list dirs)))
+	(ext (if (listp ext)
+		 ext
+	       (list ext)))
+	files)
+    (mapc
+     (lambda (x)
+       (mapc
+	(lambda (y)
+	  (setq files
+		(append files
+			(file-expand-wildcards
+			 (concat (file-name-as-directory x) "*" y)))))
+	ext))
+     dirs)
+    (mapc
+     (lambda (x)
+       (when (or (string-match "/.#" x)
+		 (string-match "#$" x))
+	 (setq files (delete x files))))
+     files)
+    files))
+
+;;; Babel
 (defun org-babel-execute-region (beg end &optional arg)
   (interactive "r")
   (narrow-to-region beg end)
   (org-babel-execute-buffer arg)
   (widen))
 
-;;;; Agenda
+;;; Agenda
 (defun org-schedule-effort ()
   (interactive)
   (save-excursion
@@ -137,7 +147,7 @@
   (interactive "P") 
   (org-agenda arg "n"))
 
-;;;; Capture
+;;; Capture
 (defun org-ask-location ()
   "prompt for a location."
   (let* ((org-refile-targets '((nil :maxlevel . 9)))
@@ -193,7 +203,7 @@
   (interactive "r")
   (org-capture-string (buffer-substring-no-properties start end) "3"))
 
-;;;; Check
+;;; Check
 (defun org-adjust-tags-column-reset-tags ()
   "In org-mode buffers, reset tag position according to `org-tags-column'."
   (interactive)
@@ -274,8 +284,7 @@ inherited by a parent headline."
       (save-excursion
 	(org-remove-empty-drawer-at "PROPERTIES" (match-beginning 0))))))
 
-;;;; Links
-					; to include mm-url-decode-entities-string
+;;; Links
 (use-package mm-url
   :autoload (mm-url-decode-entities-string))
 
@@ -308,113 +317,5 @@ inherited by a parent headline."
   (let ((title (get-html-title-from-url url)))
     (org-insert-link nil url title)))
 
-;;; Lisp
-(with-eval-after-load 'slime
-  (defvar slime-toggle nil)
-  (defun slime-switch-to-output (&optional same-window)
-    "Select the output buffer, when possible in an existing window. When
-SAME-WINDOW is non-nil open in the current window.
-
-Hint: You can use `display-buffer-reuse-frames' and
-`special-display-buffer-names' to customize the frame in which the
-buffer should appear."
-    (interactive)
-    (let ((buffer (slime-output-buffer)))
-      (if same-window
-	  (pop-to-buffer-same-window buffer)
-	(pop-to-buffer buffer))))
-
-  (defun slime-toggle ()
-    "Toggle between current buffer and slime-repl."
-    (interactive)
-    (if (eq major-mode 'slime-repl-mode)
-	(setq slime-toggle
-	      (pop-to-buffer-same-window
-	       (or slime-toggle (read-buffer "lisp buffer: "))))
-      (if (slime-connected-p)
-	  (progn
-	    (setq slime-toggle (current-buffer))
-	    (slime-switch-to-output t))
-	(setq slime-toggle (current-buffer))
-	(slime))))
-
-  (defun slime-load-script (filename)
-    "Like `slime-load-file' but for script files containing a shebang
-line (which is skipped)."
-    (interactive (list
-		  (read-file-name "Load file: " nil nil
-				  nil (if (buffer-file-name)
-					  (file-name-nondirectory
-					   (buffer-file-name))))))
-    (let ((lisp-filename (slime-to-lisp-filename (expand-file-name filename))))
-      ;; TODO 2026-05-01: 
-      (slime-eval-with-transcript `(swank:load-script-file ,lisp-filename))))
-  (defvar lisp-toggle nil)
-  (defun lisp-toggle (&optional cmd)
-    "Toggle between current buffer and inferior-lisp process buffer."
-    (interactive)
-    (if (eq major-mode 'inferior-lisp-mode)
-	(pop-to-buffer-same-window
-	 (or lisp-toggle (read-buffer "lisp buffer: ")))
-      (if inferior-lisp-buffer
-	  (progn
-	    (setq lisp-toggle (current-buffer))
-	    (inferior-lisp (or cmd inferior-lisp-program)))
-	(setq lisp-toggle (current-buffer))
-	(inferior-lisp (or cmd inferior-lisp-program)))))
-  (define-common-lisp-style "core"
-   "Core Common Lisp Indentation Style"
-   (:inherit "sbcl")
-   (:indentation
-    (defpkg (as defpackage))
-    (make-instance 1)
-    (reinitialize-instance 1)
-    (ensure-package 1)
-    (init 1)
-    (defpackage* (as defpackage))
-    (blasfunc 2)
-    (symbol-call 2)
-    (org-parse 2)
-    (lety (as let))
-    (lety* (as let*))
-    (letv (as let))
-    (letv* (as let*))
-    (deferror (as define-condition))
-    (defcondition (as define-condition))
-    (plet (as let))
-    (acase (as case))
-    (atypecase (as typecase))
-    (defwarning (as define-condition))
-    (make-db (as make-instance))
-    (make-schema (as make-instance))
-    (make-simple-schema (as make-instance))
-    (make-palette (as defpackage))
-    (define-package (as defpackage))
-    (defkernel (as defclass))
-    (defhook (as defmacro))
-    (defcommand (as defun))
-    (define-cli (as make-instance))
-    (walk-directory 1)
-    (using-gensyms (as with-gensyms))
-    (binding-gensyms (as with-gensyms))
-    (if-let* (as if-let))
-    (when-let* (as when-let))
-    (load-config 1)
-    (with-db 1)
-    (incf 1)
-    (decf 1)
-    (make-load-form-saving-slots 1)
-    (defconfig (as defclass))
-    (defclass* (as defclass))
-    (defsclass (as defclass))))
-
-  (defun slime-connect-file (file &optional host)
-    "Connect to the port number stored in FILE which should be the same value
-as the first argument to SWANK:START-SERVER on the Lisp side."
-    (interactive "fswank file: ")
-    (slime-connect
-     (or host "localhost")
-     (string-to-number
-      (with-temp-buffer
-	(insert-file-contents file)
-	(buffer-string))))))
+(provide 'organ)
+;;; organ.el ends here

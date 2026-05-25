@@ -28,6 +28,7 @@
 (require 'ox)
 (require 'ol-man)
 (require 'ol-info)
+(require 'calendar)
 (defgroup ulang nil
   "CC Universal Language.")
 
@@ -384,6 +385,66 @@ specified by `prog-comment-timestamp-format-verbose'."
      (t
       (comment-indent t)
       (insert (concat " " string))))))
+
+
+;;; Regexps
+(defvar default-line-regexp-alist
+  '((empty . "[\s\t]*$")
+    (indent . "^[\s\t]+")
+    (non-empty . "^.+$")
+    (list . "^\\([\s\t#*+]+\\|[0-9]+[^\s]?[).]+\\)")
+    (heading . "^[=-]+"))
+  "Alist of regexp types used by `default-line-regexp-p'.")
+
+(defun default-line-regexp-p (type &optional n)
+  "Test for TYPE on line.
+TYPE is the car of a cons cell in
+`default-line-regexp-alist'.  It matches a regular
+expression.
+With optional N, search in the Nth line from point."
+  (save-excursion
+    (goto-char (pos-bol))
+    (and (not (bobp))
+	 (or (beginning-of-line n) t)
+	 (save-match-data
+	   (looking-at
+	    (alist-get type default-line-regexp-alist))))))
+
+;;; Time
+(defun format-iso-week-number (&optional date)
+  "format DATE as ISO week number with week days starting on
+    Monday. If DATE is nil use current date."
+  (let* ((week (format-time-string "%W" date))
+	 (prefix (if (= (length week) 1)
+		     "w0" "w")))
+    (concat prefix week)))
+
+(defun last-day-of-year (&optional date)
+  "Return the last day of the year as time."
+  (encode-time 0 0 0 31 12 (nth 5 (decode-time
+				   (or date (current-time))))))
+
+(defun last-day-of-month (&optional date)
+  "Return the last day of month as time."
+  (let* ((now (decode-time (or date (current-time))))
+	 (month (nth 4 now))
+	 (year (nth 5 now))
+	 (last-day-of-month (calendar-last-day-of-month month year)))
+    (encode-time 0 0 0 last-day-of-month month year)))
+
+(defun last-day-of-week (&optional date)
+  "Return the last day of the week as time."
+  (let* ((now (or date (current-time)))
+	 (datetime (decode-time now))
+	 (dow (nth 6 datetime)))
+    (time-add now (days-to-time (- 7 dow)))))
+
+(defun first-day-of-week (&optional date)
+  "Return the first day of the week as time."
+  (let* ((now (or date (current-time)))
+	 (datetime (decode-time now))
+	 (dow (nth 6 datetime)))
+    (time-subtract now (days-to-time dow))))
 
 (provide 'ulang)
 ;;; ulang.el ends here
