@@ -782,7 +782,13 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-protocol
   :after (org)
-  :init (setq org-protocol-default-template-key "L"))
+  :init (setq org-protocol-default-template-key "L"
+	      org-protocol-project-alist
+	      '(("comp"
+		 :base-url company-url
+		 :working-directory company-org-directory
+		 :online-suffix ".html"
+		 :working-suffix ".org"))))
 
 (use-package citeproc
   :after (org))

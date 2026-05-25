@@ -7,29 +7,21 @@
 (require 'org-id)
 (require 'dash)
 (require 'ox-man)
-;; vendored
 (require 'htmlize)
-(defvar project-dir "~/comp/org")
+(defvar project-dir company-org-directory)
 (defvar publish-dir "/tmp/www")
 (defvar url "https://compiler.company")
-(defvar vc-url "https://vc.compiler.company")
-(defvar packy-url "https://packy.compiler.company")
+(defvar vc-url company-vc-url)
+(defvar packy-url company-packy-url)
 (defvar html-foot "<footer><p>updated %C</p></footer>")
 (defvar default-org-export-setupfile (join-paths company-org-directory "clean.theme"))
-
-;; (setq org-protocol-project-alist
-;;       '(("comp"
-;;          :base-url url
-;;          :working-directory project-dir
-;;          :online-suffix ".html"
-;;          :working-suffix ".org")))
 
 (setq org-html-style-default ""
       org-html-scripts nil
       org-html-htmlize-output-type 'css
       org-export-htmlize-output-type 'css
       org-export-allow-bind-keywords t
-      org-export-async-init-file (join-paths user-emacs-lib-directory "publish-init.el")
+      org-export-async-init-file (join-paths company-org-directory "init.el")
       org-export-with-clocks t
       org-export-with-date t
       org-export-with-drawers t

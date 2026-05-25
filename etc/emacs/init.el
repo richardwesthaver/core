@@ -135,6 +135,7 @@ TABLE."
 (defvar company-domain "compiler.company")
 (defvar company-name "The Compiler Company, LLC")
 (defvar company-vc-domain "vc.compiler.company")
+(defvar company-url (format "https://%s" company-domain))
 (defvar company-vc-url (format "https://%s" company-vc-domain))
 (defvar company-packy-domain "packy.compiler.company")
 (defvar company-packy-url (format "https://%s" company-packy-domain))
