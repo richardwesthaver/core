@@ -49,6 +49,7 @@
 (defvar company-home "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 (defvar emacs-config-source (join-paths company-source-directory "core/emacs"))
+(defvar core-lisp-program "/usr/bin/core")
 
 ;;; Settings
 (setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory)
