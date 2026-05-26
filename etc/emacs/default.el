@@ -394,10 +394,7 @@ Interactively, NUMBER is the prefix arg."
 
 ;;; Eshell
 (use-package eshell
-  :hook (eshell . (lambda ()
-		    (eshell/alias "d" "dired $1")
-		    (eshell/alias "ff" "find-file $1")
-		    (eshell/alias "hgfe" "hg-fast-export.sh")))
+  :defer nil
   :init
   (setq eshell-highlight-prompt t
 	eshell-hist-ignoredups t
@@ -405,6 +402,10 @@ Interactively, NUMBER is the prefix arg."
 	eshell-prefer-lisp-functions nil
 	eshell-destroy-buffer-when-process-dies t)
   :config
+  (require 'em-alias)
+  (eshell/alias "d" "dired $1")
+  (eshell/alias "ff" "find-file $1")
+
   (defun eshell-new()
     "Open a new instance of eshell."
     (interactive)
@@ -455,11 +456,10 @@ Interactively, NUMBER is the prefix arg."
 ;;; Terminal
 (use-package eat
   :ensure t
+  :hook (eshell . eat-eshell-mode)
   :init
   (setq eat-enable-auto-line-mode t
-	eat-kill-buffer-on-exit t)
-  :config
-  (eat-eshell-mode))
+	eat-kill-buffer-on-exit t))
 
 ;;; Eww
 (use-package shr
@@ -582,7 +582,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Org
 (use-package org
-  :hook ((org-mode . visual-line-mode))
+  :hook (org-mode-hook . visual-line-mode)
   :bind (("C-c l" . org-follow-location))
   :init
   (defun ol-vc-expand (tag)
@@ -835,34 +835,44 @@ With prefix ARG non-nil, insert the result at the end of region."
   :defer nil
   :load-path user-emacs-site-lisp-directory)
 
-(use-package scratch :load-path user-emacs-site-lisp-directory)
+(use-package scratch 
+  :defer nil
+  :load-path user-emacs-site-lisp-directory)
 
 (use-package organ 
+  :defer nil
   :load-path user-emacs-site-lisp-directory
   :hook (org-after-todo-state-change . org-clock-in-wip))
 
-(use-package graph :load-path user-emacs-site-lisp-directory
+(use-package graph 
+  :load-path user-emacs-site-lisp-directory
   :hook (org-mode . org-graph-maybe-enable))
 
 (use-package inbox
+  :defer nil
   :load-path user-emacs-site-lisp-directory
   :after (org-expiry)
   :config (load-org-inbox-capture-templates))
 
-(use-package gen :load-path user-emacs-site-lisp-directory)
+(use-package gen 
+  :load-path user-emacs-site-lisp-directory)
 
-(use-package scrum :load-path user-emacs-site-lisp-directory
+(use-package scrum 
+  :load-path user-emacs-site-lisp-directory
+  :defer nil
   ;; used in org/meta/babel.org, called via org-dblocks in project
   ;; readmes.
   :ensure-system-package tokei)
 
-(use-package skel :load-path user-emacs-site-lisp-directory)
+(use-package skel 
+  :load-path user-emacs-site-lisp-directory)
 
 (use-package skt
   :load-path user-emacs-site-lisp-directory
   :after (skel))
 
-(use-package mpk :load-path user-emacs-site-lisp-directory)
+(use-package mpk 
+  :load-path user-emacs-site-lisp-directory)
 
 (provide 'default)
 ;; default.el ends here
