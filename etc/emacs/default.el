@@ -49,6 +49,7 @@
     "DEV" "DEV_ID" "DEV_HOME"
     "WORKER" "WORKER_ID" "WORKER_HOME"
     "SBCL_HOME"
+    "NOTMUCH_CONFIG"
     "STASH"
     "STORE"
     "LISP_HOME")))

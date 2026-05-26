@@ -197,7 +197,7 @@
   (:nicknames :sk-comp)
   (:use :cl :std)
   (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
-   :skel/comp/container :skel/comp/dir-locals :skel/comp/org))
+   :skel/comp/container :skel/comp/emacs :skel/comp/org))
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)
