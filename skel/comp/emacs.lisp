@@ -12,7 +12,6 @@
 (defvar *dir-locals-file* ".dir-locals.el")
 (deftype dir-local-var-designator () '(or symbol string))
 
-
 (defclass sk-emacs-component (sk-component ast)
   ())
 
@@ -38,3 +37,7 @@
   (sk-new :el 
           :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
                                                :directory (namestring path)))))
+
+(defmethod print-object ((object sk-emacs-component) stream)
+  (print-unreadable-object (object stream :type t)
+    (format stream ":ID ~A" (format-sxhash (id object)))))

@@ -142,11 +142,11 @@
    :mk-val :mk-var
    :makefile))
 
-(defpkg :skel/comp/cargo
+(defpkg :skel/comp/rust
   (:use :cl :std :skel/core :toml :config :cli/tools/build)
   (:export :sk-rust-system :parse-sk-rust-system))
 
-(defpkg :skel/comp/pyproject
+(defpkg :skel/comp/python
   (:use :cl :std :skel/core :toml :config :cli/tools/build)
   (:export :sk-python-system :parse-sk-python-system))
 
@@ -178,7 +178,7 @@
   (:export :sk-containerfile))
 
 (defpkg :skel/comp/emacs
-  (:use :cl :std :skel/core :ast)
+  (:use :cl :std :skel/core :ast :id)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file))
 
 (defpkg :skel/comp/org
@@ -196,7 +196,7 @@
 (defpkg :skel/comp
   (:nicknames :sk-comp)
   (:use :cl :std)
-  (:use-reexport :skel/comp/asd :skel/comp/cargo :skel/comp/makefile
+  (:use-reexport :skel/comp/asd :skel/comp/rust :skel/comp/makefile
    :skel/comp/container :skel/comp/emacs :skel/comp/org))
 
 (defpkg :skel/cli

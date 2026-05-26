@@ -1,9 +1,9 @@
-;;; pyproject.lisp --- Pyproject.toml Support
+;;; python.lisp --- Python Components
 
 ;; ref: https://peps.python.org/pep-0621/
 
 ;;; Code:
-(in-package :skel/comp/pyproject)
+(in-package :skel/comp/python)
 
 (defparameter *pyproject-filename* "pyproject.toml")
 
@@ -27,4 +27,3 @@
   (declare (ignorable path)))
 
 (defmethod sk-read-file ((self sk-python-system) path))
-

@@ -1,4 +1,4 @@
-;;; lib/skel/comp/cargo.lisp --- Cargo.toml Components
+;;; lib/skel/comp/rust.lisp --- Rust Components
 
 ;; Cargo.toml skel components.
 
@@ -7,7 +7,7 @@
 ;; (:sk-rust-system "Cargo.toml")
 
 ;;; Code:
-(in-package :skel/comp/cargo)
+(in-package :skel/comp/rust)
 
 (defparameter *cargo-manifest-filename* "Cargo.toml")
 
