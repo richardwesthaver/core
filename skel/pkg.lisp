@@ -177,9 +177,9 @@
   (:use :cl :std :pod :skel/core :obj/id)
   (:export :sk-containerfile))
 
-(defpkg :skel/comp/dir-locals
+(defpkg :skel/comp/emacs
   (:use :cl :std :skel/core)
-  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals))
+  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file))
 
 (defpkg :skel/comp/org
   (:use :cl :std :skel/core :organ :obj/id)

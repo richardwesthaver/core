@@ -27,7 +27,7 @@
     (:file "box")
     (:file "container")
     (:file "org")
-    (:file "dir-locals")
+    (:file "emacs")
     (:file "makefile")
     (:file "sys")
     (:file "infer")))

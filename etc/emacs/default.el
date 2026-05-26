@@ -191,7 +191,7 @@
   :after (company cape inf-lisp)
   :autoload (slime-toggle slime-connect-file)
   :hook 
-  (lisp . (slime-mode slime-cape-enable))
+  (lisp . slime-cape-enable)
   (inferior-lisp . inferior-slime-mode)
   (slime-repl . slime-cape-enable)
   :init
