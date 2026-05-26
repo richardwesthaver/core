@@ -174,19 +174,19 @@
   (:export :sk-lisp-file))
 
 (defpkg :skel/comp/container
-  (:use :cl :std :pod :skel/core :obj/id)
+  (:use :cl :std :pod :skel/core :id :ast)
   (:export :sk-containerfile))
 
 (defpkg :skel/comp/emacs
-  (:use :cl :std :skel/core)
+  (:use :cl :std :skel/core :ast)
   (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file))
 
 (defpkg :skel/comp/org
-  (:use :cl :std :skel/core :organ :obj/id)
+  (:use :cl :std :skel/core :organ :id)
   (:export :sk-org-file))
 
 (defpkg :skel/comp/box
-  (:use :cl :std :skel/core :box :obj/id)
+  (:use :cl :std :skel/core :box :id)
   (:export :sk-box-file))
 
 (defpkg :skel/comp/infer
