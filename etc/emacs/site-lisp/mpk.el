@@ -53,3 +53,6 @@
               mode-name "MPK"
               mode-line-format (copy-tree mode-line-format))
         (current-buffer))))
+
+(provide 'mpk)
+;;; mpk.el ends here

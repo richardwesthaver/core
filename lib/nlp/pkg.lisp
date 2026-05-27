@@ -1,24 +1,20 @@
 ;;; nlp/pkg.lisp --- NLP packages
 
 ;;; Code:
-(defpkg :nlp/data
-  (:use :cl :std)
-  (:export 
-   :language-data
-   :*language-data*
-   :stop-words-lookup
-   :stop-words))
+(defpkg :nlp/fuzzy
+  (:use :cl)
+  (:export :fuzzy-match :file-match))
 
 (defpkg :nlp/stem/porter
   (:use :cl :std :rdb)
   (:export :stem))
 
 (defpkg :nlp/tokenize
-  (:use :cl :std :ppcre :nlp/data :nlp/stem/porter)
-  (:export :word-tokenize :sentence-tokenize))
+  (:use :cl :std :ppcre :nlp/stem/porter)
+  (:export :word-tokenize :sentence-tokenize :*language-data* :*stop-words*))
 
 (defpkg :nlp/doc
-  (:use :cl :std :nlp/data :nlp/tokenize)
+  (:use :std-lisp :nlp/tokenize :graph)
   (:export 
    :document
    :documents
@@ -36,27 +32,14 @@
    :term-frequency
    :extract-keywords
    :tf-vectorize-documents
-   :vector-data))
-
-(defpkg :nlp/textrank
-  (:use :cl :std :nlp/doc :nlp/tokenize :graph)
-  (:export 
-   :summarize-text :edges :document-vertex))
-
-(defpkg :nlp/dbscan
-  (:use :cl :std :nlp/doc :nlp/textrank :nlp/tokenize)
+   :vector-data)
+  (:export :summarize-text :edges :document-vertex)
   (:export 
    :document-cluster :clusters :get-cluster :distance
    :generate-document-distance-vectors
    :cluster :neighbors :clusters
-   :dbscan))
-
-(defpkg :nlp/section
-  (:use :cl :std :nlp/doc :nlp/dbscan :nlp/tokenize)
-  (:export :extract-sections))
-
-(defpkg :nlp/string
-  (:use :cl)
+   :dbscan)
+  (:export :extract-sections)
   (:export    
    #:hamming
    #:levenshtein
@@ -67,8 +50,3 @@
    #:jaccard
    #:jaro
    #:jaro-winkler))
-
-(defpkg :nlp/fuzzy
-  (:use :cl)
-  (:export :fuzzy-match :file-match))
-

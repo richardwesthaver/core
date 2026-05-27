@@ -3,14 +3,8 @@
  :require (:std :rdb :ppcre :parse :obj)
  :components 
  ((:pkg "pkg" :feature :nlp :export :nlp)
-  (:file "data")
-  (:file "tokenize")
   (:file "doc")
   (:file "porter")
-  (:file "textrank")
-  (:file "dbscan")
-  (:file "section")
-  (:file "string")
   (:file "fuzzy"))
  :provide 
  ((:proto :search)

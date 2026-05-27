@@ -5,8 +5,9 @@
 ;;; Code:
 
 ;;; UI
-(use-package hide-mode-line
-  :hook (speedbar-mode . hide-mode-line-mode))
+(add-hook 'after-init-hook 'load-default-theme)
+
+;; (use-package hide-mode-line :ensure t)
 
 ;;;; Icons
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
@@ -89,7 +90,7 @@
 	 (expand-jump . indent-according-to-mode)))
 
 (use-package completion-preview
-  :ensure t
+  :defer nil
   :config (global-completion-preview-mode))
 
 (use-package corfu
@@ -143,6 +144,7 @@
 
 ;;; Speedbar
 (use-package speedbar
+  :defer nil
   :config
   (setq speedbar-sort-tags t
 	speedbar-prefer-window t
@@ -167,7 +169,6 @@
 ;;; Lisp
 (require 'slime-autoloads)
 (use-package inf-lisp
-  :defer nil
   :init 
   (setq inferior-lisp-program
 	(format "%s --dynamic-space-size=8G --control-stack-size=32"
@@ -189,14 +190,12 @@
 
 (use-package slime
   :defer nil
-  :after (company cape inf-lisp)
-  :autoload (slime-toggle slime-connect-file)
-  :hook 
-  (lisp . slime-cape-enable)
-  (inferior-lisp . inferior-slime-mode)
-  (slime-repl . slime-cape-enable)
+  :after (company cape)
+  :autoload (slime slime-toggle slime-connect-file)
+  ;; :hook 
+  ;; (inferior-lisp-mode . inferior-slime-mode)
+  ;; (slime-repl-mode . slime-mode)
   :init
-  :config
   (setq scheme-program-name "gsi"
 	slime-auto-start t
 	guile-program "guile"
@@ -205,16 +204,14 @@
 	;; rebind the defpackage-regexp function to include DEFPKG
 	slime-defpackage-regexp
 	"^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
-	common-lisp-style-default "core"
-	slime-threads-update-interval 1
-	
+	slime-threads-update-interval 4
 	slime-contribs '(slime-fancy
 			 slime-quicklisp
 			 slime-hyperdoc
 			 ;; slime-listener-hooks
 			 ;; slime-enclosing-context
 			 ;; slime-media
-			 slime-mrepl
+			 ;; slime-mrepl
 			 ;; slime-company
 			 slime-sbcl-exts
 			 slime-cape ;; ext
@@ -227,7 +224,9 @@
 			 slime-xref-browser
 			 ;; slime-highlight-edits
 			 slime-repl-ansi-color))
+  :config
   (slime-setup slime-contribs)
+  (unbind-key "C-c C-d C-a" 'slime-repl-mode-map)
   (define-common-lisp-style 
    "core"
    "Core Common Lisp Indentation Style"
@@ -273,7 +272,13 @@
     (make-load-form-saving-slots 1)
     (defconfig (as defclass))
     (defclass* (as defclass))
-    (defsclass (as defclass)))))
+    (defsclass (as defclass))))
+  (setq common-lisp-style-default "core"))
+
+(use-package slime-cape
+  :defer nil
+  :config
+  (slime-cape-enable))
 
 ;;; Asm
 (use-package nasm-mode
@@ -401,6 +406,7 @@ Interactively, NUMBER is the prefix arg."
 	eshell-save-history-on-exit t
 	eshell-prefer-lisp-functions nil
 	eshell-destroy-buffer-when-process-dies t)
+  :bind (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
   :config
   (require 'em-alias)
   (eshell/alias "d" "dired $1")
@@ -425,11 +431,6 @@ Interactively, NUMBER is the prefix arg."
           (ignore-errors
             (delete-window)))
       (delete-forward-char arg)))
-
-  (add-hook 'eshell-mode-hook
-            (lambda ()
-              (bind-keys :map eshell-mode-map
-			 ("C-d" . eshell-quit-or-delete-char))))
 
   (defun eshell-next-prompt (n)
     "Move to end of Nth next prompt in the buffer. See `eshell-prompt-regexp'."
@@ -463,6 +464,7 @@ Interactively, NUMBER is the prefix arg."
 
 ;;; Eww
 (use-package shr
+  :defer nil
   :init
   (setq shr-use-colors nil
 	shr-use-fonts nil
@@ -525,7 +527,9 @@ Add this function to appropriate major mode hooks such as
   :after (shr)
   :autoload (eww)
   :hook ((eww-mode .shr-heading-setup-imenu)
-	 (eww-mode . (lambda () (define-key eww-mode-map "i" shr-heading-map))))
+	 (eww-mode . (lambda () )))
+  :bind (:map eww-mode-map 
+	      ("i" . shr-heading-map))
   :config
   (setopt
    browse-url-browser-function 'eww
@@ -544,7 +548,7 @@ Add this function to appropriate major mode hooks such as
         tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)))
 
 ;;; Imenu
-(use-package imenu-list)
+(use-package imenu-list :ensure t)
 
 ;;; Calc
 (use-package calc
@@ -792,6 +796,8 @@ With prefix ARG non-nil, insert the result at the end of region."
 		 :working-suffix ".org"))))
 
 (use-package citeproc
+  :ensure t
+  :defer t
   :after (org))
 
 (use-package org-expiry
@@ -802,9 +808,11 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-web-tools
   :ensure t
   :after (org))
+
 (use-package htmlize
   :ensure t
   :after (org))
+
 (use-package ol-notmuch
   :ensure t
   :after (org))
@@ -833,6 +841,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package keymaps 
   :defer nil
+  :hook (after-init-hook . load-keys)
   :load-path user-emacs-site-lisp-directory)
 
 (use-package scratch 

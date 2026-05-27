@@ -15,7 +15,15 @@
 ;;; Code:
 (in-package :doc)
 
-(defgeneric doc (self type))
-(defgeneric (setf doc) (new self type))
+(defgeneric doc (self type)
+  (:documentation "Return the TYPE documentation associated with SELF. By default dispatch to
+DOCUMENTATION.")
+  (:method (self type) (documentation self type)))
+
+(defgeneric (setf doc) (new self type)
+  (:documentation "Set the TYPE documentation associated with SELF to NEW. By default dispatch
+to (SETF DOCUMENTATION).")
+  (:method (new self type) (setf (documentation self type) new)))
+
 (defgeneric print-doc (self &optional stream))
 (defgeneric print-documentation (self &optional stream))
