@@ -1,20 +1,9 @@
 ;;; nlp/pkg.lisp --- NLP packages
 
 ;;; Code:
-(defpkg :nlp/fuzzy
-  (:use :cl)
-  (:export :fuzzy-match :file-match))
-
-(defpkg :nlp/stem/porter
-  (:use :cl :std :rdb)
-  (:export :stem))
-
-(defpkg :nlp/tokenize
-  (:use :cl :std :ppcre :nlp/stem/porter)
-  (:export :word-tokenize :sentence-tokenize :*language-data* :*stop-words*))
-
 (defpkg :nlp/doc
   (:use :std-lisp :nlp/tokenize :graph)
+  (:export :word-tokenize :sentence-tokenize :*language-data* :*stop-words*)
   (:export 
    :document
    :documents
@@ -50,3 +39,7 @@
    #:jaccard
    #:jaro
    #:jaro-winkler))
+
+(defpkg :nlp/fuzzy
+  (:use :cl :nlp/doc)
+  (:export :fuzzy-match :file-match))

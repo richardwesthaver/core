@@ -6,17 +6,17 @@
 #+CALL: project-details(vc='nil) :dir ~/comp/core/
 
 #+RESULTS:
-|-------------+--------------------------------------------------------|
-| name        | core                                                   |
-| version     | 0.1.1                                                  |
-| description | The Compiler Company Core                              |
-| id          | 4611004031049662566                                    |
-| root        | ~/comp/core/                                           |
-| tags        | CORE LISP EMACS                                        |
-| updated     | Mon May 25 21:55:15 2026 -0400                         |
-| langs       | common lisp emacs lisp makefile  org  perl  plain text |
-| lines       | 269429 :code 219947 :comment 21825 :blank 27657        |
-|-------------+--------------------------------------------------------|
+|-------------+-------------------------------------------------|
+| name        | core                                            |
+| version     | 0.1.1                                           |
+| description | The Compiler Company Core                       |
+| id          | 4611004031049662566                             |
+| root        | ~/comp/core/                                    |
+| tags        | CORE LISP EMACS                                 |
+| updated     | Wed May 27 19:34:41 2026 -0400                  |
+| langs       | elisp lisp makefile org perl text               |
+| lines       | 269152 :code 219743 :comment 21782 :blank 27627 |
+|-------------+-------------------------------------------------|
 
 #+CALL: project-links(include='all) :dir ~/comp/core/
 

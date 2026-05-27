@@ -4,7 +4,6 @@
  :components 
  ((:pkg "pkg" :feature :nlp :export :nlp)
   (:file "doc")
-  (:file "porter")
   (:file "fuzzy"))
  :provide 
  ((:proto :search)
