@@ -1,7 +1,7 @@
 ;;; doc.lisp --- Text Document Analysis
 
 ;;; Code:
-(in-package :nlp/doc)
+(in-package :doc/nlp)
 
 ;;; Vars
 (defvar *stop-words*

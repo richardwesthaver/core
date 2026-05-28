@@ -4,8 +4,10 @@
 necessary for building complete API reference documents."
  :version "0.1.0"
  :require (:std :organ :parse :obj :rdb :log)
-  :components 
+ :components 
  ((:pkg "pkg")
+  (:file "nlp")
+  (:file "fuzzy")
   (:file "proto")
   (:file "symbol")
   (:file "file")
@@ -15,5 +17,6 @@ necessary for building complete API reference documents."
   (:file "reprex"))
  :provide 
  ((:proto :doc)
+  (:proto :search)
   (:readtable :doc)
   (:tests :require (:rt :doc :rdb :obj))))

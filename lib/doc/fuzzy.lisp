@@ -4,7 +4,7 @@
 ;; Initial authors: Ambrevar, Vindarel.
 
 ;;; Code:
-(in-package :nlp/fuzzy)
+(in-package :doc/fuzzy)
 
 (defmethod object-display (obj)
   "Like `print-object', but for fuzzy-match."
@@ -55,19 +55,20 @@ A higher score means the suggestion comes first."
   ;; The Jaccard metric seems to provide much better results than, say,
   ;; Damerau-Levensthein but it's much slower.
   ;; TODO: Check out fzf for a possibly good scoring algorithm.
-  (+ (* 1.0 (nlp/string:norm-damerau-levenshtein suggestion input))
+  (+ (* 1.0 (norm-damerau-levenshtein suggestion input))
      (* 1.0 (substring-norm (std:ssplit " " input) suggestion))))
 
-(defvar score-threshold 0.0             ; TODO: Learn good value and enable low-score filtering below.
+; TODO: Learn good value and enable low-score filtering below.
+(defvar score-threshold 0.0             
   "The threshold under which suggestions are eleminated.")
 
 (defun sort-suggestions (input suggestion-pairs)
   "Sort SUGGESTION-PAIRS, the pair closest to INPUT in the levenshtein distance comes first.
 SUGGESTION-PAIRS is a list of (display-value real-value).  See `fuzzy-match' for
 more details."
-  ;; WARNING: mk-string-metrics works on low-level arrays and might not get
-  ;; the text encoding right.  We need to make sure the suggestions and the
-  ;; input are of the same encoding.
+  ;; WARNING: string metrics work on low-level arrays and might not get the
+  ;; text encoding right. We need to make sure the suggestions and the input
+  ;; are of the same encoding.
   (setf input (to-unicode input))
   (dolist (suggestion-pair suggestion-pairs)
     (setf (first suggestion-pair) (to-unicode (first suggestion-pair))))
