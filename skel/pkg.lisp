@@ -132,7 +132,7 @@
    :project-root
    :merge-project-pathnames))
 
-(defpkg :skel/comp/makefile
+(defpkg :skel/comp/make
   (:use :cl :std :skel/core :project)
   (:export
    :*default-makefile* :*makefile-extension* 
@@ -150,40 +150,22 @@
   (:use :cl :std :skel/core :toml :config :cli/tools/build)
   (:export :sk-python-system :parse-sk-python-system))
 
-(defpkg :skel/comp/sys
-  (:use :cl :skel/core :std/defsys))
-
-(defpkg :skel/comp/asd
-  (:shadowing-import-from :std :version)
-  (:import-from :std :defmethods :when-let)
-  (:use :cl :skel/core :std/macs :asdf)
-  (:import-from :asdf :system :coerce-name 
-   :system-source-file :parse-component-form :file-component :component-relative-pathname
-   :component-if-feature :component-depends-on :module-components :component-name
-   :component-version :system-depends-on :system-description :system-long-description
-   :system-author :system-maintainer :system-mailto :system-license
-   :system-homepage :system-bug-tracker :system-source-control :component-in-order-to
-   :component-build-pathname :component-build-operation :component-entry-point)
-  (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
-
 (defpkg :skel/comp/lisp
   (:import-from :skel/core :*skel-project*)
   (:shadowing-import-from :std :version)
   (:use :cl :std :skel/core :id)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
-  (:export :sk-lisp-file))
+  (:export :sk-lisp-file)
+  (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
-(defpkg :skel/comp/container
+(defpkg :skel/comp/pod
   (:use :cl :std :pod :skel/core :id :ast)
   (:export :sk-containerfile))
 
 (defpkg :skel/comp/emacs
-  (:use :cl :std :skel/core :ast :id)
-  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file))
-
-(defpkg :skel/comp/org
-  (:use :cl :std :skel/core :organ :id)
-  (:export :sk-org-file))
+  (:use :cl :std :skel/core :ast :id :organ)
+  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file
+   :sk-org-file))
 
 (defpkg :skel/comp/box
   (:use :cl :std :skel/core :box :id)
@@ -196,8 +178,8 @@
 (defpkg :skel/comp
   (:nicknames :sk-comp)
   (:use :cl :std)
-  (:use-reexport :skel/comp/asd :skel/comp/rust :skel/comp/makefile
-   :skel/comp/container :skel/comp/emacs :skel/comp/org))
+  (:use-reexport :skel/comp/rust :skel/comp/make :skel/comp/python
+   :skel/comp/pod :skel/comp/emacs))
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)

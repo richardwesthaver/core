@@ -22,15 +22,12 @@
   (:mod "comp"
    :components
    ((:file "lisp")
-    (:file "asd")
     (:file "rust")
     (:file "python")
     (:file "emacs")
-    (:file "org")
     (:file "box")
-    (:file "container")
-    (:file "makefile")
-    (:file "sys")
+    (:file "pod")
+    (:file "make")
     (:file "infer")))
   (:file "net")
   (:file "srv")

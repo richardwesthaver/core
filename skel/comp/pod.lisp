@@ -1,4 +1,4 @@
-;;; container.lisp --- Containerfile Components
+;;; pod.lisp --- Containerfile Components
 
 ;; Containerfile skel components.
 
@@ -9,7 +9,7 @@
 ;; of the containerfile, or if absent defaults to the directory name.
 
 ;;; Code:
-(in-package :skel/comp/container)
+(in-package :skel/comp/pod)
 
 (defclass sk-containerfile (sk-component containerfile)
   ())

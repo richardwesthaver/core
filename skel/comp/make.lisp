@@ -1,4 +1,4 @@
-;;; makefile.lisp --- GNU Makefile Components
+;;; make.lisp --- GNU Makefile Components
 
 ;; GNU Makefile skel components.
 
@@ -19,7 +19,7 @@
 ;; https://www.gnu.org/software/make/manual/html_node/Parsing-Makefiles.html
 
 ;;; Code:
-(in-package :skel/comp/makefile)
+(in-package :skel/comp/make)
 
 (defparameter *default-makefile* "makefile")
 (defparameter *makefile-extension* "mk")
