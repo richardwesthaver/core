@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/dat/dat.sys --- Dat Sytem Definitions
+;;; ~/src/core/lib/dat/dat.sys --- Dat Sytem Definitions
 (defsys :dat
  "Data Systems"
  :version "0.1.1"

@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/pod/pod.sys --- Pod Sytem Definitions
+;;; core/lib/pod/pod.sys --- Pod Sytem Definitions
 (defsys :pod
  :require (:std :cli :obj :dat :net :io)
  :components 

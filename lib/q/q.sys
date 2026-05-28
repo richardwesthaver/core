@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/q/q.sys --- Q Sytem Definitions
+;;; core/lib/q/q.sys --- Q Sytem Definitions
 (defsys :q
  :require (:std :obj :log :dat :parse)
  :components 

@@ -14,8 +14,8 @@
 ;;; Code:
 (in-package :doc)
 
-;;; Variables
-(defvar *default-document-class* 'org-document)
+;;; Vars
+(defvar *document-class* 'org-document)
 
 (defparameter *definition-types*
   '(:variable defvar
@@ -33,13 +33,13 @@
     :class defclass
     :method-combination define-method-combination
     :package defpackage
-    :transform :deftransform
-    :optimizer :defoptimizer
-    :vop :define-vop
-    :source-transform :define-source-transform
-    :ir1-convert :def-ir1-translator
+    :transform deftransform
+    :optimizer defoptimizer
+    :vop define-vop
+    :source-transform define-source-transform
+    :ir1-convert def-ir1-translator
     :declaration declaim
-    :alien-type :define-alien-type)
+    :alien-type define-alien-type)
   "Map SB-INTROSPECT definition type names to Slime-friendly forms")
 
 ;;; Protocol
@@ -54,10 +54,10 @@ to (SETF DOCUMENTATION).")
   (:method (new self type) (setf (documentation self type) new)))
 
 (defgeneric document-class (self)
-  (:documentation "Return the DOCUMENT class associated with SELF or *DEFAULT-DOCUMENT-CLASS*.")
+  (:documentation "Return the DOCUMENT class associated with SELF or *DOCUMENT-CLASS*.")
   (:method (self) 
     (declare (ignore self))
-    *default-document-class*))
+    *document-class*))
 
 (defgeneric publish (self &key &allow-other-keys))
 

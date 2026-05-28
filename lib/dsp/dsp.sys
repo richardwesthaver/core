@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/dsp/dsp.sys --- Dsp Sytem Definitions
+;;; ~/src/core/lib/dsp/dsp.sys --- Dsp Sytem Definitions
 (defsys :dsp
  :require (:ppcre :std :obj :dat :sndfile :net :math :gstreamer :log :io :jack :chromaprint :alsa :ffmpeg)
  :components 

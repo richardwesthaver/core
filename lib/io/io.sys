@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/io/io.sys --- Io Sytem Definitions
+;;; ~/src/core/lib/io/io.sys --- Io Sytem Definitions
 (defsys :io
  "Lisp IO Interface"
  :require (:std

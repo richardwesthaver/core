@@ -72,7 +72,7 @@
   (:export :fuzzy-match :file-match))
 
 (defpkg :doc
-  (:use :cl :std :organ :sb-mop :sb-introspect :obj/id :log)
+  (:use :cl :std :organ :sb-mop :sb-introspect :id :log :ast)
   (:import-from :uiop :string-prefix-p)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
   (:import-from :sb-kernel :symbol-package-id)
@@ -82,6 +82,8 @@
   (:import-from :sb-alien :alien-type-p)
   (:use-reexport :doc/nlp :doc/fuzzy)
   (:export
+   :*document-class*
+   :*definition-types*
    :definition-specifier
    :find-definitions
    :classify-symbol :symbol-classification-string
@@ -96,6 +98,8 @@
    :package-documentation
    :symbol-documentation
    :doc
+   :document-class
+   :publish
    :doc-files
    :doc-symbols
    :doc-dependencies

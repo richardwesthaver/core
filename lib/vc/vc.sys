@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/vc/vc.sys --- Vc Sytem Definitions
+;;; core/lib/vc/vc.sys --- Vc Sytem Definitions
 (defsys :vc
  :require (:std :cli :obj :net :log :parse)
  :components 

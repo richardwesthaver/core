@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/math/math.sys --- Math Sytem Definitions
+;;; ~/src/core/lib/math/math.sys --- Math Sytem Definitions
 (defsys :math
  :require (:std :obj :blas :lapack :cuda :syn)
  :components 

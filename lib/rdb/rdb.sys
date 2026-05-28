@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/rdb/rdb.sys --- Rdb Sytem Definitions
+;;; core/lib/rdb/rdb.sys --- Rdb Sytem Definitions
 (defsys :rdb
  :require (:std :rocksdb :obj :log :dat :cli :net :q)
  :components 

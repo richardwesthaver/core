@@ -3,7 +3,7 @@
 #+author: Richard Westhaver
 #+email: richard.westhaver@gmail.com
 #+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :links all
-#+CALL: project-details(vc='nil) :dir ~/comp/core/
+#+CALL: project-details(vc='nil) :dir ~/src/core/
 
 #+RESULTS:
 |-------------+-------------------------------------------------|
@@ -11,14 +11,14 @@
 | version     | 0.1.1                                           |
 | description | The Compiler Company Core                       |
 | id          | 4611004031049662566                             |
-| root        | ~/comp/core/                                    |
+| root        | ~/src/core/                                     |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Wed May 27 20:28:45 2026 -0400                  |
+| updated     | Wed May 27 20:53:36 2026 -0400                  |
 | langs       | elisp lisp makefile org perl text               |
-| lines       | 269067 :code 219675 :comment 21777 :blank 27615 |
+| lines       | 269084 :code 219685 :comment 21780 :blank 27619 |
 |-------------+-------------------------------------------------|
 
-#+CALL: project-links(include='all) :dir ~/comp/core/
+#+CALL: project-links(include='all) :dir ~/src/core/
 
 #+RESULTS:
 - [[https://compiler.company/docs/core/index.html][Documentation]] 

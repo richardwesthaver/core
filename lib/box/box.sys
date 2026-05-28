@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/box/box.sys --- Box Sytem Definitions
+;;; ~/src/core/lib/box/box.sys --- Box Sytem Definitions
 (defsys :box
  :require (:std :cli :obj :dat :net :log)
  :components 

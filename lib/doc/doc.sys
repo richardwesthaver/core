@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/doc/doc.sys --- Doc Sytem Definitions
+;;; core/lib/doc/doc.sys --- Doc Sytem Definitions
 (defsys :doc
  "The official documentation system of the core. Contains all modules
 necessary for building complete API reference documents."

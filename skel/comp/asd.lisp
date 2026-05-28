@@ -110,7 +110,7 @@
         (terpri s)))))
 
 ;; (sk-write-file (find-sk-asdf-system :obj) :path "test")
-;; (describe (parse-sk-asdf-system "skel" "/home/ellis/comp/core/lib/"))
+;; (describe (parse-sk-asdf-system "skel" "/home/ellis/src/core/lib/"))
 
 (defmethod sk-read-file ((self sk-asdf-system) path)
   (parse-sk-asdf-system (pathname-name path) (pathname-directory path)))

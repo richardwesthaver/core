@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/syn/syn.sys --- Syn Sytem Definitions
+;;; core/lib/syn/syn.sys --- Syn Sytem Definitions
 (defsys :syn
  :require (:std :obj :parse :tree-sitter :doc :cli :io :dat :cuda)
  :components 

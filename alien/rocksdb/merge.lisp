@@ -125,7 +125,7 @@ accessed using a different MergeOperator)
   (delete-value (* rocksdb-delete-value-function))
   (name (* rocksdb-name-function)))
 
-#| [[file:~/dev/comp/core/c/rocksdb.h::/* Merge Operator */]] |#
+#| [[file:~/dev/core/c/rocksdb.h::/* Merge Operator */]] |#
 
 (defar rocksdb-mergeoperator-destroy void (self (* rocksdb-mergeoperator)))
 

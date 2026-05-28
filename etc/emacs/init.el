@@ -128,7 +128,7 @@ TABLE."
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
 (defvar user-org-stash-directory (expand-file-name "org" user-stash-directory))
 (defvar default-theme 'modus-vivendi)
-(defvar company-source-directory (join-paths user-home-directory "comp"))
+(defvar company-source-directory (join-paths user-home-directory "src"))
 (defvar company-org-directory (join-paths company-source-directory "org"))
 (defvar company-babel-file (join-paths company-org-directory "meta/babel.org"))
 (defvar company-bibliography (join-paths company-org-directory "graph/refs.bib"))

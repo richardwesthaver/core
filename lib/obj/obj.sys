@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/obj/obj.sys --- Obj Sytem Definitions
+;;; ~/src/core/lib/obj/obj.sys --- Obj Sytem Definitions
 (defsys :obj "Lisp object library"
  :require (:std)
  :components 

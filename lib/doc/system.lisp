@@ -13,11 +13,16 @@
 ;;; Code:
 (in-package :doc)
 
-(defclass system-documentation ()
-  ((system :initarg :system :accessor doc-system :type std:system)
+(defclass system-documentation (document)
+  ((system :initarg :system :accessor doc-system :type system)
    (packages :initarg :packages :accessor doc-packages :type (vector package-documentation))))
 
-(defmethod std/defsys::system-description ((self system-documentation)) (std/defsys::system-description (doc-system self)))
+(defmethod print-object ((self system-documentation) stream)
+  (print-unreadable-object (self stream :type t)
+    (let ((sys (slot-value self 'system)))
+      (format stream "~A ~A" (name sys) (version sys)))))
+
+(defmethod system-description ((self system-documentation)) (system-description (doc-system self)))
 
 (defun system-documentation (sys &optional packages) 
   (unless (typep sys 'system) (setf sys (find-system sys)))
@@ -28,8 +33,6 @@
                     (mapc (lambda (x) (when (string-prefix-p (name sys) (package-name x))
                                         (collect (package-name x))))
                           (list-all-packages))))))
-
-(defclass system-document (system-documentation org-document) ())
 
 (defun find-system-dependents (system)
   "Return a list of systems which depend on SYSTEM."

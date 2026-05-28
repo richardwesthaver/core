@@ -1501,6 +1501,7 @@
    :load-sys
    :compile-sys
    :system
+   :system-description
    :read-component
    :compile-component
    :load-component

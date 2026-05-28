@@ -1,4 +1,4 @@
-;;; ~/comp/core/lib/cli/cli.sys --- CLI Sytem Definitions
+;;; ~/src/core/lib/cli/cli.sys --- CLI Sytem Definitions
 (defsys :cli
  :require (:std :log :dat :obj :io)
  :components 
