@@ -10,7 +10,7 @@
 ;;; Code:
 (in-package :organ)
 
-(defclass org-document (ast)
+(defclass org-document (document)
   ((meta :initform nil :initarg :meta :type (or null org-meta-section) :accessor doc-meta)))
 
 (defmethod org-title ((self org-document))

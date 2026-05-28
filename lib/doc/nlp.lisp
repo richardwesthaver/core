@@ -1,4 +1,4 @@
-;;; doc.lisp --- Text Document Analysis
+;;; nlp.lisp --- Natural Language Processing
 
 ;;; Code:
 (in-package :doc/nlp)
@@ -443,7 +443,7 @@
   (remove "" (mapcar #'std:trim (ppcre:split "[.!?]" string)) :test #'equal))
 
 ;;; Documents
-(defclass document ()
+(defclass search-document (document)
   ((source :accessor source :initarg :source
            :documentation "The source object for the document.")
    (string-contents :initarg :string-contents :accessor string-contents)
@@ -475,22 +475,22 @@ available, some examples:
 + keywords: what are the important keywords in this document
   collection?"))
 
-(defmethod initialize-instance :after ((document document) &key)
+(defmethod initialize-instance :after ((document search-document) &key)
   (setf (tokens document) (word-tokenize (string-contents document)))
   (setf (token-count document) (length (tokens document)))
   (loop for token in (tokens document) do
     (incf (gethash token (slot-value document 'term-count-table) 0))))
 
-(defmethod term-count ((document document) term)
+(defmethod term-count ((document search-document) term)
   (gethash term (slot-value document 'term-count-table) 0))
 
-(defmethod term-frequency ((document document) term)
+(defmethod term-frequency ((document search-document) term)
   "How often does the word exist in the document?"
   (/ (term-count document term)
      ;; prevent division by zero for malformed documents
      (max 1 (token-count document))))
 
-(defmethod termp ((document document) term)
+(defmethod termp ((document search-document) term)
   "Does the term exist in the document?"
   (> (term-count document term) 0))
 
@@ -510,12 +510,12 @@ available, some examples:
   (log (/ (length (documents document-collection))
           (count-if (match-term term) (documents document-collection)))))
 
-(defmethod term-frequency-inverse-document-frequency ((document document)
+(defmethod term-frequency-inverse-document-frequency ((document search-document)
                                                       (document-collection document-collection)
                                                       term)
   (* (term-frequency document term) (inverse-document-frequency document-collection term)))
 
-(defmethod dictionary ((document document))
+(defmethod dictionary ((document search-document))
   "Return a list of all of the words that appear in a document."
   (loop for key being the hash-keys of (slot-value document 'term-count-table)
         collect key))
@@ -527,7 +527,7 @@ available, some examples:
           do (appendf words (tokens document)))
     (remove-duplicates words :test #'equalp)))
 
-(defmethod keywords ((document document) &optional document-collection)
+(defmethod keywords ((document search-document) &optional document-collection)
   (if document-collection
       (sort (loop for word in (dictionary document)
                   collect (cons word (term-frequency-inverse-document-frequency
@@ -545,7 +545,7 @@ available, some examples:
                                        :string-contents text))))
 
 ;;; Doc Vector
-(defmethod word-count-vectorize ((document document) dictionary)
+(defmethod word-count-vectorize ((document search-document) dictionary)
   "Transform a document into a vector using word counts."
   (let ((vector-data (make-array (length dictionary) :initial-element 0)))
     (loop for word in dictionary
@@ -553,7 +553,7 @@ available, some examples:
           do (setf (aref vector-data index) (term-count document word)))
     (setf (vector-data document) vector-data)))
 
-(defmethod tf-idf-vectorize ((document document) (collection document-collection) dictionary)
+(defmethod tf-idf-vectorize ((document search-document) (collection document-collection) dictionary)
   "Transform a document into a vector using tf-idf.
 Definition: tf-idf: term frequency, inverse document frequency. How
 often does a term a appear in a document as compared to all other
@@ -565,7 +565,7 @@ documents?"
                    (term-frequency-inverse-document-frequency document collection word)))
     (setf (vector-data document) vector-data)))
 
-(defmethod tf-vectorize ((document document) dictionary)
+(defmethod tf-vectorize ((document search-document) dictionary)
   "Transform a document into a vector using tf.
 Definition: tf: term frequency. How often does a term appear in a
 document?"
@@ -599,7 +599,7 @@ documents?"
 ;;; textrank
 
 ;; based on https://web.eecs.umich.edu/~mihalcea/papers/mihalcea.emnlp04.pdf
-(defclass document-vertex (document ast:node)
+(defclass document-vertex (search-document node)
   ((edges :accessor edges :initform (make-hash-table)
           :documentation "The keys of the hash table represent the
           edges, the values of the hash table represent the edge
@@ -610,7 +610,7 @@ is used to store edges of that particular vertex. The keys in the
 edges slot hash table are the actual vertexes, and the values are the
 edge weights."))
 
-(defmethod cosine-similarity ((document-a document) (document-b document))
+(defmethod cosine-similarity ((document-a search-document) (document-b search-document))
   "Calculate the cosine similarity between two vectors."
   (flet ((vector-product (document-a document-b)
            (loop for a across (vector-data document-a)

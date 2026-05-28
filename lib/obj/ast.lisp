@@ -293,3 +293,8 @@ used extensively in the SYN and Q systems."))
 (defwith ast (self) (*ast* (ast (eval self))))
 
 ;; (with-ast (make-instance 'ast :ast t) (rt:is *ast*))
+
+;;; Document
+(defclass document (ast) ())
+(defgeneric document (self &key &allow-other-keys))
+(defgeneric (setf document) (new self))

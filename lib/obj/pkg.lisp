@@ -357,7 +357,7 @@
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error
    :syntax-warning :syntax-condition
-   :*ast*))
+   :*ast* :document))
 
 (defpkg :obj/config
   (:nicknames :config)

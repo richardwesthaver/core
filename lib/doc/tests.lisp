@@ -65,9 +65,9 @@
 
 (deftest docs ()
   (let ((doc (make-instance 'document :string-contents "test test test")))
-    (is (= 3 (nlp/doc:term-count
+    (is (= 3 (nlp:term-count
               doc "test")))
-    (is (= 1.0 (nlp/doc:term-frequency
+    (is (= 1.0 (nlp:term-frequency
                 doc "test")))))
 
 (deftest textrank ()
@@ -79,4 +79,4 @@
   (dbscan (extract-sections "This is a test which will be summarized by the 'SUMMARIZE-TEXT' function. Yada yada. Test 1 2 3.")))
 
 (deftest fuzzy ()
-  (isequal '("foobar" "barfoo") (nlp:fuzzy-match "foo bar" '("asdfasdoo" "barfoo" "foobar"))))
+  (isequal '("foobar" "barfoo") (fuzzy:fuzzy-match "foo bar" '("asdfasdoo" "barfoo" "foobar"))))

@@ -28,10 +28,10 @@
 ;;; Code:
 (defpkg :doc/nlp
   (:nicknames :nlp)
-  (:use :std-lisp :graph)
+  (:use :std-lisp :graph :ast)
   (:export :word-tokenize :sentence-tokenize :*language-data* :*stop-words*)
   (:export 
-   :document
+   :search-document
    :documents
    :add-document
    :document-collection
@@ -80,6 +80,7 @@
   (:import-from :sb-impl :print-standard-describe-header :describe-object)
   (:import-from :sb-int :condition)
   (:import-from :sb-alien :alien-type-p)
+  (:use-reexport :doc/nlp :doc/fuzzy)
   (:export
    :definition-specifier
    :find-definitions

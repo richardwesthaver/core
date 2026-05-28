@@ -59,10 +59,6 @@ to (SETF DOCUMENTATION).")
     (declare (ignore self))
     *default-document-class*))
 
-(defgeneric document (self &key &allow-other-keys))
-;; is also SETF-able
-(defgeneric (setf document) (new self))
-
 (defgeneric publish (self &key &allow-other-keys))
 
 ;;; Utils
