@@ -20,9 +20,9 @@
 
 ;;; Commentary:
 
-;; Based on C-MERA's cm-mode.el which is quite simple. The mode
-;; searches for a 'cm.indent' file in the current
-;; directory/user-emacs-directory and reads it if it exists.
+;; Based on C-MERA's cm-mode.el which searches for a 'cm.indent' file
+;; in the current directory/user-emacs-directory and reads it if it
+;; exists.
 
 ;; In our case we prefer to statically define the supported keywords
 ;; and indentation as much as possible and providing a configuration
@@ -54,6 +54,11 @@
       (font-lock-add-keywords 
        nil
        `((,gen-keywords-rx . font-lock-keyword-face))))))
+
+;;;###autoload
+(defun maybe-enable-gen-minor-mode ()
+  (when (equal (file-name-extension buffer-file-name) "gen")
+    (gen-minor-mode 1)))
 
 (provide 'gen)
 ;;; gen.el ends here

@@ -205,7 +205,7 @@ DOC, and NAME."
 (cl-defmethod project-root ((project list))
   (when project (car project)))
 
-(defun project-skelfile (&optional project)
+(cl-defun project-skelfile (&optional (project t))
   "Find skelfile associated with PROJECT. Defaults to current
 directory and returns name of skelfile. When PROJECT is T uses
 `project-current'."
@@ -271,14 +271,14 @@ project's skelfile, if any. Typically added to
 ;; skel project customization ui (overlays skelfile)
 
 ;;; organ-minor-mode
-;; support ORGAN reader syntax in lisp files :prefix #& :suffix &#
+;; support ORGAN reader syntax in lisp files 
 (defun organ-minor-mode-setup ()
   (make-local-variable 'post-command-hook)
   (add-hook 'post-command-hook 'organ-update-mode nil t)
   (make-local-variable 'minor-mode-alist)
   (or (assq 'organ-minor-mode minor-mode-alist)
       (setq minor-mode-alist
-	    (cons '(organ-minor-mode " organ") minor-mode-alist))))
+	        (cons '(organ-minor-mode " organ") minor-mode-alist))))
 
 (defun organ-change-mode (to)
   (if (eql to major-mode)
@@ -296,7 +296,7 @@ project's skelfile, if any. Typically added to
 	(vbar nil))
     (save-excursion 
       (if (or (search-backward "#&" nil t)
-	      (and (search-backward "#| org" nil t) (setf vbar t)))
+	      (and (re-search-backward "#|[ ]?org" nil t) (setf vbar t)))
           (setq lm (point))
         (setq lm -1)))
     (save-excursion

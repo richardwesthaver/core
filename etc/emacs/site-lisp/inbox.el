@@ -29,7 +29,7 @@
 ;;; Code:
 (require 'org)
 (require 'org-agenda)
-(require 'org-expiry)
+(require 'org-expire)
 
 (defgroup inbox nil
   "CC Inbox"
@@ -142,7 +142,7 @@
    (org-id-update-id-locations)
    (org-id-add-to-headlines-in-file)
    (org-archive-done)
-   (org-map-entries #'org-expiry-insert-created)
+   (org-map-entries #'org-expire-insert-created)
    (org-inbox-sort)))
 
 (defun org-inbox-open ()

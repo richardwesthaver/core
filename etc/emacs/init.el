@@ -145,8 +145,7 @@ TABLE."
 (defvar core-lisp-program "/usr/bin/core")
 
 ;;; Settings
-(setopt desktop-dirname (expand-file-name "sessions" user-emacs-directory)
-        custom-file (expand-file-name "custom.el" user-emacs-directory)
+(setopt custom-file (expand-file-name "custom.el" user-emacs-directory)
         tab-width 4
         switch-to-buffer-obey-display-actions t
         show-paren-context-when-offscreen 'overlay
@@ -209,8 +208,9 @@ TABLE."
 (put 'list-timers 'disabled nil)
 
 ;;; Global Modes
-(kill-ring-deindent-mode 1)
-(repeat-mode 1)
+(kill-ring-deindent-mode t)
+(repeat-mode t)
+(desktop-save-mode t)
 
 ;;; Load default.el
 (load (join-paths user-emacs-directory "default.el"))

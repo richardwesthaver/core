@@ -1,7 +1,7 @@
-;;; org-expiry.el --- expiry mechanism for Org entries  -*- lexical-binding: t; -*-
-;;
+;;; org-expire.el --- expiration mechanism for Org entries  -*- lexical-binding: t; -*-
+
 ;; Copyright 2007-2021 Free Software Foundation, Inc.
-;;
+
 ;; Author: Bastien Guerry <bzg@gnu.org>
 ;; Version: 0.2
 ;; Keywords: org, expiry
@@ -13,109 +13,109 @@
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation; either version 3, or (at your option)
 ;; any later version.
-;;
+
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
-;;
+
 ;; You should have received a copy of the GNU General Public License
 ;; along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.
-;;
+
 ;;; Commentary:
-;;
+
 ;; This package gives you a chance to get rid of old entries in your
 ;; Org files by expiring them.
-;;
+
 ;; By default, entries that have no EXPIRY property are considered to be
 ;; new (i.e. 0 day old) and only entries older than one year go to the
-;; expiry process, which consist in adding the ARCHIVE tag.  None of
+;; expiry process, which consist in adding the ARCHIVE tag. None of
 ;; your tasks will be deleted with the default settings.
-;;
-;; When does an entry expires?
-;;
+
+;; When does an entry expire?
+
 ;; Consider this entry:
-;;
+
 ;; * Stop watching TV
 ;;   :PROPERTIES:
 ;;   :CREATED:  <2008-01-07 lun 08:01>
-;;   :EXPIRY:   <2008-01-09 08:01>
+;;   :EXPIRE:   <2008-01-09 08:01>
 ;;   :END:
-;;
+
 ;; This entry will expire on the 9th, january 2008.
 
 ;; * Stop watching TV
 ;;   :PROPERTIES:
 ;;   :CREATED:  <2008-01-07 lun 08:01>
-;;   :EXPIRY:   +1w
+;;   :EXPIRE:   +1w
 ;;   :END:
-;;
+
 ;; This entry will expire on the 14th, january 2008, one week after its
 ;; creation date.
-;;
+
 ;; What happen when an entry is expired?  Nothing until you explicitly
-;; M-x org-expiry-process-entries When doing this, org-expiry will check
+;; M-x org-expire-process-entries When doing this, org-expire will check
 ;; for expired entries and request permission to process them.
-;;
+
 ;; Processing an expired entries means calling the function associated
-;; with `org-expiry-handler-function'; the default is to add the tag
+;; with `org-expire-handler-function'; the default is to add the tag
 ;; :ARCHIVE:, but you can also add a EXPIRED keyword or even archive
 ;; the subtree.
-;;
+
 ;; Is this useful?  Well, when you're in a brainstorming session, it
 ;; might be useful to know about the creation date of an entry, and be
 ;; able to archive those entries that are more than xxx days/weeks old.
-;;
-;; When you're in such a session, you can insinuate org-expiry like
-;; this: M-x org-expiry-insinuate
-;;
+
+;; When you're in such a session, you can insinuate org-expire like
+;; this: M-x org-expire-insinuate
+
 ;; Then, each time you're pressing M-RET to insert an item, the CREATION
 ;; property will be automatically added.  Same when you're scheduling or
-;; deadlining items.  You can deinsinuate: M-x org-expiry-deinsinuate
+;; deadlining items.  You can deinsinuate: M-x org-expire-deinsinuate
 
 ;;; Code:
 (require 'org)
 
 ;;; User variables:
 
-(defgroup org-expiry nil
+(defgroup org-expire nil
   "Org expiry process."
   :tag "Org Expiry"
   :group 'org)
 
-(defcustom org-expiry-inactive-timestamps nil
+(defcustom org-expire-inactive-timestamps nil
   "Insert inactive timestamps for created/expired properties."
   :type 'boolean
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-created-property-name "CREATED"
+(defcustom org-expire-created-property-name "CREATED"
   "The name of the property for setting the creation date."
   :type 'string
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-expiry-property-name "EXPIRY"
+(defcustom org-expire-expiry-property-name "EXPIRY"
   "The name of the property for setting the expiry date/delay."
   :type 'string
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-keyword "EXPIRED"
-  "The default keyword for `org-expiry-add-keyword'."
+(defcustom org-expire-keyword "EXPIRED"
+  "The default keyword for `org-expire-add-keyword'."
   :type 'string
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-wait "+1y"
+(defcustom org-expire-wait "+1y"
   "Time span between the creation date and the expiry.
 The default value for this variable (\"+1y\") means that entries
 will expire if there are at least one year old.
 
 If the expiry delay cannot be retrieved from the entry or the
 subtree above, the expiry process compares the expiry delay with
-`org-expiry-wait'.  This can be either an ISO date or a relative
+`org-expire-wait'.  This can be either an ISO date or a relative
 time specification.  See `org-read-date' for details."
   :type 'string
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-created-date "+0d"
+(defcustom org-expire-created-date "+0d"
   "The default creation date.
 The default value of this variable (\"+0d\") means that entries
 without a creation date will be handled as if they were created
@@ -127,32 +127,32 @@ with this date.  This can be either an ISO date or a relative
 time specification.  See `org-read-date' for details on relative
 time specifications."
   :type 'string
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-handler-function 'org-toggle-archive-tag
+(defcustom org-expire-handler-function 'org-toggle-archive-tag
   "Function to process expired entries.
 Possible candidates for this function are:
 
 `org-toggle-archive-tag'
-`org-expiry-add-keyword'
-`org-expiry-archive-subtree'"
+`org-expire-add-keyword'
+`org-expire-archive-subtree'"
   :type 'function
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-confirm-flag t
+(defcustom org-expire-confirm-flag t
   "Non-nil means confirm expiration process."
   :type '(choice
 	  (const :tag "Always require confirmation" t)
 	  (const :tag "Do not require confirmation" nil)
 	  (const :tag "Require confirmation in interactive expiry process"
 		 interactive))
-  :group 'org-expiry)
+  :group 'org-expire)
 
-(defcustom org-expiry-advised-functions
+(defcustom org-expire-advised-functions
   '(org-scheduled org-deadline org-time-stamp)
   "A list of advised functions.
-`org-expiry-insinuate' will activate the expiry advice for these
-functions.  `org-expiry-deinsinuate' will deactivate them."
+`org-expire-insinuate' will activate the expiry advice for these
+functions.  `org-expire-deinsinuate' will deactivate them."
   :type 'boolean
   :group 'list)
 
@@ -160,73 +160,73 @@ functions.  `org-expiry-deinsinuate' will deactivate them."
 
 (define-advice org-schedule (:after (&rest _) org-schedule-update-created)
   "Update the creation-date property when calling `org-schedule'."
-  (org-expiry-insert-created))
+  (org-expire-insert-created))
 
 (define-advice org-deadline (:after (&rest _) org-deadline-update-created)
   "Update the creation-date property when calling `org-deadline'."
-  (org-expiry-insert-created))
+  (org-expire-insert-created))
 
 (define-advice org-time-stamp (:after (&rest _) org-time-stamp-update-created)
   "Update the creation-date property when calling `org-time-stamp'."
-  (org-expiry-insert-created))
+  (org-expire-insert-created))
 
-(defun org-expiry-insinuate (&optional arg)
-  "Add hooks and activate advices for org-expiry.
+(defun org-expire-insinuate (&optional arg)
+  "Add hooks and activate advices for org-expire.
 If ARG, also add a hook to `before-save-hook' in `org-mode' and
 restart `org-mode' if necessary."
   (interactive "P")
   (ad-activate 'org-schedule)
   (ad-activate 'org-time-stamp)
   (ad-activate 'org-deadline)
-  (add-hook 'org-insert-heading-hook 'org-expiry-insert-created)
-  (add-hook 'org-after-todo-state-change-hook 'org-expiry-insert-created)
-  (add-hook 'org-after-tags-change-hook 'org-expiry-insert-created)
+  (add-hook 'org-insert-heading-hook 'org-expire-insert-created)
+  (add-hook 'org-after-todo-state-change-hook 'org-expire-insert-created)
+  (add-hook 'org-after-tags-change-hook 'org-expire-insert-created)
   (when arg
     (add-hook 'org-mode-hook
 	      (lambda() (add-hook 'before-save-hook
-				  'org-expiry-process-entries t t)))
+				  'org-expire-process-entries t t)))
     ;; need this to refresh org-mode hooks
     (when (eq major-mode 'org-mode)
       (org-mode)
       (if (called-interactively-p 'any)
-	  (message "Org-expiry insinuated, `org-mode' restarted.")))))
+	  (message "org-expire insinuated, `org-mode' restarted.")))))
 
-(defun org-expiry-deinsinuate (&optional arg)
-  "Remove hooks and deactivate advices for org-expiry.
-If ARG, also remove org-expiry hook in Org's `before-save-hook'
+(defun org-expire-deinsinuate (&optional arg)
+  "Remove hooks and deactivate advices for org-expire.
+If ARG, also remove org-expire hook in Org's `before-save-hook'
 and restart `org-mode' if necessary."
   (interactive "P")
   (advice-remove 'org-schedule #'org-schedule@org-schedule-update-created)
   (advice-remove 'org-time-stamp #'org-time-stamp@org-time-stamp-update-created)
   (advice-remove 'org-deadline #'org-deadline@org-deadline-update-created)
-  (remove-hook 'org-insert-heading-hook 'org-expiry-insert-created)
-  (remove-hook 'org-after-todo-state-change-hook 'org-expiry-insert-created)
-  (remove-hook 'org-after-tags-change-hook 'org-expiry-insert-created)
+  (remove-hook 'org-insert-heading-hook 'org-expire-insert-created)
+  (remove-hook 'org-after-todo-state-change-hook 'org-expire-insert-created)
+  (remove-hook 'org-after-tags-change-hook 'org-expire-insert-created)
   (remove-hook 'org-mode-hook
 	       (lambda() (add-hook 'before-save-hook
-				   'org-expiry-process-entries t t)))
+				   'org-expire-process-entries t t)))
   (when arg
     ;; need this to refresh org-mode hooks
     (when (eq major-mode 'org-mode)
       (org-mode)
       (if (called-interactively-p 'any)
-	  (message "Org-expiry de-insinuated, `org-mode' restarted.")))))
+	  (message "org-expire de-insinuated, `org-mode' restarted.")))))
 
-;;; org-expiry-expired-p:
+;;; org-expire-expired-p:
 
-(defun org-expiry-expired-p ()
+(defun org-expire-expired-p ()
   "Check if the entry at point is expired.
 Return nil if the entry is not expired.  Otherwise return the
 amount of time between today and the expiry date.
 
-If there is no creation date, use `org-expiry-created-date'.
-If there is no expiry date, use `org-expiry-wait'."
-  (let* ((ex-prop org-expiry-expiry-property-name)
-	 (cr-prop org-expiry-created-property-name)
+If there is no creation date, use `org-expire-created-date'.
+If there is no expiry date, use `org-expire-wait'."
+  (let* ((ex-prop org-expire-expiry-property-name)
+	 (cr-prop org-expire-created-property-name)
 	 (ct (current-time))
 	 (cr (org-read-date nil t (or (org-entry-get (point) cr-prop t)
-				      org-expiry-created-date)))
-	 (ex-field (or (org-entry-get (point) ex-prop t) org-expiry-wait))
+				      org-expire-created-date)))
+	 (ex-field (or (org-entry-get (point) ex-prop t) org-expire-wait))
 	 (ex (if (string-match "^[ \t]?[+-]" ex-field)
 		 (time-add cr (time-subtract (org-read-date nil t ex-field) ct))
 	       (org-read-date nil t ex-field))))
@@ -235,33 +235,33 @@ If there is no expiry date, use `org-expiry-wait'."
 
 ;;; Expire an entry or a region/buffer:
 
-(defun org-expiry-process-entry (&optional force)
-  "Call `org-expiry-handler-function' on entry.
+(defun org-expire-process-entry (&optional force)
+  "Call `org-expire-handler-function' on entry.
 If FORCE is non-nil, don't require confirmation from the user.
-Otherwise rely on `org-expiry-confirm-flag' to decide."
+Otherwise rely on `org-expire-confirm-flag' to decide."
   (interactive "P")
   (save-excursion
     (when (called-interactively-p 'interactive) (org-reveal))
-    (when (org-expiry-expired-p)
+    (when (org-expire-expired-p)
       (org-back-to-heading)
       (looking-at org-complex-heading-regexp)
       (let* ((ov (make-overlay (point) (match-end 0)))
-	     (e (org-expiry-expired-p))
+	     (e (org-expire-expired-p))
 	     (d (time-to-number-of-days e)))
 	(overlay-put ov 'face 'secondary-selection)
 	(if (or force
-		(null org-expiry-confirm-flag)
-		(and (eq org-expiry-confirm-flag 'interactive)
+		(null org-expire-confirm-flag)
+		(and (eq org-expire-confirm-flag 'interactive)
 		     (not (called-interactively-p 'interactive)))
-		(and org-expiry-confirm-flag
+		(and org-expire-confirm-flag
 		     (y-or-n-p (format "Entry expired by %d days.  Process? " d))))
-	    (funcall org-expiry-handler-function))
+	    (funcall org-expire-handler-function))
 	(delete-overlay ov)))))
 
-(defun org-expiry-process-entries (_ _)
+(defun org-expire-process-entries (_ _)
   "Process all expired entries between BEG and END.
 The expiry process will run the function defined by
-`org-expiry-handler-functions'."
+`org-expire-handler-functions'."
   (interactive "r")
   (save-excursion
     (let ((beg (if (org-region-active-p)
@@ -271,11 +271,11 @@ The expiry process will run the function defined by
       (goto-char beg)
       (let ((expired 0) (processed 0))
 	(while (and (outline-next-heading) (< (point) end))
-	  (when (org-expiry-expired-p)
+	  (when (org-expire-expired-p)
 	    (setq expired (1+ expired))
 	    (if (if (called-interactively-p 'any)
-		    (call-interactively 'org-expiry-process-entry)
-		  (org-expiry-process-entry))
+		    (call-interactively 'org-expire-process-entry)
+		  (org-expire-process-entry))
 		(setq processed (1+ processed)))))
 	(if (equal expired 0)
 	    (message "No expired entry")
@@ -283,17 +283,17 @@ The expiry process will run the function defined by
 		   processed expired))))))
 
 ;;; Insert created/expiry property:
-(defun org-expiry-format-timestamp (timestr inactive)
+(defun org-expire-format-timestamp (timestr inactive)
   "Properly format TIMESTR into an org (in)active timestamp"
   (format (if inactive "[%s]" "<%s>") timestr))
 
-(defun org-expiry-insert-created (&optional arg)
+(defun org-expire-insert-created (&optional arg)
   "Insert or update a property with the creation date.
 If ARG, always update it.  With one `C-u' prefix, silently update
 to today's date.  With two `C-u' prefixes, prompt the user for to
 update the date."
   (interactive "P")
-  (let* ((d (org-entry-get (point) org-expiry-created-property-name))
+  (let* ((d (org-entry-get (point) org-expire-created-property-name))
 	 d-time d-hour timestr)
     (when (or (null d) arg)
       ;; update if no date or non-nil prefix argument
@@ -302,65 +302,65 @@ update the date."
       (setq d-hour (format-time-string "%H:%M" d-time))
       (setq timestr
 	    ;; two C-u prefixes will call org-read-date
-            (org-expiry-format-timestamp
+            (org-expire-format-timestamp
              (if (equal arg '(16))
                  (org-read-date nil nil nil nil d-time d-hour)
                (format-time-string
                 (replace-regexp-in-string "\\(^<\\|>$\\)" ""
                                           (cdr org-time-stamp-formats))))
-             org-expiry-inactive-timestamps))
+             org-expire-inactive-timestamps))
       (save-excursion
 	(org-entry-put
-	 (point) org-expiry-created-property-name timestr)))))
+	 (point) org-expire-created-property-name timestr)))))
 
-(defun org-expiry-insert-expiry (&optional today)
+(defun org-expire-insert-expiry (&optional today)
   "Insert a property with the expiry date.
 With one `C-u' prefix, don't prompt interactively for the date
 and insert today's date."
   (interactive "P")
-  (let* ((d (org-entry-get (point) org-expiry-expiry-property-name))
+  (let* ((d (org-entry-get (point) org-expire-expiry-property-name))
 	 d-time d-hour timestr)
     (setq d-time (if d (org-time-string-to-time d)
 		   (current-time)))
     (setq d-hour (format-time-string "%H:%M" d-time))
-    (setq timestr (org-expiry-format-timestamp
+    (setq timestr (org-expire-format-timestamp
                    (if today
                        (format-time-string
                         (replace-regexp-in-string "\\(^<\\|>$\\)" ""
                                                   (cdr org-time-stamp-formats)))
                      (org-read-date nil nil nil nil d-time d-hour))
-                   org-expiry-inactive-timestamps))
+                   org-expire-inactive-timestamps))
     ;; maybe transform to inactive timestamp
-    (if org-expiry-inactive-timestamps
+    (if org-expire-inactive-timestamps
 	(setq timestr (concat "[" (substring timestr 1 -1) "]")))
 
     (save-excursion
       (org-entry-put
-       (point) org-expiry-expiry-property-name timestr))))
+       (point) org-expire-expiry-property-name timestr))))
 
 ;;; Functions to process expired entries:
 
-(defun org-expiry-archive-subtree ()
+(defun org-expire-archive-subtree ()
   "Archive the entry at point if it is expired."
   (interactive)
   (save-excursion
-    (if (org-expiry-expired-p)
+    (if (org-expire-expired-p)
 	(org-archive-subtree)
       (if (called-interactively-p 'any)
 	  (message "Entry at point is not expired.")))))
 
-(defun org-expiry-add-keyword (&optional keyword)
+(defun org-expire-add-keyword (&optional keyword)
   "Add KEYWORD to the entry at point if it is expired."
   (interactive "sKeyword: ")
   (if (or (member keyword org-todo-keywords-1)
-	  (setq keyword org-expiry-keyword))
+	  (setq keyword org-expire-keyword))
       (save-excursion
-	(if (org-expiry-expired-p)
+	(if (org-expire-expired-p)
 	    (org-todo keyword)
 	  (if (called-interactively-p 'any)
 	      (message "Entry at point is not expired."))))
     (error "\"%s\" is not a to-do keyword in this buffer" keyword)))
 
-(provide 'org-expiry)
+(provide 'org-expire)
 
-;;; org-expiry.el ends here
+;;; org-expire.el ends here

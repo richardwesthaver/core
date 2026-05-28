@@ -83,7 +83,7 @@
                                         (eglot (styles orderless))
                                         (eglot-capf (styles orderless)))))
 
-(use-package company :ensure t)
+(use-package company)
 
 (use-package expand
   :hook ((expand-expand . indent-according-to-mode)
@@ -190,11 +190,8 @@
 
 (use-package slime
   :defer nil
-  :after (company cape)
+  :after (cape)
   :autoload (slime slime-toggle slime-connect-file)
-  ;; :hook 
-  ;; (inferior-lisp-mode . inferior-slime-mode)
-  ;; (slime-repl-mode . slime-mode)
   :init
   (setq scheme-program-name "gsi"
 	slime-auto-start t
@@ -226,6 +223,8 @@
 			 slime-repl-ansi-color))
   :config
   (slime-setup slime-contribs)
+  (slime-cape-enable)
+  ;; fix slime repl mode
   (unbind-key "C-c C-d C-a" 'slime-repl-mode-map)
   (define-common-lisp-style 
    "core"
@@ -275,11 +274,6 @@
     (defsclass (as defclass))))
   (setq common-lisp-style-default "core"))
 
-(use-package slime-cape
-  :defer nil
-  :config
-  (slime-cape-enable))
-
 ;;; Asm
 (use-package nasm-mode
   :hook (asm . nasm-mode))
@@ -315,7 +309,6 @@
     (if defining-kbd-macro
 	(end-kbd-macro)
       (start-kbd-macro nil)))
-
   (defun play-macro-if-not-playing ()
     (interactive)
     (if defining-kbd-macro
@@ -704,7 +697,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 	  ;; org-agenda-files (list "inbox.org")
 	  org-agenda-include-diary t
 	  org-agenda-include-inactive-timestamps t
-	  org-agenda-span 5
+	  org-agenda-span 7
 	  org-confirm-babel-evaluate nil
 	  org-src-fontify-natively t
 	  org-src-tabs-act-natively t
@@ -721,10 +714,11 @@ With prefix ARG non-nil, insert the result at the end of region."
   :after (org)
   :init 
   (setq org-capture-use-agenda-date t
-	org-capture-templates '(("1" "current-task-item" item (clock) "%i%?")
-				("2" "current-task-checkbox" checkitem (clock) "%i%?")
-				("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-				("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1))))
+	org-capture-templates 
+    '(("1" "current-task-item" item (clock) "%i%?")
+	  ("2" "current-task-checkbox" checkitem (clock) "%i%?")
+	  ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
+	  ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1))))
 
 (use-package org-crypt 
   :after (org)
@@ -800,10 +794,10 @@ With prefix ARG non-nil, insert the result at the end of region."
   :defer t
   :after (org))
 
-(use-package org-expiry
+(use-package org-expire
   :load-path user-emacs-site-lisp-directory
   :after (org org-id)
-  :hook (org-after-todo-state-change-hook . (org-expiry-insert-created org-id-get-create)))
+  :hook (org-after-todo-state-change-hook . (org-expire-insert-created org-id-get-create)))
 
 (use-package org-web-tools
   :ensure t
@@ -822,6 +816,14 @@ With prefix ARG non-nil, insert the result at the end of region."
 ;;; Hexl
 (use-package hexl
   :init (setq hexl-bits 8))
+
+;;; Desktop
+(use-package desktop
+  :config
+  (setopt desktop-auto-save-timeout 60
+          desktop-base-file-name ".desktop"
+          desktop-base-lock-name ".desktop.lock")
+  (add-to-list 'desktop-path "."))
 
 ;;; Dictionary
 (use-package dictionary
@@ -860,11 +862,13 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package inbox
   :defer nil
   :load-path user-emacs-site-lisp-directory
-  :after (org-expiry)
+  :after (org-expire)
   :config (load-org-inbox-capture-templates))
 
 (use-package gen 
-  :load-path user-emacs-site-lisp-directory)
+  :load-path user-emacs-site-lisp-directory
+  :mode ("\\.gen" . lisp-mode)
+  :hook (lisp-mode . maybe-enable-gen-minor-mode))
 
 (use-package scrum 
   :load-path user-emacs-site-lisp-directory
@@ -874,7 +878,9 @@ With prefix ARG non-nil, insert the result at the end of region."
   :ensure-system-package tokei)
 
 (use-package skel 
-  :load-path user-emacs-site-lisp-directory)
+  :load-path user-emacs-site-lisp-directory
+  :interpreter ("skel" . skel-mode)
+  :hook (common-lisp-lisp-mode-hook . organ-minor-mode))
 
 (use-package skt
   :load-path user-emacs-site-lisp-directory
