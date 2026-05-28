@@ -1,7 +1,7 @@
 (defsys :organ
  "org-mode utils"
  :version "0.1.0"
- :require (:ppcre :std :nlp :parse :cry :obj :rdb :log :cry)
+ :require (:ppcre :std :parse :cry :obj :rdb :log :cry)
  :components 
  ((:pkg "pkg" :default-package :organ)
   (:file "vars")

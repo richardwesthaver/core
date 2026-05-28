@@ -5,7 +5,7 @@
  :require
  (:std :obj
   :io :log :dat :rt :parse :cry :cli
-  :net :q :nlp :rdb :organ :syn :doc
+  :net :q :rdb :organ :syn :doc
   :dsp :math :pod :box :vc :skel)
  :components ((:file "core"))
  :provide 
@@ -13,7 +13,7 @@
    :require
    (:std/tests :log/tests :rt/tests
     :dat/tests :rocksdb/tests :btrfs/tests :uring/tests
-    :doc/tests :nlp/tests :box/tests
+    :doc/tests :box/tests
     :syn/tests :organ/tests :obj/tests :math/tests
     :tree-sitter/tests :xkb/tests :ssh2/tests :sndfile/tests
     :zstd/tests :uring/tests

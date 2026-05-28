@@ -190,7 +190,7 @@
   (:export :sk-box-file))
 
 (defpkg :skel/comp/infer
-  (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :nlp)
+  (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :doc)
   (:export :sk-infer))
 
 (defpkg :skel/comp

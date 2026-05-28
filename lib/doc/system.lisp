@@ -1,13 +1,14 @@
-;;; sys.lisp --- Lisp System Documentation
+;;; system.lisp --- Lisp System Documentation
 
 ;; Standard System Documentation.
 
 ;;; Commentary:
 
-;; This module provides the SYSTEM-DOCUMENTATION class which inherits from
-;; ORG-DOCUMENT, wraps a STD:SYSTEM and provides a basic documentation-focused
-;; API - most often useful in producing org documentation for complete
-;; systems.
+;; This module provides the SYSTEM-DOCUMENTATION class which wraps a
+;; STD:SYSTEM and provides a basic documentation-focused API.
+
+;; SYSTEM-DOCUMENTATION is the most high-level documentation class provided
+;; and is intended to be encoded into a tree of ORG-DOCUMENT objects.
 
 ;;; Code:
 (in-package :doc)

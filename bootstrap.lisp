@@ -85,7 +85,6 @@ $ sbcl --script bootstrap.lisp
               :cli
               :net
               :q
-              :nlp
               :rdb
               :organ
               :syn
