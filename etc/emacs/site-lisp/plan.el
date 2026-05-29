@@ -1,4 +1,4 @@
-;;; scrum.el --- Scrum-like Planning and Roadmaps in Org  -*- lexical-binding: t; -*-
+;;; plan.el --- Org Planning Package -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2024  Richard Westhaver
 
@@ -37,12 +37,12 @@
 ;;; Code:
 (require 'ulang)
 
-(defgroup scrum nil
-  "CC Scrum Framework.")
+(defgroup plan nil
+  "CC Planning Framework.")
 
-(defvar scrum-properties '("SPRINT" "EPIC" "RELEASE" "TASKID" "PROJECT" "COMMIT" "GOAL"))
+(defvar plan-properties '("SPRINT" "EPIC" "RELEASE" "TASKID" "PROJECT" "COMMIT" "GOAL"))
 
-(defvar scrum-tags '("demo" "mvp" "release" "major-release" "ua" "qa"))
+(defvar plan-tags '("demo" "mvp" "release" "major-release" "ua" "qa"))
 
 (defun org-dblock-write:scrumboard ()
   "Generate a 'scrumboard'.")
@@ -65,12 +65,12 @@
 (defcustom org-project-info-order '(details status churn files html tasks log vc links)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
-  :group 'scrum)
+  :group 'plan)
 
 (defcustom org-lisp-system-info-order '(log packages dependencies dependents files tests symbols)
   "Order in which sections of the 'lisp-system-info' dblock will appear."
   :type 'list
-  :group 'scrum)
+  :group 'plan)
 
 (defmacro with-dblock-defaults (&rest body)
   `(let ((location (or (when-let* ((param (plist-get params :location)))
@@ -284,5 +284,5 @@ block:
 (org-dynamic-block-define "project-info" 'org-project-info)
 (org-dynamic-block-define "lisp-system-info" 'org-lisp-system-info)
 
-(provide 'scrum)
-;;; scrum.el ends here
+(provide 'plan)
+;;; plan.el ends here

@@ -870,7 +870,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :mode ("\\.gen" . lisp-mode)
   :hook (lisp-mode . maybe-enable-gen-minor-mode))
 
-(use-package scrum 
+(use-package plan 
   :load-path user-emacs-site-lisp-directory
   :defer nil
   ;; used in org/meta/babel.org, called via org-dblocks in project
