@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/comp/lisp)
 
-(defclass sk-lisp-component (sk-component component) ())
+(defclass sk-lisp-component (sk-component) ())
 
 ;;; Files
 (defclass sk-lisp-file (sk-lisp-component file-component) ())
@@ -52,9 +52,9 @@
        (sk-read-file comp (path comp)))
      comp)))
 
-(defmethod print-object ((object sk-lisp-component) stream)
-  (print-unreadable-object (object stream :type t)
-    (format stream ":ID ~A" (format-sxhash (id object)))))
+;; (defmethod print-object ((object sk-lisp-component) stream)
+;;   (print-unreadable-object (object stream :type t)
+;;     (format stream ":ID ~A" (format-sxhash (id object)))))
 
 (defmethod read-ast ((self sk-lisp-component) stream)
   (setf (ast self) (read-lisp-until-end stream)))
@@ -77,7 +77,7 @@
       (sk-load self)))
 
 ;;; System
-(defclass sk-lisp-system (sk-mod system) ())
+(defclass sk-lisp-system (sk-lisp-component system) ())
 
 (defun sys-to-sk-system (system)
   (let ((sys (change-class system 'sk-lisp-system)))
@@ -120,7 +120,7 @@
 ;; discrete files for portability. Probably will end up violating all that is
 ;; DRY and holy.
 
-(defclass sk-asdf-system (sk-lisp-system)
+(defclass sk-asdf-system (sk-lisp-component asdf:system)
   ;; these slots are inferred in ASDF:SYSTEM. Since we are also concerned with
   ;; generating ASDF:SYSTEM definitions rather than just parsing them we
   ;; restore them here.

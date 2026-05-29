@@ -149,64 +149,8 @@
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 
-(use-package mpc
-  :bind
-  (:map mpc-mode-map
-	("v" . mpc-tagbrowser)
-	("a" . mpc-playlist-add)
-	("c" . mpc-playlist-create)
-	("." . mpc-play-at-point)
-	("P" . mpc-resume)
-	("f" . mpc-ffwd)
-	("b" . mpc-rewind)
-	("x" . mpc-playlist-delete)
-	("m" . mpc-mark)
-	("1" . mpc-playlist))
-  :config
-  (defun mpc-mark ()
-    "Mark mpc song at point and move to next line."
-    (interactive)
-    (mpc-select-toggle)
-    (next-line)))
-
-;;; Modes
-
-(use-package conf-mode
-  :bind (:map conf-toml-mode-map
-	      ("C-c C-c C-r" . #'rust-run)
-	      ("C-c C-c C-u" . #'rust-compile)
-	      ("C-c C-c C-t" . #'rust-test)))
-
-(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
-(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
-(keymap-set slime-editing-map "C-c s s" #'slime-sprof-start)
-(keymap-set slime-editing-map "C-c s x" #'slime-sprof-stop)
-(keymap-set slime-editing-map "C-c s r" #'slime-sprof-report)
-
-(keymap-global-set "C-c (" #'parens-map)
-;; (keymap-global-set "C-c )" #'parens-map)
-
-;;; C-x
-(keymap-set ctl-x-map "C-b" #'ibuffer)
-(keymap-set ctl-x-map "C-M-e" #'eval-last-sexp)
-
-;;; C-x r
-(keymap-set ctl-x-r-map "SPC" #'point-to-register)
-(keymap-set ctl-x-r-map "C-l" #'list-registers)
-(keymap-set ctl-x-r-map "C-b" #'buffer-to-register)
-(keymap-set ctl-x-r-map "C-f" #'file-query-to-register)
-(keymap-set ctl-x-r-map "C-r" #'copy-register)
-;;; C-x x
-
 ;;; Global
-(keymap-global-set "C-c c" user-map)
-(keymap-global-set "<remap> <tab-to-tab-stop>" #'imenu)
-(keymap-global-set "<XF86Paste>" parens-map)
-(keymap-global-set "C-c C-p" #'outline-previous-heading)
-(keymap-global-set "C-c C-n" #'outline-next-heading)
 (global-set-key [remap dabbrev-expand] 'hippie-expand)
-(keymap-global-set "C-c a" #'org-agenda)
-(keymap-global-set "C-c t" #'org-todo)
 
 (provide 'keymaps)
 ;; keymaps.el ends here

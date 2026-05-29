@@ -4,12 +4,23 @@
 
 ;;; Code:
 
-;;; UI
-(add-hook 'after-init-hook 'load-default-theme)
+;;; Defaults
+(use-package emacs
+  :hook (after-init . load-default-theme)
+  :bind 
+  (:map ctl-x-map
+        ("C-b" . ibuffer)
+        ("C-M-e" . eval-last-sexp))
+  (:map ctl-x-r-map 
+        ("SPC" . point-to-register)
+        ("C-l" . list-registers)
+        ("C-b" . buffer-to-register)
+        ("C-f" . file-query-to-register)
+        ("C-r" . copy-register))
+  ("<remap> <tab-to-tab-stop>" . imenu))
 
-;; (use-package hide-mode-line :ensure t)
 
-;;;; Icons
+;;; Icons
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
 (use-package nerd-icons :ensure t)
 (use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode) :after (ibuffer) :ensure t)
@@ -83,7 +94,7 @@
                                         (eglot (styles orderless))
                                         (eglot-capf (styles orderless)))))
 
-(use-package company)
+(use-package company :ensure t)
 
 (use-package expand
   :hook ((expand-expand . indent-according-to-mode)
@@ -166,6 +177,10 @@
 (use-package tab-bar
   :hook #'tab-bar-history)
 
+;;; Elisp
+(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
+(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
+
 ;;; Lisp
 (require 'slime-autoloads)
 (use-package inf-lisp
@@ -192,6 +207,10 @@
   :defer nil
   :after (cape)
   :autoload (slime slime-toggle slime-connect-file)
+  :bind (:map slime-editing-map
+              ("C-c s s" . slime-sprof-start)
+              ("C-c s x" . slime-sprof-stop)
+              ("C-c s r" . slime-sprof-report))
   :init
   (setq scheme-program-name "gsi"
 	slime-auto-start t
@@ -353,6 +372,9 @@ Interactively, NUMBER is the prefix arg."
 ;;; Outlines
 (use-package outline
   :init (setq outline-minor-mode-use-buttons nil)
+  :bind 
+  ("C-c C-p" . outline-previous-heading)
+  ("C-c C-n" . outline-next-heading)
   :config
   (defun outline-hook (&optional rx)
     "Enable `outline-minor-mode' and set `outline-regexp'."
@@ -380,15 +402,25 @@ Interactively, NUMBER is the prefix arg."
 		 (css-mode)
 		 (html-mode)
 		 (skel-mode)))
+;;; Conf
+(with-eval-after-load 'rust-mode
+  (use-package conf-mode
+    :bind (:map conf-toml-mode-map
+                ("C-c C-c C-r" . #'rust-run)
+                ("C-c C-c C-u" . #'rust-compile)
+                ("C-c C-c C-t" . #'rust-test))))
 
 ;;; Shell
-(defun set-no-process-query-on-exit ()
-  (let ((proc (get-buffer-process (current-buffer))))
-    (when (processp proc)
-      (set-process-query-on-exit-flag proc nil))))
-
-(add-hook 'shell-mode-hook 'set-no-process-query-on-exit)
-(add-hook 'term-exec-hook 'set-no-process-query-on-exit)
+(use-package shell
+  :defer nil
+  :config
+  (defun set-no-process-query-on-exit ()
+    (let ((proc (get-buffer-process (current-buffer))))
+      (when (processp proc)
+        (set-process-query-on-exit-flag proc nil))))
+  :hook
+  (shell-mode . set-no-process-query-on-exit)
+  (term-exec . set-no-process-query-on-exit))
 
 ;;; Eshell
 (use-package eshell
@@ -450,7 +482,7 @@ Interactively, NUMBER is the prefix arg."
 ;;; Terminal
 (use-package eat
   :ensure t
-  :hook (eshell . eat-eshell-mode)
+  :hook (eshell-mode . eat-eshell-mode)
   :init
   (setq eat-enable-auto-line-mode t
 	eat-kill-buffer-on-exit t))
@@ -573,6 +605,27 @@ With prefix ARG non-nil, insert the result at the end of region."
     (let ((eq-str (buffer-substring calc-embed-top calc-embed-bot)))
       (calc-eval eq-str 'push))))
 
+;;; MPC
+(use-package mpc
+  :bind
+  (:map mpc-mode-map
+    ("v" . mpc-tagbrowser)
+    ("a" . mpc-playlist-add)
+    ("c" . mpc-playlist-create)
+    ("." . mpc-play-at-point)
+    ("P" . mpc-resume)
+    ("f" . mpc-ffwd)
+    ("b" . mpc-rewind)
+    ("x" . mpc-playlist-delete)
+    ("m" . mpc-mark)
+    ("1" . mpc-playlist))
+  :config
+  (defun mpc-mark ()
+    "Mark mpc song at point and move to next line."
+    (interactive)
+    (mpc-select-toggle)
+    (next-line)))
+
 ;;; Diary
 (use-package diary-lib
   :init (setq diary-list-include-blanks t))
@@ -580,7 +633,10 @@ With prefix ARG non-nil, insert the result at the end of region."
 ;;; Org
 (use-package org
   :hook (org-mode-hook . visual-line-mode)
-  :bind (("C-c l" . org-follow-location))
+  :bind 
+  (:map org-mode-map 
+        ("C-c l" . org-follow-location)
+        ("C-c t" . org-todo))
   :init
   (defun ol-vc-expand (tag)
     "Expand the tag of an org-link where linkkey is `vc'."
@@ -695,9 +751,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 	  org-default-notes-file (join-paths org-directory "inbox.org")
 	  org-refile-targets '((org-agenda-files :maxlevel . 4))
 	  ;; org-agenda-files (list "inbox.org")
-	  org-agenda-include-diary t
-	  org-agenda-include-inactive-timestamps t
-	  org-agenda-span 7
 	  org-confirm-babel-evaluate nil
 	  org-src-fontify-natively t
 	  org-src-tabs-act-natively t
@@ -728,6 +781,11 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-agenda
   :after (org)
   :hook (hl-line-mode)
+  :bind ("C-c a" . org-agenda)
+  :init
+  (setq org-agenda-include-diary t
+        org-agenda-include-inactive-timestamps t
+        org-agenda-span 7)
   :config
   (add-to-list 
    'org-agenda-custom-commands 
@@ -736,7 +794,6 @@ With prefix ARG non-nil, insert the result at the end of region."
     (interactive)
     (cl-flet ((org-read-date (&rest rest) (current-time)))
       (call-interactively 'org-agenda-schedule)))
-
   (defun org-agenda-current-subtree-or-region (only-todos)
     "Display an agenda view for the current subtree or region.
  With prefix, display only TODO-keyword items."
@@ -843,6 +900,10 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package keymaps 
   :defer nil
+  :bind-keymap 
+  ("C-c (" . parens-map)
+  ("<XF86Paste>" . parens-map)
+  ("C-c c" . user-map)
   :hook (after-init-hook . load-keys)
   :load-path user-emacs-site-lisp-directory)
 

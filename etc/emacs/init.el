@@ -12,6 +12,8 @@
 ;; 
 
 ;;; Code:
+(require 'cl-lib)
+
 ;;; Utils
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
