@@ -21,7 +21,6 @@
  (sbcl-src :env (when-let ((src (probe-directory "/usr/src/sbcl"))) (namestring src))))
 :components
 ((:org "readme")
- (:asd "core")
  (:sys "core")
  (:mod "std" (:sys "std"))
  (:mod "alien" (:sys "alien"))

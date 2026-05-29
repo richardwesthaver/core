@@ -17,8 +17,8 @@
         ("C-b" . buffer-to-register)
         ("C-f" . file-query-to-register)
         ("C-r" . copy-register))
-  ("<remap> <tab-to-tab-stop>" . imenu))
-
+  ("<remap> <tab-to-tab-stop>" . imenu)
+  ([remap dabbrev-expand] . hippie-expand))
 
 ;;; Icons
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
@@ -489,12 +489,12 @@ Interactively, NUMBER is the prefix arg."
 
 ;;; Eww
 (use-package shr
-  :defer nil
+  :after (imenu)
   :init
-  (setq shr-use-colors nil
-	shr-use-fonts nil
+  (setq shr-use-colors t
+	shr-use-fonts t
 	shr-max-image-proportion 0.6
-	shr-image-animate nil
+	shr-image-animate t
 	shr-discard-aria-hidden t
 	shr-use-xwidgets-for-media t)
   :custom
@@ -521,17 +521,14 @@ If ARG is negative move backwards, ARG defaults to 1."
 	(when (< arg 0) (beginning-of-line)))
       (beginning-of-line)
       (point)))
-
   (defun shr-heading-previous (&optional arg)
     "Move backward by ARG headings (any h1-h4).
 If ARG is negative move forwards instead, ARG defaults to 1."
     (interactive "p")
     (shr-heading-next (- (or arg 1))))
-
   (defun shr-heading--line-at-point ()
     "Return the current line."
     (buffer-substring (line-beginning-position) (line-end-position)))
-
   (defun shr-heading-setup-imenu ()
     "Setup imenu for h1-h4 headings in eww buffer.
 Add this function to appropriate major mode hooks such as
@@ -539,7 +536,6 @@ Add this function to appropriate major mode hooks such as
     (setq-local
      imenu-prev-index-position-function #'shr-heading-previous
      imenu-extract-index-name-function  #'shr-heading--line-at-point))
-
   (defvar shr-heading-map
     (let ((map (make-sparse-keymap)))
       (define-key map "n" #'shr-heading-next)
@@ -550,11 +546,8 @@ Add this function to appropriate major mode hooks such as
 
 (use-package eww
   :after (shr)
-  :autoload (eww)
-  :hook ((eww-mode .shr-heading-setup-imenu)
-	 (eww-mode . (lambda () )))
-  :bind (:map eww-mode-map 
-	      ("i" . shr-heading-map))
+  :hook (eww-mode-hook . shr-heading-setup-imenu)
+  ;; :bind (:map eww-mode-map ("i" . shr-heading-map))
   :config
   (setopt
    browse-url-browser-function 'eww
@@ -940,6 +933,8 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package skel 
   :load-path user-emacs-site-lisp-directory
+  :mode (("\\.box" . skel-mode)
+         ("\\.pod" . skel-mode))
   :interpreter ("skel" . skel-mode)
   :hook (common-lisp-lisp-mode-hook . organ-minor-mode))
 

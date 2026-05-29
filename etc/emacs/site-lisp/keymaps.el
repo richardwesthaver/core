@@ -149,8 +149,5 @@
   ";" #'prog-comment-dwim
   "C-;" #'prog-comment-timestamp-keyword)
 
-;;; Global
-(global-set-key [remap dabbrev-expand] 'hippie-expand)
-
 (provide 'keymaps)
 ;; keymaps.el ends here
