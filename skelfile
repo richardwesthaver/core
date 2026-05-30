@@ -1,4 +1,4 @@
-;;; skelfile --- CC/core skelfile -*- mode: skel; -*-
+;;; skelfile --- CC/core skelfile
 :name core
 :author ("Richard Westhaver" . "ellis@rwest.io")
 :version "0.1.1"
@@ -70,7 +70,7 @@
   (:update ()
    (with-emacs (e)
     (org-babel-lob-ingest company-babel-file)
-    (org-with-file-buffer (join-paths company-source-directory "core/readme.org")
+    (org-with-file-buffer (join-paths source-directory "core/readme.org")
      (org-babel-execute-buffer)
      (save-buffer)))))
  (psl.dat (%stash)
@@ -136,27 +136,8 @@
   -out .stash/client-cert.pem$#)
  (emacs ()
   (:install ()
-   (flet ((el-write (in out)
-           (std:with-open-files
-            ((in in :direction :input)
-             (out out :direction :output :if-exists :supersede))
-            (std:copy-stream in out :finish-output t))))
-    (let ((dotemacs (merge-pathnames ".config/emacs/" (user-homedir-pathname)))
-          (config (directory "etc/emacs/*.el"))
-          (site-lisp (directory "etc/emacs/site-lisp/*.el")))
-     (mapcar
-      (lambda (el)
-       (el-write el (merge-pathnames (file-namestring el) dotemacs)))
-      config)
-     (mapcar
-      (lambda (el)
-       (el-write el 
-        (merge-pathnames (file-namestring el)
-         (ensure-directories-exist 
-          (merge-pathnames "site-lisp/" dotemacs)))))
-      site-lisp)
-      ;; FIXME
-      #$cp -rf slime ~/.config/emacs/site-lisp/$#)))
+   #$cp -rf slime ~/.config/emacs/lisp/$#
+   (funcall #0$sudo cp -rf etc/emacs/* /usr/share/emacs/site-lisp/$# :input t))
   (:purge () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
  (core ()

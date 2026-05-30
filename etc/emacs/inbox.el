@@ -160,8 +160,10 @@
     (kill-buffer inbox)))
 
 ;;;###autoload
-(defun load-org-inbox-capture-templates ()
-  (mapcar (lambda (x) (add-to-list 'org-capture-templates x)) org-inbox-capture-templates))
+(defun org-inbox-init ()
+  (cl-flet ((mapadd (x y) (mapcar (lambda (z) (add-to-list x z)) y)))
+    (mapadd 'org-capture-templates org-inbox-capture-templates)
+    (mapadd 'org-special-properties org-inbox-properties)))
 
 (provide 'inbox)
 ;; inbox.el ends here

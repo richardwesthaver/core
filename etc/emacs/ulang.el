@@ -28,7 +28,7 @@
 
 (defgroup ulang nil "ULANG")
 
-(defcustom ulang-special-properties
+(defcustom ulang-properties
   '("VERSION" "LOCATION")
   "See 'org-special-properties'."
   :group 'ulang)
@@ -84,7 +84,7 @@
    ulang-info-url-alist)
   (mapcar 
    (lambda (y) (add-to-list 'org-special-properties y))
-   ulang-special-properties))
+   ulang-properties))
 
 ;;; Location
 

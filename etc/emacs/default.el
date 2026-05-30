@@ -3,6 +3,110 @@
 ;; Core Emacs Defaults
 
 ;;; Code:
+(require 'cl-lib)
+;;; Utils
+(defun add-to-load-path (&rest paths)
+  "Add PATHS to `load-path'."
+  (mapcar (lambda (x) (add-to-list 'load-path x)) paths))
+
+(defun darwin-p () (string= system-type "darwin"))
+(defun linux-p () (string= system-type "gnu/linux"))
+
+(defun join-paths (root &rest dirs)
+  "helper function for joining strings to a path."
+  (let ((result root))
+    (cl-loop for dir in dirs do
+             (setq result (concat (file-name-as-directory result) dir)))
+    result))
+
+(defun mkstr (&rest args)
+  "Paul Graham's mkstr utility from On Lisp.
+
+Coerce ARGS into a single string and return it."
+  (let* ((s ""))
+    (dolist (a args)
+      (cond
+       ((null a) nil)
+       ((sequencep a) (setq s (concat s a)))
+       ((numberp a) (setq s(concat s (number-to-string a))))
+       ((symbolp a) (setq s(concat s (symbol-name a))))))
+    s))
+
+(defun symb (&rest args)
+  "Concat ARGS and return a newly interned symbol."
+  (intern (apply #'mkstr args)))
+
+(defun group (source n)
+  "Group a list of arguments SOURCE by any provided grouping amount N.
+
+For example:
+(group (quote (foo 2 bar 4)) 2) ;=> ((foo 2) (bar 4))
+(group (quote (a b c d e f)) 3) ;=> ((a b c) (d e f))
+"
+  (when (zerop n) (error "zero length"))
+  (cl-labels ((rec (source acc)
+                (let ((rest (nthcdr n source)))
+                  (if (consp rest)
+                      (rec rest (cons
+                                 (cl-subseq source 0 n)
+                                 acc))
+                    (nreverse
+                     (cons source acc))))))
+    (when source (rec source nil))))
+
+(defun flatten (x)
+  "Given a tree X, return all the leaves of the tree."
+  (cl-labels ((rec (x acc)
+                (cond ((null x) acc)
+                      ((atom x) (cons x acc))
+                      (t (rec
+                          (car x)
+                          (rec (cdr x) acc))))))
+    (rec x nil)))
+
+(defun intersperse (element list)
+  "Intersperse ELEMENT between each element of LIST."
+  (if (null list)
+      nil
+    (cons (car list)
+          (cl-mapcan (lambda (x) (list element x)) (cdr list)))))
+
+(defun hash-table-alist (table)
+  "Returns an association list containing the keys and values of hash table
+TABLE."
+  (let ((alist nil))
+    (maphash (lambda (k v)
+               (push (cons k v) alist))
+             table)
+    (nreverse alist)))
+
+(defun load-default-theme (&optional theme)
+  (interactive)
+  (when theme (setq default-theme theme))
+  (load-theme default-theme t))
+
+(defun load-keys (&optional custom)
+  (let ((keydefs (or custom "keymaps")))
+    (load keydefs nil t)))
+
+(defun gen-site-lisp-autoloads ()
+  (interactive)
+  (loaddefs-generate 
+   (list
+    user-emacs-site-lisp-directory
+    (join-paths user-emacs-site-lisp-directory "slime"))
+   (join-paths user-emacs-site-lisp-directory "autoloads.el")))
+
+(defun gen-lisp-autoloads ()
+  (interactive)
+  (loaddefs-generate user-emacs-lisp-directory
+                     (join-paths user-emacs-lisp-directory "autoloads.el")))
+
+(defun upgrade-emacs (&optional ask)
+  (interactive)
+  (package-refresh-contents)
+  (package-install-selected-packages (not ask))
+  (package-upgrade-all ask))
 
 ;;; Defaults
 (use-package emacs
@@ -18,7 +122,21 @@
         ("C-f" . file-query-to-register)
         ("C-r" . copy-register))
   ("<remap> <tab-to-tab-stop>" . imenu)
-  ([remap dabbrev-expand] . hippie-expand))
+  ([remap dabbrev-expand] . hippie-expand)
+  :config
+  (add-to-load-path 
+   (expand-file-name "site-lisp" user-emacs-directory)
+   user-emacs-lisp-directory
+   user-emacs-site-lisp-directory 
+   (expand-file-name "slime" user-emacs-site-lisp-directory))
+  ;; Load autoloads if they exist
+  (require 'autoloads (expand-file-name "autoloads" user-emacs-site-lisp-directory) t))
+
+;; use-package defaults
+(use-package system-packages :ensure t)
+(use-package diminish :ensure t)
+(use-package delight :ensure t)
+(setq use-package-expand-minimally t)
 
 ;;; Icons
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
@@ -160,7 +278,9 @@
   :config
   (setq speedbar-sort-tags t
 	speedbar-prefer-window t
-	speedbar-track-mouse-flag t))
+	speedbar-track-mouse-flag t)
+  (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
+  (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
 
 ;;; Projects
 (use-package package
@@ -918,7 +1038,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :defer nil
   :load-path user-emacs-site-lisp-directory
   :after (org-expire)
-  :config (load-org-inbox-capture-templates))
+  :config (org-inbox-init))
 
 (use-package gen 
   :load-path user-emacs-site-lisp-directory
@@ -933,6 +1053,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :ensure-system-package tokei)
 
 (use-package skel 
+  :after (eglot)
   :load-path user-emacs-site-lisp-directory
   :mode (("\\.box" . skel-mode)
          ("\\.pod" . skel-mode))
