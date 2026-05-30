@@ -168,6 +168,9 @@
   (opt (* rocksdb-block-based-table-options))
   (i int))
 
+(defar rocksdb-block-based-options-set-uniform-cv-threshold void
+  (opt (* rocksdb-block-based-table-options)) (val double))
+
 (export-opt-accessors rocksdb-block-based-options
                       checksum
                       block-size
@@ -241,6 +244,8 @@
 (define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)
 (define-opt-accessor rocksdb-options max-compaction-trigger-wakeup-seconds unsigned-long)
 (define-opt-accessor rocksdb-options min-tombstones-for-range-conversion unsigned-int)
+(define-opt-accessor rocksdb-options async-wal-precreate)
+(define-opt-accessor rocksdb-options memtable-batch-lookup-optimization)
 (define-alien-enum (rocksdb-compression-type)
   :none 0
   :snappy 1
@@ -452,6 +457,7 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-readoptions deadline unsigned-long)
 (define-opt-accessor rocksdb-readoptions io-timeout unsigned-long)
 (define-opt-accessor rocksdb-readoptions async-io)
+(define-opt-accessor rocksdb-readoptions optimize-multiget-for-io)
 (defar rocksdb-readoptions-set-snapshot void
   (self (* rocksdb-readoptions))
   (val (* rocksdb-snapshot)))

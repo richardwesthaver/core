@@ -107,6 +107,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-block-based-options-set-top-level-index-pinning-tier
    :rocksdb-block-based-options-set-partition-pinning-tier
    :rocksdb-block-based-options-set-unpartition-pinning-tier
+   :rocksdb-block-based-options-set-uniform-cv-threshold
    :rocksdb-block-based-options-destroy
    :rocksdb-options-increase-parallelism
    :rocksdb-options-set-uint64add-merge-operator

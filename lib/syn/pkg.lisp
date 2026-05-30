@@ -18,7 +18,7 @@
   (:export :fmt :fmt-config))
 
 (defpkg :syn/gen
-  (:use :cl :std :doc :id :graph :ast)
+  (:use :cl :std :id :graph :ast)
   (:export :gen-designator :gen-condition :gen-error
    :simple-gen-error :defsyntax
    :function-call :src-location

@@ -1,6 +1,6 @@
 ;;; core/lib/syn/syn.sys --- Syn Sytem Definitions
 (defsys :syn
- :require (:std :obj :parse :tree-sitter :doc :cli :io :dat :cuda)
+ :require (:std :obj :parse :tree-sitter :cli :io :dat :cuda)
  :components 
  ((:pkg "pkg")
   (:file "ts")

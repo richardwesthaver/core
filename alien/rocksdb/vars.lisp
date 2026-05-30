@@ -75,6 +75,7 @@
     filter-block-read-byte
     compression-dict-block-read-byte
     metadata-block-read-byte
+    blob-cache-read-byte
     total-metric-count))
 
 (defvar *rocksdb-perf-levels*
