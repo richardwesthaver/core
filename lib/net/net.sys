@@ -23,6 +23,7 @@
                 (:file "dbus")
                 (:file "ssh")
                 (:file "dm")
+                (:file "lsp")
                 (:file "sesh")))
   (:file "cookie")               
   (:file "req")

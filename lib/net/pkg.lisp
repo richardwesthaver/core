@@ -383,6 +383,10 @@
    :eval-repeatedly-async-state   
    :reconnect-worker))
 
+(defpkg :net/proto/lsp
+  (:nicknames :net/lsp :lsp)
+  (:use :std-lisp :net/core :net/codec/rpc :syn/lang))
+
 (defpkg :net/req
   (:nicknames :req)
   (:shadowing-import-from :std/type :octet :octet-vector)
