@@ -244,7 +244,6 @@
 (define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)
 (define-opt-accessor rocksdb-options max-compaction-trigger-wakeup-seconds unsigned-long)
 (define-opt-accessor rocksdb-options min-tombstones-for-range-conversion unsigned-int)
-(define-opt-accessor rocksdb-options async-wal-precreate)
 (define-opt-accessor rocksdb-options memtable-batch-lookup-optimization)
 (define-alien-enum (rocksdb-compression-type)
   :none 0

@@ -1053,20 +1053,22 @@ With prefix ARG non-nil, insert the result at the end of region."
   :ensure-system-package tokei)
 
 (use-package skel 
+  :defer nil
   :after (eglot)
   :load-path user-emacs-site-lisp-directory
-  :mode (("\\.box" . skel-mode)
-         ("\\.pod" . skel-mode))
+  :mode 
+  ("\\.box" . skel-mode)
+  ("\\.pod" . skel-mode)
+  ("/\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)" . skel-mode)
   :interpreter ("skel" . skel-mode)
   :init (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
-  :mode ("[.]?(skelrc|skelfile|sk|sxp|homerc|kryptrc|packyrc)" . skel-mode)
   :hook 
   (skel-mode-hook . skel-dir-local-get-variables)
   (common-lisp-lisp-mode-hook . organ-minor-mode)
   (project-find-functions . project-try-skel)
   :config
   (org-babel-make-language-alias "skel" "lisp-data"))
-
+;; (add-to-list 'auto-mode-alist '("/\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)" . skel-mode))
 (use-package skt
   :load-path user-emacs-site-lisp-directory
   :after (skel))

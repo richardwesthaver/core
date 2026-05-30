@@ -34,7 +34,16 @@ The core is a [[id:af0ed8bb-4b45-42f9-b8be-82b8ea7935a3][Common Lisp]] hacking e
 No guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
-#+begin_src shell :eval never
-  ./bootstrap.lisp
-  sudo .stash/core --script etc/script/install.lisp # prefix=/usr
-#+end_src
+- install core programs
+  #+begin_src shell :eval no
+  # sudo pacman -Sy sbcl
+  ./bootstrap.lisp #> .stash/core
+  sudo .stash/core --script etc/script/install.lisp
+  #+end_src
+
+- install emacs site-lisp
+  #+begin_src shell :eval no
+  # sudo pacman -Sy emacs
+  # export EMACSLOADPATH
+  skel make install-emacs
+  #+end_src
