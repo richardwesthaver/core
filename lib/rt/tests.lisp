@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpackage :rt/tests
-  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/fuzz))
+  (:use :cl :std :rt :rt/flamegraph :rt/tracing :rt/fuzz :rt/lipsum))
 
 (in-package :rt/tests)
 
@@ -61,8 +61,13 @@
   (with-tmp-directory ("foobar")
     (is (directory-path-p (probe-file *tmp*)))))
 
+(deftest lipsum ()
+  (istype 'string (lipsum :list :count 4 :stream nil))
+  (signals error (lipsum :paragraph :count nil)))
+
 (deftest fuzz ()
   (defkernel foo-fuzz (fuzz:fuzzer) ())
   (istype 'fuzzer (make-instance 'foo-fuzz))
   (is (integerp (fuzz (fuzzer))))
   (is (= 100 (length (fuzz* (make-random-state) (kernel (fuzzer)) :count 100)))))
+

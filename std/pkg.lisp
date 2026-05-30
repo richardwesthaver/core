@@ -62,6 +62,7 @@
    :flatten
    :group
    :firstn
+   :intersperse
    :zip :unzip
    :zip-list :zip-tree
    :ziptree

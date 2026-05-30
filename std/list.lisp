@@ -144,6 +144,13 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                               (rec (cdr x) acc))))))
       (rec x nil))))
 
+(defun intersperse (element list)
+  "Intersperse ELEMENT between each element of LIST."
+  (if (null list)
+      nil
+    (cons (car list)
+          (mapcan (lambda (x) (list element x)) (cdr list)))))
+
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun zip-list (&rest args)
     "Return a list of lists containing every member of ARGS at the same position."

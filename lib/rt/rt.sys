@@ -12,6 +12,7 @@
   (:file "rt")
   (:file "tracing")
   (:file "flamegraph")
+  (:file "lipsum")
   (:file "fuzz"))
  :provide
  ((:proto :test)

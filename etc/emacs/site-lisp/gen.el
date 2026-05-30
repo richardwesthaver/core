@@ -57,7 +57,7 @@
 
 ;;;###autoload
 (defun maybe-enable-gen-minor-mode ()
-  (when (equal (file-name-extension buffer-file-name) "gen")
+  (when (and buffer-file-name (equal (file-name-extension buffer-file-name) "gen"))
     (gen-minor-mode 1)))
 
 (provide 'gen)

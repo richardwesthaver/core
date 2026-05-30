@@ -4,9 +4,6 @@
 
 ;;; Commentary:
 
-;; 
-;; wiki: https://en.wikipedia.org/wiki/Fuzzing
-
 ;;; Code:
 (in-package :rt/fuzz)
 

@@ -123,7 +123,7 @@
 
 (defpkg :rt/tracing
   (:nicknames :tracing)
-  (:use :cl :std :log :rt)
+  (:use :std-lisp :log :rt)
   (:export
    :start-tracing
    :stop-tracing
@@ -132,10 +132,15 @@
 
 (defpkg :rt/flamegraph
   (:nicknames :flamegraph)
-  (:use :cl :std :log :rt)
+  (:use :std-lisp :log :rt)
   (:export :with-flamegraph))
 
 (defpkg :rt/fuzz
   (:nicknames :fuzz)
-  (:use :cl :std :log :rt)
+  (:use :std-lisp :log :rt)
   (:export :fuzzer :fuzz :fuzz*))
+
+(defpkg :rt/lipsum
+  (:nicknames :lipsum :lorem-ipsum)
+  (:use :std-lisp)
+  (:export :lipsum :lipsum-sentences :lipsum-paragraphs :lipsum-list))
