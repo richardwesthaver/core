@@ -11,7 +11,7 @@
 ;; course Emacs, where SLIME (slime-cl-indent.el) and other Lisp-specific
 ;; packages provide a rich framework for consuming user-config in this
 ;; manner. This module is also available for use throughout the core - such as
-;; the SYN/LINT module.
+;; the SYN/LINT module or via NET/LSP.
 
 ;;; Code:
 (in-package :syn/fmt)

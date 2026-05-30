@@ -134,6 +134,11 @@
   (:export
    :tlv :tlv-type :tlv-length :tlv-value :make-tlv))
 
+(defpkg :net/codec/rpc
+  (:nicknames :codec/rpc :net/rpc :rpc)
+  (:use :std-lisp :net/core)
+  (:export))
+
 (defpkg :net/codec/osc
   (:nicknames :codec/osc)
   (:use :std-lisp :log :net/core)

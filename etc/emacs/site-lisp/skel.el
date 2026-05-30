@@ -1,6 +1,6 @@
 ;;; skel.el --- skel Emacs Mode -*- lexical-binding:t -*-
 
-;; skel-mode, skel-minor-mode,skt-minor-mode, sk-classes
+;; skel-mode, skel-minor-mode, skt-minor-mode
 
 ;; Copyright (C) 2023  The Compiler Company
 
@@ -25,15 +25,16 @@
 ;;
 
 ;;; Code:
-(eval-and-compile (require 'eieio)
-		  (require 'cl-lib)
-                  (require 'skeleton)
-                  (require 'project)
-                  (require 'org)
-                  (require 'tempo)
-                  (require 'autoinsert)
-		  (defvar skel-debug nil)
-		  (when skel-debug (require 'ede)))
+(eval-and-compile 
+  (require 'eieio)
+  (require 'cl-lib)
+  (require 'skeleton)
+  (require 'project)
+  (require 'org)
+  (require 'tempo)
+  (require 'autoinsert)
+  (defvar skel-debug nil)
+  (when skel-debug (require 'ede)))
 
 (defvar skel-version "0.1.0")
 
@@ -62,6 +63,8 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :type 'string
   :group 'skel)
 
+;;; Commands
+;; should dispatch to a server, likely covered by eglot tho..
 (defvar-keymap skel-map
   :doc "skel keymap"
   :prefix 'skel-map
@@ -100,6 +103,7 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 (def-skel-cmd search)
 (def-skel-cmd view)
 
+;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
   :global t
@@ -116,8 +120,6 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 	(vc-file-setprop dir 'project-vc res)
 	(setf (car res) 'skel))
       (append res (list dir)))))
-
-(add-hook 'project-find-functions 'project-try-skel)
 
 (defun skel-indent-region (start end)
   "Indent region as a SKEL S-expression."
@@ -140,6 +142,7 @@ to trigger `skel-actions' based on the `skel-behavior' value."
       (and pr (progress-reporter-done pr))
       (move-marker end nil))))
 
+;;; Major Mode
 ;; TODO 2023-09-06: 
 (define-derived-mode skel-mode lisp-mode "Skel"
   :group 'skel
@@ -148,8 +151,6 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   (setq imenu-case-fold-search nil)
   (setq-local indent-region-function 'skel-indent-region)
   (setq-local lisp-indent-offset 1))
-
-(org-babel-make-language-alias "skel" "lisp-data")
 
 (defun maybe-skel-minor-mode ()
   "Check the current environment and determine if `skel-minor-mode' should
@@ -160,43 +161,6 @@ be enabled. This function is added as a hook to
   `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
 	 (current-time-list nil))
      (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
-
-(defclass sk ()
-  ((id :initarg :id :initform (make-id)))
-  :documentation "Base class for skeleton objects."
-  :abstract t)
-
-(defun sk-classes () (eieio-class-children 'sk))
-
-(defmacro def-sk-class (name doc &optional slots superclasses)
-  "Define a new class with superclass of `skel'+SUPERCLASSES, SLOTS,
-DOC, and NAME."
-  (declare (indent 1))
-  `(defclass ,(symb "sk-" name)
-     ,(if superclasses `(sk ,@superclasses) '(sk))
-     ,(if slots
-	  `(,@slots
-	    (:id :initarg :id :initform (make-id ,(symbol-name name)) :accessor id))
-	`((:id :initarg :id :initform (make-id ,(symbol-name name)) :accessor id)))
-     :documentation ,doc))
-
-(def-sk-class target "Target skeleton class.")
-(def-sk-class source "Source skeleton class.")
-(def-sk-class rule
-  "Config skeleton class."
-  ((target :initarg :target :initform nil :type (or null sk-target))
-   (rules :initarg :source :initform nil :type (or null sk-source))))
-
-(def-sk-class project
-  "Project skeleton class."
-  ((rules :initarg :rules :initform nil :accessor sk-project-rules :type list)))
-
-(add-to-list 'auto-mode-alist '("skelfile" . skel-mode))
-(add-to-list 'auto-mode-alist '("\\.sk" . skel-mode))
-(add-to-list 'auto-mode-alist '("\\.sys" . skel-mode))
-(add-to-list 'auto-mode-alist '("\\.sxp" . skel-mode))
-(add-to-list 'auto-mode-alist '("skelrc" . skel-mode))
-(add-to-list 'auto-mode-alist '("\\.skelrc" . skel-mode))
 
 (cl-defmethod project-root ((project (head skel)))
   (when (and project (>= (length project) 4))
@@ -259,8 +223,6 @@ project's skelfile, if any. Typically added to
   (let ((root (expand-file-name (project-root (project-current)))))
     (unless (assoc-string root dir-locals-class-alist)
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))
-
-;; (add-hook 'skel-minor-mode-hook '%skel-dir-local--get-variables)
 
 (defun run-skel-shell ()
   (interactive)

@@ -83,8 +83,9 @@
   :ensure t
   :config (vertico-mode)
   :bind 
-  (("M-q" . #'vertico-quick-insert)
-   ("C-q" . #'vertico-quick-exit)))
+  (:map vertico-map 
+        ("M-q" . #'vertico-quick-insert)
+        ("C-M-q" . #'vertico-quick-exit)))
 
 (use-package orderless
   :ensure t
@@ -300,14 +301,14 @@
 ;;; Rust
 (use-package rust-mode 
   :ensure nil
-  :hook (rust . eglot-ensure)
+  :hook (rust-mode-hook . eglot-ensure)
   :init
   (setq rust-rustfmt-switches nil
-	rust-indent-offset 2))
+	    rust-indent-offset 2))
 
 ;;; Python
 (use-package python
-  :hook eglot-ensure
+  :hook (python-mode-hook . eglot-ensure)
   :init (setq python-indent-offset 2))
 
 ;;; Javascript
@@ -936,7 +937,14 @@ With prefix ARG non-nil, insert the result at the end of region."
   :mode (("\\.box" . skel-mode)
          ("\\.pod" . skel-mode))
   :interpreter ("skel" . skel-mode)
-  :hook (common-lisp-lisp-mode-hook . organ-minor-mode))
+  :init (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
+  :mode ("[.]?(skelrc|skelfile|sk|sxp|homerc|kryptrc|packyrc)" . skel-mode)
+  :hook 
+  (skel-mode-hook . skel-dir-local-get-variables)
+  (common-lisp-lisp-mode-hook . organ-minor-mode)
+  (project-find-functions . project-try-skel)
+  :config
+  (org-babel-make-language-alias "skel" "lisp-data"))
 
 (use-package skt
   :load-path user-emacs-site-lisp-directory

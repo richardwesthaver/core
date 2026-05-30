@@ -7,6 +7,12 @@
 
 ;;; Commentary:
 
+;; we intend to extend this to support different template DSLs with expansions
+;; processed in CL and used by Emacs.
+
+;; Eventually we want to replace `eglot--snippet-expansion-fn' with a remote
+;; call to the functions supplied here.
+
 ;;; Code:
 (in-package :syn/tempo)
 

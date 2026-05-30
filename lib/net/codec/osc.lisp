@@ -1,6 +1,6 @@
 ;;; osc.lisp --- Open Sound Control
 
-;; 
+;; OSC protocol support
 
 ;;; Code:
 (in-package :net/codec/osc)
