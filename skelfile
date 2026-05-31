@@ -70,7 +70,7 @@
   (:update ()
    (with-emacs (e)
     (org-babel-lob-ingest company-babel-file)
-    (org-with-file-buffer (join-paths source-directory "core/readme.org")
+    (org-with-file-buffer (join-paths src-directory "core/readme.org")
      (org-babel-execute-buffer)
      (save-buffer)))))
  (psl.dat (%stash)

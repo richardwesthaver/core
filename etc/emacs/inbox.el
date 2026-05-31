@@ -69,17 +69,21 @@
 
 (defcustom org-inbox-capture-templates
   `(("i" "inbox-item" entry (file ,org-inbox-file)
-     "* %?\n%i"
-     :empty-lines 1)
-    ("t" "inbox-task" entry (file ,org-inbox-file) "* TODO %^{item}\n")
-    ("n" "inbox-note" entry (file ,org-inbox-file) "* %^{item}\n%a")
-    ("w" "inbox-web-link" entry (file ,org-inbox-file)
-     "* %?"
-     :hook (lambda ()
-             (goto-char (pos-eol))
-             (org-web-tools-insert-link-for-url (org-web-tools--get-first-url))))
-    ("l" "log" item (org-ask-location) "%U %?" :empty-lines 1)
-    ("s" "secret" table-line (file+function "krypt" org-ask-location) "| %^{key} | %^{val} |" :immediate-finish t :kill-buffer t))
+     "%i"
+     :unnarrowed t
+     :clock-keep t
+     :empty-lines 1
+     :prepare-finalize (org-id-get-create org-expire-insert-created))
+    ("t" "inbox-task" entry (file ,org-inbox-file) "TODO %i\n"
+     :empty-lines 1
+     :prepare-finalize (org-id-get-create org-expire-insert-created))
+    ("n" "inbox-note" entry (file ,org-inbox-file) "%i\n%a"
+     :empty-lines 1
+     :prepare-finalize (org-id-get-create org-expire-insert-created))
+    ("l" "log" entry (file+olp+datetree ,(expand-file-name "log.org" org-directory)) "%i" 
+     :empty-lines 1 
+     :unnarrowed t
+     :prepare-finalize (org-id-get-create org-expire-insert-created)))
   "List of additional capture templates loaded by 'inbox'."
   :group 'inbox)
 

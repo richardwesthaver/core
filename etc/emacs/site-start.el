@@ -29,8 +29,8 @@
 (defvar user-mail-directory (expand-file-name "mail" user-home-directory))
 (defvar user-org-stash-directory (expand-file-name "org" user-stash-directory))
 (defvar default-theme 'modus-vivendi)
-(defvar source-directory (expand-file-name "src" user-home-directory))
-(defvar company-org-directory (expand-file-name "org" source-directory))
+(defvar src-directory (expand-file-name "src" user-home-directory))
+(defvar company-org-directory (expand-file-name "org" src-directory))
 (defvar company-babel-file (expand-file-name "meta/babel.org" company-org-directory))
 (defvar company-bibliography (expand-file-name "graph/refs.bib" company-org-directory))
 (defvar company-domain "compiler.company")
@@ -43,7 +43,7 @@
 (defvar company-staging-url "the.compiler.company")
 (defvar company-cdn-url "https://cdn.compiler.company")
 (defvar company-attach-id-dir nil)
-(defvar emacs-config-source (expand-file-name "core/emacs" source-directory))
+(defvar emacs-config-source (expand-file-name "core/emacs" src-directory))
 (defvar core-lisp-program "/usr/bin/core")
 
 ;;; Settings

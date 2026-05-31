@@ -748,7 +748,9 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Org
 (use-package org
-  :hook visual-line-mode
+  :hook 
+  (org-mode . visual-line-mode)
+  (org-clock-in-prepare . org-mode-ask-effort)
   :bind 
   (:map org-mode-map 
         ("C-c l" . org-follow-location)
@@ -854,9 +856,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 	(unless (equal effort "")
 	  (org-set-property "Effort" effort)))))
 
-  (add-hook 'org-clock-in-prepare-hook
-	    'org-mode-ask-effort)
-
   (with-eval-after-load "preview"
     '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
@@ -897,7 +896,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-agenda
   :after (org)
-  :hook (hl-line-mode)
+  :hook hl-line-mode
   :bind ("C-c a" . org-agenda)
   :init
   (setq org-agenda-include-diary t

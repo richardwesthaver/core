@@ -51,14 +51,14 @@
 ;;; Utils
 (eval-when (:load-toplevel :compile-toplevel :execute)
   (defun default-web-directory (&optional sub-directory)
-    (let ((source-directory #.(or *compile-file-truename* *load-truename*)))
-      (merge-pathnames (make-pathname :directory (append (pathname-directory source-directory)
+    (let ((src-directory #.(or *compile-file-truename* *load-truename*)))
+      (merge-pathnames (make-pathname :directory (append (pathname-directory src-directory)
                                                          (list "www")
                                                          (when sub-directory
                                                            (list sub-directory)))
                                       :name nil
                                       :type nil
-                                      :defaults source-directory)))))
+                                      :defaults src-directory)))))
 
 (defgeneric start-listening (self))
 (defgeneric service-status-message (service status-code &key &allow-other-keys))
