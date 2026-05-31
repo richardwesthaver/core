@@ -152,10 +152,16 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   (setq-local indent-region-function 'skel-indent-region)
   (setq-local lisp-indent-offset 1))
 
-(defun maybe-skel-minor-mode ()
-  "Check the current environment and determine if `skel-minor-mode' should
-be enabled. This function is added as a hook to
-`lisp-data-mode-hook'.")
+;;;###autoload
+(defun init-skel ()
+  (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
+        '("\\.box\\'" "\\.pod\\'" "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")))
+
+;; TODO 2026-05-30: 
+;; (defun maybe-skel-minor-mode ()
+;;   "Check the current environment and determine if `skel-minor-mode' should
+;; be enabled. This function is added as a hook to
+;; `lisp-data-mode-hook'.")
 
 (defmacro make-id (&optional pre)
   `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))

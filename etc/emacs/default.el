@@ -94,12 +94,13 @@ TABLE."
    (list
     site-lisp-directory
     (join-paths site-lisp-directory "slime"))
-   (or output (join-paths site-lisp-directory "autoloads.el"))))
+   (or output"autoloads.el")))
 
 (defun gen-lisp-autoloads ()
   (interactive)
-  (loaddefs-generate user-emacs-lisp-directory
-                     (join-paths user-emacs-lisp-directory "autoloads.el")))
+  (loaddefs-generate 
+   user-lisp-directory
+   (join-paths user-lisp-directory "autoloads.el")))
 
 (defun upgrade-emacs (&optional ask)
   (interactive)
@@ -303,6 +304,8 @@ TABLE."
 
 ;;; Lisp
 (require 'slime-autoloads)
+(add-to-list 'auto-mode-alist '("\\.sys" . lisp-mode))
+
 (use-package inf-lisp
   :init 
   (setq inferior-lisp-program
@@ -420,14 +423,14 @@ TABLE."
 ;;; Rust
 (use-package rust-mode 
   :ensure nil
-  :hook (rust-mode-hook . eglot-ensure)
+  :hook eglot-ensure
   :init
   (setq rust-rustfmt-switches nil
 	    rust-indent-offset 2))
 
 ;;; Python
 (use-package python
-  :hook (python-mode-hook . eglot-ensure)
+  :hook eglot-ensure
   :init (setq python-indent-offset 2))
 
 ;;; Javascript
@@ -666,7 +669,7 @@ Add this function to appropriate major mode hooks such as
 
 (use-package eww
   :after (shr)
-  :hook (eww-mode-hook . shr-heading-setup-imenu)
+  :hook shr-heading-setup-imenu
   ;; :bind (:map eww-mode-map ("i" . shr-heading-map))
   :config
   (setopt
@@ -745,7 +748,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Org
 (use-package org
-  :hook (org-mode-hook . visual-line-mode)
+  :hook visual-line-mode
   :bind 
   (:map org-mode-map 
         ("C-c l" . org-follow-location)
@@ -946,7 +949,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-id
   :after (org)
-  :hook (kill-emacs-hook . org-id-locations-save)
+  :hook (kill-emacs . org-id-locations-save)
   :init (setq org-id-link-to-org-use-id t))
 
 (use-package org-protocol
@@ -967,7 +970,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-expire
   :load-path site-lisp-directory
   :after (org org-id)
-  :hook (org-after-todo-state-change-hook . (org-expire-insert-created org-id-get-create)))
+  :hook (org-after-todo-state-change . (lambda () (org-expire-insert-created org-id-get-create))))
 
 (use-package org-web-tools
   :ensure t
@@ -1003,7 +1006,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package ispell
   :init ;; requires aspell and a hunspell dictionary (hunspell-en_us)
   (setq-default ispell-program-name "hunspell")
-  :hook (mail-send-hook . ispell-message))
+  :hook (mail-send . ispell-message))
 
 ;;; Core Extensions
 (use-package ulang
@@ -1017,7 +1020,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   ("C-c (" . parens-map)
   ("<XF86Paste>" . parens-map)
   ("C-c c" . user-map)
-  :hook (after-init-hook . load-keys)
+  :hook (after-init . load-keys)
   :load-path site-lisp-directory)
 
 (use-package scratch 
@@ -1052,21 +1055,24 @@ With prefix ARG non-nil, insert the result at the end of region."
   :ensure-system-package tokei)
 
 (use-package skel 
-  :defer nil
   :load-path site-lisp-directory
-  :after (eglot)
-  :mode ("\\.box\\'" "\\.pod\\'" "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")
+  :defer nil
   :interpreter "skel"
   :hook 
-  (skel-mode-hook . skel-dir-local-get-variables)
-  (common-lisp-lisp-mode-hook . organ-minor-mode)
+  (skel-mode . skel-dir-local-get-variables)
+  (lisp-mode . organ-minor-mode)
   (project-find-functions . project-try-skel)
-  :config
+  (prog-mode-hook . skel-minor-mode)
+  (org-mode-hook . skel-minor-mode)
+  (conf-mode-hook . skel-minor-mode)
+  (dired-mode-hook . skel-minor-mode)
+  :init
   (with-eval-after-load 'eglot
     (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 
-;; (add-to-list 'auto-mode-alist '("/\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)" . skel-mode))
+(init-skel)
+
 (use-package skt
   :load-path site-lisp-directory
   :after (skel))

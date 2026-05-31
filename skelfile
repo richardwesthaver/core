@@ -135,7 +135,8 @@
   -keyout .stash/client-key.pem -outform PEM \
   -out .stash/client-cert.pem$#)
  (emacs ()
-  (:install () (funcall #0$sudo cp -rf etc/emacs/* slime /usr/share/emacs/site-lisp/$# :input t))
+  (:install (autoload-emacs) (funcall #0$sudo cp -rf etc/emacs/* slime /usr/share/emacs/site-lisp/$# :input t))
+  (:autoload () (funcall #0$sudo emacs -Q --script etc/script/gen-autoloads.el$# :input t))
   (:purge () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))
  (core ()
