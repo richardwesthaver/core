@@ -17,8 +17,9 @@
 
 ;;; Code:
 ;;; Variables
-(defvar user-emacs-site-lisp-directory (expand-file-name "site-lisp" user-emacs-directory))
-(defvar user-emacs-lisp-directory (expand-file-name "lisp" user-emacs-directory))
+
+(defvar site-lisp-directory "/usr/share/emacs/site-lisp/")
+(defvar user-lisp-directory (expand-file-name "lisp" user-emacs-directory))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-config-file (expand-file-name "config.el" user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
@@ -47,6 +48,8 @@
 
 ;;; Settings
 (setopt custom-file (expand-file-name "custom.el" user-emacs-directory)
+        lisp-directory "/usr/share/emacs/lisp/"
+        user-lisp-directory (expand-file-name "lisp" user-emacs-directory)
         tab-width 4
         switch-to-buffer-obey-display-actions t
         show-paren-context-when-offscreen 'overlay

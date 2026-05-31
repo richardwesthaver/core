@@ -41,8 +41,7 @@ Coerce ARGS into a single string and return it."
 
 For example:
 (group (quote (foo 2 bar 4)) 2) ;=> ((foo 2) (bar 4))
-(group (quote (a b c d e f)) 3) ;=> ((a b c) (d e f))
-"
+(group (quote (a b c d e f)) 3) ;=> ((a b c) (d e f))"
   (when (zerop n) (error "zero length"))
   (cl-labels ((rec (source acc)
                 (let ((rest (nthcdr n source)))
@@ -89,13 +88,13 @@ TABLE."
   (let ((keydefs (or custom "keymaps")))
     (load keydefs nil t)))
 
-(defun gen-site-lisp-autoloads ()
+(defun gen-site-lisp-autoloads (&optional output)
   (interactive)
   (loaddefs-generate 
    (list
-    user-emacs-site-lisp-directory
-    (join-paths user-emacs-site-lisp-directory "slime"))
-   (join-paths user-emacs-site-lisp-directory "autoloads.el")))
+    site-lisp-directory
+    (join-paths site-lisp-directory "slime"))
+   (or output (join-paths site-lisp-directory "autoloads.el"))))
 
 (defun gen-lisp-autoloads ()
   (interactive)
@@ -125,12 +124,12 @@ TABLE."
   ([remap dabbrev-expand] . hippie-expand)
   :config
   (add-to-load-path 
-   (expand-file-name "site-lisp" user-emacs-directory)
-   user-emacs-lisp-directory
-   user-emacs-site-lisp-directory 
-   (expand-file-name "slime" user-emacs-site-lisp-directory))
+   user-lisp-directory
+   lisp-directory
+   site-lisp-directory 
+   (expand-file-name "slime" site-lisp-directory))
   ;; Load autoloads if they exist
-  (require 'autoloads (expand-file-name "autoloads" user-emacs-site-lisp-directory) t))
+  (require 'autoloads (expand-file-name "autoloads" site-lisp-directory) t))
 
 ;; use-package defaults
 (use-package system-packages :ensure t)
@@ -966,7 +965,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :after (org))
 
 (use-package org-expire
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :after (org org-id)
   :hook (org-after-todo-state-change-hook . (org-expire-insert-created org-id-get-create)))
 
@@ -1009,7 +1008,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 ;;; Core Extensions
 (use-package ulang
   :defer nil
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :config (ulang-init))
 
 (use-package keymaps 
@@ -1019,34 +1018,34 @@ With prefix ARG non-nil, insert the result at the end of region."
   ("<XF86Paste>" . parens-map)
   ("C-c c" . user-map)
   :hook (after-init-hook . load-keys)
-  :load-path user-emacs-site-lisp-directory)
+  :load-path site-lisp-directory)
 
 (use-package scratch 
   :defer nil
-  :load-path user-emacs-site-lisp-directory)
+  :load-path site-lisp-directory)
 
 (use-package organ 
   :defer nil
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :hook (org-after-todo-state-change . org-clock-in-wip))
 
 (use-package graph 
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :hook (org-mode . org-graph-maybe-enable))
 
 (use-package inbox
   :defer nil
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :after (org-expire)
   :config (org-inbox-init))
 
 (use-package gen 
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :mode ("\\.gen" . lisp-mode)
   :hook (lisp-mode . maybe-enable-gen-minor-mode))
 
 (use-package plan 
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :defer nil
   ;; used in org/meta/babel.org, called via org-dblocks in project
   ;; readmes.
@@ -1054,27 +1053,26 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package skel 
   :defer nil
+  :load-path site-lisp-directory
   :after (eglot)
-  :load-path user-emacs-site-lisp-directory
-  :mode 
-  ("\\.box" . skel-mode)
-  ("\\.pod" . skel-mode)
-  ("/\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)" . skel-mode)
-  :interpreter ("skel" . skel-mode)
-  :init (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
+  :mode ("\\.box\\'" "\\.pod\\'" "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")
+  :interpreter "skel"
   :hook 
   (skel-mode-hook . skel-dir-local-get-variables)
   (common-lisp-lisp-mode-hook . organ-minor-mode)
   (project-find-functions . project-try-skel)
   :config
-  (org-babel-make-language-alias "skel" "lisp-data"))
+  (with-eval-after-load 'eglot
+    (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
+  (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
+
 ;; (add-to-list 'auto-mode-alist '("/\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)" . skel-mode))
 (use-package skt
-  :load-path user-emacs-site-lisp-directory
+  :load-path site-lisp-directory
   :after (skel))
 
 (use-package mpk 
-  :load-path user-emacs-site-lisp-directory)
+  :load-path site-lisp-directory)
 
 (provide 'default)
 ;; default.el ends here
