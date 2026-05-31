@@ -860,8 +860,9 @@ With prefix ARG non-nil, insert the result at the end of region."
   (with-eval-after-load "preview"
     '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
-  (setopt org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
-	  org-latex-image-default-width "8cm"
+  (setopt 
+   ;; org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
+   ;; org-latex-image-default-width "8cm"
 	  org-refile-use-cache t
 	  org-refile-allow-creating-parent-nodes 'confirm
 	  org-default-notes-file (join-paths org-directory "inbox.org")
@@ -983,6 +984,9 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package ol-notmuch
   :ensure t
   :after (org))
+
+(use-package ox-man
+  :commands (org-man-export-to-man org-man-export-to-pdf))
 
 ;; (use-package auctex)
 
