@@ -345,12 +345,13 @@ TABLE."
 
 (use-package slime
   :defer nil
-  :after (cape)
+  :after (company cape)
   :autoload (slime slime-toggle slime-connect-file define-common-lisp-style)
   :bind (:map slime-editing-map
               ("C-c s s" . slime-sprof-start)
               ("C-c s x" . slime-sprof-stop)
               ("C-c s r" . slime-sprof-report))
+  :hook (slime-mode . (lambda () (completion-preview-mode -1)))
   :init
   (setq scheme-program-name "gsi"
 	slime-auto-start t

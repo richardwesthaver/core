@@ -18,6 +18,7 @@
 
 (defvar *skel-project* nil)
 (defvar *skel-registry* nil)
+;; TODO 2026-06-01: replace with single var *skel-config*
 (defvar *skel-user-config* nil)
 (defvar *skel-system-config* nil)
 (defvar *skel-env* (make-hash-table :test 'equal)

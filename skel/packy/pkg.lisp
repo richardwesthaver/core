@@ -41,7 +41,8 @@
    :package-database
    :init-packy-db
    :package-id
-   :default-packfile))
+   :*default-pkgfile*
+   :*default-pkg-extension*))
 
 (defpkg :skel/packy/pkgbuild
   (:use :cl :std :ast :syn/ts :tree-sitter)

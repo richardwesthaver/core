@@ -23,6 +23,10 @@ output and is often accessible over WAN.")
   "Table mapping MACHINE-TARGETs to TARGET-CONFIGs.")
   
 (defparameter *user-packyrc* (xdg-config-file :packy))
+(defparameter *system-packyrc* (pathname "/etc/packyrc"))
+
 (defvar *packy-config*)
 
-(defvar *default-packfile* "packfile")
+(defparameter *default-pkg-extension* "pkg")
+
+(defvar *default-pkgfile* "pkgfile")

@@ -39,7 +39,7 @@
      :default-package :pk-user)
     (:file "var")
     (:file "proto")
-    (:file "packfile")
+    (:file "pkgfile")
     (:file "pkgbuild")
     (:file "db")
     (:file "client")
