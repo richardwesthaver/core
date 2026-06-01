@@ -5,9 +5,12 @@
 ;;; Code:
 (require 'cl-lib)
 ;;; Utils
+(defmacro mapadd (x y &optional append test)
+  `(setf ,x (cl-remove-duplicates (append ,x ,y) :test 'equal :from-end t)))
+
 (defun add-to-load-path (&rest paths)
   "Add PATHS to `load-path'."
-  (mapcar (lambda (x) (add-to-list 'load-path x)) paths))
+  (mapadd load-path paths))
 
 (defun darwin-p () (string= system-type "darwin"))
 (defun linux-p () (string= system-type "gnu/linux"))
@@ -158,12 +161,13 @@ TABLE."
 (use-package exec-path-from-shell
   :ensure t
   :init
-  (add-to-list 'exec-path "/usr/bin/")
-  (add-to-list 'exec-path "/usr/sbin/")
-  (add-to-list 'exec-path "/usr/local/bin/")
-  (add-to-list 'exec-path "/usr/local/share/lisp/")
-  (add-to-list 'exec-path "/usr/share/lisp/")
-  (add-to-list 'exec-path (join-paths user-home-directory ".local/bin/"))
+  (mapadd exec-path
+          `("/usr/bin/"
+            "/usr/sbin/"
+            "/usr/local/bin/"
+            "/usr/local/share/lisp/"
+            "/usr/share/lisp/"
+            ,(join-paths user-home-directory ".local/bin/")))
   :config
   (exec-path-from-shell-copy-envs 
    (list 
@@ -199,13 +203,15 @@ TABLE."
 
 (use-package vertico
   :ensure t
-  :config (vertico-mode)
+  :defer nil
+  :config (vertico-mode 1)
   :bind 
   (:map vertico-map 
         ("M-q" . #'vertico-quick-insert)
         ("C-M-q" . #'vertico-quick-exit)))
 
 (use-package orderless
+  :defer nil
   :ensure t
   :init
   (setq completion-styles '(orderless partial-completion basic)
@@ -225,6 +231,7 @@ TABLE."
 
 (use-package corfu
   :ensure t
+  :defer nil
   :config
   (global-corfu-mode)
   (corfu-popupinfo-mode)
@@ -241,9 +248,7 @@ TABLE."
                                            (interactive)
                                            (corfu-insert)
                                            (insert ,(cdr c)))))
-  (add-to-list 'completion-at-point-functions #'cape-dabbrev t)
-  (add-to-list 'completion-at-point-functions #'cape-abbrev t) 
-  (add-to-list 'completion-at-point-functions #'cape-file)
+  (mapadd completion-at-point-functions '(cape-dabbrev abbrev cape-file))
   (defun corfu-move-to-minibuffer ()
     (interactive)
     (pcase completion-in-region--data
@@ -281,7 +286,19 @@ TABLE."
 	speedbar-track-mouse-flag t)
   (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
   (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
+;;; Tempo
+(use-package tempo
+  :config
+  (defun tempo-tags-variable (mode)
+    "Return a tempo tags variable's symbol for MODE."
+    (when mode
+      (intern (replace-regexp-in-string
+               (rx "-mode" eos) "-tempo-tags"
+               (symbol-name mode))))))
 
+;;; TODO Skeleton
+(use-package skeleton)
+  
 ;;; Projects
 (use-package package
   :init
@@ -742,18 +759,18 @@ With prefix ARG non-nil, insert the result at the end of region."
 				       ("C" . "comment")
 				       ("v" . "verse"))
 	org-link-abbrev-alist `(("vc" . ol-vc-expand)
-				("comp" . ,(format "https://%s/%%s" company-domain))
-				("cdn" . ,(format "%s/%%s" company-cdn-url))
-				("packy" . ,(format "%s/%%s" company-packy-url))
-				("yt" . "https://youtube.com/watch?v=%s")
-				("gh" . "https://github.com/%s")
-				("cb" . "https://codeberg.org/%s")
-				("wikipedia" . "https://en.wikipedia.org/wiki/%s")
-				("archwiki" . "https://wiki.archlinux.org/title/%s")
-				("reddit" . "https://reddit.com/%s")
-				("hn" . "https://news.ycombinator.com/%s")
-				("archive" . "https://web.archive.org/web/%s")
-				("so" . "https://stackoverflow.com/%s"))
+				            ("comp" . ,(format "https://%s/%%s" company-domain))
+				            ("cdn" . ,(format "%s/%%s" company-cdn-url))
+				            ("packy" . ,(format "%s/%%s" company-packy-url))
+				            ("yt" . "https://youtube.com/watch?v=%s")
+				            ("gh" . "https://github.com/%s")
+				            ("cb" . "https://codeberg.org/%s")
+				            ("wikipedia" . "https://en.wikipedia.org/wiki/%s")
+				            ("archwiki" . "https://wiki.archlinux.org/title/%s")
+				            ("reddit" . "https://reddit.com/%s")
+				            ("hn" . "https://news.ycombinator.com/%s")
+				            ("archive" . "https://web.archive.org/web/%s")
+				            ("so" . "https://stackoverflow.com/%s"))
 	org-babel-default-header-args '((:session . "none") (:results . "replace") 
 					(:eval . "no-export") (:exports . "both")
 					(:cache . "no") (:noweb . "no") 
@@ -762,28 +779,27 @@ With prefix ARG non-nil, insert the result at the end of region."
 				(("EFFORT_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
 				 ("STYLE_ALL" . "habit")))
 	org-todo-keywords '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
-			    (sequence "HOLD(H@/!)" "WIP(!)" "|")
-			    (sequence "WAIT(W@/!)" "WIP(!)" "|")
-			    (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
-			    (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-			    (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
-			    (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
-				  "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
-				  "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
-			    (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
-			    (sequence "|" "DONE(d!)" "NOPE(x@!)"))
+			            (sequence "HOLD(H@/!)" "WIP(!)" "|")
+			            (sequence "WAIT(W@/!)" "WIP(!)" "|")
+			            (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
+			            (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
+			            (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
+			            (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
+				              "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
+				              "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
+			            (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
+			            (sequence "|" "DONE(d!)" "NOPE(x@!)"))
 	org-todo-keyword-faces '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
-				 
-				 ("PRODUCT" . (:foreground "olivedrab" :weight bold))
-				 ("RELEASE" . (:foreground "maroon3" :weight bold))
-				 ("RESEARCH" . (:foreground "maroon2" :weight bold))
-				 ("HACK" . (:foreground "maroon3" :weight bold))
-				 ("TBD" . (:foreground "brown" :weight bold))
-				 ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
-				 ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
-				 ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
-				 ("WIP" . (:foreground "darkorchid2" :weight bold))
-				 ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen")))
+				             ("PRODUCT" . (:foreground "olivedrab" :weight bold))
+				             ("RELEASE" . (:foreground "maroon3" :weight bold))
+				             ("RESEARCH" . (:foreground "maroon2" :weight bold))
+				             ("HACK" . (:foreground "maroon3" :weight bold))
+				             ("TBD" . (:foreground "brown" :weight bold))
+				             ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
+				             ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
+				             ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
+				             ("WIP" . (:foreground "darkorchid2" :weight bold))
+				             ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen")))
 	org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
   :config
   (org-babel-do-load-languages
@@ -810,9 +826,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 	      (org-entry-get-multivalued-property (point) "Effort"))))
 	(unless (equal effort "")
 	  (org-set-property "Effort" effort)))))
-
-  (with-eval-after-load "preview"
-    '(add-to-list 'preview-default-preamble "\\PreviewEnvironment{circuitikz}" t))
 
   (setopt 
    ;; org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
@@ -1012,6 +1025,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package skel 
   :load-path site-lisp-directory
+  :after (eglot)
   :defer nil
   :interpreter "skel"
   :hook 
@@ -1023,15 +1037,10 @@ With prefix ARG non-nil, insert the result at the end of region."
   (conf-mode-hook . skel-minor-mode)
   (dired-mode-hook . skel-minor-mode)
   :init
-  (with-eval-after-load 'eglot
-    (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
+  (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 
 (init-skel)
-
-(use-package skt
-  :load-path site-lisp-directory
-  :after (skel))
 
 (use-package mpk 
   :load-path site-lisp-directory)

@@ -62,6 +62,7 @@
   "SPC" #'toggle-macro-recording
   "x" #'org-clock-toggle-auto-clockout
   "s" #'slime-toggle
+  "p" #'completion-preview-mode
   "l" #'lisp-toggle
   "w" #'which-key-mode
   "W" #'global-whitespace-toggle-options)

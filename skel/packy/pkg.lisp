@@ -40,7 +40,8 @@
    :*machine-target-table*
    :package-database
    :init-packy-db
-   :package-id))
+   :package-id
+   :default-packfile))
 
 (defpkg :skel/packy/pkgbuild
   (:use :cl :std :ast :syn/ts :tree-sitter)

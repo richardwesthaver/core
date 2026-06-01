@@ -42,6 +42,7 @@
   (let ((c (make-config :packy :path from)))
     (load-ast c)))
 
+;; TODO 2026-06-01: 
 (defun write-pacman-conf (cfg output)
   "Write a pacman.conf file based on a PACKY-CONFIG.")
 

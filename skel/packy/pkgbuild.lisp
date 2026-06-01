@@ -1,4 +1,4 @@
-;;; lib/skel/comp/pkgbuild.lisp --- Archlinux PKGBUILDs
+;;; skel/packy/pkgbuild.lisp --- Archlinux PKGBUILDs
 
 ;; Readers and Writers for PKBUILD files
 

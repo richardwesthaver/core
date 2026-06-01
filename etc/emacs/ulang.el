@@ -48,6 +48,21 @@
   "See 'org-info-other-documents'."
   :group 'ulang)
 
+(defcustom ulang-link-abbrev-alist
+  '()
+  "See `org-link-abbrev-alist'."
+  :group 'ulang)
+
+(defcustom ulang-todo-keywords
+  '()
+  "See `org-todo-keywords'."
+  :group 'ulang)
+
+(defcustom ulang-todo-keyword-faces
+  '()
+  "See `org-todo-keyword-faces'."
+  :group 'ulang)
+
 (defcustom ulang-export-dictionary
   (list '("Table of Contents" "⇜"))
   "See 'org-export-dictionary'."
@@ -82,17 +97,13 @@
   (interactive)
   (org-babel-lob-ingest company-babel-file)
   (org-export-translate-to-lang ulang-export-dictionary "ulang")
-  (mapcar 
-   (lambda (x) 
-     (add-to-list 'org-info-other-documents x)
-     (add-to-list 'browse-url-filename-alist x))
-   ulang-info-url-alist)
-  (mapcar 
-   (lambda (y) (add-to-list 'org-special-properties y))
-   ulang-properties)
-  (mapcar 
-   (lambda (y) (add-to-list 'org-agenda-custom-commands y))
-   ulang-agenda-commands))
+  (mapadd org-info-other-documents ulang-info-url-alist)
+  (mapadd browse-url-filename-alist ulang-info-url-alist)
+  (mapadd org-link-abbrev-alist ulang-link-abbrev-alist)
+  (mapadd org-special-properties ulang-properties)
+  (mapadd org-agenda-custom-commands ulang-agenda-commands)
+  (mapadd org-todo-keywords ulang-todo-keywords)
+  (mapadd org-todo-keyword-faces ulang-todo-keyword-faces))
 
 ;;; Location
 

@@ -24,3 +24,5 @@ output and is often accessible over WAN.")
   
 (defparameter *user-packyrc* (xdg-config-file :packy))
 (defvar *packy-config*)
+
+(defvar *default-packfile* "packfile")

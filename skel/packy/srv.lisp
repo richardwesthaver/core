@@ -15,8 +15,6 @@
 
 (defclass packy-service (service) ())
 
-(defstruct packy-server)
-
 (defun ensure-packy-directories (&optional (path *packy-home*))
   (dolist (p '("dist/" "doc/" "report/" "vc/"))
     (ensure-directories-exist (merge-pathnames p path))))
