@@ -16,8 +16,8 @@
 ;; USER.el -- user custom file
 
 ;;; Code:
-;;; Variables
 
+;;; Variables
 (defvar site-lisp-directory "/usr/share/emacs/site-lisp/")
 (defvar user-lisp-directory (expand-file-name "lisp" user-emacs-directory))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
@@ -103,3 +103,6 @@
 ;;; User customizations
 (add-hook 'after-init-hook (lambda () (when (file-exists-p user-config-file) (load-file user-config-file))))
 (add-hook 'after-init-hook (lambda () (when (file-exists-p user-custom-file) (load-file user-custom-file))))
+
+(provide 'site-start)
+;;; site-start.el ends here

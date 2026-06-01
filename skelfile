@@ -137,7 +137,7 @@
  (emacs ()
   (:autoload () (funcall #0$sudo emacs -Q --script etc/script/gen-autoloads.el$# :input t))
   (:install () 
-   (funcall #0$sudo cp -rf etc/emacs/* slime /usr/share/emacs/site-lisp/$# :input t)
+   (funcall #0$sudo mkdir -p /usr/share/emacs/site-lisp/slime && sudo cp -rf etc/emacs/* slime /usr/share/emacs/site-lisp/$# :input t)
    (sk-run (sk-find "autoload-emacs" *skel-project*)))
   (:purge () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#))

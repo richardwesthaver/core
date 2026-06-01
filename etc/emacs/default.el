@@ -303,7 +303,7 @@ TABLE."
 (keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
 
 ;;; Lisp
-(require 'slime-autoloads)
+;; (require 'slime-autoloads)
 (add-to-list 'auto-mode-alist '("\\.sys" . lisp-mode))
 
 (use-package inf-lisp
@@ -329,7 +329,7 @@ TABLE."
 (use-package slime
   :defer nil
   :after (cape)
-  :autoload (slime slime-toggle slime-connect-file)
+  :autoload (slime slime-toggle slime-connect-file define-common-lisp-style)
   :bind (:map slime-editing-map
               ("C-c s s" . slime-sprof-start)
               ("C-c s x" . slime-sprof-stop)
@@ -363,57 +363,12 @@ TABLE."
 			 slime-xref-browser
 			 ;; slime-highlight-edits
 			 slime-repl-ansi-color))
-  :config
   (slime-setup slime-contribs)
+  :config
   (slime-cape-enable)
   ;; fix slime repl mode
   (unbind-key "C-c C-d C-a" 'slime-repl-mode-map)
-  (define-common-lisp-style 
-   "core"
-   "Core Common Lisp Indentation Style"
-   (:inherit "sbcl")
-   (:indentation
-    (defpkg (as defpackage))
-    (make-instance 1)
-    (reinitialize-instance 1)
-    (ensure-package 1)
-    (init 1)
-    (defpackage* (as defpackage))
-    (blasfunc 2)
-    (symbol-call 2)
-    (org-parse 2)
-    (lety (as let))
-    (lety* (as let*))
-    (letv (as let))
-    (letv* (as let*))
-    (deferror (as define-condition))
-    (defcondition (as define-condition))
-    (plet (as let))
-    (acase (as case))
-    (atypecase (as typecase))
-    (defwarning (as define-condition))
-    (make-db (as make-instance))
-    (make-schema (as make-instance))
-    (make-simple-schema (as make-instance))
-    (make-palette (as defpackage))
-    (define-package (as defpackage))
-    (defkernel (as defclass))
-    (defhook (as defmacro))
-    (defcommand (as defun))
-    (define-cli (as make-instance))
-    (walk-directory 1)
-    (using-gensyms (as with-gensyms))
-    (binding-gensyms (as with-gensyms))
-    (if-let* (as if-let))
-    (when-let* (as when-let))
-    (load-config 1)
-    (with-db 1)
-    (incf 1)
-    (decf 1)
-    (make-load-form-saving-slots 1)
-    (defconfig (as defclass))
-    (defclass* (as defclass))
-    (defsclass (as defclass))))
+  (require 'lisp-style)
   (setq common-lisp-style-default "core"))
 
 ;;; Asm
@@ -903,9 +858,6 @@ With prefix ARG non-nil, insert the result at the end of region."
         org-agenda-include-inactive-timestamps t
         org-agenda-span 7)
   :config
-  (add-to-list 
-   'org-agenda-custom-commands 
-   '("i" "Work in progress tasks" ((todo "WIP") (agenda))) org-agenda-custom-commands)
   (defun org-agenda-reschedule-to-today ()
     (interactive)
     (cl-flet ((org-read-date (&rest rest) (current-time)))
@@ -970,7 +922,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-expire
   :load-path site-lisp-directory
   :after (org org-id)
-  :hook (org-after-todo-state-change . (lambda () (org-expire-insert-created org-id-get-create))))
+  :hook (org-after-todo-state-change . (lambda () (org-expire-insert-created) (org-id-get-create))))
 
 (use-package org-web-tools
   :ensure t
@@ -984,8 +936,8 @@ With prefix ARG non-nil, insert the result at the end of region."
   :ensure t
   :after (org))
 
-(use-package ox-man
-  :commands (org-man-export-to-man org-man-export-to-pdf))
+;; (use-package ox-man
+;;   :commands (org-man-export-to-man org-man-export-to-pdf))
 
 ;; (use-package auctex)
 
@@ -1015,7 +967,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package ulang
   :defer nil
   :load-path site-lisp-directory
-  :config (ulang-init))
+  :hook (after-init . ulang-init))
 
 (use-package keymaps 
   :defer nil
@@ -1033,6 +985,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package organ 
   :defer nil
   :load-path site-lisp-directory
+  :commands (org-list-files)
   :hook (org-after-todo-state-change . org-clock-in-wip))
 
 (use-package graph 

@@ -52,7 +52,12 @@
   (list '("Table of Contents" "⇜"))
   "See 'org-export-dictionary'."
   :group 'ulang)
-  
+
+(defcustom ulang-agenda-commands
+  '(("i" "Work in progress tasks" ((todo "WIP") (agenda))))
+  "See `org-agenda-custom-commands'."
+  :group 'ulang)
+
 (defun org-export-translate-to-lang (term-translations &optional lang)
   "Adds desired translations to `org-export-dictionary'.
    TERM-TRANSLATIONS is alist consisted of term you want to translate
@@ -84,7 +89,10 @@
    ulang-info-url-alist)
   (mapcar 
    (lambda (y) (add-to-list 'org-special-properties y))
-   ulang-properties))
+   ulang-properties)
+  (mapcar 
+   (lambda (y) (add-to-list 'org-agenda-custom-commands y))
+   ulang-agenda-commands))
 
 ;;; Location
 

@@ -74,14 +74,14 @@
      :clock-keep t
      :empty-lines 1
      :prepare-finalize (org-id-get-create org-expire-insert-created))
-    ("t" "inbox-task" entry (file ,org-inbox-file) "TODO %i\n"
-     :empty-lines 1
+    ("t" "inbox-task" entry (file ,org-inbox-file) "%i\n"
+     :empty-lines-before 1
      :prepare-finalize (org-id-get-create org-expire-insert-created))
     ("n" "inbox-note" entry (file ,org-inbox-file) "%i\n%a"
-     :empty-lines 1
+     :empty-lines-before 1
      :prepare-finalize (org-id-get-create org-expire-insert-created))
     ("l" "log" entry (file+olp+datetree ,(expand-file-name "log.org" org-directory)) "%i" 
-     :empty-lines 1 
+     :empty-lines-before 1 
      :unnarrowed t
      :prepare-finalize (org-id-get-create org-expire-insert-created)))
   "List of additional capture templates loaded by 'inbox'."
