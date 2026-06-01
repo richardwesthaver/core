@@ -13,9 +13,9 @@
 | id          | 4611004031049662566                             |
 | root        | ~/src/core/                                     |
 | tags        | CORE LISP EMACS                                 |
-| updated     | Sat May 30 20:19:17 2026 -0400                  |
+| updated     | Mon Jun 01 18:05:43 2026 -0400                  |
 | langs       | elisp lisp makefile org perl text               |
-| lines       | 269641 :code 220043 :comment 21836 :blank 27762 |
+| lines       | 268832 :code 219479 :comment 21793 :blank 27560 |
 |-------------+-------------------------------------------------|
 
 #+CALL: project-links(include='all) :dir ~/src/core/
@@ -28,9 +28,9 @@
 
 #+END:
 
-This repository contains the monolothic core of [[comp:][The Compiler Company]].
+This repository contains the monolothic core of [[https://compiler.company][The Compiler Company]].
 
-The core is a [[id:af0ed8bb-4b45-42f9-b8be-82b8ea7935a3][Common Lisp]] hacking environment bootstrapped from SBCL.
+The core is a [[https://compiler.company/graph/lang/lisp#af0ed8bb-4b45-42f9-b8be-82b8ea7935a3][Common Lisp]] hacking environment bootstrapped from SBCL.
 No guarantees are made with respect to compatibility with other
 packages or ANSI Lisp implementations.
 
