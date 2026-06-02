@@ -700,6 +700,18 @@ be used with SETF."))
         append (unless (member options props)
                  (list options value))))
 
+(defun plist-split (list)
+  "Split a LIST which starts with a plist into two separate values: The plist and
+remaining forms. Emacs calls these 'pseudo-plists'."
+  #+nil (values plist body))
+
+(defun plistify (list)
+  "Ensure LIST is a proper plist by consing extra forms until a new key is
+encountered. Similar to Emacs' use-package.
+
+Example:
+(plistify '(:foo 1 2 3 :bar 4 5 6)) ;=> (:foo (1 2 3) :bar (4 5 6))")
+
 ;;; Consify
 (defun deconsify (x sym)
   (if (atom x) x

@@ -63,6 +63,8 @@
    :group
    :firstn
    :intersperse
+   :plist-split
+   :plistify
    :zip :unzip
    :zip-list :zip-tree
    :ziptree
@@ -90,11 +92,12 @@
 
 (defpkg :std/prim
   (:use :cl :std/list)
-  (:import-from :std/sym :symb :with-gensyms)
+  (:import-from :std/sym :symb :with-gensyms :alias-function)
   (:import-from :sb-introspect :function-lambda-list)
   (:import-from :sb-int :parse-lambda-list)
   (:export 
    :function-lambda-list
+   :arglist ; alias
    :pswap
    :read-until-end
    :read-lisp-until-end

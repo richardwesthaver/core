@@ -48,11 +48,11 @@
   :type 'string
   :group 'inbox)
 
-(defcustom org-inbox-buffer-name "*Inbox*"
+(defcustom org-inbox-buffer-name "*inbox*"
   "The name of the org-inbox buffer."
   :group 'inbox)
 
-(defcustom org-inbox-config-buffer-name "*Inbox Config*"
+(defcustom org-inbox-config-buffer-name "*inbox-config*"
   "Then name of the org-inbox configuration buffer."
   :group 'inbox)
 

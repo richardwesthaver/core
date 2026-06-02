@@ -3,7 +3,8 @@
 ;; Core Emacs Defaults
 
 ;;; Code:
-(require 'cl-lib)
+(require 'site-start)
+
 ;;; Utils
 (defmacro mapadd (x y &optional append test)
   `(setf ,x (cl-remove-duplicates (append ,x ,y) :test 'equal :from-end t)))
@@ -113,11 +114,24 @@ TABLE."
 
 ;;; Defaults
 (use-package emacs
-  :hook (after-init . load-default-theme)
+  :defer nil
+  :hook 
+  (after-init . load-default-theme)
+  (Buffer-menu-mode . hl-line-mode)
+  (ibuffer-mode . hl-line-mode)
+  :bind-keymap 
+  ("C-c t" . clock-map)
+  ("C-c r" . review-map)
+  ("C-c SPC" . toggle-map)
+  ("C-c ." . status-map)
+  ("C-c s" . search-map)
   :bind 
   (:map ctl-x-map
         ("C-b" . ibuffer)
-        ("C-M-e" . eval-last-sexp))
+        ("C-M-e" . eval-last-sexp)
+        ("C-M-n" . next-buffer)
+        ("C-M-p" . previous-buffer)
+        ("n" . duplicate-dwim))
   (:map ctl-x-r-map 
         ("SPC" . point-to-register)
         ("C-l" . list-registers)
@@ -126,6 +140,8 @@ TABLE."
         ("C-r" . copy-register))
   ("<remap> <tab-to-tab-stop>" . imenu)
   ([remap dabbrev-expand] . hippie-expand)
+  ("C-c u" . compile)
+  ("C-c f" . load-file)
   :config
   (add-to-load-path 
    user-lisp-directory
@@ -142,13 +158,12 @@ TABLE."
 (setq use-package-expand-minimally t)
 
 ;;; Icons
-;; all-the-icons all-the-icons-dired all-the-icons-ibuffer ;; icons
+;; all-the-icons all-the-icons-dired all-the-icons-ibuffer
 (use-package nerd-icons :ensure t)
 (use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode) :after (ibuffer) :ensure t)
 (use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode) :after (dired) :ensure t)
 (use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode) :ensure t)
 (use-package nerd-icons-xref :hook (xref-mode . nerd-icons-xref-mode) :ensure t)
-(use-package tab-line-nerd-icons :hook (tab-line-mode . tab-line-nerd-icons-global-mode) :ensure t)
 
 ;;; Whitespace
 (use-package whitespace
@@ -270,10 +285,10 @@ TABLE."
 
 ;;; Dired
 (use-package dired
+  :hook (dired-mode . image-dired-minor-mode)
   :config
   (setq dired-dwim-target t
 	dired-free-space 'separate
-	dired-free-space nil
 	dired-mouse-drag-files t)
   (when (linux-p) (setq dired-listing-switches "-alsh")))
 
@@ -286,6 +301,7 @@ TABLE."
 	speedbar-track-mouse-flag t)
   (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
   (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
+
 ;;; Tempo
 (use-package tempo
   :config
@@ -300,12 +316,11 @@ TABLE."
 (use-package skeleton)
   
 ;;; Projects
-(use-package package
-  :init
-  (setq project-list-file (expand-file-name "projects" user-emacs-directory)
-        project-mode-line t
-        project-file-history-behavior 'relativize)
+(use-package project
   :config
+  (setopt project-list-file (expand-file-name "projects" user-emacs-directory)
+          project-mode-line t
+          project-file-history-behavior 'relativize)
   (defun remember-project ()
     (interactive)
     (project-remember-project (project-current))
@@ -313,15 +328,39 @@ TABLE."
 
 ;;; Tabs
 (use-package tab-bar
-  :hook #'tab-bar-history)
+  :hook (tab-bar-mode-hook . tab-bar-history))
 
-;;; Elisp
-(keymap-set emacs-lisp-mode-map "C-c C-l" #'load-file)
-(keymap-set emacs-lisp-mode-map "C-c M-k" #'elisp-byte-compile-file)
+(use-package tab-line-nerd-icons :ensure t :hook (tab-line-mode . tab-line-nerd-icons-global-mode))
+
+;;; Ulang
+(use-package ulang
+  :defer nil
+  :load-path site-lisp-directory
+  :hook (after-init . ulang-init))
 
 ;;; Lisp
-;; (require 'slime-autoloads)
-(add-to-list 'auto-mode-alist '("\\.sys" . lisp-mode))
+(use-package lisp-mode
+  :mode ("\\.sys\\'" "\\.gen\\'")
+  :bind 
+  ("<XF86Paste>" . lisp-mode-shared-map)
+  (:map emacs-lisp-mode-map
+        ("C-c C-l" . load-file)
+        ("C-c M-k" . elisp-byte-compile-file))
+  (:map lisp-mode-shared-map
+        ("C-M-;" . prog-comment-dwim)
+        ("C-c C-;" . prog-comment-timestamp-keyword)
+        ("C-M-f" . forward-sexp)
+        ("C-M-b" . backward-sexp)
+        ("C-M-d" . down-list)
+        ("C-M-u" . up-list)
+        ("C-M-p" . backward-list)
+        ("C-M-n" . forward-list)
+        ("C-M-k" . kill-sexp)
+        ("C-M-q" . indent-sexp)
+        ("C-M-t" . transpose-sexps)
+        ("C-M-r" . raise-sexp)
+        ("C-M-c" . check-parens)
+        ("C-M-x" . eval-defun)))
 
 (use-package inf-lisp
   :init 
@@ -345,7 +384,7 @@ TABLE."
 
 (use-package slime
   :defer nil
-  :after (company cape)
+  :after (company cape lisp-mode)
   :autoload (slime slime-toggle slime-connect-file define-common-lisp-style)
   :bind (:map slime-editing-map
               ("C-c s s" . slime-sprof-start)
@@ -397,6 +436,10 @@ TABLE."
 (use-package rust-mode 
   :ensure nil
   :hook eglot-ensure
+  :bind (:map conf-toml-mode-map
+              ("C-c C-c C-r" . #'rust-run)
+              ("C-c C-c C-u" . #'rust-compile)
+              ("C-c C-c C-t" . #'rust-test))
   :init
   (setq rust-rustfmt-switches nil
 	    rust-indent-offset 2))
@@ -406,7 +449,7 @@ TABLE."
   :hook eglot-ensure
   :init (setq python-indent-offset 2))
 
-;;; Javascript
+;;; Web
 (use-package js
   :init (setq js-indent-level 2))
 (use-package css-mode
@@ -471,6 +514,8 @@ Interactively, NUMBER is the prefix arg."
   :bind 
   ("C-c C-p" . outline-previous-heading)
   ("C-c C-n" . outline-next-heading)
+  ("C-c TAB" . outline-cycle)
+  ("C-c <backtab>" . outline-cycle-buffer)
   :config
   (defun outline-hook (&optional rx)
     "Enable `outline-minor-mode' and set `outline-regexp'."
@@ -498,13 +543,6 @@ Interactively, NUMBER is the prefix arg."
 		 (css-mode)
 		 (html-mode)
 		 (skel-mode)))
-;;; Conf
-(with-eval-after-load 'rust-mode
-  (use-package conf-mode
-    :bind (:map conf-toml-mode-map
-                ("C-c C-c C-r" . #'rust-run)
-                ("C-c C-c C-u" . #'rust-compile)
-                ("C-c C-c C-t" . #'rust-test))))
 
 ;;; Shell
 (use-package shell
@@ -527,7 +565,10 @@ Interactively, NUMBER is the prefix arg."
 	eshell-save-history-on-exit t
 	eshell-prefer-lisp-functions nil
 	eshell-destroy-buffer-when-process-dies t)
-  :bind (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
+  :bind 
+  (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
+  ("C-c RET" . eshell)
+  ("C-c C-<return>" . eshell-new)
   :config
   (require 'em-alias)
   (eshell/alias "d" "dired $1")
@@ -662,15 +703,18 @@ Add this function to appropriate major mode hooks such as
         tramp-auto-save-directory (expand-file-name "auto-save/tramp/" user-emacs-directory)))
 
 ;;; Imenu
-(use-package imenu-list :ensure t)
+(use-package imenu
+  :bind ("C-c i" . imenu))
+
+(use-package imenu-list :ensure t
+  :bind ("C-c M-i" . imenu-list))
 
 ;;; Calc
 (use-package calc
   :init
   (setq calc-highlight-selections-with-faces t)
   :config
-  (cl-pushnew (cons 'lisp-mode (list "#| " "|#
-")) calc-embedded-open-close-mode-alist)
+  (cl-pushnew '(lisp-mode "#| " "|#") calc-embedded-open-close-mode-alist)
   (cl-pushnew '(emacs-lisp-mode ";; " "
 ") calc-embedded-open-close-mode-alist)
 
@@ -708,6 +752,7 @@ With prefix ARG non-nil, insert the result at the end of region."
     ("x" . mpc-playlist-delete)
     ("m" . mpc-mark)
     ("1" . mpc-playlist))
+  ("C-c e p" . mpc)
   :config
   (defun mpc-mark ()
     "Mark mpc song at point and move to next line."
@@ -717,7 +762,17 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Diary
 (use-package diary-lib
-  :init (setq diary-list-include-blanks t))
+  :config 
+  (setopt diary-list-include-blanks t
+          diary-file (join-paths org-directory "diary")))
+
+;;; Remember
+(use-package remember
+  :bind ("C-x M-r" . remember)
+  :config
+  (setopt remember-data-file (join-paths org-directory "notes")
+          remember-mailbox (join-paths user-mail-directory "remember")
+          remember-initial-major-mode 'org-mode))
 
 ;;; Org
 (use-package org
@@ -725,6 +780,8 @@ With prefix ARG non-nil, insert the result at the end of region."
   (org-mode . visual-line-mode)
   (org-clock-in-prepare . org-mode-ask-effort)
   :bind 
+  ("C-c l" . org-store-link)
+  ("C-c c" . org-capture)
   (:map org-mode-map 
         ("C-c l" . org-follow-location)
         ("C-c t" . org-todo))
@@ -865,8 +922,11 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-agenda
   :after (org)
-  :hook hl-line-mode
-  :bind ("C-c a" . org-agenda)
+  :hook (org-agenda-mode . hl-line-mode)
+  :bind 
+  ("C-c a" . org-agenda)
+  ("C-c A" . org-agenda-show-week-all)
+  ("C-c v" . org-tags-view)
   :init
   (setq org-agenda-include-diary t
         org-agenda-include-inactive-timestamps t
@@ -940,7 +1000,9 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-web-tools
   :ensure t
-  :after (org))
+  :after (org)
+  :bind (:map org-mode-map
+              ("C-c c l" . org-web-tools-insert-link-for-url)))
 
 (use-package htmlize
   :ensure t
@@ -964,7 +1026,9 @@ With prefix ARG non-nil, insert the result at the end of region."
   :config
   (setopt desktop-auto-save-timeout 60
           desktop-base-file-name ".desktop"
-          desktop-base-lock-name ".desktop.lock")
+          desktop-base-lock-name ".desktop.lock"
+          desktop-save nil
+          desktop-save-mode t)
   (add-to-list 'desktop-path "."))
 
 ;;; Dictionary
@@ -973,26 +1037,17 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Ispell
 (use-package ispell
-  :init ;; requires aspell and a hunspell dictionary (hunspell-en_us)
-  (setq-default ispell-program-name "hunspell")
+  :ensure-system-package (aspell hunspell)
+  :init
+  (setq ispell-program-name "hunspell")
   :hook (mail-send . ispell-message))
 
 ;;; Core Extensions
-(use-package ulang
-  :defer nil
-  :load-path site-lisp-directory
-  :hook (after-init . ulang-init))
-
-(use-package keymaps 
-  :defer nil
-  :bind-keymap 
-  ("C-c (" . parens-map)
-  ("<XF86Paste>" . parens-map)
-  ("C-c c" . user-map)
-  :hook (after-init . load-keys)
-  :load-path site-lisp-directory)
-
 (use-package scratch 
+  :bind 
+  ("C-c z" . scratch-buffer)
+  ("C-c C-z" . scratch-new)
+  ("C-c Z" . default-scratch-buffer)
   :defer nil
   :load-path site-lisp-directory)
 
@@ -1009,12 +1064,12 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package inbox
   :defer nil
   :load-path site-lisp-directory
+  :bind ("C-c 1" . org-inbox-open)
   :after (org-expire)
   :config (org-inbox-init))
 
 (use-package gen 
   :load-path site-lisp-directory
-  :mode ("\\.gen" . lisp-mode)
   :hook (lisp-mode . maybe-enable-gen-minor-mode))
 
 (use-package plan 
@@ -1033,10 +1088,10 @@ With prefix ARG non-nil, insert the result at the end of region."
   (skel-mode . skel-dir-local-get-variables)
   (lisp-mode . organ-minor-mode)
   (project-find-functions . project-try-skel)
-  (prog-mode-hook . skel-minor-mode)
-  (org-mode-hook . skel-minor-mode)
-  (conf-mode-hook . skel-minor-mode)
-  (dired-mode-hook . skel-minor-mode)
+  (prog-mode . skel-minor-mode)
+  (org-mode . skel-minor-mode)
+  (conf-mode . skel-minor-mode)
+  (dired-mode . skel-minor-mode)
   :init
   (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))

@@ -199,6 +199,11 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 (defun project-root (&optional (project *skel-project*))
   (or (when project (skel/core::src project)) *default-pathname-defaults*))
 
+(defmethod sk-load-component ((kind t) (form t) &optional (path (project-root)))
+  "Default component loader dispatches to DESERIALIZE."
+  (let ((*default-pathname-defaults* path))
+    (deserialize form kind)))
+
 (defun merge-project-pathnames (path &optional (project *skel-project*))
   (merge-pathnames path (project-root project)))
 

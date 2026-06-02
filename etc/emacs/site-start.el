@@ -1,6 +1,6 @@
-;;; early-init.el --- emacs init -*- lexical-binding: t -*-
+;;; site-start.el --- Site Startup -*- lexical-binding: t -*-
 
-;; Core Emacs init file.
+;; Core Emacs site startup file.
 
 ;;; Commentary:
 
@@ -16,6 +16,7 @@
 ;; USER.el -- user custom file
 
 ;;; Code:
+(require 'cl-lib)
 
 ;;; Variables
 (defvar site-lisp-directory "/usr/share/emacs/site-lisp/")
@@ -45,6 +46,73 @@
 (defvar company-attach-id-dir nil)
 (defvar emacs-config-source (expand-file-name "core/emacs" src-directory))
 (defvar core-lisp-program "/usr/bin/core")
+
+;;; Keymaps
+(defvar-keymap toggle-map
+  :doc "User keymap for mode toggles. Usually bound to 'C-c SPC'."
+  :prefix 'toggle-map
+  "v" 'global-visual-line-mode
+  "b" 'speedbar
+  "h" 'global-hl-line-mode
+  "i" 'imenu-list-smart-toggle
+  "N" 'global-display-line-numbers-mode
+  "c" 'corfu-mode
+  "a" 'gpm-mouse-mode
+  "r" 'refill-mode
+  "o" 'outline-minor-mode
+  "O" 'allout-mode
+  "R" 'global-auto-revert-mode
+  "t" 'toggle-frame-tab-bar
+  "T" 'load-theme
+  "d" 'toggle-debug-on-error
+  "SPC" 'toggle-macro-recording
+  "x" 'org-clock-toggle-auto-clockout
+  "s" 'slime-toggle
+  "p" 'completion-preview-mode
+  "l" 'lisp-toggle
+  "w" 'which-key-mode
+  "W" 'global-whitespace-toggle-options)
+
+(defvar-keymap status-map
+  :doc "User keymap for status functions. Usually bound to 'C-c .'."
+  "l" 'eglot-list-connections
+  "p" 'list-processes
+  "t" 'list-threads
+  "a" 'list-abbrevs
+  "c" 'list-timers
+  "d" 'list-dynamic-libraries
+  "v" 'project-vc-dir
+  "P" 'list-packages)
+
+(defvar-keymap review-map
+  :doc "User keymap for review functions. Usually bound to 'C-c r'."
+  "s" 'flyspell-buffer
+  "SPC" 'whitespace-cleanup
+  "C-s" 'org-schedule-effort
+  "u" 'untabify
+  "q" 'query-replace-regexp)
+
+(defvar-keymap search-map
+  :doc "User keymap for search functions. Usually bound to 'C-c s'."
+  "g" 'grep
+  "r" 'rgrep
+  "z" 'zrgrep
+  "f" 're-search-forward
+  "b" 're-search-backward
+  "d" 'xref-find-definitions
+  "a" 'xref-find-apropos
+  "SPC" 'whitespace-cleanup)
+
+(defvar-keymap clock-map
+  :doc "User keymap for org-clock functions. Usually bound to 'C-c t'."
+  "j" 'org-clock-goto
+  "i" 'org-clock-in
+  "o" 'org-clock-out
+  "d" 'org-clock-display
+  "x" 'org-clock-cancel
+  "l" 'org-clock-in-last
+  "e" 'org-clock-modify-effort-estimate
+  "m" 'org-clock-mark-default-task)
 
 ;;; Settings
 (setopt custom-file (expand-file-name "custom.el" user-emacs-directory)

@@ -348,3 +348,7 @@ It must never be modified, though only good implementations will even enforce th
 (defun read-lisp-string (str)
   (with-input-from-string (s str)
     (read-lisp-until-end s)))
+
+;;; Aliases
+;; see emacs `lisp-arglist-command'
+(alias-function arglist function-lambda-list)

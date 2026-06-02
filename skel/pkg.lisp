@@ -159,8 +159,8 @@
   (:shadowing-import-from :std :version)
   (:use :std-lisp :skel/core :id)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
-  (:export :sk-lisp-file)
-  (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
+  (:export :sk-lisp-file :sk-lisp-component :sk-lisp-system 
+   :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
 
 (defpkg :skel/comp/pod
   (:use :cl :std :pod :skel/core :id :ast)
