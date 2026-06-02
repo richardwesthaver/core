@@ -26,7 +26,7 @@
     (:file "rust")
     (:file "python")
     (:file "emacs")
-    (:file "pkgbuild")
+    (:file "shell")
     (:file "box")
     (:file "pod")
     (:file "infer")))
