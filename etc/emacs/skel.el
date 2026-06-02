@@ -155,7 +155,8 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 ;;;###autoload
 (defun init-skel ()
   (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
-        '("\\.box\\'" "\\.pod\\'" "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")))
+        '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
+          "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")))
 
 ;; TODO 2026-05-30: 
 ;; (defun maybe-skel-minor-mode ()

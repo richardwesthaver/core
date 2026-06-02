@@ -5,7 +5,8 @@
 ;;; Code:
 (defpkg :skel/packy
   (:nicknames :packy)
-  (:use :cl :std :id :io :ast :log :config :db :rdb :schema :time :net/core :net/srv)
+  (:use :cl :std :id :io :ast :log :config :db :rdb :schema :time :net/core :net/srv
+    :skel/core :skel/comp)
   (:export
    :*packy-url*
    :unpack
@@ -43,10 +44,6 @@
    :package-id
    :*default-pkgfile*
    :*default-pkg-extension*))
-
-(defpkg :skel/packy/pkgbuild
-  (:use :cl :std :ast :syn/ts :tree-sitter)
-  (:export))
 
 (defpkg :skel/packy/cli
   (:use :cl :std :clap :cmd :skel/packy :cli/main))

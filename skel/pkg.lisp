@@ -36,7 +36,7 @@
 
 ;;; Code:
 (defpkg :skel/core
-  (:use :cl :std :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc)
+  (:use :std-lisp :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
   (:export
@@ -133,7 +133,7 @@
    :merge-project-pathnames))
 
 (defpkg :skel/comp/make
-  (:use :cl :std :skel/core :project)
+  (:use :std-lisp :skel/core :project)
   (:export
    :*default-makefile* :*makefile-extension* 
    :*mk-magic-vars* :*mk-command-prefixes*
@@ -142,18 +142,22 @@
    :mk-val :mk-var
    :makefile))
 
+(defpkg :skel/comp/shell
+  (:use :std-lisp :skel/core :ast :syn/ts)
+  (:export :pkgbuild))
+
 (defpkg :skel/comp/rust
-  (:use :cl :std :skel/core :toml :config :cli/tools/build)
+  (:use :std-lisp :skel/core :toml :config :cli/tools/build)
   (:export :sk-rust-system :parse-sk-rust-system))
 
 (defpkg :skel/comp/python
-  (:use :cl :std :skel/core :toml :config :cli/tools/build)
+  (:use :std-lisp :skel/core :toml :config :cli/tools/build)
   (:export :sk-python-system :parse-sk-python-system))
 
 (defpkg :skel/comp/lisp
   (:import-from :skel/core :*skel-project*)
   (:shadowing-import-from :std :version)
-  (:use :cl :std :skel/core :id)
+  (:use :std-lisp :skel/core :id)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
   (:export :sk-lisp-file)
   (:export :sk-lisp-system :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
@@ -179,7 +183,8 @@
   (:nicknames :sk-comp)
   (:use :cl :std)
   (:use-reexport :skel/comp/rust :skel/comp/make :skel/comp/python
-   :skel/comp/pod :skel/comp/emacs))
+   :skel/comp/pod :skel/comp/emacs :skel/comp/box :skel/comp/infer
+   :skel/comp/shell :skel/comp/lisp))
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)

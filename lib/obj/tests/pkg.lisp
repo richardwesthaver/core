@@ -8,9 +8,6 @@
 (defsuite :obj)
 (in-suite :obj)
 
-;;; Fixtures
-;; TODO 2026-01-20: 
-
 ;;; Color
 (defun eps= (a b &optional (eps 1e-10))
   (<= (abs (- a b)) eps))

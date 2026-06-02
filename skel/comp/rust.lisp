@@ -1,4 +1,4 @@
-;;; lib/skel/comp/rust.lisp --- Rust Components
+;;; skel/comp/rust.lisp --- Rust Components
 
 ;; Cargo.toml skel components.
 

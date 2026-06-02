@@ -7,4 +7,5 @@
 ;;; Code:
 (in-package :skel/packy)
 
-(defclass pkgfile ())
+(defclass pkgfile (sk-component) ()
+  (:documentation "Package build files."))

@@ -1,15 +1,20 @@
-;;; skel/packy/pkgbuild.lisp --- Archlinux PKGBUILDs
+;;; skel/comp/shell.lisp --- Shell Components
 
-;; Readers and Writers for PKBUILD files
+;; Shell skel components.
 
 ;;; Commentary:
+
+;; (:sh "script")
+
+;; (:pkgbuild)
 
 ;; wiki: https://wiki.archlinux.org/title/PKGBUILD
 ;; man: https://man.archlinux.org/man/PKGBUILD.5
 ;; ref: https://wiki.archlinux.org/title/Creating_packages
 
 ;;; Code:
-(in-package :skel/packy/pkgbuild)
+(in-package :skel/comp/shell)
+
 (load-aliens :tree-sitter :tree-sitter-bash)
 
 (defparameter *pkgbuild-filename* "PKGBUILD"
@@ -39,7 +44,7 @@
 values: (VARS FUNCTIONS SRC)"
   (let* ((path (probe-file file))
          (str (read-file path))
-         (tree (convert-ts-tree (syn/ts:parse-file :bash path)))
+         (tree (tree-sitter:convert-ts-tree (syn/ts:parse-file :bash path)))
          vars fns)
     (mapc (lambda (x)
             (case (car x)
@@ -64,7 +69,7 @@ values: (VARS FUNCTIONS SRC)"
   (multiple-value-bind (config fns) (parse-pkgbuild from)
     (apply 'make-instance 'pkgbuild :functions fns config)))
 
-(defclass pkgbuild (ast)
+(defclass pkgbuild (sk-component)
   ((pkgname :initarg :pkgname)
    (pkgver :initarg :pkgver)
    (pkgrel :initarg :pkgrel)
@@ -117,6 +122,22 @@ values: (VARS FUNCTIONS SRC)"
             when v
             do (format f "~A=~A~%" (string-downcase n) v))
       (doplist (k v) fns (format f "~A() ~A~%" (string-downcase k) v)))))
+
+(defmethod sk-load-component ((kind (eql :pkgbuild)) (form null) &optional (path (project-root)))
+  (declare (ignore kind))
+  (deserialize 
+   (pathname (make-pathname :name *pkgbuild-filename* 
+                            :directory (namestring path))) 
+   :pkgbuild))
+
+(defmethod sk-build ((self pkgbuild) &key (path (find-stash-directory)))
+  (serde self path))
+
+(defmethod sk-write-file ((self pkgbuild) &key (path (stash-pathname (name self))))
+  (serde self path))
+
+(defmethod sk-read-file ((self pkgbuild) path)
+  (sk-load-component :pkgbuild path))
 
 ;;; Install scripts
 ;; pre_install, post_install

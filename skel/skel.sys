@@ -22,12 +22,13 @@
   (:mod "comp"
    :components
    ((:file "lisp")
+    (:file "make")
     (:file "rust")
     (:file "python")
     (:file "emacs")
+    (:file "pkgbuild")
     (:file "box")
     (:file "pod")
-    (:file "make")
     (:file "infer")))
   (:file "net")
   (:file "srv")
@@ -40,7 +41,6 @@
     (:file "var")
     (:file "proto")
     (:file "pkgfile")
-    (:file "pkgbuild")
     (:file "db")
     (:file "client")
     (:file "srv")
