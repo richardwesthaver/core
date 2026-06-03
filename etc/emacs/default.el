@@ -283,6 +283,9 @@ TABLE."
   :ensure t
   :hook (completion-mode . nerd-icons-completion-mode))
 
+;;; Time
+(use-package time
+  :bind (:map status-map ("." . world-clock)))
 ;;; Dired
 (use-package dired
   :hook (dired-mode . image-dired-minor-mode)
@@ -340,6 +343,9 @@ TABLE."
   (after-init . ulang-init)
   (lisp-mode . org-minor-mode))
 
+;;; Eglot
+(use-package eglot
+  :bind (:map status-map ("e" . eglot-list-connections)))
 ;;; Lisp
 (use-package lisp-mode
   :mode ("\\.sys\\'" "\\.gen\\'")
@@ -388,10 +394,16 @@ TABLE."
   :defer nil
   :after (company cape lisp-mode)
   :autoload (slime slime-toggle slime-connect-file define-common-lisp-style)
-  :bind (:map slime-editing-map
-              ("C-c s s" . slime-sprof-start)
-              ("C-c s x" . slime-sprof-stop)
-              ("C-c s r" . slime-sprof-report))
+  :bind 
+  (:map slime-editing-map
+        ("C-c s s" . slime-sprof-start)
+        ("C-c s x" . slime-sprof-stop)
+        ("C-c s r" . slime-sprof-report))
+  (:map status-map
+        ("l" . slime-list-connections)
+        ("n" . slime-list-compiler-notes)
+        ("S" . slime-list-all-repl-shortcuts)
+        ("s" . slime-list-threads))
   :hook (slime-mode . (lambda () (completion-preview-mode -1)))
   :init
   (setq scheme-program-name "gsi"

@@ -75,20 +75,20 @@
 
 (defvar-keymap status-map
   :doc "User keymap for status functions. Usually bound to 'C-c .'."
-  "l" 'eglot-list-connections
   "p" 'list-processes
   "t" 'list-threads
   "a" 'list-abbrevs
   "c" 'list-timers
   "d" 'list-dynamic-libraries
-  "v" 'project-vc-dir
-  "P" 'list-packages)
+  "i" 'list-input-methods
+  "P" 'list-packages
+  "b" 'list-bookmarks)
 
 (defvar-keymap review-map
   :doc "User keymap for review functions. Usually bound to 'C-c r'."
   "s" 'flyspell-buffer
+  "w" 'flyspell-word
   "SPC" 'whitespace-cleanup
-  "C-s" 'org-schedule-effort
   "u" 'untabify
   "q" 'query-replace-regexp)
 
@@ -100,8 +100,7 @@
   "f" 're-search-forward
   "b" 're-search-backward
   "d" 'xref-find-definitions
-  "a" 'xref-find-apropos
-  "SPC" 'whitespace-cleanup)
+  "a" 'xref-find-apropos)
 
 (defvar-keymap clock-map
   :doc "User keymap for org-clock functions. Usually bound to 'C-c t'."
@@ -146,7 +145,7 @@
         ;; initial-buffer-choice t
         scroll-bar-mode nil
         tool-bar-mode nil
-        menu-bar-mode nil
+        ;; menu-bar-mode nil
         use-dialog-box t
         native-comp-async-report-warnings-errors nil
         comp-deferred-compilation t
@@ -155,8 +154,8 @@
 ;;; Package Setup
 (setq package-archives
       '(("gnu" . "https://elpa.gnu.org/packages/")
-	    ("nongnu" . "https://elpa.nongnu.org/nongnu/")
-	    ("melpa" . "https://melpa.org/packages/")))
+        ("nongnu" . "https://elpa.nongnu.org/nongnu/")
+        ("melpa" . "https://melpa.org/packages/")))
 
 ;;; Enable Commands
 (put 'upcase-region 'disabled nil)
