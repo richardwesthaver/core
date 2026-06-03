@@ -161,6 +161,7 @@
 (put 'upcase-region 'disabled nil)
 (put 'list-threads 'disabled nil)
 (put 'list-timers 'disabled nil)
+(put 'set-goal-column 'disabled nil)
 
 ;;; Global Modes
 (kill-ring-deindent-mode t)

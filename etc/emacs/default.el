@@ -138,10 +138,10 @@ TABLE."
         ("C-b" . buffer-to-register)
         ("C-f" . file-query-to-register)
         ("C-r" . copy-register))
+  (:map help-map
+        ("K" . describe-keymap))
   ("<remap> <tab-to-tab-stop>" . imenu)
   ([remap dabbrev-expand] . hippie-expand)
-  ("C-c u" . compile)
-  ("C-c f" . load-file)
   :config
   (add-to-load-path 
    user-lisp-directory
@@ -782,8 +782,11 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Remember
 (use-package remember
-  :bind ("C-x M-r" . remember)
-  :config
+  :defer nil
+  :bind 
+  ("C-x M-r" . remember)
+  ("C-x C-M-r" . remember-notes)
+  :init
   (setopt remember-data-file (join-paths org-directory "notes")
           remember-mailbox (join-paths user-mail-directory "remember")
           remember-initial-major-mode 'org-mode))
