@@ -353,11 +353,17 @@ name respectively the current project name."
   (setq-local indent-region-function 'skel-indent-region)
   (setq-local lisp-indent-offset 1))
 
+(defun project-skel-shell () 
+  (interactive)
+  (run-skel nil 'project t))
+
 ;;;###autoload
 (defun init-skel ()
   (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
         '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
           "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'"))
+  (with-eval-after-load 'project 
+    (add-to-list 'project-switch-commands '(project-skel-shell "Skel")))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 

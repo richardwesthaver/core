@@ -1086,7 +1086,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package skel 
   :load-path site-lisp-directory
   :defer nil
-  :bind (:map project-prefix-map ("RET" . run-skel))
+  :bind (:map project-prefix-map ("RET" . project-skel-shell))
   :interpreter "skel"
   :hook 
   (skel-mode . skel-dir-local-get-variables)
