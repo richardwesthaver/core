@@ -63,6 +63,34 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :type 'string
   :group 'skel)
 
+(defcustom skel-shell-buffer-name "Skel"
+  "Default buffer name for Skel interpreter."
+  :type 'string
+  :safe 'stringp
+  :group 'skel)
+
+(defcustom skel-shell-interpreter
+  (cond ((executable-find "skel") "skel shell")
+        (t "core"))
+  "Skel interpreter for interactive use."
+  :type 'string
+  :group 'skel)
+
+(defcustom skel-shell-interpreter-args ""
+  "Arguments for the Skel interpreter for interactive use."
+  :type 'string
+  :group 'skel)
+
+(defcustom skel-shell-dedicated nil
+  "Whether to make Python shells dedicated by default.
+This option influences `run-skel' when called without a prefix
+argument.  If `buffer' or `project', create a Skel shell
+dedicated to the current buffer or its project (if one is found)."
+  :version "29.1"
+  :type '(choice (const :tag "To buffer" buffer)
+                 (const :tag "To project" project)
+                 (const :tag "Not dedicated" nil)))
+
 ;;; Commands
 ;; should dispatch to a server, likely covered by eglot tho..
 (defvar-keymap skel-map
@@ -103,22 +131,13 @@ to trigger `skel-actions' based on the `skel-behavior' value."
 (def-skel-cmd search)
 (def-skel-cmd view)
 
-;;; Minor Mode
-(define-minor-mode skel-minor-mode
-  "skel-minor-mode"
-  :global t
-  :lighter " Sk"
-  :group 'skel
-  :version skel-version
-  (keymap-local-set skel-map-prefix skel-map))
-
 (defun project-try-skel (dir)
   (when (or (file-exists-p (join-paths dir "skelfile"))
-	    (directory-files dir nil "^.*[.]sk"))
+	        (directory-files dir nil "^.*[.]sk"))
     (let ((res (project-try-vc--search dir)))
       (when res 
-	(vc-file-setprop dir 'project-vc res)
-	(setf (car res) 'skel))
+	    (vc-file-setprop dir 'project-vc res)
+	    (setf (car res) 'skel))
       (append res (list dir)))))
 
 (defun skel-indent-region (start end)
@@ -128,45 +147,23 @@ to trigger `skel-actions' based on the `skel-behavior' value."
     (goto-char start)
     (beginning-of-line)
     (let* ((parse-state (lisp-indent-initial-state))
-	   (pr (unless (minibufferp)
-		 (make-progress-reporter "Indenting region..." (point) end))))
+	       (pr (unless (minibufferp)
+		         (make-progress-reporter "Indenting region..." (point) end))))
       (let ((ppss (lisp-indent-state-ppss parse-state)))
-	(unless (or (and (bolp) (eolp)) (nth 3 ppss))
-	  (lisp-indent-line (calculate-lisp-indent ppss))))
+	    (unless (or (and (bolp) (eolp)) (nth 3 ppss))
+	      (lisp-indent-line (calculate-lisp-indent ppss))))
       (let ((indent nil))
-	(while (progn (setq indent (lisp-indent-calc-next parse-state))
-		      (< (point) end))
-	  (unless (or (and (bolp) (eolp)) (not indent))
-	    (lisp-indent-line indent))
-	  (and pr (progress-reporter-update pr (point)))))
+	    (while (progn (setq indent (lisp-indent-calc-next parse-state))
+		              (< (point) end))
+	      (unless (or (and (bolp) (eolp)) (not indent))
+	        (lisp-indent-line indent))
+	      (and pr (progress-reporter-update pr (point)))))
       (and pr (progress-reporter-done pr))
       (move-marker end nil))))
 
-;;; Major Mode
-;; TODO 2023-09-06: 
-(define-derived-mode skel-mode lisp-mode "Skel"
-  :group 'skel
-  (skel-minor-mode 1)
-  (setq-local electric-quote-string t)
-  (setq imenu-case-fold-search nil)
-  (setq-local indent-region-function 'skel-indent-region)
-  (setq-local lisp-indent-offset 1))
-
-;;;###autoload
-(defun init-skel ()
-  (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
-        '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
-          "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'")))
-
-;; TODO 2026-05-30: 
-;; (defun maybe-skel-minor-mode ()
-;;   "Check the current environment and determine if `skel-minor-mode' should
-;; be enabled. This function is added as a hook to
-;; `lisp-data-mode-hook'.")
-
 (defmacro make-id (&optional pre)
   `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
-	 (current-time-list nil))
+	     (current-time-list nil))
      (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
 
 (cl-defmethod project-root ((project (head skel)))
@@ -231,55 +228,142 @@ project's skelfile, if any. Typically added to
     (unless (assoc-string root dir-locals-class-alist)
       (push (skel-dir-local--get-variables) dir-locals-class-alist))))
 
-(defun run-skel-shell ()
-  (interactive)
-  (comint-run "skel" '("shell")))
+;;; Shell
+(defun clone-local-variables (from-buffer &optional regexp)
+  "Clone local variables from FROM-BUFFER.
+Optional argument REGEXP selects variables to clone and defaults
+to \"^skel-\"."
+  (mapc
+   (lambda (pair)
+     (and (consp pair)
+          (symbolp (car pair))
+          (string-match (or regexp "^skel-")
+                        (symbol-name (car pair)))
+          (set (make-local-variable (car pair))
+               (cdr pair))))
+   (buffer-local-variables from-buffer)))
+
+(defvar skel-shell--parent-buffer nil)
+
+(define-derived-mode inferior-skel-mode comint-mode "Inferior Skel"
+  "Major mode for Skel inferior process.
+Runs a Skel interpreter as a subprocess of Emacs, with Skel
+I/O through an Emacs buffer.  Variables `skel-shell-interpreter'
+and `skel-shell-interpreter-args' control how skel is run."
+  (when skel-shell--parent-buffer (clone-local-variables skel-shell--parent-buffer))
+  (setq-local indent-tabs-mode nil)
+  (setq-local comint-output-filter-functions
+              '(ansi-color-process-output
+                ;; skel-shell-comint-watch-for-first-prompt-output-filter
+                comint-watch-for-password-prompt))
+  (setq-local scroll-conservatively 1)
+  (setq-local comint-dynamic-complete-functions
+              '(comint-c-a-p-replace-by-expanded-history))
+  (compilation-shell-minor-mode 1))
+
+(defun skel-shell-calculate-command ()
+  "Calculate the string used to execute the inferior Skel process."
+  (concat
+   skel-shell-interpreter
+   (unless (string-empty-p skel-shell-interpreter-args) " ")
+   skel-shell-interpreter-args))
+
+(defun skel-shell-make-comint (cmd proc-name &optional show internal)
+  (save-excursion
+    (let* ((proc-buffer-name
+            (format (if (not internal) "*%s*" " *%s*") proc-name)))
+      (when (not (comint-check-proc proc-buffer-name))
+        (let* ((cmdlist (split-string-and-unquote cmd))
+               (interpreter (car cmdlist))
+               (args (cdr cmdlist))
+               (buffer (apply #'make-comint-in-buffer proc-name
+                              proc-buffer-name
+                              interpreter nil args))
+               (skel-shell--parent-buffer (current-buffer))
+               (process (get-buffer-process buffer))
+               (skel-shell-interpreter interpreter)
+               (skel-shell-interpreter-args (mapconcat #'identity args " ")))
+          (with-current-buffer buffer
+            (inferior-skel-mode))
+          (and internal (set-process-query-on-exit-flag process nil))))
+      (when show (pop-to-buffer proc-buffer-name))
+      proc-buffer-name)))
+
+(defun skel-shell-get-process-name (dedicated)
+  "Calculate the appropriate process name for inferior Skel process.
+If DEDICATED is nil, this is simply `skel-shell-buffer-name'.
+If DEDICATED is `buffer' or `project', append the current buffer
+name respectively the current project name."
+  (pcase dedicated
+    ('nil skel-shell-buffer-name)
+    ('project
+     (if-let* ((proj (project-current)))
+         (format "%s[%s]" skel-shell-buffer-name (project-name proj))
+       skel-shell-buffer-name))
+    (_ (format "%s[%s]" skel-shell-buffer-name (buffer-name)))))
+
+(defun run-skel (&optional cmd dedicated show)
+  "Run an inferior Skel process."
+  (interactive
+   (if current-prefix-arg
+       (list
+        (read-shell-command "Run Skel: " (skel-shell-calculate-command))
+        (alist-get (car (read-multiple-choice "Make dedicated process?"
+                                              '((?b "to buffer")
+                                                (?p "to project")
+                                                (?n "no"))))
+                   '((?b . buffer) (?p . project)))
+        (= (prefix-numeric-value current-prefix-arg) 4))
+     (list (skel-shell-calculate-command)
+           skel-shell-dedicated
+           t)))
+  (let* ((project (and (eq 'project dedicated)
+                       (project-current t)))
+         (default-directory (if project
+                                (project-root project)
+                              default-directory))
+         (buffer (skel-shell-make-comint
+                  (or cmd (skel-shell-calculate-command))
+                  (skel-shell-get-process-name dedicated)
+                  show)))
+    (get-buffer-process buffer)))
+
+;;; Minor Mode
+(define-minor-mode skel-minor-mode
+  "skel-minor-mode"
+  :global t
+  :lighter " Sk"
+  :group 'skel
+  :version skel-version
+  (keymap-local-set skel-map-prefix skel-map))
+
+;; TODO 2026-05-30: 
+;; (defun maybe-skel-minor-mode ()
+;;   "Check the current environment and determine if `skel-minor-mode' should
+;; be enabled. This function is added as a hook to
+;; `lisp-data-mode-hook'.")
+
+;;; Major Mode
+;; TODO 2023-09-06: 
+(define-derived-mode skel-mode lisp-mode "Skel"
+  :group 'skel
+  (skel-minor-mode 1)
+  (setq-local electric-quote-string t)
+  (setq imenu-case-fold-search nil)
+  (setq-local indent-region-function 'skel-indent-region)
+  (setq-local lisp-indent-offset 1))
+
+;;;###autoload
+(defun init-skel ()
+  (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
+        '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
+          "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'"))
+  (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
+  (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 
 ;;; UI
 ;; TODO 2025-10-03: 
 ;; skel project customization ui (overlays skelfile)
-
-;;; organ-minor-mode
-;; support ORGAN reader syntax in lisp files 
-(defun organ-minor-mode-setup ()
-  (make-local-variable 'post-command-hook)
-  (add-hook 'post-command-hook 'organ-update-mode nil t)
-  (make-local-variable 'minor-mode-alist)
-  (or (assq 'organ-minor-mode minor-mode-alist)
-      (setq minor-mode-alist
-	        (cons '(organ-minor-mode " organ") minor-mode-alist))))
-
-(defun organ-change-mode (to)
-  (if (eql to major-mode)
-      t
-    (progn
-      (if (eql to 'org-mode)
-	  (org-mode)
-	(lisp-mode))
-      (organ-minor-mode-setup))))
-
-;; FIX 2026-05-01: 
-(defun organ-update-mode ()
-  (let ((lm -1)
-        (rm -1)
-	(vbar nil))
-    (save-excursion 
-      (if (or (search-backward "#&" nil t)
-	      (and (re-search-backward "#|[ ]?org" nil t) (setf vbar t)))
-          (setq lm (point))
-        (setq lm -1)))
-    (save-excursion
-      (if (or (and (not vbar) (search-forward "&#" nil t))
-	      (and vbar (search-forward "|#" nil t)))
-          (setq rm (point))
-        (setq rm -1)))
-    (if (or (= lm -1) (= rm -1))
-        (organ-change-mode nil)
-      (organ-change-mode 'org-mode))))
-
-(define-minor-mode organ-minor-mode nil
-  :lighter " organ"
-  :after-hook (organ-minor-mode-setup))
 
 (provide 'skel)
 ;;; skel.el ends here

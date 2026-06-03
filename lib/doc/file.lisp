@@ -103,7 +103,7 @@
 ;; the matching comment block end sequence.
 
 ;; When using the core emacs distribution you may also activate
-;; `organ-minor-mode' to swith to `org-mode' highlighting and bindings while
+;; `org-minor-mode' to swith to `org-mode' highlighting and bindings while
 ;; point is inside an org comment block or an organ block '#&&#'
 
 ;;; Code:

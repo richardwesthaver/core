@@ -238,7 +238,7 @@ TABLE."
 
 (use-package expand
   :hook ((expand-expand . indent-according-to-mode)
-	 (expand-jump . indent-according-to-mode)))
+	     (expand-jump . indent-according-to-mode)))
 
 (use-package completion-preview
   :defer nil
@@ -288,8 +288,8 @@ TABLE."
   :hook (dired-mode . image-dired-minor-mode)
   :config
   (setq dired-dwim-target t
-	dired-free-space 'separate
-	dired-mouse-drag-files t)
+	    dired-free-space 'separate
+	    dired-mouse-drag-files t)
   (when (linux-p) (setq dired-listing-switches "-alsh")))
 
 ;;; Speedbar
@@ -297,8 +297,8 @@ TABLE."
   :defer nil
   :config
   (setq speedbar-sort-tags t
-	speedbar-prefer-window t
-	speedbar-track-mouse-flag t)
+	    speedbar-prefer-window t
+	    speedbar-track-mouse-flag t)
   (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
   (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
 
@@ -314,7 +314,7 @@ TABLE."
 
 ;;; TODO Skeleton
 (use-package skeleton)
-  
+
 ;;; Projects
 (use-package project
   :config
@@ -336,7 +336,9 @@ TABLE."
 (use-package ulang
   :defer nil
   :load-path site-lisp-directory
-  :hook (after-init . ulang-init))
+  :hook 
+  (after-init . ulang-init)
+  (lisp-mode . org-minor-mode))
 
 ;;; Lisp
 (use-package lisp-mode
@@ -365,22 +367,22 @@ TABLE."
 (use-package inf-lisp
   :init 
   (setq inferior-lisp-program
-	(format "%s --dynamic-space-size=8G --control-stack-size=32"
-		(if (file-exists-p "/bin/core") "/bin/core" "/bin/sbcl")))
+	    (format "%s --dynamic-space-size=8G --control-stack-size=32"
+		        (if (file-exists-p "/bin/core") "/bin/core" "/bin/sbcl")))
   (defvar lisp-toggle nil)  
   :config
   (defun lisp-toggle (&optional cmd)
     "Toggle between current buffer and inferior-lisp process buffer."
     (interactive)
     (if (eq major-mode 'inferior-lisp-mode)
-	(pop-to-buffer-same-window
-	 (or lisp-toggle (read-buffer "lisp buffer: ")))
+	    (pop-to-buffer-same-window
+	     (or lisp-toggle (read-buffer "lisp buffer: ")))
       (if inferior-lisp-buffer
-	  (progn
+	      (progn
+	        (setq lisp-toggle (current-buffer))
+	        (inferior-lisp (or cmd inferior-lisp-program)))
 	    (setq lisp-toggle (current-buffer))
-	    (inferior-lisp (or cmd inferior-lisp-program)))
-	(setq lisp-toggle (current-buffer))
-	(inferior-lisp (or cmd inferior-lisp-program))))))
+	    (inferior-lisp (or cmd inferior-lisp-program))))))
 
 (use-package slime
   :defer nil
@@ -393,33 +395,33 @@ TABLE."
   :hook (slime-mode . (lambda () (completion-preview-mode -1)))
   :init
   (setq scheme-program-name "gsi"
-	slime-auto-start t
-	guile-program "guile"
-	cmulisp-program "lisp"
-	scsh-program "scsh"
-	;; rebind the defpackage-regexp function to include DEFPKG
-	slime-defpackage-regexp
-	"^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
-	slime-threads-update-interval 4
-	slime-contribs '(slime-fancy
-			 slime-quicklisp
-			 slime-hyperdoc
-			 ;; slime-listener-hooks
-			 ;; slime-enclosing-context
-			 ;; slime-media
-			 ;; slime-mrepl
-			 ;; slime-company
-			 slime-sbcl-exts
-			 slime-cape ;; ext
-			 slime-repl-ansi-color
-			 slime-cl-indent
-			 ;; slime-snapshot
-			 slime-sprof
-			 slime-tramp
-			 ;; slime-typeout-frame
-			 slime-xref-browser
-			 ;; slime-highlight-edits
-			 slime-repl-ansi-color))
+	    slime-auto-start t
+	    guile-program "guile"
+	    cmulisp-program "lisp"
+	    scsh-program "scsh"
+	    ;; rebind the defpackage-regexp function to include DEFPKG
+	    slime-defpackage-regexp
+	    "^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
+	    slime-threads-update-interval 4
+	    slime-contribs '(slime-fancy
+			             slime-quicklisp
+			             slime-hyperdoc
+			             ;; slime-listener-hooks
+			             ;; slime-enclosing-context
+			             ;; slime-media
+			             ;; slime-mrepl
+			             ;; slime-company
+			             slime-sbcl-exts
+			             slime-cape ;; ext
+			             slime-repl-ansi-color
+			             slime-cl-indent
+			             ;; slime-snapshot
+			             slime-sprof
+			             slime-tramp
+			             ;; slime-typeout-frame
+			             slime-xref-browser
+			             ;; slime-highlight-edits
+			             slime-repl-ansi-color))
   (slime-setup slime-contribs)
   :config
   (slime-cape-enable)
@@ -465,12 +467,12 @@ TABLE."
   (defun toggle-macro-recording ()
     (interactive)
     (if defining-kbd-macro
-	(end-kbd-macro)
+	    (end-kbd-macro)
       (start-kbd-macro nil)))
   (defun play-macro-if-not-playing ()
     (interactive)
     (if defining-kbd-macro
-	(end-kbd-macro)
+	    (end-kbd-macro)
       (call-last-kbd-macro))))
 
 ;;; Registers
@@ -530,19 +532,19 @@ Interactively, NUMBER is the prefix arg."
     `(mapc (lambda (x) (add-outline-hook (car x) (cadr x))) ',pairs))
 
   (outline-hooks (asm-mode ";;;+")
-		 (nasm-mode ";;;+")
-		 (rust-mode "\\(//!\\|////+\\)")
-		 (sh-mode "###+")
-		 (sh-script-mode "###+")
-		 (makefile-mode "###+")
-		 (conf-mode "###+")
-		 (common-lisp-mode)
-		 (emacs-lisp-mode)
-		 (lisp-data-mode)
-		 (org-mode)
-		 (css-mode)
-		 (html-mode)
-		 (skel-mode)))
+		         (nasm-mode ";;;+")
+		         (rust-mode "\\(//!\\|////+\\)")
+		         (sh-mode "###+")
+		         (sh-script-mode "###+")
+		         (makefile-mode "###+")
+		         (conf-mode "###+")
+		         (common-lisp-mode)
+		         (emacs-lisp-mode)
+		         (lisp-data-mode)
+		         (org-mode)
+		         (css-mode)
+		         (html-mode)
+		         (skel-mode)))
 
 ;;; Shell
 (use-package shell
@@ -561,14 +563,14 @@ Interactively, NUMBER is the prefix arg."
   :defer nil
   :init
   (setq eshell-highlight-prompt t
-	eshell-hist-ignoredups t
-	eshell-save-history-on-exit t
-	eshell-prefer-lisp-functions nil
-	eshell-destroy-buffer-when-process-dies t)
+	    eshell-hist-ignoredups t
+	    eshell-save-history-on-exit t
+	    eshell-prefer-lisp-functions nil
+	    eshell-destroy-buffer-when-process-dies t)
   :bind 
-  (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
   ("C-c RET" . eshell)
-  ("C-c C-<return>" . eshell-new)
+  ("C-c C-RET" . eshell-new)
+  (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
   :config
   (require 'em-alias)
   (eshell/alias "d" "dired $1")
@@ -588,7 +590,7 @@ Interactively, NUMBER is the prefix arg."
   (defun eshell-quit-or-delete-char (arg)
     (interactive "p")
     (if (and (eolp) (looking-back eshell-prompt-regexp))
-	(progn
+	    (progn
           (eshell-life-is-too-much) ; Why not? (eshell/exit)
           (ignore-errors
             (delete-window)))
@@ -600,7 +602,7 @@ Interactively, NUMBER is the prefix arg."
     (re-search-forward eshell-prompt-regexp nil t n)
     (when eshell-highlight-prompt
       (while (not (get-text-property (line-beginning-position) 'read-only) )
-	(re-search-forward eshell-prompt-regexp nil t n)))
+	    (re-search-forward eshell-prompt-regexp nil t n)))
     (eshell-skip-prompt))
 
   (defun eshell-previous-prompt (n)
@@ -613,7 +615,7 @@ Interactively, NUMBER is the prefix arg."
     "Displays the eshell history to select and insert back into your eshell."
     (interactive)
     (insert (ido-completing-read "Eshell history: "
-				 (delete-dups
+				                 (delete-dups
                                   (ring-elements eshell-history-ring))))))
 
 ;;; Terminal
@@ -622,18 +624,18 @@ Interactively, NUMBER is the prefix arg."
   :hook (eshell-mode . eat-eshell-mode)
   :init
   (setq eat-enable-auto-line-mode t
-	eat-kill-buffer-on-exit t))
+	    eat-kill-buffer-on-exit t))
 
 ;;; Eww
 (use-package shr
   :after (imenu)
   :init
   (setq shr-use-colors t
-	shr-use-fonts t
-	shr-max-image-proportion 0.6
-	shr-image-animate t
-	shr-discard-aria-hidden t
-	shr-use-xwidgets-for-media t)
+	    shr-use-fonts t
+	    shr-max-image-proportion 0.6
+	    shr-image-animate t
+	    shr-discard-aria-hidden t
+	    shr-use-xwidgets-for-media t)
   :custom
   ;; ref: https://github.com/oantolin/emacs-config/blob/master/my-lisp/shr-heading.el
   (defun shr-heading-next (&optional arg)
@@ -643,19 +645,19 @@ If ARG is negative move backwards, ARG defaults to 1."
     (unless arg (setq arg 1))
     (catch 'return
       (dotimes (_ (abs arg))
-	(when (> arg 0) (end-of-line))
-	(if-let* ((match
-		   (funcall (if (> arg 0)
-				#'text-property-search-forward
-			      #'text-property-search-backward)
-			    'face '(shr-h1 shr-h2 shr-h3 shr-h4)
-			    (lambda (tags face)
-			      (cl-loop for x in (if (consp face) face (list face))
-				       thereis (memq x tags))))))
-	    (goto-char
-	     (if (> arg 0) (prop-match-beginning match) (prop-match-end match)))
-	  (throw 'return nil))
-	(when (< arg 0) (beginning-of-line)))
+	    (when (> arg 0) (end-of-line))
+	    (if-let* ((match
+		           (funcall (if (> arg 0)
+				                #'text-property-search-forward
+			                  #'text-property-search-backward)
+			                'face '(shr-h1 shr-h2 shr-h3 shr-h4)
+			                (lambda (tags face)
+			                  (cl-loop for x in (if (consp face) face (list face))
+				                       thereis (memq x tags))))))
+	        (goto-char
+	         (if (> arg 0) (prop-match-beginning match) (prop-match-end match)))
+	      (throw 'return nil))
+	    (when (< arg 0) (beginning-of-line)))
       (beginning-of-line)
       (point)))
   (defun shr-heading-previous (&optional arg)
@@ -723,18 +725,18 @@ Add this function to appropriate major mode hooks such as
 With prefix ARG non-nil, insert the result at the end of region."
     (interactive "P\nr")
     (let* ((expr (buffer-substring-no-properties beg end))
-	   (result (calc-eval expr)))
+	       (result (calc-eval expr)))
       (if (null arg)
-	  (message "%s = %s" expr result)
-	(goto-char end)
-	(save-excursion
-	  (insert result)))))
+	      (message "%s = %s" expr result)
+	    (goto-char end)
+	    (save-excursion
+	      (insert result)))))
 
   (defun calc-embedded-formula-to-stack ()
     (interactive)
     (save-excursion
       (save-match-data
-	(calc-embedded-find-bounds)))
+	    (calc-embedded-find-bounds)))
     (let ((eq-str (buffer-substring calc-embed-top calc-embed-bot)))
       (calc-eval eq-str 'push))))
 
@@ -742,16 +744,16 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package mpc
   :bind
   (:map mpc-mode-map
-    ("v" . mpc-tagbrowser)
-    ("a" . mpc-playlist-add)
-    ("c" . mpc-playlist-create)
-    ("." . mpc-play-at-point)
-    ("P" . mpc-resume)
-    ("f" . mpc-ffwd)
-    ("b" . mpc-rewind)
-    ("x" . mpc-playlist-delete)
-    ("m" . mpc-mark)
-    ("1" . mpc-playlist))
+        ("v" . mpc-tagbrowser)
+        ("a" . mpc-playlist-add)
+        ("c" . mpc-playlist-create)
+        ("." . mpc-play-at-point)
+        ("P" . mpc-resume)
+        ("f" . mpc-ffwd)
+        ("b" . mpc-rewind)
+        ("x" . mpc-playlist-delete)
+        ("m" . mpc-mark)
+        ("1" . mpc-playlist))
   ("C-c e p" . mpc)
   :config
   (defun mpc-mark ()
@@ -790,130 +792,130 @@ With prefix ARG non-nil, insert the result at the end of region."
     "Expand the tag of an org-link where linkkey is `vc'."
     (let ((f (split-string tag ":" "/")))
       (concat (string-trim-right company-vc-url "[/]")
-	      (cl-case (length f)
-		(0 "")
-		(1 (format "/%s" (car f)))
-		(2 (apply 'format "/%s/file/tip/%s" f))
-		(t (apply 'format "/%s/file/%s/%s" f))))))
+	          (cl-case (length f)
+		        (0 "")
+		        (1 (format "/%s" (car f)))
+		        (2 (apply 'format "/%s/file/tip/%s" f))
+		        (t (apply 'format "/%s/file/%s/%s" f))))))
   (setq org-html-htmlize-output-type 'css
-	org-html-head-include-default-style nil
-	org-ascii-text-width 80
-	org-man-command 'woman
+	    org-html-head-include-default-style nil
+	    org-ascii-text-width 80
+	    org-man-command 'woman
         org-safe-remote-resources '("\\`https://cdn\\.compiler\\.company/org/clean\\.theme\\'")
         org-publish-timestamp-directory (join-paths user-emacs-directory ".org-timestamps/")
-	org-attach-id-dir (join-paths company-cdn-url "media/")
-	org-edit-src-content-indentation 0
-	org-archive-location "archive.org::"
-	org-structure-template-alist '(("s" . "src")
-				       ("e" . "src emacs-lisp")
-				       ("x" . "src shell")
-				       ("l" . "src lisp")
-				       ("h" . "export html")
-				       ("p" . "src python")
-				       ("r" . "src rust")
-				       ("E" . "example")
-				       ("q" . "quote")
-				       ("c" . "center")
-				       ("C" . "comment")
-				       ("v" . "verse"))
-	org-link-abbrev-alist `(("vc" . ol-vc-expand)
-				            ("comp" . ,(format "https://%s/%%s" company-domain))
-				            ("cdn" . ,(format "%s/%%s" company-cdn-url))
-				            ("packy" . ,(format "%s/%%s" company-packy-url))
-				            ("yt" . "https://youtube.com/watch?v=%s")
-				            ("gh" . "https://github.com/%s")
-				            ("cb" . "https://codeberg.org/%s")
-				            ("wikipedia" . "https://en.wikipedia.org/wiki/%s")
-				            ("archwiki" . "https://wiki.archlinux.org/title/%s")
-				            ("reddit" . "https://reddit.com/%s")
-				            ("hn" . "https://news.ycombinator.com/%s")
-				            ("archive" . "https://web.archive.org/web/%s")
-				            ("so" . "https://stackoverflow.com/%s"))
-	org-babel-default-header-args '((:session . "none") (:results . "replace") 
-					(:eval . "no-export") (:exports . "both")
-					(:cache . "no") (:noweb . "no") 
-					(:hlines . "no") (:tangle . "no"))
-	org-global-properties '(quote 
-				(("EFFORT_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
-				 ("STYLE_ALL" . "habit")))
-	org-todo-keywords '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
-			            (sequence "HOLD(H@/!)" "WIP(!)" "|")
-			            (sequence "WAIT(W@/!)" "WIP(!)" "|")
-			            (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
-			            (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-			            (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
-			            (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
-				              "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
-				              "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
-			            (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
-			            (sequence "|" "DONE(d!)" "NOPE(x@!)"))
-	org-todo-keyword-faces '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
-				             ("PRODUCT" . (:foreground "olivedrab" :weight bold))
-				             ("RELEASE" . (:foreground "maroon3" :weight bold))
-				             ("RESEARCH" . (:foreground "maroon2" :weight bold))
-				             ("HACK" . (:foreground "maroon3" :weight bold))
-				             ("TBD" . (:foreground "brown" :weight bold))
-				             ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
-				             ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
-				             ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
-				             ("WIP" . (:foreground "darkorchid2" :weight bold))
-				             ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen")))
-	org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
+	    org-attach-id-dir (join-paths company-cdn-url "media/")
+	    org-edit-src-content-indentation 0
+	    org-archive-location "archive.org::"
+	    org-structure-template-alist '(("s" . "src")
+				                       ("e" . "src emacs-lisp")
+				                       ("x" . "src shell")
+				                       ("l" . "src lisp")
+				                       ("h" . "export html")
+				                       ("p" . "src python")
+				                       ("r" . "src rust")
+				                       ("E" . "example")
+				                       ("q" . "quote")
+				                       ("c" . "center")
+				                       ("C" . "comment")
+				                       ("v" . "verse"))
+	    org-link-abbrev-alist `(("vc" . ol-vc-expand)
+				                ("comp" . ,(format "https://%s/%%s" company-domain))
+				                ("cdn" . ,(format "%s/%%s" company-cdn-url))
+				                ("packy" . ,(format "%s/%%s" company-packy-url))
+				                ("yt" . "https://youtube.com/watch?v=%s")
+				                ("gh" . "https://github.com/%s")
+				                ("cb" . "https://codeberg.org/%s")
+				                ("wikipedia" . "https://en.wikipedia.org/wiki/%s")
+				                ("archwiki" . "https://wiki.archlinux.org/title/%s")
+				                ("reddit" . "https://reddit.com/%s")
+				                ("hn" . "https://news.ycombinator.com/%s")
+				                ("archive" . "https://web.archive.org/web/%s")
+				                ("so" . "https://stackoverflow.com/%s"))
+	    org-babel-default-header-args '((:session . "none") (:results . "replace") 
+					                    (:eval . "no-export") (:exports . "both")
+					                    (:cache . "no") (:noweb . "no") 
+					                    (:hlines . "no") (:tangle . "no"))
+	    org-global-properties '(quote 
+				                (("EFFORT_ALL" . "0:15 0:30 0:45 1:00 2:00 3:00 4:00 5:00 6:00 0:00")
+				                 ("STYLE_ALL" . "habit")))
+	    org-todo-keywords '((sequence "TBD(0!)" "TODO(t!)" "NEXT(n!)" "WIP(i!)" "|" "DONE(d!)")
+			                (sequence "HOLD(H@/!)" "WIP(!)" "|")
+			                (sequence "WAIT(W@/!)" "WIP(!)" "|")
+			                (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
+			                (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
+			                (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
+			                (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
+				                  "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
+				                  "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
+			                (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
+			                (sequence "|" "DONE(d!)" "NOPE(x@!)"))
+	    org-todo-keyword-faces '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
+				                 ("PRODUCT" . (:foreground "olivedrab" :weight bold))
+				                 ("RELEASE" . (:foreground "maroon3" :weight bold))
+				                 ("RESEARCH" . (:foreground "maroon2" :weight bold))
+				                 ("HACK" . (:foreground "maroon3" :weight bold))
+				                 ("TBD" . (:foreground "brown" :weight bold))
+				                 ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
+				                 ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
+				                 ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
+				                 ("WIP" . (:foreground "darkorchid2" :weight bold))
+				                 ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen")))
+	    org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
   :config
   (org-babel-do-load-languages
    ;; TODO 2021-10-24: bqn, apl, k
    'org-babel-load-languages '((shell . t)
-			       (emacs-lisp . t)
-			       (lisp . t)
-			       (org . t)
-			       (eshell . t)
-			       (calc . t)
-			       (sed . t)
-			       (awk . t)
-			       (dot . t)
-			       (js . t)
-			       (C . t)
-			       (python . t)))
+			                   (emacs-lisp . t)
+			                   (lisp . t)
+			                   (org . t)
+			                   (eshell . t)
+			                   (calc . t)
+			                   (sed . t)
+			                   (awk . t)
+			                   (dot . t)
+			                   (js . t)
+			                   (C . t)
+			                   (python . t)))
 
   (defun org-mode-ask-effort ()
     "Ask for an effort estimate when clocking in."
     (unless (org-entry-get (point) "Effort")
       (let ((effort
-	     (completing-read
-	      "Effort: "
-	      (org-entry-get-multivalued-property (point) "Effort"))))
-	(unless (equal effort "")
-	  (org-set-property "Effort" effort)))))
+	         (completing-read
+	          "Effort: "
+	          (org-entry-get-multivalued-property (point) "Effort"))))
+	    (unless (equal effort "")
+	      (org-set-property "Effort" effort)))))
 
   (setopt 
    ;; org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
    ;; org-latex-image-default-width "8cm"
-	  org-refile-use-cache t
-	  org-refile-allow-creating-parent-nodes 'confirm
-	  org-default-notes-file (join-paths org-directory "inbox.org")
-	  org-refile-targets '((org-agenda-files :maxlevel . 4))
-	  ;; org-agenda-files (list "inbox.org")
-	  org-confirm-babel-evaluate nil
-	  org-src-fontify-natively t
-	  org-src-tabs-act-natively t
-	  org-footnote-section nil
-	  org-log-into-drawer t
-	  org-log-refile 'time
-	  org-log-redeadline 'time
-	  org-log-states-order-reversed nil
-	  org-clock-persist 'history
-	  org-clock-persist-file (join-paths user-emacs-directory "org-clock-save")
-	  org-id-locations-file (join-paths user-emacs-directory "org-id-locations")))
+   org-refile-use-cache t
+   org-refile-allow-creating-parent-nodes 'confirm
+   org-default-notes-file (join-paths org-directory "inbox.org")
+   org-refile-targets '((org-agenda-files :maxlevel . 4))
+   ;; org-agenda-files (list "inbox.org")
+   org-confirm-babel-evaluate nil
+   org-src-fontify-natively t
+   org-src-tabs-act-natively t
+   org-footnote-section nil
+   org-log-into-drawer t
+   org-log-refile 'time
+   org-log-redeadline 'time
+   org-log-states-order-reversed nil
+   org-clock-persist 'history
+   org-clock-persist-file (join-paths user-emacs-directory "org-clock-save")
+   org-id-locations-file (join-paths user-emacs-directory "org-id-locations")))
 
 (use-package org-capture
   :after (org)
   :init 
   (setq org-capture-use-agenda-date t
-	org-capture-templates 
-    '(("1" "current-task-item" item (clock) "%i%?")
-	  ("2" "current-task-checkbox" checkitem (clock) "%i%?")
-	  ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
-	  ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1))))
+	    org-capture-templates 
+        '(("1" "current-task-item" item (clock) "%i%?")
+	      ("2" "current-task-checkbox" checkitem (clock) "%i%?")
+	      ("3" "current-task-region" plain (clock) "%i" :immediate-finish t :empty-lines 1)
+	      ("4" "current-task-kill" plain (clock) "%c" :immediate-finish t :empty-lines 1))))
 
 (use-package org-crypt 
   :after (org)
@@ -941,37 +943,37 @@ With prefix ARG non-nil, insert the result at the end of region."
  With prefix, display only TODO-keyword items."
     (interactive "P")
     (let ((starting-point (point))
-	  header)
+	      header)
       (with-current-buffer (or (buffer-base-buffer (current-buffer))
-			       (current-buffer))
-	(if (use-region-p)
-	    (progn
-	      (setq header "Region")
-	      (put 'org-agenda-files 'org-restrict (list (buffer-file-name (current-buffer))))
-	      (setq org-agenda-restrict (current-buffer))
-	      (move-marker org-agenda-restrict-begin (region-beginning))
-	      (move-marker org-agenda-restrict-end
-			   (save-excursion
-			     ;; If point is at beginning of line, include
-			     ;; heading on that line by moving forward 1.
-			     (goto-char (1+ (region-end)))
-			     (org-end-of-subtree))))
-	  ;; No region; restrict to subtree.
-	  (save-excursion
-	    (save-restriction
-	      ;; In case the command was called from an indirect buffer, set point
-	      ;; in the base buffer to the same position while setting restriction.
-	      (widen)
-	      (goto-char starting-point)
-	      (setq header "Subtree")
-	      (org-agenda-set-restriction-lock))))
-	;; NOTE: Unlike other agenda commands, binding `org-agenda-sorting-strategy'
-	;; around `org-search-view' seems to have no effect.
-	(let ((org-agenda-sorting-strategy '(priority-down timestamp-up))
-	      (org-agenda-overriding-header header))
-	  (org-search-view (if only-todos t nil) "*"))
-	(org-agenda-remove-restriction-lock t)
-	(message nil)))))
+			                   (current-buffer))
+	    (if (use-region-p)
+	        (progn
+	          (setq header "Region")
+	          (put 'org-agenda-files 'org-restrict (list (buffer-file-name (current-buffer))))
+	          (setq org-agenda-restrict (current-buffer))
+	          (move-marker org-agenda-restrict-begin (region-beginning))
+	          (move-marker org-agenda-restrict-end
+			               (save-excursion
+			                 ;; If point is at beginning of line, include
+			                 ;; heading on that line by moving forward 1.
+			                 (goto-char (1+ (region-end)))
+			                 (org-end-of-subtree))))
+	      ;; No region; restrict to subtree.
+	      (save-excursion
+	        (save-restriction
+	          ;; In case the command was called from an indirect buffer, set point
+	          ;; in the base buffer to the same position while setting restriction.
+	          (widen)
+	          (goto-char starting-point)
+	          (setq header "Subtree")
+	          (org-agenda-set-restriction-lock))))
+	    ;; NOTE: Unlike other agenda commands, binding `org-agenda-sorting-strategy'
+	    ;; around `org-search-view' seems to have no effect.
+	    (let ((org-agenda-sorting-strategy '(priority-down timestamp-up))
+	          (org-agenda-overriding-header header))
+	      (org-search-view (if only-todos t nil) "*"))
+	    (org-agenda-remove-restriction-lock t)
+	    (message nil)))))
 
 (use-package org-id
   :after (org)
@@ -981,12 +983,12 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package org-protocol
   :after (org)
   :init (setq org-protocol-default-template-key "L"
-	      org-protocol-project-alist
-	      '(("comp"
-		 :base-url company-url
-		 :working-directory company-org-directory
-		 :online-suffix ".html"
-		 :working-suffix ".org"))))
+	          org-protocol-project-alist
+	          '(("comp"
+		         :base-url company-url
+		         :working-directory company-org-directory
+		         :online-suffix ".html"
+		         :working-suffix ".org"))))
 
 (use-package citeproc
   :ensure t
@@ -1023,12 +1025,13 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Desktop
 (use-package desktop
+  :defer nil
+  :hook (emacs-startup . (lambda () (desktop-save-mode (if buffer-file-name -1 1))))
   :config
   (setopt desktop-auto-save-timeout 60
           desktop-base-file-name ".desktop"
           desktop-base-lock-name ".desktop.lock"
-          desktop-save nil
-          desktop-save-mode t)
+          desktop-save nil)
   (add-to-list 'desktop-path "."))
 
 ;;; Dictionary
@@ -1069,34 +1072,30 @@ With prefix ARG non-nil, insert the result at the end of region."
   :config (org-inbox-init))
 
 (use-package gen 
+  :defer nil
   :load-path site-lisp-directory
-  :hook (lisp-mode . maybe-enable-gen-minor-mode))
+  :hook (lisp-mode . gen-maybe-enable))
 
 (use-package plan 
-  :load-path site-lisp-directory
   :defer nil
+  :load-path site-lisp-directory
   ;; used in org/meta/babel.org, called via org-dblocks in project
   ;; readmes.
   :ensure-system-package tokei)
 
 (use-package skel 
   :load-path site-lisp-directory
-  :after (eglot)
   :defer nil
+  :bind (:map project-prefix-map ("RET" . run-skel))
   :interpreter "skel"
   :hook 
   (skel-mode . skel-dir-local-get-variables)
-  (lisp-mode . organ-minor-mode)
   (project-find-functions . project-try-skel)
   (prog-mode . skel-minor-mode)
   (org-mode . skel-minor-mode)
   (conf-mode . skel-minor-mode)
   (dired-mode . skel-minor-mode)
-  :init
-  (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver"))
-  (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
-
-(init-skel)
+  :init (init-skel))
 
 (use-package mpk 
   :load-path site-lisp-directory)

@@ -56,7 +56,7 @@
        `((,gen-keywords-rx . font-lock-keyword-face))))))
 
 ;;;###autoload
-(defun maybe-enable-gen-minor-mode ()
+(defun gen-maybe-enable ()
   (when (and buffer-file-name (equal (file-name-extension buffer-file-name) "gen"))
     (gen-minor-mode 1)))
 

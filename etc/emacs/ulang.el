@@ -26,6 +26,7 @@
 (require 'org)
 (require 'ox)
 
+;;; Custom
 (defgroup ulang nil "ULANG")
 
 (defcustom ulang-properties
@@ -73,6 +74,66 @@
   "See `org-agenda-custom-commands'."
   :group 'ulang)
 
+;;; Regexps
+(defvar default-line-regexp-alist
+  '((empty . "[\s\t]*$")
+    (indent . "^[\s\t]+")
+    (non-empty . "^.+$")
+    (list . "^\\([\s\t#*+]+\\|[0-9]+[^\s]?[).]+\\)")
+    (heading . "^[=-]+"))
+  "Alist of regexp types used by `default-line-regexp-p'.")
+
+(defun default-line-regexp-p (type &optional n)
+  "Test for TYPE on line.
+TYPE is the car of a cons cell in
+`default-line-regexp-alist'.  It matches a regular
+expression.
+With optional N, search in the Nth line from point."
+  (save-excursion
+    (goto-char (pos-bol))
+    (and (not (bobp))
+     (or (beginning-of-line n) t)
+     (save-match-data
+       (looking-at
+        (alist-get type default-line-regexp-alist))))))
+
+;;; Time
+(defun format-iso-week-number (&optional date)
+  "format DATE as ISO week number with week days starting on
+    Monday. If DATE is nil use current date."
+  (let* ((week (format-time-string "%W" date))
+     (prefix (if (= (length week) 1)
+             "w0" "w")))
+    (concat prefix week)))
+
+(defun last-day-of-year (&optional date)
+  "Return the last day of the year as time."
+  (encode-time 0 0 0 31 12 (nth 5 (decode-time
+                   (or date (current-time))))))
+
+(defun last-day-of-month (&optional date)
+  "Return the last day of month as time."
+  (let* ((now (decode-time (or date (current-time))))
+     (month (nth 4 now))
+     (year (nth 5 now))
+     (last-day-of-month (calendar-last-day-of-month month year)))
+    (encode-time 0 0 0 last-day-of-month month year)))
+
+(defun last-day-of-week (&optional date)
+  "Return the last day of the week as time."
+  (let* ((now (or date (current-time)))
+     (datetime (decode-time now))
+     (dow (nth 6 datetime)))
+    (time-add now (days-to-time (- 7 dow)))))
+
+(defun first-day-of-week (&optional date)
+  "Return the first day of the week as time."
+  (let* ((now (or date (current-time)))
+     (datetime (decode-time now))
+     (dow (nth 6 datetime)))
+    (time-subtract now (days-to-time dow))))
+
+;;; Utils
 (defun org-export-translate-to-lang (term-translations &optional lang)
   "Adds desired translations to `org-export-dictionary'.
    TERM-TRANSLATIONS is alist consisted of term you want to translate
@@ -106,7 +167,6 @@
   (mapadd org-todo-keyword-faces ulang-todo-keyword-faces))
 
 ;;; Location
-
 ;; (org-property-inherit-p "LOCATION")
 
 ;; currently does not support locations with spaces.. need to walk
@@ -283,64 +343,47 @@ specified by `prog-comment-timestamp-format-verbose'."
       (comment-indent t)
       (insert (concat " " string))))))
 
-;;; Regexps
-(defvar default-line-regexp-alist
-  '((empty . "[\s\t]*$")
-    (indent . "^[\s\t]+")
-    (non-empty . "^.+$")
-    (list . "^\\([\s\t#*+]+\\|[0-9]+[^\s]?[).]+\\)")
-    (heading . "^[=-]+"))
-  "Alist of regexp types used by `default-line-regexp-p'.")
+;;; org-minor-mode
+;; support ORG reader syntax in lisp files 
+(defun org-minor-mode-setup ()
+  (make-local-variable 'post-command-hook)
+  (add-hook 'post-command-hook 'org-update-minor-mode nil t)
+  (make-local-variable 'minor-mode-alist)
+  (or (assq 'org-minor-mode minor-mode-alist)
+      (setq minor-mode-alist
+            (cons '(org-minor-mode " ;org") minor-mode-alist))))
 
-(defun default-line-regexp-p (type &optional n)
-  "Test for TYPE on line.
-TYPE is the car of a cons cell in
-`default-line-regexp-alist'.  It matches a regular
-expression.
-With optional N, search in the Nth line from point."
-  (save-excursion
-    (goto-char (pos-bol))
-    (and (not (bobp))
-	 (or (beginning-of-line n) t)
-	 (save-match-data
-	   (looking-at
-	    (alist-get type default-line-regexp-alist))))))
+(defun org-change-mode (to)
+  (if (eql to major-mode)
+      t
+    (progn
+      (if (eql to 'org-mode)
+      (org-mode)
+    (lisp-mode))
+      (org-minor-mode-setup))))
 
-;;; Time
-(defun format-iso-week-number (&optional date)
-  "format DATE as ISO week number with week days starting on
-    Monday. If DATE is nil use current date."
-  (let* ((week (format-time-string "%W" date))
-	 (prefix (if (= (length week) 1)
-		     "w0" "w")))
-    (concat prefix week)))
+;; FIX 2026-05-01: 
+(defun org-update-minor-mode ()
+  (let ((lm -1)
+        (rm -1)
+    (vbar nil))
+    (save-excursion 
+      (if (or (search-backward "#&" nil t)
+          (and (re-search-backward "#|[ ]?org" nil t) (setf vbar t)))
+          (setq lm (point))
+        (setq lm -1)))
+    (save-excursion
+      (if (or (and (not vbar) (search-forward "&#" nil t))
+          (and vbar (search-forward "|#" nil t)))
+          (setq rm (point))
+        (setq rm -1)))
+    (if (or (= lm -1) (= rm -1))
+        (org-change-mode nil)
+      (org-change-mode 'org-mode))))
 
-(defun last-day-of-year (&optional date)
-  "Return the last day of the year as time."
-  (encode-time 0 0 0 31 12 (nth 5 (decode-time
-				   (or date (current-time))))))
-
-(defun last-day-of-month (&optional date)
-  "Return the last day of month as time."
-  (let* ((now (decode-time (or date (current-time))))
-	 (month (nth 4 now))
-	 (year (nth 5 now))
-	 (last-day-of-month (calendar-last-day-of-month month year)))
-    (encode-time 0 0 0 last-day-of-month month year)))
-
-(defun last-day-of-week (&optional date)
-  "Return the last day of the week as time."
-  (let* ((now (or date (current-time)))
-	 (datetime (decode-time now))
-	 (dow (nth 6 datetime)))
-    (time-add now (days-to-time (- 7 dow)))))
-
-(defun first-day-of-week (&optional date)
-  "Return the first day of the week as time."
-  (let* ((now (or date (current-time)))
-	 (datetime (decode-time now))
-	 (dow (nth 6 datetime)))
-    (time-subtract now (days-to-time dow))))
+(define-minor-mode org-minor-mode nil
+  :lighter " org"
+  :after-hook (org-minor-mode-setup))
 
 (provide 'ulang)
 ;;; ulang.el ends here

@@ -166,7 +166,6 @@
 ;;; Global Modes
 (kill-ring-deindent-mode t)
 (repeat-mode t)
-(desktop-save-mode t)
 
 ;;; User customizations
 (add-hook 'after-init-hook (lambda () (when (file-exists-p user-config-file) (load-file user-config-file))))
