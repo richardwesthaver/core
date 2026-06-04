@@ -7,15 +7,15 @@
 ;;; Code:
 (in-package :skel/packy)
 
-(defclass pkgfile (sk-lisp-component) ()
+(defclass! pkgfile (sk-lisp-component simple-project) 
+  (arch url require provide src options checksum bind)
   (:documentation "Package build files."))
 
-(defmethod load-ast ((self sk-lisp-component))
+(defmethod load-ast ((self pkgfile))
   (let ((ast (ast self)))
     (multiple-value-bind (slots body) (plist-split ast)
-      ;; todo: slots
       (doplist (k v) slots
-        (setf (slot-value self (symbolicate k)) v))
+        (setf (slot-value self (find-symbol (string-upcase k) :skel/packy)) v))
       (setf (ast self) body)
       self)))
 

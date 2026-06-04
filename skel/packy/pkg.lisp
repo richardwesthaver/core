@@ -6,7 +6,7 @@
 (defpkg :skel/packy
   (:nicknames :packy)
   (:use :cl :std :id :io :ast :log :config :db :rdb :schema :time :net/core :net/srv
-    :skel)
+    :skel :project)
   (:export
    :*packy-url*
    :unpack

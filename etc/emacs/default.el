@@ -338,6 +338,7 @@ TABLE."
 ;;; Ulang
 (use-package ulang
   :defer nil
+  :bind (:map org-mode-map ("C-c L" . org-follow-location))
   :load-path site-lisp-directory
   :hook 
   (after-init . ulang-init)

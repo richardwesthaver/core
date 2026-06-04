@@ -359,12 +359,12 @@ transformer is replaced in-turn by the result of:
 otherwise it is left as it is.
 
 Example:
-  (maptree-if #'(λ (x) (and (consp x) (eq (car x) 'ping)))
-              #'(λ (x) `(pong ,@(cdr x)))
+  (maptree-if #'(lambda (x) (and (consp x) (eq (car x) 'ping)))
+              #'(lambda (x) `(pong ,@(cdr x)))
               '(progn (ping (ping (ping 1)))))
   ;; (PROGN (PONG (PING (PING 1))))
-  (maptree-if #'(λ (x) (and (consp x) (eq (car x) 'ping)))
-              #'(λ (x) (values `(pong ,@(cdr x)) #'mapcar))
+  (maptree-if #'(lambda (x) (and (consp x) (eq (car x) 'ping)))
+              #'(lambda (x) (values `(pong ,@(cdr x)) #'mapcar))
               '(progn (ping (ping (ping 1)))))
   ;; (PROGN (PONG (PONG (PONG 1))))
   "
@@ -702,8 +702,16 @@ be used with SETF."))
 
 (defun plist-split (list)
   "Split a LIST which starts with a plist into two separate values: The plist and
-remaining forms. Emacs calls these 'pseudo-plists'."
-  #+nil (values plist body))
+remaining forms. Emacs (jwiegley) calls these 'pseudo-plists'."
+  (let ((body))
+    (values 
+     (loop with %props = t
+           for (x . y) on list by #'cddr
+           while (setf %props (keywordp x))
+           collect x
+           collect (car y)
+           finally (setf body (cons x y)))
+     body)))
 
 (defun plistify (list)
   "Ensure LIST is a proper plist by consing extra forms until a new key is
