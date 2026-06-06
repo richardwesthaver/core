@@ -24,7 +24,7 @@
     result))
 
 (defun mkstr (&rest args)
-  "Paul Graham's mkstr utility from On Lisp.
+  "Paul Graham's 'mkstr' utility from On Lisp.
 
 Coerce ARGS into a single string and return it."
   (let* ((s ""))
@@ -161,7 +161,6 @@ TABLE."
 ;; all-the-icons all-the-icons-dired all-the-icons-ibuffer
 (use-package nerd-icons :ensure t)
 (use-package nerd-icons-ibuffer :hook (ibuffer-mode . nerd-icons-ibuffer-mode) :after (ibuffer) :ensure t)
-(use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode) :after (dired) :ensure t)
 (use-package nerd-icons-grep :hook (grep-mode . nerd-icons-grep-mode) :ensure t)
 (use-package nerd-icons-xref :hook (xref-mode . nerd-icons-xref-mode) :ensure t)
 
@@ -263,7 +262,7 @@ TABLE."
                                            (interactive)
                                            (corfu-insert)
                                            (insert ,(cdr c)))))
-  (mapadd completion-at-point-functions '(cape-dabbrev abbrev cape-file))
+  (mapadd completion-at-point-functions '(cape-dabbrev cape-abbrev cape-file))
   (defun corfu-move-to-minibuffer ()
     (interactive)
     (pcase completion-in-region--data
@@ -286,6 +285,7 @@ TABLE."
 ;;; Time
 (use-package time
   :bind (:map status-map ("." . world-clock)))
+
 ;;; Dired
 (use-package dired
   :hook (dired-mode . image-dired-minor-mode)
@@ -294,6 +294,7 @@ TABLE."
 	    dired-free-space 'separate
 	    dired-mouse-drag-files t)
   (when (linux-p) (setq dired-listing-switches "-alsh")))
+(use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode) :after (dired) :ensure t)
 
 ;;; Speedbar
 (use-package speedbar
@@ -800,9 +801,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :bind 
   ("C-c l" . org-store-link)
   ("C-c c" . org-capture)
-  (:map org-mode-map 
-        ("C-c l" . org-follow-location)
-        ("C-c t" . org-todo))
+  (:map org-mode-map ("C-c t" . org-todo))
   :init
   (defun ol-vc-expand (tag)
     "Expand the tag of an org-link where linkkey is `vc'."
@@ -862,7 +861,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 			                (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
 			                (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
 				                  "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
-				                  "REFILE(w!)" "LOG(L!)" "GOTO(g!)" "|")
+				                  "REFILE(w!)" "LOG(L!)" "GET(g!)" "GOTO(G!)" "PRACTICE(a!)" "|")
 			                (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
 			                (sequence "|" "DONE(d!)" "NOPE(x@!)"))
 	    org-todo-keyword-faces '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
@@ -907,9 +906,11 @@ With prefix ARG non-nil, insert the result at the end of region."
    ;; org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
    ;; org-latex-image-default-width "8cm"
    org-refile-use-cache t
+   org-refile-use-outline-path 'full-file-path
+   org-outline-path-complete-in-steps nil
    org-refile-allow-creating-parent-nodes 'confirm
    org-default-notes-file (join-paths org-directory "inbox.org")
-   org-refile-targets '((org-agenda-files :maxlevel . 4))
+   org-refile-targets `((org-agenda-files :maxlevel . 4))
    ;; org-agenda-files (list "inbox.org")
    org-confirm-babel-evaluate nil
    org-src-fontify-natively t
@@ -946,9 +947,34 @@ With prefix ARG non-nil, insert the result at the end of region."
   ("C-c A" . org-agenda-show-week-all)
   ("C-c v" . org-tags-view)
   :init
+  (defun nerd-agenda-icons (fun prefix alist)
+    "Makes an org agenda alist"
+    (mapcar (pcase-lambda (`(,category . ,icon))
+              `(,category
+                (,(funcall fun (concat prefix icon) :height 1.0))))
+            alist))
+
   (setq org-agenda-include-diary t
         org-agenda-include-inactive-timestamps t
         org-agenda-span 7)
+  (mapadd org-agenda-category-icon-alist
+          (nerd-agenda-icons #'nerd-icons-mdicon "nf-md-"
+                             '(("alien" . "alien")
+                               ("lib" . "library")
+                               ("life" . "walk")
+                               ("work" . "briefcase")
+                               ("inbox" . "inbox")
+                               ("archive" . "archive")
+                               ("rnd" . "ufo")
+                               ("graph" . "graph")
+                               ("project" . "floor_plan")
+                               ("roadmap" . "map")
+                               ("shed" . "warehouse"))))
+  (mapadd org-agenda-category-icon-alist
+          (nerd-agenda-icons #'nerd-icons-sucicon "nf-custom-"
+                             '(("emacs" . "emacs")
+                               ("org" . "orgmode")
+                               ("core" . "common_lisp"))))
   :config
   (defun org-agenda-reschedule-to-today ()
     (interactive)
@@ -1050,6 +1076,10 @@ With prefix ARG non-nil, insert the result at the end of region."
           desktop-save nil)
   (add-to-list 'desktop-path "."))
 
+;;; Multisession
+;; TODO 2026-06-05: 
+(use-package multisession)
+
 ;;; Dictionary
 (use-package dictionary
   :init (setq dictionary-server "dict.compiler.company"))
@@ -1058,8 +1088,17 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package ispell
   :ensure-system-package (aspell hunspell)
   :init
-  (setq ispell-program-name "hunspell")
-  :hook (mail-send . ispell-message))
+  (setq ispell-program-name "hunspell"
+        ispell-personal-dictionary (join-paths user-home-directory ".config/dictionary"))
+  :hook 
+  (mail-send . ispell-message))
+
+(use-package flyspell
+  :hook
+  (org-mode . flyspell-mode)
+  (prog-mode . flyspell-prog-mode)
+  (text-mode . flyspell-mode)
+  (emacs-lisp-mode . flyspell-prog-mode))
 
 ;;; Core Extensions
 (use-package scratch 

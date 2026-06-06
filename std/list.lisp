@@ -713,6 +713,7 @@ remaining forms. Emacs (jwiegley) calls these 'pseudo-plists'."
            finally (setf body (cons x y)))
      body)))
 
+;; TODO 2026-06-04: 
 (defun plistify (list)
   "Ensure LIST is a proper plist by consing extra forms until a new key is
 encountered. Similar to Emacs' use-package.

@@ -1486,6 +1486,7 @@
    :*system-table*
    :*module-table*
    :*provider-table*
+   :*component-class-table*
    :components
    :sysdefs
    :sysdef

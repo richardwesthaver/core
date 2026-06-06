@@ -54,9 +54,8 @@
   "See `org-link-abbrev-alist'."
   :group 'ulang)
 
-(defcustom ulang-todo-keywords
-  '()
-  "See `org-todo-keywords'."
+(defcustom ulang-todo-keywords '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
+  "See `org-todo-keywords-for-agenda'."
   :group 'ulang)
 
 (defcustom ulang-todo-keyword-faces
@@ -70,7 +69,26 @@
   :group 'ulang)
 
 (defcustom ulang-agenda-commands
-  '(("i" "Work in progress tasks" ((todo "WIP") (agenda))))
+  '(("d" "Daily Agenda" 
+     ((tags-todo "+PRIORITY=\"A\"" ((org-agenda-overriding-header "High Priority Tasks")))
+      (agenda "" ((org-agenda-span 'day)))))
+    ("w" "Weekly Review"
+     ((agenda ""
+              ((org-agenda-overriding-header "Completed Tasks")
+               (org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo 'done))
+               (org-agenda-span 'week)))
+      (agenda ""
+              ((org-agenda-overriding-header "Incomplete Tasks")
+               (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+               (org-agenda-span 'week)))))
+    ("i" "Work in progress tasks" ((todo "WIP" ((org-agenda-sorting-strategy '(priority-up effort-down))))))
+    ("c" "Core tasks" ((tags-todo "+core" ((org-agenda-sorting-strategy '(priority-up effort-down))))))
+    ("u" "Untagged tasks" ((tags-todo "-{.*}" ((org-agenda-sorting-strategy '(priority-up effort-down))))))
+    (" " "Inbox"
+     ((tags-todo ".*" ((org-agenda-files `(,org-inbox-file))
+                       (org-agenda-overriding-header "Inbox Items")
+                       (org-agenda-sorting-strategy '(priority-up effort-down))))
+      (agenda "" ((org-agenda-span 'day))))))
   "See `org-agenda-custom-commands'."
   :group 'ulang)
 
@@ -163,7 +181,7 @@ With optional N, search in the Nth line from point."
   (mapadd org-link-abbrev-alist ulang-link-abbrev-alist)
   (mapadd org-special-properties ulang-properties)
   (mapadd org-agenda-custom-commands ulang-agenda-commands)
-  (mapadd org-todo-keywords ulang-todo-keywords)
+  (mapadd org-todo-keywords-for-agenda ulang-todo-keywords)
   (mapadd org-todo-keyword-faces ulang-todo-keyword-faces))
 
 ;;; Location
@@ -229,8 +247,7 @@ or file at point."
      (t (find-file loc t)))))
 
 ;;; Comments
-(defcustom prog-comment-keywords
-  '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
+(defcustom prog-comment-keywords ulang-todo-keywords
   "List of strings with comment keywords."
   :group 'ulang
   :type '(list string))

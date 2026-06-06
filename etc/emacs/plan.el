@@ -26,7 +26,7 @@
 ;; theoretical.
 
 ;; - task dependencies
-;;   - refer to org-depend.el for implementation details
+;;   - refer to org-expire.el for implementation details
 ;;   - org-trigger-hook and org-blocker-hook
 ;;   - org-todo-state-tags-triggers
 
