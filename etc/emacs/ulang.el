@@ -403,15 +403,12 @@ specified by `prog-comment-timestamp-format-verbose'."
   :after-hook (org-minor-mode-setup))
 
 ;;; Hooks
-;;;###autoload
 (defun ulang--org-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|\\* \\)"))
+  (setq-local page-delimiter "^\\(\\|\n\\* \\)"))
 
-;;;###autoload
 (defun ulang--lisp-page-delimiter ()
   (setq-local page-delimiter "^\\(\\|\n;;; \\)"))
 
-;;;###autoload
 (defun ulang--sh-page-delimiter ()
   (setq-local page-delimiter "^\\(\\|\n### \\)"))
 

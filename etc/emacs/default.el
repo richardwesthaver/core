@@ -289,11 +289,13 @@ TABLE."
 ;;; Dired
 (use-package dired
   :hook (dired-mode . image-dired-minor-mode)
-  :config
+  :after (vc)
+  :init
   (setq dired-dwim-target t
 	    dired-free-space 'separate
 	    dired-mouse-drag-files t)
   (when (linux-p) (setq dired-listing-switches "-alsh")))
+
 (use-package nerd-icons-dired :hook (dired-mode . nerd-icons-dired-mode) :after (dired) :ensure t)
 
 ;;; Speedbar
@@ -958,10 +960,6 @@ With prefix ARG non-nil, insert the result at the end of region."
               `(,category
                 (,(funcall fun (concat prefix icon) :height 1.0))))
             alist))
-
-  (setq org-agenda-include-diary t
-        org-agenda-include-inactive-timestamps t
-        org-agenda-span 7)
   (mapadd org-agenda-category-icon-alist
           (nerd-agenda-icons #'nerd-icons-mdicon "nf-md-"
                              '(("alien" . "alien")
@@ -971,6 +969,7 @@ With prefix ARG non-nil, insert the result at the end of region."
                                ("inbox" . "inbox")
                                ("archive" . "archive")
                                ("rnd" . "ufo")
+                               ("std" . "toolbox")
                                ("graph" . "graph")
                                ("project" . "floor_plan")
                                ("roadmap" . "map")
@@ -980,6 +979,11 @@ With prefix ARG non-nil, insert the result at the end of region."
                              '(("emacs" . "emacs")
                                ("org" . "orgmode")
                                ("core" . "common_lisp"))))
+  (setq org-agenda-include-diary t
+        org-agenda-include-inactive-timestamps t
+        org-agenda-span 7
+        org-agenda-block-separator ?-
+        org-agenda-breadcrumbs-separator (nerd-icons-mdicon "nf-md-menu_right"))
   :config
   (defun org-agenda-reschedule-to-today ()
     (interactive)

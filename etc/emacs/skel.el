@@ -82,7 +82,7 @@ to trigger `skel-actions' based on the `skel-behavior' value."
   :group 'skel)
 
 (defcustom skel-shell-dedicated nil
-  "Whether to make Python shells dedicated by default.
+  "Whether to make Skel shells dedicated by default.
 This option influences `run-skel' when called without a prefix
 argument.  If `buffer' or `project', create a Skel shell
 dedicated to the current buffer or its project (if one is found)."
@@ -302,6 +302,129 @@ name respectively the current project name."
          (format "%s[%s]" skel-shell-buffer-name (project-name proj))
        skel-shell-buffer-name))
     (_ (format "%s[%s]" skel-shell-buffer-name (buffer-name)))))
+
+(defun skel-shell-get-buffer ()
+  "Return inferior Skel buffer for current buffer.
+If current buffer is in `inferior-skel-mode', return it."
+  (if (derived-mode-p 'inferior-skel-mode)
+      (current-buffer)
+    (seq-some
+     (lambda (dedicated)
+       (let* ((proc-name (skel-shell-get-process-name dedicated))
+              (buffer-name (format "*%s*" proc-name)))
+         (when (comint-check-proc buffer-name)
+           buffer-name)))
+     '(buffer project nil))))
+
+(defun skel-shell-get-process ()
+  "Return inferior Skel process for current buffer."
+  (get-buffer-process (skel-shell-get-buffer)))
+
+(defun skel-shell-get-process-or-error (&optional interactivep)
+  "Return inferior Skel process for current buffer or signal error.
+When argument INTERACTIVEP is non-nil, use `user-error' instead
+of `error' with a user-friendly message."
+  (or (skel-shell-get-process)
+      (if interactivep
+          (user-error
+           (substitute-command-keys
+            "Start a Skel process first with \\`M-x run-skel' or `%s'")
+           ;; Get the binding.
+           (key-description
+            (or (where-is-internal #'run-skel overriding-local-map t)
+                (where-is-internal #'project-skel-shell overriding-local-map t))))
+        (error "No inferior Skel process running"))))
+
+(defun skel-shell--save-temp-file (string)
+  (let* ((temporary-file-directory
+          (if (file-remote-p default-directory)
+              (concat (file-remote-p default-directory) "/tmp")
+            temporary-file-directory))
+         (temp-file-name (make-temp-file "lisp"))
+         ;; (coding-system-for-write (python-info-encoding))
+         )
+    (with-temp-file temp-file-name
+      (if (bufferp string)
+          (insert-buffer-substring string)
+        (insert string))
+      (delete-trailing-whitespace))
+    temp-file-name))
+
+(defun skel-shell-send-file (file-name &optional process delete temp-file-name msg)
+  "Send FILE-NAME to inferior Skel PROCESS.
+
+If TEMP-FILE-NAME is passed then that file is used for processing
+instead, while internally the shell will continue to use FILE-NAME.
+FILE-NAME can be remote, but TEMP-FILE-NAME must be in the same host as
+PROCESS.  If TEMP-FILE-NAME and DELETE is non-nil, then TEMP-FILE-NAME is deleted
+after evaluation is performed.
+
+When optional argument MSG is non-nil, forces display of a
+user-friendly message if there's no process running; defaults to
+t when called interactively."
+  (interactive
+   (list
+    (read-file-name "File to send: ")   ; file-name
+    nil                                 ; process
+    nil                                 ; delete
+    nil                                 ; temp-file-name
+    t))                                 ; msg
+  (setq process (or process (skel-shell-get-process-or-error msg)))
+  (with-current-buffer (process-buffer process)
+    (unless (or temp-file-name
+                (string= (file-remote-p file-name)
+                         (file-remote-p default-directory)))
+      (setq temp-file-name (with-temp-buffer
+                             (insert-file-contents file-name)
+                             (skel-shell--save-temp-file (current-buffer))))))
+  (let* ((temp-file-name (when temp-file-name
+                           (file-local-name (expand-file-name
+                                             temp-file-name)))))
+    (comint-send-string
+     process
+     (format
+      "(load \"%s\")\n" temp-file-name))
+    (delete-file temp-file-name)))
+
+(defun skel-shell-send-string (string &optional process msg)
+  "Send STRING to inferior Skel PROCESS.
+When optional argument MSG is non-nil, forces display of a user-friendly
+message if there's no process running; defaults to t when called
+interactively."
+  (interactive
+   (list (read-string "Skel command: ") nil t))
+  (let ((process (or process (skel-shell-get-process-or-error msg))))
+    (unless skel-shell-output-filter-in-progress
+      (with-current-buffer (process-buffer process)
+        (save-excursion
+          (goto-char (process-mark process))
+          (insert-before-markers "\n"))))
+    (if (null (process-tty-name process))
+        (comint-send-string process string)
+      (let* ((temp-file-name (with-current-buffer (process-buffer process)
+                               (skel-shell--save-temp-file string)))
+             (file-name (or (buffer-file-name) temp-file-name)))
+        (skel-shell-send-file file-name process temp-file-name t)))))
+
+(defun skel-shell-send-region (start end &optional msg)
+  (interactive
+   (list (region-beginning) (region-end) t))
+  (let* ((string (buffer-substring-no-properties start end))
+         (process (skel-shell-get-process-or-error msg))
+         (_ (string-match "\\`\n*\\(.*\\)" string)))
+    (message "Sent: %s..." (match-string 1 string))
+    ;; Recalculate positions to avoid landing on the wrong line if
+    ;; lines have been removed/added.
+    (with-current-buffer (process-buffer process)
+      (compilation-forget-errors))
+    (skel-shell-send-string string process)
+    (deactivate-mark)))
+
+(defun skel-shell-send-buffer (&optional msg)
+  (interactive (list t))
+  (save-restriction
+    (widen)
+    (skel-shell-send-region (point-min) (point-max) msg)))
 
 (defun run-skel (&optional cmd dedicated show)
   "Run an inferior Skel process."
