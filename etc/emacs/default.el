@@ -929,7 +929,8 @@ With prefix ARG non-nil, insert the result at the end of region."
    org-log-states-order-reversed nil
    org-clock-persist 'history
    org-clock-persist-file (join-paths user-emacs-directory "org-clock-save")
-   org-id-locations-file (join-paths user-emacs-directory "org-id-locations")))
+   org-id-locations-file (join-paths user-emacs-directory "org-id-locations")
+   org-columns-default-format "%TODO %30ITEM %1PRIORITY %CLOCKSUM %EFFORT %CREATED %TAGS"))
 
 (use-package org-capture
   :after (org)
@@ -983,7 +984,9 @@ With prefix ARG non-nil, insert the result at the end of region."
         org-agenda-include-inactive-timestamps t
         org-agenda-span 7
         org-agenda-block-separator ?-
-        org-agenda-breadcrumbs-separator (nerd-icons-mdicon "nf-md-menu_right"))
+        org-agenda-breadcrumbs-separator (nerd-icons-mdicon "nf-md-menu_right")
+        org-agenda-start-with-log-mode t
+        org-agenda-columns-add-appointments-to-effort-sum t)
   :config
   (defun org-agenda-reschedule-to-today ()
     (interactive)
