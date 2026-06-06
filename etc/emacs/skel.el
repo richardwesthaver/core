@@ -222,6 +222,7 @@ project's skelfile, if any. Typically added to
   (let ((root (project-root (project-current))))
     (cons (expand-file-name root) (project-skelfile-dir-locals root))))
 
+;; FIX 2026-06-05: 
 (defun skel-dir-local-get-variables ()
   "Open the project skelfile and return the :dir-locals bindingings if present."
   (let ((root (expand-file-name (project-root (project-current)))))

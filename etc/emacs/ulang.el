@@ -64,7 +64,7 @@
   :group 'ulang)
 
 (defcustom ulang-export-dictionary
-  (list '("Table of Contents" "⇜"))
+  (list '("Table of Contents" "⇝"))
   "See 'org-export-dictionary'."
   :group 'ulang)
 
@@ -401,6 +401,19 @@ specified by `prog-comment-timestamp-format-verbose'."
 (define-minor-mode org-minor-mode nil
   :lighter " org"
   :after-hook (org-minor-mode-setup))
+
+;;; Hooks
+;;;###autoload
+(defun ulang--org-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|\\* \\)"))
+
+;;;###autoload
+(defun ulang--lisp-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|\n;;; \\)"))
+
+;;;###autoload
+(defun ulang--sh-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|\n### \\)"))
 
 (provide 'ulang)
 ;;; ulang.el ends here

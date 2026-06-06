@@ -343,7 +343,10 @@ TABLE."
   :load-path site-lisp-directory
   :hook 
   (after-init . ulang-init)
-  (lisp-mode . org-minor-mode))
+  (lisp-mode . org-minor-mode)
+  (lisp-mode . ulang--lisp-page-delimiter)
+  (org-mode . ulang--org-page-delimiter)
+  (sh-script-mode . ulang--sh-page-delimiter))
 
 ;;; Eglot
 (use-package eglot
@@ -449,8 +452,10 @@ TABLE."
   :hook (asm . nasm-mode))
 
 ;;; Rust
+
 (use-package rust-mode 
-  :ensure nil
+  :ensure t
+  :after (conf-mode)
   :hook eglot-ensure
   :bind (:map conf-toml-mode-map
               ("C-c C-c C-r" . #'rust-run)
@@ -1144,7 +1149,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   :bind (:map project-prefix-map ("RET" . project-skel-shell))
   :interpreter "skel"
   :hook 
-  (skel-mode . skel-dir-local-get-variables)
+  ;; (skel-mode . skel-dir-local-get-variables)
   (project-find-functions . project-try-skel)
   (prog-mode . skel-minor-mode)
   (org-mode . skel-minor-mode)

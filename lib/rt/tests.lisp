@@ -8,8 +8,9 @@
 
 (defsuite :rt
   :policy '(optimize sb-cover:store-coverage-data debug)
-  :fixtures (list
-             (make-fixture :tmp :name :fx1)))
+  :fixtures 
+  (list
+   (make-fixture :tmp :name :fx1)))
 
 (in-suite :rt)
 
@@ -23,7 +24,7 @@
         collect (loop for y in (%foo x)
                       collect (cons x y))))
 
-(deftest rt (:profile t :persist t)
+(deftest rt (:profile t)
   (with-fixture (fx :tmp :directory "/tmp/")
     (istype 'tmp-fixture fx))
   (signals (error t) (test-form (make-instance 'test-result))))

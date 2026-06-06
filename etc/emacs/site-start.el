@@ -141,6 +141,8 @@
         url-cache-directory (expand-file-name "url" user-emacs-directory)
         register-use-preview t
         view-read-only t
+        ;; enable all commands
+        disabled-command-function nil
         ;; inhibit-startup-buffer-menu nil
         ;; initial-buffer-choice t
         scroll-bar-mode nil
@@ -156,12 +158,6 @@
       '(("gnu" . "https://elpa.gnu.org/packages/")
         ("nongnu" . "https://elpa.nongnu.org/nongnu/")
         ("melpa" . "https://melpa.org/packages/")))
-
-;;; Enable Commands
-(put 'upcase-region 'disabled nil)
-(put 'list-threads 'disabled nil)
-(put 'list-timers 'disabled nil)
-(put 'set-goal-column 'disabled nil)
 
 ;;; Global Modes
 (kill-ring-deindent-mode t)

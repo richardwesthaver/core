@@ -133,19 +133,17 @@ declarations for the test body."
   "Define a TEST-SUITE with provided keys. The object returned can be
 enabled using the IN-SUITE macro, similiar to the DEFPACKAGE API."
   (check-type suite-name (or symbol string))
-  `(eval-when (:compile-toplevel :load-toplevel :execute)
-     (let ((obj (make-suite
-                 :name (format nil "~A" ',suite-name)
-                 ,@props)))
-       (setq *test-suite-list* (spush obj *test-suite-list* :test #'test-name=))
-       obj)))
+  `(let ((obj (make-suite
+               :name (format nil "~A" ',suite-name)
+               ,@props)))
+     (prog1 obj
+       (pushnew obj *test-suite-list* :test #'test-name=))))
 
-(defmacro in-suite (name)
+(defun in-suite (name)
   "Set *TEST-SUITE* to the TEST-SUITE object referred to by symbol
 NAME. Return the object."
-  (assert-suite name)
-  `(progn
-     (setq *test-suite* (ensure-suite ,name))))
+  (check-suite-designator name)
+  (setq *test-suite* (ensure-suite name)))
 
 (defun run-all-tests (&optional force)
   (with-readtable :std

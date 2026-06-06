@@ -26,6 +26,7 @@
       org-export-with-date t
       org-export-with-drawers t
       org-export-async-debug t
+      org-html--id-attr-prefix ""
       ;; org-export-in-background t
       org-html-divs '((preamble "section" "preamble") (content "main" "content") (postamble "section" "postamble"))
       org-html-container-element "div"

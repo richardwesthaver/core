@@ -105,17 +105,12 @@
         (b (normalize-test-name b)))
     (string= a b)))
 
-(declaim (inline assert-suite ensure-suite))
 (defun ensure-suite (name)
   (if-let ((ok (member name *test-suite-list* :test #'test-name=)))
     (car ok)
     (when (or (eq name t) (null name)) (make-suite :name *default-test-suite-name*))))
 
 (defun check-suite-designator (suite) (check-type suite test-suite-designator))
-
-(defun assert-suite (name)
-  (check-suite-designator name)
-  (assert (ensure-suite name)))
 
 (defmacro time-total (n &body body)
   "N-average the execution time of BODY in seconds"
