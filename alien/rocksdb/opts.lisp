@@ -65,7 +65,16 @@
   (opts (* rocksdb-hyper-clock-cache-options))
   (malloc (* rocksdb-memory-allocator)))
 
+(define-alien-enum (rocksdb-txndb-write-policy)
+  :write-commited 0
+  :write-prepared 1
+  :write-unprepared 2)
+
 (define-opt rocksdb-transactiondb-options)
+(defar rocksdb-transactiondb-options-set-write-policy void
+  (opt (* rocksdb-transactiondb-options))
+  (write-policy rocksdb-txndb-write-policy))
+
 (define-opt rocksdb-transaction-options)
 (define-opt rocksdb-optimistictransaction-options)
 (define-opt rocksdb-envoptions)

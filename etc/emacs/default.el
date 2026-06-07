@@ -1153,16 +1153,18 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package skel 
   :load-path site-lisp-directory
   :defer nil
-  :bind (:map project-prefix-map ("RET" . project-skel-shell))
+  :bind (:map project-prefix-map 
+              ("RET" . project-skel-shell)
+              ("a" . project-agenda))
   :interpreter "skel"
   :hook 
-  ;; (skel-mode . skel-dir-local-get-variables)
   (project-find-functions . project-try-skel)
+  ;; (hack-dir-local-get-variables-functions . skel-dir-local--get-variables)
   (prog-mode . skel-minor-mode)
   (org-mode . skel-minor-mode)
   (conf-mode . skel-minor-mode)
   (dired-mode . skel-minor-mode)
-  :init (init-skel))
+  (after-init . skel-init))
 
 (use-package mpk 
   :load-path site-lisp-directory)

@@ -14,8 +14,8 @@
  (cc :env "gcc")
  (emacs-locals
   :dir-locals
-  (nil . ((indent-tabs-mode . nil)))
-  (sh-mode . (sh-indentation . 2))
+  ;; (nil . ((indent-tabs-mode nil)))
+  (sh-mode . ((sh-indentation . 2)))
   (makefile-mode . ((indent-tabs-mode . t))))
  (packy-home :env "/opt/store/packy")
  (sbcl-src :env (when-let ((src (probe-directory "/usr/src/sbcl"))) (namestring src)))

@@ -330,6 +330,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-env-destroy
    :rocksdb-create-dir-if-missing
    :rocksdb-options-set-wal-dir
+   :rocksdb-transactiondb-options-set-write-policy
    :rocksdb
    :rocksdb-iterator
    :rocksdb-backup-engine

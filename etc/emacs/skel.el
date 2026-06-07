@@ -36,30 +36,13 @@
   (defvar skel-debug nil)
   (when skel-debug (require 'ede)))
 
-(defvar skel-version "0.1.0")
-
+;;; Custom
 (defgroup skel nil
   "skel customization group."
   :group 'local)
 
 (defcustom skel-map-prefix "C-x M-s"
   "Prefix for `skel' keymap."
-  :type 'string
-  :group 'skel)
-
-(defcustom skel-triggers nil
-  "Association of symbols to a specific condition which can be used
-to trigger `skel-actions' based on the `skel-behavior' value."
-  :type '(list function)
-  :group 'skel)
-
-(defcustom skel-actions nil
-  "Array of actions which may be performed on skeletons."
-  :type 'obarray
-  :group 'skel)
-
-(defcustom skel-id-prefix "sk"
-  "Default prefix for `make-id'."
   :type 'string
   :group 'skel)
 
@@ -161,11 +144,6 @@ dedicated to the current buffer or its project (if one is found)."
       (and pr (progress-reporter-done pr))
       (move-marker end nil))))
 
-(defmacro make-id (&optional pre)
-  `(let ((pre ,(if-let* ((pre)) (concat skel-id-prefix "-" pre "-") (concat skel-id-prefix "-")))
-	     (current-time-list nil))
-     (symb pre (prog1 gensym-counter (setq gensym-counter (1+ gensym-counter))) (format "%x" (car (current-time))))))
-
 (cl-defmethod project-root ((project (head skel)))
   (when (and project (>= (length project) 4))
     (caddr project)))
@@ -173,12 +151,12 @@ dedicated to the current buffer or its project (if one is found)."
 (cl-defmethod project-root ((project list))
   (when project (car project)))
 
-(cl-defun project-skelfile (&optional (project t))
+(defun project-skelfile (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current
 directory and returns name of skelfile. When PROJECT is T uses
 `project-current'."
   (interactive)
-  (let* ((dir (unless (eql t project) (expand-file-name (or project default-directory))))
+  (let* ((dir (or project (project-root (project-current)) default-directory))
          (project-root (project-root (project-current nil dir))))
     (or
      (when dir
@@ -206,28 +184,28 @@ directory and returns name of skelfile. When PROJECT is T uses
 
 (defun project-skelfile-dir-locals (&optional project)
   "Return a list of dir-local bindings from a skelfile."
-  (let ((form (read-skelfile-bind project)))
-    (cl-loop for f in form
-             do (cond
-                 ((eql (car f) :dir-locals) (cl-return (cdr f)))
-                 ;; when used as second element, the first is the name
-                 ;; of the CL-local binding, here we discard it and
-                 ;; just take the CDDR.
-                 ((eql (cadr f) :dir-locals) (cl-return (cddr f)))))))
+  (cl-block nil
+    (dolist (f (read-skelfile-bind project))
+      (when (eql (car f) :dir-locals) (cl-return (cdr f)))
+      (when (eql (cadr f) :dir-locals)
+        ;; when used as second element, the first is the name
+        ;; of the CL-local binding, here we discard it and
+        ;; just take the CDDR.
+        (cl-return (cddr f))))))
 
 (defun skel-dir-local--get-variables ()
   "Compute and return the list of :DIR-LOCAL bindings found in the current
-project's skelfile, if any. Typically added to
-`hack-dir-local--get-variables'."
+project's skelfile, if any. Typically added to 'hack-dir-local-get-variables-functions'."
   (let ((root (project-root (project-current))))
-    (cons (expand-file-name root) (project-skelfile-dir-locals root))))
+    (when root
+      (cons (expand-file-name root) (project-skelfile-dir-locals root)))))
 
-;; FIX 2026-06-05: 
 (defun skel-dir-local-get-variables ()
-  "Open the project skelfile and return the :dir-locals bindingings if present."
+  "Open the project skelfile and return the :dir-locals bindings if present."
   (let ((root (expand-file-name (project-root (project-current)))))
-    (unless (assoc-string root dir-locals-class-alist)
-      (push (skel-dir-local--get-variables) dir-locals-class-alist))))
+    (when root 
+      (unless (assoc-string root dir-locals-class-alist t)
+        (push (skel-dir-local--get-variables) dir-locals-class-alist)))))
 
 ;;; Shell
 (defun clone-local-variables (from-buffer &optional regexp)
@@ -452,13 +430,30 @@ interactively."
                   show)))
     (get-buffer-process buffer)))
 
+
+(defun project-skel-shell () 
+  (interactive)
+  (run-skel nil 'project t))
+
+;;; Agenda
+;; project agenda integration
+;; TODO 2026-06-06: local todo.org files
+(defun project-agenda-files ()
+  "Return the tasks.org file of the current project."
+  (let ((path (join-paths company-org-directory "plan/tasks" (format "%s.org" (project-name (project-current))))))
+    (when (file-exists-p path) (list path))))
+
+(defun project-agenda (&optional arg keys restriction)
+  (interactive)
+  (let ((org-agenda-files (project-agenda-files)))
+    (org-agenda arg keys restriction)))
+
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
   :global t
   :lighter " Sk"
   :group 'skel
-  :version skel-version
   (keymap-local-set skel-map-prefix skel-map))
 
 ;; TODO 2026-05-30: 
@@ -477,21 +472,19 @@ interactively."
   (setq-local indent-region-function 'skel-indent-region)
   (setq-local lisp-indent-offset 1))
 
-(defun project-skel-shell () 
-  (interactive)
-  (run-skel nil 'project t))
 
 ;;;###autoload
-(defun init-skel ()
+(defun skel-init ()
+  (interactive)
   (mapc (lambda (x) (add-to-list 'auto-mode-alist `(,x . skel-mode))) 
         '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
           "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'"))
   (with-eval-after-load 'project 
-    (add-to-list 'project-switch-commands '(project-skel-shell "Skel")))
+    (add-to-list 'project-switch-commands '(project-skel-shell "Skel"))
+    (add-to-list 'project-switch-commands '(project-agenda "Agenda")))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 
-;;; UI
 ;; TODO 2025-10-03: 
 ;; skel project customization ui (overlays skelfile)
 
