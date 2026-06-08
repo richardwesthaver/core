@@ -62,7 +62,7 @@
 ;; inherited. The 'PROJECT' property itself can be inherited.
 
 ;; project-info
-(defcustom org-project-info-order '(details html status churn files tasks log vc links)
+(defcustom org-project-info-order '(details html status churn files agenda tasks log vc links)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
   :group 'plan)
@@ -101,18 +101,19 @@ The following keyword parameters can be passed to the info dynamic block:
 :vc      when non-nil include the vc files table.
 :files   when non-nil include the local files table.
 :html    when non-nil include the html files table.
-
+:agenda when non-nil include the project agenda.
+:tasks when non-nil include the project tasks.
 :links when non-nil include the links list. The argument is passed
        via project-links(include=ARG)."
   (with-dblock-defaults
    (let ((html (when-let* ((val (plist-member params :html)))
-		 (cadr val)))
+		         (cadr val)))
          (vc (when-let* ((val (plist-member params :vc)))
                (cadr val)))
-	 (links (when-let* ((val (plist-member params :links)))
-	       (cadr val)))
-	 (files (when-let* ((val (plist-member params :files)))
-		  (cadr val)))
+	     (links (when-let* ((val (plist-member params :links)))
+	              (cadr val)))
+	     (files (when-let* ((val (plist-member params :files)))
+		          (cadr val)))
          (churn (if-let* ((val (plist-member params :churn)))
                     (cadr val)
                   t))
@@ -121,13 +122,14 @@ The following keyword parameters can be passed to the info dynamic block:
                    t))
          (log (if-let* ((val (plist-member params :log)))
                   (cadr val)
-		t))
-         (tasks (if-let* ((val (plist-member params :tasks)))
-                    (cadr val)
-                  t))
+		        t))
+         (tasks (when-let* ((val (plist-member params :tasks)))
+                    (cadr val)))
          (details (if-let* ((val (plist-member params :details)))
                       (cadr val)
-                    t)))
+                    t))
+         (agenda (when-let* ((val (plist-member params :agenda)))
+                     (cadr val))))
      (message "Generating info for project: %s" location)
      (let* ((project (project-current nil location))
             (project-name (project-name project))
@@ -137,8 +139,8 @@ The following keyword parameters can be passed to the info dynamic block:
            ('details (when details
                        (message "building project details...")
                        (insert "#+CALL: project-details(")
-		       (unless vc (insert "vc='nil"))
-		       (insert ") :dir " project-root "\n")
+		               (unless vc (insert "vc='nil"))
+		               (insert ") :dir " project-root "\n")
                        (org-babel-execute-maybe)
                        (org-table-align)))
            ('status (when status
@@ -152,20 +154,24 @@ The following keyword parameters can be passed to the info dynamic block:
                      (insert "#+CALL: hg-churn() :dir " project-root "\n")))
            ('log (when log
                    (message "building project vc log...")))
-	   ('html (when html
-		    (message "building project html files...")
-		    (insert "#+CALL: project-html-files() :dir " project-root "\n")))
+	       ('html (when html
+		            (message "building project html files...")
+		            (insert "#+CALL: project-html-files() :dir " project-root "\n")))
            ('vc (when vc
                   (message "building project vc files...")
                   (insert "#+CALL: project-vc-files() :dir " project-root "\n")))
-	   ('files (when files
-		     (message "building project local files...")
-		     (insert "#+CALL: project-files() :dir " project-root "\n")))
-	   ('links (when links
-		     (message "building project links...")
-		     ;; note that LINKS is quoted
-		     (insert "#+CALL: project-links(include=" 
-			     (format "'%s" links) ") :dir " project-root "\n")))))
+	       ('files (when files
+		             (message "building project local files...")
+		             (insert "#+CALL: project-files() :dir " project-root "\n")))
+	       ('links (when links
+		             (message "building project links...")
+		             ;; note that LINKS is quoted
+		             (insert "#+CALL: project-links(include=" 
+			                 (format "'%s" links) ") :dir " project-root "\n")))
+           ('agenda (when agenda
+                      (message "building project agenda...")
+                      ;; note that LINKS is quoted
+                      (insert "#+CALL: project-agenda() :dir " project-root "\n")))))
        (org-babel-execute-region point (point))))))
 
 (defun org-project-info ()

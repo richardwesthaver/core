@@ -40,7 +40,7 @@ profile/
 
 ;;; Config
 (defconfig archiso-config (box-config)
-  ((arch :initform "x86_64" :type string)
+  ((target :initform *machine-target*)
    (hostname :initform "box" :type string :accessor name)
    (iso-name :initform "archlinux")
    (iso-label :initform "ARCH_$(date --date=\"@${SOURCE_DATE_EPOCH:-$(date +%s)}\" +%Y%m)")
@@ -116,7 +116,7 @@ profile/
         (with-open-file (bootstrap "bootstrap_packages" :direction :output :if-exists :supersede)
           (dolist (p (slot-value self 'bootstrap-packages))
             (write-line (string-downcase p) bootstrap)))
-        (with-open-file (bootstrap (format nil "packages.~A" (slot-value self 'arch)) :direction :output :if-exists :supersede)
+        (with-open-file (bootstrap (format nil "packages.~A" (machine-target-name (slot-value self 'target))) :direction :output :if-exists :supersede)
           (dolist (p (slot-value self 'packages))
             (write-line (string-downcase p) bootstrap)))
         (uiop:copy-file (slot-value self 'pacman-conf) "pacman.conf")

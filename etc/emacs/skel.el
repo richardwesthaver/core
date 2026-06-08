@@ -448,6 +448,16 @@ interactively."
   (let ((org-agenda-files (project-agenda-files)))
     (org-agenda arg keys restriction)))
 
+(defun project-todo-list (&optional arg)
+  (interactive)
+  (let ((org-agenda-files (project-agenda-files)))
+    (org-todo-list arg)))
+
+(defun project-agenda-list (&optional arg start-day span with-hour)
+  (interactive)
+  (let ((org-agenda-files (project-agenda-files)))
+    (org-agenda-list arg start-day span with-hour)))
+
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"

@@ -75,12 +75,12 @@
       (agenda "" ((org-agenda-span 'day)))))
     ("w" "Weekly Review"
      ((agenda ""
-              ((org-agenda-overriding-header "Completed Tasks")
-               (org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo 'done))
-               (org-agenda-span 'week)))
-      (agenda ""
               ((org-agenda-overriding-header "Incomplete Tasks")
                (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+               (org-agenda-span 'week)))
+      (agenda ""
+              ((org-agenda-overriding-header "Completed Tasks")
+               (org-agenda-skip-function '(org-agenda-skip-entry-if 'nottodo 'done))
                (org-agenda-span 'week)))))
     ("i" "Work in progress tasks" ((todo "WIP" ((org-agenda-sorting-strategy '(priority-up effort-down))))))
     ("c" "Core tasks" ((tags-todo "+core" ((org-agenda-sorting-strategy '(priority-up effort-down))))))

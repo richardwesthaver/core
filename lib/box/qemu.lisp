@@ -33,7 +33,7 @@
                ,@(when size `(,size)))))))
 
 (defconfig qemu-system-config (box-config)
-  ((arch :initform *machine-target*)
+  ((target :initform *machine-target*)
    (image :initform nil)
    machine
    accel
@@ -141,6 +141,10 @@
    enable-sync-profile
    perfmap
    objects))
+
+(defvar *qemu-system-slots*
+  (mapcar (lambda (x) (slot-definition-name x))
+          (class-direct-slots (find-class 'qemu-system-config))))
 
 (defmethod make-config ((fmt (eql :qemu-system)) &rest args &key ast &allow-other-keys)
   (let ((cfg (apply 'make-instance 'qemu-system-config args)))

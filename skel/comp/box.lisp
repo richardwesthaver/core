@@ -8,6 +8,7 @@
 (defclass sk-box-file (sk-component box-config) ())
 (defclass sk-archiso-file (sk-box-file archiso-config) ())
 (defclass sk-qemu-image-file (sk-box-file qemu-image-config) ())
+(defclass sk-qemu-system-file (sk-box-file qemu-system-config) ())
 
 (defmethods sk-convert 
   (((self box-config))
@@ -20,6 +21,10 @@
      ret))
   (((self qemu-image-config))
    (let ((ret (change-class self 'sk-qemu-image-file)))
+     (update-id ret)
+     ret))
+  (((self qemu-system-config))
+   (let ((ret (change-class self 'sk-qemu-system-file)))
      (update-id ret)
      ret)))
 

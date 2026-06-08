@@ -233,7 +233,7 @@
    :run-buildah :run-podman :run-qemu :podman-machine-upgrade
    :start-podman-service :find-qemu-exe :run-xvfb-run :run-archiso 
    :mkarchiso :qemu-system :qemu-img :qemu-img-cmd
-   :qemu-img-format))
+   :qemu-img-format :qemu-type-opt :qemu-system-display-type))
 
 (defpkg :cli/tools
   (:nicknames :tools)

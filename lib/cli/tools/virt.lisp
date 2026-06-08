@@ -64,7 +64,7 @@
 (defun run-archiso (iso &key (uefi t) additional-iso vnc secure-boot disk accessibility (output t))
   "Run the given ISO path with qemu."
   (sb-ext:run-program 
-   (cli:find-exe "run_archiso")
+   (find-exe "run_archiso")
    `("-i" ,iso
      ,@(when uefi '("-u"))
      ,@(when additional-iso `("-c" ,additional-iso))
@@ -98,6 +98,15 @@
   (let ((proc (sb-ext:run-program #1=(find-exe "qemu-img") (cons (string-downcase cmd) (or args nil)) :output t)))
     (unless (eq 0 (sb-ext:process-exit-code proc))
       (qemu-error "QEMU-IMG command failed: ~A ~A" #1# (or args "")))))
+
+(deftype qemu-system-display-type ()
+  '(or null 
+    (member :gtk :sdl :egl-headless :curses :spice-app :dbus)))
+
+(deffmt fmt-qemu-type "~(~#[~;-~a~;-~a ~a~:;-~a ~@{~a=~a~^,~}~]~)")
+
+(defun qemu-type-opt (name &rest args)
+  (apply 'fmt-qemu-type nil name args))
 
 (defun qemu-system (&key (arch (machine-target-name))
                          image

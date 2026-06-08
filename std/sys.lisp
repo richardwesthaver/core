@@ -90,6 +90,14 @@ global."
 (defun lisp-machine-id ()
   (format nil "~(~A-lisp-linux-~A-~A~)" (substitute #\_ #\- (machine-type)) (lisp-implementation-type) (lisp-implementation-version)))
 
+(eval-always
+  (defvar *machine-targets* '(:x86 :x64 :amd64 :arm32 :arm64)))
+
+(deftype machine-target () `(member ,@*machine-targets*))
+
+(defun machine-target-p (obj)
+  (typep obj 'machine-target))
+
 (defun machine-target (&optional (type (machine-type)))
   "Return the machine target as a keyword which may be one of the following:
 
@@ -108,6 +116,8 @@ global."
           "AMD64"
           "X64")))))
 
+(defparameter *machine-target* (machine-target))
+
 (defun machine-target-name (&optional (target *machine-target*))
   "Return the 'C friendly' name for machine-target TARGET."
   (case target
@@ -115,16 +125,6 @@ global."
     (:x32 "x86")
     ;; TODO 2026-06-07: 
     ))
-
-(eval-always
-  (defvar *machine-targets* '(:x86 :x64 :amd64 :arm32 :arm64)))
-
-(deftype machine-target () `(member ,@*machine-targets*))
-
-(defun machine-target-p (obj)
-  (typep obj 'machine-target))
-
-(defparameter *machine-target* (machine-target))
 
 (defun current-machine ()
   "Return the current machine spec as a list: (HOST TYPE VERSION)"
