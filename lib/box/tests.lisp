@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :box/tests
-  (:use :cl :rt :box :net/core)
+  (:use :cl :rt :box :net/core :config)
   (:import-from :std :in-readtable)
   (:export #:*archiso-json*))
 
@@ -175,3 +175,7 @@
 
 (deftest archiso ()
   (is *archiso-json*))
+
+(deftest qemu ()
+  (istype 'qemu-image-config (make-config :qemu-image))
+  (istype 'qemu-system-config (make-config :qemu-system)))

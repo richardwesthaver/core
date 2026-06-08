@@ -1,33 +1,7 @@
 #+title: core
 #+description: The Compiler Company Core
 #+author: Richard Westhaver
-#+email: richard.westhaver@gmail.com
-#+BEGIN: project-info :files nil :tasks nil :status nil :churn nil :links all
-#+CALL: project-details(vc='nil) :dir ~/src/core/
-
-#+RESULTS:
-|-------------+-------------------------------------------------|
-| name        | core                                            |
-| version     | 0.1.1                                           |
-| description | The Compiler Company Core                       |
-| id          | 4611004031049662566                             |
-| root        | ~/src/core/                                     |
-| tags        | CORE LISP EMACS                                 |
-| updated     | Wed Jun 03 20:57:45 2026 -0400                  |
-| langs       | elisp lisp makefile org perl text               |
-| lines       | 269023 :code 219663 :comment 21784 :blank 27576 |
-|-------------+-------------------------------------------------|
-
-#+CALL: project-links(include='all) :dir ~/src/core/
-
-#+RESULTS:
-- [[https://compiler.company/docs/core/index.html][Documentation]] 
-  - [[https://compiler.company/docs/core/man.html][Manual]]
-  - [[https://compiler.company/docs/core/api.html][API]]
-- [[https://compiler.company/plan/tasks/core.html][Tasks]]
-
-#+END:
-
+#+email: ellis@compiler.company
 This repository contains the monolothic core of [[https://compiler.company][The Compiler Company]].
 
 The core is a [[https://compiler.company/graph/lang/lisp#af0ed8bb-4b45-42f9-b8be-82b8ea7935a3][Common Lisp]] hacking environment bootstrapped from SBCL.
@@ -47,3 +21,12 @@ packages or ANSI Lisp implementations.
   # export EMACSLOADPATH
   skel make install-emacs
   #+end_src
+
+#+call: project-links(include='all)
+
+#+RESULTS:
+- [[https://compiler.company/docs/core/index.html][Documentation]] 
+  - [[https://compiler.company/docs/core/man.html][User Manual]]
+  - [[https://compiler.company/docs/core/api.html][API Reference]]
+  - [[https://compiler.company/docs/core/info.html][Info]]
+- [[https://compiler.company/plan/tasks/core.html][Tasks]]

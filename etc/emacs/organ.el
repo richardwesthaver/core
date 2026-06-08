@@ -407,8 +407,9 @@ inherited by a parent headline."
 (defun org-html-format-drawer (name contents)
   "Default function used as value for `org-html-format-drawer-function'."
   (let ((name (downcase name)))
-    (format "<details class='edges'><summary>%s</summary>%s</details>"
+    (format "<details class=\"%s\" open><summary>%s</summary>%s</details>"
 	    name
+        name
 	    (pcase name
 	      ("edges"
 	       (unless (null contents)
@@ -426,7 +427,7 @@ inherited by a parent headline."
   "Transcode a PROPERTY-DRAWER element from Org to HTML.
 CONTENTS holds the contents of the drawer.  INFO is a plist holding
 contextual information."
-  (format "<details class='properties'><summary>props</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
+  (format "<details class='properties'><summary>properties</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
 
 (defun org-export-get-reference-title (datum info)
   "Like `org-export-get-reference', except uses heading titles instead of random numbers."

@@ -764,6 +764,7 @@
    :lisp-implementation-id
    :lisp-machine-id
    :machine-target
+   :machine-target-name
    :+lowtags+ :+widetags+
    :open-fasl-output :close-fasl-output
    :check-fasl-header

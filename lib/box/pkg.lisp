@@ -12,12 +12,10 @@
 
 ;;; Code:
 (defpkg :box
-  (:use :cl :std :cli :net :dat/json :config :obj)
+  (:use :cl :std :cli :net :dat/json :config :obj :cli/tools/virt)
   (:export
    :box-config
    :archiso-config
-   :mkarchiso
-   :run-archiso
    :qemu-image-config
    :qemu-system-config))
 

@@ -90,8 +90,8 @@ global."
 (defun lisp-machine-id ()
   (format nil "~(~A-lisp-linux-~A-~A~)" (substitute #\_ #\- (machine-type)) (lisp-implementation-type) (lisp-implementation-version)))
 
-(defun machine-target (&optional (type (machine-type)) (default :error))
-  "Return the current machine target as a keyword which may be one of the following:
+(defun machine-target (&optional (type (machine-type)))
+  "Return the machine target as a keyword which may be one of the following:
 
 - X86
 - X64
@@ -99,7 +99,7 @@ global."
 - ARM32
 - ARM64"
   (keywordicate
-   (std/string:string-case (type :default default)
+   (std/string:string-case ((string-upcase (substitute #\- #\_ type)))
      ("X86" type)
      ("ARM64" type)
      ("ARM" "ARM32")
@@ -107,6 +107,14 @@ global."
       (if (equal (subseq (machine-version) 0 3) "AMD")
           "AMD64"
           "X64")))))
+
+(defun machine-target-name (&optional (target *machine-target*))
+  "Return the 'C friendly' name for machine-target TARGET."
+  (case target
+    (:x64 "x86_64")
+    (:x32 "x86")
+    ;; TODO 2026-06-07: 
+    ))
 
 (eval-always
   (defvar *machine-targets* '(:x86 :x64 :amd64 :arm32 :arm64)))

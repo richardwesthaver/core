@@ -231,7 +231,9 @@
   (:use :cl :std :cli/tools/proto :cli/env)
   (:export :*buildah* :*podman* :*qemu*
    :run-buildah :run-podman :run-qemu :podman-machine-upgrade
-   :start-podman-service :find-qemu-exe :run-qemu-img :run-xvfb-run))
+   :start-podman-service :find-qemu-exe :run-xvfb-run :run-archiso 
+   :mkarchiso :qemu-system :qemu-img :qemu-img-cmd
+   :qemu-img-format))
 
 (defpkg :cli/tools
   (:nicknames :tools)

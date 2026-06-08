@@ -898,7 +898,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 			                   (js . t)
 			                   (C . t)
 			                   (python . t)))
-
   (defun org-mode-ask-effort ()
     "Ask for an effort estimate when clocking in."
     (unless (org-entry-get (point) "Effort")
@@ -908,7 +907,6 @@ With prefix ARG non-nil, insert the result at the end of region."
 	          (org-entry-get-multivalued-property (point) "Effort"))))
 	    (unless (equal effort "")
 	      (org-set-property "Effort" effort)))))
-
   (setopt 
    ;; org-preview-latex-image-directory (join-paths user-emacs-directory ".cache/ltximg")
    ;; org-latex-image-default-width "8cm"
@@ -927,10 +925,10 @@ With prefix ARG non-nil, insert the result at the end of region."
    org-log-refile 'time
    org-log-redeadline 'time
    org-log-states-order-reversed nil
-   org-clock-persist 'history
+   org-clock-persist t
    org-clock-persist-file (join-paths user-emacs-directory "org-clock-save")
    org-id-locations-file (join-paths user-emacs-directory "org-id-locations")
-   org-columns-default-format "%TODO %30ITEM %1PRIORITY %CLOCKSUM %EFFORT %CREATED %TAGS"))
+   org-columns-default-format "%TODO %30ITEM %4PRIORITY %CLOCKSUM %EFFORT %CREATED %TAGS"))
 
 (use-package org-capture
   :after (org)
