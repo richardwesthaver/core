@@ -23,8 +23,8 @@
 (defun sk-slot-name (self &optional downcase) 
   (keywordicate (sk-class-name self downcase)))
 
-(defmethod sk-new ((self t) &rest initargs)
-  (apply #'make-instance self initargs))
+;; (defmethod sk-new ((self t) &rest initargs)
+;;   (apply #'make-instance self initargs))
 
 (defmethod print-object ((self skel) stream)
   (print-unreadable-object (self stream)
@@ -41,15 +41,8 @@
 ;; sxhash as a nonce for UUID
 ;; note that the sk-meta class does not inherit from skel or ast.
 ;;; Meta
-(defclass sk-meta (project-metadata) ()
-  (:documentation "Skel Meta class."))
-
-(defmethod print-object ((self sk-meta) stream)
-  (print-unreadable-object (self stream)
-    (format stream "~A ~A :path ~A" (sk-class-name self t) (name self) (path self))
-    (unless (sequence:emptyp (version self))
-      (format stream " :version ~A" (version self)))
-    (format stream " :id ~A" (format-sxhash (id self)))))
+;; (defclass sk-meta (project-metadata) ()
+;;   (:documentation "Skel Meta class."))
 
 (defun sk-init (class &rest initargs)
   (apply #'make-instance class initargs))
@@ -67,7 +60,7 @@
      self))
 
 ;;; Config
-(defconfig sk-config (skel ast) 
+(defconfig skel-config (id ast) 
   ((vc :initform *default-vc-kind* :initarg :vc :type (or vc-repo vc-designator) :accessor vc)
    (store :initform *skel-store* :initarg :store :type pathname :accessor store)
    (stash :initform *skel-stash* :initarg :stash :type pathname :accessor stash)
@@ -78,15 +71,15 @@
    (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config) :accessor logger)
    (fmt :initform :pretty :initarg :fmt :type symbol)
    (auto-insert :initform nil :initarg :auto-insert :type form))
-  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SK-*-CONFIG types."))
+  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SKEL-*-CONFIG types."))
 
-(defmethod sk-new ((self (eql :config)) &rest args &key (type :user))
-  (setf self
-        (case type
-          (:user 'sk-user-config)
-          (:system 'sk-system-config)
-          (t 'sk-config)))
-  (apply #'sk-new self args))
+;; (defmethod sk-new ((self (eql :config)) &rest args &key (type :user))
+;;   (setf self
+;;         (case type
+;;           (:user 'skel-user-config)
+;;           (:system 'skel-system-config)
+;;           (t 'skel-config)))
+;;   (apply #'sk-new self args))
 
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
@@ -102,7 +95,7 @@
          (progn ,@body)
          (invalid-ast ast))))
 
-(defmethod load-ast ((self sk-config))
+(defmethod load-ast ((self skel-config))
   ;; internal ast is never tagged
   (with-skel-ast ast self
     (sb-int:doplist (k v) ast
@@ -123,7 +116,7 @@
     (unless *keep-ast* (setf (ast self) nil))
     self))
 
-(defmethod sk-build ((self sk-config) &key (nullp nil) (exclude '(ast id author version user)))
+(defmethod build ((self skel-config) &key (nullp nil) (exclude '(ast id author version user)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -131,13 +124,12 @@
                        :nullp nullp
                        :exclude exclude)))
 
-(defmethod sk-write-file ((self sk-config) 
-                          &key (path *default-skelfile*) 
-                               nullp
-                               comment
-                               (pretty t)
-                               (if-exists :error))
-  (sk-build self :nullp nullp)
+(defmethod write-ast ((self skel-config) path
+                      &key nullp
+                           comment
+                           (pretty t)
+                           (if-exists :error))
+  (build self :nullp nullp)
   (prog1 
       (with-open-file (out path
                            :direction :output
@@ -154,7 +146,7 @@
         (write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod write-ast ((self sk-config) stream &key (pretty t) (case :downcase))
+(defmethod write-ast ((self skel-config) stream &key (pretty t) (case :downcase))
   (if pretty
       (if (listp (ast self))
           (with-open-stream (st stream)
@@ -171,18 +163,18 @@
           (invalid-ast (ast self)))
       (write (ast self) :stream stream :pretty pretty :case case :readably t :array t :escape t)))
 
-(defclass sk-system-config (sk-config sk-meta) ())
+(defclass skel-system-config (skel-config project-metadata) ())
 
-(defun default-sk-system-config ()
-  (make-instance 'sk-system-config))
+(defun default-skel-system-config ()
+  (make-instance 'skel-system-config))
 
-(defclass sk-user-config (sk-config sk-meta)
+(defclass skel-user-config (skel-config project-metadata)
   ((user :initarg :user :type string :accessor user :initform (current-user))
    (name :initarg :name :type string :accessor name)
    (email :initarg :email :type string :accessor email))
   (:documentation "User configuration object, typically written to ~/.skelrc."))
 
 (defmethod make-config ((self (eql :skel)) &rest args)
-  (apply 'make-instance 'sk-user-config args))
+  (apply 'make-instance 'skel-user-config args))
 
-(defun default-sk-user-config () (make-instance 'sk-user-config))
+(defun default-skel-user-config () (make-instance 'skel-user-config))

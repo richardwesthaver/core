@@ -9,7 +9,7 @@
   ((user :initform (current-user) :initarg :user :type string)
    (path :initform nil :initarg :path :type (or pathname null))
    (src :initform #p"/usr/src/home/" :initarg :src :type (or null pathname vc-repo))
-   (skel :initform nil :initarg :skel :type (or null pathname sk-config))
+   (skel :initform nil :initarg :skel :type (or null pathname skel-config))
    (krypt :initform nil :initarg :krypt :type (or null pathname krypt-config))
    (mpk :initform nil :initarg :mpk :type (or null pathname mpk-config))
    (packy :initform nil :initarg :packy :type (or null packy-config))

@@ -49,7 +49,7 @@ the appropriate restarts."
                                                            :description "barfood"))
 	     (src (path) (list path))
 	     (cmd (&rest body) body)
-	     (rule (tr sr) (make-sk-rule (file-namestring tr) sr)))
+	     (rule (tr sr) (make-rule (file-namestring tr) sr)))
 	(is (null (sk-write-file (mk) :if-exists :supersede :path (merge-pathnames (%tmp-path "mk") *tmp*))))
 	(let* ((tr1 (%tmp-path "t1"))
 	       (tr2 (%tmp-path "t2"))

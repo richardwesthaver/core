@@ -4,22 +4,6 @@
 
 ;;; Commentary:
 
-;; This package was initially isolated to the OBJ/QUERY AST machinery, but as
-;; we are getting into codegen for C/CUDA/etc we now have a need to generalize
-;; it into a unique package.
-
-;; The objects in this package are probably not that useful in a Lisp-only
-;; context, or even a Lisp -> Lisp transpiler where we can leverage
-;; homoiconicity.
-
-;; These objects are best suited for a Lisp <-> Non-Lisp environment - where
-;; we want to be able to parse some Non-Lisp target language and write Lisp
-;; that emits code in that language.
-
-;; This package is depended on by OBJ/QUERY and Q for SQL and the like, as
-;; well as SYN/GEN which contains support for our Non-Lisp programming
-;; languages.
-
 ;;; Code:
 (in-package :obj/ast)
 

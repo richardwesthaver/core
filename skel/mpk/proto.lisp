@@ -7,9 +7,9 @@
 
 (defclass mpk-object (id) ())
 
-(defclass mpk-project (mpk-object skel:sk-project) ())
+(defclass mpk-project (mpk-object skel:skel-project) ())
 
-(defclass mpk-component (mpk-object skel:sk-component) ())
+(defclass mpk-component (mpk-object project-component) ())
 
 ;; playback state
 (defgeneric mpk-play (self &rest args &key &allow-other-keys)

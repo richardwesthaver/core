@@ -69,7 +69,7 @@ values: (VARS FUNCTIONS SRC)"
   (multiple-value-bind (config fns) (parse-pkgbuild from)
     (apply 'make-instance 'pkgbuild :functions fns config)))
 
-(defclass pkgbuild (sk-component)
+(defclass pkgbuild (project-component)
   ((pkgname :initarg :pkgname)
    (pkgver :initarg :pkgver)
    (pkgrel :initarg :pkgrel)
@@ -123,21 +123,21 @@ values: (VARS FUNCTIONS SRC)"
             do (format f "~A=~A~%" (string-downcase n) v))
       (doplist (k v) fns (format f "~A() ~A~%" (string-downcase k) v)))))
 
-(defmethod sk-load-component ((kind (eql :pkgbuild)) (form null) &optional (path (project-root)))
+(defmethod load-project-component ((kind (eql :pkgbuild)) (form null) &key (path (project-root)))
   (declare (ignore kind))
   (deserialize 
    (pathname (make-pathname :name *pkgbuild-filename* 
                             :directory (namestring path))) 
    :pkgbuild))
 
-(defmethod sk-build ((self pkgbuild) &key (path (find-stash-directory)))
+(defmethod build ((self pkgbuild) &key (path (find-stash-directory)))
   (serde self path))
 
-(defmethod sk-write-file ((self pkgbuild) &key (path (stash-pathname (name self))))
+(defmethod write-ast ((self pkgbuild) path &key)
   (serde self path))
 
-(defmethod sk-read-file ((self pkgbuild) path)
-  (sk-load-component :pkgbuild path))
+(defmethod read-ast ((self pkgbuild) path)
+  (load-project-component :pkgbuild path))
 
 ;;; Install scripts
 ;; pre_install, post_install

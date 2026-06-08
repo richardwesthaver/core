@@ -16,8 +16,6 @@
 
 (defparameter *skel-hook* (make-instance 'std:key-hook))
 
-(defvar *skel-project* nil)
-(defvar *skel-registry* nil)
 ;; TODO 2026-06-01: replace with single var *skel-config*
 (defvar *skel-user-config* nil)
 (defvar *skel-system-config* nil)
@@ -54,4 +52,4 @@ uninitialized with non-nil :ast slots.")
 (defvar *user-skelrc* (xdg-config-file :skel))
 
 (std:defvar-unbound *default-clean-function*
-  "The default function used to clean a SK-PROJECT.")
+  "The default function used to clean a SKEL-PROJECT.")

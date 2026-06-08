@@ -8,11 +8,11 @@
 ;;; File Headers
 (deftype file-header-kind () '(member :source :shebang))
 
-(defclass sk-file-header (file-header)
+(defclass skel-file-header (file-header)
   ((kind :initform :source :type file-header-kind :initarg :kind)))
 
 (defun make-file-header (kind hl)
-  (make-instance 'sk-file-header :kind kind :headline hl))
+  (make-instance 'skel-file-header :kind kind :headline hl))
 
 (defun make-source-file-header (str)
   (make-file-header :source str))

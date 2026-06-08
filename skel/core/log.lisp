@@ -5,9 +5,9 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass sk-log-schema (rdb-log-schema sk-schema) ())
+(defclass skel-log-schema (rdb-log-schema skel-schema) ())
 
-(defvar *skel-log-schema* (make-instance 'sk-log-schema))
+(defvar *skel-log-schema* (make-instance 'skel-log-schema))
 
 (defclass skel-db-sink (rdb-sink) ()
   (:default-initargs

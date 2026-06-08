@@ -646,7 +646,12 @@
   (:export :project :project-config :make-project
    :*default-project-class* :simple-project :project-metadata :author
    :version :tags :description :license
-   :rule :simple-rule :interactive-rule))
+   :rule :simple-rule :interactive-rule :project-compile
+   :project-load :project-component :project-module :with-project
+   :with-rule :*rule* :*project* :project-convert
+   :load-project-component :project-find :project-config-slot :search-project
+   :project-slot :*project-config* :make-rule :rules
+   :*default-rule-class*))
 
 (defpkg :obj/db
   (:nicknames :db)

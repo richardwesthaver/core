@@ -11,39 +11,38 @@
 ;;; Code:
 (in-package :skel/comp/pod)
 
-(defclass sk-containerfile (sk-component containerfile)
+(defcomponent project-containerfile (project-component containerfile)
   ())
 
-(defmethod print-object ((object sk-containerfile) stream)
+(defmethod print-object ((object project-containerfile) stream)
   (print-unreadable-object (object stream :type t)
     (format stream "~A" (file-namestring (path object)))))
 
-(defmethod sk-convert ((self containerfile))
-  (let ((self (change-class self 'sk-containerfile)))
+(defmethod project-convert ((self containerfile))
+  (let ((self (change-class self 'project-containerfile)))
     (update-id self)
     self))
 
-(defmethod sk-load-component ((kind (eql :containerfile))
-                              name
-                              &optional (path (project-root)))
-  (declare (ignore kind))
-  (sk-convert (deserialize
-               (make-pathname :name *default-containerfile* :type (when name (namestring name))
-                              :directory (namestring path))
-               :containerfile)))
+(defmethod load-project-component ((kind (eql :containerfile))
+                                   name
+                                   &key (path (project-root)))
+  (project-convert (deserialize
+                    (make-pathname :name *default-containerfile* :type (when name (namestring name))
+                                   :directory (namestring path))
+                    :containerfile)))
 
-(defmethod sk-write-file ((self sk-containerfile) &key path)
+(defmethod write-ast ((self project-containerfile) path &key)
   (serde self (pathname (or path (path self)))))
 
-(defmethod sk-read-file ((self sk-containerfile) path)
-  (sk-load-component :containerfile path))
+(defmethod read-ast ((self project-containerfile) path)
+  (load-project-component :containerfile path))
 
-(defmethod sk-build ((self sk-containerfile) &key with-client no-cache tag)
+(defmethod build ((self project-containerfile) &key with-client no-cache tag)
   (typecase with-client
     (null (apply 'pod::run-podman (flatten (concatenate 'list
                                                         `("build" "-f"
-                                                                  ,(path self)
-                                                                  ,@(when no-cache (list "--no-cache")))
+                                                          ,(path self)
+                                                          ,@(when no-cache (list "--no-cache")))
                                                         (when tag (list "-t" tag ))))))
     ;; iff == t
     (boolean

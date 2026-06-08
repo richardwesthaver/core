@@ -9,9 +9,9 @@
 ;;; Code:
 (in-package :skel/comp/infer)
 
-(defclass sk-inference-engine (engine skel) ())
-(defclass sk-inferred-project (sk-project) ())
+(defclass project-inference-engine (engine skel) ())
+(defclass inferred-project (skel-project) ())
 
-(defun sk-infer (&optional (path *default-pathname-defaults*))
+(defun project-infer (&optional (path *default-pathname-defaults*))
   "Infer the type of a project or component given its PATH."
   (declare (ignore path)))

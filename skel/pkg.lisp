@@ -12,7 +12,7 @@
 ;; with SKEL objects. 
 
 ;; The compiler package depends on the core and provides primitive compilers
-;; for translating SKEL objects into foreign formats. For example, SK-RULE
+;; for translating SKEL objects into foreign formats. For example, RULE
 ;; objects may be translated into a corresponding GNU Make Rule. The compiler
 ;; packages implement the CLOS API defined in the core and may serve as a
 ;; useful guide for further extending the system yourself.
@@ -22,7 +22,7 @@
 ;; communication amongst any number of remote hosts.
 
 ;; Additionally there is a collection of default extensions which may be
-;; toggled off via the SK-CONFIG FEATURES slot:
+;; toggled off via the SKEL-CONFIG FEATURES slot:
 
 ;; - VIEW provides an API for generating visualizations of SKEL objects
 
@@ -40,16 +40,6 @@
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
   (:export
-   ;; generics
-   :sk-run :sk-new 
-   :sk-call :sk-load
-   :sk-build
-   :sk-compile
-   :sk-write
-   :sk-write-file
-   :sk-read-file
-   :sk-find
-   :sk-convert :sk-load-component
    ;; conditions
    :skel-condition
    :skel-error
@@ -58,7 +48,7 @@
    :skel-io-error
    :skel-compile-error
    ;; vars
-   :*skel-project* :*default-skelrc*
+   :*default-skelrc*
    :*skel-env* :*skel-project*
    :*default-skelfile* :*default-skel-user* 
    :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
@@ -87,20 +77,17 @@
    ;; objects
    :sk-stash :sk-data :user
    :sk-push :sk-pull
-   :edit-skelrc :sk-target :skel
-   :sk-meta :def-sk-class :sk-project :sk-source
-   :sk-env :make-sk-rule
-   :sk-rule :sk-rule-target :sk-rule-source :sk-rule-recipe
-   :sk-make :sk-kind
-   :sk-command :scripts :sk-script :sk-config
-   :sk-snippet :sk-abbrev
-   :sk-user-config :sk-system-config
+   :edit-skelrc :skel
+   :def-sk-class :skel-project
+   :sk-env :make-rule
+   :make :sk-kind
+   :sk-command :scripts :project-script :skel-config
+   :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*
-   :sk-component :sk-mod
-   :sk-parent :skel-store :with-skel-ast
+   :skel-store :with-skel-ast
    :print-skel-object
    ;; schema
-   :sk-object-schema :sk-schema :*skel-registry-schema* :*skel-cache-schema*
+   :sk-object-schema :skel-schema :*skel-registry-schema* :*skel-cache-schema*
    ;; db
    :skel-db 
    :skel-db-path
@@ -125,10 +112,7 @@
    :load-skelfile
    :find-skelfile
    :find-sk-file
-   :sk-config-slot
-   :sk-project-slot
    :setf-skel-vars
-   :sk-search-project
    :project-root
    :merge-project-pathnames))
 
@@ -143,41 +127,40 @@
    :makefile))
 
 (defpkg :skel/comp/shell
-  (:use :std-lisp :skel/core :ast :syn/ts)
+  (:use :std-lisp :skel/core :ast :syn/ts :project)
   (:export :pkgbuild))
 
 (defpkg :skel/comp/rust
-  (:use :std-lisp :skel/core :toml :config :cli/tools/build)
-  (:export :sk-rust-system :parse-sk-rust-system))
+  (:use :std-lisp :skel/core :toml :config :cli/tools/build :project)
+  (:export :rust-system :parse-rust-system))
 
 (defpkg :skel/comp/python
-  (:use :std-lisp :skel/core :toml :config :cli/tools/build)
-  (:export :sk-python-system :parse-sk-python-system))
+  (:use :std-lisp :skel/core :toml :config :cli/tools/build :project)
+  (:export :python-system :parse-python-system))
 
 (defpkg :skel/comp/lisp
-  (:import-from :skel/core :*skel-project*)
   (:shadowing-import-from :std :version)
-  (:use :std-lisp :skel/core :id)
+  (:use :std-lisp :skel/core :id :project)
   (:import-from :ast :ast :read-ast :write-ast :load-ast)
-  (:export :sk-lisp-file :sk-lisp-component :sk-lisp-system 
-   :read-system-definitions :parse-sk-lisp-system :sk-write-asd-components))
+  (:export :lisp-file :lisp-component :lisp-system 
+   :read-system-definitions :parse-lisp-system :write-asd-components))
 
 (defpkg :skel/comp/pod
-  (:use :cl :std :pod :skel/core :id :ast)
-  (:export :sk-containerfile))
+  (:use :cl :std :pod :skel/core :id :ast :project)
+  (:export :project-containerfile))
 
 (defpkg :skel/comp/emacs
-  (:use :cl :std :skel/core :ast :id :organ)
-  (:export :*dir-locals-file* :dir-local-var-designator :sk-dir-locals :sk-emacs-component :sk-emacs-lisp-file
-   :sk-org-file))
+  (:use :cl :std :skel/core :ast :id :organ :project)
+  (:export :*dir-locals-file* :dir-local-var-designator :dir-locals :emacs-component :emacs-lisp-file
+   :org-file))
 
 (defpkg :skel/comp/box
-  (:use :cl :std :skel/core :box :id)
-  (:export :sk-box-file))
+  (:use :cl :std :skel/core :box :id :project)
+  (:export :box-file))
 
 (defpkg :skel/comp/infer
-  (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :doc)
-  (:export :sk-infer))
+  (:use :cl :std :skel/core :srv :id :ast :dat :config :vc :doc :project)
+  (:export :project-infer))
 
 (defpkg :skel/comp
   (:nicknames :sk-comp)
@@ -188,15 +171,15 @@
 
 (defpkg :skel/cli
   (:nicknames :sk-cli)
-  (:use :cl :std :log :skel/core :sb-ext :clap :cli/main))
+  (:use :cl :std :log :skel/core :sb-ext :clap :cli/main :project))
 
 (defpkg :skel/srv
   (:use :cl :std :db 
    :store :config :skel/core
-   :net/srv/udp :net/srv/http :srv)
-  (:export #:sk-service
-           #:sk-request
-           #:sk-response))
+   :net/srv/udp :net/srv/http :srv :project)
+  (:export #:skel-service
+           #:skel-request
+           #:skel-response))
 
 (defpkg :skel/net
   (:nicknames :sk-net)
@@ -207,13 +190,13 @@
   (:use :cl :std)
   (:use-reexport 
    :skel/core :skel/comp 
-   :skel/net)
-  (:export :with-project))
+   :skel/net :project))
 
 (defpkg :sk-user
   (:use :std-lisp :cli :tools
-   :cl-user :log :sb-debug :sb-ext
-   :obj/ast :vc :rdb :io :net :pod :uri)
+    :cl-user :log :sb-debug :sb-ext
+    :obj/ast :vc :rdb :io :net :pod :uri
+    :project)
   (:use :skel))
 
 (init :commands :name :skel :copy :cli :clean t)

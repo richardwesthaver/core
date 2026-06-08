@@ -237,15 +237,16 @@ instead set or replace the location file keyword."
             (insert "#+LOCATION: " val "\n")))
       (org-set-property "LOCATION" value))))
 
-(defun org-follow-location (point)
+(defun org-follow-location (point &optional arg)
   "Open the location specified by the LOCATION property of the org heading
-or file at point."
+or file at point. With C-u or ARG open in separate window."
   (interactive "d")
-  (let ((loc (org-get-location point)))
+  (let ((loc (org-get-location point))
+        (arg (or arg current-prefix-arg)))
     (cond
      ((string-match-p org-link-any-re loc) (org-link-open-from-string loc))
      ;; TODO 2024-08-29: handle other location types (physical, etc)
-     (t (find-file loc t)))))
+     (t (funcall (if arg 'find-file-other-window 'find-file) loc t)))))
 
 ;;; Comments
 (defcustom prog-comment-keywords ulang-todo-keywords

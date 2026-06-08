@@ -5,10 +5,10 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass sk-schema (rdb-schema skel) ())
+(defclass skel-schema (rdb-schema skel) ())
 
 (defvar *skel-registry-schema*
-  (make-instance 'sk-schema
+  (make-instance 'skel-schema
     :fields 
     (make-fields 
      :id '(fixnum . string)
@@ -18,12 +18,12 @@
      :tags '(fixnum . (array string)))))
 
 (defvar *skel-cache-schema*
-  (make-instance 'sk-schema
+  (make-instance 'skel-schema
     :fields 
     (make-fields
      :id '(fixnum . octet-vector)
      :hash '((octet-vector 32) . fixnum)
      :updated '(fixnum . octet-vector))))
 
-(defschema sk-object-schema (rdb-object-schema) ()
+(defschema skel-object-schema (rdb-object-schema) ()
   (:default-initargs :class-name 'skel))

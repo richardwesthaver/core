@@ -8,13 +8,13 @@
 
 (define-command-type rule (&optional 
                            (prompt "Rule: ") 
-                           (completions (map 'list #'sk-rule-target (skel/core::rules *skel-project*)))
+                           (completions (map 'list #'sink (skel/core::rules *project*)))
                            (default :error))
   (let ((*query-io* (if (streamp *command-io*) *command-io* *query-io*)))
     (cli/tui:completing-read prompt completions default)))
 
 (define-command-type rule* (&optional (prompt "Rules: ")
-                                      (completions (map 'list #'sk-rule-target (skel/core::rules *skel-project*))))
+                                      (completions (map 'list #'sink (skel/core::rules *project*))))
   (loop for x = (cli/tui:completing-read prompt completions nil)
         while x
         collect x))
@@ -36,16 +36,16 @@
 (defcommand (:skel inspect) ()
   "Inspect the current project."
   (setq *interactive* t)
-  (inspect (or *skel-project* *skel-user-config*)))
+  (inspect (or *project* *project-config*)))
 
 (flet ((call-with-args (action args)
-         (with-directory (project-root *skel-project*)
+         (with-directory (project-root *project*)
            (if (null args)
-               (sk-call *skel-project* action)
-               (if-let ((comp (find (car args) (components *skel-project*) :key 'name :test 'string-equal)))
+               (call *project* action)
+               (if-let ((comp (find (car args) (components *project*) :key 'name :test 'string-equal)))
                  (apply (symbolicate "SK-" (symbol-name action)) comp (cdr args))
                  (mapc (lambda (x)
-                         (sk-call *skel-project* (keywordicate (symbol-name action) '- (string-upcase x))))
+                         (call *project* (keywordicate (symbol-name action) '- (string-upcase x))))
                        args))))))
   (defcommand (:skel compile) (&rest args)
     (call-with-args :compile args))
@@ -78,10 +78,10 @@
         (mapc (lambda (script)
                 ;; first check if a script with the same name exists, else check
                 ;; for a rule definition
-                (if-let ((script (sk-find
+                (if-let ((script (project-find
                                   (pathname-name script)
                                   *skel-user-config*)))
-                  (sk-run script)
+                  (exec script)
                   (call-with-args :run (list script))))
               args)
         (required-argument 'name))))
@@ -92,13 +92,13 @@
   (if args
       (mapc (lambda (x) 
               (let ((y (string-left-trim ":" x)))
-                (if (sk-project-slot y nil)
+                (if (project-slot y :package :skel/core :default nil)
                     (let ((val
                             (slot-value
-                             *skel-project*
+                             *project*
                              (sb-mop:slot-definition-name
                               (find y
-                                    (sb-mop:class-slots (class-of *skel-project*))
+                                    (sb-mop:class-slots (class-of *project*))
                                     :test 'string=
                                     :key (lambda (x) (string-downcase (sb-mop:slot-definition-name x))))))))
                       (if (and (sequencep val) (not (stringp val)))
@@ -107,8 +107,8 @@
                     (log:fatal! "unknown argument: ~A~%" x))))
             args)
       (cond
-        ((boundp '*skel-project*)
-         (print-skel-object *skel-project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
+        ((boundp '*project*)
+         (print-skel-object *project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
         ((boundp '*skel-user-config*) (print-skel-object *skel-user-config*))
         ((boundp '*skel-system-config*) (print-skel-object  *skel-system-config*))
         (t (skel-simple-error "skel not installed"))))
@@ -116,35 +116,35 @@
 
 (defcommand (:skel id) ()
   "Print the current project ID as a hexstring and exit."
-  (println (octet-vector-to-hex-string (integer-to-octets (id:id *skel-project*)))))
+  (println (octet-vector-to-hex-string (integer-to-octets (id:id *project*)))))
 
 (defcommand (:skel edit) (&optional arg)
   "Edit a project file using ED."
-  (let ((file (or arg (path *skel-project*))))
+  (let ((file (or arg (path *project*))))
     (ed (namestring file))))
 
 (defcommand (:skel make) (&rest args)
   "Make project rules."
   (declare (interactive (ustring* "Rules: ")))
-  (let ((sk *skel-project*))
+  (let ((sk *project*))
     (with-directory (project-root sk)
       (if args
           (loop for a in args
                 do (debug!
-                    (if-let ((rule (sk-find a sk)))
-                      (sk-make sk rule)
+                    (if-let ((rule (project-find a sk)))
+                      (make sk rule)
                       ;;  TODO 2024-08-23: restart condition here
                       (skel-simple-error "rule not found: ~A" a))))
-          (sk-make sk (aref (skel/core::rules sk) 0))))))
+          (make sk (aref (skel/core::rules sk) 0))))))
 
 (defcommand (:skel status) ()
   "Print the VC status of the current project."
-  (vc:vc-status (vc:vc *skel-project*)))
+  (vc:vc-status (vc:vc *project*)))
 
 (defcommand (:skel search) (&rest args)
   "Search the current project and print results."
   (dolist (a args)
-    (println (sk-search-project a))))
+    (println (search-project a))))
 
 (defcommand (:skel shell) ()
   "Start the interactive skel REPL."

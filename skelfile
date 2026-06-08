@@ -50,7 +50,7 @@
    (bump "ppcre")
    (bump "ironclad")
    (bump "slime")
-   (vc-export (vc *skel-project*) :filter-regexp "^std$" :upstream nil) ;; yuck
+   (vc-export (vc *project*) :filter-regexp "^std$" :upstream nil) ;; yuck
    (with-repo (r :path "/tmp/core" :type :git :delete t)
     (loop for remote across (setf (vc-remotes r) (remotes "core"))
      do (vc-remote r :add :name (name remote) :url (uri remote)))
@@ -63,7 +63,7 @@
     (vc-push r :remote "cb" :force t :branch "default"))))
  (clean ()
   (probe-delete-directory ".stash" :recursive t)
-  (vc-purge (vc *skel-project*))
+  (vc-purge (vc *project*))
   (mapc 'delete-file (directory "**/*.fasl"))
   (mapc 'delete-file (directory "**/*.elc")))
  (readme ()
@@ -139,7 +139,7 @@
   (:install () 
    (funcall #0$sudo mkdir -pv $EMACS_HOME/{site-lisp/slime,lisp,native-lisp}$# :input t)
    (funcall #0$sudo cp -rf etc/emacs/* slime $EMACS_HOME/site-lisp/$# :input t)
-   (sk-run (sk-find "autoload-emacs" *skel-project*)))
+   (exec (project-find "autoload-emacs" *project*)))
   (:clean () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#)
   (:purge (clean-emacs)
@@ -193,7 +193,7 @@
   (with-directory ".stash"
    (compress-file "core" "core.zst")))
  (dist-repo ()
-  (vc-bundle (vc *skel-project*) "/opt/store/packy/vc/core.hg"))
+  (vc-bundle (vc *project*) "/opt/store/packy/vc/core.hg"))
  (dist-source ()
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
@@ -201,6 +201,6 @@
   (:build ()))
  (deploy (dist dist-repo)
   (move-file ".stash/core.zst" "/opt/store/packy/dist/x86_64/core.zst")
-  (sk-make *skel-project* :dist-source)
+  (make *project* :dist-source)
   (when-let ((f (probe-file "core.tar.zst")))
   (move-file f "/opt/store/packy/src/core.tar.zst"))))

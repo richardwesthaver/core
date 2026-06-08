@@ -10,7 +10,7 @@
 
 ;;  HACK 2023-09-15: MVP
 
-;; SO, the absolute priority ATM is to transpile our `sk-rule' objects
+;; SO, the absolute priority ATM is to transpile our rule objects
 ;; into a working Makefile. We're ignoring most of the niceties like
 ;; line-splitting and any JIT or compile-time execution.
 
@@ -38,18 +38,18 @@
   (val (make-mk-val) :type mk-val))
 
 ;; https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
-(defclass makefile (skel sk-meta)
+(defclass makefile (skel project-metadata)
   ((directives :initform (make-array 0 :adjustable t :fill-pointer 0)
 	       :type (vector list) :accessor mk-directives)
    (variables :initform (make-hash-table)
 	      :type (hash-table) :accessor mk-vars)
-   (explicit :initform (make-array 0 :element-type 'sk-rule :adjustable t :fill-pointer 0)
-	     :type (vector sk-rule) :accessor mk-erules)
-   (implicit :initform (make-array 0 :element-type 'sk-rule :adjustable t :fill-pointer 0) 
-	     :type (vector sk-rule) :accessor mk-irules))
+   (explicit :initform (make-array 0 :element-type 'simple-rule :adjustable t :fill-pointer 0)
+	     :type (vector simple-rule) :accessor mk-erules)
+   (implicit :initform (make-array 0 :element-type 'simple-rule :adjustable t :fill-pointer 0) 
+	     :type (vector simple-rule) :accessor mk-irules))
   (:documentation "A virtual GNU Makefile."))
 
-(defmethod push-mk-rule ((self sk-rule) (place makefile) &optional implicit)
+(defmethod push-mk-rule ((self simple-rule) (place makefile) &optional implicit)
   (if implicit
       (vector-push-extend self (mk-irules place))
       (vector-push-extend self (mk-erules place))))
@@ -61,7 +61,7 @@
   (destructuring-bind (k v) self
     (setf (gethash k (mk-vars place)) v)))
 
-(defmethod sk-compile ((self makefile) &key stream &allow-other-keys)
+(defmethod project-compile ((self makefile) &key stream &allow-other-keys)
   "Compile the makefile SELF to output STREAM."
   (with-open-stream (s stream)
     (with-slots (directives variables explicit implicit) self
@@ -74,33 +74,31 @@
       ;; explicit rules
       (loop for exp across explicit
 	    do (format s "~A:~A;~A~%" 
-		       (sk-rule-target exp)
-		       (sk-rule-source exp)
-                       (when-let ((recipe (sk-rule-recipe exp)))
-		         (sk-write recipe nil))))
+		       (rule-target exp)
+		       (source exp)
+                       (when-let ((recipe (ast exp)))
+		         (write-ast recipe nil))))
       ;; TODO implicit rules
       (loop for imp across implicit
 	    do (format s "~A:~A;~A~%" 
-		       (sk-rule-target imp)
-		       (sk-rule-source imp)
-		       (sk-write (sk-rule-recipe imp) nil))))))
+		       (rule-target imp)
+		       (source imp)
+		       (write-ast (ast imp) nil))))))
 
-(defmethod sk-write-file ((self makefile) &key (path *default-makefile*) (comment t) (if-exists :overwrite))
+(defmethod write-ast ((self makefile) (path pathname) &key (comment t) (if-exists :overwrite))
   (with-open-file (out path
-		       :direction :output
-		       :if-exists if-exists
-		       :if-does-not-exist :create)
-    (when comment (princ
-		   (make-source-header-comment
-		    (name self)
-		    :cchar #\#
-		    :timestamp t
-		    :description (description self)
-		    :opts '("mode: makefile-gmake;"))
-		   out))
-    (sk-compile self :stream out)))
+		               :direction :output
+		               :if-exists if-exists
+		               :if-does-not-exist :create)
+    (when comment (make-source-header-comment
+		           (name self)
+		           :cchar #\#
+		           :timestamp t
+		           :description (description self)
+		           :opts '("mode: makefile-gmake;")))
+    (project-compile self :stream out)))
 
-(defmethod sk-read-file ((self makefile) path)
+(defmethod read-ast ((self makefile) (path pathname))
   (with-open-file (f path :direction :input)))
 
 ;;; Auto Vars
@@ -111,7 +109,7 @@
 
 ;; (defmacro def-mk-auto (sym ll &body body))
 
-;; (def-mk-auto $@ (rule) (sk-rule-target rule))
-;; (def-mk-auto $< (rule) (car (sk-rule-source rule)))
-;; (def-mk-auto $^ (rule) (sk-rule-source rule))
+;; (def-mk-auto $@ (rule) (rule-target rule))
+;; (def-mk-auto $< (rule) (car (source rule)))
+;; (def-mk-auto $^ (rule) (source rule))
 

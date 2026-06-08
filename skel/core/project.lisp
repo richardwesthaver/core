@@ -6,7 +6,7 @@
 (in-package :skel/core)
 
 ;;; Project
-(defclass sk-project (skel sk-meta simple-project)
+(defclass skel-project (skel simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
    (vc :initarg :vc
@@ -16,7 +16,7 @@
    (stash :initarg :stash :accessor stash :initform ".stash/")
    (store :initarg :store :accessor store :initform ".stash/store/")
    (cache :initarg :store :accessor cache :initform ".stash/cache/")
-   (components :initform #() :initarg :components :accessor components :type (vector sk-component)
+   (components :initform #() :initarg :components :accessor components :type (vector project-component)
                :documentation "A vector of child components belonging to this project.")
    (bind :initarg :bind :initform *default-skel-bindings* :accessor bind :type list
          :documentation "A list of dynamic bindings which are applied to rule definitions.")
@@ -26,9 +26,9 @@
 	   :type hash-table
            :documentation "A hash-table containing PHASE-NAME : RULE-MEMBER-LIST pairs.")
    (rules :initarg :rules
-	  :initform (make-array 0 :element-type 'sk-rule :adjustable t)
+	  :initform (make-array 0 :element-type 'rule :adjustable t)
 	  :accessor rules
-	  :type (vector sk-rule)
+	  :type (vector rule)
           :documentation "A vector of rule objects containing individual units of work. Each rule is
 implicitly linked to a phase in the PHASES hash-table slot.")
    (include :initarg :include
@@ -40,17 +40,16 @@ define their own subprojects or extend the current one."))
   (:documentation "Skel project base class, usually defined by skelfiles at a project's root
 directory."))
 
-(defmethod print-object ((self sk-project) stream)
-  (print-unreadable-object (self stream)
-    (format stream "~A ~A :components ~A :rules ~A"
-	    (sk-class-name self t)
-	    (name self)
-	    (length (components self))
-	    (length (rules self)))))
+(defmethod print-object ((self skel-project) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A :components ~A :rules ~A"
+	        (name self)
+	        (length (components self))
+	        (length (rules self)))))
 
-(defmethod sk-new ((self (eql :project)) &rest args)
-  (declare (ignore self))
-  (apply #'sk-new 'sk-project args))
+;; (defmethod sk-new ((self (eql :project)) &rest args)
+;;   (declare (ignore self))
+;;   (apply #'sk-new 'sk-project args))
 
 (defun find-sk-symbol (s)
   (find-symbol* (symbol-name s) :skel/core t))
@@ -108,7 +107,7 @@ directory."))
 	 (log:trace! "env: ~A=~A~%" _sym val))))))
 
 ;; ast -> obj
-(defmethod load-ast ((self sk-project))
+(defmethod load-ast ((self skel-project))
   ;; internal ast is never tagged
   (with-skel-ast ast self
     ;; ast is valid, modify object, set ast nil
@@ -171,20 +170,20 @@ directory."))
 		     ;; recursively load included projects
 		     (lambda (i) 
                        (load-ast
-			(sk-read-file
-			 (make-instance 'sk-project)
+			(read-ast
+			 (make-instance 'skel-project)
 			 i)))
 		     include)))
 	;; COMPONENTS
 	(when (slot-boundp self 'components)
 	  (setf (components self) (map 'vector
 					  (lambda (c)
-					    (sk-load-component
+					    (load-project-component
 					     (pop c)
-                                             (if (= 1 (length c))
-                                                 (pathname (car c))
-                                                 c)
-					     *default-pathname-defaults*))
+                         (if (= 1 (length c))
+                             (pathname (car c))
+                             c)
+					     :path *default-pathname-defaults*))
 					  (components self)))))
       ;; BIND contains a list of forms which are bound dynamically based
       ;; on the contents of the cdr
@@ -234,19 +233,19 @@ directory."))
 			       (let ((%target (keywordicate phase '- (string-upcase target))))
 				 (let ((ph (gethash phase (phases self))))
 				   (setf (gethash phase (phases self))
-					 (push (make-sk-rule %target source recipe) ph))))))
+					 (push (make-rule %target source recipe) ph))))))
 			   recipe))
-			 (make-sk-rule target source recipe))))
+			 (make-rule target source recipe))))
 		 (coerce rules 'list)))
-	       '(vector sk-rule))))          
+	       '(vector rule))))          
       (unless *keep-ast* (setf (ast self) nil))
       (setf (id self) (sxhash (cons (name self) (version self))))
       self)))
 
 ;; obj -> ast
 
-;; need to define a method for SK-PROJECT to add PHASES to the exclusion list.
-(defmethod build ((self sk-project) &key (nullp nil) (exclude '(ast id phases)))
+;; need to define a method for SKEL-PROJECT to add PHASES to the exclusion list.
+(defmethod build ((self skel-project) &key (nullp nil) (exclude '(ast id phases)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -256,16 +255,15 @@ directory."))
   self)
 
 ;; file -> ast
-(defmethod sk-read-file ((self sk-project) path)
+(defmethod read-ast ((self skel-project) path)
   (wrap self (file-read-forms path))
   (setf (path self) (ensure-absolute-pathname path *default-pathname-defaults*))
   self)
 
 ;; ast -> file
-(defmethod sk-write-file ((self sk-project) 
-			  &key 
-			  (path *default-skelfile*) (nullp nil) (comment t) (pretty t)
-			  (if-exists :error))
+(defmethod write-ast ((self skel-project) path
+			          &key (nullp nil) (comment t) (pretty t)
+			               (if-exists :error))
   (build self :nullp nullp)
   (prog1 
       (with-open-file (out path
@@ -283,7 +281,7 @@ directory."))
 	(write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
-(defmethod wrap ((self sk-project) (config sk-user-config))
+(defmethod wrap ((self skel-project) (config skel-user-config))
   (with-slots (vc store stash license author) (debug! config) ;; log-level, custom, fmt
     (setf (vc self) vc)
     (setf (stash self) stash)
@@ -291,47 +289,47 @@ directory."))
     (setf (license self) license)
     (setf (author self) author)))
 
-(defmethod sk-find ((item sk-rule) (self skel) &key)
-  (find (string-upcase (sk-rule-target item))
-	(rules self) :test 'string-equal :key 'sk-rule-target))
+(defmethod project-find ((item rule) (self skel) &key)
+  (find (string-upcase (sink item))
+	(rules self) :test 'string-equal :key 'sink))
 
-(defmethod sk-find ((item t) (self skel) &key)
-  (find (string-upcase item) (rules self) :test 'string-equal :key #'sk-rule-target))
+(defmethod project-find ((item t) (self skel) &key)
+  (find (string-upcase item) (rules self) :test 'string-equal :key #'sink))
 
-(defmethod sk-find ((name string) (self sk-config) &key)
+(defmethod project-find ((name string) (self skel-config) &key)
   (find name (scripts self) :test 'equal :key #'name))
 
-(defmethod sk-call ((self sk-project) (arg sk-rule))
-  (sk-make self arg))
+(defmethod call ((self skel-project) (arg rule))
+  (make self arg))
 
-(defmethod sk-call ((self sk-project) (arg t))
-  (sk-make self (sk-find arg self)))
+(defmethod call ((self skel-project) (arg t))
+  (make self (project-find arg self)))
 
-(defmethod sk-call ((self sk-project) (arg (eql :compile)))
+(defmethod call ((self skel-project) (arg (eql :compile)))
   (loop for c across (components self)
-	collect (sk-compile self)))
+	    collect (project-compile self)))
 
-(defmethod sk-call ((self sk-project) (arg (eql :build)))
+(defmethod call ((self skel-project) (arg (eql :build)))
   (loop for c across (components self)
-	collect (sk-build self)))
+	collect (build self)))
 
-(defmethod sk-call ((self sk-project) (arg (eql :load)))
+(defmethod call ((self skel-project) (arg (eql :load)))
   (loop for c across (components self)
-	collect (sk-load self)))
+	collect (project-load self)))
 
-(defmethod sk-call ((self sk-project) (arg (eql :clean)))
-  (if-let ((x (sk-find arg self)))
-    (sk-make self x)
+(defmethod call ((self skel-project) (arg (eql :clean)))
+  (if-let ((x (project-find arg self)))
+    (make self x)
     (funcall skel/core::*default-clean-function* self)))
 
-(defmethod sk-build ((self sk-project) &key)
+(defmethod build ((self skel-project) &key)
   (loop for c across (components self)
-	collect (sk-build c)))
+	collect (build c)))
 
-(defmethod sk-compile ((self sk-project) &key)
+(defmethod project-compile ((self skel-project) &key)
   (loop for c across (components self)
-	collect (sk-compile c)))
+	collect (project-compile c)))
 
-(defmethod sk-load ((self sk-project) &key)
+(defmethod project-load ((self skel-project) &key)
   (loop for c across (components self)
-	collect (sk-load c)))
+	collect (project-load c)))

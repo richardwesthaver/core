@@ -49,7 +49,7 @@ can be set to INTERNAL-TIME-UNITS-PER-SECOND")
 			   :type     (unsigned-byte 48)
 			   :accessor node
 			   :initform 0))
-  (:documentation "Represents an uuid"))
+  (:documentation "Lisp representation of a uuid."))
 
 (labels ((parse-block (string start end)
            (parse-integer string :start start :end end :radix 16)))

@@ -53,7 +53,7 @@ timestamp for a oneshot task, else it is a list."
 ;; (build (load-ast (make-instance 'homer-task :ast '(mail-update (:repeat (:every (:min 15))) 1 2 3))))
   
 ;;; Jobs
-(defstruct (homer-job (:include sk-rule)))
+(defclass homer-job (simple-rule) ())
 
 (defmethod run-object ((self homer-job) &key)
   (when #1=(homer-job-source self)
