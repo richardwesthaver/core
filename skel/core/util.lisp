@@ -158,7 +158,7 @@ skelfile if found."
 (defmethod load-project-component ((kind t) (form t) &key (path (project-root)))
   "Default component loader dispatches to DESERIALIZE."
   (let ((*default-pathname-defaults* path))
-    (load-project-component kind form :path path)))
+    (deserialize form kind :path path)))
 
 (defun merge-project-pathnames (path &optional (project *project*))
   (merge-pathnames path (project-root project)))

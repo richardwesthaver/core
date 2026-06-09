@@ -60,9 +60,10 @@
 ;;; Code:
 (in-package :skel/packy)
 
-(defclass! pkgfile (sk-lisp-component sk-meta simple-project) 
+(defcomponent pkgfile (lisp-component simple-project)
   (bind arch url require provide src options checksum)
-  (:documentation "Package build files."))
+  (:documentation "Package build files.")
+  (:keyword :pkg))
 
 (defmethod load-ast ((self pkgfile))
   (let ((ast (ast self)))
@@ -72,7 +73,12 @@
       (setf (ast self) body)
       self)))
 
-(defmethod deserialize ((from pathname) (format (eql :pkg)) &key)
+(defmethod deserialize ((from pathname) (format (eql :pkgfile)) &key)
   (load-ast (read-ast (make-instance 'pkgfile) from)))
 
-; LocalWords:  optdepends checkdepends
+(defmethod load-project-component ((kind (eql :pkg)) form &key (path (project-root)))
+  (let ((*default-pathname-defaults* path))
+    (deserialize form :pkgfile)))
+  
+
+  

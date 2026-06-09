@@ -176,7 +176,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 ;;; Components
 (defclass project-component (id component ast)
-  ((parent :initarg :parent :accessor parent)))
+  ((parent :initarg :parent :accessor parent))
+  (:default-initargs :ast nil))
 
 (defmethod print-object ((self project-component) stream)
   (print-unreadable-object (self stream :type t)

@@ -12,7 +12,7 @@
   (:keyword :lisp))
 
 (defmethod project-convert ((self file-component))
-  (make-instance 'lisp-file 
+  (make-instance 'lisp-file
     :path (path self)
     :name (name self)
     :type "lisp"))
