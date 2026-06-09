@@ -5,10 +5,6 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass skel (id)
-  ()
-  (:documentation "Base class for skeleton objects."))
-
 (declaim (inline sk-slot-name sk-class-name))
 (defun sk-class-name (self &optional downcase)
   (let* ((class-name (string (class-name (class-of self))))
@@ -22,42 +18,6 @@
 
 (defun sk-slot-name (self &optional downcase) 
   (keywordicate (sk-class-name self downcase)))
-
-;; (defmethod sk-new ((self t) &rest initargs)
-;;   (apply #'make-instance self initargs))
-
-(defmethod print-object ((self skel) stream)
-  (print-unreadable-object (self stream)
-    (format stream "~A :ID ~A" (sk-class-name self t) (format-sxhash (id self)))))
-
-(defmethod initialize-instance :around ((self skel) &rest initargs &key &allow-other-keys)
-  ;; TODO 2023-09-10: make fast 
-  (unless (getf initargs :id)
-    (setf (id self) (sxhash self)))
-  (when (next-method-p)
-    (call-next-method)))
-
-;; TODO 2023-09-11: research other hashing strategies - maybe use the
-;; sxhash as a nonce for UUID
-;; note that the sk-meta class does not inherit from skel or ast.
-;;; Meta
-;; (defclass sk-meta (project-metadata) ()
-;;   (:documentation "Skel Meta class."))
-
-(defun sk-init (class &rest initargs)
-  (apply #'make-instance class initargs))
-
-(defmacro sk-init-dir (class &rest initargs)
-  `(let ((self (sk-init ',class ,@initargs)))
-     (unless (getf ',initargs :path)
-       (setf (path self) (sb-posix:getcwd)))
-     self))
-
-(defmacro sk-init-file (class &rest initargs)
-  `(let ((self (sk-init ',class ,@initargs)))
-     (unless (getf ',initargs :path)
-       (setf (path self) *default-skelfile*))
-     self))
 
 ;;; Config
 (defconfig skel-config (id ast) 
@@ -73,14 +33,6 @@
    (auto-insert :initform nil :initarg :auto-insert :type form))
   (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SKEL-*-CONFIG types."))
 
-;; (defmethod sk-new ((self (eql :config)) &rest args &key (type :user))
-;;   (setf self
-;;         (case type
-;;           (:user 'skel-user-config)
-;;           (:system 'skel-system-config)
-;;           (t 'skel-config)))
-;;   (apply #'sk-new self args))
-
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))
 (defun sk-dir (o)
@@ -89,17 +41,11 @@
         *default-pathname-defaults*
         (pathname str))))
 
-(defmacro with-skel-ast (sym obj &body body)
-  `(with-slots ((,sym ast)) ,obj
-     (if (formp ,sym)
-         (progn ,@body)
-         (invalid-ast ast))))
-
 (defmethod load-ast ((self skel-config))
   ;; internal ast is never tagged
-  (with-skel-ast ast self
+  (with-object-ast ast self
     (sb-int:doplist (k v) ast
-      (when-let ((s (find-sk-symbol k)))
+      (when-let ((s (find-skel-symbol k)))
         (setf (slot-value self s) v))) ;; needs to be the correct package
     (when (bound-string-p self 'stash) (setf (stash self) (merge-pathnames (stash self) (sk-dir self))))
     (when (bound-string-p self 'store) (setf (store self) (merge-pathnames (store self) (sk-dir self))))
@@ -156,7 +102,7 @@
                   do 
                      (write k :stream stream :pretty pretty :case case :readably t :array t :escape t)
                      (write-char #\space st)
-                     (if (or (eq (type-of v) 'skel) (subtypep (type-of v) 'structure-object))
+                     (if (or (eq (type-of v) 'id) (subtypep (type-of v) 'structure-object))
                          (write-ast v stream :pretty pretty)
                          (write v :stream stream :pretty pretty :case case :readably t :array t :escape t))
                      (write-char #\newline st)))

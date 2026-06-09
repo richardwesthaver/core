@@ -10,15 +10,13 @@
 
 (defun init-user-skelrc (&optional (file *user-skelrc*))
   "Initialize a skelrc configuration based on the currently active
-*SKEL-USER-CONFIG*. Defaults to ~/.skelrc."
-  (write-ast (make-instance 'skel-user-config) file
-             :pretty t))
+*PROJECT-CONFIG*. Defaults to ~/.config/skelrc."
+  (write-ast (make-instance 'skel-user-config) file :pretty t))
 
 (defun init-system-skelrc (&optional (file *system-skelrc*))
   "Initialize a system skelrc configuration based on the currently active
-*SKEL-SYSTEM-CONFIG*."
-  (write-ast (make-instance 'skel-system-config) file
-             :pretty t))
+*PROJECT-CONFIG*."
+  (write-ast (make-instance 'skel-system-config) file :pretty t))
 
 (defun load-user-skelrc (&optional (file *user-skelrc*) (init t))
   "Load a user-skelrc configuration from FILE. Defaults to *USER-SKELRC*.
@@ -131,7 +129,7 @@ skelfile if found."
             (,set *project* (load-skelfile project)
                   *skel-path* (skel/core::src *project*)
                   *skel-cache* (skel/core::cache *project*)))
-          (when-let ((hook *skel-hook*))
+          (when-let ((hook *project-hook*))
             (funcall hook :init))
           (values))))
   (defun init-skel ()

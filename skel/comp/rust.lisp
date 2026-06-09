@@ -12,10 +12,12 @@
 (defparameter *cargo-manifest-filename* "Cargo.toml")
 
 (defcomponent rust-system (project-module) 
-  (config))
+  (config)
+  (:keyword :rust-system))
 
 (defcomponent rust-component (project-component)
-  (type value))
+  (type value)
+  (:keyword :rs))
 
 (defmethod print-object ((object rust-system) stream)
   (print-unreadable-object (object stream :type t)

@@ -357,7 +357,7 @@
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error
    :syntax-warning :syntax-condition
-   :*ast* :document))
+   :*ast* :document :with-object-ast))
 
 (defpkg :obj/config
   (:nicknames :config)
@@ -651,7 +651,7 @@
    :with-rule :*rule* :*project* :project-convert
    :load-project-component :project-find :project-config-slot :search-project
    :project-slot :*project-config* :make-rule :rules
-   :*default-rule-class*))
+   :*default-rule-class* :*project-hook* :rule-target))
 
 (defpkg :obj/db
   (:nicknames :db)

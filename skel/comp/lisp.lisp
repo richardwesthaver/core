@@ -8,10 +8,8 @@
 (defclass lisp-component (project-component) ())
 
 ;;; Files
-(defclass lisp-file (lisp-component file-component) ())
-
-;; (defmethod sk-new ((self (eql :lisp)) &rest args)
-;;   (apply #'make-instance 'sk-lisp-file args))
+(defcomponent lisp-file (lisp-component file-component) ()
+  (:keyword :lisp))
 
 (defmethod project-convert ((self file-component))
   (make-instance 'lisp-file 
@@ -81,7 +79,8 @@
       (project-load self)))
 
 ;;; System
-(defclass lisp-system (lisp-component system) ())
+(defcomponent lisp-system (lisp-component system) ()
+  (:keyword :sys))
 
 (defun project-system-from-system (system)
   (let ((sys (change-class system 'lisp-system)))

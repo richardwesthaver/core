@@ -231,12 +231,13 @@ SCHEMA."
   `(make-instance ,(class-of self) :metadata ,(schema-metadata self)))
 
 ;;; Simple Schema
-(defclass simple-schema (schema) 
-  ((name :accessor name :initarg :name))
-  (:documentation "A simple schema contains at least a NAME slot and supports the ID protocol."))
+(defclass simple-schema (schema id)
+  ())
 
-(defmethod id ((self simple-schema)) (name self))
-(defmethod (setf id) (new (self simple-schema)) (setf (name self) new))
+(defmethod initialize-instance :before ((self simple-schema) &key name &allow-other-keys)
+  (when name (setf (id self) name)))
+
+(defaccessor name ((self simple-schema)) (id self))
 
 (defun make-simple-schema (name &rest fields)
   (make-instance 'simple-schema :name name :fields (coerce fields 'field-vector)))

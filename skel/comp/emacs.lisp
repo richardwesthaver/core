@@ -16,18 +16,12 @@
 
 (defclass dir-locals (emacs-component) ())
 
-;; (defmethod sk-new ((self (eql :dir-locals)) &rest args)
-;;   (apply #'make-instance 'sk-dir-locals args))
-
 (defmethod load-project-component ((kind (eql :dir-locals)) (form pathname) &key (path (project-root)))
   (make-instance 'dir-locals 
     :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
                                          :directory (namestring path)))))
 
 (defclass emacs-lisp-file (emacs-component) ())
-
-;; (defmethod sk-new ((self (eql :el)) &rest args)
-;;   (apply #'make-instance 'sk-emacs-lisp-file args))
 
 (defmethod load-project-component ((kind (eql :el)) (form pathname) &key (path (project-root)))
   (make-instance 'emacs-lisp-file
@@ -40,9 +34,6 @@
 
 ;;; Org
 (defclass project-org-file (project-component org-document project-metadata) ())
-
-;; (defmethod sk-new ((self (eql :org)) &rest args)
-;;   (apply #'make-instance 'sk-org-file args))
 
 (defmethod project-convert ((self org-document))
   (let ((self (change-class self 'project-org-file)))

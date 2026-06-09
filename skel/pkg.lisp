@@ -52,7 +52,6 @@
    :*skel-env* :*skel-project*
    :*default-skelfile* :*default-skel-user* 
    :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
-   :*skel-hook*
    #:*skel-stash*
    #:*skel-store*
    #:*skel-cache*
@@ -79,12 +78,12 @@
    :sk-push :sk-pull
    :edit-skelrc :skel
    :def-sk-class :skel-project
-   :sk-env :make-rule
+   :sk-env
    :make :sk-kind
    :sk-command :scripts :project-script :skel-config
    :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*
-   :skel-store :with-skel-ast
+   :skel-store
    :print-skel-object
    ;; schema
    :sk-object-schema :skel-schema :*skel-registry-schema* :*skel-cache-schema*

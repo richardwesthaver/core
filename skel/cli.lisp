@@ -21,7 +21,7 @@
 
 ;; TODO 2026-05-03: 
 (defcommand (:skel init) (&optional file name)
-  "Intialize a SK-PROJECT."
+  "Intialize a SKEL-PROJECT."
   (handler-bind
       ((sb-ext:file-exists
          #'(lambda (s)
@@ -109,8 +109,7 @@
       (cond
         ((boundp '*project*)
          (print-skel-object *project* :exclude (if ast:*keep-ast* '(:phases :rules) '(:phases :rules :ast))))
-        ((boundp '*skel-user-config*) (print-skel-object *skel-user-config*))
-        ((boundp '*skel-system-config*) (print-skel-object  *skel-system-config*))
+        ((boundp '*project-config*) (print-skel-object *project-config*))
         (t (skel-simple-error "skel not installed"))))
   (values))
 

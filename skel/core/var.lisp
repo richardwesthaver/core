@@ -14,8 +14,6 @@
 (defparameter *default-skel-extension* "sk")
 (defparameter *default-skelrc* ".skelrc")
 
-(defparameter *skel-hook* (make-instance 'std:key-hook))
-
 ;; TODO 2026-06-01: replace with single var *skel-config*
 (defvar *skel-user-config* nil)
 (defvar *skel-system-config* nil)

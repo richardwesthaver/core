@@ -27,7 +27,7 @@
    'list))
 
 (defun sk-print-slot (slot self &key (stream *standard-output*) (limit 8) (case :downcase))
-  (declare (stream stream) (skel self))
+  (declare (stream stream) (id self))
      (let ((name (sb-mop:slot-definition-name slot))
            (*print-case* case))
        (when (slot-boundp self name)
@@ -54,7 +54,7 @@
 
 (defun print-skel-object (self &key (stream *standard-output*) (id t) exclude (case :downcase) direct (limit 8) &allow-other-keys)
   (declare (stream stream) (positive-fixnum limit))
-  (let ((name (skel/core::sk-slot-name self (when (eql :downcase case))))
+  (let ((name (skel/core::sk-slot-name self (eql :downcase case)))
         (*print-case* case))
     (if id
         (format stream "~S ~A~%" 

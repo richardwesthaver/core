@@ -30,10 +30,10 @@ make-shebang-comment, and make-shebang-file-header."
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
   (with-tmp-file (f :type "sk")
-    (let ((p (make-instance 'sk-project :name "nada" :path "test" :vc :hg)))
-      (sk-write-file p :path *tmp* :if-exists :supersede)
+    (let ((p (make-instance 'skel-project :name "nada" :path "test" :vc :hg)))
+      (write-ast p *tmp* :if-exists :supersede)
       (is (load-skelfile *tmp*))
-      (is (build (apply 'make-instance 'sk-project (std:file-read-forms *tmp*)))))))
+      (is (build (apply 'make-instance 'skel-project (std:file-read-forms *tmp*)))))))
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."
@@ -50,7 +50,7 @@ the appropriate restarts."
 	     (src (path) (list path))
 	     (cmd (&rest body) body)
 	     (rule (tr sr) (make-rule (file-namestring tr) sr)))
-	(is (null (sk-write-file (mk) :if-exists :supersede :path (merge-pathnames (%tmp-path "mk") *tmp*))))
+	(is (null (ast (mk) (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))
 	(let* ((tr1 (%tmp-path "t1"))
 	       (tr2 (%tmp-path "t2"))
 	       (sr (src (%tmp-path "s1")))
@@ -67,12 +67,12 @@ endif")
 	  (is (push-mk-var '(b c) mk1))
 	  ;; FIXME
 	  (is 
-           (null 
-            (sk-write-file mk1 :if-exists :supersede :path (merge-pathnames (%tmp-path "mk") *tmp*))))))))
+       (null 
+        (write-ast mk1 (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))))))
 
 (deftest asd ()
-  (let ((sk (make-instance 'sk-project :components '((:lisp "test")
-                                                     (:lisp-system "test")))))
+  (let ((sk (make-instance 'skel-project :components '((:lisp "test")
+                                                       (:lisp-system "test")))))
     (is sk)))
 
 (load-database-backend :packy)

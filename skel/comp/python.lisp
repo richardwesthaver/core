@@ -8,10 +8,12 @@
 (defparameter *pyproject-filename* "pyproject.toml")
 
 (defcomponent python-system (project-module)
-  (config))
+  (config)
+  (:keyword :python-system))
 
 (defcomponent python-component (project-component)
-  (type value))
+  (type value)
+  (:keyword :py))
 
 (defmethod print-object ((object python-system) stream)
   (print-unreadable-object (object stream :type t)

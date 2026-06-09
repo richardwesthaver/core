@@ -5,8 +5,52 @@
 ;;; Code:
 (in-package :skel/core)
 
+;;; Rules
+(defmethod write-ast ((self rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(sink self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+
+(defmethod print-object ((self rule) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A" (sink self))
+    (when-let ((source (source self)))
+      (format stream " ~{~(~A~)~}" source))))
+
+(eval-always
+  (defmacro with-sk-rule-env (binds &body body)
+    `(let (,@binds)
+       (declare (ignorable ,@(mapcar 'car binds)))
+       (symbol-macrolet ,*skel-project-symbol-macros*
+         (macrolet ,*skel-project-macros*
+           (labels ,*skel-project-functions*
+             ,@body))))))
+
+;(mapcar (lambda (x) (eval (cadr x))) binds)
+;; Note that EXEC directly on a rule currently does NOT touch the sources.
+(defmethod exec ((self rule))
+  (compile-and-eval
+   `(with-sk-rule-env ,(bind *project*)
+      ,@(ast self))))
+
+(defmethod write-object ((self rule) stream &key)
+  (write-string (sink self) stream) ;; target isn't typep SK-OBJECT
+  (write (source self) :stream stream)
+  (write (ast self) :stream stream))
+
+(defun make (obj &rest rules)
+  (if rules
+      (mapc
+       (lambda (r) 
+         (when-let ((rule (project-find r obj)))
+           (call obj rule)))
+       rules)
+      (unless (sequence:emptyp (rules obj))
+        (let ((rule (aref (rules obj) 0)))
+          (if (source rule)
+              (make obj rule)
+              (exec rule))))))
+
 ;;; Project
-(defclass skel-project (skel simple-project)
+(defclass skel-project (simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
          :documentation "The name of this project.")
    (vc :initarg :vc
@@ -47,11 +91,7 @@ directory."))
 	        (length (components self))
 	        (length (rules self)))))
 
-;; (defmethod sk-new ((self (eql :project)) &rest args)
-;;   (declare (ignore self))
-;;   (apply #'sk-new 'sk-project args))
-
-(defun find-sk-symbol (s)
+(defun find-skel-symbol (s)
   (find-symbol* (symbol-name s) :skel/core t))
 
 (defun %recipe-phase-p (form)
@@ -109,11 +149,11 @@ directory."))
 ;; ast -> obj
 (defmethod load-ast ((self skel-project))
   ;; internal ast is never tagged
-  (with-skel-ast ast self
+  (with-object-ast ast self
     ;; ast is valid, modify object, set ast nil
     (progn
       (sb-int:doplist (k v) ast
-	(when-let ((s (find-sk-symbol k)))
+	(when-let ((s (find-skel-symbol k)))
 	  (setf (slot-value self s) v))) ;; needs to be correct package
 	  ;;; SRC
       (if (bound-string-p self 'src)
@@ -289,18 +329,28 @@ directory."))
     (setf (license self) license)
     (setf (author self) author)))
 
-(defmethod project-find ((item rule) (self skel) &key)
-  (find (string-upcase (sink item))
-	(rules self) :test 'string-equal :key 'sink))
+(defmethod project-find ((item rule) (self skel-project) &key)
+  (find (name item)
+	    (rules self) 
+        :test 'string-equal
+        :key 'name))
 
-(defmethod project-find ((item t) (self skel) &key)
+(defmethod project-find ((item t) (self skel-project) &key)
   (find (string-upcase item) (rules self) :test 'string-equal :key #'sink))
 
-(defmethod project-find ((name string) (self skel-config) &key)
+(defmethod project-find ((name string) (self project-config) &key)
   (find name (scripts self) :test 'equal :key #'name))
 
-(defmethod call ((self skel-project) (arg rule))
-  (make self arg))
+(defmethod call ((self skel-project) (rule rule))
+  (when-let ((sources (and rule (source rule))))
+    (mapcar
+     (lambda (src)
+       (if-let* ((sr (project-find src self)))
+         ;; TODO: check if we need to rerun sources
+         (make self sr)
+         (error "unhandled source: ~A for rule ~A" src rule)))
+     sources))
+  (exec rule))
 
 (defmethod call ((self skel-project) (arg t))
   (make self (project-find arg self)))

@@ -276,6 +276,13 @@ used extensively in the SYN and Q systems."))
 
 (defwith ast (self) (*ast* (ast (eval self))))
 
+(defmacro with-object-ast (sym obj &body body)
+  (let ((%sym (if (atom sym) sym (gensym))))
+    `(with-slots ((,%sym ast)) ,obj
+         (if (formp ,%sym)
+             ,(if (atom sym) `(progn ,@body) `(destructuring-bind ,sym ,%sym ,@body))
+             (invalid-ast ast)))))
+
 ;; (with-ast (make-instance 'ast :ast t) (rt:is *ast*))
 
 ;;; Document

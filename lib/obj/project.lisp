@@ -28,6 +28,8 @@
 (defvar *project* nil "The currently active PROJECT instance.")
 (defvar *project-config* nil "The currently active PROJECT-CONFIG instance.")
 
+(defparameter *project-hook* (make-instance 'std:key-hook))
+
 (defvar-unbound *rule* "The currently active RULE instance.")
 
 ;;; Conditions
@@ -147,7 +149,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (write (source self) :stream stream)
   (write (ast self) :stream stream))
 
-(defmethod exec ((self simple-rule)) (compile-and-eval (ast self)))
+(defmethod exec ((self simple-rule)) (compile-and-eval* (ast self)))
 (defmethod id ((self simple-rule)) (sxhash (list (rule-target self) (source self))))
 (defaccessor name ((self simple-rule)) (rule-target self))
 (defaccessor sink ((self simple-rule)) (rule-target self))
@@ -173,9 +175,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
       form)))
 
 ;;; Components
-(defcomponent project-component (id component ast)
-  ((parent :initarg :parent :accessor parent))
-  (:keyword :project-component))
+(defclass project-component (id component ast)
+  ((parent :initarg :parent :accessor parent)))
 
 (defmethod print-object ((self project-component) stream)
   (print-unreadable-object (self stream :type t)
@@ -202,7 +203,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defcomponent project-module (project-component mod-component project-metadata) 
   ()
-  (:keyword :project-module)
+  (:keyword :mod)
   (:documentation "A module component for projects. Includes PROJECT-METADATA."))
 
 (defmethod load-project-component ((kind (eql :mod)) (form t) &key (path *default-pathname-defaults*))

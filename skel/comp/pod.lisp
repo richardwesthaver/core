@@ -12,7 +12,8 @@
 (in-package :skel/comp/pod)
 
 (defcomponent project-containerfile (project-component containerfile)
-  ())
+  ()
+  (:keyword :containerfile))
 
 (defmethod print-object ((object project-containerfile) stream)
   (print-unreadable-object (object stream :type t)

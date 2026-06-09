@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass skel-schema (rdb-schema skel) ())
+(defclass skel-schema (rdb-schema simple-schema) ())
 
 (defvar *skel-registry-schema*
   (make-instance 'skel-schema
@@ -26,4 +26,4 @@
      :updated '(fixnum . octet-vector))))
 
 (defschema skel-object-schema (rdb-object-schema) ()
-  (:default-initargs :class-name 'skel))
+  (:default-initargs :class-name 'project-component))

@@ -1,18 +1,16 @@
 ;;; core/skel/skel.sys --- Skel Sytem Definitions
 (defsys :skel
- :version "0.1.1"
+ :version "0.1.2"
  :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
  :components 
  ((:pkg "pkg" :internal-package :skel-int :feature :skel :default-package :sk-user)
   (:mod "core"
    :components 
    ((:file "condition")
-    (:file "proto")
     (:file "header")
     (:file "var")
     (:file "obj")
     (:file "component")
-    (:file "rule")
     (:file "project")
     (:file "print")
     (:file "schema")
