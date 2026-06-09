@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :skel/srv)
 
-(defclass skel-message (request response) 
+(defclass skel-message (request response message) 
   ((type :initarg :type :initform :ack)
    )
   (:documentation "In-memory representation of a binary-encoded, unencrypted, uncompressed
@@ -18,8 +18,8 @@ information. For a lower-level interface which preserves the header see SK-PACKE
 (defclass skel-service (service) ()
   (:documentation "Base class for SKEL services.")
   (:default-initargs
-   :request-class 'sk-message
-   :response-class 'sk-message))
+   :request-class 'skel-message
+   :response-class 'skel-message))
 
 (defclass skel-engine (multi-threaded-engine thread-pool) ())
 

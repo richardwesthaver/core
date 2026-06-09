@@ -13,7 +13,7 @@
 
 (in-package :skel/packy)
 
-(defclass packy-service (service) ())
+(defclass packy-service (skel-service) ())
 
 (defun ensure-packy-directories (&optional (path *packy-home*))
   (dolist (p '("dist/" "doc/" "report/" "vc/"))
