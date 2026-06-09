@@ -403,6 +403,14 @@ inherited by a parent headline."
   (let ((title (get-html-title-from-url url)))
     (org-insert-link nil url title)))
 
+(defun org-format-buffer ()
+  (interactive)
+  (org-archive-all-done)
+  (org-align-all-tables)
+  (org-align-tags t)
+  (org-remove-redundant-tags)
+  (org-id-add-to-headlines-in-file))
+
 ;;; Export
 (defun org-html-format-drawer (name contents)
   "Default function used as value for `org-html-format-drawer-function'."

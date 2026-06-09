@@ -1153,7 +1153,9 @@ With prefix ARG non-nil, insert the result at the end of region."
   :defer nil
   :bind (:map project-prefix-map 
               ("RET" . project-skel-shell)
-              ("a" . project-agenda))
+              ("a" . project-agenda)
+              ("t" . project-todo-list)
+              ("C" . project-capture))
   :interpreter "skel"
   :hook 
   (project-find-functions . project-try-skel)

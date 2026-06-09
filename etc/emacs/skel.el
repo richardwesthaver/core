@@ -39,7 +39,8 @@
 ;;; Custom
 (defgroup skel nil
   "skel customization group."
-  :group 'local)
+  :group 'local
+  :group 'project)
 
 (defcustom skel-map-prefix "C-x M-s"
   "Prefix for `skel' keymap."
@@ -73,6 +74,11 @@ dedicated to the current buffer or its project (if one is found)."
   :type '(choice (const :tag "To buffer" buffer)
                  (const :tag "To project" project)
                  (const :tag "Not dedicated" nil)))
+
+(defcustom skel-project-capture-templates nil
+  "See 'org-capture-templates'."
+  :type 'list
+  :group 'skel)
 
 ;;; Commands
 ;; should dispatch to a server, likely covered by eglot tho..
@@ -437,26 +443,39 @@ interactively."
 
 ;;; Agenda
 ;; project agenda integration
-;; TODO 2026-06-06: local todo.org files
+;; TODO 2026-06-06: local todo.org files, subprojects
 (defun project-agenda-files ()
-  "Return the tasks.org file of the current project."
+  "Return the tasks.org file of the current project if it exists."
   (let ((path (join-paths company-org-directory "plan/tasks" (format "%s.org" (project-name (project-current))))))
-    (when (file-exists-p path) (list path))))
+    (when (file-exists-p path) 
+      (list path))))
 
 (defun project-agenda (&optional arg keys restriction)
   (interactive)
-  (let ((org-agenda-files (project-agenda-files)))
+  (let ((org-agenda-files (or (project-agenda-files) org-agenda-files)))
     (org-agenda arg keys restriction)))
 
 (defun project-todo-list (&optional arg)
-  (interactive)
-  (let ((org-agenda-files (project-agenda-files)))
+  (interactive "P")
+  (let ((org-agenda-files (or (project-agenda-files) org-agenda-files)))
     (org-todo-list arg)))
 
 (defun project-agenda-list (&optional arg start-day span with-hour)
   (interactive)
-  (let ((org-agenda-files (project-agenda-files)))
+  (let ((org-agenda-files (or (project-agenda-files) org-agenda-files)))
     (org-agenda-list arg start-day span with-hour)))
+
+;;; Capture
+(defun project-capture-templates ()
+  "Return the capture-templates of the current project. Defaults to the
+variable 'skel-project-capture-templates'."
+  skel-project-capture-templates)
+
+(defun project-capture (&optional goto keys)
+  "Project-aware 'org-capture'."
+  (interactive)
+  (let ((org-capture-templates (project-capture-templates)))
+    (org-capture goto keys)))
 
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
@@ -491,7 +510,8 @@ interactively."
           "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'"))
   (with-eval-after-load 'project 
     (add-to-list 'project-switch-commands '(project-skel-shell "Skel"))
-    (add-to-list 'project-switch-commands '(project-agenda "Agenda")))
+    (add-to-list 'project-switch-commands '(project-agenda "Agenda"))
+    (add-to-list 'project-switch-commands '(project-capture "Capture")))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 

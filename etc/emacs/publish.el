@@ -238,13 +238,5 @@ If given a prefix (C-u), set all args to t"
 	   (org-element-property :drawer-name drawer)
 	   contents))
 
-(defun org-format-buffer ()
-  (interactive)
-  (org-archive-all-done)
-  (org-align-all-tables)
-  (org-align-tags t)
-  (org-remove-redundant-tags)
-  (org-id-add-to-headlines-in-file))
-
 (provide 'publish)
 ;;; publish.el ends here
