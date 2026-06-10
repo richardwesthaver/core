@@ -142,7 +142,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (rule-target self))
     (when-let ((source (source self)))
-      (format stream " ~{~(~A~)~}" source))))
+      (format stream " ~{~(~A~)~^ ~}" source))))
 
 (defmethod write-object ((self simple-rule) stream &key)
   (write-string (rule-target self) stream) ;; target isn't typep SK-OBJECT
@@ -159,6 +159,10 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (:documentation "Return the ruleset of object SELF."))
 
 (defkernel interactive-rule (rule command)
+  ((args :initform nil :type list))
+  (:documentation "Rules which support the command protocol."))
+
+(defkernel simple-interactive-rule (interactive-rule simple-rule)
   ((args :initform nil :type list))
   (:documentation "Rules which support the command protocol."))
 

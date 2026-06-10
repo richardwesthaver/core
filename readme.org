@@ -25,8 +25,8 @@ packages or ANSI Lisp implementations.
 #+call: project-links(include='all)
 
 #+RESULTS:
-- [[https://compiler.company/docs/core/index.html][Documentation]] 
-  - [[https://compiler.company/docs/core/man.html][User Manual]]
-  - [[https://compiler.company/docs/core/api.html][API Reference]]
-  - [[https://compiler.company/docs/core/info.html][Info]]
+- [[https://compiler.company/docs/core/index][Documentation]] 
+  - [[https://compiler.company/docs/core/man][User Manual]]
+  - [[https://compiler.company/docs/core/api][API Reference]]
+  - [[https://compiler.company/docs/core/info][Info]]
 - [[https://compiler.company/plan/tasks/core.html][Tasks]]

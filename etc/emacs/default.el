@@ -1075,6 +1075,14 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package hexl
   :init (setq hexl-bits 8))
 
+;;; Etags
+(use-package etags-regen
+  :init (setq etags-regen-create-on-completion t
+              ;; etags-regen-tags-file
+              )
+  :config
+  (add-to-list 'etags-regen-file-extensions "gen"))
+
 ;;; Desktop
 (use-package desktop
   :defer nil

@@ -45,10 +45,10 @@
 (defcommand (:homer run) (&rest args)
   (mapcar 
    (lambda (x)
-     (run-object
+     (exec
       (find (string-upcase x) (jobs *home-config*)
             :test 'equal
-            :key (lambda (x) (skel/homer/core::homer-job-target x)))))
+            :key (lambda (x) (sink x)))))
    args))
 
 (defcommand (:homer start) (srv)

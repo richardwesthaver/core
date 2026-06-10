@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpkg :skel/homer/core
-  (:use :cl :std :log :skel/krypt :skel/core :config :io/kbd :ast :id :time :pod :box :cli/tools/sys)
+  (:use :cl :std :log :skel/krypt :skel/core :config :io/kbd :ast :id :time :pod :box :cli/tools/sys :project)
   (:import-from :srv :request :response :service :engine)
   ;; (:import-from :mpk :mpk-config :load-mpkrc)
   (:export

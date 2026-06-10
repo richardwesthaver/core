@@ -15,8 +15,7 @@
 ;;; Code:
 (in-package :skel/homer/core)
 
-(defclass homer-task (scheduled-task ast id) ()
-  (:metaclass kernel-class))
+(defkernel homer-task (scheduled-task ast id) ())
 
 ;; :sec :min :hour :day :day-of-week :month
 
@@ -53,23 +52,27 @@ timestamp for a oneshot task, else it is a list."
 ;; (build (load-ast (make-instance 'homer-task :ast '(mail-update (:repeat (:every (:min 15))) 1 2 3))))
   
 ;;; Jobs
-(defclass homer-job (simple-rule) ())
 
-(defmethod run-object ((self homer-job) &key)
-  (when #1=(homer-job-source self)
+(defkernel homer-job (simple-interactive-rule) ())
+
+(defmethod exec ((self homer-job))
+  (when #1=(source self)
     (mapc
      (lambda (j)
        (when-let ((job (find (string-upcase j) (jobs *home-config*)
                              :test 'equal
-                             :key (lambda (x) (skel/homer/core::homer-job-target x)))))
-         (run-object job)))
+                             :key (lambda (x) (sink x)))))
+         (exec job)))
      #1#))
   (mapcar 
    (lambda (x)
      (etypecase x
        ((or symbol function) (funcall x :output t))
        (t (eval x))))
-   (homer-job-recipe self)))
+   (ast self)))
+
+(defmethod run-object ((self homer-job) &key)
+  (exec self))
 
 (defmethod write-ast ((self homer-job) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(homer-job-target self) ,(homer-job-source self) ,@(homer-job-recipe self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+  (write `(,(sink self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))

@@ -12,21 +12,29 @@
 (defvar *dir-locals-file* ".dir-locals.el")
 (deftype dir-local-var-designator () '(or symbol string))
 
-(defclass emacs-component (project-component ast) ())
+(defclass emacs-component (project-component) ())
 
 (defclass dir-locals (emacs-component) ())
 
 (defmethod load-project-component ((kind (eql :dir-locals)) (form pathname) &key (path (project-root)))
-  (make-instance 'dir-locals 
-    :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
-                                         :directory (namestring path)))))
+  (let ((self
+          (make-instance 'dir-locals 
+            :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
+                                                 :directory (namestring path))))))
+    (update-id self)
+    self))
+
+(defmethod load-ast ((self emacs-component)) nil)
 
 (defclass emacs-lisp-file (emacs-component) ())
 
 (defmethod load-project-component ((kind (eql :el)) (form pathname) &key (path (project-root)))
-  (make-instance 'emacs-lisp-file
-    :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
-                                         :directory (namestring path)))))
+  (let ((self
+          (make-instance 'emacs-lisp-file
+            :ast (file-read-forms (make-pathname :name (namestring form) :type "el"
+                                                 :directory (namestring path))))))
+    (update-id self)
+    self))
 
 (defmethod print-object ((object emacs-component) stream)
   (print-unreadable-object (object stream :type t)

@@ -75,12 +75,24 @@ dedicated to the current buffer or its project (if one is found)."
                  (const :tag "To project" project)
                  (const :tag "Not dedicated" nil)))
 
-(defcustom skel-project-capture-templates nil
+(defcustom skel-project-capture-templates
+  '(("t" "project-task" entry #'project-tasks-file "%i"
+     :empty-lines-before 1
+     :unnarrowed t
+     :prepare-finalize (org-id-get-create org-expire-insert-created))
+    ("n" "project-note" entry #'project-tasks-file "%i"
+     :empty-lines-before 1
+     :unnarrowed t
+     :prepare-finalize (org-id-get-create org-expire-insert-created)))
   "See 'org-capture-templates'."
   :type 'list
   :group 'skel)
 
-;;; Commands
+(defcustom skel-project-todo-file "todo.org"
+  "Project-local todo filename."
+  :type 'filename
+  :group 'skel)
+
 ;; should dispatch to a server, likely covered by eglot tho..
 (defvar-keymap skel-map
   :doc "skel keymap"
@@ -99,6 +111,7 @@ dedicated to the current buffer or its project (if one is found)."
   "v" 'skel:vc
   "V" 'skel:view)
 
+;;; Commands
 (defmacro def-skel-cmd (name)
   `(defun ,(symb 'skel: name) (&optional arg)
      (interactive "P")
@@ -121,13 +134,14 @@ dedicated to the current buffer or its project (if one is found)."
 (def-skel-cmd view)
 
 (defun project-try-skel (dir)
-  (when (or (file-exists-p (join-paths dir "skelfile"))
-	        (directory-files dir nil "^.*[.]sk"))
-    (let ((res (project-try-vc--search dir)))
-      (when res 
-	    (vc-file-setprop dir 'project-vc res)
-	    (setf (car res) 'skel))
-      (append res (list dir)))))
+  (when dir
+    (when (or (file-exists-p (join-paths dir "skelfile"))
+	          (directory-files dir nil "^.*[.]sk"))
+      (let ((res (project-try-vc--search dir)))
+        (when res 
+	      (vc-file-setprop dir 'project-vc res)
+	      (setf (car res) 'skel))
+        (append res (list dir))))))
 
 (defun skel-indent-region (start end)
   "Indent region as a SKEL S-expression."
@@ -156,6 +170,12 @@ dedicated to the current buffer or its project (if one is found)."
 
 (cl-defmethod project-root ((project list))
   (when project (car project)))
+
+(cl-defgeneric project-parent (project)
+  "Return the parent of a subproject PROJECT or NIL if top-level."
+  (let* ((default-directory (expand-file-name (project-root project)) )
+         (roots (remove default-directory (mapcar 'expand-file-name (project-known-project-roots)))))
+    (project-try-skel (car (any (lambda (x) (when x (string-prefix-p x default-directory))) roots)))))
 
 (defun project-skelfile (&optional project)
   "Find skelfile associated with PROJECT. Defaults to current
@@ -444,9 +464,23 @@ interactively."
 ;;; Agenda
 ;; project agenda integration
 ;; TODO 2026-06-06: local todo.org files, subprojects
+
+(defun project-todo-file ()
+  "Search for a todo file in the current project or parent. Return NIL if none exists."
+  (cl-find skel-project-todo-file (project-files (project-current)) :key 'file-name-nondirectory))
+
+(defun project-tasks-file ()
+  (let* ((current (project-current))
+         (parent (project-parent current))
+         (default (join-paths company-org-directory "plan/tasks" 
+                              (format "%s.org" 
+                                      (project-name 
+                                       (or parent current))))))
+    (if (file-exists-p default) default (project-todo-file))))
+
 (defun project-agenda-files ()
   "Return the tasks.org file of the current project if it exists."
-  (let ((path (join-paths company-org-directory "plan/tasks" (format "%s.org" (project-name (project-current))))))
+  (let ((path (project-tasks-file)))
     (when (file-exists-p path) 
       (list path))))
 
@@ -474,7 +508,9 @@ variable 'skel-project-capture-templates'."
 (defun project-capture (&optional goto keys)
   "Project-aware 'org-capture'."
   (interactive)
-  (let ((org-capture-templates (project-capture-templates)))
+  (let ((org-default-notes-file (project-tasks-file))
+        (org-capture-templates (project-capture-templates)))
+    ;; (setf (plist-get org-capture-plist :target)  `(file ,(car (project-agenda-files))))
     (org-capture goto keys)))
 
 ;;; Minor Mode

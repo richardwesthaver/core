@@ -67,7 +67,7 @@
                          (let ((ret))
                            (dolist (job v ret)
                              (push 
-                              (make-homer-job :target (string (pop job)) :source (pop job) :recipe job)
+                              (make-instance 'homer-job :target (string (pop job)) :source (pop job) :ast job)
                               ret))))
                         (:services
                          (let ((ret))
