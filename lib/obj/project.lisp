@@ -130,6 +130,17 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defaccessor name ((self rule)) (id self))
 
+(defmethod write-ast ((self rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
+  (write `(,(sink self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
+
+(defmethod print-object ((self rule) stream)
+  (print-unreadable-object (self stream :type t)
+    (format stream "~A" (name self))))
+
+(defmethod write-object ((self rule) stream &key)
+  (write-string (name self) stream)
+  (write (ast self) :stream stream))
+
 (defkernel simple-rule (rule)
   ((source :initform nil :type list :accessor source :initarg :source)
    (target :initform nil :accessor rule-target :initarg :target))

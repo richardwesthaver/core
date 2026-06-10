@@ -93,6 +93,11 @@ dedicated to the current buffer or its project (if one is found)."
   :type 'filename
   :group 'skel)
 
+(defcustom skel-project-registers-file "registers"
+  "Project-local registers filename."
+  :type 'filename
+  :group 'skel)
+
 ;; should dispatch to a server, likely covered by eglot tho..
 (defvar-keymap skel-map
   :doc "skel keymap"
@@ -513,6 +518,22 @@ variable 'skel-project-capture-templates'."
     ;; (setf (plist-get org-capture-plist :target)  `(file ,(car (project-agenda-files))))
     (org-capture goto keys)))
 
+;;; Registers
+(defun project-registers-file ()
+  (expand-file-name 
+   skel-project-registers-file
+   (project-root (project-current))))
+
+(defun project-save-registers ()
+  "Project-aware 'save-registers'."
+  (interactive)
+  (save-registers (project-registers-file)))
+
+(defun project-load-registers ()
+  "Load the 'project-registers-file' if it exists."
+  (interactive)
+  (load (project-registers-file) t))
+
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
@@ -537,7 +558,6 @@ variable 'skel-project-capture-templates'."
   (setq-local indent-region-function 'skel-indent-region)
   (setq-local lisp-indent-offset 1))
 
-
 ;;;###autoload
 (defun skel-init ()
   (interactive)
@@ -547,7 +567,9 @@ variable 'skel-project-capture-templates'."
   (with-eval-after-load 'project 
     (add-to-list 'project-switch-commands '(project-skel-shell "Skel"))
     (add-to-list 'project-switch-commands '(project-agenda "Agenda"))
-    (add-to-list 'project-switch-commands '(project-capture "Capture")))
+    (add-to-list 'project-switch-commands '(project-capture "Capture"))
+    (add-to-list 'project-switch-commands '(project-save-registers "Save Registers"))
+    (add-to-list 'project-switch-commands '(project-load-registers "Load Registers")))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 

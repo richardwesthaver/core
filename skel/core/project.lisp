@@ -6,15 +6,6 @@
 (in-package :skel/core)
 
 ;;; Rules
-(defmethod write-ast ((self rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
-  (write `(,(sink self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
-
-(defmethod print-object ((self rule) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A" (sink self))
-    (when-let ((source (source self)))
-      (format stream " ~{~(~A~)~}" source))))
-
 (eval-always
   (defmacro with-sk-rule-env (binds &body body)
     `(let (,@binds)
@@ -30,11 +21,6 @@
   (compile-and-eval
    `(with-sk-rule-env ,(bind *project*)
       ,@(ast self))))
-
-(defmethod write-object ((self rule) stream &key)
-  (write-string (sink self) stream) ;; target isn't typep SK-OBJECT
-  (write (source self) :stream stream)
-  (write (ast self) :stream stream))
 
 (defun make (obj &rest rules)
   (if rules

@@ -405,14 +405,15 @@ specified by `prog-comment-timestamp-format-verbose'."
   :after-hook (org-minor-mode-setup))
 
 ;;; Hooks
+;;;###autoload
 (defun ulang--org-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|\n\\* \\)"))
-
+  (setq-local page-delimiter "^\\(\\|\\* \\)"))
+;;;###autoload
 (defun ulang--lisp-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|\n;;; \\)"))
-
+  (setq-local page-delimiter "^\\(\\|;;; \\)"))
+;;;###autoload
 (defun ulang--sh-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|\n### \\)"))
+  (setq-local page-delimiter "^\\(\\|### \\)"))
 
 (provide 'ulang)
 ;;; ulang.el ends here

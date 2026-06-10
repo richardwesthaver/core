@@ -8,3 +8,4 @@ foo.c
 [.]desktop.*$
 [.]stash/.*
 lib/syn/tests/gen/.*[.](c|rs|cu|cpp|js|py|apl|fs)$
+registers

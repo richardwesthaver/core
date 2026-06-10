@@ -504,36 +504,52 @@ TABLE."
 Interactively, NUMBER is the prefix arg."
     (interactive "p\ncDecrement register: ")
     (increment-register (- number) register))
-
   (defun copy-register (a b)
     "Copy register A to B."
     (interactive
      (list (register-read-with-preview "From register: ")
            (register-read-with-preview "To register: ")))
     (set-register b (get-register a)))
-
-  (defun buffer-to-register (register &optional delete)
-    "Put current buffer in register - this would also work for
-  just buffers, as switch-to-buffer can use both, but it
-  facilitates for easier saving/restoring of registers."
-    (interactive "cPut current buffername in register: \nP.")
-    (set-register register (cons 'buffer (buffer-name (current-buffer)))))
-
-  (defun file-to-register (register &optional delete)
-    "This is better than put-buffer-in-register for file-buffers, because a closed
-   file can be opened again, but does not work for no-file-buffers."
-    (interactive "cPut the filename of current buffer in register: \nP")
-    (set-register register (cons 'file (buffer-file-name (current-buffer)))))
-
   (defun file-query-to-register (register &optional delete)
     (interactive
      (list
       (register-read-with-preview "File query to register: ")))
-    (set-register register (list 'file-query (buffer-file-name (current-buffer)) (point)))))
+    (set-register register (list 'file-query (buffer-file-name (current-buffer)) (point))))
+  (defun save-registers (&optional filename queryp)
+    "Save the contents of all registers to a file as loadable data. Cannot
+save window/frame configurations."
+    (interactive "i\nP")
+    (setf filename (if queryp (read-file-name nil registers-file) (or filename registers-file)))
+    (let ((print-level nil)
+          (print-length nil)
+          (b (generate-new-buffer "*registers*")))
+      (set-buffer b)
+      (insert (format ";;; %s -*- mode:emacs-lisp; lexical-binding:t -*-\n" (file-name-base filename)))
+      (dolist (i register-alist)
+        (let ((char (car i))
+              (contents (cdr i)))
+          (cond
+           ((or (stringp contents) (numberp contents))
+            (insert (format "%S\n" `(set-register ,char ,contents))))
+           ((markerp contents)
+            (insert (format "%S\n" `(set-register ,char
+                                                  '(file-query
+                                                    ,(buffer-file-name (marker-buffer contents))
+                                                    ,(marker-position contents))))))
+           ((bufferp (cdr contents))
+            (insert (format "%s\n" `(set-register ,char ',(buffer-name (cdr contents))))))
+           (t (when (and contents
+                         (not (or (window-configuration-p (car contents))
+                                  (frame-configuration-p (car contents)))))
+                (insert (format "%s\n" `(set-register ,char ',contents))))))))
+      (delete-file filename)
+      (write-file filename)
+      (kill-buffer b))))
 
 ;;; Outlines
 (use-package outline
-  :init (setq outline-minor-mode-use-buttons nil)
+  :init (setq outline-minor-mode-use-buttons 'in-margins)
+  :hook (view-mode . (lambda () (setq-local outline-minor-mode-use-buttons 'insert)))
   :bind 
   ("C-c C-p" . outline-previous-heading)
   ("C-c C-n" . outline-next-heading)
@@ -559,13 +575,7 @@ Interactively, NUMBER is the prefix arg."
 		         (sh-script-mode "###+")
 		         (makefile-mode "###+")
 		         (conf-mode "###+")
-		         (common-lisp-mode)
-		         (emacs-lisp-mode)
-		         (lisp-data-mode)
-		         (org-mode)
-		         (css-mode)
-		         (html-mode)
-		         (skel-mode)))
+                 (fundamental-mode "###+"))
 
 ;;; Shell
 (use-package shell
@@ -1163,7 +1173,9 @@ With prefix ARG non-nil, insert the result at the end of region."
               ("RET" . project-skel-shell)
               ("a" . project-agenda)
               ("t" . project-todo-list)
-              ("C" . project-capture))
+              ("C" . project-capture)
+              ("R" . project-load-registers)
+              ("S" . project-save-registers))
   :interpreter "skel"
   :hook 
   (project-find-functions . project-try-skel)

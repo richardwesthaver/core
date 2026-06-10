@@ -23,6 +23,7 @@
 (defvar user-lisp-directory (expand-file-name "lisp" user-emacs-directory))
 (defvar user-custom-file (expand-file-name (format "%s.el" user-login-name) user-emacs-directory))
 (defvar user-config-file (expand-file-name "config.el" user-emacs-directory))
+(defvar registers-file (expand-file-name "registers" user-emacs-directory))
 (defvar user-home-directory (expand-file-name "~"))
 (defvar user-lab-directory (expand-file-name "lab" user-home-directory))
 (defvar user-stash-directory (expand-file-name ".stash" user-home-directory))
