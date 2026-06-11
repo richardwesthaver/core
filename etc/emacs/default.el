@@ -548,7 +548,7 @@ save window/frame configurations."
 
 ;;; Outlines
 (use-package outline
-  :init (setq outline-minor-mode-use-buttons 'in-margins)
+  :defer nil
   :hook (view-mode . (lambda () (setq-local outline-minor-mode-use-buttons 'insert)))
   :bind 
   ("C-c C-p" . outline-previous-heading)
@@ -556,14 +556,12 @@ save window/frame configurations."
   ("C-c TAB" . outline-cycle)
   ("C-c <backtab>" . outline-cycle-buffer)
   :config
-  (defun outline-hook (&optional rx)
-    "Enable `outline-minor-mode' and set `outline-regexp'."
-    (when rx (setq-local outline-regexp rx))
-    (outline-minor-mode 1))
-
-  (defun add-outline-hook (mode &optional rx)
-    (let ((sym (symb mode "-hook")))
-      (add-hook sym (lambda () (outline-hook rx)))))
+  (defun add-outline-hook (mode &optional rx buttons)
+    (let ((sym (symb mode "-hook"))
+          (body `(,@(when rx `((setq-local outline-regexp ,rx)))
+                  ,@(when buttons `((setq-local outline-minor-mode-use-buttons ,buttons)))
+                  (outline-minor-mode 1))))
+      (add-hook sym `(lambda () ,@body))))
 
   (defmacro outline-hooks (&rest pairs)
     `(mapc (lambda (x) (add-outline-hook (car x) (cadr x))) ',pairs))
@@ -575,7 +573,10 @@ save window/frame configurations."
 		         (sh-script-mode "###+")
 		         (makefile-mode "###+")
 		         (conf-mode "###+")
-                 (fundamental-mode "###+"))
+                 (fundamental-mode "###+")
+                 (org-mode)
+                 (common-lisp-mode nil 'in-margins)
+                 (emacs-lisp-mode nil 'in-margins)))
 
 ;;; Shell
 (use-package shell
