@@ -561,10 +561,11 @@ save window/frame configurations."
           (body `(,@(when rx `((setq-local outline-regexp ,rx)))
                   ,@(when buttons `((setq-local outline-minor-mode-use-buttons ,buttons)))
                   (outline-minor-mode 1))))
+      (print body)
       (add-hook sym `(lambda () ,@body))))
 
   (defmacro outline-hooks (&rest pairs)
-    `(mapc (lambda (x) (add-outline-hook (car x) (cadr x))) ',pairs))
+    `(mapc (lambda (x) (apply 'add-outline-hook x)) ',pairs))
 
   (outline-hooks (asm-mode ";;;+")
 		         (nasm-mode ";;;+")
@@ -575,8 +576,7 @@ save window/frame configurations."
 		         (conf-mode "###+")
                  (fundamental-mode "###+")
                  (org-mode)
-                 (common-lisp-mode nil 'in-margins)
-                 (emacs-lisp-mode nil 'in-margins)))
+                 (prog-mode nil 'in-margins)))
 
 ;;; Shell
 (use-package shell
