@@ -376,25 +376,35 @@ specified by `prog-comment-timestamp-format-verbose'."
   :local t)
 
 ;; support ORG reader syntax in lisp files 
-(defun org-links-in-buffer (&optional buffer)
+(defun org-links-in-buffer ()
 "Return a list of org-links as (BEG END LINK DESC) in BUFFER
 or the current buffer if not given."
   (let ((matches))
     (save-match-data
       (save-excursion
-        (with-current-buffer (or buffer (current-buffer))
-          (save-restriction
-            (widen)
-            (end-of-buffer)
-            ;; search backwards since resulting list will be reversed
-            (while (search-backward-regexp org-link-any-re nil t 1)
-              (push
-               (list
-                (match-beginning 0)
-                (match-end 0)
-                (or (match-string-no-properties 1) (match-string-no-properties 0))
-                (match-string-no-properties 2))
-               matches)))))
+        (save-restriction
+          (widen)
+          (beginning-of-buffer)
+          (while (search-forward-regexp org-link-any-re nil t 1)
+            (push
+             (if (org-in-regexp org-link-bracket-re)
+                 (list
+                  ;; start/end
+                  (match-string-no-properties 0)
+                  (match-beginning 0)
+                  (match-end 0)
+                  ;; 1
+                  (match-string-no-properties 1) 
+                  (match-beginning 1)
+                  (match-end 1)
+                  ;; 2
+                  (match-string-no-properties 2)
+                  (match-beginning 2)
+                  (match-end 2))
+               (list (match-string-no-properties 0)
+                     (match-beginning 0)
+                     (match-end 0)))
+             matches))))
       matches)))
 
 (defun org-minor-mode-swap-setup ()
@@ -403,15 +413,17 @@ or the current buffer if not given."
 
 (defun org-minor-mode-setup ()
   (when org-minor-mode-use-buttons
-    (mapc (lambda (x) 
-            (cl-destructuring-bind (start end link &optional desc) x
-              (make-button 
-               start end
-               ;; 'label (cadddr x)
-               'data link
+    (mapc (lambda (a) 
+            (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
+              ;; (remove-overlays xs (or ze xe))
+              (make-button
+               xs xe
+               'data (or y x)
                'action 'org-open-at-point-global
-               'help-echo (or desc link))))
-            ;; (remove-overlays (car x) (cadr x) '(face nil))
+               'help-echo (or (when z (format "%s (%s)" z y)) x))
+              (when z 
+                (put-text-property xs zs 'invisible t)
+                (put-text-property ze xe 'invisible t))))
           (org-links-in-buffer))))
 
 ;; FIX 2026-05-01: readtable regexps

@@ -1,8 +1,8 @@
 ;;; skel.el --- skel Emacs Mode -*- lexical-binding:t -*-
 
-;; skel-mode, skel-minor-mode, skt-minor-mode
+;; skel-mode, skel-minor-mode
 
-;; Copyright (C) 2023  The Compiler Company
+;; Copyright (C) 2023  [[https://compiler.company][The Compiler Company]]
 
 ;; Author: ellis <ellis@rwest.io>
 ;; Keywords: languages, lisp
