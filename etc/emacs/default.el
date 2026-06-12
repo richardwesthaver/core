@@ -302,9 +302,10 @@ TABLE."
 (use-package speedbar
   :defer nil
   :config
-  (setq speedbar-sort-tags t
-	    speedbar-prefer-window t
-	    speedbar-track-mouse-flag t)
+  (setopt speedbar-sort-tags t
+	      speedbar-prefer-window t
+	      speedbar-track-mouse-flag t
+          speedbar-use-images t)
   (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
   (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
 
@@ -345,7 +346,7 @@ TABLE."
   :load-path site-lisp-directory
   :hook 
   (after-init . ulang-init)
-  (lisp-mode . org-minor-mode)
+  (prog-mode . org-minor-mode)
   (lisp-mode . ulang--lisp-page-delimiter)
   (org-mode . ulang--org-page-delimiter)
   (sh-script-mode . ulang--sh-page-delimiter))
@@ -353,31 +354,36 @@ TABLE."
 ;;; Eglot
 (use-package eglot
   :bind (:map status-map ("e" . eglot-list-connections)))
+
 ;;; Lisp
 (use-package lisp-mode
+  :defer nil
   :mode ("\\.sys\\'" "\\.gen\\'")
+  :hook 
+  (common-lisp-lisp-mode . (lambda () (setq-local org-minor-mode-use-readtable t)))
   :bind 
   ("<XF86Paste>" . lisp-mode-shared-map)
   (:map emacs-lisp-mode-map
-        ("C-c C-l" . load-file)
-        ("C-c M-k" . elisp-byte-compile-file))
-  (:map lisp-mode-shared-map
-        ("C-M-;" . prog-comment-dwim)
-        ("C-c C-;" . prog-comment-timestamp-keyword)
-        ("C-M-f" . forward-sexp)
-        ("C-M-b" . backward-sexp)
-        ("C-M-d" . down-list)
-        ("C-M-u" . up-list)
-        ("C-M-p" . backward-list)
-        ("C-M-n" . forward-list)
-        ("C-M-k" . kill-sexp)
-        ("C-M-q" . indent-sexp)
-        ("C-M-t" . transpose-sexps)
-        ("C-M-r" . raise-sexp)
-        ("C-M-c" . check-parens)
-        ("C-M-x" . eval-defun)))
+        ("C-c M-l" . load-file)
+        ("C-c M-k" . elisp-byte-compile-file)
+        (:map lisp-mode-shared-map
+              ("C-M-;" . prog-comment-dwim)
+              ("C-c C-;" . prog-comment-timestamp-keyword)
+              ("C-M-f" . forward-sexp)
+              ("C-M-b" . backward-sexp)
+              ("C-M-d" . down-list)
+              ("C-M-u" . up-list)
+              ("C-M-p" . backward-list)
+              ("C-M-n" . forward-list)
+              ("C-M-k" . kill-sexp)
+              ("C-M-q" . indent-sexp)
+              ("C-M-t" . transpose-sexps)
+              ("C-M-r" . raise-sexp)
+              ("C-M-c" . check-parens)
+              ("C-M-x" . eval-defun))))
 
 (use-package inf-lisp
+  :defer nil
   :init 
   (setq inferior-lisp-program
 	    (format "%s --dynamic-space-size=8G --control-stack-size=32"
@@ -549,7 +555,6 @@ save window/frame configurations."
 ;;; Outlines
 (use-package outline
   :defer nil
-  :hook (view-mode . (lambda () (setq-local outline-minor-mode-use-buttons 'insert)))
   :bind 
   ("C-c C-p" . outline-previous-heading)
   ("C-c C-n" . outline-next-heading)
@@ -561,12 +566,9 @@ save window/frame configurations."
           (body `(,@(when rx `((setq-local outline-regexp ,rx)))
                   ,@(when buttons `((setq-local outline-minor-mode-use-buttons ,buttons)))
                   (outline-minor-mode 1))))
-      (print body)
       (add-hook sym `(lambda () ,@body))))
-
   (defmacro outline-hooks (&rest pairs)
     `(mapc (lambda (x) (apply 'add-outline-hook x)) ',pairs))
-
   (outline-hooks (asm-mode ";;;+")
 		         (nasm-mode ";;;+")
 		         (rust-mode "\\(//!\\|////+\\)")
@@ -786,13 +788,19 @@ With prefix ARG non-nil, insert the result at the end of region."
         ("x" . mpc-playlist-delete)
         ("m" . mpc-mark)
         ("1" . mpc-playlist))
-  ("C-c e p" . mpc)
+  :bind ("C-c e p" . mpc)
   :config
   (defun mpc-mark ()
     "Mark mpc song at point and move to next line."
     (interactive)
     (mpc-select-toggle)
     (next-line)))
+
+;;; Newsticker
+(use-package newsticker
+  :bind 
+  ("C-c e n" . newsticker-plainview)
+  ("C-c e N" . newsticker-treeview))
 
 ;;; Diary
 (use-package diary-lib
@@ -819,6 +827,8 @@ With prefix ARG non-nil, insert the result at the end of region."
   :bind 
   ("C-c l" . org-store-link)
   ("C-c c" . org-capture)
+  ("C-c C-o" . org-open-at-point-global)
+  ("C-c C-l" . org-insert-link-global)
   (:map org-mode-map ("C-c t" . org-todo))
   :init
   (defun ol-vc-expand (tag)
@@ -991,6 +1001,7 @@ With prefix ARG non-nil, insert the result at the end of region."
                                ("core" . "common_lisp"))))
   (setq org-agenda-include-diary t
         org-agenda-include-inactive-timestamps t
+        org-agenda-show-outline-path 'title
         org-agenda-span 7
         org-agenda-block-separator ?-
         org-agenda-breadcrumbs-separator (nerd-icons-mdicon "nf-md-menu_right")
@@ -1179,6 +1190,7 @@ With prefix ARG non-nil, insert the result at the end of region."
               ("S" . project-save-registers))
   :interpreter "skel"
   :hook 
+  (skel-mode . (lambda () (setq-local org-minor-mode-use-readtable t)))
   (project-find-functions . project-try-skel)
   ;; (hack-dir-local-get-variables-functions . skel-dir-local--get-variables)
   (prog-mode . skel-minor-mode)

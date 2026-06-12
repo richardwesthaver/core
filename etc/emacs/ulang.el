@@ -1,8 +1,8 @@
 ;;; ulang.el --- ulang compliance lib -*- lexical-binding:t -*-
 
-;; Copyright (C) 2023  
+;; Copyright (C) 2023  The Compiler Company
 
-;; Author:  <ellis@zor>
+;; Author:  <mailto:ellis@zor>
 ;; Keywords: comm
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -212,7 +212,7 @@ values in addition to the keyword '#+LOCATION:'."
   (interactive "d")
   (let ((path (org-get-with-inheritance "LOCATION" nil point)))
     ;; when the second path component is an absolute path, skip the first
-    (when (and (< 1 (length path)) (file-name-absolute-p (print (cadr path))))
+    (when (and (< 1 (length path)) (file-name-absolute-p (cadr path)))
       (setq path (cdr path)))
     (message "%s"
              (apply 'join-paths
@@ -363,45 +363,83 @@ specified by `prog-comment-timestamp-format-verbose'."
       (insert (concat " " string))))))
 
 ;;; org-minor-mode
+(defcustom org-minor-mode-use-buttons t
+  "When Non-nil insert buttons into 'org-minor-mode' buffers."
+  :type 'boolean
+  :group 'ulang
+  :local t)
+
+(defcustom org-minor-mode-use-readtable nil
+  "When Non-nil use embedded organ readtable syntax in 'org-minor-mode' buffers."
+  :type 'boolean
+  :group 'ulang
+  :local t)
+
 ;; support ORG reader syntax in lisp files 
-(defun org-minor-mode-setup ()
+(defun org-links-in-buffer (&optional buffer)
+"Return a list of org-links as (BEG END LINK DESC) in BUFFER
+or the current buffer if not given."
+  (let ((matches))
+    (save-match-data
+      (save-excursion
+        (with-current-buffer (or buffer (current-buffer))
+          (save-restriction
+            (widen)
+            (end-of-buffer)
+            ;; search backwards since resulting list will be reversed
+            (while (search-backward-regexp org-link-any-re nil t 1)
+              (push
+               (list
+                (match-beginning 0)
+                (match-end 0)
+                (or (match-string-no-properties 1) (match-string-no-properties 0))
+                (match-string-no-properties 2))
+               matches)))))
+      matches)))
+
+(defun org-minor-mode-swap-setup ()
   (make-local-variable 'post-command-hook)
-  (add-hook 'post-command-hook 'org-update-minor-mode nil t)
-  (make-local-variable 'minor-mode-alist)
-  (or (assq 'org-minor-mode minor-mode-alist)
-      (setq minor-mode-alist
-            (cons '(org-minor-mode " ;org") minor-mode-alist))))
+  (add-hook 'post-command-hook 'org-update-minor-mode nil t))
 
-(defun org-change-mode (to)
-  (if (eql to major-mode)
-      t
-    (progn
-      (if (eql to 'org-mode)
-      (org-mode)
-    (lisp-mode))
-      (org-minor-mode-setup))))
+(defun org-minor-mode-setup ()
+  (when org-minor-mode-use-buttons
+    (mapc (lambda (x) 
+            (cl-destructuring-bind (start end link &optional desc) x
+              (make-button 
+               start end
+               ;; 'label (cadddr x)
+               'data link
+               'action 'org-open-at-point-global
+               'help-echo (or desc link))))
+            ;; (remove-overlays (car x) (cadr x) '(face nil))
+          (org-links-in-buffer)))
+  (when org-minor-mode-use-readtable
+    (org-minor-mode-swap-setup)))
 
-;; FIX 2026-05-01: 
+;; FIX 2026-05-01: readtable regexps
 (defun org-update-minor-mode ()
   (let ((lm -1)
         (rm -1)
-    (vbar nil))
+        (vbar nil)
+        (p (point)))
     (save-excursion 
       (if (or (search-backward "#&" nil t)
-          (and (re-search-backward "#|[ ]?org" nil t) (setf vbar t)))
+              (and (re-search-backward "#|[ ]?org" nil t) (setf vbar t)))
           (setq lm (point))
         (setq lm -1)))
     (save-excursion
       (if (or (and (not vbar) (search-forward "&#" nil t))
-          (and vbar (search-forward "|#" nil t)))
+              (search-forward "|#" nil t))
           (setq rm (point))
         (setq rm -1)))
-    (if (or (= lm -1) (= rm -1))
-        (org-change-mode nil)
-      (org-change-mode 'org-mode))))
+    (if (< 0 lm p rm)
+        (progn (major-mode-suspend) (org-mode))
+      (major-mode-restore))
+    (org-minor-mode-swap-setup)))
 
 (define-minor-mode org-minor-mode nil
   :lighter " org"
+  :interactive (prog-mode)
   :after-hook (org-minor-mode-setup))
 
 ;;; Hooks
