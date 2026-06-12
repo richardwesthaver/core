@@ -86,6 +86,7 @@
    :*definition-types*
    :definition-specifier
    :find-definitions
+   :definition-source-line-number
    :classify-symbol :symbol-classification-string
    :file-commentary
    :file-summary

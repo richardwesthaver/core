@@ -545,8 +545,9 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 
 (defun %load-proto (form &optional (system *module*))
   "Load a protocol module NAME."
-  (destructuring-bind (name &rest args) form
+  (destructuring-bind (name . args) form
     (declare (ignore name))
+    (print args)
     (let ((pkg (find-package (or (getf args :package) system))))
       (values
        (remove-if 'null

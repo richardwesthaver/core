@@ -412,9 +412,7 @@ or the current buffer if not given."
                'action 'org-open-at-point-global
                'help-echo (or desc link))))
             ;; (remove-overlays (car x) (cadr x) '(face nil))
-          (org-links-in-buffer)))
-  (when org-minor-mode-use-readtable
-    (org-minor-mode-swap-setup)))
+          (org-links-in-buffer))))
 
 ;; FIX 2026-05-01: readtable regexps
 (defun org-update-minor-mode ()
@@ -439,8 +437,11 @@ or the current buffer if not given."
 
 (define-minor-mode org-minor-mode nil
   :lighter " org"
+  :group 'ulang
   :interactive (prog-mode)
-  :after-hook (org-minor-mode-setup))
+  ;; (if (derived-mode-p 'lisp-mode) (setq-local org-minor-mode-use-readtable t))
+  (when org-minor-mode-use-readtable (org-minor-mode-swap-setup))
+  (org-minor-mode-setup))
 
 ;;; Hooks
 ;;;###autoload

@@ -41,23 +41,28 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
 :TYPESPEC, :CLASS, :MACRO, :SPECIAL-OPERATOR, and/or :PACKAGE"
   (check-type symbol symbol)
   (flet ((type-specifier-p (s)
-           (or (documentation s 'type)
-               (not (eq (deftype-lambda-list s) :not-available)))))
+           (documentation s 'type)
+           #+nil (not (eq (deftype-lambda-list s) :not-available))
+           ))
     (let (result)
-      (when (boundp symbol)             (push (if (constantp symbol)
-                                                  :constant :boundp) result))
+      (when (boundp symbol)             (push (if (constantp symbol) :constant :boundp) result))
+      (or (when (find-system symbol) (push :system result))
+          (when (find-module symbol) (push :module result)))
+      (when (find-class symbol nil)     (push :class result))
+      (when (subtypep symbol 'condition) (push :condition result))
+      (when (subtypep symbol 'structure-class) (push :structure result))
+      (when (ignore-errors (parse-alien-type symbol nil)) (push :alien-type result))
       (when (fboundp symbol)            (push :function result))
       (when (type-specifier-p symbol)   (push :type result))
-      (when (find-class symbol nil)     (push :class result))
-      (when (typep symbol 'condition) (push :condition result))
-      (when (typep symbol 'structure-class) (push :structure result))
-      (when (alien-type-p symbol) (push :alien-type result))
-      (when (vop-p symbol) (push :vop result))
+      (when-let ((sym (find-symbol* symbol :sb-vm nil)))
+        (when (or (gethash sym sb-c::*backend-parsed-vops*) 
+                  (gethash sym sb-c::*backend-template-names*))
+          (push :vop result)))
       (when (macro-function symbol)     (push :macro result))
       (when (special-operator-p symbol) (push :special-operator result))
       (when (find-package symbol)       (push :package result))
       (when (compiler-macro-function symbol) (push :compiler-macro result))
-      (when (compiled-function-p symbol) (push :compiled result))
+      (when (compiled-function-p (ignore-errors (symbol-function symbol))) (push :compiled result))
       (when (and (fboundp symbol)
                  (typep (ignore-errors (fdefinition symbol))
                         'generic-function))
@@ -65,8 +70,14 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
       result)))
 
 (defun symbol-classification-string (symbol)
-  "Return a string in the form -f-c---- where each letter stands for
-boundp fboundp generic-function class macro special-operator package"
+  "Return a string in the form -f-c---- where each letter stands for:
+- boundp 
+- fboundp 
+- generic-function 
+- class 
+- macro 
+- special-operator 
+- package"
   (let ((letters "bfgctmsp")
         (result (copy-seq "--------")))
     (flet ((flip (letter)

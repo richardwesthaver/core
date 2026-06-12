@@ -69,12 +69,7 @@
    :with-rdb
    :*temp-db-destroy*
    :with-temp-rdb
-   :do-db
-   :with-cf
-   :do-cf
-   :do-cfs
    :with-sst
-   :nil
    :rdb-cf-p
    :copy-rdb-cf
    :rdb-cf-key-type

@@ -80,3 +80,24 @@ to (SETF DOCUMENTATION).")
                    do (push (make-dspec type name defsrc) dspecs)
                       (dolist (d (sb-introspect:find-definition-sources-by-name name type)) (push d defs))))
     (values dspecs defs)))
+
+(defun count-lines-up-to-character (pathname char-count)
+  "Reads through PATHNAME and counts the number of newlines before reaching
+CHAR-COUNT."
+  (with-open-file (s pathname)
+    (loop for count from 0 by 1
+          with line = 1
+          with lf = nil
+          for char = (read-char s)
+          ;; do (format t "~& ~5,d ~5,d: ~@C ~a" count line char lf)
+          if (char= #\Newline char)
+          do (incf line)
+          until (> count char-count)
+          finally (return (1+ line)))))
+
+(defun definition-source-line-number (def)
+  (let ((pathname (sb-introspect:definition-source-pathname def)))
+    (if-let ((count (sb-introspect:definition-source-character-offset def)))
+      (count-lines-up-to-character pathname count)
+      0)))
+    

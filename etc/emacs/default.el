@@ -344,12 +344,13 @@ TABLE."
   :defer nil
   :bind (:map org-mode-map ("C-c L" . org-follow-location))
   :load-path site-lisp-directory
-  :hook 
-  (after-init . ulang-init)
-  (prog-mode . org-minor-mode)
-  (lisp-mode . ulang--lisp-page-delimiter)
-  (org-mode . ulang--org-page-delimiter)
-  (sh-script-mode . ulang--sh-page-delimiter))
+  :hook
+  ((after-init . ulang-init)
+   (prog-mode . org-minor-mode)
+   (lisp-mode . ulang--lisp-page-delimiter)
+   (emacs-lisp-mode . ulang--lisp-page-delimiter)
+   (org-mode . ulang--org-page-delimiter)
+   (sh-script-mode . ulang--sh-page-delimiter)))
 
 ;;; Eglot
 (use-package eglot
@@ -364,8 +365,8 @@ TABLE."
   :bind 
   ("<XF86Paste>" . lisp-mode-shared-map)
   (:map emacs-lisp-mode-map
-        ("C-c M-l" . load-file)
         ("C-c M-k" . elisp-byte-compile-file)
+        ("C-c C-l" . load-file)
         (:map lisp-mode-shared-map
               ("C-M-;" . prog-comment-dwim)
               ("C-c C-;" . prog-comment-timestamp-keyword)
@@ -457,6 +458,7 @@ TABLE."
 
 ;;; Asm
 (use-package nasm-mode
+  :ensure t
   :hook (asm . nasm-mode))
 
 ;;; Rust
@@ -555,7 +557,7 @@ save window/frame configurations."
 ;;; Outlines
 (use-package outline
   :defer nil
-  :bind 
+  :bind*
   ("C-c C-p" . outline-previous-heading)
   ("C-c C-n" . outline-next-heading)
   ("C-c TAB" . outline-cycle)
@@ -577,7 +579,7 @@ save window/frame configurations."
 		         (makefile-mode "###+")
 		         (conf-mode "###+")
                  (fundamental-mode "###+")
-                 (org-mode)
+                 ;; (org-mode)
                  (prog-mode nil 'in-margins)))
 
 ;;; Shell
@@ -828,7 +830,7 @@ With prefix ARG non-nil, insert the result at the end of region."
   ("C-c l" . org-store-link)
   ("C-c c" . org-capture)
   ("C-c C-o" . org-open-at-point-global)
-  ("C-c C-l" . org-insert-link-global)
+  ("C-c M-l" . org-insert-link-global)
   (:map org-mode-map ("C-c t" . org-todo))
   :init
   (defun ol-vc-expand (tag)
@@ -1190,7 +1192,6 @@ With prefix ARG non-nil, insert the result at the end of region."
               ("S" . project-save-registers))
   :interpreter "skel"
   :hook 
-  (skel-mode . (lambda () (setq-local org-minor-mode-use-readtable t)))
   (project-find-functions . project-try-skel)
   ;; (hack-dir-local-get-variables-functions . skel-dir-local--get-variables)
   (prog-mode . skel-minor-mode)
