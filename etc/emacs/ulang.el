@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2023  The Compiler Company
 
-;; Author:  <mailto:ellis@zor>
+;; Author: <mailto:ellis@compiler.company>
 ;; Keywords: comm
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -60,7 +60,7 @@
   :group 'ulang)
 
 (defcustom ulang-todo-keyword-faces
-  '()
+  '(("TODO" :weight bold))
   "See `org-todo-keyword-faces'."
   :group 'ulang)
 
@@ -249,25 +249,20 @@ or file at point. With C-u or ARG open in separate window."
      (t (funcall (if arg 'find-file-other-window 'find-file) loc t)))))
 
 ;;; Comments
-(defcustom prog-comment-keywords ulang-todo-keywords
-  "List of strings with comment keywords."
-  :group 'ulang
-  :type '(list string))
-
-(defcustom prog-comment-timestamp-format-concise "%F"
-  "Specifier for date in `prog-comment-timestamp-keyword'.
+(defcustom ulang-comment-timestamp-format-concise "%F"
+  "Specifier for date in `ulang-comment-timestamp-keyword'.
 Refer to the doc string of `format-time-string' for the available
 options."
   :group 'ulang
   :type 'string)
 
-(defcustom prog-comment-timestamp-format-verbose "%F %T %z"
-  "Like `prog-comment-timestamp-format-concise', but longer."
+(defcustom ulang-comment-timestamp-format-verbose "%F %T %z"
+  "Like `ulang-comment-timestamp-format-concise', but longer."
   :group 'ulang
   :type 'string)
 
 ;;;###autoload
-(defun prog-comment-dwim (arg)
+(defun ulang-comment-dwim (arg)
   "Flexible, do-what-I-mean commenting.
 
 If region is active and ARG is either a numeric argument greater
@@ -294,22 +289,22 @@ operates on the lines before point)."
    (t
     (save-excursion (comment-line (or arg 1))))))
 
-(defvar prog-comment--keyword-hist '()
+(defvar ulang-comment--keyword-hist '()
   "Input history of selected comment keywords.")
 
-(defun prog-comment--keyword-prompt (keywords)
+(defun ulang-comment--keyword-prompt (keywords)
   "Prompt for candidate among KEYWORDS."
-  (let ((def (car prog-comment--keyword-hist)))
+  (let ((def (car ulang-comment--keyword-hist)))
     (completing-read
      (format "Select keyword [%s]: " def)
-     keywords nil nil nil 'prog-comment--keyword-hist def)))
+     keywords nil nil nil 'ulang-comment--keyword-hist def)))
 
 ;;;###autoload
-(defun prog-comment-timestamp-keyword (keyword &optional verbose)
+(defun ulang-comment-timestamp-keyword (keyword &optional verbose)
   "Add timestamped comment with KEYWORD.
 
 When called interactively, the list of possible keywords is that
-of `prog-comment-keywords', though it is possible to
+of `ulang-comment-keywords', though it is possible to
 input arbitrary text.
 
 If point is at the beginning of the line or if line is empty (no
@@ -323,18 +318,18 @@ with `comment-indent'.
 
 The comment is always formatted as 'DELIMITER KEYWORD DATE:',
 with the date format being controlled by the variable
-`prog-comment-timestamp-format-concise'.
+`ulang-comment-timestamp-format-concise'.
 
 With optional VERBOSE argument (such as a prefix argument
 `\\[universal-argument]'), use an alternative date format, as
-specified by `prog-comment-timestamp-format-verbose'."
+specified by `ulang-comment-timestamp-format-verbose'."
   (interactive
    (list
-    (prog-comment--keyword-prompt prog-comment-keywords)
+    (ulang-comment--keyword-prompt ulang-comment-keywords)
     current-prefix-arg))
   (let* ((date (if verbose
 		   comment-timestamp-format-verbose
-		 prog-comment-timestamp-format-concise))
+		 ulang-comment-timestamp-format-concise))
 	 (string (format "%s %s: " keyword (format-time-string date)))
 	 (beg (point)))
     (cond
@@ -409,25 +404,28 @@ or the current buffer if not given."
 
 (defun org-minor-mode-swap-setup ()
   (make-local-variable 'post-command-hook)
-  (add-hook 'post-command-hook 'org-update-minor-mode nil t))
+  (add-hook 'post-command-hook 'org-minor-mode-swap nil t))
 
-(defun org-minor-mode-setup ()
-  (when org-minor-mode-use-buttons
-    (mapc (lambda (a) 
-            (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
-              ;; (remove-overlays xs (or ze xe))
-              (make-button
-               xs xe
-               'data (or y x)
-               'action 'org-open-at-point-global
-               'help-echo (or (when z (format "%s (%s)" z y)) x))
-              (when z 
-                (put-text-property xs zs 'invisible t)
-                (put-text-property ze xe 'invisible t))))
-          (org-links-in-buffer))))
+(defun org-minor-mode-link-setup ()
+  (setq-local font-lock-fontify-buffer-function 'org-minor-mode-update-links))
+
+(defun org-minor-mode-update-links ()
+  (mapc (lambda (a) 
+          (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
+            ;; (remove-overlays xs (or ze xe))
+            (make-button
+             xs xe
+             'data (or y x)
+             'action 'org-open-at-point-global
+             'help-echo (or (when z (format "%s (%s)" z y)) x))
+            (when z 
+              (put-text-property xs zs 'invisible t)
+              (put-text-property ze xe 'invisible t))))
+        (org-links-in-buffer))
+  (jit-lock-refontify))
 
 ;; FIX 2026-05-01: readtable regexps
-(defun org-update-minor-mode ()
+(defun org-minor-mode-swap ()
   (let ((lm -1)
         (rm -1)
         (vbar nil)
@@ -453,7 +451,7 @@ or the current buffer if not given."
   :interactive (prog-mode)
   ;; (if (derived-mode-p 'lisp-mode) (setq-local org-minor-mode-use-readtable t))
   (when org-minor-mode-use-readtable (org-minor-mode-swap-setup))
-  (org-minor-mode-setup))
+  (when org-minor-mode-use-buttons (org-minor-mode-link-setup)))
 
 ;;; Hooks
 ;;;###autoload

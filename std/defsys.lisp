@@ -525,10 +525,14 @@ to match all systems and optional KIND (a module designator) specified by KEY."
               (setf (gethash name *module-table*) (nconc ret (list kind k))))
          (t (setf (gethash name *module-table*) ret)))))
     ((and kind val append) (register-module kind name val append))
+    ((not (or kind key val append))
+     (delete-module name))
     (t (setf (gethash name *module-table*) val))))
 
-(defsetf find-module (name &optional kind key (append t)) (val)
-  `(set-module ,name ,val ,kind ,key ,append))
+(definline delete-module (name) (remhash name *module-table*))
+
+(defsetf find-module (name &optional kind key append) (val)
+   `(set-module ,name ,val ,kind ,key ,append))
 
 (defun init-module (mod)
   "Initialize module MOD, loading all implementation hooks."
@@ -544,39 +548,42 @@ to match all systems and optional KIND (a module designator) specified by KEY."
     :structs :declarations :globals))
 
 (defun %load-proto (form &optional (system *module*))
-  "Load a protocol module NAME."
-  (destructuring-bind (name . args) form
-    (declare (ignore name))
-    (print args)
-    (let ((pkg (find-package (or (getf args :package) system))))
-      (values
-       (remove-if 'null
-                  (mapcar (lambda (x)
-                            (when-let ((syms (getf args x)))
-                              (shadowing-import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
-                              (cons x syms)))
-                          *protocol-keyword-imports*))
-       pkg))))
+  "Load a protocol module given its FORM."
+  (handler-case
+      (destructuring-bind (name . args) form
+        (declare (ignore name))
+        (let ((pkg (find-package (or (getf args :package) system))))
+          (values
+           (remove-if 'null
+                      (mapcar (lambda (x)
+                                (when-let ((syms (getf args x)))
+                                  (shadowing-import (mapcar (lambda (x) (intern (symbol-name x) pkg)) syms))
+                                  (cons x syms)))
+                              *protocol-keyword-imports*))
+           pkg)))
+    (error (c) (simple-system-error "Invalid protocol.~%~A" c))))
 
 ;; templates?
 (defun %load-module (form kind key sys)
-  (case kind
-    ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
-    (:io (gethash form *io-table*))
-    (:annotations (load-annotations form))
-    (:printer (use-printer form))
-    (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
-    (:prelude (use-package form))
-    (:package (use-package form))
-    (:pool (setf *thread-pool* (find-thread-pool form)))
-    (:proto (%load-proto form))
-    (:tests (load-system form))
-    (:sys (load-system form))
-    (:bench (load-system form))
-    (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
-    (t
-     (sb-int:doplist (k v) form
-       (%load-module v k key sys)))))
+  (if (and (consp form) (consp (car form)))
+      (mapcar (lambda (x) (%load-module x kind key sys)) form)
+      (case kind
+        ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
+        (:io (gethash form *io-table*))
+        (:annotations (load-annotations (car form)))
+        (:printer (use-printer form))
+        (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
+        (:prelude (use-package form))
+        (:package (use-package form))
+        (:pool (setf *thread-pool* (find-thread-pool form)))
+        (:proto (%load-proto form))
+        (:tests (load-system form))
+        (:sys (load-system form))
+        (:bench (load-system form))
+        (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
+        (t
+         (sb-int:doplist (k v) form
+           (%load-module v k key sys))))))
 
 (defun load-module (name &optional kind key)
   (let ((*module* name))
@@ -606,7 +613,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
           args))
 
 (defun unload-module (name &optional kind key)
-  (setf (find-module name kind key nil) nil)
+  (setf (find-module name kind key) nil)
   (when (eq *module* name)
     (setf *module* nil)))
 

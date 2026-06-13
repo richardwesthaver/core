@@ -368,8 +368,8 @@ TABLE."
         ("C-c M-k" . elisp-byte-compile-file)
         ("C-c C-l" . load-file)
         (:map lisp-mode-shared-map
-              ("C-M-;" . prog-comment-dwim)
-              ("C-c C-;" . prog-comment-timestamp-keyword)
+              ("C-M-;" . ulang-comment-dwim)
+              ("C-c C-;" . ulang-comment-timestamp-keyword)
               ("C-M-f" . forward-sexp)
               ("C-M-b" . backward-sexp)
               ("C-M-d" . down-list)

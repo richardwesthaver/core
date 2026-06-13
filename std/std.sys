@@ -64,11 +64,13 @@
   (:pool :default)
   (:pool :sys)
   (:proto :serde
+   :package :std/io
    :description "SERialize/DEserialize."
    :conditions (serde-error serializer-error deserializer-errorr)
    :methods (serialize deserialize serde)
    :accessors (ser de))
   (:proto :pipe
+   :package :std/pipe
    :description "CLOS-based element pipelines."
    :conditions (unknown-element invalid-element)
    :functions (make-pipe defpipe*)
@@ -157,10 +159,12 @@
    :structs (pressure status)
    :predicates (task-p job-p task-force-p task-prevented-p))
   (:proto :bitfield
+   :package :std/bit
    :description "Efficiently store multiple discrete states in an unsigned integer."
    :types (bitfield)
    :macros (define-bitfield))
   (:proto :foreign-vector
+   :package :std/alien
    :description "Foreign octet-vector class wrapper with element-type-based memoization."
    :classes (foreign-vector-class foreign-vector)
    :parameters (*fvref-range-check*)
