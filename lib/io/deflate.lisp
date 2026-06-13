@@ -325,7 +325,7 @@ distances as specified by RFC1951."
   (defstruct (huffman-decode-table
               (:conc-name hdt-)
               (:constructor make-hdt (counts offsets symbols bits)))
-    ;; FIXME: look into combining these two into one array for speed.
+    ;; FIX: look into combining these two into one array for speed.
     (counts #1=(error "required parameter")
      :type (simple-array (unsigned-byte 16) (#.+max-code-length+))
      :read-only t)
@@ -1211,7 +1211,7 @@ the input and the number of bytes written to the output."
                (let ((header (inflate-state-header state)))
                  (when (logbitp +gzip-flag-crc+ (flags header))
                    (let ((crc16 (ensure-and-read-bits 16 state)))
-                     ;; FIXME: would be good to perform integrity checking here
+                     ;; FIX: would be good to perform integrity checking here
                      (declare (ignore crc16))))
                  (transition-to block-type)))
              (gzip-crc32 (state)
@@ -1411,7 +1411,7 @@ the input and the number of bytes written to the output."
   (n-groups 0)
   (n-selectors 0)
   (EOB 0 :type (integer 0 257))
-  ;; FIXME: check on the declarations for these three.
+  ;; FIX: check on the declarations for these three.
   (group-number 0 :type fixnum)
   (group-position 0 :type fixnum)
   (lval 0 :type fixnum)
@@ -2859,7 +2859,7 @@ check if reached."
   (declare (ignore args))
   (error "No callback given for compression"))
 
-;; FIXME: MERGE-INPUT is pretty ugly. It's the product of incremental
+;; FIX: MERGE-INPUT is pretty ugly. It's the product of incremental
 ;; evolution and experimentation. It should be cleaned up.
 
 ;; Its basic purpose is to use octets from INPUT to fill up 32k-octet halves
@@ -3123,7 +3123,7 @@ with OUTPUT, a starting offset, and the count of pending data."
    :adler32 (make-digest :adler32)))
 
 (defmethod start-data-format :before ((compressor zlib-compressor))
-  ;; FIXME: Replace these naked constants with symbolic constants.
+  ;; FIX: Replace these naked constants with symbolic constants.
   (write-octet #x78 compressor)
   (write-octet #x9C compressor))
 

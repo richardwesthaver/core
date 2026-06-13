@@ -603,7 +603,7 @@ variant associated with this value." type name)
 
 ;; inspired by ELEPHANT
 
-;; FIXME: this is probably inefficient after recent discoveries in
+;; FIX: this is probably inefficient after recent discoveries in
 ;; SB-ALIEN-INTERNALS - can be reworked to use direct SAP accessors with SAP-REF
 
 ;; all operations are performed on (* unsigned-char)

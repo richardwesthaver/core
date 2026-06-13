@@ -69,7 +69,7 @@
                oauth
                :auth-code auth-code
                :redirect-uri redirect-uri)))
-    (reset-from-json oauth now json))) ;; FIXME
+    (reset-from-json oauth now json))) ;; FIX
 
 (defun refresh-token (oauth)
   "Updates the oauth2 object with a refreshed token"

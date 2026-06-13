@@ -821,4 +821,4 @@ the PRINT-MIDI-MESSAGE method to print the slots."))
 			   do (setf (aref vec i) next-byte)
 			   finally (return vec)))
   :writer (map nil (lambda (byte) (write-bytes byte))
-	       data)) ; FIXME
+	       data)) ; FIX

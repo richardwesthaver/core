@@ -286,7 +286,7 @@
     (:kanji '(1 0 0 0))   ; "1000"
     (:eci '(0 1 1 1))     ; "0111"
     (:structured '(0 0 1 1)) ; "0011"
-    (:fnc1 '(0 1 0 1))))  ; FIXME: "0101" & "1001"
+    (:fnc1 '(0 1 0 1))))  ; FIX: "0101" & "1001"
 
 (defun terminator (bstream version level)
   "End of message"
@@ -1357,7 +1357,7 @@ preceded or followed by light area 4 modules wide. N3 points, N3 = 40"
             (format stream "0 ")))
       (format stream "~%"))))
 
-;;; FIXME: other encodings???
+;;; FIX: other encodings???
 (defun ascii->bytes (text)
   (map 'list #'char-code text))
 

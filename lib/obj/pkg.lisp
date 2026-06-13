@@ -642,7 +642,7 @@
 
 (defpkg :obj/project
   (:nicknames :project)
-  (:use :cl :std :id :schema :config :ast :cmd)
+  (:use :cl :std :id :schema :config :ast :cmd :url)
   (:export :project :project-config :make-project
    :*default-project-class* :simple-project :project-metadata :author
    :version :tags :description :license

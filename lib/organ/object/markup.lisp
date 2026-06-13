@@ -50,7 +50,7 @@
 ;; =verbatim=
 (define-org-object verbatim () :include plain-text)
 
-;; FIXME 2023-12-27: 
+;; FIX 2023-12-27: 
 (define-org-parser (verbatim :from string)
   (let ((res (org-create :verbatim)))
     (setf (org-verbatim-contents res)

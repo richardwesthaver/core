@@ -323,7 +323,7 @@ state of each file in FILES."
 ;;;; QUOTES
 ;; (defun dwim-match-quotes (string index))
 ;; (defun dwim-mark-quotes (string index &key pre post))
-;; FIXME: should checking for #\", "\"", et cetera.
+;; FIX: should checking for #\", "\"", et cetera.
 (defun quoted-p (string index)
   (let ((quoted-p nil))
     (dotimes (n (min index (length string)) quoted-p)
@@ -341,7 +341,7 @@ state of each file in FILES."
           when (eql (schar string n) #\") return n)))
 
 ;;;; PARENS
-;; FIXME: This is not the Right Way to do paren matching.
+;; FIX: This is not the Right Way to do paren matching.
 ;; * use stack, not counting
 ;; * don't count #\( #\) &co
 (defun after-close-p (string index)

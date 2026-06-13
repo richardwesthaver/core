@@ -207,7 +207,7 @@ of the array's :ELEMENT-TYPE ~S"
 (defun check-initial-contents (length initial-contents)
   (let ((initial-contents-length (length initial-contents)))
     (when (/= length initial-contents-length)
-      ;; FIXME: signal TYPE-ERROR
+      ;; FIX: signal TYPE-ERROR
       (error "MAKE-STATIC-VECTOR: There are ~A elements in the :INITIAL-CONTENTS, ~
 but requested vector length is ~A."
              initial-contents-length length))))
@@ -215,7 +215,7 @@ but requested vector length is ~A."
 (declaim (inline check-initialization-arguments))
 (defun check-initialization-arguments (initial-element-p initial-contents-p)
   (when (and initial-element-p initial-contents-p)
-    ;; FIXME: signal ARGUMENT-LIST-ERROR
+    ;; FIX: signal ARGUMENT-LIST-ERROR
     (error "MAKE-STATIC-VECTOR: You must not specify both ~
 :INITIAL-ELEMENT and :INITIAL-CONTENTS")))
 

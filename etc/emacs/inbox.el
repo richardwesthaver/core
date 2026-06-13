@@ -106,7 +106,7 @@
                  ("C" 3)
                  (_ 4)))
          (res))
-    ;; FIXME todo states shouldn't be hardcoded
+    ;; FIX: todo states shouldn't be hardcoded
     (cond
      ((null todo) (setq res (cons 3 prio)))
      ((string= todo "WATCH") (setq res (cons 3 prio)))

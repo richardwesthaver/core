@@ -65,7 +65,7 @@ endif")
 	       mk1))
 	  (is (push-mk-var '(a b) mk1))
 	  (is (push-mk-var '(b c) mk1))
-	  ;; FIXME
+	  ;; FIX
 	  (is 
        (null 
         (write-ast mk1 (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))))))

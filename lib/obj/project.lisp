@@ -45,6 +45,7 @@
    (author :initarg :author :accessor author)
    (version :initform nil :initarg :version :accessor version)
    (tags :initform nil :initarg :tags :accessor tags)
+   (url :initform nil :initarg :url :accessor url)
    (description :initarg :description :initform nil :type (or null string) :accessor description)
    (license :initform nil :initarg :license :accessor license))
   (:documentation "Project Metadata contains optional slots which may be inherited by

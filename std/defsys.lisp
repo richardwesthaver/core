@@ -67,8 +67,10 @@ ASDF:DEFSYSTEM.")
   :test 'string=
   :documentation "The default file extension used in system definitions.")
 
-(defvar *module* nil "The name of the current module or NIL. This gets set to the name of a SYSTEM
-in a call to INIT.")
+(defvar *module* nil 
+"The name of the current module.
+This value is set when INIT is called on a SYSTEM instance and whenever
+LOAD-MODULE is called.")
 
 (defvar *module-table* (make-hash-table :test 'equal)
   "A table which maps modules names to objects.")
@@ -588,17 +590,17 @@ to match all systems and optional KIND (a module designator) specified by KEY."
            (%load-module v k key sys))))))
 
 (defun load-module (name &optional kind key)
-  (let ((*module* name))
-    (multiple-value-bind (form sys prov) (find-module name kind key)
-      (let ((kind (or prov kind)))
-        (typecase form
-          (list
-           (%load-module
-            (case (length form)
-              (1 (car form))
-              (t form))
-            kind (ensure-car form) sys))
-          (t (%load-module form kind form sys)))))))
+  (multiple-value-bind (form sys prov) (find-module name kind key)
+    (let ((kind (or prov kind)))
+      (typecase form
+        (list
+         (%load-module
+          (case (length form)
+            (1 (car form))
+            (t form))
+          kind (ensure-car form) sys))
+        (t (%load-module form kind form sys)))
+      (setq *module* name))))
 
 (defun load-module* (name &rest args)
   (mapcar (lambda (x) 

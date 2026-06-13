@@ -256,7 +256,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
   (invariant (zerop (c-terminal-close)))
   (setf (backend-ready-p backend) nil))
 
-;; FIXME: Use read-char-no-hang to detect pastes, and set an
+;; FIX: Use read-char-no-hang to detect pastes, and set an
 ;; apropriate flag, or something.
 (defmethod read-chord ((backend terminal))
   (assert (backend-ready-p backend))
@@ -302,7 +302,7 @@ color bolded, other options are terminal colors :BLACK, :RED, :GREEN, :YELLOW,
     (write-char #\Return)
     (not (equal #\q q))))
 
-;; FIXME: Explicit line-wrap needed
+;; FIX: Explicit line-wrap needed
 (defmethod print-in-columns ((backend terminal) list &key width)
   (let ((max-col (truncate (backend-columns backend) width))
 	(col 0)
@@ -842,7 +842,7 @@ MAKE-LIST-COMPLETER."
            (redraw-line *editor*)
            (get-finished-string *editor*)))
     (if (and *editor* (backend-ready-p *editor*))
-        ;; FIXME: This is a bit kludgy. It would be nicer to have a new
+        ;; FIX: This is a bit kludgy. It would be nicer to have a new
         ;; editor object that shares the same backend, kill-ring, etc.
         (let* ((new (getf keyword-args :prompt))
                (old (editor-prompt *editor*))
@@ -898,7 +898,7 @@ MAKE-LIST-COMPLETER."
     (catch 'form-done
       (let ((eof-marker (gensym "EOF"))
 	    (table (copy-readtable)))
-	;; FIXME: It would be nice to provide an interace of some sort that
+	;; FIX: It would be nice to provide an interace of some sort that
 	;; the user could use to alter the crucial reader macros in custom readtables.
 	(set-macro-character #\: #'colon-reader nil table)
 	(set-macro-character #\, (constantly (values)) nil table)
@@ -1049,7 +1049,7 @@ MAKE-LIST-COMPLETER."
 (defcommand set-mark (editor)
   (setf (editor-mark editor) (get-point editor)))
 
-;; FIXME: KILL-SEXP is fairly broken, but works for enough of my
+;; FIX: KILL-SEXP is fairly broken, but works for enough of my
 ;; common use cases.  Most of its flaws lie in how the EDITOR-SEXP-
 ;; functions deal with objects other than lists and strings.
 (defcommand kill-sexp (editor)
@@ -1187,7 +1187,7 @@ MAKE-LIST-COMPLETER."
 		(if wrap-current
 		    (lambda (in out)
 		      (declare (type stream out in))
-		      ;; FIXME: Yich.
+		      ;; FIX: Yich.
 		      (terpri)
 		      (with-input-from-string (in (repl-reader in out))
 			(funcall read-form-fun in out)))

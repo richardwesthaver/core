@@ -349,7 +349,7 @@
                        (setq state :utf8-4b)
                   else (excl::.parse-error
 ;;;;TODO:
-                        "invalid UTF-8 encoding...FIXME")))
+                        "invalid UTF-8 encoding...")))
               (:utf8-3a
                (if* (<= #xA0 cc #xBF)
                   then (setf (aref vec veci) cc)

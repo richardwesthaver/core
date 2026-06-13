@@ -1048,7 +1048,7 @@ table.")
 
 (defmethod find-name-entry (platform-id encoding-id language-id name-id
                             (font-loader font-loader))
-  ;; FIXME: this vector is sorted by platform ID, encoding ID,
+  ;; FIX: this vector is sorted by platform ID, encoding ID,
   ;; language ID, and name ID, in that order. Could bisect if it
   ;; mattered.
   (loop for name-entry across (name-entries font-loader)
@@ -1105,7 +1105,7 @@ table.")
 (deftype cmap-value-table ()
   `(array (unsigned-byte 16) (*)))
 
-;;; FIXME: "unicode-cmap" is actually a format 4 character map that
+;;; FIX: "unicode-cmap" is actually a format 4 character map that
 ;;; happens to currently be loaded from a Unicode-compatible
 ;;; subtable. However, other character maps (like Microsoft's Symbol
 ;;; encoding) also use format 4 and could be loaded with these
@@ -2175,7 +2175,7 @@ to look up information in various structures in the truetype file.")
 
 (defmethod print-object ((glyph glyph) stream)
   (print-unreadable-object (glyph stream :type t :identity nil)
-    ;; FIXME: Is this really going to be Unicode?
+    ;; FIX: Is this really going to be Unicode?
     (format stream "~S U+~4,'0X"
             (postscript-name glyph)
             (code-point glyph))))
@@ -2428,7 +2428,7 @@ index. Despite the name, NOT the inverse of GLYPH-INDEX.")
             :expected-values ok
             :actual-value magic))))
 
-;; FIXME: move most/all of this stuff into initialize-instance
+;; FIX: move most/all of this stuff into initialize-instance
 (defun open-font-loader-from-stream (input-stream &key (collection-index 0))
   (let ((magic (read-uint32 input-stream))
         (font-count))

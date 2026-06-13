@@ -627,7 +627,7 @@ streams); wrap it."
 
 (defun read-comment-extension (stream)
   (flet ((ascii-char (code)
-           ;;; FIXME: This assumes ASCII code-char mapping; could keep a table
+           ;;; FIX: This assumes ASCII code-char mapping; could keep a table
            ;;; instead.
            (code-char (min code 127))))
     (with-output-to-string (output)

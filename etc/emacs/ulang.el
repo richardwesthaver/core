@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2023  The Compiler Company
 
-;; Author: <mailto:ellis@compiler.company>
+;; Author: <ellis@compiler.company>
 ;; Keywords: comm
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -30,7 +30,7 @@
 (defgroup ulang nil "ULANG")
 
 (defcustom ulang-properties
-  '("VERSION" "LOCATION")
+  '("VERSION" "LOCATION" "PRONOUNCE")
   "See 'org-special-properties'."
   :group 'ulang)
 
@@ -249,10 +249,21 @@ or file at point. With C-u or ARG open in separate window."
      (t (funcall (if arg 'find-file-other-window 'find-file) loc t)))))
 
 ;;; Comments
-;; TODO 2026-06-13:
-(defvar ulang-comment-keywords nil)
-(defun load-ulang-comment-keywords ()
-  "Parse 'ulang-comment-keywords' and return a list of simplified todo keywords.")
+
+;; see also [[https://github.com/tarsius/hl-todo/blob/main/hl-todo.el][hl-todo.el]]
+(defun ulang-comment-keywords () 
+  "Parse 'ulang-todo-keywords' and return a list of simplified todo keywords."
+  (cl-remove-duplicates
+   (append 
+    ulang-todo-keywords
+    (mapcan 
+     (lambda (x)
+       (mapcar (lambda (y) (car (string-split y "(" nil)))
+               (remove "|" x)))
+     (mapcar 'cdr org-todo-keywords)))
+   :test 'string=))
+ 
+(defvar ulang-comment-keywords (ulang-comment-keywords))
 
 (defcustom ulang-comment-timestamp-format-concise "%F"
   "Specifier for date in `ulang-comment-timestamp-keyword'.
@@ -362,15 +373,15 @@ specified by `ulang-comment-timestamp-format-verbose'."
       (comment-indent t)
       (insert (concat " " string))))))
 
-;;; org-minor-mode
-(defcustom org-minor-mode-use-buttons t
-  "When Non-nil insert buttons into 'org-minor-mode' buffers."
+;;; ulang-minor-mode
+(defcustom ulang-minor-mode-use-buttons t
+  "When Non-nil insert buttons into 'ulang-minor-mode' buffers."
   :type 'boolean
   :group 'ulang
   :local t)
 
-(defcustom org-minor-mode-use-readtable nil
-  "When Non-nil use embedded organ readtable syntax in 'org-minor-mode' buffers."
+(defcustom ulang-minor-mode-use-readtable nil
+  "When Non-nil use embedded organ readtable syntax in 'ulang-minor-mode' buffers."
   :type 'boolean
   :group 'ulang
   :local t)
@@ -407,30 +418,35 @@ or the current buffer if not given."
              matches))))
       matches)))
 
-(defun org-minor-mode-swap-setup ()
+(defun ulang-minor-mode-swap-setup ()
   (make-local-variable 'post-command-hook)
-  (add-hook 'post-command-hook 'org-minor-mode-swap nil t))
+  (add-hook 'post-command-hook 'ulang-minor-mode-swap nil t))
 
-(defun org-minor-mode-link-setup ()
-  (setq-local font-lock-fontify-buffer-function 'org-minor-mode-update-links))
+(defun ulang-minor-mode-link-setup ()
+  (setq-local font-lock-fontify-region-function 'ulang-fontify-region))
 
-(defun org-minor-mode-update-links ()
-  (mapc (lambda (a) 
-          (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
-            ;; (remove-overlays xs (or ze xe))
-            (make-button
-             xs xe
-             'data (or y x)
-             'action 'org-open-at-point-global
-             'help-echo (or (when z (format "%s (%s)" z y)) x))
-            (when z 
-              (put-text-property xs zs 'invisible t)
-              (put-text-property ze xe 'invisible t))))
-        (org-links-in-buffer))
-  (jit-lock-refontify))
+(defun ulang-fontify-region (&optional start end verbose)
+  (let ((start (or start (point-min)))
+        (end (or end (point-max))))
+    (mapc (lambda (a)
+            (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
+              (unless (>= start xs)
+                (remove-overlays xs (or ze xe))
+                (make-button
+                 xs xe
+                 'data (or y x)
+                 'action 'org-open-at-point-global
+                 'help-echo (or (when z (format "%s (%s)" z y)) x))
+                (if z 
+                    (progn
+                      (put-text-property xs zs 'invisible t)
+                      (put-text-property ze xe 'invisible t))
+                  (org-remove-flyspell-overlays-in xs xe)))))
+          (org-links-in-buffer)))
+  (font-lock-default-fontify-region start end verbose))
 
 ;; FIX 2026-05-01: readtable regexps
-(defun org-minor-mode-swap ()
+(defun ulang-minor-mode-swap ()
   (let ((lm -1)
         (rm -1)
         (vbar nil)
@@ -448,15 +464,15 @@ or the current buffer if not given."
     (if (< 0 lm p rm)
         (progn (major-mode-suspend) (org-mode))
       (major-mode-restore))
-    (org-minor-mode-swap-setup)))
+    (ulang-swap-setup)))
 
-(define-minor-mode org-minor-mode nil
-  :lighter " org"
+(define-minor-mode ulang-minor-mode nil
+  :lighter " ulang"
   :group 'ulang
   :interactive (prog-mode)
-  ;; (if (derived-mode-p 'lisp-mode) (setq-local org-minor-mode-use-readtable t))
-  (when org-minor-mode-use-readtable (org-minor-mode-swap-setup))
-  (when org-minor-mode-use-buttons (org-minor-mode-link-setup)))
+  ;; (if (derived-mode-p 'lisp-mode) (setq-local ulang-minor-mode-use-readtable t))
+  (when ulang-minor-mode-use-readtable (ulang-minor-mode-swap-setup))
+  (when ulang-minor-mode-use-buttons (ulang-minor-mode-link-setup)))
 
 ;;; Hooks
 ;;;###autoload

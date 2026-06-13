@@ -380,7 +380,7 @@
 
 (defun decode-response (server octets offset limit)
   (declare (ignorable limit))
-  ;; FIXME: Implement buffer limiting.
+  ;; FIX: Implement buffer limiting.
   (multiple-value-bind (header pos) (decode-header octets offset)
     (when (< 0 (getf header :response-code))
       (error 'dns-server-failure :dns-server server :response-code (getf header :response-code)))

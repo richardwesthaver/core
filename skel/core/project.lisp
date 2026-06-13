@@ -15,7 +15,7 @@
            (labels ,*skel-project-functions*
              ,@body))))))
 
-;(mapcar (lambda (x) (eval (cadr x))) binds)
+                                        ;(mapcar (lambda (x) (eval (cadr x))) binds)
 ;; Note that EXEC directly on a rule currently does NOT touch the sources.
 (defmethod exec ((self rule))
   (compile-and-eval
@@ -49,22 +49,16 @@
    (components :initform #() :initarg :components :accessor components :type (vector project-component)
                :documentation "A vector of child components belonging to this project.")
    (bind :initarg :bind :initform *default-skel-bindings* :accessor bind :type list
-         :documentation "A list of dynamic bindings which are applied to rule definitions.")
-   (phases :initarg :phases
-	   :initform (make-hash-table)
-	   :accessor phases
-	   :type hash-table
-           :documentation "A hash-table containing PHASE-NAME : RULE-MEMBER-LIST pairs.")
+     :documentation "A list of dynamic bindings which are applied to rule definitions.")
    (rules :initarg :rules
-	  :initform (make-array 0 :element-type 'rule :adjustable t)
-	  :accessor rules
-	  :type (vector rule)
-          :documentation "A vector of rule objects containing individual units of work. Each rule is
-implicitly linked to a phase in the PHASES hash-table slot.")
+	      :initform (make-array 0 :element-type 'rule :adjustable t)
+	      :accessor rules
+	      :type (vector rule)
+          :documentation "A vector of rule objects containing individual units of work.")
    (include :initarg :include
-	    :initform (make-array 0 :element-type 'pathname :adjustable t)
-	    :accessor include
-	    :type (vector pathname)
+	        :initform (make-array 0 :element-type 'pathname :adjustable t)
+	        :accessor include
+	        :type (vector pathname)
             :documentation "A list of skelfiles to include in the current project. Files in this list may
 define their own subprojects or extend the current one."))
   (:documentation "Skel project base class, usually defined by skelfiles at a project's root
@@ -78,7 +72,8 @@ directory."))
 	        (length (rules self)))))
 
 (defun find-skel-symbol (s)
-  (find-symbol* (symbol-name s) :skel/core t))
+  (let ((s (symbol-name s)))
+    (find-symbol* s :skel/core (find-symbol s))))
 
 (defun %recipe-phase-p (form)
   "Return non-nil if FORM looks like (:PHASE &BODY BODY)."
@@ -128,9 +123,9 @@ directory."))
      ;; environment.
      (unless (null val)
        (let ((val (if (listp val) (eval val) val))
-	     (_sym (substitute #\_ #\- (string sym))))
-	 (sb-posix:setenv _sym (format nil "~A" val) 1)
-	 (log:trace! "env: ~A=~A~%" _sym val))))))
+	         (_sym (substitute #\_ #\- (string sym))))
+	     (sb-posix:setenv _sym (format nil "~A" val) 1)
+	     (log:trace! "env: ~A=~A~%" _sym val))))))
 
 ;; ast -> obj
 (defmethod load-ast ((self skel-project))
@@ -139,139 +134,132 @@ directory."))
     ;; ast is valid, modify object, set ast nil
     (progn
       (sb-int:doplist (k v) ast
-	(when-let ((s (find-skel-symbol k)))
-	  (setf (slot-value self s) v))) ;; needs to be correct package
+	    (when-let ((s (find-skel-symbol k)))
+	      (setf (slot-value self s) v))) ;; needs to be correct package
 	  ;;; SRC
       (if (bound-string-p self 'src)
-	  (setf (src self) (or (probe-file (src self))
-				  (probe-file (merge-pathnames (src self) *skel-path*))
-				  (error 'invalid-argument :reason "project source not found"
-							   :item (src self))))
-	  (setf (src self) (sk-dir self)))
+	      (setf (src self) (or (probe-file (src self))
+				               (probe-file (merge-pathnames (src self) *skel-path*))
+				               (error 'invalid-argument :reason "project source not found"
+							                            :item (src self))))
+	      (setf (src self) (sk-dir self)))
       (setq *skel-path* (or (src self) *default-pathname-defaults*))
       (let ((*default-pathname-defaults* (make-pathname :defaults (namestring *skel-path*))))
-	(when (bound-string-p self 'stash) 
+	    (when (bound-string-p self 'stash) 
           (setf (stash self) (ensure-directory-truename (the simple-string (stash self)))))
-        (when (bound-string-p self 'store) 
+        (when (bound-string-p self 'store)
           (setf (store self) (ensure-directory-truename (the simple-string (store self)))))
         (when (bound-string-p self 'cache)
           (setf (cache self) (ensure-directory-truename (the simple-string (cache self)))))
-	;; VC
-	(when-let ((vc (vc self)))
-	  (etypecase vc
-	    ((or vc-repo null) nil)
+	    ;; VC
+	    (when-let ((vc (vc self)))
+	      (etypecase vc
+	        ((or vc-repo null) nil)
             ;; WARNING: slow path - recurses submodules, parses configs
-	    (vc-designator (setf (vc self) (make-repo *skel-path* :type vc)))
-	    (list
-	     (flet ((%vc-scan (lst)
-		      (let* ((%type (if (typep (car lst) 'vc-designator)
-					(pop lst)
-					*default-vc-kind*))
-			     (repo (vc-init %type)))
-			(setf (vc-remotes repo)
-			      (map 'vector
-				   (lambda (v)
-				     (etypecase v
-				       (string (vc::make-vc-remote :name 'default :url v))
-				       (list 
-					(let ((name (pop v))
-					      (val (pop v)))
-					  (if (consp val)
-					      (vc::make-vc-remote :name name
-								  :type (pop val)
-								  :url (pop val))
-					      (vc::make-vc-remote :name name
-								  :url val))))))
-				   lst))
+	        (vc-designator (setf (vc self) (make-repo *skel-path* :type vc)))
+	        (list
+	         (flet ((%vc-scan (lst)
+		              (let* ((%type (if (typep (car lst) 'vc-designator)
+					                    (pop lst)
+					                    *default-vc-kind*))
+			                 (repo (vc-init %type)))
+			            (setf (vc-remotes repo)
+			                  (map 'vector
+				                   (lambda (v)
+				                     (etypecase v
+				                       (string (vc::make-vc-remote :name 'default :url v))
+				                       (list 
+					                    (let ((name (pop v))
+					                          (val (pop v)))
+					                      (if (consp val)
+					                          (vc::make-vc-remote :name name
+								                                  :type (pop val)
+								                                  :url (pop val))
+					                          (vc::make-vc-remote :name name
+								                                  :url val))))))
+				                   lst))
                         (when (eql (vc-type repo) :hg)
                           (setf (vc/hg::vc-bookmarks repo) (find-hg-bookmarks (path repo))
                                 (vc/hg::vc-requires repo) (vc/hg:find-hg-requires (path repo))
                                 (vc-submodules repo) (vc/hg::find-hg-submodules (path repo))))
-			repo)))
-	       (setf (vc self) (%vc-scan vc))))))
-	;; INCLUDE
-	(when-let ((include (include self)))
-	  (setf (include self) 
+			            repo)))
+	           (setf (vc self) (%vc-scan vc))))))
+	    ;; INCLUDE
+	    (when-let ((include (include self)))
+	      (setf (include self) 
                 (map 'vector
-		     ;; recursively load included projects
-		     (lambda (i) 
+		             ;; recursively load included projects
+		             (lambda (i) 
                        (load-ast
-			(read-ast
-			 (make-instance 'skel-project)
-			 i)))
-		     include)))
-	;; COMPONENTS
-	(when (slot-boundp self 'components)
-	  (setf (components self) (map 'vector
-					  (lambda (c)
-					    (load-project-component
-					     (pop c)
-                         (if (= 1 (length c))
-                             (pathname (car c))
-                             c)
-					     :path *default-pathname-defaults*))
-					  (components self)))))
+			            (read-ast
+			             (make-instance 'skel-project)
+			             i)))
+		             include)))
+	    ;; COMPONENTS
+	    (when (slot-boundp self 'components)
+	      (setf (components self) (map 'vector
+					                   (lambda (c)
+					                     (load-project-component
+					                      (pop c)
+                                          (if (= 1 (length c))
+                                              (pathname (car c))
+                                              c)
+					                      :path *default-pathname-defaults*))
+					                   (components self)))))
       ;; BIND contains a list of forms which are bound dynamically based
       ;; on the contents of the cdr
       (when-let ((bind (bind self)))
-	(setf (bind self)
-	      (let ((ret))
-		(dolist (b bind ret)
-		  ;; if this is a list of length > 2 we parse the form as either
-		  ;; (key &rest val) or (var param &rest val)
+	    (setf (bind self)
+	          (let ((ret))
+		        (dolist (b bind ret)
+		          ;; if this is a list of length > 2 we parse the form as either
+		          ;; (key &rest val) or (var param &rest val)
                   (if (= 2 (length b))
                       ;; FIX 2026-05-08: protect against use of eval?
                       ;; WARN 2026-05-08: use of eval
                       (push b ret)
-		      (let ((sym (car b))
-			    (form (cdr b)))
-		        ;; (form (cddr b)))
-		        (let ((key (car form))
-			      (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
-		          (if (keywordp key)
-			      (sk-case-bind key val sym)
-			      (cond
-			        ;; (sym param &rest val) detected
-			        ((> (length (cdr form)) 0)
-			         (let ((key (cadr b)))
-			           (if (keywordp key)
-				       (sk-case-bind key (cdr form) sym)
-				       ;; if nothing else must be a lambda
-				       (push `(,sym 
-					       ,(compile sym `(lambda ,(car b) ,@(cddr b))))
-					     ret))))
-			        (t
-			         (push b ret)))))))))))
+		              (let ((sym (car b))
+			                (form (cdr b)))
+		                ;; (form (cddr b)))
+		                (let ((key (car form))
+			                  (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
+		                  (if (keywordp key)
+			                  (sk-case-bind key val sym)
+			                  (cond
+			                    ;; (sym param &rest val) detected
+			                    ((> (length (cdr form)) 0)
+			                     (let ((key (cadr b)))
+			                       (if (keywordp key)
+				                       (sk-case-bind key (cdr form) sym)
+				                       ;; if nothing else must be a lambda
+				                       (push `(,sym 
+					                           ,(compile sym `(lambda ,(car b) ,@(cddr b))))
+					                         ret))))
+			                    (t
+			                     (push b ret)))))))))))
       ;; RULES
       (when-let ((rules (rules self)))
-	(setf (rules self)
-	      (coerce
-	       (flatten
-		(mapcar
-		 (lambda (x)
-		   (destructuring-bind (target source &rest recipe) x
-		     ;; TODO 2024-07-30: check for phases
-		     (if (sk-multi-recipe-p recipe)
-			 (flatten
-			  (mapcar
-			   (lambda (y)
-			     (destructuring-bind (phase source &rest recipe) y
-			       (let ((%target (keywordicate phase '- (string-upcase target))))
-				 (let ((ph (gethash phase (phases self))))
-				   (setf (gethash phase (phases self))
-					 (push (make-rule %target source recipe) ph))))))
-			   recipe))
-			 (make-rule target source recipe))))
-		 (coerce rules 'list)))
-	       '(vector rule))))          
+	    (setf (rules self)
+	          (coerce
+	           (flatten
+		        (mapcar
+		         (lambda (x)
+		           (destructuring-bind (target source &rest recipe) x
+		             (if (sk-multi-recipe-p recipe)
+			             (mapcar
+			              (lambda (y)
+			                (destructuring-bind (phase source &rest recipe) y
+					          (make-rule (keywordicate phase '- (string-upcase target)) source recipe)))
+			               recipe)
+			             (make-rule target source recipe))))
+		         (coerce rules 'list)))
+	           '(vector rule))))          
       (unless *keep-ast* (setf (ast self) nil))
       (setf (id self) (sxhash (cons (name self) (version self))))
       self)))
 
 ;; obj -> ast
-
-;; need to define a method for SKEL-PROJECT to add PHASES to the exclusion list.
-(defmethod build ((self skel-project) &key (nullp nil) (exclude '(ast id phases)))
+(defmethod build ((self skel-project) &key (nullp nil) (exclude '(ast id)))
   (setf (ast self)
         (unwrap-object self
                        :slots t
@@ -293,18 +281,18 @@ directory."))
   (build self :nullp nullp)
   (prog1 
       (with-open-file (out path
-			   :direction :output
-			   :if-exists if-exists
-			   :if-does-not-exist :create)
-	(when comment (princ
-		       (make-source-header-comment
-		        (name self)
-		        :cchar #\;
-		        :timestamp t
-		        :description (description self)
-		        :opts '("mode:skel;"))
-		       out))
-	(write-ast self out :pretty pretty))
+			               :direction :output
+			               :if-exists if-exists
+			               :if-does-not-exist :create)
+	    (when comment (princ
+		               (make-source-header-comment
+		                (name self)
+		                :cchar #\;
+		                :timestamp t
+		                :description (description self)
+		                :opts '("mode:skel;"))
+		               out))
+	    (write-ast self out :pretty pretty))
     (unless *keep-ast* (setf (ast self) nil))))
 
 (defmethod wrap ((self skel-project) (config skel-user-config))
@@ -347,11 +335,11 @@ directory."))
 
 (defmethod call ((self skel-project) (arg (eql :build)))
   (loop for c across (components self)
-	collect (build self)))
+	    collect (build self)))
 
 (defmethod call ((self skel-project) (arg (eql :load)))
   (loop for c across (components self)
-	collect (project-load self)))
+	    collect (project-load self)))
 
 (defmethod call ((self skel-project) (arg (eql :clean)))
   (if-let ((x (project-find arg self)))
@@ -360,12 +348,12 @@ directory."))
 
 (defmethod build ((self skel-project) &key)
   (loop for c across (components self)
-	collect (build c)))
+	    collect (build c)))
 
 (defmethod project-compile ((self skel-project) &key)
   (loop for c across (components self)
-	collect (project-compile c)))
+	    collect (project-compile c)))
 
 (defmethod project-load ((self skel-project) &key)
   (loop for c across (components self)
-	collect (project-load c)))
+	    collect (project-load c)))

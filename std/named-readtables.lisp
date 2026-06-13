@@ -225,7 +225,7 @@
                  (,iter)
                (unless ,more? (return ,result))
                (let ,(when non-terminating-p
-                       ;; FIXME: N-T-P should be incorporated in iterators.
+                       ;; FIX: N-T-P should be incorporated in iterators.
                        `((,non-terminating-p
                           (nth-value 1 (get-macro-character ,char ,rt)))))
                  ,@body))))))))
@@ -792,7 +792,7 @@
          (find-reserved-readtable name))
         ((%find-readtable name))))
 
-;;; FIXME: This doesn't take a NAMED-READTABLE-DESIGNATOR, but only a
+;;; FIX: This doesn't take a NAMED-READTABLE-DESIGNATOR, but only a
 ;;; STRING-DESIGNATOR. (When fixing, heed interplay with compiler
 ;;; macros below.)
 (defsetf find-readtable register-readtable)

@@ -346,7 +346,7 @@ TABLE."
   :load-path site-lisp-directory
   :hook
   ((after-init . ulang-init)
-   (prog-mode . org-minor-mode)
+   (prog-mode . ulang-minor-mode)
    (lisp-mode . ulang--lisp-page-delimiter)
    (emacs-lisp-mode . ulang--lisp-page-delimiter)
    (org-mode . ulang--org-page-delimiter)
@@ -361,7 +361,7 @@ TABLE."
   :defer nil
   :mode ("\\.sys\\'" "\\.gen\\'")
   :hook 
-  (common-lisp-lisp-mode . (lambda () (setq-local org-minor-mode-use-readtable t)))
+  (common-lisp-lisp-mode . (lambda () (setq-local ulang-minor-mode-use-readtable t)))
   :bind 
   ("<XF86Paste>" . lisp-mode-shared-map)
   (:map emacs-lisp-mode-map
@@ -655,6 +655,9 @@ save window/frame configurations."
                                   (ring-elements eshell-history-ring))))))
 
 ;;; Terminal
+(use-package ansi-osc
+  :init (setq ansi-osc-for-compilation-buffer t))
+
 (use-package eat
   :ensure t
   :hook (eshell-mode . eat-eshell-mode)
@@ -888,23 +891,23 @@ With prefix ARG non-nil, insert the result at the end of region."
 			                (sequence "WAIT(W@/!)" "WIP(!)" "|")
 			                (sequence "RESEARCH(s!)" "WIP(!)" "REPORT(c!)" "|")
 			                (sequence "OUTLINE(O!)" "DRAFT(M!)" "REVIEW(V!)" "|")
-			                (sequence "FIXME(f!)" "WIP(!)" "TEST(T!)" "|")
+			                (sequence "FIX(f!)" "WIP(!)" "TEST(T!)" "|")
 			                (type "FIND(q!)" "READ(r@!)" "WATCH(A@!)" "HACK(h!)"
 				                  "CODE(c!)" "BENCH(b!)" "DEPLOY(D!)" "RUN(X!)"
 				                  "REFILE(w!)" "LOG(L!)" "GET(g!)" "GOTO(G!)" "PRACTICE(a!)" "|")
 			                (type "PROJECT(p!)" "PRODUCT(P!)" "SPRINT(S!)" "RELEASE(R!)" "|")
 			                (sequence "|" "DONE(d!)" "NOPE(x@!)"))
-	    org-todo-keyword-faces '(("PROJECT" . (:foreground "lightseagreen" :weight bold))
-				                 ("PRODUCT" . (:foreground "olivedrab" :weight bold))
-				                 ("RELEASE" . (:foreground "maroon3" :weight bold))
-				                 ("RESEARCH" . (:foreground "maroon2" :weight bold))
-				                 ("HACK" . (:foreground "maroon3" :weight bold))
-				                 ("TBD" . (:foreground "brown" :weight bold))
-				                 ("CODE" . (:foreground "bisque" :weight bold :background "midnightblue"))
-				                 ("HOLD" . (:foreground "red1" :weight bold :background "yellow1"))
-				                 ("WAIT" . (:foreground "red4" :weight bold :background "yellow1"))
-				                 ("WIP" . (:foreground "darkorchid2" :weight bold))
-				                 ("NOPE" . (:foreground "hotpink" :weight bold :background "darkgreen")))
+	    org-todo-keyword-faces '(("PROJECT" :foreground "lightseagreen" :weight bold)
+				                 ("PRODUCT" :foreground "olivedrab" :weight bold)
+				                 ("RELEASE" :foreground "maroon3" :weight bold)
+				                 ("RESEARCH" :foreground "maroon2" :weight bold)
+				                 ("HACK" :foreground "maroon3" :weight bold)
+				                 ("TBD" :foreground "brown" :weight bold)
+				                 ("CODE" :foreground "bisque" :weight bold :background "midnightblue")
+				                 ("HOLD" :foreground "red1" :weight bold :background "yellow1")
+				                 ("WAIT" :foreground "red4" :weight bold :background "yellow1")
+				                 ("WIP" :foreground "darkorchid2" :weight bold)
+				                 ("NOPE" :foreground "hotpink" :weight bold :background "darkgreen"))
 	    org-stuck-projects '("+PROJECT/-DONE" ("NEXT") nil ""))
   :config
   (org-babel-do-load-languages

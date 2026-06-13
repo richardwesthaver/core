@@ -33,7 +33,7 @@ compatible element-types."
   (let ((output-position 0)
         (input-position 0))
     (unless (zerop start)
-      ;; FIXME add platform specific optimization to skip seekable streams
+      ;; FIX: add platform specific optimization to skip seekable streams
       (loop while (< input-position start)
             do (let ((n (read-sequence buffer input
                                        :end (min (length buffer)

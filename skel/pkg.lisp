@@ -36,7 +36,7 @@
 
 ;;; Code:
 (defpkg :skel/core
-  (:use :std-lisp :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc)
+  (:use :std-lisp :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc :url)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
   (:export

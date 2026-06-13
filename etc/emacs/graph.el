@@ -883,7 +883,7 @@ either side, and deletes both sides of a link."
 (defun org-graph-edge-github-src (&optional link desc)
   "Insert a related link to a github source."
   (interactive "ssrc:")
-  (when link (org-graph-edge-insert-related (format "github:%s" link) (or desc "src"))))
+  (when link (org-graph-edge-insert-related (format "gh:%s" link) (or desc "src"))))
 
 ;;; Dynamic Blocks
 ;; TODO 2026-05-25: 

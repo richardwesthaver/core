@@ -148,7 +148,7 @@
         ;; initial-buffer-choice t
         scroll-bar-mode nil
         tool-bar-mode nil
-        ;; menu-bar-mode nil
+        menu-bar-mode nil
         use-dialog-box t
         native-comp-async-report-warnings-errors nil
         comp-deferred-compilation t

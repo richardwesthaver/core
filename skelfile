@@ -1,7 +1,8 @@
 ;;; skelfile --- CC/core skelfile
 :name core
 :author ("Richard Westhaver" . "ellis@rwest.io")
-:version "0.1.1"
+:version "0.1.2"
+:url "https://compiler.company/docs/core/info"
 :license mpl
 :stash ".stash"
 :description "The Compiler Company Core"
