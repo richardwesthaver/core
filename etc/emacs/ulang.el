@@ -304,7 +304,7 @@ operates on the lines before point)."
   "Add timestamped comment with KEYWORD.
 
 When called interactively, the list of possible keywords is that
-of `ulang-comment-keywords', though it is possible to
+of `ulang-todo-keywords', though it is possible to
 input arbitrary text.
 
 If point is at the beginning of the line or if line is empty (no
@@ -325,7 +325,7 @@ With optional VERBOSE argument (such as a prefix argument
 specified by `ulang-comment-timestamp-format-verbose'."
   (interactive
    (list
-    (ulang-comment--keyword-prompt ulang-comment-keywords)
+    (ulang-comment--keyword-prompt ulang-todo-keywords)
     current-prefix-arg))
   (let* ((date (if verbose
 		   comment-timestamp-format-verbose

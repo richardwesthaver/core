@@ -565,16 +565,17 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 
 ;; templates?
 (defun %load-module (form kind key sys)
-  (if (and (consp form) (consp (car form)))
+  (if (and (consp (print form)) (consp (car form)))
       (mapcar (lambda (x) (%load-module x kind key sys)) form)
       (case kind
+        (:internal-package nil) ; ignore
         ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
         (:io (gethash form *io-table*))
         (:annotations (load-annotations (car form)))
         (:printer (use-printer form))
         (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
-        (:prelude (use-package form))
-        (:package (use-package form))
+        (:prelude (use-package (ensure-car form)))
+        (:package (use-package (ensure-car form)))
         (:pool (setf *thread-pool* (find-thread-pool form)))
         (:proto (%load-proto form))
         (:tests (load-system form))
@@ -653,7 +654,7 @@ USE should be called in order to load and activate a module."
   `(progn
      ,@(mapcar (lambda (x) (if (atom x) `(refuse ,x) `(refuse ,@x))) args)))
 
-;; (with-eval-after-load (module &body body))
+;; (defmacro with-eval-after-load (module &body body))
 
 ;;; System
 (defcomponent system (mod-component module)
