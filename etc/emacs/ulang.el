@@ -249,6 +249,11 @@ or file at point. With C-u or ARG open in separate window."
      (t (funcall (if arg 'find-file-other-window 'find-file) loc t)))))
 
 ;;; Comments
+;; TODO 2026-06-13:
+(defvar ulang-comment-keywords nil)
+(defun load-ulang-comment-keywords ()
+  "Parse 'ulang-comment-keywords' and return a list of simplified todo keywords.")
+
 (defcustom ulang-comment-timestamp-format-concise "%F"
   "Specifier for date in `ulang-comment-timestamp-keyword'.
 Refer to the doc string of `format-time-string' for the available

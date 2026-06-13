@@ -565,10 +565,11 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 
 ;; templates?
 (defun %load-module (form kind key sys)
-  (if (and (consp (print form)) (consp (car form)))
+  (if (and (consp form) (consp (car form)))
       (mapcar (lambda (x) (%load-module x kind key sys)) form)
       (case kind
         (:internal-package nil) ; ignore
+        (:default-package (eval-always (setq *package* form)))
         ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
         (:io (gethash form *io-table*))
         (:annotations (load-annotations (car form)))
