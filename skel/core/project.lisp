@@ -37,8 +37,7 @@
 
 ;;; Project
 (defclass skel-project (simple-project)
-  ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name
-         :documentation "The name of this project.")
+  ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name)
    (vc :initarg :vc
        :initform nil
        :accessor vc)
@@ -54,13 +53,7 @@
 	      :initform (make-array 0 :element-type 'rule :adjustable t)
 	      :accessor rules
 	      :type (vector rule)
-          :documentation "A vector of rule objects containing individual units of work.")
-   (include :initarg :include
-	        :initform (make-array 0 :element-type 'pathname :adjustable t)
-	        :accessor include
-	        :type (vector pathname)
-            :documentation "A list of skelfiles to include in the current project. Files in this list may
-define their own subprojects or extend the current one."))
+          :documentation "A vector of rule objects containing individual units of work."))
   (:documentation "Skel project base class, usually defined by skelfiles at a project's root
 directory."))
 
@@ -184,17 +177,16 @@ directory."))
                                 (vc-submodules repo) (vc/hg::find-hg-submodules (path repo))))
 			            repo)))
 	           (setf (vc self) (%vc-scan vc))))))
-	    ;; INCLUDE
-	    (when-let ((include (include self)))
-	      (setf (include self) 
-                (map 'vector
-		             ;; recursively load included projects
-		             (lambda (i) 
-                       (load-ast
-			            (read-ast
-			             (make-instance 'skel-project)
-			             i)))
-		             include)))
+	    ;; REQUIRE
+	    (when-let ((req (slot-boundp! self 'require)))
+	      (setf (module-require self)
+                (mapcar ; recursively load included projects
+		         (lambda (r) 
+                   (load-ast
+			        (read-ast
+			         (make-instance 'skel-project)
+			         r)))
+		         req)))
 	    ;; COMPONENTS
 	    (when (slot-boundp self 'components)
 	      (setf (components self) (map 'vector

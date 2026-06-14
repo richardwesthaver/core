@@ -19,7 +19,7 @@
 ;;; Code:
 (in-package :obj/project)
 
-;;; Vars
+;;; Variables
 (defvar *default-project-class* 'simple-project)
 (defvar *default-rule-class* 'simple-rule)
 (defglobal *project-table* (make-hash-table)
@@ -36,18 +36,18 @@
 (defcondition project-condition () 
   ((project :initform *project* :accessor error-project :initarg :project))
   (:error-class project-error (error) () (:reporter t))
-  (:warning-class project-warning (warning) () (:reporter t)))
+  (:warning-class project-warning (simple-warning) () (:reporter t)))
 
 ;;; Protocol
 (defclass project-metadata ()
-  ((name :initarg :name :initform nil :type (or null string) :accessor name)
-   (path :initarg :path :initform nil :type (or null pathname) :accessor path)
+  ((name :initarg :name :accessor name)
+   (path :initarg :path :accessor path)
    (author :initarg :author :accessor author)
-   (version :initform nil :initarg :version :accessor version)
-   (tags :initform nil :initarg :tags :accessor tags)
-   (url :initform nil :initarg :url :accessor url)
-   (description :initarg :description :initform nil :type (or null string) :accessor description)
-   (license :initform nil :initarg :license :accessor license))
+   (version :initarg :version :accessor version)
+   (tags :initarg :tags :accessor tags)
+   (links :initarg :links :accessor links)
+   (description :initarg :description :type (or null string) :accessor description)
+   (license :initarg :license :accessor license))
   (:documentation "Project Metadata contains optional slots which may be inherited by
 project-like objects."))
 
@@ -65,7 +65,7 @@ project-like objects."))
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
 
-(defclass simple-project (project project-metadata) ()
+(defclass simple-project (project project-metadata module) ()
   (:documentation "A PROJECT with optional metadata."))
 
 (defgeneric project-compile (self &key path &allow-other-keys))
@@ -107,6 +107,18 @@ project-like objects."))
                  (project-find query config :slot :id)))
     (keyword (project-slot query))))
 
+(defun project-link (key &optional (project *project*))
+  (if project
+    (getf key (links project))
+    (project-warning "No active *PROJECT*.")))
+
+(defun project-tag-p (tag &optional (project *project*))
+  (if project
+      (find tag (tags project))
+      (project-warning "No active *PROJECT*.")))
+
+(defun list-all-projects () (hash-table-values *project-table*))
+
 ;;; Config
 (defconfig project-config (project-metadata ast) ()
   (:documentation "A generic project configuration."))
@@ -143,8 +155,8 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (write (ast self) :stream stream))
 
 (defkernel simple-rule (rule)
-  ((source :initform nil :type list :accessor source :initarg :source)
-   (target :initform nil :accessor rule-target :initarg :target))
+  ((source :type list :accessor source :initarg :source)
+   (target :accessor rule-target :initarg :target))
   (:documentation "A 'simple' rule containing a SOURCE and TARGET, similar to GNU Makefile rules."))
 
 (defmethod write-ast ((self simple-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
@@ -221,7 +233,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 (defcomponent project-module (project-component mod-component project-metadata) 
   ()
   (:keyword :mod)
-  (:documentation "A module component for projects. Includes PROJECT-METADATA."))
+  (:documentation "A module component for projects."))
 
 (defmethod load-project-component ((kind (eql :mod)) (form t) &key (path *default-pathname-defaults*))
   (make-instance 'project-module :path path :ast (ensure-cons form)))
@@ -237,3 +249,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 ;;; Macros
 (defwith project (name) (*project* (project name)))
 (defwith rule (rule) (*rule* rule))
+
+#+todo
+(defmacro defproject (name &body body)
+  "Like `defsys' for PROJECT instances.")

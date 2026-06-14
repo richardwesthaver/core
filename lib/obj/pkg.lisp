@@ -651,7 +651,9 @@
    :with-rule :*rule* :*project* :project-convert
    :load-project-component :project-find :project-config-slot :search-project
    :project-slot :*project-config* :make-rule :rules
-   :*default-rule-class* :*project-hook* :rule-target :simple-interactive-rule))
+   :*default-rule-class* :*project-hook* :rule-target :simple-interactive-rule
+   :links :project-link :project-tag-p :list-all-projects
+   :defproject))
 
 (defpkg :obj/db
   (:nicknames :db)

@@ -349,9 +349,9 @@ objects of type COMPONENT."
    root
    (find-package* name name)))
 
-(defprovider :package (root name)
+(defprovider :packages (root name)
   (register-module
-   :package
+   :packages
    root
    (find-package* name name)
    t))
@@ -554,7 +554,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
   (handler-case
       (destructuring-bind (name . args) form
         (declare (ignore name))
-        (let ((pkg (find-package (or (getf args :package) system))))
+        (let ((pkg (find-package (or (getf args :packages) system))))
           (values
            (remove-if 'null
                       (mapcar (lambda (x)
@@ -570,7 +570,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
   (if (and (consp form) (consp (car form)))
       (mapcar (lambda (x) (%load-module x kind key sys)) form)
       (case kind
-        (:internal-package nil) ; ignore
+        (:internal-package nil) ; ignore, never ensure
         (:default-package (eval-always (setq *package* form)))
         ;; should assert io and proto symbols are available, maybe set an *io* and *proto* variable.
         (:io (gethash form *io-table*))
@@ -578,7 +578,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
         (:printer (use-printer form))
         (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
         (:prelude (use-package (ensure-car form)))
-        (:package (use-package (ensure-car form)))
+        ((or :package :packages) (use-package (ensure-car form)))
         (:pool (setf *thread-pool* (find-thread-pool form)))
         (:proto (%load-proto form))
         (:tests (load-system form))
@@ -1292,7 +1292,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                     (when-let ((e (and (slot-boundp comp 'export) (slot-value comp 'export))))
                       (unless (find-package e) (make-package e :internal-symbols 0))
                       (reexport-packages *component-packages* e))
-                    (mapc (lambda (x) (call-provider :package (list *module* x))) *component-packages*)
+                    (mapc (lambda (x) (call-provider :packages (list *module* x))) *component-packages*)
                     (call-provider :internal-package (list *module* (internal-package comp)))
                     (call-provider :default-package (list *module* (or (default-package comp)
                                                                        (find-package* *module* nil)
@@ -1350,8 +1350,8 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
 
 (defun reload-system-packages (name &optional (path :pkg))
   (let ((*module* name))
-    ;; delete :package submods
-    (set-module name nil :package nil nil)
+    ;; delete :packages
+    (setf (find-module name :packages) nil)
     ;; reload
     (load-component (find-component path (find-system name)) :force t)))
 

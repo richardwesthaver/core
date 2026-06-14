@@ -194,6 +194,11 @@ function NAME and be skipped for (setf NAME)."
     (handler-bind ((sb-pcl::missing-slot nil))
       (slot-boundp self slot))))
 
+(defun slot-boundp! (self slot)
+  "Like `slot-boundp*' but return the slot value when bound."
+  (when (slot-boundp* self slot)
+    (slot-value self slot)))
+
 (defun shallow-copy-object (self)
   "Create a 'shallow' copy of object SELF."
   (let* ((class (class-of self))
@@ -218,18 +223,6 @@ function NAME and be skipped for (setf NAME)."
     (copy-symbol self))
   (:method ((self structure-object))
     (copy-structure self)))
-
-;;; Struct Constructor
-(defgeneric struct-constructor (class)
-  (:documentation "Called to get the constructor name for a struct class. Users
-                  should overload this when they want to serialize
-                  non-standard constructor names. The default constructor
-                  make-xxx will work by default. The argument is an eql style
-                  type: i.e. of type (eql 'my-struct)"))
-
-(defmethod struct-constructor ((class t))
-  (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
-                           (symbol-package class))))
 
 ;;; Helpers
 (defun class-equalp (c1 c2)

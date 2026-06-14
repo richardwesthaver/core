@@ -1060,6 +1060,7 @@
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
    :slot-boundp* :slot-values
+   :slot-boundp!
    :explore :with-fslots
    :upgrade :version
    :validate :resume
@@ -1081,7 +1082,7 @@
    :*standard-metaobjects* :find-slot-def-by-name
    :find-direct-slot-def-by-name :find-slot-defs-by-type
    :find-slot-def-names-by-type :struct-slots-and-values
-   :slots-and-values :struct-constructor
+   :slots-and-values
    :remove-template-method :define-template-method
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
