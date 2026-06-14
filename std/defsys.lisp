@@ -499,11 +499,17 @@ objects of type COMPONENT."
           (values match parents providers))
         (values (car match) (car parents) (car providers)))))
 
+(definline provider-name-coerce (name)
+  ":PACKAGE -> :PACKAGES.
+
+Other conveniences as needed."
+  (if (eql name :package) :packages name))
+
 (defun find-module (name &optional kind key)
   "Find the module specified by NAME which should be a system designator or NIL
-to match all systems and optional KIND (a module designator) specified by KEY."
+to match all systems and optional KIND (a provider-designator) specified by KEY."
   (when name (setf name (keywordicate name)))
-  (when kind (setf kind (keywordicate kind)))
+  (when kind (setf kind (provider-name-coerce kind)))
   (cond
     (name
      (if-let ((mod (find-module* name)))
@@ -554,7 +560,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
   (handler-case
       (destructuring-bind (name . args) form
         (declare (ignore name))
-        (let ((pkg (find-package (or (getf args :packages) system))))
+        (let ((pkg (find-package (or (getf args :package) system))))
           (values
            (remove-if 'null
                       (mapcar (lambda (x)
@@ -567,7 +573,7 @@ to match all systems and optional KIND (a module designator) specified by KEY."
 
 ;; templates?
 (defun %load-module (form kind key sys)
-  (if (and (consp form) (consp (car form)))
+  (if (and kind (not key) (consp form) (consp (car form)))
       (mapcar (lambda (x) (%load-module x kind key sys)) form)
       (case kind
         (:internal-package nil) ; ignore, never ensure
@@ -578,29 +584,29 @@ to match all systems and optional KIND (a module designator) specified by KEY."
         (:printer (use-printer form))
         (:alien (funcall (the function (gethash form std/alien:*alien-load-table*))))
         (:prelude (use-package (ensure-car form)))
-        ((or :package :packages) (use-package (ensure-car form)))
+        (:package (use-package (ensure-car form)))
+        (:packages (mapc (lambda (x) (or (packagep x) (simple-system-error "Invalid package: ~A" x))) form))
         (:pool (setf *thread-pool* (find-thread-pool form)))
         (:proto (%load-proto form))
         (:tests (load-system form))
         (:sys (load-system form))
         (:bench (load-system form))
         (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
-        (t
+        ('nil
          (sb-int:doplist (k v) form
-           (%load-module v k key sys))))))
+           (%load-module v k nil nil)))
+        (t (simple-system-error "Unknown provider: ~A" kind)))))
 
 (defun load-module (name &optional kind key)
-  (multiple-value-bind (form sys prov) (find-module name kind key)
-    (let ((kind (or prov kind)))
-      (typecase form
-        (list
-         (%load-module
-          (case (length form)
-            (1 (car form))
-            (t form))
-          kind (ensure-car form) sys))
-        (t (%load-module form kind form sys)))
-      (setq *module* name))))
+  (let ((form (find-module name kind key)))
+    (typecase form
+      (list
+       (%load-module
+        (case (length form)
+          (1 (car form))
+          (t form))
+        kind (ensure-car form) *module*))
+      (t (%load-module form kind key *module*)))))
 
 (defun load-module* (name &rest args)
   (mapcar (lambda (x) 
@@ -1220,7 +1226,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                                           output))
           (tmp-constants (merge-pathnames #p"constants.lisp-temp"
                                           output)))
-    (sb-grovel::c-constants-extract path tmp-c-source (package-name (slot-value comp 'std/defsys::package)))
+    (sb-grovel::c-constants-extract path tmp-c-source (package-name (slot-value comp 'package)))
     (lety ((code (sb-grovel::run-c-compiler tmp-c-source tmp-a-dot-out) :type fixnum))
       (unless (= code 0)
         (error 'sb-grovel::c-compile-failed)))
@@ -1383,7 +1389,7 @@ object SELF remains unmodified."
   ;; then we call providers
   (call-system-providers self)
   ;; and set variables
-  (setq *module* (name self))
+  (unless (typep self 'test-system) (setq *module* (name self)))
   self)
 
 (defmethod reset ((self system) &key)

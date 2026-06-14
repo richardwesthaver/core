@@ -59,6 +59,10 @@
   "See `org-todo-keywords-for-agenda'."
   :group 'ulang)
 
+(defface ulang-todo '((t :inherit org-todo))
+  "Default face used for `ulang-todo-keywords' in ulang-minor-mode."
+  :group 'ulang)
+
 (defcustom ulang-todo-keyword-faces
   '(("TODO" :weight bold))
   "See `org-todo-keyword-faces'."
@@ -92,6 +96,9 @@
       (agenda "" ((org-agenda-span 'day))))))
   "See `org-agenda-custom-commands'."
   :group 'ulang)
+
+(defvar ulang-syntax-table (copy-syntax-table text-mode-syntax-table)
+  "Syntax table used by `ulang-minor-mode'.")
 
 ;;; Regexps
 (defvar default-line-regexp-alist
