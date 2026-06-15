@@ -164,7 +164,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defmethod print-object ((self simple-rule) stream)
   (print-unreadable-object (self stream :type t)
-    (format stream "~A" (rule-target self))
+    (format stream "~A" (slot-boundp! self 'project::target))
     (when-let ((source (source self)))
       (format stream " ~{~(~A~)~^ ~}" source))))
 
@@ -190,9 +190,9 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   ((args :initform nil :type list))
   (:documentation "Rules which support the command protocol."))
 
-(definline make-rule (target &optional source recipe (class *default-rule-class*))
+(definline make-rule (&optional target source recipe (class *default-rule-class*))
   (make-instance class
-    :target (etypecase target 
+    :target (typecase target 
               (string target)
               (symbol (string-downcase target)))
     :source source
