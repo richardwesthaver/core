@@ -98,9 +98,9 @@ dedicated to the current buffer or its project (if one is found)."
   :type 'filename
   :group 'skel)
 
-(defcustom skel-project-tmux-config nil
-  "Default Project-local tmux configuration.
-A string of commands separated by ';'."
+(defcustom skel-project-tmux-init nil
+  "Global Project tmux configuration as a string.
+May be overridden by project-local config."
   :type 'string
   :group 'skel)
 

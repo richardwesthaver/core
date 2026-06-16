@@ -148,17 +148,19 @@ currently active org-graph."
       (setf (org-graph-node-id node) (org-graph--file-hash file)
             (org-graph-node-name node) (file-name-nondirectory file)))
     (setf (org-graph-node-properties node) 
-	  `(,@(let ((ts (org-entry-get (point) "CREATED")))
-		(when ts `(:created ,(org-parse-time-string ts t))))
+	      `(,@(let ((ts (org-entry-get (point) "CREATED")))
+		        (when ts `(:created ,(org-parse-time-string ts t))))
             ,@(let ((tags (org-entry-get (point) "ALLTAGS"))) 
-		(when tags 
-		  `(:tags 
-		    ,(split-string 
-		      (substring-no-properties tags)
-		      ":" t))))
-	    ,@(let ((aka (org-entry-get (point) "AKA")))
-		(when aka
-		  `(:aka ,aka)))))
+		        (when tags 
+		          `(:tags 
+		            ,(split-string 
+		              (substring-no-properties tags)
+		              ":" t))))
+            ;; TODO 2026-06-15: iterate over all 'ulang-properties' - need to keywordicate
+	        ,@(when-let* ((aka (org-entry-get (point) "AKA")))
+		        `(:aka ,aka))
+            ,@(when-let* ((aka (org-entry-get (point) "PRONOUNCE")))
+                `(:pronounce ,aka))))
     (when update
       (puthash (org-graph-node-id node) node (org-graph-nodes (if (eql t update) org-graph update))))
     node))
@@ -168,7 +170,7 @@ currently active org-graph."
   (interactive)
   (let ((link (org-element-context)))
     (buffer-substring-no-properties (org-element-property :contents-begin link)
-				    (org-element-property :contents-end link))))
+				                    (org-element-property :contents-end link))))
 
 (defun org-graph-collect-edge ()
   "Collect the edge at point which should be a line created with `org-graph-edge--insert'."
@@ -185,7 +187,7 @@ currently active org-graph."
                                :type arrow
                                :point ep
                                :timestamp (org-parse-time-string ts t)
-			       :properties `(:name ,(org-link--description-at-point))
+			                   :properties `(:name ,(org-link--description-at-point))
                                :out (string-trim (org--link-at-point) "id:")))))))
 
 (defun org-graph-map-edges (function)
@@ -193,13 +195,13 @@ currently active org-graph."
   (save-excursion
     (with-org-graph-edge-drawer (end)
       (unless (eobp)
-	(org-fold-reveal))
+	    (org-fold-reveal))
       (re-search-backward (rx bol ?: (literal (org-graph-edge-drawer)) ?: eol) nil t)
       (goto-char (1+ (match-end 0)))
       (cl-loop while (> (point-max) end (point))
                for x = (funcall function)
-	       unless (not x) 
-	       collect x
+	           unless (not x) 
+	           collect x
                do (next-line)))))
 
 ;; TODO 2024-09-23: 
@@ -234,10 +236,10 @@ or when 't' use the currently active org-graph."
   (let ((edges (org-graph-map-edges 'org-graph-collect-edge)))
     (when update
       (mapc (lambda (e)
-	      (puthash 
-	       (org-graph-edge-in e)
-	       e
-	       (org-graph-edges (if (eql t update) org-graph update))))
+	          (puthash 
+	           (org-graph-edge-in e)
+	           e
+	           (org-graph-edges (if (eql t update) org-graph update))))
             edges))
     edges))
 
@@ -273,32 +275,32 @@ currently active org-graph."
     (when (derived-mode-p 'org-mode)
       (org-map-entries 
        (lambda ()
-	 (org-graph-node-at-point t)
-	 (org-graph-edges-at-point t))))))
+	     (org-graph-node-at-point t)
+	     (org-graph-edges-at-point t))))))
 
 (defun org-graph-files (&optional clean)
   (let ((files 
-	 (flatten 
-	  (mapcar (lambda (x) 
-		    (let ((paths 
-			   (cl-remove-if 
-			    (lambda (y) (string-prefix-p "." y))
-			    (directory-files x)))
-			  (ret))
-		      (dolist (d paths ret)
-			(let ((xd (join-paths x d))) 
-			  (if (file-directory-p xd)
-			      (push (directory-files-recursively xd "**/*.org$") ret)
-			    (push xd ret))))))
-		  org-graph-locations))))
+	     (flatten 
+	      (mapcar (lambda (x) 
+		            (let ((paths 
+			               (cl-remove-if 
+			                (lambda (y) (string-prefix-p "." y))
+			                (directory-files x)))
+			              (ret))
+		              (dolist (d paths ret)
+			            (let ((xd (join-paths x d))) 
+			              (if (file-directory-p xd)
+			                  (push (directory-files-recursively xd "**/*.org$") ret)
+			                (push xd ret))))))
+		          org-graph-locations))))
     (if clean
-	(cl-remove-if '(lambda (x) 
-			 (or
-			  (string= (file-name-base x) "readme")
-			  (string= (file-name-base x) "index")
-			  (string= x org-graph-ui-file)
-			  (not (string= (file-name-extension x) "org"))))
-		      files)
+	    (cl-remove-if '(lambda (x) 
+			             (or
+			              (string= (file-name-base x) "readme")
+			              (string= (file-name-base x) "index")
+			              (string= x org-graph-ui-file)
+			              (not (string= (file-name-extension x) "org"))))
+		              files)
       files)))
 
 (defun org-graph--targets ()
@@ -307,13 +309,13 @@ currently active org-graph."
   (interactive)
   (let ((files (or files (org-graph-files t))))
     (cl-loop for c in files
-	     do (org-graph-buffer-update c))))
+	         do (org-graph-buffer-update c))))
 
 (defun org-graph-file-p (v)
   (when v
     (cl-loop for l in org-graph-locations
-	     when (string-prefix-p l (file-truename v))
-	     return t)))
+	         when (string-prefix-p l (file-truename v))
+	         return t)))
 
 (defun org-graph-from-id-locations (&optional edges local)
   "Populate the `org-graph' from `org-id-locations', filtering out any
@@ -322,33 +324,33 @@ non-nil visit each node and collect all edges found."
   (interactive "P")
   (save-excursion
     (let* ((node-ids (copy-hash-table (or org-id-locations (org-id-locations-load)))) ;; don't overwrite `org-id-locations'
-	   (graph (make-org-graph :nodes node-ids)))
+	       (graph (make-org-graph :nodes node-ids)))
       (maphash
        (lambda (k v) 
-	 (unless (org-graph-file-p v)
-	   (remhash k node-ids)))
+	     (unless (org-graph-file-p v)
+	       (remhash k node-ids)))
        node-ids)
       (let* ((total (hash-table-count node-ids))
-	     (i 0)
-	     (prog (make-progress-reporter "Building org-graph..."
-					   i total)))
-	(maphash
-	 (lambda (k v)
-	   (message "org-graph-node: %s:%s" v k)
-	   (progress-reporter-update prog (incf i) v)
-	   (let ((pos (cdr (org-id-find-id-in-file k v))))
-	     (if pos
-		 (progn
-		   (org-with-file-buffer v   
-		     (goto-char pos)
-		     (org-graph-node-at-point graph)
-		     (org-graph-edges-at-point graph)))
-	       (warn "couldn't find node %s %s" k v))))
-	 (org-graph-nodes graph))
-	(progress-reporter-done prog))
+	         (i 0)
+	         (prog (make-progress-reporter "Building org-graph..."
+					                       i total)))
+	    (maphash
+	     (lambda (k v)
+	       (message "org-graph-node: %s:%s" v k)
+	       (progress-reporter-update prog (incf i) v)
+	       (let ((pos (cdr (org-id-find-id-in-file k v))))
+	         (if pos
+		         (progn
+		           (org-with-file-buffer v   
+		             (goto-char pos)
+		             (org-graph-node-at-point graph)
+		             (org-graph-edges-at-point graph)))
+	           (warn "couldn't find node %s %s" k v))))
+	     (org-graph-nodes graph))
+	    (progress-reporter-done prog))
       (if local
-	  (setq-local org-graph graph)
-	(setq org-graph graph)))))
+	      (setq-local org-graph graph)
+	    (setq org-graph graph)))))
 
 (defun org-graph-narrow-to-node ()
   "Narrow to current heading, excluding subheadings."
@@ -362,10 +364,10 @@ non-nil visit each node and collect all edges found."
   "Return link elements for ID."
   (org-graph-narrow-to-node)
   (let ((links
-	 (org-element-map (org-element-parse-buffer) 'link
-	   (lambda (link)
-	     (when (string= (org-element-property :path link) id)
-	       link)))))
+	     (org-element-map (org-element-parse-buffer) 'link
+	       (lambda (link)
+	         (when (string= (org-element-property :path link) id)
+	           link)))))
     (widen)
     links))
 
@@ -460,11 +462,11 @@ associated EDGE-TYPE.")
   "Prompt the user for a graph node location using PROMPT."
   (let ((names) (ids))
     (maphash (lambda (k v) 
-	       (push (org-graph-node-name v) names)
-	       (push (org-graph-node-id v) ids))
-	     (org-graph-nodes org-graph))
+	           (push (org-graph-node-name v) names)
+	           (push (org-graph-node-id v) ids))
+	         (org-graph-nodes org-graph))
     (let ((node (org-graph-get-node 
-		 (elt ids (cl-position (completing-read "refile node to: " names) names :test 'string=)))))
+		         (elt ids (cl-position (completing-read "refile node to: " names) names :test 'string=)))))
       (set-marker (make-marker) (org-graph-node-point node) (find-file-noselect (org-graph-node-file node))))))
 
 (defun org-graph-refile-get-location ()
@@ -646,23 +648,23 @@ Optionally skip inserting a parent node at the target with NO-PARENT."
   "Insert link to marker TARGET and create a parent edge.
 Optionally skip inserting a child node at the target with NO-CHILD."
   (let* ((source (point-marker))
-	 (source-link (org-graph-edge-links-action source 'org-graph-edge-pre-parent-hook))
-	 (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-child-hook))
-	 (source-formatted-link (org-graph-edge-link-builder source-link))
-	 (target-formatted-link (org-graph-edge-link-builder target-link)))
+	     (source-link (org-graph-edge-links-action source 'org-graph-edge-pre-parent-hook))
+	     (target-link (org-graph-edge-links-action target 'org-graph-edge-pre-child-hook))
+	     (source-formatted-link (org-graph-edge-link-builder source-link))
+	     (target-formatted-link (org-graph-edge-link-builder target-link)))
     (unless no-child
       (with-current-buffer (marker-buffer target)
-	(save-excursion
-	  (save-restriction
-	    (widen) ;; buffer could be narrowed
-	    (goto-char (marker-position target))
-	    (when (derived-mode-p 'org-mode)
-	      (org-graph-edge-insert-child (car source-formatted-link) (cdr source-formatted-link)))))))
+	    (save-excursion
+	      (save-restriction
+	        (widen) ;; buffer could be narrowed
+	        (goto-char (marker-position target))
+	        (when (derived-mode-p 'org-mode)
+	          (org-graph-edge-insert-child (car source-formatted-link) (cdr source-formatted-link)))))))
     (with-current-buffer (marker-buffer source)
       (save-excursion
-	(goto-char (marker-position source))
-	(print target-formatted-link)
-	(org-graph-edge-insert-parent (car target-formatted-link) (cdr target-formatted-link))))))
+	    (goto-char (marker-position source))
+	    (print target-formatted-link)
+	    (org-graph-edge-insert-parent (car target-formatted-link) (cdr target-formatted-link))))))
 
 (defun org-graph-edge-insert-link-marker (target &optional no-forward no-backward)
   "Insert link to marker TARGET and create an edge.
@@ -761,15 +763,15 @@ either side, and deletes both sides of a link."
   (mapcar
    (lambda (x)
      (when (and 
-	    (member (buffer-file-name x) (org-graph-files exclude-readme))
-	    (buffer-live-p x))
+	        (member (buffer-file-name x) (org-graph-files exclude-readme))
+	        (buffer-live-p x))
        (kill-buffer x)))
    (org-buffer-list))
   (message "closed all org-graph buffers"))
 
 (defun org-graph-install-refile-targets ()
   (cl-pushnew (org-graph--targets) org-refile-targets 
-	      :test (lambda (a b) (equal (car a) (car b))))
+	          :test (lambda (a b) (equal (car a) (car b))))
   (org-refile-get-targets))
 
 ;; TODO 2025-03-01: babel-mode or only no-readme?
@@ -788,30 +790,30 @@ either side, and deletes both sides of a link."
 
 (defun org-graph-node-edges (node)
   "Return the edges associated with NODE."
-   (gethash (org-graph-node-id node) (org-graph-edges org-graph)))
+  (gethash (org-graph-node-id node) (org-graph-edges org-graph)))
 
 (defun org-graph-tablist ()
   (mapcar 
    (lambda (x)
      (with-slots (id name file properties) x
        (list id 
-	     `[,(if name (substring-no-properties name) "")
-	       ,(if file (string-trim file org-graph-root) "")
-	       ,(if #1=(plist-get properties :tags)
-		  (if (stringp #1#) 
-		      #1#
-		    (apply 'concat (intersperse ":" #1#)))
-		  "")
-	       ,(format "%s" (let ((edges (org-graph-node-edges x)))
-			       (mapcar (lambda (x)   
-					 (with-slots (type out timestamp properties) x
-					   (list (org-graph-edge-arrow type) out timestamp properties)))
-				       (if (listp edges) edges (list edges)))))])))
+	         `[,(if name (substring-no-properties name) "")
+	           ,(if file (string-trim file org-graph-root) "")
+	           ,(if #1=(plist-get properties :tags)
+		          (if (stringp #1#) 
+		              #1#
+		            (apply 'concat (intersperse ":" #1#)))
+		          "")
+	           ,(format "%s" (let ((edges (org-graph-node-edges x)))
+			                   (mapcar (lambda (x)   
+					                     (with-slots (type out timestamp properties) x
+					                       (list (org-graph-edge-arrow type) out timestamp properties)))
+				                       (if (listp edges) edges (list edges)))))])))
    (org-graph-node-list)))
 
 (defun org-graph-plist ()
   (list :nodes (mapcar 'unwrap (org-graph-node-list))
-	:edges (mapcar 'unwrap (org-graph-edge-list))))
+	    :edges (mapcar 'unwrap (org-graph-edge-list))))
 
 (defun org-graph-json ()
   (json-encode-plist (org-graph-plist)))
@@ -854,7 +856,7 @@ either side, and deletes both sides of a link."
              (when link
                (if-let* ((dom (plz 'get link :as (lambda ()
                                                    (libxml-parse-html-region (point-min) (point-max)))
-				:else nil))
+				                :else nil))
                          (title (cl-caddr (car (dom-by-tag dom 'title)))))
                    (org-web-tools--cleanup-title title)
                  (message "HTML page at URL has no title"))))))
@@ -973,18 +975,18 @@ either side, and deletes both sides of a link."
   "Major mode for browsing a list of graph nodes."
   :interactive nil
   (setq tabulated-list-format
-	`[("Title" ,node-title-column-width graph-menu--title-predicate)
+	    `[("Title" ,node-title-column-width graph-menu--title-predicate)
 
-	  ("File"  ,node-file-column-width  graph-menu--file-predicate)
-	  ("Tags"  ,node-tags-column-width  graph-menu--tags-predicate)
-	  ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
-	  ;; ("Properties" ,node-properties-column-width graph-menu--properties-predicate)
-	  ])
+	      ("File"  ,node-file-column-width  graph-menu--file-predicate)
+	      ("Tags"  ,node-tags-column-width  graph-menu--tags-predicate)
+	      ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
+	      ;; ("Properties" ,node-properties-column-width graph-menu--properties-predicate)
+	      ])
   (setq-local tabulated-list-padding 2
-	      ;; tabulated-list-sort-key (cons "Title" nil)
-	      tabulated-list-entries (org-graph-tablist)
-	      ;; revert-buffer-function 'graph-menu--refresh
-	      )
+	          ;; tabulated-list-sort-key (cons "Title" nil)
+	          tabulated-list-entries (org-graph-tablist)
+	          ;; revert-buffer-function 'graph-menu--refresh
+	          )
   (tabulated-list-init-header)
   (tabulated-list-print))
 

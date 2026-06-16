@@ -30,7 +30,7 @@
 (defgroup ulang nil "ULANG")
 
 (defcustom ulang-properties
-  '("VERSION" "LOCATION" "PRONOUNCE")
+  '("VERSION" "LOCATION" "PRONOUNCE" "AKA" "CREATED")
   "See 'org-special-properties'."
   :group 'ulang)
 
@@ -53,6 +53,30 @@
 (defcustom ulang-link-abbrev-alist
   '()
   "See `org-link-abbrev-alist'."
+  :group 'ulang)
+
+(defcustom ulang-created-property-name "CREATED"
+  "The name of the property for setting the creation date."
+  :type 'string
+  :group 'ulang)
+
+(defcustom ulang-created-date "+0d"
+  "The default creation date.
+The default value of this variable (\"+0d\") means that entries
+without a creation date will be handled as if they were created
+today.
+
+If the creation date cannot be retrieved from the entry or the
+subtree above, the expiry process will compare the expiry delay
+with this date.  This can be either an ISO date or a relative
+time specification.  See `org-read-date' for details on relative
+time specifications."
+  :type 'string
+  :group 'org-expire)
+
+(defcustom ulang-inactive-timestamps nil
+  "Insert inactive timestamps for created/expired properties."
+  :type 'boolean
   :group 'ulang)
 
 (defcustom ulang-todo-keywords '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
@@ -190,7 +214,21 @@ With optional N, search in the Nth line from point."
   (mapadd org-special-properties ulang-properties)
   (mapadd org-agenda-custom-commands ulang-agenda-commands)
   (mapadd org-todo-keywords-for-agenda ulang-todo-keywords)
-  (mapadd org-todo-keyword-faces ulang-todo-keyword-faces))
+  (mapadd org-todo-keyword-faces ulang-todo-keyword-faces)
+  (ad-activate 'org-schedule)
+  (ad-activate 'org-time-stamp)
+  (ad-activate 'org-deadline)
+  (add-hook 'org-insert-heading-hook 'org-insert-created)
+  (add-hook 'org-after-todo-state-change-hook 'org-insert-created)
+  (add-hook 'org-after-tags-change-hook 'org-insert-created))
+
+(defun ulang-deinit ()
+  (advice-remove 'org-schedule #'org-schedule@org-schedule-update-created)
+  (advice-remove 'org-time-stamp #'org-time-stamp@org-time-stamp-update-created)
+  (advice-remove 'org-deadline #'org-deadline@org-deadline-update-created)
+  (remove-hook 'org-insert-heading-hook 'org-insert-created)
+  (remove-hook 'org-after-todo-state-change-hook 'org-insert-created)
+  (remove-hook 'org-after-tags-change-hook 'org-insert-created))
 
 ;;; Location
 ;; (org-property-inherit-p "LOCATION")
@@ -255,8 +293,38 @@ or file at point. With C-u or ARG open in separate window."
      ;; TODO 2024-08-29: handle other location types (physical, etc)
      (t (funcall (if arg 'find-file-other-window 'find-file) loc t)))))
 
-;;; Comments
+;;; Created
+(defun ulang--format-timestamp (timestr inactive)
+  "Properly format TIMESTR into an org (in)active timestamp"
+  (format (if inactive "[%s]" "<%s>") timestr))
 
+(defun org-insert-created (&optional arg)
+  "Insert or update a property with the creation date.
+If ARG, always update it.  With one `C-u' prefix, silently update
+to today's date.  With two `C-u' prefixes, prompt the user for to
+update the date."
+  (interactive "P")
+  (let* ((d (org-entry-get (point) ulang-created-property-name))
+         d-time d-hour timestr)
+    (when (or (null d) arg)
+      ;; update if no date or non-nil prefix argument
+      (setq d-time (if d (org-time-string-to-time d)
+             (current-time)))
+      (setq d-hour (format-time-string "%H:%M" d-time))
+      (setq timestr
+        ;; two C-u prefixes will call org-read-date
+            (ulang--format-timestamp
+             (if (equal arg '(16))
+                 (org-read-date nil nil nil nil d-time d-hour)
+               (format-time-string
+                (replace-regexp-in-string "\\(^<\\|>$\\)" ""
+                                          (cdr org-time-stamp-formats))))
+             ulang-inactive-timestamps))
+      (save-excursion
+    (org-entry-put
+     (point) ulang-created-property-name timestr)))))
+
+;;; Comments
 ;; see also [[https://github.com/tarsius/hl-todo/blob/main/hl-todo.el][hl-todo.el]]
 (defun ulang-comment-keywords () 
   "Parse 'ulang-todo-keywords' and return a list of simplified todo keywords."
@@ -480,6 +548,19 @@ or the current buffer if not given."
   ;; (if (derived-mode-p 'lisp-mode) (setq-local ulang-minor-mode-use-readtable t))
   (when ulang-minor-mode-use-readtable (ulang-minor-mode-swap-setup))
   (when ulang-minor-mode-use-buttons (ulang-minor-mode-link-setup)))
+
+;;; Advice
+(define-advice org-schedule (:after (&rest _) org-schedule-update-created)
+  "Update the creation-date property when calling `org-schedule'."
+  (org-insert-created))
+
+(define-advice org-deadline (:after (&rest _) org-deadline-update-created)
+  "Update the creation-date property when calling `org-deadline'."
+  (org-insert-created))
+
+(define-advice org-time-stamp (:after (&rest _) org-time-stamp-update-created)
+  "Update the creation-date property when calling `org-time-stamp'."
+  (org-insert-created))
 
 ;;; Hooks
 ;;;###autoload
