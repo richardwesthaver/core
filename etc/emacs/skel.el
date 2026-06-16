@@ -549,6 +549,33 @@ variable 'skel-project-capture-templates'."
     (if buf (switch-to-buffer buf)
       (eat "tmux" (format "attach-session %s" name)))))
 
+;;; Tab Groups
+(defun project-tab-group ()
+  "Call `tab-group` with the current project name as the group."
+  (interactive)
+  (when-let* ((proj (project-current))
+              (name (file-name-nondirectory
+                     (directory-file-name (project-root proj)))))
+    (tab-group (format "[%s]" name))))
+
+(defun tab-switch-to-group ()
+  "Prompt for a tab group and switch to its first tab.
+Uses position instead of index field."
+  (interactive)
+  (let* ((tabs (funcall tab-bar-tabs-function)))
+	(let* ((groups (delete-dups (mapcar (lambda (tab)
+										  (funcall tab-bar-tab-group-function tab))
+										tabs)))
+		   (group (completing-read "Switch to group: " groups nil t)))
+	  (let ((i 1) (found nil))
+		(dolist (tab tabs)
+		  (let ((tab-group (funcall tab-bar-tab-group-function tab)))
+			(when (and (not found)
+					   (string= tab-group group))
+			  (setq found t)
+			  (tab-bar-select-tab i)))
+		  (setq i (1+ i)))))))
+
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
@@ -586,7 +613,8 @@ variable 'skel-project-capture-templates'."
             (project-capture "Capture")
             (project-save-registers "Save Registers")
             (project-load-registers "Load Registers")
-            (project-tmux "Tmux"))))
+            (project-tmux "Tmux")
+            (project-tab-group "Tab Group"))))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 

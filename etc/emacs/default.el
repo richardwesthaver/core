@@ -335,7 +335,21 @@ TABLE."
 
 ;;; Tabs
 (use-package tab-bar
-  :hook (tab-bar-mode-hook . tab-bar-history))
+  :init (setq tab-bar-tab-hints t
+              tab-bar-new-button-show nil
+              tab-bar-close-button-show nil
+              tab-bar-separator " "
+              tab-bar-format '(tab-bar-format-tabs-groups
+					           tab-bar-format-tabs tab-bar-separator tab-bar-format-add-tab))
+  :hook (tab-bar-mode . tab-bar-history-mode)
+  :config
+  ;; OVERRIDES
+  (defun tab-bar-tab-name-format-hints (name _tab i)
+	(if tab-bar-tab-hints (concat (format "«%d»" i) "") name))
+  (defun tab-bar-tab-group-format-default (tab _i &optional current-p)
+	(propertize
+	 (concat (funcall tab-bar-tab-group-function tab))
+	 'face (if current-p 'tab-bar-tab-group-current 'tab-bar-tab-group-inactive))))
 
 (use-package tab-line-nerd-icons :ensure t :hook (tab-line-mode . tab-line-nerd-icons-global-mode))
 
@@ -1186,15 +1200,20 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package skel 
   :load-path site-lisp-directory
   :defer nil
-  :bind (:map project-prefix-map 
-              ("RET" . project-skel-shell)
-              ("a" . project-agenda)
-              ("l" . project-todo-list)
-              ("t" . project-tmux)
-              ("c" . project-capture)
-              ("C" . project-compile)
-              ("R" . project-load-registers)
-              ("S" . project-save-registers))
+  :bind 
+  (:map project-prefix-map 
+         ("RET" . project-skel-shell)
+         ("a" . project-agenda)
+         ("l" . project-todo-list)
+         ("t" . project-tmux)
+         ("c" . project-capture)
+         ("C" . project-compile)
+         ("w" . project-load-registers)
+         ("W" . project-save-registers)
+         ("P" . project-tab-group)
+         ("S" . tab-switch-to-group))
+  ("C-x t P" . project-tab-group)
+  ("C-x t g" . tab-switch-to-group)
   :interpreter "skel"
   :hook 
   (project-find-functions . project-try-skel)
