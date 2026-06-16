@@ -79,7 +79,7 @@
 ;; To use this mode call RUN-TMUX with the "-C" arg.
 
 ;; ref: https://github.com/tmux/tmux/wiki/Control-Mode#control-mode
-(defparameter *tmux-user-config-path* (merge-pathnames ".tmux.conf" (user-homedir-pathname)))
+(defparameter *tmux-user-config-path* (xdg-config-file :tmux))
 (defparameter *tmux-system-config-path* (merge-pathnames "tmux.conf" "/etc/"))
 
 (defparameter *default-tmux-tmpdir* (pathname (format nil "/tmp/tmux-~A/" (sb-posix:getuid))))
@@ -163,11 +163,10 @@
 
 When SYSTEM is non-nil, skip check for user config.
 
-When USER is non-nil it should be the name of a user whose config will be loaded
-from /home/USER/.tmux.conf."
+When USER is non-nil it should be the name of a user whose config will be loaded instead."
   (let ((path (cond
                 (system (probe-file *tmux-system-config-path*))
-                (user (probe-file (format nil "/home/~A/.tmux.conf" user)))
+                (user (probe-file (format nil "/home/~A/.config/tmux.conf" user)))
                 (t (or (probe-file *tmux-user-config-path*) (probe-file *tmux-system-config-path*)))))
         (obj (make-config :tmux :commands nil)))
     (with-open-file (file path)

@@ -1189,8 +1189,10 @@ With prefix ARG non-nil, insert the result at the end of region."
   :bind (:map project-prefix-map 
               ("RET" . project-skel-shell)
               ("a" . project-agenda)
-              ("t" . project-todo-list)
-              ("C" . project-capture)
+              ("l" . project-todo-list)
+              ("t" . project-tmux)
+              ("c" . project-capture)
+              ("C" . project-compile)
               ("R" . project-load-registers)
               ("S" . project-save-registers))
   :interpreter "skel"

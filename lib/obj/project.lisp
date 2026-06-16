@@ -165,7 +165,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 (defmethod print-object ((self simple-rule) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (slot-boundp! self 'project::target))
-    (when-let ((source (source self)))
+    (when-let ((source (slot-boundp! self 'source)))
       (format stream " ~{~(~A~)~^ ~}" source))))
 
 (defmethod write-object ((self simple-rule) stream &key)

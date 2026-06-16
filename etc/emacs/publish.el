@@ -155,43 +155,42 @@
   (interactive)
   (save-excursion
     (let ((dirs '("graph/app" "graph/comp" "graph/lang" "graph/hw" "graph/math" "graph/os" 
-		  "graph/proto" "graph/sys" "graph/theory" "graph/web"
-		  "plan/tasks"
-		  "docs/core/lib")))
+		          "graph/proto" "graph/sys" "graph/theory" "graph/web" "graph/techne"
+		          "plan/tasks")))
       (while dirs
-	(let* ((dir (pop dirs))
-	       (default-directory (join-paths project-dir dir))
-	       (files (remove "index.org" (directory-files default-directory nil ".org$" t)))
-	       (entries))
-	  (delete-file "index.org")
-	  (when-let* ((index-open (find-buffer-visiting "index.org")))
-	    (kill-buffer index-open))
-	  (while files
-	    (let* ((file (pop files)))
-	      (with-temp-buffer
-		(org-mode)
-		(insert-file-contents file nil)
-		(add-to-list
-		 'entries
-		 (cons file (org-collect-keywords '("TITLE")))))))
-	  (sort entries
-		(lambda (a b)
-		  (string-greaterp (car (cdaddr a)) (car (cdaddr b)))))
-	  (org-with-file-buffer "index.org"
-	    (insert (format "#+TITLE: %s\n" dir))
-	    (insert (format "#+HTML_LINK_UP: %s\n" "../"))
-	    (insert (format "#+SETUPFILE: %s\n" 
-			    (cl-case (length (file-name-split dir))
-			      (2 "../../clean.theme")
-			      (3 "../../../clean.theme")
-			      (4 "../../../../clean.theme")
-			      (t (error "max index level reached in 'update-sitemap'")))))
-	    (dolist (e entries)
-	      (let ((file (file-name-with-extension (car e) "html"))
-		    (title (cadadr e)))
-		(insert (format "- [[%s/%s/%s][%s]]\n" url dir file title))))
-	    (save-buffer))
-	  (message (format "generated %s/index.org" dir)))))))
+	    (let* ((dir (pop dirs))
+	           (default-directory (join-paths project-dir dir))
+	           (files (remove "index.org" (directory-files default-directory nil ".org$" t)))
+	           (entries))
+	      (delete-file "index.org")
+	      (when-let* ((index-open (find-buffer-visiting "index.org")))
+	        (kill-buffer index-open))
+	      (while files
+	        (let* ((file (pop files)))
+	          (with-temp-buffer
+		        (org-mode)
+		        (insert-file-contents file nil)
+		        (add-to-list
+		         'entries
+		         (cons file (org-collect-keywords '("TITLE")))))))
+	      (sort entries
+		        (lambda (a b)
+		          (string-greaterp (car (cdaddr a)) (car (cdaddr b)))))
+	      (org-with-file-buffer "index.org"
+	        (insert (format "#+TITLE: %s\n" dir))
+	        (insert (format "#+HTML_LINK_UP: %s\n" "../"))
+	        (insert (format "#+SETUPFILE: %s\n" 
+			                (cl-case (length (file-name-split dir))
+			                  (2 "../../clean.theme")
+			                  (3 "../../../clean.theme")
+			                  (4 "../../../../clean.theme")
+			                  (t (error "max index level reached in 'update-sitemap'")))))
+	        (dolist (e entries)
+	          (let ((file (file-name-with-extension (car e) "html"))
+		            (title (cadadr e)))
+		        (insert (format "- [[%s/%s/%s][%s]]\n" url dir file title))))
+	        (save-buffer))
+	      (message (format "generated %s/index.org" dir)))))))
 
 ;;;###autoload
 (defun publish (&optional sitemap force async)

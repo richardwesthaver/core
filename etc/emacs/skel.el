@@ -98,6 +98,12 @@ dedicated to the current buffer or its project (if one is found)."
   :type 'filename
   :group 'skel)
 
+(defcustom skel-project-tmux-config nil
+  "Default Project-local tmux configuration.
+A string of commands separated by ';'."
+  :type 'string
+  :group 'skel)
+
 ;; should dispatch to a server, likely covered by eglot tho..
 (defvar-keymap skel-map
   :doc "skel keymap"
@@ -534,6 +540,15 @@ variable 'skel-project-capture-templates'."
   (interactive)
   (load (project-registers-file) t))
 
+;;; Multiplexer
+(defun project-tmux ()
+  (interactive)
+  (let* ((name  (project-name (project-current)))
+         (eat-buffer-name (format "*%s-tmux*" name))
+         (buf (get-buffer eat-buffer-name)))
+    (if buf (switch-to-buffer buf)
+      (eat "tmux" (format "attach-session %s" name)))))
+
 ;;; Minor Mode
 (define-minor-mode skel-minor-mode
   "skel-minor-mode"
@@ -565,11 +580,13 @@ variable 'skel-project-capture-templates'."
         '("\\.box\\'" "\\.pod\\'" "\\.pkg\\'"
           "\\.?\\(skelrc\\|skelfile\\|sk\\|sxp\\|homerc\\|kryptrc\\|packyrc\\)\\'"))
   (with-eval-after-load 'project 
-    (add-to-list 'project-switch-commands '(project-skel-shell "Skel"))
-    (add-to-list 'project-switch-commands '(project-agenda "Agenda"))
-    (add-to-list 'project-switch-commands '(project-capture "Capture"))
-    (add-to-list 'project-switch-commands '(project-save-registers "Save Registers"))
-    (add-to-list 'project-switch-commands '(project-load-registers "Load Registers")))
+    (mapc (lambda (x) (add-to-list 'project-switch-commands x))
+          '((project-skel-shell "Skel")
+            (project-agenda "Agenda")
+            (project-capture "Capture")
+            (project-save-registers "Save Registers")
+            (project-load-registers "Load Registers")
+            (project-tmux "Tmux"))))
   (with-eval-after-load 'eglot (add-to-list 'eglot-server-programs '((lisp-mode skel-mode) "skel" "langserver")))
   (with-eval-after-load 'org (org-babel-make-language-alias "skel" "lisp-data")))
 

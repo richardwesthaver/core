@@ -18,7 +18,7 @@
 (defmacro deftyped (name args ret &body body)
   "function definition with typed args and return value."
   `(defun ,name ,(mapcar (lambda (x) (if (atom x) x (car x))) args) 
-     (declare (ftype (function ,(mapcar (lambda (x) (or (cdr x) t)) args) ,ret) ,name))
+     (declare (ftype (function ,(mapcar (lambda (x) (if (atom x) t (cadr x))) args) ,ret) ,name))
      ,@body))
 
 (defmacro defityped* (name args &body body)
