@@ -3,7 +3,7 @@
  "The official documentation system of the core. Contains all modules
 necessary for building complete API reference documents."
  :version "0.1.0"
- :require (:std :organ :parse :obj :rdb :log)
+ :require (:std :organ :parse :obj :rdb :log :syn)
  :components 
  ((:pkg "pkg")
   (:file "nlp")
@@ -15,7 +15,15 @@ necessary for building complete API reference documents."
   (:file "system")
   (:file "reprex"))
  :provide 
- ((:proto :doc)
+ (
+  (:proto :nlp)
+  (:proto :doc
+   :variables (*document-class*)
+   :accessors (doc)
+   :methods (document-class publish)
+   :functions (find-definitions definition-source-line-number classify-symbol symbol-classification-string))
+  ;; (:proto :api)?
+  (:proto :reprex)
   (:proto :search)
   (:readtable :doc)
   (:tests :require (:rt :doc :rdb :obj))))

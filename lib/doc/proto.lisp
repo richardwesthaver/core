@@ -72,7 +72,8 @@ to (SETF DOCUMENTATION).")
          (sb-introspect::definition-source-description source-location)))
 
 (defun find-definitions (name)
-  "Iterate over all type definitions returning two lists, DSPECs and DEFINITION-SOURCEs."
+  "Iterate over all type definitions returning two lists as values: DSPECs and
+DEFINITION-SOURCEs."
   (let ((dspecs) (defs))
     (loop for type in *definition-types* by #'cddr
           for defsrcs = (sb-introspect:find-definition-sources-by-name name type)

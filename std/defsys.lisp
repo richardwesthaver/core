@@ -591,7 +591,7 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
         (:tests (load-system form))
         (:sys (load-system form))
         (:bench (load-system form))
-        (:readtable (std/named-readtables:merge-readtables-into *readtable* form))
+        (:readtable (apply 'std/named-readtables:merge-readtables-into *readtable* form))
         ('nil
          (sb-int:doplist (k v) form
            (%load-module v k nil nil)))

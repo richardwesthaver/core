@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :doc/tests
-  (:use :cl :rt :doc :std))
+  (:use :cl :rt :doc :std :doc/nlp))
 
 (in-package :doc/tests)
 

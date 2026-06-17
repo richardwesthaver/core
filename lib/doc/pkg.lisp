@@ -49,6 +49,7 @@
    :tf-vectorize-documents
    :vector-data)
   (:export :summarize-text :edges :document-vertex)
+  (:export :stem)
   (:export 
    :document-cluster :clusters :get-cluster :distance
    :generate-document-distance-vectors

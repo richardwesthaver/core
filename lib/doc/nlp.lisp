@@ -456,7 +456,7 @@ amount of times word appears in the document.")
    (tokens :accessor tokens)
    (token-count :accessor token-count))
   (:documentation 
-   "The document class represents a search-optimized document. 
+   "A search-optimized document object.
 
 After creating a document, you can perform several operations on it, some
 examples:
@@ -467,8 +467,7 @@ examples:
 
 (defclass document-collection ()
   ((documents :initform () :initarg :documents :accessor documents))
-  (:documentation "The document collection class represents a
-collection of documents. As with a document, there are several operations
+  (:documentation "A collection of documents. As with a document, there are several operations
 available, some examples:
 
 + dictionary: which words appear in the document collection?
