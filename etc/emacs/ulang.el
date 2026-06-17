@@ -25,6 +25,7 @@
 ;;; Code:
 (require 'org)
 (require 'ox)
+(require 'rx)
 
 ;;; Custom
 (defgroup ulang nil "ULANG")
@@ -79,7 +80,7 @@ time specifications."
   :type 'boolean
   :group 'ulang)
 
-(defcustom ulang-todo-keywords '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH")
+(defcustom ulang-todo-keywords '("TODO" "REVIEW" "FIX" "HACK" "RESEARCH" "NOTE")
   "See `org-todo-keywords-for-agenda'."
   :group 'ulang)
 
@@ -87,8 +88,7 @@ time specifications."
   "Default face used for `ulang-todo-keywords' in ulang-minor-mode."
   :group 'ulang)
 
-(defcustom ulang-todo-keyword-faces
-  '(("TODO" :weight bold))
+(defcustom ulang-todo-keyword-faces nil
   "See `org-todo-keyword-faces'."
   :group 'ulang)
 
@@ -183,6 +183,17 @@ With optional N, search in the Nth line from point."
      (dow (nth 6 datetime)))
     (time-subtract now (days-to-time dow))))
 
+;;; Hooks
+;;;###autoload
+(defun ulang--org-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|\\* \\)"))
+;;;###autoload
+(defun ulang--lisp-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|;;; \\)"))
+;;;###autoload
+(defun ulang--sh-page-delimiter ()
+  (setq-local page-delimiter "^\\(\\|### \\)"))
+
 ;;; Utils
 (defun org-export-translate-to-lang (term-translations &optional lang)
   "Adds desired translations to `org-export-dictionary'.
@@ -191,17 +202,18 @@ With optional N, search in the Nth line from point."
    :utf-8. LANG is language you want to translate to."
   (dolist (term-translation term-translations)
     (let* ((term (car term-translation))
-	   (translation-default (nth 1 term-translation))
-	   (translation-html (nth 2 term-translation))
-	   (translation-utf-8 (nth 3 term-translation))
-	   (term-list (assoc term org-export-dictionary))
-	   (term-langs (cdr term-list)))
+       (translation-default (nth 1 term-translation))
+       (translation-html (nth 2 term-translation))
+       (translation-utf-8 (nth 3 term-translation))
+       (term-list (assoc term org-export-dictionary))
+       (term-langs (cdr term-list)))
       (setcdr term-list (append term-langs
-				(list
-				 (list lang
-				       :default translation-default
-				       :html translation-html
-				       :utf-8 translation-utf-8)))))))
+                (list
+                 (list lang
+                       :default translation-default
+                       :html translation-html
+                       :utf-8 translation-utf-8)))))))
+
 
 ;;;###autoload
 (defun ulang-init ()
@@ -215,17 +227,11 @@ With optional N, search in the Nth line from point."
   (mapadd org-agenda-custom-commands ulang-agenda-commands)
   (mapadd org-todo-keywords-for-agenda ulang-todo-keywords)
   (mapadd org-todo-keyword-faces ulang-todo-keyword-faces)
-  (ad-activate 'org-schedule)
-  (ad-activate 'org-time-stamp)
-  (ad-activate 'org-deadline)
   (add-hook 'org-insert-heading-hook 'org-insert-created)
   (add-hook 'org-after-todo-state-change-hook 'org-insert-created)
   (add-hook 'org-after-tags-change-hook 'org-insert-created))
 
 (defun ulang-deinit ()
-  (advice-remove 'org-schedule #'org-schedule@org-schedule-update-created)
-  (advice-remove 'org-time-stamp #'org-time-stamp@org-time-stamp-update-created)
-  (advice-remove 'org-deadline #'org-deadline@org-deadline-update-created)
   (remove-hook 'org-insert-heading-hook 'org-insert-created)
   (remove-hook 'org-after-todo-state-change-hook 'org-insert-created)
   (remove-hook 'org-after-tags-change-hook 'org-insert-created))
@@ -273,7 +279,7 @@ instead set or replace the location file keyword."
   (let ((val (or value (org-read-property-value "LOCATION" nil nil))))
     (if (org-before-first-heading-p)
         (save-excursion
-          (beginning-of-buffer)
+          (goto-char (point-min))
           (let ((start (point)))
             (when (re-search-forward (rx bol "#+LOCATION:" (+ space) (group (* (not space))) eol) nil t)
               (setq start (match-beginning 0))
@@ -337,8 +343,6 @@ update the date."
                (remove "|" x)))
      (mapcar 'cdr org-todo-keywords)))
    :test 'string=))
- 
-(defvar ulang-comment-keywords (ulang-comment-keywords))
 
 (defcustom ulang-comment-timestamp-format-concise "%F"
   "Specifier for date in `ulang-comment-timestamp-keyword'.
@@ -370,11 +374,11 @@ operates on the lines before point)."
   (cond
    ((and (> arg 1) (use-region-p))
     (let* ((beg (region-beginning))
-	   (end (region-end))
-	   (num (count-lines beg end)))
+       (end (region-end))
+       (num (count-lines beg end)))
       (save-excursion
-	(goto-char beg)
-	(comment-kill num))))
+    (goto-char beg)
+    (comment-kill num))))
    ((use-region-p)
     (comment-or-uncomment-region (region-beginning) (region-end)))
    (t
@@ -416,41 +420,41 @@ With optional VERBOSE argument (such as a prefix argument
 specified by `ulang-comment-timestamp-format-verbose'."
   (interactive
    (list
-    (ulang-comment--keyword-prompt ulang-todo-keywords)
+    (ulang-comment--keyword-prompt (ulang-comment-keywords))
     current-prefix-arg))
   (let* ((date (if verbose
-		   comment-timestamp-format-verbose
-		 ulang-comment-timestamp-format-concise))
-	 (string (format "%s %s: " keyword (format-time-string date)))
-	 (beg (point)))
+                   ulang-comment-timestamp-format-verbose
+                 ulang-comment-timestamp-format-concise))
+         (string (format "%s %s: " keyword (format-time-string date)))
+         (beg (point)))
     (cond
      ((or (eq beg (pos-bol))
-	  (default-line-regexp-p 'empty))
+      (default-line-regexp-p 'empty))
       (let* ((maybe-newline (unless (default-line-regexp-p 'empty 1) "\n")))
-	;; NOTE 2021-07-24: we use this `insert' instead of
-	;; `comment-region' because of a yet-to-be-determined bug that
-	;; traps `undo' to the two states between the insertion of the
-	;; string and its transformation into a comment.
-	(insert
-	 (concat comment-start
-		 ;; NOTE 2021-07-24: See function `comment-add' for
-		 ;; why we need this.
-		 (make-string
-		  (comment-add nil)
-		  (string-to-char comment-start))
-		 comment-padding
-		 string
-		 comment-end))
-	(indent-region beg (point))
-	(when maybe-newline
-	  (save-excursion (insert maybe-newline)))))
+    ;; NOTE 2021-07-24: we use this `insert' instead of
+    ;; `comment-region' because of a yet-to-be-determined bug that
+    ;; traps `undo' to the two states between the insertion of the
+    ;; string and its transformation into a comment.
+    (insert
+     (concat comment-start
+             ;; NOTE 2021-07-24: See function `comment-add' for
+             ;; why we need this.
+         (make-string
+          (comment-add nil)
+          (string-to-char comment-start))
+         comment-padding
+         string
+         comment-end))
+    (indent-region beg (point))
+    (when maybe-newline
+      (save-excursion (insert maybe-newline)))))
      (t
       (comment-indent t)
       (insert (concat " " string))))))
 
 ;;; ulang-minor-mode
-(defcustom ulang-minor-mode-use-buttons t
-  "When Non-nil insert buttons into 'ulang-minor-mode' buffers."
+(defcustom ulang-minor-mode-fontify t
+  "When Non-nil fontify 'ulang-minor-mode' buffers."
   :type 'boolean
   :group 'ulang
   :local t)
@@ -462,16 +466,16 @@ specified by `ulang-comment-timestamp-format-verbose'."
   :local t)
 
 ;; support ORG reader syntax in lisp files 
-(defun org-links-in-buffer ()
-"Return a list of org-links as (BEG END LINK DESC) in BUFFER
-or the current buffer if not given."
+;;;###autoload
+(defun org-links-in-buffer (&optional start end)
+"Return a list of org-links as (FULL BEG END LINK BEG END DESC BEG END) in the current buffer."
   (let ((matches))
     (save-match-data
       (save-excursion
         (save-restriction
           (widen)
-          (beginning-of-buffer)
-          (while (search-forward-regexp org-link-any-re nil t 1)
+          (goto-char (or start (point-min)))
+          (while (search-forward-regexp org-link-any-re end t 1)
             (push
              (if (org-in-regexp org-link-bracket-re)
                  (list
@@ -493,32 +497,70 @@ or the current buffer if not given."
              matches))))
       matches)))
 
+;;;###autoload
+(defun ulang-comment-keywords-in-buffer (&optional start end)
+"Return a list of comment keywords in buffer as (KW START END TS START
+END DESC START END) in the current buffer."
+  (let ((matches))
+    (save-match-data
+      (save-excursion
+        (save-restriction
+          (widen)
+          (goto-char (or start (point-min)))
+          (while (search-forward-regexp  
+                  (rx-let ((ulang-comment-keyword (eval `(or ,@(ulang-comment-keywords)))))
+                    (rx (* space) (+ (eval (or comment-start ":"))) (+ space)
+                        (group ulang-comment-keyword)
+                        (+ space)
+                        (group (* not-newline) digit) ":" (group (* not-newline))))
+                  end t 1)
+            (push
+             (list
+              (match-string-no-properties 1)
+              (match-beginning 1)
+              (match-end 1)
+              (match-string-no-properties 2) 
+              (match-beginning 2)
+              (match-end 2)
+              (match-string-no-properties 3) 
+              (match-beginning 3)
+              (match-end 3))
+             matches))))
+      matches)))
+
+;;;###autoload
 (defun ulang-minor-mode-swap-setup ()
   (make-local-variable 'post-command-hook)
   (add-hook 'post-command-hook 'ulang-minor-mode-swap nil t))
 
-(defun ulang-minor-mode-link-setup ()
-  (setq-local font-lock-fontify-region-function 'ulang-fontify-region))
-
+;;;###autoload
 (defun ulang-fontify-region (&optional start end verbose)
   (let ((start (or start (point-min)))
         (end (or end (point-max))))
+    (font-lock-default-fontify-region start end verbose)
     (mapc (lambda (a)
             (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
-              (unless (>= start xs)
-                (remove-overlays xs (or ze xe))
-                (make-button
-                 xs xe
-                 'data (or y x)
-                 'action 'org-open-at-point-global
-                 'help-echo (or (when z (format "%s (%s)" z y)) x))
-                (if z 
-                    (progn
-                      (put-text-property xs zs 'invisible t)
-                      (put-text-property ze xe 'invisible t))
-                  (org-remove-flyspell-overlays-in xs xe)))))
-          (org-links-in-buffer)))
-  (font-lock-default-fontify-region start end verbose))
+              (remove-overlays xs (or ze xe))
+              (make-button
+               xs xe
+               'data (or y x)
+               'action 'org-open-at-point-global
+               'help-echo (or (when z (format "%s (%s)" z y)) x))
+              (if z 
+                  (progn
+                    (put-text-property xs zs 'invisible t)
+                    (put-text-property ze xe 'invisible t))
+                (org-remove-flyspell-overlays-in xs xe))))
+          (org-links-in-buffer start end))
+    (mapc (lambda (b)
+            (cl-destructuring-bind (x xs xe y ys ye z zs ze) b
+              (put-text-property xs xe 'face (org-get-todo-face x))
+              (put-text-property ys ye 'face 'org-agenda-date)
+              (put-text-property zs ze 'face 'org-scheduled)))
+          (ulang-comment-keywords-in-buffer start end))))
+
+(defun ulang-minor-mode-link-setup ()
+  (setq-local font-lock-fontify-region-function 'ulang-fontify-region))
 
 ;; FIX 2026-05-01: readtable regexps
 (defun ulang-minor-mode-swap ()
@@ -539,7 +581,7 @@ or the current buffer if not given."
     (if (< 0 lm p rm)
         (progn (major-mode-suspend) (org-mode))
       (major-mode-restore))
-    (ulang-swap-setup)))
+    (ulang-minor-mode-swap-setup)))
 
 (define-minor-mode ulang-minor-mode nil
   :lighter " ulang"
@@ -547,31 +589,7 @@ or the current buffer if not given."
   :interactive (prog-mode)
   ;; (if (derived-mode-p 'lisp-mode) (setq-local ulang-minor-mode-use-readtable t))
   (when ulang-minor-mode-use-readtable (ulang-minor-mode-swap-setup))
-  (when ulang-minor-mode-use-buttons (ulang-minor-mode-link-setup)))
-
-;;; Advice
-(define-advice org-schedule (:after (&rest _) org-schedule-update-created)
-  "Update the creation-date property when calling `org-schedule'."
-  (org-insert-created))
-
-(define-advice org-deadline (:after (&rest _) org-deadline-update-created)
-  "Update the creation-date property when calling `org-deadline'."
-  (org-insert-created))
-
-(define-advice org-time-stamp (:after (&rest _) org-time-stamp-update-created)
-  "Update the creation-date property when calling `org-time-stamp'."
-  (org-insert-created))
-
-;;; Hooks
-;;;###autoload
-(defun ulang--org-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|\\* \\)"))
-;;;###autoload
-(defun ulang--lisp-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|;;; \\)"))
-;;;###autoload
-(defun ulang--sh-page-delimiter ()
-  (setq-local page-delimiter "^\\(\\|### \\)"))
+  (when ulang-minor-mode-fontify (ulang-minor-mode-link-setup)))
 
 (provide 'ulang)
 ;;; ulang.el ends here

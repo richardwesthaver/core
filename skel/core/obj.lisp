@@ -31,7 +31,8 @@
    (logger :initform (default-logger-config) :initarg :logger :type (or null logger-config) :accessor logger)
    (fmt :initform :pretty :initarg :fmt :type symbol)
    (auto-insert :initform nil :initarg :auto-insert :type form))
-  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be exposed externally, but specifies all shared fields of SKEL-*-CONFIG types."))
+  (:documentation "Root configuration class for the SKEL system. This class doesn't need to be
+exposed externally, but specifies all shared fields of SKEL-*-CONFIG types."))
 
 (declaim (inline bound-string-p sk-dir))
 (defun bound-string-p (o s) (and (slot-boundp o s) (stringp (slot-value o s))))

@@ -136,8 +136,7 @@ TABLE."
         ("SPC" . point-to-register)
         ("C-l" . list-registers)
         ("C-b" . buffer-to-register)
-        ("C-f" . file-query-to-register)
-        ("C-r" . copy-register))
+        ("C-f" . file-query-to-register))
   (:map help-map
         ("K" . describe-keymap))
   ("<remap> <tab-to-tab-stop>" . imenu)
@@ -339,13 +338,12 @@ TABLE."
               tab-bar-new-button-show nil
               tab-bar-close-button-show nil
               tab-bar-separator " "
-              tab-bar-format '(tab-bar-format-tabs-groups
-					           tab-bar-format-tabs tab-bar-separator tab-bar-format-add-tab))
+              tab-bar-format '(tab-bar-format-tabs-groups tab-bar-separator tab-bar-format-add-tab))
   :hook (tab-bar-mode . tab-bar-history-mode)
   :config
   ;; OVERRIDES
-  (defun tab-bar-tab-name-format-hints (name _tab i)
-	(if tab-bar-tab-hints (concat (format "«%d»" i) "") name))
+  ;; (defun tab-bar-tab-name-format-hints (name _tab i)
+  ;;   (if tab-bar-tab-hints (concat (format "«%d»" i) "") name))
   (defun tab-bar-tab-group-format-default (tab _i &optional current-p)
 	(propertize
 	 (concat (funcall tab-bar-tab-group-function tab))
@@ -354,9 +352,11 @@ TABLE."
 (use-package tab-line-nerd-icons :ensure t :hook (tab-line-mode . tab-line-nerd-icons-global-mode))
 
 ;;; Ulang
+(require 'ulang)
 (use-package ulang
   :defer nil
   :bind (:map org-mode-map ("C-c L" . org-follow-location))
+  :after org
   :load-path site-lisp-directory
   :hook
   ((after-init . ulang-init)
@@ -520,6 +520,7 @@ TABLE."
 
 ;;; Registers
 (use-package register
+  :bind (:map ctl-x-r-map ("C-r" . copy-register))
   :config
   (defun decrement-register (number register)
     "Subtract NUMBER from the contents of register REGISTER.
@@ -1200,20 +1201,20 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package skel 
   :load-path site-lisp-directory
   :defer nil
-  :bind 
-  (:map project-prefix-map 
-         ("RET" . project-skel-shell)
-         ("a" . project-agenda)
-         ("l" . project-todo-list)
-         ("t" . project-tmux)
-         ("c" . project-capture)
-         ("C" . project-compile)
-         ("w" . project-load-registers)
-         ("W" . project-save-registers)
-         ("P" . project-tab-group)
-         ("S" . tab-switch-to-group))
+  :bind
   ("C-x t P" . project-tab-group)
   ("C-x t g" . tab-switch-to-group)
+  (:map project-prefix-map 
+        ("RET" . project-skel-shell)
+        ("a" . project-agenda)
+        ("l" . project-todo-list)
+        ("t" . project-tmux)
+        ("c" . project-capture)
+        ("C" . project-compile)
+        ("w" . project-load-registers)
+        ("W" . project-save-registers)
+        ("P" . project-tab-group)
+        ("S" . tab-switch-to-group))
   :interpreter "skel"
   :hook 
   (project-find-functions . project-try-skel)

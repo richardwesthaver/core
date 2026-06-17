@@ -10,16 +10,13 @@
 
 ;;; Code:
 (in-package :skel/core)
-(declaim (optimize (speed 3)))
 ;; sb-pretty::*standard-pprint-dispatch-table*
 ;; *readtable*
 
-(declaim (inline sk-coerce-name sk-coerce-sequence))
-
-(defun sk-coerce-name (name &optional (case :downcase))
+(definline sk-coerce-name (name &optional (case :downcase))
   (if (eql :downcase case) (string-downcase name) (string-upcase name)))
 
-(defun sk-coerce-sequence (seq &optional limit)
+(definline sk-coerce-sequence (seq &optional limit)
   (coerce
    (if limit
        (take limit seq)

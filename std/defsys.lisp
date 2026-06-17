@@ -606,7 +606,8 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
           (1 (car form))
           (t form))
         kind (ensure-car form) *module*))
-      (t (%load-module form kind key *module*)))))
+      (t (%load-module form kind key *module*)))
+    form))
 
 (defun load-module* (name &rest args)
   (mapcar (lambda (x) 

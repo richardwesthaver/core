@@ -2,5 +2,5 @@
 (loaddefs-generate 
  '("/usr/share/emacs/site-lisp/"
    "/usr/share/emacs/site-lisp/slime/")
- "/usr/share/emacs/site-lisp/autoloads.el"
- nil nil nil t)
+ "/usr/share/emacs/site-lisp/autoloads.el")
+
