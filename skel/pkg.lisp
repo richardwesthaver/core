@@ -85,6 +85,7 @@
    :*skel-user-config* :*skel-system-config*
    :skel-store
    :print-skel-object
+   :*skel-slot-exclusions*
    ;; schema
    :sk-object-schema :skel-schema :*skel-registry-schema* :*skel-cache-schema*
    ;; db

@@ -12,7 +12,6 @@
     (:file "obj")
     (:file "component")
     (:file "project")
-    (:file "print")
     (:file "schema")
     (:file "db")
     (:file "log")
