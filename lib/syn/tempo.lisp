@@ -2,8 +2,8 @@
 
 ;; Based on Embedded Ruby templates (ERB)
 
-;; ref: https://github.com/ruby/erb
-;; ref: https://gitlab.common-lisp.net/mraskin/cl-emb
+;; [[https://github.com/ruby/erb][erb]]
+;; [[https://gitlab.common-lisp.net/mraskin/cl-emb][cl-emb]]
 
 ;;; Commentary:
 
@@ -75,7 +75,7 @@ like e.g. *ESCAPE-TYPE*."
       (autofuncall (funcall v))
       v))
 
-;; Code from Edi Weitz's TBNL <http://weitz.de/tbnl/>
+;; Code from Edi Weitz's [[http://weitz.de/tbnl/][TBNL]]
 (defun escape-by-table (string replacements)
   (with-output-to-string (out)
     (with-input-from-string (in string)
@@ -415,7 +415,7 @@ Rebuilds it when text template was a file which has been modified."
   (let* ((tempo-function (gethash name *tempo-table*))
          (path (when tempo-function (path tempo-function))))
     (cond ((and (not (typep name 'pathname)) (null tempo-function))
-           (error "Function ~S not found." name))
+           (error "Tempo function ~S not found." name))
           ((null tempo-function)
            (return-from get-tempo-function))
           ((and path (> (file-write-date path) (tempo-function-time tempo-function)))
@@ -460,7 +460,8 @@ Rebuilds it when text template was a file which has been modified."
                                        (progn (collect c) (collect c1))))
                               else do (collect c)))))))
 
-;; #% <% @if t %> :OK <% @else %> :NOPE <% @endif %> %#
+;; NOTE: returns a tempo function
+;;  #% <% @if t %> (print :OK) <% @else %> (print :NOPE) <% @endif %> %#
 
 (defreadtable :tempo
   (:merge :std)

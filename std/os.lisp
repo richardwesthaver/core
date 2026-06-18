@@ -175,8 +175,8 @@ arrange for FVAR to be closed after BODY."
               (:data-home . ".data")
               (:config-home . ".config")
               (:state-home . ".local/state")
-              (:data-dirs . (#p"/usr/local/share/" #p"/usr/share/"))
-              (:config-dirs . (#P"/etc/xdg/"))
+              (:data-dirs #p"/usr/local/share/" #p"/usr/share/")
+              (:config-dirs #P"/etc/xdg/")
               (:cache-home . ".cache")
               (:runtime-dir)))
       tbl))
@@ -249,6 +249,7 @@ default to the default supplied path (XDG-CONFIG-DIRECTORY NAME)."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
+;; TODO 2026-06-17: (defmacro define-config-file-search (name arg files-form dir-form rc-form))
 (defun xdg-config-file (name)
   "Attempt to find an xdg config file for NAME for searching for a match in this order: 
 - ~/.config/NAMErc 
@@ -268,6 +269,11 @@ default to the default supplied path (XDG-CONFIG-DIRECTORY NAME)."
           (when-let ((p
                       (.find (concatenate 'string "." rc-name) (std/path:directory-files (user-homedir-pathname)))))
             (warn 'simple-warning :format-control "config file in $HOME: ~A" :format-arguments p))))))
+
+#+todo
+(defun sys-config-file (name)
+  "Attempt to find a config file given NAME in the system configuration
+directory (usually '/etc/').")
 
 (defun xdg-data-directory (name)
   (directory-path (merge-pathnames name (xdg-dir :data-home))))

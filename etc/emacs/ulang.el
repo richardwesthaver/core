@@ -214,7 +214,6 @@ With optional N, search in the Nth line from point."
                        :html translation-html
                        :utf-8 translation-utf-8)))))))
 
-
 ;;;###autoload
 (defun ulang-init ()
   (interactive)
@@ -509,10 +508,16 @@ END DESC START END) in the current buffer."
           (goto-char (or start (point-min)))
           (while (search-forward-regexp  
                   (rx-let ((ulang-comment-keyword (eval `(or ,@(ulang-comment-keywords)))))
-                    (rx (* space) (+ (eval (or comment-start ":"))) (+ space)
+                    (rx (* space) (+ (eval (or comment-start ";"))) (+ space)
                         (group ulang-comment-keyword)
-                        (+ space)
-                        (group (* not-newline) digit) ":" (group (* not-newline))))
+                        (? 
+                         (seq
+                          (* space)
+                          (group (* not-newline) digit)))
+                        ":"
+                        (? (seq
+                            (* space)
+                            (group (* not-newline))))))
                   end t 1)
             (push
              (list
@@ -550,13 +555,13 @@ END DESC START END) in the current buffer."
                   (progn
                     (put-text-property xs zs 'invisible t)
                     (put-text-property ze xe 'invisible t))
-                (org-remove-flyspell-overlays-in xs xe))))
+                (org-remove-flyspell-overlays-in xs ze))))
           (org-links-in-buffer start end))
     (mapc (lambda (b)
             (cl-destructuring-bind (x xs xe y ys ye z zs ze) b
-              (put-text-property xs xe 'face (org-get-todo-face x))
-              (put-text-property ys ye 'face 'org-agenda-date)
-              (put-text-property zs ze 'face 'org-scheduled)))
+              (when (or y (not (string-empty-p z))) (put-text-property xs xe 'face (org-get-todo-face x))
+                    (when y (put-text-property ys ye 'face 'org-agenda-date))
+                    (when (not (string-empty-p z)) (put-text-property zs ze 'face 'org-scheduled)))))
           (ulang-comment-keywords-in-buffer start end))))
 
 (defun ulang-minor-mode-link-setup ()

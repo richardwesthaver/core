@@ -4,7 +4,7 @@
 
 ;;; Commentary:
 
-;; ref: https://reprex.tidyverse.org/
+;; [[https://reprex.tidyverse.org/][reprex]]
 
 ;; NOTE: reprex should also cover 'evolutions' where the same code is
 ;; modified, and the differences are highlighted.

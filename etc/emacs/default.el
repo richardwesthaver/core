@@ -318,7 +318,7 @@ TABLE."
                (rx "-mode" eos) "-tempo-tags"
                (symbol-name mode))))))
 
-;;; TODO Skeleton
+;;; TODO: Skeleton
 (use-package skeleton)
 
 ;;; Projects

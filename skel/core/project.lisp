@@ -5,17 +5,27 @@
 ;;; Code:
 (in-package :skel/core)
 
+;;; Utils
+#+todo
+(defmacro sk-let (bindings &body body)
+  "LET for SKEL-PROJECT bindings.
+
+Each element of BINDINGS is ")
 ;;; Rules
 (eval-always
   (defmacro with-sk-rule-env (binds &body body)
-    `(let (,@binds)
+    `(let (,@(mapcar (lambda (x) 
+                       ;; TODO 2026-06-17: 
+                       (if (or (atom x) (> 3 (length x)))
+                           x
+                           (cons (car x) (cddr x))))
+                     binds))
        (declare (ignorable ,@(mapcar 'car binds)))
        (symbol-macrolet ,*skel-project-symbol-macros*
          (macrolet ,*skel-project-macros*
            (labels ,*skel-project-functions*
              ,@body))))))
 
-                                        ;(mapcar (lambda (x) (eval (cadr x))) binds)
 ;; Note that EXEC directly on a rule currently does NOT touch the sources.
 (defmethod exec ((self rule))
   (compile-and-eval
@@ -149,15 +159,12 @@ directory."))
     ;;  ;; process the remainder as spec+defopt-args+body
     ;;  )
     (:env
-     ;; process the remainder as a regular value but
-     ;; associate the name with a shell environment which
-     ;; is set to the value. If the cdr is of length 3
-     ;; then we simply remember the value and set it during
-     ;; any calls out from Lisp to the shell. When the form
-     ;; length is > 3 we parse the next value as a shell
-     ;; specification with additional options for checking
-     ;; for pre-existing values and 'exporting' the
-     ;; environment.
+     ;; process the remainder as a regular value but associate the name with a
+     ;; shell environment which is set to the value. If the cdr is of length 3
+     ;; then we simply remember the value and set it during any calls out from
+     ;; Lisp to the shell. When the form length is > 3 we parse the next value
+     ;; as a shell specification with additional options for checking for
+     ;; pre-existing values and 'exporting' the environment.
      (unless (null val)
        (let ((val (if (listp val) (eval val) val))
 	         (_sym (substitute #\_ #\- (string sym))))
@@ -245,34 +252,22 @@ directory."))
       ;; BIND contains a list of forms which are bound dynamically based
       ;; on the contents of the cdr
       (when-let ((bind (bind self)))
-	    (setf (bind self)
-	          (let ((ret))
-		        (dolist (b bind ret)
-		          ;; if this is a list of length > 2 we parse the form as either
-		          ;; (key &rest val) or (var param &rest val)
-                  (if (= 2 (length b))
-                      ;; FIX 2026-05-08: protect against use of eval?
-                      ;; WARN 2026-05-08: use of eval
-                      (push b ret)
-		              (let ((sym (car b))
-			                (form (cdr b)))
-		                ;; (form (cddr b)))
-		                (let ((key (car form))
-			                  (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
-		                  (if (keywordp key)
-			                  (sk-case-bind key val sym)
-			                  (cond
-			                    ;; (sym param &rest val) detected
-			                    ((> (length (cdr form)) 0)
-			                     (let ((key (cadr b)))
-			                       (if (keywordp key)
-				                       (sk-case-bind key (cdr form) sym)
-				                       ;; if nothing else must be a lambda
-				                       (push `(,sym 
-					                           ,(compile sym `(lambda ,(car b) ,@(cddr b))))
-					                         ret))))
-			                    (t
-			                     (push b ret)))))))))))
+		(dolist (b bind)
+          ;; FIX 2026-05-08: protect against use of eval?
+          ;; WARN 2026-05-08: use of eval
+		  (let ((sym (car b))
+			    (form (cdr b)))
+		    ;; (form (cddr b)))
+		    (let ((key (car form))
+			      (val (if (= (length #1=(cdr form)) 1) (cadr form) #1#)))
+		      (if (keywordp key)
+			      (sk-case-bind key val sym)
+			      (cond
+			        ;; (sym param &rest val) detected
+			        ((> (length (cdr form)) 0)
+			         (let ((key (cadr b)))
+			           (when (keywordp key)
+				         (sk-case-bind key (cdr form) sym))))))))))
       ;; RULES
       (when-let ((rules (rules self)))
 	    (setf (rules self)

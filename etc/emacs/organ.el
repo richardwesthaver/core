@@ -437,6 +437,7 @@ CONTENTS holds the contents of the drawer.  INFO is a plist holding
 contextual information."
   (format "<details class='properties'><summary>properties</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
 
+;;;###autoload
 (defun org-export-get-reference-title (datum info)
   "Like `org-export-get-reference', except uses heading titles instead of random numbers."
   (let ((cache (plist-get info :internal-references)))
@@ -545,14 +546,15 @@ targets and targets."
      (t
       (org-export-get-reference datum info)))))
 
+;; FIX 2026-06-17: 
 (define-minor-mode org-id-export-mode
   "Attempt to export Org as HTML with useful link IDs.
 Instead of random IDs like \"#orga1b2c3\", use heading titles, made
 unique when necessary."
   :global t
   (if org-id-export-mode
-      (advice-add #'org-export-get-reference :override #'org-export-get-reference)
-    (advice-remove #'org-export-get-reference #'org-export-get-reference)))
+      (advice-add #'org-export-get-reference :override #'org-html--reference)
+    (advice-remove #'org-export-get-reference #'org-html--reference)))
 
 (provide 'organ)
 ;;; organ.el ends here
