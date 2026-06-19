@@ -653,7 +653,7 @@
    :project-slot :*project-config* :make-rule :rules
    :*default-rule-class* :*project-hook* :rule-target :simple-interactive-rule
    :links :project-link :project-tag-p :list-all-projects
-   :defproject))
+   :defproject :*project-env*))
 
 (defpkg :obj/db
   (:nicknames :db)

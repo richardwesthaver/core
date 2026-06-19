@@ -9,11 +9,12 @@ necessary for building complete API reference documents."
   (:file "nlp")
   (:file "fuzzy")
   (:file "proto")
+  (:file "reprex")
   (:file "symbol")
   (:file "file")
   (:file "package")
   (:file "system")
-  (:file "reprex"))
+  (:file "project"))
  :provide 
  (
   (:proto :nlp)

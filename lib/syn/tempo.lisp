@@ -444,7 +444,7 @@ Rebuilds it when text template was a file which has been modified."
         *tempo-case-sensitive* nil))
 
 ;;; Readtable
-(defun tempo-reader (stream subchar numarg)
+((defun tempo-reader (stream subchar numarg)
   (declare (ignore subchar numarg))
   `(tempo-function (or *compile-file-truename* *load-truename*)
                    (get-universal-time)

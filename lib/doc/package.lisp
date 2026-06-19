@@ -84,10 +84,10 @@
      (loop for s across symbols
            collect (doc-symbol s)))))
 
-(defmethod doc-dependents ((self package-documentation))
+(defmethod dependents ((self package-documentation))
   (mapcar #'package-documentation (package-used-by-list (doc-package self))))
 
-(defmethod doc-dependencies ((self package-documentation))
+(defmethod dependencies ((self package-documentation))
   (mapcar #'package-documentation (package-use-list (doc-package self))))
 
 ;; (sb-introspect:allocation-information (make-instance 'package-documentation))

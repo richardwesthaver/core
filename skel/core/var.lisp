@@ -17,13 +17,6 @@
 ;; TODO 2026-06-01: replace with single var *skel-config*
 (defvar *skel-user-config* nil)
 (defvar *skel-system-config* nil)
-(defvar *skel-env* (make-hash-table :test 'equal)
-  "A hash-table containing active SKEL environment variables. Keys and values are
-strings.
-
-The environment can be used for example in SB-EXT:RUN-PROGRAM by running the
-table through CLI/ENV:CONCAT-ENV-TABLE and passing it as the value of the
-:ENVIRONMENT keyword argument.")
 
 (defvar *skel-load-recursive* t
   "Whether to recursively load sk objects in the :include slot or store them

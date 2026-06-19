@@ -48,10 +48,10 @@
                            :test #'equalp))
         (push s r)))))
 
-(defmethod doc-dependents ((self system-documentation))
+(defmethod dependents ((self system-documentation))
   (mapcar #'system-documentation (find-system-dependents (doc-system self))))
 
-(defmethod doc-dependencies ((self system-documentation))
+(defmethod dependencies ((self system-documentation))
   (mapcar #'system-documentation (component-require (doc-system self))))
 
 (defmethod doc-files ((self system-documentation))

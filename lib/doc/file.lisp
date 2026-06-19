@@ -56,17 +56,12 @@
 ;;;; Headings
 
 ;; We define headings according to the Emacs notion of the term, as used in
-;; outline-mode, allout-mode, and org-mode. As mentioned, headings in source
+;; outline-mode and org-mode. As mentioned, headings in source
 ;; files begin with a minimum of 3 comment characters. 
 
 ;; For each additional comment character in outline-mode, the nested 'level'
 ;; of the heading is increased and any non-header elements or header elements
 ;; with a level greater than the top-level are nested inside that heading.
-
-;; For allout-mode, All headings begin with 3 comment characters followed by
-;; an underscore. The level is indicated by how many spaces follow the
-;; underscore. A special heading bullet character designates the specific type
-;; of header. Se allout-mode's docs for details.
 
 ;; 3 comment headings represent a level of 0. Any heading with a level
 ;; > 0 is a Subheading. For example, we are in a subheading named
@@ -140,9 +135,9 @@ stripped. Note that this level is NOT the same as the heading level."
 
 (defun decomment (s) (string-left-trim "; " s))
 
-(defclass allout-heading (file-heading)
+(defclass outline-heading (file-heading)
   ((type :initarg :type :initform nil))
-  (:documentation "A heading according to Emacs allout-mode."))
+  (:documentation "A heading according to Emacs outline-mode."))
 
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)
@@ -228,16 +223,15 @@ position is always assumed to be 0."
 
 ;; (defmacro define-file-heading (type slots))
 
-(defclass file-documentation ()
+(defclass file-documentation (file-component)
   ((path :initarg :path :type pathname :accessor doc-path)
    (header :initarg :header :type file-header)
    (contents :initarg :contents :type sequence)
    (locations :initarg :locations :type sequence))
   (:documentation "An object containing the header, contents, and relevant
-  locations of a source file. This object should be the result of a
-  function like COMPILE-FILE-DOCUMENTATION. Note that this object only
-  contains inline comments. Symbol documentation such as this one will
-  not be captured in instances of this object."))
+  locations of a source file. Note that this object only contains inline
+  comments. Symbol documentation such as this one will not be captured in
+  instances of this object."))
 
 (defaccessor path ((self file-documentation)) (doc-path self))
 
@@ -245,11 +239,17 @@ position is always assumed to be 0."
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (doc-path self))))
 
+(defmethod change-class ((self file-component) (new (eql 'file-documentation)) &key &allow-other-keys)
+  (make-instance new :header (read-file-header (path self) nil)))
+
 (defun file-documentation (path)
   "Return the FILE-DOCUMENTATION for PATH."
   (make-instance 'file-documentation
     :path path
-    :header (read-file-header path nil)))
+    :header (read-file-header path nil)
+    :name (pathname-name path)
+    :type (pathname-type path)))
+(sb-introspect::translate-source-location #p"~/src/core/core.lisp")
 
 (definline file-header (doc) (slot-value doc 'header))
 (definline file-headline (doc) (slot-value (file-header doc) 'headline))

@@ -11,7 +11,7 @@
   '("PREFIX" "STASHDIR" "STOREDIR" "BINDIR" "LIBDIR" "DATADIR" "CARGO_TARGET_DIR"))
 
 (defglobal *env-table* (make-hash-table :test 'equal)
-  "Global environment variables available in this image.")
+    "Global environment variables available in this image.")
 
 (defun get-env (name &optional default)
   (gethash name *env-table* default))

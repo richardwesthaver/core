@@ -44,21 +44,33 @@
                 ;; check for lisp-mode character
                 (cond
                   ((char= c #\,) ;; check for splice-mode character
-                   (if (char= (peek-char nil stream) #\@)
-                       (progn
-                         ;; skip it
-                         (read-char stream)
-                         ;; eval and push each form individually.
-                         (let ((form (read stream nil nil)))
-                           (push
-                            (coerce
-                             (format nil "~{~A~^ ~}" (compile-and-eval form))
-                             'list)
-                            out)))
-                       ;; unconditionally read in a single sexp and eval.
-                       (push (coerce (format nil "~A " (compile-and-eval (read stream nil nil)))
-                                     'list)
-                             out)))
+                   (let ((pch (peek-char nil stream)))
+                     (cond 
+                       ((char= pch #\@)
+                        ;; skip it
+                        (read-char stream)
+                        ;; eval and push each form individually.
+                        (let ((form (read stream nil nil)))
+                          (push
+                           (coerce
+                            (format nil "~{~A~^ ~}" (compile-and-eval form))
+                            'list)
+                           out)))
+                       #+nil
+                       ((char= pch #\,)
+                        ;; skip it
+                        (read-char stream)
+                        ;; eval and push symbol value.
+                        (let ((form (symbol-value (read stream nil nil))))
+                          (push
+                           (coerce
+                            (format nil "~{~A~^ ~}" form)
+                            'list)
+                           out)))
+                       (t ;; unconditionally read in a single sexp and eval.
+                          (push (coerce (format nil "~A " (compile-and-eval (read stream nil nil)))
+                                        'list)
+                                out)))))
                   ((or (char= c #\+) (char= c #\-))
                    (if (char= 
                         (if (sb-int:featurep (let ((*package* sb-int:*keyword-package*)

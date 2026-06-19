@@ -25,12 +25,15 @@
 (defglobal *project-table* (make-hash-table)
   "An EQL hash-table containing all registered projects.")
 
-(defvar *project* nil "The currently active PROJECT instance.")
-(defvar *project-config* nil "The currently active PROJECT-CONFIG instance.")
+(defvar *project* nil "The active PROJECT instance.")
+(defvar *project-config* nil "The active PROJECT-CONFIG instance.")
 
-(defparameter *project-hook* (make-instance 'std:key-hook))
+(defvar-unbound *project-env* "The active project-local environment.
+A hash-table containing pairs converted to KEY=VAL and consumed by RUN-PROGRAM.")
+    
+(defparameter *project-hook* (make-instance 'std:key-hook) "The project-local HOOK.")
 
-(defvar-unbound *rule* "The currently active RULE instance.")
+(defvar-unbound *rule* "The active RULE instance.")
 
 ;;; Conditions
 (defcondition project-condition () 

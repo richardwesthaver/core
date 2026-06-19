@@ -545,7 +545,6 @@ END DESC START END) in the current buffer."
     (font-lock-default-fontify-region start end verbose)
     (mapc (lambda (a)
             (cl-destructuring-bind (x xs xe &optional y ys ye z zs ze) a
-              (remove-overlays xs (or ze xe))
               (make-button
                xs xe
                'data (or y x)
@@ -554,8 +553,7 @@ END DESC START END) in the current buffer."
               (if z 
                   (progn
                     (put-text-property xs zs 'invisible t)
-                    (put-text-property ze xe 'invisible t))
-                (org-remove-flyspell-overlays-in xs ze))))
+                    (put-text-property ze xe 'invisible t)))))
           (org-links-in-buffer start end))
     (mapc (lambda (b)
             (cl-destructuring-bind (x xs xe y ys ye z zs ze) b

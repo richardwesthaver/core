@@ -96,6 +96,11 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
       (when (find-package symbol)       (flip #\p))
       result)))
 
+;; TODO 2026-06-18: symbol-tag-string
+#+todo
+(defun symbol-tag-string (sym)
+  "Return a string consisting of tags separated by ':'.")
+
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-symbol)
    (class :initarg :class :type list :accessor doc-class)

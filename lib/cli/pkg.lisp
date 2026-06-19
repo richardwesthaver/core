@@ -33,7 +33,7 @@
    :load-cli :args :arg0 :cli-args))
 
 (defpkg :cli/env
-  (:use :cl :std)
+  (:use :cl :std :project)
   (:nicknames :env)
   (:export :*default-global-env-var-names* :*default-local-env-var-names* :exec-path-list
    :program-list :find-exe :ld-library-path-list :concat-env-table

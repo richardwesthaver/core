@@ -49,7 +49,7 @@
    :skel-compile-error
    ;; vars
    :*default-skelrc*
-   :*skel-env* :*skel-project*
+   :*skel-project*
    :*default-skelfile* :*default-skel-user* 
    :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
    #:*skel-stash*

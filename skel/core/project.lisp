@@ -6,11 +6,7 @@
 (in-package :skel/core)
 
 ;;; Utils
-#+todo
-(defmacro sk-let (bindings &body body)
-  "LET for SKEL-PROJECT bindings.
 
-Each element of BINDINGS is ")
 ;;; Rules
 (eval-always
   (defmacro with-sk-rule-env (binds &body body)
