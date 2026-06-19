@@ -75,7 +75,10 @@ project-like objects."))
 (defgeneric project-load (self &key &allow-other-keys))
 (defgeneric project-find (what self &key &allow-other-keys))
 (defgeneric project-convert (self))
-(defgeneric load-project-component (kind form &key &allow-other-keys))
+(defgeneric load-project-component (kind form &key &allow-other-keys)
+  (:method (kind form &rest args)
+    (declare (ignore kind))
+    (apply 'load-component form args)))
 
 (defun project (name)
   "Find a registered project by NAME."
@@ -212,7 +215,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defmethod print-object ((self project-component) stream)
   (print-unreadable-object (self stream :type t)
-    (when-let ((name (or (name self) (format-sxhash (id self)))))
+    (when-let ((name (or (slot-boundp! self 'name) (format-sxhash (slot-boundp! self 'id)))))
       (format stream "~A" name))))
 
 (defmethod load-ast ((self project-component))
@@ -235,10 +238,10 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defcomponent project-module (project-component mod-component project-metadata) 
   ()
-  (:keyword :mod)
+  (:keyword :module)
   (:documentation "A module component for projects."))
 
-(defmethod load-project-component ((kind (eql :mod)) (form t) &key (path *default-pathname-defaults*))
+(defmethod load-project-component ((kind (eql :module)) (form t) &key (path *default-pathname-defaults*))
   (make-instance 'project-module :path path :ast (ensure-cons form)))
 
 (defmethod project-compile ((self project-module) &key)

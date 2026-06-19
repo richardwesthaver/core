@@ -249,7 +249,6 @@ position is always assumed to be 0."
     :header (read-file-header path nil)
     :name (pathname-name path)
     :type (pathname-type path)))
-(sb-introspect::translate-source-location #p"~/src/core/core.lisp")
 
 (definline file-header (doc) (slot-value doc 'header))
 (definline file-headline (doc) (slot-value (file-header doc) 'headline))

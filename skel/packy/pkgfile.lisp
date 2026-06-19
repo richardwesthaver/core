@@ -69,16 +69,13 @@
   (let ((ast (ast self)))
     (multiple-value-bind (slots body) (plist-split ast)
       (doplist (k v) slots
-        (setf (slot-value self (find-symbol (string-upcase k) :skel/packy)) v))
+        (setf (slot-value self (find-symbol* (string-upcase k) :skel/packy)) v))
       (setf (ast self) body)
       self)))
 
 (defmethod deserialize ((from pathname) (format (eql :pkgfile)) &key)
   (load-ast (read-ast (make-instance 'pkgfile) from)))
 
-(defmethod load-project-component ((kind (eql :pkg)) form &key (path (project-root)))
+(defmethod load-project-component ((kind (eql :pkg)) (form t) &key (path (project-root)))
   (let ((*default-pathname-defaults* path))
-    (deserialize form :pkgfile)))
-  
-
-  
+    (print (deserialize (make-pathname :name form :type "pkg" :defaults *default-pathname-defaults*) :pkgfile))))
