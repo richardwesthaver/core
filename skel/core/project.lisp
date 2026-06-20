@@ -5,8 +5,6 @@
 ;;; Code:
 (in-package :skel/core)
 
-;;; Utils
-
 ;;; Rules
 (eval-always
   (defmacro with-sk-rule-env (binds &body body)
@@ -27,19 +25,6 @@
   (compile-and-eval
    `(with-sk-rule-env ,(bind *project*)
       ,@(ast self))))
-
-(defun make (obj &rest rules)
-  (if rules
-      (mapc
-       (lambda (r) 
-         (when-let ((rule (project-find r obj)))
-           (call obj rule)))
-       rules)
-      (unless (sequence:emptyp (rules obj))
-        (let ((rule (aref (rules obj) 0)))
-          (if (source rule)
-              (make obj rule)
-              (exec rule))))))
 
 ;;; Project
 (defcomponent skel-project (simple-project)
@@ -339,20 +324,6 @@ directory.")
 
 (defmethod project-find ((name string) (self project-config) &key)
   (find name (scripts self) :test 'equal :key #'name))
-
-(defmethod call ((self skel-project) (rule rule))
-  (when-let ((sources (and rule (source rule))))
-    (mapcar
-     (lambda (src)
-       (if-let* ((sr (project-find src self)))
-         ;; TODO: check if we need to rerun sources
-         (make self sr)
-         (error "unhandled source: ~A for rule ~A" src rule)))
-     sources))
-  (exec rule))
-
-(defmethod call ((self skel-project) (arg t))
-  (make self (project-find arg self)))
 
 (defmethod call ((self skel-project) (arg (eql :compile)))
   (loop for c across (components self)

@@ -66,7 +66,7 @@ Default value: NIL")
       (fmt *print-slot-exclude*)
       (fmt *print-slot-unbound*)
       (fmt *print-color*))
-     nil)))
+     (values))))
 
 (defun format-sxhash (code &optional stream)
   "Turn the fixnum value CODE into a human-friendly string. CODE should

@@ -79,7 +79,7 @@
    :edit-skelrc :skel
    :def-sk-class :skel-project
    :sk-env
-   :make :sk-kind
+   :sk-kind
    :sk-command :scripts :project-script :skel-config
    :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*

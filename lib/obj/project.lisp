@@ -187,7 +187,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
       (format stream " ~{~(~A~)~^ ~}" source))))
 
 (defmethod write-object ((self simple-rule) stream &key)
-  (write-string (rule-target self) stream) ;; target isn't typep SK-OBJECT
+  (write-string (rule-target self) stream)
   (write (source self) :stream stream)
   (write (ast self) :stream stream))
 
@@ -216,9 +216,37 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
     :source source
     :ast
     (multiple-value-bind (form _ doc) (parse-body recipe :documentation t)
-      ;; TODO 2025-02-25: figure out where to put the docstring - hash,compare,cache
+      ;; TODO 2025-02-25: figure out where to put the docstring -
+      ;; hash,compare,cache
       (declare (ignore _ doc))
       form)))
+
+(defmethod make ((self project) &rest rules)
+  (if rules
+      (mapc
+       (lambda (r) 
+         (when-let ((rule (project-find r self)))
+           (call self rule)))
+       rules)
+      (unless (sequence:emptyp (rules self))
+        (let ((rule (aref (rules self) 0)))
+          (if (source rule)
+              (make self rule)
+              (exec rule))))))
+
+(defmethod call ((self project) (rule rule))
+  (when-let ((sources (and rule (source rule))))
+    (mapcar
+     (lambda (src)
+       (if-let* ((sr (project-find src self)))
+         ;; TODO: check if we need to rerun sources
+         (make self sr)
+         (error "unhandled source: ~A for rule ~A" src rule)))
+     sources))
+  (exec rule))
+
+(defmethod call ((self project) (arg t))
+  (make self (project-find arg self)))
 
 ;;; Components
 (defclass project-component (id component ast)

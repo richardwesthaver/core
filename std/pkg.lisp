@@ -1059,6 +1059,7 @@
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
+   :make
    :slot-boundp* :slot-values
    :slot-boundp!
    :explore :with-fslots
