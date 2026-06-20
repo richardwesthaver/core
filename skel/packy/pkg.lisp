@@ -43,6 +43,7 @@
    :init-packy-db
    :package-id
    :*default-pkgfile*
+   :pkgfile
    :*default-pkg-extension*))
 
 (defpkg :skel/packy/cli

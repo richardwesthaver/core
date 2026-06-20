@@ -68,7 +68,7 @@ ASDF:DEFSYSTEM.")
   :documentation "The default file extension used in system definitions.")
 
 (defvar *module* nil 
-"The name of the current module.
+  "The name of the current module.
 This value is set when INIT is called on a SYSTEM instance and whenever
 LOAD-MODULE is called.")
 
@@ -100,7 +100,6 @@ LOAD-MODULE is called.")
        (retry ()
          :report (lambda (s)
                    (format s "~@<Retry system method.~@:>"))))))
-
 
 ;; (retry)
 ;; (reset-session)
@@ -224,7 +223,7 @@ directory recursively.")
   (:documentation "A FILE-COMPONENT which matches a SB-GROVEL constants file.")
   (:keyword :grovel))
 
-(defun find-component (path self)
+(defun find-component (path &optional (self (find-system *module*)))
   "Find a component designated by PATH which is either an atom designating a
 component name or a list indicating a sequence of module component names
 ending with the target component name."
@@ -317,12 +316,12 @@ objects of type COMPONENT."
 
 (defprovider :asdf (root path &optional name)
   (unless (find-module root :asdf)
-    (register-module :asdf root 
-                     (compile nil 
-                              `(lambda () 
-                                 (asdf:load-asd 
-                                  ,(probe-file (merge-pathnames path (path (find-system root)))))
-                                 (asdf:load-system ,(or name root)))))))
+    (register-module 
+     :asdf root 
+     (compile-and-eval 
+      `(asdf:load-asd 
+        ,(probe-file (merge-pathnames path (path (find-system root))))
+        :name ,(or name root))))))
 
 (defprovider :alien (root name &rest args)
   (register-module :alien root (compile-and-eval `(std/alien:define-alien-loader ,name ,@args))))
@@ -540,7 +539,7 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
 (definline delete-module (name) (remhash name *module-table*))
 
 (defsetf find-module (name &optional kind key append) (val)
-   `(set-module ,name ,val ,kind ,key ,append))
+  `(set-module ,name ,val ,kind ,key ,append))
 
 (defun init-module (mod)
   "Initialize module MOD, loading all implementation hooks."
@@ -592,6 +591,7 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
         (:sys (load-system form))
         (:bench (load-system form))
         (:readtable (apply 'std/named-readtables:merge-readtables-into *readtable* (ensure-cons form)))
+        (:asdf (when *asdf-compatibility* (funcall form)))
         ('nil
          (sb-int:doplist (k v) form
            (%load-module v k nil nil)))
@@ -696,7 +696,7 @@ system jobs to be executed in an async context."
   (declare (ftype (sfunction (t) pathname)))
   (if (typep name 'system) (path name) (path (find-system name :default :error))))
 
-(defun system-home (name)
+(definline system-home (name)
   (make-pathname :directory (pathname-directory (the pathname (system-path name)))))
 
 (defun system-relative-pathname (self path)
@@ -1059,6 +1059,7 @@ inputs."))
         (ecase (car form)
           ((or :file :pkg :grovel)
            (let ((ty (if (pathnamep n) (pathname-type n) "lisp")))
+             (when (symbolp n) (setf n (string-downcase n)))
              (apply 'make-instance kind
                     :type (keywordicate (string-upcase ty))
                     :name n
@@ -1128,13 +1129,13 @@ the following extensions:
     (declare (ignore dec))
     (unless (symbolp name) (setq name (keywordicate (string-upcase name))))
     (let ((prov (%sys-get :provide %body)) (hooks (%sys-get :hook %body))
-          (path (%sys-get :path %body))
-          (req (%sys-get :require %body))
-          (ver (%sys-get :version %body))
-          (plan (or (%sys-get :plan %body) :serial))
-          (class (or (%sys-get :class %body) ''system))
-          (comp (%sys-get :components %body))
-          (*defsys* name))
+                                           (path (%sys-get :path %body))
+                                           (req (%sys-get :require %body))
+                                           (ver (%sys-get :version %body))
+                                           (plan (or (%sys-get :plan %body) :serial))
+                                           (class (or (%sys-get :class %body) ''system))
+                                           (comp (%sys-get :components %body))
+                                           (*defsys* name))
       (std/sym:with-gensyms (sys)
         `(let* ((,sys (apply 'make-instance ,class :name ,name ',%body))
                 (*default-pathname-defaults*

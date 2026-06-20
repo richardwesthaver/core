@@ -755,7 +755,7 @@ either side, and deletes both sides of a link."
   (interactive "P")
   (org-insert-heading arg invisible-ok level)
   (org-id-get-create)
-  (org-expire-insert-created))
+  (org-insert-created))
 
 ;;;###autoload
 (defun org-graph-kill-all (&optional exclude-readme)

@@ -1,3 +1,6 @@
+:PROPERTIES:
+:ID:       f48aa3b8-8f5f-4b12-b0a7-29821b150394
+:END:
 #+title: core
 #+description: The Compiler Company Core
 #+author: Richard Westhaver

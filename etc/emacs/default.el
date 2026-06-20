@@ -1091,8 +1091,8 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 (use-package org-expire
   :load-path site-lisp-directory
-  :after (org org-id)
-  :hook (org-after-todo-state-change . (lambda () (org-expire-insert-created) (org-id-get-create))))
+  :after (org org-id ulang)
+  :hook (org-after-todo-state-change . (lambda () (org-insert-created) (org-id-get-create))))
 
 (use-package org-web-tools
   :ensure t

@@ -79,11 +79,11 @@ dedicated to the current buffer or its project (if one is found)."
   '(("t" "project-task" entry #'project-tasks-file "%i"
      :empty-lines-before 1
      :unnarrowed t
-     :prepare-finalize (org-id-get-create org-expire-insert-created))
+     :prepare-finalize (org-id-get-create org-insert-created))
     ("n" "project-note" entry #'project-tasks-file "%i"
      :empty-lines-before 1
      :unnarrowed t
-     :prepare-finalize (org-id-get-create org-expire-insert-created)))
+     :prepare-finalize (org-id-get-create org-insert-created)))
   "See 'org-capture-templates'."
   :type 'list
   :group 'skel)

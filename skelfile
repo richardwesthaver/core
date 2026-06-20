@@ -22,11 +22,15 @@
 :components
 ((:org "readme")
  (:sys "core")
- (:mod "std" (:sys "std"))
- (:mod "alien" (:sys "alien"))
- (:mod "lib")
- (:mod "skel" (:sys "skel"))
- (:mod "etc"))
+ (:module "std" (:sys "std"))
+ (:module "alien" (:sys "alien"))
+ (:module "lib")
+ (:module "skel" (:sys "skel"))
+ (:module "etc"
+  ;; (:file "corerc")
+  (:module "lisp")
+  (:module "script")
+  (:module "emacs")))
 :rules
 ((default (data rebuild-core))
  (bootstrap (data build-core))

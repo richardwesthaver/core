@@ -78,4 +78,4 @@
 
 (defmethod load-project-component ((kind (eql :pkg)) (form t) &key (path (project-root)))
   (let ((*default-pathname-defaults* path))
-    (print (deserialize (make-pathname :name form :type "pkg" :defaults *default-pathname-defaults*) :pkgfile))))
+    (print (deserialize (make-pathname :name (pathname-name form) :type "pkg" :defaults *default-pathname-defaults*) :pkgfile))))
