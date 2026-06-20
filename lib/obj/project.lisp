@@ -42,6 +42,15 @@ A hash-table containing pairs converted to KEY=VAL and consumed by RUN-PROGRAM."
   (:warning-class project-warning (simple-warning) () (:reporter t)))
 
 ;;; Protocol
+(defgeneric project-compile (self &key path &allow-other-keys))
+(defgeneric project-load (self &key &allow-other-keys))
+(defgeneric project-find (what self &key &allow-other-keys))
+(defgeneric project-convert (self))
+(defgeneric load-project-component (kind form &key &allow-other-keys)
+  (:method (kind form &rest args)
+    (declare (ignore kind))
+    (apply 'load-component form args)))
+
 (defclass project-metadata ()
   ((name :initarg :name :accessor name)
    (path :initarg :path :accessor path)
@@ -64,32 +73,35 @@ project-like objects."))
 (defclass project (id ast) ()
   (:documentation "A generic project (without metadata)."))
 
+(defmethod initialize-instance :after ((self project) &key &allow-other-keys)
+  (register-project self))
+
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
 
-(defclass simple-project (project project-metadata module) ()
-  (:documentation "A PROJECT with optional metadata."))
+(defcomponent simple-project (project project-metadata module) ()
+  (:documentation "A PROJECT with optional metadata.")
+  (:keyword :project))
 
-(defgeneric project-compile (self &key path &allow-other-keys))
-(defgeneric project-load (self &key &allow-other-keys))
-(defgeneric project-find (what self &key &allow-other-keys))
-(defgeneric project-convert (self))
-(defgeneric load-project-component (kind form &key &allow-other-keys)
-  (:method (kind form &rest args)
-    (declare (ignore kind))
-    (apply 'load-component form args)))
+(defmethod load-project-component ((kind (eql :project)) (form t) 
+                                   &key (path *default-pathname-defaults*) (class *default-project-class*))
+  (let ((*default-pathname-defaults* path))
+    (apply 'make-instance class (ensure-cons form))))
 
-(defun project (name)
+(defmethod load-project-component ((kind (eql :module)) (form t) &key (path *default-pathname-defaults*))
+  (make-instance 'project-module :path path :ast (ensure-cons form)))
+
+(defun find-project (name)
   "Find a registered project by NAME."
   (gethash name *project-table*))
 
-(defun (setf project) (project name)
-  "Find a registered project by NAME."
+(defun (setf find-project) (project name)
+  "Set a registered project by NAME."
   (setf (gethash name *project-table*) project))
 
 (defun register-project (project)
-  (setf (project (name project)) project))
+  (setf (find-project (name project)) project))
 
 (defun make-project (name &rest args &key (class *default-project-class*) &allow-other-keys)
   (apply 'make-instance class :name name (remove-from-plist args :class)))
@@ -253,7 +265,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
     (build c)))
 
 ;;; Macros
-(defwith project (name) (*project* (project name)))
+(defwith project (name) (*project* (find-project name)))
 (defwith rule (rule) (*rule* rule))
 
 #+todo

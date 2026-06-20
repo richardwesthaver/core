@@ -8,3 +8,7 @@
 
 ;;; Code:
 (in-package :doc)
+
+(defclass project-documentation (id) ())
+
+(defmethod describe-object ((self project-documentation) stream))

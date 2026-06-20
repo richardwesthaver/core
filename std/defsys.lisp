@@ -59,7 +59,7 @@ macro-expansion time) or the SYSTEM object itself. This variable is rebound
 inside every DEFSYS form.")
 
 (defvar *asdf-compatibility* nil
-  "When non-nil, enable compatibility between STD/DEFSYS and SYSTTEM - component
+  "When non-nil, enable compatibility between STD/DEFSYS and SYSTEM - component
 operations will use ASDF and DEFSYS will first pass all argument to
 ASDF:DEFSYSTEM.")
 
@@ -701,6 +701,20 @@ system jobs to be executed in an async context."
 
 (defun system-relative-pathname (self path)
   (merge-pathnames path (system-home self)))
+
+(defun find-system-dependents (system)
+  "Return a list of systems which depend on SYSTEM."
+  (when (typep system 'system) (setf system (name system)))
+  (let ((r))
+    (dolist (s (list-all-systems) r)
+      (when (and s (member (name system)
+                           (mapcar
+                            (lambda (dep)
+                              (when (atom dep)
+                                (string-downcase (format nil "~A" dep))))
+                            (component-require s))
+                           :test #'equalp))
+        (push s r)))))
 
 ;;; ASDF Compat
 (definline change-component-class (self)

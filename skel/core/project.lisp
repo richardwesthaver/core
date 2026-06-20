@@ -42,7 +42,7 @@
               (exec rule))))))
 
 ;;; Project
-(defclass skel-project (simple-project)
+(defcomponent skel-project (simple-project)
   ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name)
    (vc :initarg :vc
        :initform nil
@@ -61,7 +61,8 @@
 	      :type (vector rule)
           :documentation "A vector of rule objects containing individual units of work."))
   (:documentation "Skel project base class, usually defined by skelfiles at a project's root
-directory."))
+directory.")
+  (:keyword :project))
 
 (defmethod print-object ((self skel-project) stream)
   (print-unreadable-object (self stream :type t)
@@ -69,8 +70,6 @@ directory."))
 	        (name self)
 	        (length (components self))
 	        (length (rules self)))))
-
-(defvar *skel-slot-exclusions* nil)
 
 (definline sk-coerce-name (name &optional (case :downcase))
   (if (eql :downcase case) (string-downcase name) (string-upcase name)))
@@ -110,8 +109,7 @@ directory."))
 
 (defun print-skel-object (self stream)
   (mapcar (lambda (slot) (sk-print-slot slot self :stream stream :limit *print-length* :case *print-case*))
-          (remove-if (lambda (x) (member (keywordicate (sb-mop:slot-definition-name x)) *skel-slot-exclusions*))
-                     (sb-mop:class-slots (class-of self))))
+          (remove-if 'print-slot-exclusion (sb-mop:class-slots (class-of self))))
   self)
 
 (defun find-skel-symbol (s)
@@ -292,7 +290,7 @@ directory."))
                        :slots t
                        :methods nil
                        :nullp nullp
-                       :exclude exclude))
+                       :exclude (append *print-slot-exclude* exclude)))
   self)
 
 ;; file -> ast

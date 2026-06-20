@@ -13,7 +13,7 @@
 ;;; Code:
 (in-package :doc)
 
-(defclass system-documentation (document)
+(defclass system-documentation (document id)
   ((system :initarg :system :accessor doc-system :type system)
    (packages :initarg :packages :accessor doc-packages :type (vector package-documentation))))
 
@@ -34,20 +34,6 @@
                                         (collect (package-name x))))
                           (list-all-packages))))))
 
-(defun find-system-dependents (system)
-  "Return a list of systems which depend on SYSTEM."
-  (when (typep system 'system) (setf system (name system)))
-  (let ((r))
-    (dolist (s (list-all-systems) r)
-      (when (and s (member (name system)
-                           (mapcar
-                            (lambda (dep)
-                              (when (atom dep)
-                                (string-downcase (format nil "~A" dep))))
-                            (component-require s))
-                           :test #'equalp))
-        (push s r)))))
-
 (defmethod dependents ((self system-documentation))
   (mapcar #'system-documentation (find-system-dependents (doc-system self))))
 
@@ -66,7 +52,7 @@
               (flatten (mapcar #'%rec comp)))))))
 
 (defmethod doc-files ((self mod-component))
-  (flet ((%rec (s) (if (typep s 'mod-component)
+  (labels ((%rec (s) (if (typep s 'mod-component)
                        (doc-files s)
                        (when s (path s)))))
     (mapcar #'%rec (components self))))

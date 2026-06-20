@@ -1407,7 +1407,8 @@
    :load-annotations :defnotation
    :aformat :expand-annotated-string
    :expand-annotation :word-wrap
-   :annotations))
+   :annotations :*print-slot-exclude* :*print-slot-unbound* :*print-slot-name-width*
+   :print-slot-exclusion))
 
 (defpkg :std/os
   (:use :cl :sb-alien :std/string)
@@ -1505,6 +1506,7 @@
    :module-require
    :defprovider
    :defcomponent
+   :find-system-dependents
    :load-sys
    :compile-sys
    :system

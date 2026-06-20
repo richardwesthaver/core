@@ -9,11 +9,22 @@
 
 Default value: 0")
 
+(defvar *print-slot-name-width* 30
+  "A variable indicating the default width to print slot names with the DESCRIBE-SLOT function.
+
+Default value: 30")
+
 (defvar *print-color* nil
   "A variable indicating whether the current environment supports color
 output. This is usually inferred from the current terminal capabilities.
 
 Default value: NIL")
+
+(defvar *print-slot-exclude* '(ast id)
+  "A list of slot names to be excluded from object printing.")
+
+(defvar *print-slot-unbound* nil
+  "A boolean value indicating whether unbound slots should be printed.")
 
 ;;; Utils
 (defmacro deffmt (name control-string &optional doc)
@@ -51,6 +62,9 @@ Default value: NIL")
       (fmt *print-readably*)
       (fmt *print-right-margin*)
       (fmt *print-slot-indent*)
+      (fmt *print-slot-name-width*)
+      (fmt *print-slot-exclude*)
+      (fmt *print-slot-unbound*)
       (fmt *print-color*))
      nil)))
 
@@ -215,43 +229,55 @@ be produced by `sxhash'."
                      unit))))
 
 ;;; MOP
-(defun describe-slot (name value &optional (max-slot-name-length 30) (stream t) (indent *print-slot-indent*))
+(defun describe-slot (name value &optional (max-slot-name-length *print-slot-name-width*) (stream t) (indent *print-slot-indent*))
   "Describe slot NAME with associated VALUE."
   (format stream "~%~A~VA = ~A" (make-string indent :initial-element #\space) max-slot-name-length name (prin1-to-line value)))
 
+(defun print-slot-exclusion (name)
+  "Return T if slot NAME should be excluded from printing."
+  (member (sb-mop:slot-definition-name name) *print-slot-exclude* :test 'string=))
+
 ;; FROM: sb-impl describe
-(defun %describe-object (object stream)
+(defun %describe-object (object stream &optional (unbound *print-slot-unbound*))
   (let* ((class (class-of object))
-	 (slotds (sb-mop:class-slots class))
-	 (max-slot-name-length 30)
-	 (plist nil))
+	     (slotds (remove-if 'print-slot-exclusion (sb-mop:class-slots class)))
+	     (max-slot-name-length *print-slot-name-width*)
+	     (plist nil))
     ;; Figure out a good width for the slot-name column.
     (flet ((adjust-slot-name-length (name)
-	     (setf max-slot-name-length
-		   (max max-slot-name-length (length (symbol-name name))))))
+	         (setf max-slot-name-length
+		           (max max-slot-name-length (length (symbol-name name)))))
+           (do-slots (slots)
+             (dolist (slotd (nreverse slots))
+               (when (or unbound (slot-boundp object (sb-mop:slot-definition-name slotd)))
+                 (describe-slot
+                  (sb-mop:slot-definition-name slotd)
+                  (sb-pcl::slot-value-for-printing object (sb-mop:slot-definition-name slotd))
+                  *print-slot-name-width*
+                  stream)))))
       (dolist (slotd slotds)
-	(adjust-slot-name-length (sb-mop:slot-definition-name slotd))
-	(push slotd (getf plist (sb-mop:slot-definition-allocation slotd)))))
-    ;; Now that we know the width, we can print.
+	    (adjust-slot-name-length (sb-mop:slot-definition-name slotd))
+	    (push slotd (getf plist (sb-mop:slot-definition-allocation slotd))))
+      ;; Now that we know the width, we can print.
       (sb-int:doplist (allocation slots) plist
-	(dolist (slotd (nreverse slots))
-	  (describe-slot
-	   (sb-mop:slot-definition-name slotd)
-	   (sb-pcl::slot-value-for-printing object (sb-mop:slot-definition-name slotd)))))
+        (unless (eql allocation :instance)
+          ;; TODO 2026-06-20: 
+          (println allocation stream))
+        (do-slots slots)))
     (unless slotds
       (format stream "~@:_No slots."))))
 
-(defun print-slots (object &optional (stream t))
+(defun print-slots (object &optional (stream t) (unbound *print-slot-unbound*))
   "Print the slots of OBJECT to STREAM."
   (let ((*print-right-margin* (or *print-right-margin* 72))
-	(*print-circle* t)
-	(*print-circle-not-shared* t)
-	(*print-pretty* t)
-	(*suppress-print-errors*
-	  (if (subtypep 'serious-condition *suppress-print-errors*)
-	      *suppress-print-errors*
-	      'serious-condition)))
-    (%describe-object object stream)))
+	    (*print-circle* t)
+	    (*print-circle-not-shared* t)
+	    (*print-pretty* t)
+	    (*suppress-print-errors*
+	      (if (subtypep 'serious-condition *suppress-print-errors*)
+	          *suppress-print-errors*
+	          'serious-condition)))
+    (%describe-object object stream unbound)))
 
 (defun format-slots (stream &rest slots)
   "Print SLOTS to STREAM."
@@ -263,14 +289,14 @@ be produced by `sxhash'."
 	  (if (subtypep 'serious-condition *suppress-print-errors*)
 	      *suppress-print-errors*
 	      'serious-condition)))
-    (sb-int:doplist (k v) (print slots)
-      (describe-slot (string k) v 30 stream))
+    (sb-int:doplist (k v) slots
+      (describe-slot (string k) v *print-slot-name-width* stream))
     (force-output stream)))
 
 ;;; Bitmaps
 
 ;; These bits of lovely code are sourced from here:
-;; https://github.com/whalliburton/academy/blob/87a1a13ffbcd60d8553e42e647c59486c761e8cf/drawing.lisp
+;; [[https://github.com/whalliburton/academy/blob/87a1a13ffbcd60d8553e42e647c59486c761e8cf/drawing.lisp][walliburton/academy/drawing.lisp]]
 (defun make-bitmap (width height &optional contents)
   (if contents
     (make-array (list height width) :initial-contents contents)

@@ -518,11 +518,11 @@ variable 'skel-project-capture-templates'."
 
 (defun project-capture (&optional goto keys)
   "Project-aware 'org-capture'."
-  (interactive)
-  (let ((org-default-notes-file (project-tasks-file))
-        (org-capture-templates (project-capture-templates)))
+  (interactive "P")
+  (let ((org-capture-templates (project-capture-templates)))
+    (org-capture-put :target (car (project-agenda-files)))
     ;; (setf (plist-get org-capture-plist :target)  `(file ,(car (project-agenda-files))))
-    (org-capture goto keys)))
+    (org-capture)))
 
 ;;; Registers
 (defun project-registers-file ()

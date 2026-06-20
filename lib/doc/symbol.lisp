@@ -141,8 +141,8 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
   (with-slots (symbol id definitions specs alloc) self
     ;; (print-standard-describe-header self stream)
     (describe symbol stream)
-    (format stream "~%Id: ~S" id)
-    (format stream "~%Alloc Info: ~S" alloc)
+    (format stream "~%Id: ~S~%" id)
+    (format stream "~%Alloc Info: ~S~%" alloc)
     (format stream "~%Definitions: ~S~%" definitions)
     (format stream "~%Specs: ~%")
     (loop for s in specs

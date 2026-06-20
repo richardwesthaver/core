@@ -25,7 +25,7 @@
 ;;; Code:
 (in-package :doc)
 
-(defclass package-documentation ()
+(defclass package-documentation (id)
   ((package :initform *package* :initarg :package :type package :accessor doc-package)
    (files :initform #() :initarg :files :type (vector file-documentation) :accessor doc-files)
    (symbols :initform #() :initarg :symbols :type (vector symbol-documentation) :accessor doc-symbols)))
