@@ -77,7 +77,7 @@
     (describe package stream)
     (format stream "~%Files: ~S"
             (loop for f across files
-                  collect (doc-path f)))
+                  collect (path f)))
     (format stream "~%Symbol Docs: ")
     (pprint-tabular
      stream 

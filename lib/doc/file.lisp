@@ -111,7 +111,7 @@
   ((name :initarg :name :type string)
    (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))
    (contents :initarg :contents :type string))
-  (:documentation "A heading according to Emacs outline-mode."))
+  (:documentation "A generic file heading according to Emacs outline-mode."))
 
 (defun heading-line-p (string)
   (uiop:string-prefix-p #.(make-string +min-file-heading-level+ :initial-element #\;) string))
@@ -120,18 +120,18 @@
   "Read a comment line from STREAM. Returns two values: the uncommented
 string and a 'level' indicating how many comment characters were
 stripped. Note that this level is NOT the same as the heading level."
-  (let ((level 0) (contents (organ::read-line stream)))
-    (when (> (length contents) 9)
-      (loop for c = (char contents level)
-            until (not (char= c #\;))
-            do (incf level))
-      (values
-       (if (zerop level) contents (subseq contents (1+ level)))
-       level))))
+  (let ((level 0) (contents (read-line stream)))
+    (loop for c = (char contents level)
+          until (not (char= c #\;))
+          do (incf level))
+    (values
+     (if (zerop level) contents (subseq contents (1+ level)))
+     level)))
 
 (defun read-file-heading (stream)
-  (destructuring-bind (name level) (read-comment-line stream)
-    (make-instance 'file-heading :name name :level level :contents "")))
+  (multiple-value-bind (name level) (read-comment-line stream)
+    (when name
+      (make-instance 'file-heading :name name :level level :contents ""))))
 
 (defun decomment (s) (string-left-trim "; " s))
 
@@ -197,34 +197,61 @@ the name of the next top-level headline or NIL."
   (:documentation "A source-file header object containing a FILE-HEADLINE and array of
 optional top-level FILE-HEADINGs."))
 
-(defun read-file-header (path &optional (if-does-not-exist :error))
-  "Read a FILE-HEADER from PATH which should be an INPUT-FILE-STREAM.
+(defun code-start-p (line)
+  (string-prefix-p ";;; Code:" line))
 
-File headers always appear at the very start of a file so the stream
-position is always assumed to be 0."
+(defun read-until-code-start (stream)
+  (loop for l = (read-line stream nil)
+        while l
+        until (code-start-p l)
+        finally (return (file-position stream))))
+
+(defun read-file-header (path &optional (if-does-not-exist :error))
+  "Read a FILE-HEADER from PATH.
+
+File headers always appear at the very start of a file so the stream position
+is always assumed to be 0.
+
+Return two values: the file-header and the position of the first character
+after the code start header (see CODE-START-P)."
   (with-open-file (f path :if-does-not-exist if-does-not-exist)
     (multiple-value-bind (hl next) (read-file-headline f)
       (when hl
-        (let ((h (make-instance 'file-header :headline hl)))
+        (let ((h (make-instance 'file-header :headline hl))
+              (body-start))
           (when next
             (setf (slot-value h 'commentary) 
                   (make-instance 'file-heading 
-                    :level 0 :name next
+                    :level 0 
+                    :name next
                     :contents
                     (trim
                      (apply 'concatenate 'string
                             (loop for l = (read-line f nil)
                                   while l
-                                  until (string-prefix-p ";;; Code:" l)
+                                  until (and (code-start-p l)
+                                             (setf body-start (file-position f)))
                                   unless (sequence:emptyp (trim l))
                                   collect (decomment l)
                                   collect (make-string 1 :initial-element #\newline)))))))
-          h)))))
+          (values h body-start))))))
 
+(defun read-file-outline (path &optional start (if-does-not-exist :error))
+  "Return a list of file-headings defined in PATH."
+  (with-open-file (f path :if-does-not-exist if-does-not-exist)
+    ;; calculate offset of first line after ';;; Code:'
+    (file-position f (or start (read-until-code-start f)))
+    (debug! "code starts at ~d" (file-position f))
+    (loop for l = (read-line f nil)
+          while l
+          if (heading-line-p l)
+          collect (with-input-from-string (s l) (read-file-heading s)))))
+
+;; (read-file-outline "proto.lisp")
 ;; (defmacro define-file-heading (type slots))
 
 (defclass file-documentation (file-component)
-  ((path :initarg :path :type pathname :accessor doc-path)
+  ((path :initarg :path :type pathname :accessor path)
    (header :initarg :header :type file-header)
    (contents :initarg :contents :type sequence)
    (locations :initarg :locations :type sequence))
@@ -233,22 +260,22 @@ position is always assumed to be 0."
   comments. Symbol documentation such as this one will not be captured in
   instances of this object."))
 
-(defaccessor path ((self file-documentation)) (doc-path self))
-
-(defmethod print-object ((self file-documentation) stream)
-  (print-unreadable-object (self stream :type t)
-    (format stream "~A" (doc-path self))))
+;; (defmethod print-object ((self file-documentation) stream)
+;;   (print-unreadable-object (self stream :type t)
+;;     (format stream "~A" (path self))))
 
 (defmethod change-class ((self file-component) (new (eql 'file-documentation)) &key &allow-other-keys)
   (make-instance new :header (read-file-header (path self) nil)))
 
 (defun file-documentation (path)
   "Return the FILE-DOCUMENTATION for PATH."
-  (make-instance 'file-documentation
-    :path path
-    :header (read-file-header path nil)
-    :name (pathname-name path)
-    :type (pathname-type path)))
+  (multiple-value-bind (header code-start) (read-file-header path nil)
+    (make-instance 'file-documentation
+      :path path
+      :header header
+      :contents (when code-start (read-file-outline path code-start))
+      :name (pathname-name path)
+      :type (pathname-type path))))
 
 (definline file-header (doc) (slot-value doc 'header))
 (definline file-headline (doc) (slot-value (file-header doc) 'headline))

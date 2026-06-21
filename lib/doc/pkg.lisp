@@ -94,6 +94,7 @@
    :file-summary
    :file-description
    :file-heading :file-headline :file-header :read-file-header
+   :read-file-outline
    :+max-heading-level+ :+min-heading-level+
    :file-documentation
    :system-documentation
