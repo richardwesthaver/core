@@ -28,46 +28,43 @@
 (Internal)
 :OPTIMIZER
 :SOURCE-TRANSFORM
+:SPECIAL-OPERATOR
 :TRANSFORM
 :VOP
 :IR1-CONVERT
+
+(Custom)
+:SYSTEM
+:MODULE
 |#
 
 (defun classify-symbol (symbol)
-  "Returns a list of classifiers that classify SYMBOL according to its
-underneath objects (e.g. :BOUNDP if SYMBOL constitutes a special
-variable.) The list may contain the following classification
-keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
-:TYPESPEC, :CLASS, :MACRO, :SPECIAL-OPERATOR, and/or :PACKAGE"
+  "Return the classification list of SYMBOL."
   (check-type symbol symbol)
-  (flet ((type-specifier-p (s)
-           (documentation s 'type)
-           #+nil (not (eq (deftype-lambda-list s) :not-available))
-           ))
-    (let (result)
-      (when (boundp symbol)             (push (if (constantp symbol) :constant :boundp) result))
-      (or (when (find-system symbol) (push :system result))
-          (when (find-module symbol) (push :module result)))
-      (when (find-class symbol nil) (push :class result))
-      (when (ignore-errors (subtypep symbol 'condition)) (push :condition result))
-      (when (ignore-errors (subtypep symbol 'structure-class)) (push :structure result))
-      (when (ignore-errors (parse-alien-type symbol nil)) (push :alien-type result))
-      (when (fboundp symbol)            (push :function result))
-      (when (type-specifier-p symbol)   (push :type result))
-      (when-let ((sym (find-symbol* symbol :sb-vm nil)))
-        (when (or (gethash sym sb-c::*backend-parsed-vops*) 
-                  (gethash sym sb-c::*backend-template-names*))
-          (push :vop result)))
-      (when (macro-function symbol)     (push :macro result))
-      (when (special-operator-p symbol) (push :special-operator result))
-      (when (find-package symbol)       (push :package result))
-      (when (compiler-macro-function symbol) (push :compiler-macro result))
-      (when (compiled-function-p (ignore-errors (symbol-function symbol))) (push :compiled result))
-      (when (and (fboundp symbol)
-                 (typep (ignore-errors (fdefinition symbol))
-                        'generic-function))
-        (push :generic-function result))
-      result)))
+  (let (result)
+    (when (boundp symbol)             (push (if (constantp symbol) :constant :boundp) result))
+    (or (when (find-system symbol) (push :system result))
+        (when (find-module symbol) (push :module result)))
+    (when (find-class symbol nil) (push :class result))
+    (when (ignore-errors (subtypep symbol 'condition)) (push :condition result))
+    (when (ignore-errors (subtypep symbol 'structure-class)) (push :structure result))
+    (when (ignore-errors (parse-alien-type symbol nil)) (push :alien-type result))
+    (when (fboundp symbol)            (push :function result))
+    (when (documentation symbol 'type) (push :type result))
+    (when-let ((sym (find-symbol* symbol :sb-vm nil)))
+      (when (or (gethash sym sb-c::*backend-parsed-vops*) 
+                (gethash sym sb-c::*backend-template-names*))
+        (push :vop result)))
+    (when (macro-function symbol)     (push :macro result))
+    (when (special-operator-p symbol) (push :special-operator result))
+    (when (find-package symbol)       (push :package result))
+    (when (compiler-macro-function symbol) (push :compiler-macro result))
+    (when (compiled-function-p (ignore-errors (symbol-function symbol))) (push :compiled result))
+    (when (and (fboundp symbol)
+               (typep (ignore-errors (fdefinition symbol))
+                      'generic-function))
+      (push :generic-function result))
+    result))
 
 (defun symbol-classification-string (symbol)
   "Return a string in the form -f-c---- where each letter stands for:
@@ -96,10 +93,10 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
       (when (find-package symbol)       (flip #\p))
       result)))
 
-;; TODO 2026-06-18: symbol-tag-string
-#+todo
 (defun symbol-tag-string (sym)
-  "Return a string consisting of tags separated by ':'.")
+  "Return a string consisting of tags separated by ':'."
+  (with-output-to-string (s)
+    (fmt-tag-string s (mapcar 'symbol-name (classify-symbol sym)))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)

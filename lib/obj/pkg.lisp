@@ -867,6 +867,7 @@
   (:use :cl :std :config :id :ast)
   (:export
    #:service
+   #:find-service
    #:response-ok-p
    #:response-status
    #:dispatch-request

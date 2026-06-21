@@ -29,9 +29,9 @@
 
 ;;;; REFS:
 
-;; Tower: https://github.com/tower-rs/tower
+;; [[https://github.com/tower-rs/tower][tower]]
 
-;; Axum: https://github.com/tokio-rs/axum
+;; [[https://github.com/tokio-rs/axum][axum]]
 
 ;;; Code:
 (in-package :obj/srv)
@@ -46,8 +46,13 @@
 (defun in-request-p () (and (boundp '*request*) *request*))
 (defun in-response-p () (and (boundp '*response*) *response*))
 
+(defun find-service (name)
+  (gethash name *service-table*))
+(defun (setf find-service) (new name)
+  (setf (gethash name *service-table*) new))
+
 (std:definline register-service (name srv)
-  (setf (gethash name *service-table*) srv))
+  (setf (find-service name) srv))
 
 ;;; Conditions
 (define-condition service-condition (condition) ())
@@ -75,8 +80,9 @@ strategies."))
   ((request-class :type symbol :initarg :request-class :accessor service-request-class)
    (response-class :type symbol :initarg :response-class :accessor service-response-class)
    (engine :type engine :accessor engine :initarg :engine))
-  (:documentation "Base Class shared by all services. A service must specify the request and
-response classes it uses for communication as well as the engine which drives it."))
+  (:documentation "Base service class.
+A service must specify the request and response classes it uses for
+communication as well as the engine which drives it."))
 
 (defclass response () ()
   (:documentation "Base class for response objects, usually generated in reply to a REQUEST."))
@@ -97,7 +103,8 @@ response classes it uses for communication as well as the engine which drives it
 	    :reader service)
    (session :initform nil
 	    :accessor session)
-   (protocol :initarg :request-protocol :reader request-protocol)))
+   (protocol :initarg :request-protocol :reader request-protocol))
+  (:documentation "Generic service request."))
 
 ;;; Protocol
 (defgeneric service (self)
@@ -130,7 +137,7 @@ logging, etc."))
 (defgeneric (setf response-status) (new res))
 
 ;;; Config
-(defconfig service-config (id:id ast:ast) 
+(defconfig service-config (id ast) 
   ((request-class :initarg :request-class)
    (response-class :initarg :response-class))
   (:default-initargs
@@ -145,7 +152,7 @@ logging, etc."))
 (defmethod load-ast ((self service-config))
   (with-slots (ast) self
     (doplist (k v) ast
-      (unless (null v) (setf (slot-value self (symbolicate k)) v)))
+      (setf (slot-value self (find-symbol (string k))) v))
     (setf ast nil)
     self))
 

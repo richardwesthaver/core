@@ -69,6 +69,8 @@ to (SETF DOCUMENTATION).")
   (:documentation "Publish object SELF."))
 
 ;;; Utils
+(deffmt fmt-tags "~{~A~^:~}" "Format a list of tags as an org tag string, delimited by ':'.")
+
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."
   (getf *definition-types* type))

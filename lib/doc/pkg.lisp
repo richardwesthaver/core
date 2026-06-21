@@ -73,7 +73,7 @@
   (:export :fuzzy-match :file-match))
 
 (defpkg :doc
-  (:use :cl :std :organ :sb-mop :sb-introspect :id :log :ast :project :config :val :tempo)
+  (:use :cl :std :organ :sb-mop :sb-introspect :id :log :ast :project :config :val :tempo :srv)
   (:import-from :uiop :string-prefix-p)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
   (:import-from :sb-kernel :symbol-package-id)
@@ -89,6 +89,7 @@
    :find-definitions
    :definition-source-line-number
    :classify-symbol :symbol-classification-string
+   :fmt-tags :symbol-tag-string
    :file-commentary
    :file-summary
    :file-description
