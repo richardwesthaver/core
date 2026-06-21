@@ -82,6 +82,15 @@ string as the argument."
   "Intern a new symbol with a name equal to the result of applying MKSTR to ARGS."
   (values (intern (apply #'mkstr args))))
 
+(defun symbol-name* (sym &optional stream)
+  "Print SYM's fully-qualified SYMBOL-NAME."
+  
+  (multiple-value-bind (s access) (if (stringp sym) 
+                                      (find-symbol sym)
+                                      (find-symbol (symbol-name sym) (symbol-package sym)))
+    (when s
+      (format stream "~A:~:[~;:~]~A" (symbol-package-name s) (eq access :external) s))))
+
 (sb-ext:with-unlocked-packages (:sb-int)
   (handler-bind
       ((sb-kernel:redefinition-warning #'muffle-warning))

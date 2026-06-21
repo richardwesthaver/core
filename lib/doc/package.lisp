@@ -27,13 +27,13 @@
 
 (defclass package-documentation (id)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
-   (files :initform #() :initarg :files :type (vector file-documentation) :accessor doc-files)
+   (files :initform nil :initarg :files :accessor doc-files)
    (symbols :initform #() :initarg :symbols :type (vector symbol-documentation) :accessor doc-symbols)))
 
 (defmethod name ((self package-documentation))
   (package-name (doc-object self)))
 
-(defun package-documentation (&optional (package *package*) (for :external))
+(defun package-documentation (&optional (package *package*) (for :external) (safe-directories (project-directories)))
   "Return a PACKAGE-DOCUMENTATION object from PACKAGE."
   (unless (packagep package)
     (if (or (null package) (eq t package))
@@ -49,7 +49,7 @@
                    (let ((doc (symbol-documentation s)))
                      (dolist (p (doc-files doc))
                        (pushnew p paths))
-                     (vector-push-extend doc symbols 8))))
+                     (vector-push-extend doc symbols))))
       (:external (do-external-symbols (s package)
                    (let ((doc (symbol-documentation s)))
                      (dolist (p (doc-files doc))
@@ -63,7 +63,16 @@
                     (vector-push doc symbols)))))
     (make-instance 'package-documentation
       :package package
-      :files (map 'vector (lambda (x) (unless (null x) (file-documentation x))) paths)
+      :files (mapcan
+              (lambda (x) 
+                (unless (notany 
+                         (lambda (y) 
+                           (pathname-match-p
+                            x
+                            (make-pathname :directory `(,@y :wild-inferiors))))
+                         safe-directories)
+                  (list (file-documentation x))))
+              paths)
       :symbols symbols)))
 
 (defmethod print-object ((self package-documentation) stream)
@@ -76,13 +85,13 @@
     (print-standard-describe-header self stream)
     (describe package stream)
     (format stream "~%Files: ~S"
-            (loop for f across files
+            (loop for f in files
                   collect (path f)))
     (format stream "~%Symbol Docs: ")
     (pprint-tabular
      stream 
      (loop for s across symbols
-           collect (doc-symbol s)))))
+           collect (doc-object s)))))
 
 (defmethod dependents ((self package-documentation))
   (mapcar #'package-documentation (package-used-by-list (doc-object self))))

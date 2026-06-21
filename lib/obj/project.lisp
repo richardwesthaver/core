@@ -137,6 +137,14 @@ project-like objects."))
 
 (defun list-all-projects () (hash-table-values *project-table*))
 
+(defun project-directories () 
+  (mapcan 
+   (lambda (x) (when-let ((path (path x))) (list (pathname-directory path))))
+   (hash-table-values *project-table*)))
+
+(defun project-paths ()
+  (mapcar (lambda (x) (make-pathname :directory x)) (project-directories)))
+
 ;;; Config
 (defconfig project-config (project-metadata ast) ()
   (:documentation "A generic project configuration."))

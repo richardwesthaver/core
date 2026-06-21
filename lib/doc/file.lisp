@@ -104,6 +104,20 @@
 ;;; Code:
 (in-package :doc)
 
+(deftempo :file-documentation
+  "* <%@var name%>
+:PROPERTIES:
+:SUMMARY: <%@var summary%>
+:LOCATION: <%@var location%>
+:END:
+<%@var description%>
+<%@var info%>
+<%@if commentary%>
+<%@var commentary%>
+<%@endif%><%@if outline%>
+<%@var outline%>
+<%@endif%>")
+
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)
 
@@ -120,24 +134,21 @@
   "Read a comment line from STREAM. Returns two values: the uncommented
 string and a 'level' indicating how many comment characters were
 stripped. Note that this level is NOT the same as the heading level."
-  (let ((level 0) (contents (read-line stream)))
-    (loop for c = (char contents level)
+  (let* ((level 0))
+    (loop for c = (peek-char nil stream nil)
+          while c
           until (not (char= c #\;))
+          do (read-char stream nil)
           do (incf level))
     (values
-     (if (zerop level) contents (subseq contents (1+ level)))
+     (when-let ((line (read-line stream nil))) (string-trim " " line))
      level)))
 
 (defun read-file-heading (stream)
   (multiple-value-bind (name level) (read-comment-line stream)
-    (when name
-      (make-instance 'file-heading :name name :level level :description ""))))
+    (make-instance 'file-heading :name name :level level :description "")))
 
 (defun decomment (s) (string-left-trim "; " s))
-
-(defclass outline-heading (file-heading)
-  ((type :initarg :type :initform nil))
-  (:documentation "A heading according to Emacs outline-mode."))
 
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)

@@ -8,6 +8,7 @@
 
 (defpkg :std/sym
   (:use :cl)
+  (:import-from :std/defpkg :symbol-package-name)
   (:mix :sb-int)
   (:shadowing-import-from :sb-int :once-only)
   (:shadow :make-gensym :make-gensyms :make-gensym-list)
@@ -28,7 +29,8 @@
    :fboundp! :vboundp!
    :alias-macro
    :alias-function
-   :do-symbols*))
+   :do-symbols*
+   :symbol-name*))
 
 (defpkg :std/list
   (:use :cl)

@@ -31,7 +31,8 @@
     :packages (or packages 
                   (collecting
                     (mapc (lambda (x) (when (string-prefix-p (name sys) (package-name x))
-                                        (collect (package-name x))))
+                                        (ignore-errors
+                                         (collect (package-documentation x)))))
                           (list-all-packages))))))
 
 (defmethod dependents ((self system-documentation))

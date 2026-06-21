@@ -5,6 +5,18 @@
 ;;; Code:
 (in-package :doc)
 
+(deftempo :symbol-documentation
+    "* <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
+:PROPERTIES:
+:ID: LISP:<%@var id%>
+:CUSTOM_ID: <%@var name%>
+:END:
+<%@ifnotempty definitions%>
+<%@loop definitions%>
+
+<%@endloop%>
+<%@endif%>")
+
 #|
 (Public)
 :CLASS
@@ -95,8 +107,13 @@
 
 (defun symbol-tag-string (sym)
   "Return a string consisting of tags separated by ':'."
-  (with-output-to-string (s)
-    (fmt-tag-string s (mapcar 'symbol-name (classify-symbol sym)))))
+  (when-let ((tags (mapcar 'symbol-name (if (typep sym 'symbol-documentation)
+                                            (doc-class sym)
+                                            (classify-symbol sym)))))
+    (with-output-to-string (s)
+      (write-char #\: s)
+      (fmt-tags s tags)
+      (write-char #\: s))))
 
 (defun %symbol-info (sym)
   (collecting
@@ -152,11 +169,11 @@
       (format stream "~S ~A"  symbol class))))
 
 (defmethod doc-files ((self symbol-documentation))
+  ;; definition-source-pathname is allowed to be nil, indicating no path to
+  ;; definition.
+  (flatten
    (remove-duplicates
-    (remove-if
-     #'null ;; definition-source-pathname is allowed to be nil,
-            ;; indicating no path to definition.
-     (mapcar #'definition-source-pathname (doc-specs self)))))
+    (mapcar #'definition-source-pathname (doc-specs self)))))
 
 (defmethod describe-object ((self symbol-documentation) stream)
   (with-slots (symbol id definitions specs alloc) self
@@ -170,4 +187,11 @@
           do (format stream "  ~S ~S~%" (definition-source-pathname s)
                      (sb-introspect::definition-source-description s)))))
 
-;; (defmethod publish ((self symbol-documentation) &key))
+(defmethod publish ((self symbol-documentation) &key)
+  (with-slots (id definitions specs alloc) self
+    (execute-template :symbol-documentation :env 
+                      `(:name ,(name self) :id ,id
+                        :tags ,(symbol-tag-string self)
+                        :definitions ,(print definitions)
+                        :alloc ,alloc
+                        :specs ,specs))))
