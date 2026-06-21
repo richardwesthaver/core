@@ -22,7 +22,7 @@
     (let ((sys (slot-value self 'system)))
       (format stream "~A ~A" (name sys) (version sys)))))
 
-(defmethod system-description ((self system-documentation)) (system-description (doc-system self)))
+(defmethod description ((self system-documentation)) (description (doc-system self)))
 
 (defun system-documentation (sys &optional packages) 
   (unless (typep sys 'system) (setf sys (find-system sys)))

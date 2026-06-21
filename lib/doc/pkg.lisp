@@ -73,7 +73,7 @@
   (:export :fuzzy-match :file-match))
 
 (defpkg :doc
-  (:use :cl :std :organ :sb-mop :sb-introspect :id :log :ast)
+  (:use :cl :std :organ :sb-mop :sb-introspect :id :log :ast :project :config :val)
   (:import-from :uiop :string-prefix-p)
   (:import-from :sb-c :packed-info :symbol-hash :symbol-dbinfo :vop-p :package-external-symbol-count)
   (:import-from :sb-kernel :symbol-package-id)
@@ -96,7 +96,7 @@
    :+max-heading-level+ :+min-heading-level+
    :file-documentation
    :system-documentation
-   :image-documentation
+   ;; :image-documentation
    :package-documentation
    :symbol-documentation
    :doc
@@ -108,4 +108,5 @@
    :doc-packages
    :print-doc
    :print-documentation
-   :asdf-system-documentation))
+   :asdf-system-documentation
+   :project-documentation))

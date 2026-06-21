@@ -32,7 +32,7 @@
 
 (defcustom ulang-properties
   '("VERSION" "LOCATION" "PRONOUNCE" "AKA" "CREATED")
-  "See 'org-special-properties'."
+  nil
   :group 'ulang)
 
 (defcustom ulang-info-url-alist
@@ -222,7 +222,7 @@ With optional N, search in the Nth line from point."
   (mapadd org-info-other-documents ulang-info-url-alist)
   (mapadd browse-url-filename-alist ulang-info-url-alist)
   (mapadd org-link-abbrev-alist ulang-link-abbrev-alist)
-  (mapadd org-special-properties ulang-properties)
+  ;; ulang-properties ?
   (mapadd org-agenda-custom-commands ulang-agenda-commands)
   (mapadd org-todo-keywords-for-agenda ulang-todo-keywords)
   (mapadd org-todo-keyword-faces ulang-todo-keyword-faces)

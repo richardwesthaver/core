@@ -669,7 +669,7 @@ USE should be called in order to load and activate a module."
 ;;; System
 (defcomponent system (mod-component module)
   ((version :accessor version :initform nil)
-   description
+   (description :accessor description :initform nil)
    (plan 
     :documentation "The default plan associated with this object which specifies the ordering of
 system jobs to be executed in an async context."
@@ -791,7 +791,7 @@ system jobs to be executed in an async context."
    (make-instance new-class-name
      :version (version instance)
      :name (name instance)
-     :description (system-description instance)
+     :description (description instance)
      :components (mapcar 'revert-component-class (components instance)))))
 
 ;;; Test System

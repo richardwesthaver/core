@@ -680,8 +680,12 @@ STYLE indicates the level of decoration to apply to the output:
     (values)))
 
 ;;; Printer Table
-(defvar *printer-table* (make-hash-table))
 (defvar *default-printer* sb-pretty::*standard-pprint-dispatch-table*)
+(defvar *printer-table* 
+  (let ((tbl (make-hash-table)))
+    (setf (gethash :default tbl) *default-printer*)
+    tbl))
+
 ;; Common Lisp provides the ability to bind and modify the
 ;; *PRINT-PPRINT-DISPATCH* variable to achieve dynamic pretty printing based
 ;; on the mapping from predicates to print functions defined in a
@@ -699,6 +703,8 @@ STYLE indicates the level of decoration to apply to the output:
   (defun (setf find-printer) (new name) (setf (gethash name *printer-table*) new))
   (defun unknown-printer (name)
     (error 'std/condition:invalid-argument :item name :reason "Unknown printer")))
+
+(defun list-all-printers () (std/hash:hash-table-alist *printer-table*))
 
 (defmacro defprint ((name type &optional (priority 0) (table *default-printer*)) args &body body)
   "Define a (pretty) printer function which interprets the forms in OPTS for
@@ -742,6 +748,8 @@ STYLE indicates the level of decoration to apply to the output:
 (defconstant +annotation-prefix+ #\%)
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))
+
+(defun list-all-annotations () (std/hash:hash-table-alist *annotation-table*))
 
 (defun annotations (name)
   (gethash name *annotation-table*))

@@ -1059,7 +1059,7 @@
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
-   :make
+   :make :description
    :slot-boundp* :slot-values
    :slot-boundp!
    :explore :with-fslots
@@ -1385,6 +1385,7 @@
   (:use :cl :std/stream :std/string)
   (:import-from :std/list :group :ensure-cons :assoc-value)
   (:import-from :std/meta :init)
+  (:import-from :std/hash :hash-table-alist)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/rand :random-booleans)
   (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
@@ -1392,6 +1393,7 @@
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
    :fmt-column :*annotations*
+   :list-all-annotations :list-all-printers
    :iprintln :fmt-tree :println :human-readable-size 
    :print-slots :format-slots :*print-slot-indent* :make-bitmap
    :with-bitmap :set-pixel :outside-bounds :draw
@@ -1511,7 +1513,6 @@
    :load-sys
    :compile-sys
    :system
-   :system-description
    :read-component
    :compile-component
    :load-component

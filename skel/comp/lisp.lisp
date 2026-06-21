@@ -220,8 +220,8 @@
                 s)
         (terpri s)))))
 
-;; (write-file (find-asdf-system :obj) :path "test")
-;; (describe (parse-asdf-system "skel" "/home/ellis/src/core/lib/"))
+;; (write-file (find-asdf-system :ppcre) :path "test")
+;; (describe (parse-asdf-system "ppcre" "/home/ellis/src/core/ppcre/"))
 
 (defmethod read-ast ((self asdf-system) (path pathname))
   (parse-asdf-system (pathname-name path) (pathname-directory path)))

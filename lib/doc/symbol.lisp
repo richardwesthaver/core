@@ -113,7 +113,7 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
   (symbol-name (doc-symbol self)))
 
 (defun symbol-documentation (s)
-  "Return the SYMBOL-DOCUMENTATION object of S, a symbol."
+  "Return the documentation instance of S, a symbol."
   (let ((class (classify-symbol s)))
     (multiple-value-bind (defs specs) (find-definitions s)
       (make-instance 'symbol-documentation
