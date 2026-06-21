@@ -14,12 +14,12 @@
    ;; TODO 2026-06-20: component-documentation
    (systems :initarg :systems :accessor doc-systems :type (vector system-documentation))))
 
-(defun project-documentation (s &optional systems)
+(defun project-documentation (&optional (project *project*) systems)
   "Return the documentation instance of project S."
-  (unless (typep s 'project) (setf s (find-project s)))
+  (unless (typep project 'project) (setf project (find-project project)))
   (make-instance 'project-documentation
-    :project s
-    :components systems))
+    :project project
+    :systems systems))
 
 (defmethod print-object ((self project-documentation) stream)
   (print-unreadable-object (self stream :type t)

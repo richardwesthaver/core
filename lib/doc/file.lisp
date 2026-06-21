@@ -110,7 +110,7 @@
 (defclass file-heading ()
   ((name :initarg :name :type string)
    (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))
-   (contents :initarg :contents :type string))
+   (description :initarg :description :type string))
   (:documentation "A generic file heading according to Emacs outline-mode."))
 
 (defun heading-line-p (string)
@@ -131,7 +131,7 @@ stripped. Note that this level is NOT the same as the heading level."
 (defun read-file-heading (stream)
   (multiple-value-bind (name level) (read-comment-line stream)
     (when name
-      (make-instance 'file-heading :name name :level level :contents ""))))
+      (make-instance 'file-heading :name name :level level :description ""))))
 
 (defun decomment (s) (string-left-trim "; " s))
 
@@ -187,7 +187,7 @@ the name of the next top-level headline or NIL."
                  :summary summary
                  :opts opts
                  :level 0
-                 :contents desc)
+                 :description desc)
                next)))))
     (end-of-file (c) (when error (error "failed to read file headline: ~A" c)))))
 
@@ -224,7 +224,7 @@ after the code start header (see CODE-START-P)."
                   (make-instance 'file-heading 
                     :level 0 
                     :name next
-                    :contents
+                    :description
                     (trim
                      (apply 'concatenate 'string
                             (loop for l = (read-line f nil)
@@ -241,7 +241,7 @@ after the code start header (see CODE-START-P)."
   (with-open-file (f path :if-does-not-exist if-does-not-exist)
     ;; calculate offset of first line after ';;; Code:'
     (file-position f (or start (read-until-code-start f)))
-    (debug! "code starts at ~d" (file-position f))
+    (trace! "code starts at ~d" (file-position f))
     (loop for l = (read-line f nil)
           while l
           if (heading-line-p l)
@@ -250,15 +250,19 @@ after the code start header (see CODE-START-P)."
 ;; (read-file-outline "proto.lisp")
 ;; (defmacro define-file-heading (type slots))
 
-(defclass file-documentation (file-component)
+(defclass file-documentation (file-component id)
   ((path :initarg :path :type pathname :accessor path)
    (header :initarg :header :type file-header)
-   (contents :initarg :contents :type sequence)
-   (locations :initarg :locations :type sequence))
-  (:documentation "An object containing the header, contents, and relevant
-  locations of a source file. Note that this object only contains inline
+   (outline :initarg :outline :type sequence)
+   (links :initarg :links :type sequence))
+  (:documentation "An object containing the header, outline, and relevant
+  links in a source file. Note that this object only contains inline
   comments. Symbol documentation such as this one will not be captured in
-  instances of this object."))
+  instances of this object. The ID slot of file-documentation is a hash of
+  the full file contents."))
+
+(defmethod initialize-instance :after ((self file-documentation) &key &allow-other-keys)
+  (when (path self) (setf (id self) (cry:crc64-file (path self)))))
 
 ;; (defmethod print-object ((self file-documentation) stream)
 ;;   (print-unreadable-object (self stream :type t)
@@ -273,12 +277,16 @@ after the code start header (see CODE-START-P)."
     (make-instance 'file-documentation
       :path path
       :header header
-      :contents (when code-start (read-file-outline path code-start))
+      :outline (when code-start (read-file-outline path code-start))
       :name (pathname-name path)
       :type (pathname-type path))))
 
 (definline file-header (doc) (slot-value doc 'header))
 (definline file-headline (doc) (slot-value (file-header doc) 'headline))
-(definline file-commentary (doc) (slot-value (slot-value (file-header doc) 'commentary) 'contents))
+(definline file-commentary (doc) (slot-value (slot-value (file-header doc) 'commentary) 'description))
 (definline file-summary (doc) (slot-value (file-headline doc) 'summary))
-(definline file-description (doc) (slot-value (file-headline doc) 'contents))
+(definline file-description (doc) (slot-value (file-headline doc) 'description))
+
+(defmethod description ((self file-documentation)) (file-description self))
+(defmethod summary ((self file-documentation)) (file-summary self))
+(defmethod commentary ((self file-documentation)) (file-commentary self))

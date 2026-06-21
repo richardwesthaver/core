@@ -32,7 +32,7 @@
     :condition define-condition
     :class defclass
     :method-combination define-method-combination
-    :package defpackage
+    :package defpackage ;; defpkg? declaration?
     :transform deftransform
     :optimizer defoptimizer
     :vop define-vop
@@ -67,6 +67,14 @@ to (SETF DOCUMENTATION).")
 
 (defverb publish (self &key &allow-other-keys)
   (:documentation "Publish object SELF."))
+
+(defverb summary (self)
+  (:accessor t)
+  (:documentation "Return the summary of SELF."))
+
+(defverb commentary (self)
+  (:accessor t)
+  (:documentation "Return the commentary of SELF."))
 
 ;;; Utils
 (deffmt fmt-tags "~{~A~^:~}" "Format a list of tags as an org tag string, delimited by ':'.")

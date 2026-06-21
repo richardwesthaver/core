@@ -15,7 +15,7 @@
    :totp))
 
 (defpkg :cry/crc64
-  (:use :cl)
+  (:use :std-lisp)
   (:export :+polynomial+ :+improved-polynomial+
            :init-crc64 :crc64-stream
            :crc64-file :crc64-sequence))

@@ -53,6 +53,9 @@ forget to call this before calling the library functions."
       (setf (aref *crc-table-h* i) (ash (logand part #xFFFFFFFF00000000) -32))
       (setf (aref *crc-table-l* i) (logand part #xFFFFFFFF)))))
 
+(defmethod init ((self (eql :crc64)) &key (polynomial +improved-polynomial+))
+  (init-crc64 polynomial))
+
 (defun crc64-file (pathname)
   "Calculates the CRC64 of the file specified by pathname."
   (declare (optimize (speed 3) (space 0) (debug 0)))

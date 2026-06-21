@@ -131,6 +131,8 @@
 (defmethod name ((self symbol-documentation))
   (symbol-name (doc-object self)))
 
+(defmethod document-class ((self symbol-documentation)) 'org-heading)
+
 (defun symbol-documentation (s)
   "Return the documentation instance of S, a symbol."
   (let ((class (classify-symbol s)))
