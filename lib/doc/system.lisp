@@ -14,7 +14,7 @@
 (in-package :doc)
 
 (defclass system-documentation (document id)
-  ((system :initarg :system :accessor doc-system :type system)
+  ((system :initarg :system :accessor doc-object :type system)
    (packages :initarg :packages :accessor doc-packages :type (vector package-documentation))))
 
 (defmethod print-object ((self system-documentation) stream)
@@ -22,7 +22,7 @@
     (let ((sys (slot-value self 'system)))
       (format stream "~A ~A" (name sys) (version sys)))))
 
-(defmethod description ((self system-documentation)) (description (doc-system self)))
+(defmethod description ((self system-documentation)) (description (doc-object self)))
 
 (defun system-documentation (sys &optional packages) 
   (unless (typep sys 'system) (setf sys (find-system sys)))
@@ -35,14 +35,14 @@
                           (list-all-packages))))))
 
 (defmethod dependents ((self system-documentation))
-  (mapcar #'system-documentation (find-system-dependents (doc-system self))))
+  (mapcar #'system-documentation (find-system-dependents (doc-object self))))
 
 (defmethod dependencies ((self system-documentation))
-  (mapcar #'system-documentation (component-require (doc-system self))))
+  (mapcar #'system-documentation (component-require (doc-object self))))
 
 (defmethod doc-files ((self system-documentation))
   "Return a list of source file components from SELF."
-  (when-let ((sys (doc-system self)))
+  (when-let ((sys (doc-object self)))
     (cons (path sys)
           (when-let ((comp (components sys)))
             (flet ((%rec (s) (if (typep s 'mod-component)

@@ -102,7 +102,7 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
   "Return a string consisting of tags separated by ':'.")
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
-  ((symbol :initarg :symbol :type symbol :accessor doc-symbol)
+  ((symbol :initarg :symbol :type symbol :accessor doc-object)
    (class :initarg :class :type list :accessor doc-class)
    (definitions :initform nil :initarg :definitions :type list :accessor doc-definitions)
    (specs :initform nil :initarg :specs :type list :accessor doc-specs)
@@ -110,7 +110,7 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
    (alloc :initarg :alloc :type list :accessor doc-alloc)))
 
 (defmethod name ((self symbol-documentation))
-  (symbol-name (doc-symbol self)))
+  (symbol-name (doc-object self)))
 
 (defun symbol-documentation (s)
   "Return the documentation instance of S, a symbol."
@@ -148,3 +148,5 @@ keywords: :BOUNDP, :FBOUNDP, :CONSTANT, :GENERIC-FUNCTION,
     (loop for s in specs
           do (format stream "  ~S ~S~%" (definition-source-pathname s)
                      (sb-introspect::definition-source-description s)))))
+
+;; (defmethod publish ((self symbol-documentation) &key))

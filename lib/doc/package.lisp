@@ -26,12 +26,12 @@
 (in-package :doc)
 
 (defclass package-documentation (id)
-  ((package :initform *package* :initarg :package :type package :accessor doc-package)
+  ((package :initform *package* :initarg :package :type package :accessor doc-object)
    (files :initform #() :initarg :files :type (vector file-documentation) :accessor doc-files)
    (symbols :initform #() :initarg :symbols :type (vector symbol-documentation) :accessor doc-symbols)))
 
 (defmethod name ((self package-documentation))
-  (package-name (doc-package self)))
+  (package-name (doc-object self)))
 
 (defun package-documentation (&optional (package *package*) (for :external))
   "Return a PACKAGE-DOCUMENTATION object from PACKAGE."
@@ -85,10 +85,10 @@
            collect (doc-symbol s)))))
 
 (defmethod dependents ((self package-documentation))
-  (mapcar #'package-documentation (package-used-by-list (doc-package self))))
+  (mapcar #'package-documentation (package-used-by-list (doc-object self))))
 
 (defmethod dependencies ((self package-documentation))
-  (mapcar #'package-documentation (package-use-list (doc-package self))))
+  (mapcar #'package-documentation (package-use-list (doc-object self))))
 
 ;; (sb-introspect:allocation-information (make-instance 'package-documentation))
 ;; sb-introspect:definition-source

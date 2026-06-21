@@ -29,7 +29,7 @@
 
 ;;; Code:
 (defpkg :organ
-  (:use :cl :ppcre :std :parse/lex :sb-gray :ast :val)
+  (:use :cl :ppcre :std :parse/lex :sb-gray :ast :val :id)
   (:import-from :uiop :read-file-string)
   (:export
    ;; vars

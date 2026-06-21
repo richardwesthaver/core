@@ -53,13 +53,20 @@ DOCUMENTATION.")
 to (SETF DOCUMENTATION).")
   (:method (new self type) (setf (documentation self type) new)))
 
+(defgeneric doc-object (self)
+  (:documentation "Return the object associated with documentation SELF."))
+
+(defgeneric (setf doc-object) (new self)
+  (:documentation "Set the object associated with documentation SELF."))
+
 (defgeneric document-class (self)
   (:documentation "Return the DOCUMENT class associated with SELF or *DOCUMENT-CLASS*.")
   (:method (self) 
     (declare (ignore self))
     *document-class*))
 
-(defgeneric publish (self &key &allow-other-keys))
+(defverb publish (self &key &allow-other-keys)
+  (:documentation "Publish object SELF."))
 
 ;;; Utils
 (defun definition-specifier (type)
