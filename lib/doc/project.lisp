@@ -31,3 +31,5 @@
 
 (defmethod dependencies ((self project-documentation))
   (mapcar #'system-documentation (component-require (doc-object self))))
+
+(defmethod publish ((self project-documentation) &key))

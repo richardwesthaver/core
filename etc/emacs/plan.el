@@ -196,7 +196,7 @@ block:
        checking for a LOCATION property in the current tree, followed by
        the value of the `project-current' function.
 
-:log          when nil don't include the vc log.
+TODO :log          when nil don't include the vc log.
 :files        when nil don't include the files section.
 :packages     when nil don't include the packages section.
 :symbols      when nil don't include the symbols section.

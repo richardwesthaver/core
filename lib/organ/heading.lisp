@@ -15,7 +15,7 @@
 (defmethod org-create ((type (eql :heading)) &rest initargs &key &allow-other-keys)
   (apply #'make-instance (sym-to-org-class-name type) initargs))
 
-(defmethod id:id ((self org-heading))
+(defmethod id ((self org-heading))
   (when-let* ((props (org-properties self))
               (id (find "ID" (org-contents props) :test 'string-equal :key 'name)))
     (value id)))
