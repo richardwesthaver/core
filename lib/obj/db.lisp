@@ -200,9 +200,6 @@ usually a key such as :ROCKSDB or :SQLITE."))
 (defgeneric connect-db (db &key &allow-other-keys)
   (:documentation "Connect the database DB."))
 
-(defgeneric query-db (db query &key &allow-other-keys)
-  (:documentation "Execute QUERY against DB."))
-
 (defgeneric db-get (db key &key &allow-other-keys)
   (:documentation "Return the value associated with KEY from DB."))
 

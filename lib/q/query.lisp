@@ -67,6 +67,8 @@
                      collect (aref (fields self) i))
                'field-vector))))
 
+(defgeneric query (self query &key &allow-other-keys))
+
 ;;; Expressions
 (defclass query-expr (expr) ())
 

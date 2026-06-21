@@ -98,12 +98,34 @@
   (with-output-to-string (s)
     (fmt-tag-string s (mapcar 'symbol-name (classify-symbol sym)))))
 
+(defun %symbol-info (sym)
+  (collecting
+    (let ((prev 0))
+      (sb-impl::call-with-each-info
+       (lambda (name type-num val)
+         (unless (eq name prev) (setq prev name))
+         (let ((type (svref *info-types* type-num)))
+           (collect (list name 
+                          (if (not type) type-num 
+                              (when type (list 
+                                          (sb-impl::meta-info-category type) 
+                                          (sb-impl::meta-info-kind type))))
+                          val))))
+       sym))))
+
+(defun symbol-info (sym)
+  (let ((ret))
+    (dolist (s (%symbol-info sym) ret)
+      (if-let ((l (find (car s) ret :key 'car :test 'equalp)))
+        (pushnew (cdr s) (cdr l) :test 'equalp)
+        (push s ret)))))
+
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
    (class :initarg :class :type list :accessor doc-class)
    (definitions :initform nil :initarg :definitions :type list :accessor doc-definitions)
    (specs :initform nil :initarg :specs :type list :accessor doc-specs)
-   (info :initarg :info :type (or null packed-info) :accessor doc-info)
+   (info :initarg :info :type (or list packed-info) :accessor doc-info)
    (alloc :initarg :alloc :type list :accessor doc-alloc)))
 
 (defmethod name ((self symbol-documentation))
@@ -119,7 +141,7 @@
         :class class
         :definitions defs
         :specs specs
-        :info (symbol-dbinfo s)
+        :info (symbol-info s)
         :alloc (multiple-value-list (allocation-information s))))))
 
 (defmethod print-object ((self symbol-documentation) stream)

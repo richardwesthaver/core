@@ -100,6 +100,7 @@
    ;; :image-documentation
    :package-documentation
    :symbol-documentation
+   :symbol-info
    :doc
    :document-class
    :publish

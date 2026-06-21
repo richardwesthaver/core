@@ -14,7 +14,8 @@ necessary for building complete API reference documents."
   (:file "file")
   (:file "package")
   (:file "system")
-  (:file "project"))
+  (:file "project")
+  (:file "srv"))
  :provide 
  (
   (:proto :nlp)
@@ -23,7 +24,7 @@ necessary for building complete API reference documents."
    :accessors (doc)
    :methods (document-class publish)
    :functions (find-definitions definition-source-line-number classify-symbol symbol-classification-string))
-  ;; (:proto :api)?
+  ;; (:proto :publish)?
   (:proto :reprex)
   (:proto :search)
   (:readtable :doc)

@@ -180,7 +180,7 @@ extractor."
     (push-opts db)
     db))
 
-(defmethod query-db ((db rdb) (query (eql :get)) &key key column &allow-other-keys)
+(defmethod query ((db rdb) (query (eql :get)) &key key column &allow-other-keys)
   (declare (ignore query))
   (get-val db key :column column))
 

@@ -668,7 +668,6 @@
    :close-db
    :destroy-db
    :connect-db
-   :query-db
    :find-db
    :db-get
    :db
