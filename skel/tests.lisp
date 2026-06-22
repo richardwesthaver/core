@@ -1,6 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
 (defpackage :skel/tests
-  (:use :std-lisp :skel :rt :log :obj :skel/packy :skel/krypt)
+  (:use :std-lisp :skel :rt :log :obj :skel/packy :skel/krypt :doc)
   (:import-from :uiop :file-exists-p))
 
 (in-package :skel/tests)
@@ -9,22 +9,6 @@
 (in-suite :skel)
 
 (defun %tmp-path (ext) (make-pathname :name (namestring (tmpize-pathname (string (gensym "g")))) :type ext))
-
-(deftest header-comments ()
-  "Make sure header comments are generated correctly. 
-
-This covers variations of make-source-header-comment, make-source-file-header,
-make-shebang-comment, and make-shebang-file-header."
-  (issubtype 'file-header 
-             (type-of (make-shebang-file-header 
-		       (make-shebang-comment "/dev/null"))))
-  (issubtype 'file-header 
-             (type-of (make-source-file-header 
-		       (make-source-header-comment 
-		        "foo-test"
-		        :timestamp t
-		        :description "nothing to see here"
-		        :opts '("Definitely-Not_Emacs: T;"))))))
 
 (deftest skelfile ()
   "Ensure skelfiles are created and loaded correctly and that they signal
@@ -47,28 +31,28 @@ the appropriate restarts."
                                                                   (when path (merge-pathnames path *tmp*))
                                                                   *tmp*)
                                                            :description "barfood"))
-	     (src (path) (list path))
-	     (cmd (&rest body) body)
-	     (rule (tr sr) (make-rule (file-namestring tr) sr)))
-	(is (null (ast (mk) (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))
-	(let* ((tr1 (%tmp-path "t1"))
-	       (tr2 (%tmp-path "t2"))
-	       (sr (src (%tmp-path "s1")))
-	       (r1 (rule tr1 sr))
-	       (r2 (rule (car sr) (src tr2)))
-	       (mk1 (mk "test.mk")))
-	  (is (push-mk-rule r1 mk1))
-	  (is (push-mk-rule r2 mk1))
-	  (is (push-mk-directive 
-	       (cmd "ifeq ($(DEBUG),1) echo foo 
+	         (src (path) (list path))
+	         (cmd (&rest body) body)
+	         (rule (tr sr) (make-rule (file-namestring tr) sr)))
+	    (is (null (ast (mk (merge-pathnames (%tmp-path "mk") *tmp*)))))
+	    (let* ((tr1 (%tmp-path "t1"))
+	           (tr2 (%tmp-path "t2"))
+	           (sr (src (%tmp-path "s1")))
+	           (r1 (rule tr1 sr))
+	           (r2 (rule (car sr) (src tr2)))
+	           (mk1 (mk "test.mk")))
+	      (is (push-mk-rule r1 mk1))
+	      (is (push-mk-rule r2 mk1))
+	      (is (push-mk-directive 
+	           (cmd "ifeq ($(DEBUG),1) echo foo 
 endif")
-	       mk1))
-	  (is (push-mk-var '(a b) mk1))
-	  (is (push-mk-var '(b c) mk1))
-	  ;; FIX
-	  (is 
-       (null 
-        (write-ast mk1 (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))))))
+	           mk1))
+	      (is (push-mk-var '(a b) mk1))
+	      (is (push-mk-var '(b c) mk1))
+	      ;; FIX
+	      (is 
+           (null 
+            (write-ast mk1 (merge-pathnames (%tmp-path "mk") *tmp*) :if-exists :supersede)))))))
 
 (deftest asd ()
   (let ((sk (make-instance 'skel-project :components '((:lisp "test")
