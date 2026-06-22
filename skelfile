@@ -1,6 +1,10 @@
 ;;; skelfile --- CC/core skelfile
+
+;;
+
+;;; Code:
 :name core
-:author ("Richard Westhaver" . "ellis@rwest.io")
+:author ("Richard Westhaver" . "ellis@compiler.company")
 :version "0.1.2"
 :links 
 (:info "https://compiler.company/docs/core/info"

@@ -11,11 +11,12 @@
 
 (deftempo :project-documentation
   "#+TITLE: <%@var name%><%@ifnotempty summary%>
-#+SUBTITLE: <%@var summary%><%@endif%><%@ifnotempty version%>
-#+VERSION: <%@var version%><%@endif%><%@ifnotempty id%>
+#+SUBTITLE: <%@var summary%><%@endif%><%@ifnotempty file-description%>
+#+DESCRIPTION: <%@var file-description%><%@endif%><%@if version%>
+#+VERSION: <%@var version%><%@endif%><%@if id%>
 #+ID: <%@var id%><%@endif%><%@ifnotempty location%>
 #+LOCATION: <%@var location%><%@endif%><%@ifnotempty author%>
-#+AUTHOR: <%@var author%><%@endif%><%@ifnotempty email%>
+#+AUTHOR: <%@var author%><%@endif%><%@if email%>
 #+EMAIL: <%@var email%><%@endif%><%@ifnotempty tags%>
 #+FILETAGS: <%@var tags%><%@endif%>
 <%@var description%>
@@ -71,12 +72,16 @@
 (defaccessor module-provide ((self project-documentation)) (slot-boundp (doc-object self) 'provide))
 (defaccessor module-require ((self project-documentation)) (module-require (doc-object self)))
 (defaccessor rules ((self project-documentation)) (rules (doc-object self)))
+(defaccessor author ((self project-documentation)) (author (doc-object self)))
+
 (defmethod path ((self project-documentation))
   (path (doc-object self)))
 
 (defmethod publish ((self project-documentation) &key output info)
   (with-slots (project systems) self
     (let* ((file (file-documentation (path self)))
+           (author (if (consp #1=(author self)) (car #1#) #1#))
+           (email (when (consp #1#) (cdr #1#)))
            (gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,(id self)
@@ -90,6 +95,8 @@
                                    :version ,(version self)
                                    :provide ,(module-provide self)
                                    :rules ,(coerce (rules self) 'list)
+                                   :author ,author
+                                   :email ,email
                                    ;; :require ,(module-require self)
                                    ;; :tags ,(file-tag-string self)
                                    :systems ,systems))))
