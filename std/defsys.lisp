@@ -716,6 +716,18 @@ system jobs to be executed in an async context."
                            :test #'equalp))
         (push s r)))))
 
+(defun directory-systems (&optional (dir *default-pathname-defaults*))
+  "Return a list of all systems under DIR."
+  (let ((dir (make-pathname :directory `(,@(pathname-directory (truename dir)) :wild-inferiors))))
+    (remove-if-not (lambda (x) (pathname-match-p (path x) dir)) (list-all-systems))))
+
+(defun directory-sysdef-files (&optional (dir *default-pathname-defaults*))
+  "Return a list of all sysdef files under DIR."
+  (let ((dir (make-pathname :directory `(,@(pathname-directory (truename dir)) :wild-inferiors))))
+    (remove-duplicates
+     (mapcan (lambda (x) (and (pathname-match-p (path x) dir) (list (path x)))) (list-all-systems))
+     :test 'pathname-equal)))
+
 ;;; ASDF Compat
 (definline change-component-class (self)
   "Change class of SELF to its associated STD/DEFSYS class."

@@ -196,8 +196,8 @@ function NAME and be skipped for (setf NAME)."
 (defun slot-boundp* (self slot)
   "Return T if SLOT is bound in object SELF, otherwise return NIL."
   (when slot
-    (handler-bind ((sb-pcl::missing-slot nil))
-      (slot-boundp self slot))))
+    (handler-case (slot-boundp self slot)
+      (error () nil))))
 
 (defun slot-boundp! (self slot)
   "Like `slot-boundp*' but return the slot value when bound."

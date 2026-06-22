@@ -30,12 +30,9 @@
   "Define an ORG-PARSE method specializer for org type specifier NAME with body
 BODY."
   (let ((elt (sb-int:keywordicate name)))
+    (pushnew elt *org-parser-keywords*)
     `(progn
        (defmethod org-parse ((type (eql ,elt)) (input ,from))
-         ;;  NOTE 2023-12-27: (,name (org-create ,nvar)) == bad idea.
-         ;; need parser to be fallible so shouldn't create an object
-         ;; upfront. We should delay initialization until the last moment
-         ;; -- match up front.
          ,@body))))
 
 ;; It's super helpful to have our objects printed with their contents

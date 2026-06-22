@@ -13,6 +13,37 @@
 ;;; Code:
 (in-package :doc)
 
+(deftempo :system-documentation
+  "* <%@var name%>
+:PROPERTIES:
+<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@endif%><%@ifnotempty file-description%>:DESCRIPTION: <%@var file-description%>
+<%@endif%><%@ifnotempty version%>:VERSION: <%@var version%>
+<%@endif%>:LOCATION: <%@var location%>
+:END:
+<%@var description%>
+<%@if info%>
+#+BEGIN: lisp-system-info :system <%@var name%> :level 1
+#+END:
+<%@endif%><%@if commentary%>
+<%@var commentary%>
+<%@endif%><%@ifnotempty packages%>
+** Packages
+<%@loop packages%>
+
+<%@endloop%>
+<%@endif%><%@ifnotempty components%>
+** Components
+<%@loop components%>
+
+<%@endloop%>
+<%@endif%><%@ifnotempty provide%>
+** Provides
+<%@loop provide%>
+
+<%@endloop%>
+<%@endif%>")
+
 (defclass system-documentation (document id)
   ((system :initarg :system :accessor doc-object :type system)
    (packages :initarg :packages :accessor doc-packages :type (vector package-documentation))))
@@ -22,11 +53,18 @@
     (let ((sys (slot-value self 'system)))
       (format stream "~A ~A" (name sys) (version sys)))))
 
-(defmethod description ((self system-documentation)) (description (doc-object self)))
+(defaccessor description ((self system-documentation)) (description (doc-object self)))
+(defaccessor name ((self system-documentation)) (name (doc-object self)))
+(defaccessor version ((self system-documentation)) (version (doc-object self)))
+(defaccessor components ((self system-documentation)) (components (doc-object self)))
+(defaccessor module-provide ((self system-documentation)) (module-provide (doc-object self)))
+(defaccessor module-require ((self system-documentation)) (module-require (doc-object self)))
+(defmethod path ((self system-documentation)) (path (doc-object self)))
 
 (defun system-documentation (sys &optional packages) 
   (unless (typep sys 'system) (setf sys (find-system sys)))
   (make-instance 'system-documentation 
+    :id (make-v5-uuid +namespace-oid+ (format nil "SYSTEM:~A" (name sys)))
     :system sys
     :packages (or packages 
                   (collecting
@@ -57,3 +95,26 @@
                        (doc-files s)
                        (when s (path s)))))
     (mapcar #'%rec (components self))))
+
+(defmethod publish ((self system-documentation) &key output info)
+  (with-slots (id name packages) self
+    (let* ((file (file-documentation (path self)))
+           (gen (execute-template (keywordicate (class-name (class-of self)))
+                                 :env
+                                 `(:name ,(name self) :id ,id
+                                   :location ,(enough-namestring (path self))
+                                   :summary ,(file-summary file)
+                                   :info ,info
+                                   :commentary ,(file-commentary file)
+                                   :description ,(description self)
+                                   :file-description ,(file-description file)
+                                   :components ,(components self)
+                                   :version ,(version self)
+                                   :provide ,(module-provide self)
+                                   ;; :require ,(module-require self)
+                                   ;; :tags ,(file-tag-string self)
+                                   :packages ,packages))))
+      (case output
+        ('nil (values (org-parse (document-keyword self) gen) gen))
+        (:string gen)
+        (t (write-string gen output))))))

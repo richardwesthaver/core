@@ -25,6 +25,26 @@
 ;;; Code:
 (in-package :doc)
 
+(deftempo :package-documentation
+  "* <%@var name%>
+:PROPERTIES:
+:SUMMARY: <%@var summary%>
+:LOCATION: <%@var location%>
+:END:
+<%@var description%>
+<%@var info%>
+<%@ifnotempty external%>
+* External Symbols
+<%@loop external%>
+
+<%@endloop%>
+<%@endif%><%@ifnotempty internal%>
+* Internal Symbols
+<%@loop internal%>
+
+<%@endloop%>
+<%@endif%>")
+
 (defclass package-documentation (id)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
    (files :initform nil :initarg :files :accessor doc-files)
@@ -62,6 +82,7 @@
                         (pushnew p paths)))
                     (vector-push doc symbols)))))
     (make-instance 'package-documentation
+      :id (make-v5-uuid +namespace-oid+ (package-name package))
       :package package
       :files (mapcan
               (lambda (x) 
@@ -107,3 +128,16 @@
 ;; (sb-introspect:find-definition-sources-by-name 'std-error :condition)
 
 ;; (package-documentation)
+
+(defmethod publish ((self package-documentation) &key output)
+  (with-slots (id files symbols) self
+    (let ((gen (execute-template (keywordicate (class-name (class-of self)))
+                                 :env
+                                 `(:name ,(name self) :id ,id
+                                   ;; :tags ,(package-tag-string self)
+                                   :files ,files
+                                   :symbols ,symbols))))
+      (case output
+        ('nil (values (org-parse (document-keyword self) gen) gen))
+        (:string gen)
+        (t (write-string gen output))))))

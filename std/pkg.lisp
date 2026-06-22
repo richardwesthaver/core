@@ -1506,6 +1506,8 @@
    :list-all-test-systems
    :list-all-providers
    :list-all-modules
+   :directory-systems
+   :directory-sysdef-files
    :register-module
    :module-provide
    :module-require

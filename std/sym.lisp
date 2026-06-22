@@ -101,7 +101,7 @@ src/code/primordial-extensions.lisp but re-implemented here. The only
 difference is that we also handle non-zero integers, which can be
 passed as the first argument to `gensym'."
       (let ((g (if (typep x '(integer 0)) x (string x))))
-	(loop repeat length
+	    (loop repeat length
               collect (gensym g))))))
 
 ;; FBOUNDP!, VBOUNDP! are described in the C-MERA paper.

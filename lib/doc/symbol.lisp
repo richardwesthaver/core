@@ -6,9 +6,9 @@
 (in-package :doc)
 
 (deftempo :symbol-documentation
-    "* <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
+  "* <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
-:ID: LISP:<%@var id%>
+:ID: <%@var id%>
 :CUSTOM_ID: <%@var name%>
 :END:
 <%@ifnotempty definitions%>
@@ -110,10 +110,7 @@
   (when-let ((tags (mapcar 'symbol-name (if (typep sym 'symbol-documentation)
                                             (doc-class sym)
                                             (classify-symbol sym)))))
-    (with-output-to-string (s)
-      (write-char #\: s)
-      (fmt-tags s tags)
-      (write-char #\: s))))
+    (with-output-to-string (s) (fmt-tags s tags))))
 
 (defun %symbol-info (sym)
   (collecting
@@ -149,13 +146,14 @@
   (symbol-name (doc-object self)))
 
 (defmethod document-class ((self symbol-documentation)) 'org-heading)
+(defmethod document-keyword ((self symbol-documentation)) :heading)
 
 (defun symbol-documentation (s)
   "Return the documentation instance of S, a symbol."
   (let ((class (classify-symbol s)))
     (multiple-value-bind (defs specs) (find-definitions s)
       (make-instance 'symbol-documentation
-        :id (symbol-hash s)
+        :id (make-v5-uuid +namespace-oid+ (symbol-name* s))
         :symbol s
         :class class
         :definitions defs
@@ -187,11 +185,17 @@
           do (format stream "  ~S ~S~%" (definition-source-pathname s)
                      (sb-introspect::definition-source-description s)))))
 
-(defmethod publish ((self symbol-documentation) &key)
+(defmethod publish ((self symbol-documentation) &key output)
   (with-slots (id definitions specs alloc) self
-    (execute-template :symbol-documentation :env 
-                      `(:name ,(name self) :id ,id
-                        :tags ,(symbol-tag-string self)
-                        :definitions ,(print definitions)
-                        :alloc ,alloc
-                        :specs ,specs))))
+    (let ((gen (execute-template (keywordicate (class-name (class-of self))) 
+                                 :env
+                                 `(:name ,(name self) :id ,id
+                                   :tags ,(symbol-tag-string self)
+                                   :definitions ,definitions
+                                   :alloc ,alloc
+                                   :specs ,specs))))
+      (case output
+        ('nil (values (org-parse (document-keyword self) gen) gen))
+        (:string gen)
+        (t (print gen output))))))
+         

@@ -292,12 +292,37 @@ after the code start header (see CODE-START-P)."
       :name (pathname-name path)
       :type (pathname-type path))))
 
-(definline file-header (doc) (slot-value doc 'header))
-(definline file-headline (doc) (slot-value (file-header doc) 'headline))
-(definline file-commentary (doc) (slot-value (slot-value (file-header doc) 'commentary) 'description))
-(definline file-summary (doc) (slot-value (file-headline doc) 'summary))
-(definline file-description (doc) (slot-value (file-headline doc) 'description))
+(definline file-header (doc) (slot-boundp! doc 'header))
+(definline file-headline (doc) (when-let ((h (file-header doc))) (slot-boundp! h 'headline)))
+(definline file-commentary (doc)
+  (when-let* ((h (file-header doc))
+              (c (slot-boundp! h 'commentary)))
+    (slot-boundp! c 'description)))
+(definline file-summary (doc) 
+  (when-let ((h (file-header doc)))
+    (slot-boundp! h 'summary)))
+(definline file-description (doc) 
+  (when-let ((h (file-header doc)))
+    (slot-boundp! h 'description)))
 
 (defmethod description ((self file-documentation)) (file-description self))
 (defmethod summary ((self file-documentation)) (file-summary self))
 (defmethod commentary ((self file-documentation)) (file-commentary self))
+
+(defmethod publish ((self file-documentation) &key output)
+  (with-slots (id name outline) self
+    (let ((gen (execute-template (keywordicate (class-name (class-of self)))
+                                 :env
+                                 `(:name ,(name self) :id ,id
+                                   :location ,(path self)
+                                   :description ,(file-description self)
+                                   :summary ,(file-summary self)
+                                   :commentary ,(file-commentary self)
+                                   ;; :tags ,(file-tag-string self)
+                                   :outline ,outline))))
+      (case output
+        ('nil (values (org-parse (document-keyword self) gen) gen))
+        (:string gen)
+        (t (write-string gen output))))))
+
+;; TODO 2026-06-21: (defmethod publish ((self file-heading) &key))

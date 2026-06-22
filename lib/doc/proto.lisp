@@ -16,6 +16,7 @@
 
 ;;; Vars
 (defvar *document-class* 'org-document)
+(defvar *default-document-keyword* :document)
 
 (defparameter *definition-types*
   '(:variable defvar
@@ -59,11 +60,11 @@ to (SETF DOCUMENTATION).")
 (defgeneric (setf doc-object) (new self)
   (:documentation "Set the object associated with documentation SELF."))
 
-(defgeneric document-class (self)
-  (:documentation "Return the DOCUMENT class associated with SELF or *DOCUMENT-CLASS*.")
+(defgeneric document-keyword (self)
+  (:documentation "Return the parser-keyword associated with SELF or *DEFAULT-DOCUMENT-KEYWORD*.")
   (:method (self) 
     (declare (ignore self))
-    *document-class*))
+    *default-document-keyword*))
 
 (defverb publish (self &key &allow-other-keys)
   (:documentation "Publish object SELF."))
@@ -77,7 +78,7 @@ to (SETF DOCUMENTATION).")
   (:documentation "Return the commentary of SELF."))
 
 ;;; Utils
-(deffmt fmt-tags "~{~A~^:~}" "Format a list of tags as an org tag string, delimited by ':'.")
+(deffmt fmt-tags "~@[:~{~A~^:~}~:]" "Format a list of tags as an org tag string, delimited by ':'.")
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."
