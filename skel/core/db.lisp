@@ -7,7 +7,26 @@
 
 (load-database-backend :rdb)
 
+(defvar *skel-registry-schema*
+  (make-instance 'simple-schema
+    :fields 
+    (make-fields 
+     :id '(fixnum . string)
+     :properties '(fixnum . octet-vector)
+     :name '(string . fixnum)
+     :path '(fixnum . pathname)
+     :tags '(fixnum . (array string)))))
+
+(defvar *skel-cache-schema*
+  (make-instance 'simple-schema
+    :fields 
+    (make-fields
+     :id '(fixnum . octet-vector)
+     :hash '((octet-vector 32) . fixnum)
+     :updated '(fixnum . octet-vector))))
+
 (defvar *skel-db-path* (merge-homedir-pathnames ".stash/skel/db/"))
+
 (defun skel-db-path (path) (merge-pathnames path *skel-db-path*))
 
 (defun skel-db-spec (path &optional (backend :rdb))
@@ -51,8 +70,6 @@
   ((collection :type (vector rdb-schema) :initarg :collection :accessor schema-collection))
   (:default-initargs
    :name "skel-db"))
-
-(defclass skel-object-schema (object-schema) ())
 
 (defclass skel-record (id) ()
   (:metaclass stored-class))

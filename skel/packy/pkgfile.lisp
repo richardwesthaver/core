@@ -63,6 +63,7 @@
 (defcomponent pkgfile (lisp-component simple-project)
   (bind arch url require provide src options checksum)
   (:documentation "Package build files.")
+  (:default-initargs :name nil)
   (:keyword :pkg))
 
 (defmethod load-ast ((self pkgfile))
@@ -78,4 +79,4 @@
 
 (defmethod load-project-component ((kind (eql :pkg)) (form t) &key (path (project-root)))
   (let ((*default-pathname-defaults* path))
-    (print (deserialize (make-pathname :name (pathname-name form) :type "pkg" :defaults *default-pathname-defaults*) :pkgfile))))
+    (deserialize (make-pathname :name (pathname-name form) :type "pkg" :defaults *default-pathname-defaults*) :pkgfile)))

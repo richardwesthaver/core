@@ -156,6 +156,7 @@
     (println "Welcome to SKEL")
     (cli/linedit:install-repl 
      :wrap-current t 
+     ;; :eof-quits t
      :history (xdg-data-dir :skel "history") 
      :killring (xdg-data-dir :skel "killring"))
     (cli/shell:make-toplevel-init

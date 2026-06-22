@@ -102,7 +102,8 @@
           (name-keysym (or f name))))))
 
 (defun load-xkb-keysyms (&rest codes)
-  "Retrieve and map the names of the keysyms CODES which are all integers. Returns a table of INT->STRING."
+  "Retrieve and map the names of the keysyms CODES which are all
+integers. Returns a table of INT->STRING."
   (dolist (c codes (values *keysym-name-table* *name-keysym-table*))
     (declare (fixnum c))
     (lety ((n (keysym-name c) :type string))
@@ -113,6 +114,11 @@
 
 (defun load-xkb-keysyms-file (file)
   (apply 'load-xkb-keysyms (read-lisp-file file)))
+
+(defun list-all-keycodes ()
+  (nconc
+   (mapcan (lambda (x) (and (typep x 'fixnum) (list x))) (hash-table-keys io/kbd::*keysym-name-table*))
+   (mapcan (lambda (x) (and (typep x 'fixnum) (list x))) (hash-table-keys io/kbd::*dead-keysym-name-table*))))
 
 (eval-always
   (defun keysym (key &rest bytes)

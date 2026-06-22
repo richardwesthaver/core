@@ -90,9 +90,10 @@
   (req:fetch "https://packy.compiler.company/data/kbd.sxp"
    ".stash/kbd.sxp"
    :if-exists nil))
+ #+nil
  (ccadb.dat (%stash)
   (unless (probe-file ".stash/cert.csv")
-   (req:fetch "https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv2"
+   (req:fetch "https://ccadb.my.salesforce-sites.com/ccadb/AllCertificateRecordsCSVFormatv5"
     ".stash/cert.csv")
    (loop for i from 1994 to (time:timestamp-year (time::today))
     do (req:fetch 

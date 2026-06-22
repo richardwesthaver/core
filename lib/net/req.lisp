@@ -1519,7 +1519,7 @@ keep-alive-stream), and should handle clean-up of it"
                          :element-type '(unsigned-byte 8))
       (remf args :if-exists)
       (let ((body (apply #'req uri :want-stream t :force-binary t args)))
-        (copy-stream body out)
+        (copy-stream body out :element-type '(unsigned-byte 8))
         ;; Usually the body gets closed, but if keep-alive is nil we need to
         ;; explicitly do it.
         (when (open-stream-p body)

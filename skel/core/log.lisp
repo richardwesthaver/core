@@ -5,7 +5,8 @@
 ;;; Code:
 (in-package :skel/core)
 
-(defclass skel-log-schema (rdb-log-schema skel-schema) ())
+;; TODO 2026-06-22: project-log-schema
+(defclass skel-log-schema (rdb-log-schema) ())
 
 (defvar *skel-log-schema* (make-instance 'skel-log-schema))
 

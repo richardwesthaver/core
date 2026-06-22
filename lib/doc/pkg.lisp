@@ -97,6 +97,13 @@
    :summary :commentary
    :read-file-outline
    :+max-heading-level+ :+min-heading-level+
+   :make-file-header 
+   :make-shebang-file-header 
+   :make-source-file-header 
+   :file-header-kind
+   :file-header
+   :make-source-header-comment 
+   :make-shebang-comment
    :file-documentation
    :system-documentation
    ;; :image-documentation

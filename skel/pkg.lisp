@@ -65,29 +65,18 @@
    #:*skel-project-symbol-macros*
    #:*skel-project-macros*
    #:*default-clean-function*
-   ;; header
-   :make-file-header 
-   :make-shebang-file-header 
-   :make-source-file-header 
-   :file-header-kind
-   :file-header
-   :make-source-header-comment 
-   :make-shebang-comment
    ;; objects
    :sk-stash :sk-data :user
    :sk-push :sk-pull
    :edit-skelrc :skel
    :def-sk-class :skel-project
-   :sk-env
-   :sk-kind
-   :sk-command :scripts :project-script :skel-config
+   :sk-command :scripts :skel-config :skel-store
    :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*
-   :skel-store
    :print-skel-object
    :*skel-slot-exclusions*
    ;; schema
-   :sk-object-schema :skel-schema :*skel-registry-schema* :*skel-cache-schema*
+   :sk-object-schema :*skel-registry-schema* :*skel-cache-schema*
    ;; db
    :skel-db 
    :skel-db-path
