@@ -11,16 +11,11 @@
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var name%>
 :END:
-<%@var documentation%>
-<%@ifnotempty definitions%>
-<%@loop definitions%>
-<%=(doc:publish env)%>
-<%@endloop%>
-<%@endif%>
-<%@ifnotempty specs%>
-<%@loop specs%>
-<%=env%>
-<%@endloop%>
+
+<%@var documentation%><%@ifnotempty definitions%>
+:definitions:<%@loop definitions%>
+<%=(doc:publish env)%><%@endloop%>
+:end:
 <%@endif%>")
 
 #|
@@ -140,10 +135,15 @@
         (pushnew (cdr s) (cdr l) :test 'equalp)
         (push s ret)))))
 
+(deffmt fmt-definition-source "- ~A~@[:~D~]~@[ ~{/~A/~^ ~}~]")
+
 (defmethod publish ((self definition-source) &key)
-  (format nil "- ~A~@[~%  Line ~A~]~@[~%  ~A~]" 
-          (definition-source-pathname self) (definition-source-line-number self)
-          (sb-introspect::definition-source-description self)))
+  (with-output-to-string (s)
+    (fmt-definition-source 
+     s
+     (definition-source-pathname self) 
+     (definition-source-line-number self)
+     (flatten (sb-introspect::definition-source-description self)))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
@@ -161,16 +161,15 @@
 
 (defun symbol-documentation (s)
   "Return the documentation instance of S, a symbol."
-  (let ((class (classify-symbol s)))
-    (multiple-value-bind (specs defs) (find-definitions s)
-      (make-instance 'symbol-documentation
-        :id (make-v5-uuid +namespace-oid+ (symbol-name* s))
-        :symbol s
-        :class class
-        :definitions defs
-        :specs specs
-        :info (symbol-info s)
-        :alloc (multiple-value-list (allocation-information s))))))
+  (let ((class (classify-symbol s))
+        (defs (find-definitions s)))
+    (make-instance 'symbol-documentation
+      :id (make-v5-uuid +namespace-oid+ (symbol-name* s))
+      :symbol s
+      :class class
+      :definitions defs
+      :info (symbol-info s)
+      :alloc (multiple-value-list (allocation-information s)))))
 
 (defmethod print-object ((self symbol-documentation) stream)
   (with-slots (symbol class) self
@@ -185,27 +184,32 @@
     (mapcar #'definition-source-pathname (doc-definitions self)))))
 
 (defmethod describe-object ((self symbol-documentation) stream)
-  (with-slots (symbol id definitions specs alloc) self
+  (with-slots (symbol id definitions alloc) self
     ;; (print-standard-describe-header self stream)
     (describe symbol stream)
     (format stream "~%Id: ~S~%" id)
     (format stream "~%Alloc Info: ~S~%" alloc)
-    (format stream "~%Definitions: ~S~%" definitions)
-    (format stream "~%Specs: ~%")
-    (loop for s in specs
-          do (format stream "  ~S ~S~%" (definition-source-pathname s)
-                     (sb-introspect::definition-source-description s)))))
+    (format stream "~%Definitions: ~S~%" definitions)))
 
 (defmethod publish ((self symbol-documentation) &key output)
-  (with-slots (id definitions specs alloc) self
-    (let ((gen (execute-template (keywordicate (class-name (class-of self))) 
-                                 :env
-                                 `(:name ,(name self) :id ,id
-                                   :documentation ,(with-output-to-string (s) (describe-object (doc-object self) s))
-                                   :tags ,(symbol-tag-string self)
-                                   :definitions ,definitions
-                                   :alloc ,alloc
-                                   :specs ,specs))))
+  (with-slots (id definitions alloc) self
+    (let ((gen (execute-template 
+                (keywordicate (class-name (class-of self)))
+                :env
+                `(:name ,(name self) :id ,id
+                  :documentation ,(with-output-to-string (s) (describe-object (doc-object self) s))
+                  :tags ,(symbol-tag-string self)
+                  :definitions 
+                  ,(sort
+                    (remove-duplicates
+                     (remove-if (lambda (x) (not (definition-source-pathname x))) definitions)
+                     :test (lambda (x y) (and (pathname-equal (definition-source-pathname x)
+                                                              (definition-source-pathname y))
+                                              (equalp (sb-introspect::definition-source-description x)
+                                                      (sb-introspect::definition-source-description y)))))
+                    (lambda (x y) (< (length (string (car (flatten (sb-introspect::definition-source-description x)))))
+                                     (length (string (car (flatten (sb-introspect::definition-source-description y))))))))
+                  :alloc ,alloc))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)

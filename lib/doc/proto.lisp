@@ -84,12 +84,17 @@ to (SETF DOCUMENTATION).")
   "Return a pretty specifier for NAME representing a definition of type TYPE."
   (getf *definition-types* type))
 
+(defun find-definitions (name)
+  (loop for type in *definition-types* by #'cddr
+        for defsrcs = (sb-introspect:find-definition-sources-by-name name type)
+        nconc (loop for defsrc in defsrcs nconc (sb-introspect:find-definition-sources-by-name name type))))
+
 (defun make-dspec (type name source-location)
   (list* (definition-specifier type)
          name
          (sb-introspect::definition-source-description source-location)))
 
-(defun find-definitions (name)
+(defun find-definition-specs (name)
   "Iterate over all type definitions returning two lists as values: DSPECs and
 DEFINITION-SOURCEs."
   (let ((dspecs) (defs))

@@ -30,25 +30,25 @@
 :PROPERTIES:
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
-:END:
+:END:<%@ifnotempty description%>
 <%@var description%>
-<%@var info%>
-<%@ifnotempty external%>
-* External Symbols
-<%@loop external%>
+<%@endif%><%@if info%>
+#+call:lisp-package-dependencies(\"<%=env%>\")
 
-<%@endloop%>
-<%@endif%><%@ifnotempty internal%>
-* Internal Symbols
-<%@loop internal%>
-
-<%@endloop%>
+#+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty files%>
+* Files
+<%@loop files%>
+<%=(doc:publish env :output :string)%><%@endloop%>
+<%@endif%><%@ifnotempty symbols%>
+* Symbols
+<%@loop symbols%>
+*<%=(doc:publish env :output :string)%><%@endloop%>
 <%@endif%>")
 
 (defclass package-documentation (id)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
    (files :initform nil :initarg :files :accessor doc-files)
-   (symbols :initform #() :initarg :symbols :type (vector symbol-documentation) :accessor doc-symbols)))
+   (symbols :initform nil :initarg :symbols :accessor doc-symbols)))
 
 (defmethod name ((self package-documentation))
   (package-name (doc-object self)))
@@ -60,27 +60,25 @@
         (setf package *package*)
         (setf package (find-package package))))
   (let ((paths)
-        (symbols (make-array (package-external-symbol-count package)
-                             :element-type 'symbol-documentation
-                             :fill-pointer 0)))
+        (symbols))
     ;; TODO: we always want external symbols, we need XOR
     (case for
       (:internal (do-symbols* (s package)
                    (let ((doc (symbol-documentation s)))
                      (dolist (p (doc-files doc))
                        (pushnew p paths))
-                     (vector-push-extend doc symbols))))
+                     (push doc symbols))))
       (:external (do-external-symbols (s package)
                    (let ((doc (symbol-documentation s)))
                      (dolist (p (doc-files doc))
                        (pushnew p paths))
-                     (vector-push doc symbols))))
+                     (push doc symbols))))
       (t (loop for s being each present-symbol in package
                do (let ((doc (symbol-documentation s)))
                     (dolist (p (doc-files doc))
                       (unless (null p)
                         (pushnew p paths)))
-                    (vector-push doc symbols)))))
+                    (push doc symbols)))))
     (make-instance 'package-documentation
       :id (make-v5-uuid +namespace-oid+ (package-name package))
       :package package
@@ -111,7 +109,7 @@
     (format stream "~%Symbol Docs: ")
     (pprint-tabular
      stream 
-     (loop for s across symbols
+     (loop for s in symbols
            collect (doc-object s)))))
 
 (defmethod dependents ((self package-documentation))

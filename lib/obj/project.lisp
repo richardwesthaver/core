@@ -217,17 +217,16 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   (:documentation "Rules which support the command protocol."))
 
 (definline make-rule (&optional target source recipe (class *default-rule-class*))
-  (make-instance class
-    :target (typecase target 
-              (string target)
-              (symbol (string-downcase target)))
-    :source source
-    :ast
-    (multiple-value-bind (form _ doc) (parse-body recipe :documentation t)
-      ;; TODO 2025-02-25: figure out where to put the docstring -
-      ;; hash,compare,cache
-      (declare (ignore _ doc))
-      form)))
+  (multiple-value-bind (ast _ doc) (parse-body recipe :documentation t)
+    (declare (ignore _))
+    (let ((ret (make-instance class
+                 :target (typecase target 
+                           (string target)
+                           (symbol (string-downcase target)))
+                 :source source
+                 :ast ast)))
+      (setf (kernel-documentation ret) doc)
+      ret)))
 
 (defmethod make ((self project) &rest rules)
   (if rules

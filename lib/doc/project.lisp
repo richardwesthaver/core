@@ -41,24 +41,26 @@
 (defmethod publish ((self mod-component) &rest args)
   (apply 'publish (change-class self 'mod-documentation) args))
 
+(deffmt fmt-rule "- ~A~@[ (~{~A~^ ~})~]")
+
 (defclass project-documentation (document id)
   ((project :initarg :project :accessor doc-object :type project)
    ;; TODO 2026-06-20: component-documentation
-   (components :initarg :systems :accessor components :type (vector component-documentation))))
+   (components :initarg :components :accessor components)))
 
-(defun project-documentation (&optional (project *project*) systems)
+(defun project-documentation (&optional (project *project*) components)
   "Return the documentation instance of project S."
   (unless (typep project 'project) (setf project (find-project project)))
   (make-instance 'project-documentation
     :id (make-v5-uuid +namespace-oid+ (format nil "PROJECT:~A" (name project)))
     :project project
-    :systems systems))
+    :components components))
 
 (defmethod print-object ((self project-documentation) stream)
   (print-unreadable-object (self stream :type t)
     (let ((proj (slot-value self 'project)))
       (format stream "~A ~A" (name proj) (version proj)))))
-    
+
 (defmethod dependents ((self project-documentation))
   (mapcar #'system-documentation (find-system-dependents (doc-object self))))
 
@@ -79,28 +81,28 @@
   (path (doc-object self)))
 
 (defmethod publish ((self project-documentation) &key output info)
-  (with-slots (project systems) self
+  (with-slots (project components) self
     (let* ((file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
            (email (when (consp #1#) (cdr #1#)))
            (gen (execute-template (keywordicate (class-name (class-of self)))
-                                 :env
-                                 `(:name ,(name self) :id ,(id self)
-                                   :location ,(enough-namestring (path self))
-                                   :summary ,(file-summary file)
-                                   :info ,info
-                                   :commentary ,(file-commentary file)
-                                   :description ,(description self)
-                                   :file-description ,(file-description file)
-                                   :components ,(coerce (components self) 'list)
-                                   :version ,(version self)
-                                   :provide ,(module-provide self)
-                                   :rules ,(coerce (rules self) 'list)
-                                   :author ,author
-                                   :email ,email
-                                   ;; :require ,(module-require self)
-                                   ;; :tags ,(file-tag-string self)
-                                   :systems ,systems))))
+                                  :env
+                                  `(:name ,(name self) :id ,(id self)
+                                    :location ,(enough-namestring (path self))
+                                    :summary ,(file-summary file)
+                                    :info ,info
+                                    :commentary ,(file-commentary file)
+                                    :description ,(description self)
+                                    :file-description ,(file-description file)
+                                    :components ,(coerce (components self) 'list)
+                                    :version ,(version self)
+                                    :provide ,(module-provide self)
+                                    :rules ,(coerce (rules self) 'list)
+                                    :author ,author
+                                    :email ,email
+                                    ;; :require ,(module-require self)
+                                    ;; :tags ,(file-tag-string self)
+                                    :components ,components))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
