@@ -11,9 +11,15 @@
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var name%>
 :END:
+<%@var documentation%>
 <%@ifnotempty definitions%>
 <%@loop definitions%>
-
+<%=(doc:publish env)%>
+<%@endloop%>
+<%@endif%>
+<%@ifnotempty specs%>
+<%@loop specs%>
+<%=env%>
 <%@endloop%>
 <%@endif%>")
 
@@ -134,6 +140,11 @@
         (pushnew (cdr s) (cdr l) :test 'equalp)
         (push s ret)))))
 
+(defmethod publish ((self definition-source) &key)
+  (format nil "- ~A~@[~%  Line ~A~]~@[~%  ~A~]" 
+          (definition-source-pathname self) (definition-source-line-number self)
+          (sb-introspect::definition-source-description self)))
+
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
    (class :initarg :class :type list :accessor doc-class)
@@ -151,7 +162,7 @@
 (defun symbol-documentation (s)
   "Return the documentation instance of S, a symbol."
   (let ((class (classify-symbol s)))
-    (multiple-value-bind (defs specs) (find-definitions s)
+    (multiple-value-bind (specs defs) (find-definitions s)
       (make-instance 'symbol-documentation
         :id (make-v5-uuid +namespace-oid+ (symbol-name* s))
         :symbol s
@@ -171,7 +182,7 @@
   ;; definition.
   (flatten
    (remove-duplicates
-    (mapcar #'definition-source-pathname (doc-specs self)))))
+    (mapcar #'definition-source-pathname (doc-definitions self)))))
 
 (defmethod describe-object ((self symbol-documentation) stream)
   (with-slots (symbol id definitions specs alloc) self
@@ -190,6 +201,7 @@
     (let ((gen (execute-template (keywordicate (class-name (class-of self))) 
                                  :env
                                  `(:name ,(name self) :id ,id
+                                   :documentation ,(with-output-to-string (s) (describe-object (doc-object self) s))
                                    :tags ,(symbol-tag-string self)
                                    :definitions ,definitions
                                    :alloc ,alloc
@@ -198,4 +210,3 @@
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
         (t (print gen output))))))
-         

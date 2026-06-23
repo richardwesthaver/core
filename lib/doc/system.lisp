@@ -21,28 +21,21 @@
 <%@endif%><%@ifnotempty version%>:VERSION: <%@var version%>
 <%@endif%>:LOCATION: <%@var location%>
 :END:
-<%@var description%>
-<%@if info%>
+<%@var description%><%@if info%>
 #+BEGIN: lisp-system-info :system <%@var name%> :level 1
 #+END:
 <%@endif%><%@if commentary%>
 <%@var commentary%>
-<%@endif%><%@ifnotempty packages%>
+<%@endif%>
+<%@ifnotempty packages%>
 ** Packages
-<%@loop packages%>
-
-<%@endloop%>
-<%@endif%><%@ifnotempty components%>
+<%@loop packages%>**<%=(doc:publish env :output :string)%>
+<%@endloop%><%@endif%><%@ifnotempty components%>
 ** Components
-<%@loop components%>
-
-<%@endloop%>
-<%@endif%><%@ifnotempty provide%>
-** Provides
-<%@loop provide%>
-
-<%@endloop%>
-<%@endif%>")
+<%@loop components%>**<%=(doc:publish env :output :string)%>
+<%@endloop%><%@endif%><%@ifnotempty provide%>** Modules
+<%@loop provide%>**
+<%@endloop%><%@endif%>")
 
 (defclass system-documentation (document id)
   ((system :initarg :system :accessor doc-object :type system)

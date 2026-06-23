@@ -29,20 +29,22 @@
 <@var commentary%>
 <%@endif%><%@ifnotempty components%>
 * Components
-<%@loop components%>
-
-<%@endloop%>
-<%@endif%><%@ifnotempty rules%>
+<%@loop components%><%=env%><%@endloop%><%@endif%><%@ifnotempty rules%>
 * Rules
-<%@loop rules%>
+<%@loop rules%><%=env%><%@endloop%><%@endif%>")
 
-<%@endloop%>
-<%@endif%>")
+(defclass component-documentation (id component) ())
+
+(defmethod publish ((self file-component) &rest args)
+  (apply 'publish (change-class self 'file-documentation) args))
+
+(defmethod publish ((self mod-component) &rest args)
+  (apply 'publish (change-class self 'mod-documentation) args))
 
 (defclass project-documentation (document id)
   ((project :initarg :project :accessor doc-object :type project)
    ;; TODO 2026-06-20: component-documentation
-   (systems :initarg :systems :accessor doc-systems :type (vector system-documentation))))
+   (components :initarg :systems :accessor components :type (vector component-documentation))))
 
 (defun project-documentation (&optional (project *project*) systems)
   "Return the documentation instance of project S."
@@ -68,7 +70,6 @@
 (defaccessor version ((self project-documentation)) (version (doc-object self)))
 (defaccessor description ((self project-documentation)) (description (doc-object self)))
 (defaccessor links ((self project-documentation)) (links (doc-object self)))
-(defaccessor components ((self project-documentation)) (components (doc-object self)))
 (defaccessor module-provide ((self project-documentation)) (slot-boundp (doc-object self) 'provide))
 (defaccessor module-require ((self project-documentation)) (module-require (doc-object self)))
 (defaccessor rules ((self project-documentation)) (rules (doc-object self)))

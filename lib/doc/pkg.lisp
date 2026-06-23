@@ -118,7 +118,6 @@
    :doc-object
    :doc-packages
    :doc-systems
-   :doc-components
    :print-doc
    :print-documentation
    :asdf-system-documentation

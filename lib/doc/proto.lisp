@@ -78,7 +78,7 @@ to (SETF DOCUMENTATION).")
   (:documentation "Return the commentary of SELF."))
 
 ;;; Utils
-(deffmt fmt-tags "~@[:~{~A~^:~}~:]" "Format a list of tags as an org tag string, delimited by ':'.")
+(deffmt fmt-tags "~@[:~{~A~^:~}:~]" "Format a list of tags as an org tag string, delimited by ':'.")
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."
@@ -116,7 +116,5 @@ CHAR-COUNT."
 
 (defun definition-source-line-number (def)
   (let ((pathname (sb-introspect:definition-source-pathname def)))
-    (if-let ((count (sb-introspect:definition-source-character-offset def)))
-      (count-lines-up-to-character pathname count)
-      0)))
-    
+    (when-let ((count (sb-introspect:definition-source-character-offset def)))
+      (count-lines-up-to-character pathname count))))

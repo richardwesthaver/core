@@ -109,23 +109,29 @@
 :PROPERTIES:
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
-:END:
-<%@var description%>
-<%@var info%>
-<%@if commentary%>
+:END:<%@if description%>
+~<%@var description%>~
+<%@endif%><%@if commentary%>
 <%@var commentary%>
-<%@endif%><%@if outline%>
-<%@var outline%>
+<%@endif%><%@ifnotempty outline%>
+:outline:
+<%@loop outline%><%=(doc:publish env)%>
+<%@endloop%>:end:
 <%@endif%>")
 
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)
 
 (defclass file-heading ()
-  ((name :initarg :name :type string)
-   (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+))
-   (description :initarg :description :type string))
+  ((name :initarg :name :type string :accessor name)
+   (level :initform 0 :initarg :level :type (integer 0 #.+max-file-heading-level+) :accessor level)
+   (description :initarg :description :accessor description :initform nil))
   (:documentation "A generic file heading according to Emacs outline-mode."))
+
+(defmethod publish ((self file-heading) &key)
+  (format nil "~A- ~A~@[~%~2:*  ~A~]" 
+          (make-string (- (level self) 3) :initial-element #\space)
+          (name self) (unless (sequence:emptyp (description self)) (description self))))
 
 (defun heading-line-p (string)
   (uiop:string-prefix-p #.(make-string +min-file-heading-level+ :initial-element #\;) string))
@@ -261,6 +267,13 @@ after the code start header (see CODE-START-P)."
 ;; (read-file-outline "proto.lisp")
 ;; (defmacro define-file-heading (type slots))
 
+(defclass mod-documentation (document ast) ())
+
+(defmethod change-class ((self mod-component) (new (eql 'mod-documentation)) &key &allow-other-keys)
+  (make-instance 'mod-documentation 
+    :ast (mapcar (lambda (x) (change-class x 'file-documentation))
+                 (expand-component-paths self))))
+
 (defclass file-documentation (file-component id)
   ((path :initarg :path :type pathname :accessor path)
    (header :initarg :header :type file-header)
@@ -280,7 +293,8 @@ after the code start header (see CODE-START-P)."
 ;;     (format stream "~A" (path self))))
 
 (defmethod change-class ((self file-component) (new (eql 'file-documentation)) &key &allow-other-keys)
-  (make-instance new :header (read-file-header (path self) nil)))
+  (when-let ((path (slot-boundp! self 'path)))
+    (file-documentation path)))
 
 (defun file-documentation (path)
   "Return the FILE-DOCUMENTATION for PATH."
@@ -314,7 +328,7 @@ after the code start header (see CODE-START-P)."
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
-                                   :location ,(path self)
+                                   :location ,(enough-namestring (path self))
                                    :description ,(file-description self)
                                    :summary ,(file-summary self)
                                    :commentary ,(file-commentary self)
@@ -324,6 +338,10 @@ after the code start header (see CODE-START-P)."
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
         (t (write-string gen output))))))
+
+(defmethod publish ((self mod-documentation) &rest args)
+  (loop for c in (ast self)
+        do (apply 'publish c args)))
 
 ;; TODO 2026-06-21: (defmethod publish ((self file-heading) &key))
 

@@ -242,7 +242,6 @@ ending with the target component name."
                      (push c parents)))
               finally (return c)))))
 
-#+nil
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
 absolute pathnames. Shouldn't be needed if all system components exist when
@@ -540,6 +539,8 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
 
 (defsetf find-module (name &optional kind key append) (val)
   `(set-module ,name ,val ,kind ,key ,append))
+
+;;  TODO 2026-06-22: (defmacro do-modules (var supermod))
 
 (defun init-module (mod)
   "Initialize module MOD, loading all implementation hooks."

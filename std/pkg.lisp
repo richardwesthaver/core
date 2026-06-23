@@ -1514,6 +1514,7 @@
    :defprovider
    :defcomponent
    :find-system-dependents
+   :expand-component-paths
    :load-sys
    :compile-sys
    :system
