@@ -105,11 +105,11 @@
 (in-package :doc)
 
 (deftempo :file-documentation
-  "* <%@var name%>
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
-:END:<%@if description%>
+:END:<%@ifnotempty description%>
 ~<%@var description%>~
 <%@endif%><%@if commentary%>
 <%@var commentary%>
@@ -154,7 +154,13 @@ stripped. Note that this level is NOT the same as the heading level."
   (multiple-value-bind (name level) (read-comment-line stream)
     (make-instance 'file-heading :name name :level level :description "")))
 
-(defun decomment (s) (string-left-trim "; " s))
+(defun decomment (s) 
+  "In addition to left-trimming comments and whitespace, we insert a comma (#\')
+when the first character may be misinterpreted as the start of an org heading."
+  (let ((ret (string-left-trim "; " s)))
+    (if (and (positive-integer-p (length ret)) (char= #\* (schar ret 0)))
+        (concatenate 'string "," ret)
+        ret)))
 
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)
@@ -323,7 +329,7 @@ after the code start header (see CODE-START-P)."
 (defmethod summary ((self file-documentation)) (file-summary self))
 (defmethod commentary ((self file-documentation)) (file-commentary self))
 
-(defmethod publish ((self file-documentation) &key output)
+(defmethod publish ((self file-documentation) &key output level)
   (with-slots (id name outline) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
@@ -332,6 +338,7 @@ after the code start header (see CODE-START-P)."
                                    :description ,(file-description self)
                                    :summary ,(file-summary self)
                                    :commentary ,(file-commentary self)
+                                   ,@(when level `(:level ,level))
                                    ;; :tags ,(file-tag-string self)
                                    :outline ,outline))))
       (case output

@@ -6,17 +6,16 @@
 (in-package :doc)
 
 (deftempo :symbol-documentation
-  "* <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var name%>
-:END:
-
-<%@var documentation%><%@ifnotempty definitions%>
-:definitions:<%@loop definitions%>
-<%=(doc:publish env)%><%@endloop%>
-:end:
-<%@endif%>")
+:END:<%@ifnotempty documentation%>
+<%@var documentation%>
+<%@endif%><%@ifnotempty definitions%>
+:definitions:
+<%@loop definitions%><%=(doc:publish env)%>
+<%@endloop%>:end:<%@endif%>")
 
 #|
 (Public)
@@ -191,7 +190,7 @@
     (format stream "~%Alloc Info: ~S~%" alloc)
     (format stream "~%Definitions: ~S~%" definitions)))
 
-(defmethod publish ((self symbol-documentation) &key output)
+(defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 
                 (keywordicate (class-name (class-of self)))
@@ -199,6 +198,7 @@
                 `(:name ,(name self) :id ,id
                   :documentation ,(with-output-to-string (s) (describe-object (doc-object self) s))
                   :tags ,(symbol-tag-string self)
+                  ,@(when level `(:level ,level))
                   :definitions 
                   ,(sort
                     (remove-duplicates

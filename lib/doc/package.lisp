@@ -26,7 +26,7 @@
 (in-package :doc)
 
 (deftempo :package-documentation
-  "* <%@var name%>
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
@@ -34,16 +34,13 @@
 <%@var description%>
 <%@endif%><%@if info%>
 #+call:lisp-package-dependencies(\"<%=env%>\")
-
 #+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty files%>
-* Files
-<%@loop files%>
-<%=(doc:publish env :output :string)%><%@endloop%>
-<%@endif%><%@ifnotempty symbols%>
-* Symbols
+<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Files
+<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%>
+<%@endloop%><%@endif%><%@ifnotempty symbols%>
+<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Symbols
 <%@loop symbols%>
-*<%=(doc:publish env :output :string)%><%@endloop%>
-<%@endif%>")
+<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
 
 (defclass package-documentation (id)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
@@ -127,13 +124,14 @@
 
 ;; (package-documentation)
 
-(defmethod publish ((self package-documentation) &key output)
+(defmethod publish ((self package-documentation) &key output level)
   (with-slots (id files symbols) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
                                    ;; :tags ,(package-tag-string self)
                                    :files ,files
+                                   ,@(when level `(:level ,level))
                                    :symbols ,symbols))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))

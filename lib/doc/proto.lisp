@@ -17,7 +17,6 @@
 ;;; Vars
 (defvar *document-class* 'org-document)
 (defvar *default-document-keyword* :document)
-
 (defparameter *definition-types*
   '(:variable defvar
     :constant defconstant

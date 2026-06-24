@@ -2,12 +2,6 @@
 
 ;; Standard library system definition
 
-;;; Commentary:
-
-;; Note that this file should ONLY be loaded after the STD/DEFSYS package has
-;; been defined. To load the STD system on a fresh SBCL, load it from the ASD
-;; file.
-
 ;;; Code:
 (defsys :std
  "CC Standard Library"

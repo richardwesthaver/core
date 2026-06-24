@@ -27,11 +27,13 @@
 <%@var readme%>
 <%@endif%><%@if commentary%>
 <@var commentary%>
+<%@endif%><%@ifnotempty rules%>
+:rules:
+<%@loop rules%><%=(doc:publish env)%>
+<%@endloop%>:end:
 <%@endif%><%@ifnotempty components%>
 * Components
-<%@loop components%><%=env%><%@endloop%><%@endif%><%@ifnotempty rules%>
-* Rules
-<%@loop rules%><%=env%><%@endloop%><%@endif%>")
+<%@loop components%><%=env%><%@endloop%><%@endif%>")
 
 (defclass component-documentation (id component) ())
 
@@ -41,7 +43,11 @@
 (defmethod publish ((self mod-component) &rest args)
   (apply 'publish (change-class self 'mod-documentation) args))
 
-(deffmt fmt-rule "- ~A~@[ (~{~A~^ ~})~]")
+(deffmt fmt-rule "- ~A~@[ (~{~(~A~)~^ ~})~]~@[ \\\\~%~A~]")
+
+(defmethod publish ((self simple-rule) &key)
+  (with-output-to-string (s)
+    (fmt-rule s (rule-target self) (source self) (kernel-documentation self))))
 
 (defclass project-documentation (document id)
   ((project :initarg :project :accessor doc-object :type project)

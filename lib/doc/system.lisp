@@ -14,27 +14,27 @@
 (in-package :doc)
 
 (deftempo :system-documentation
-  "* <%@var name%>
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
 <%@ifnotempty summary%>:SUMMARY: <%@var summary%>
 <%@endif%><%@ifnotempty file-description%>:DESCRIPTION: <%@var file-description%>
 <%@endif%><%@ifnotempty version%>:VERSION: <%@var version%>
 <%@endif%>:LOCATION: <%@var location%>
-:END:
-<%@var description%><%@if info%>
-#+BEGIN: lisp-system-info :system <%@var name%> :level 1
+:END:<%@ifnotempty description%>
+<%@var description%>
+<%@endif%><%@if info%>
+#+BEGIN: lisp-system-info :system <%@var name%> :files nil :packages nil :symbols nil
 #+END:
-<%@endif%><%@if commentary%>
+<%@endif%><%@ifnotempty commentary%>
 <%@var commentary%>
-<%@endif%>
-<%@ifnotempty packages%>
-** Packages
-<%@loop packages%>**<%=(doc:publish env :output :string)%>
+<%@endif%><%@ifnotempty packages%>
+<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Packages
+<%@loop packages%><%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%><%@ifnotempty components%>
-** Components
-<%@loop components%>**<%=(doc:publish env :output :string)%>
+<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Components
+<%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 2)%>
 <%@endloop%><%@endif%><%@ifnotempty provide%>** Modules
-<%@loop provide%>**
+<%@loop provide%>- todo
 <%@endloop%><%@endif%>")
 
 (defclass system-documentation (document id)
