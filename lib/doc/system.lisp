@@ -89,7 +89,7 @@
                        (when s (path s)))))
     (mapcar #'%rec (components self))))
 
-(defmethod publish ((self system-documentation) &key output info)
+(defmethod publish ((self system-documentation) &key output info level)
   (with-slots (id name packages) self
     (let* ((file (file-documentation (path self)))
            (gen (execute-template (keywordicate (class-name (class-of self)))
@@ -97,6 +97,7 @@
                                  `(:name ,(name self) :id ,id
                                    :location ,(enough-namestring (path self))
                                    :summary ,(file-summary file)
+                                   :level ,level
                                    :info ,info
                                    :commentary ,(file-commentary file)
                                    :description ,(description self)

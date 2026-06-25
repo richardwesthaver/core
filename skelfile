@@ -206,7 +206,13 @@
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
  (docs ()
-  (:build ()))
+  (:build ()
+   (with-output-to-file (f "api.org" :if-exists :supersede) 
+    (publish (project-documentation *project* 
+              (remove-if 
+               (lambda (x) (or (typep x 'test-system) (search "IRONCLAD" (string (name x))))) 
+               (directory-systems))) 
+     :output f :info t))))
  (deploy (dist dist-repo)
   (move-file ".stash/core.zst" "/opt/store/packy/dist/x86_64/core.zst")
   (make *project* :dist-source)
