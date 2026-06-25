@@ -32,7 +32,7 @@
 <%@loop packages%><%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%><%@ifnotempty components%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Components
-<%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 2)%>
+<%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 2)%>
 <%@endloop%><%@endif%><%@ifnotempty provide%>** Modules
 <%@loop provide%>- todo
 <%@endloop%><%@endif%>")

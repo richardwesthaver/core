@@ -342,7 +342,7 @@
   (:export :ast 
    :load-ast
    :wrap :unwrap
-   :unwrap-or :form
+   :form
    :formp :unwrap-object
    :wrap-object :expr
    :literal-expr :unary-expr
@@ -352,7 +352,7 @@
    :defnode :defstmt
    :stmt :defexpr
    :traverse :op
-   :*ast-dispatch-table* :write-ast
+   :write-ast
    :read-ast :with-ast :call-with-ast :invalid-ast
    :debug-traverser :copy-traverser
    :*keep-ast* :syntax-error

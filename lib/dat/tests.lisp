@@ -1,3 +1,8 @@
+;;; tests.lisp --- Dat Tests
+
+;;
+
+;;; Code:
 (defpackage :dat/tests
   (:use :cl :std :rt :dat :log :ast :color)
   (:export))

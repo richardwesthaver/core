@@ -34,10 +34,7 @@
 <%@var description%>
 <%@endif%><%@if info%>
 #+call:lisp-package-dependencies(\"<%=env%>\")
-#+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty files%>
-<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Files
-<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%>
-<%@endloop%><%@endif%><%@ifnotempty symbols%>
+#+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Symbols
 <%@loop symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
@@ -92,17 +89,14 @@
       :symbols symbols)))
 
 (defmethod print-object ((self package-documentation) stream)
-  (with-slots (package files symbols) self
+  (with-slots (package symbols) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~A :symbols ~A :files ~A" (package-name package) (length symbols) (length files)))))
+      (format stream "~A :symbols ~A" (package-name package) (length symbols)))))
 
 (defmethod describe-object ((self package-documentation) stream)
-  (with-slots (package files symbols) self
+  (with-slots (package symbols) self
     (print-standard-describe-header self stream)
     (describe package stream)
-    (format stream "~%Files: ~S"
-            (loop for f in files
-                  collect (path f)))
     (format stream "~%Symbol Docs: ")
     (pprint-tabular
      stream 
@@ -125,12 +119,11 @@
 ;; (package-documentation)
 
 (defmethod publish ((self package-documentation) &key output level)
-  (with-slots (id files symbols) self
+  (with-slots (id symbols) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
                                    ;; :tags ,(package-tag-string self)
-                                   :files ,files
                                    ,@(when level `(:level ,level))
                                    :symbols ,symbols))))
       (case output

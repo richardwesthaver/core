@@ -110,7 +110,7 @@
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
 :END:<%@ifnotempty description%>
-~<%@var description%>~
+<%@var description%>
 <%@endif%><%@if commentary%>
 <%@var commentary%>
 <%@endif%><%@ifnotempty outline%>
@@ -118,6 +118,15 @@
 <%@loop outline%><%=(doc:publish env)%>
 <%@endloop%>:end:
 <%@endif%>")
+
+(deftempo :mod-documentation
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
+:PROPERTIES:
+:SUMMARY: <%@var summary%>
+:LOCATION: <%@var location%>
+:END:<%@ifnotempty files%>
+<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 3)%>
+<%@endloop%><%@endif%>")
 
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)
@@ -273,18 +282,20 @@ after the code start header (see CODE-START-P)."
 ;; (read-file-outline "proto.lisp")
 ;; (defmacro define-file-heading (type slots))
 
-(defclass mod-documentation (document ast) ())
+(defclass mod-documentation (document mod-component) ())
 
 (defmethod change-class ((self mod-component) (new (eql 'mod-documentation)) &key &allow-other-keys)
-  (make-instance 'mod-documentation 
+  (make-instance 'mod-documentation
+    :path (path self)
+    :name (name self)
     :ast (mapcar (lambda (x) (change-class x 'file-documentation))
                  (expand-component-paths self))))
 
 (defclass file-documentation (file-component id)
   ((path :initarg :path :type pathname :accessor path)
-   (header :initarg :header :type file-header)
-   (outline :initarg :outline :type sequence)
-   (links :initarg :links :type sequence))
+   (header :initform nil :initarg :header :type file-header)
+   (outline :initform nil :initarg :outline :type sequence)
+   (links :initform nil :initarg :links :type sequence))
   (:documentation "An object containing the header, outline, and relevant
   links in a source file. Note that this object only contains inline
   comments. Symbol documentation such as this one will not be captured in
@@ -346,11 +357,21 @@ after the code start header (see CODE-START-P)."
         (:string gen)
         (t (write-string gen output))))))
 
-(defmethod publish ((self mod-documentation) &rest args)
-  (loop for c in (ast self)
-        do (apply 'publish c args)))
+(defmethod publish ((self mod-documentation) &key output level)
+  (with-slots (ast path) self
+    (let ((gen (execute-template (keywordicate (class-name (class-of self)))
+                                 :env
+                                 `(:location ,(enough-namestring (path self))
+                                   ,@(when level `(:level ,level))
+                                   :name ,(lastcar (pathname-directory (path self)))
+                                   :files ,ast))))
+      (case output
+        ('nil (values (org-parse (document-keyword self) gen) gen))
+        (:string gen)
+        (t (write-string gen output))))))
 
-;; TODO 2026-06-21: (defmethod publish ((self file-heading) &key))
+(defmethod publish ((self mod-component) &rest args)
+  (apply 'publish (change-class self 'mod-documentation) args))
 
 ;;; File Headers
 (deftype file-header-kind () '(member :source :shebang))

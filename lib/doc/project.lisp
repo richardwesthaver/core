@@ -31,9 +31,9 @@
 :rules:
 <%@loop rules%><%=(doc:publish env)%>
 <%@endloop%>:end:
-<%@endif%><%@ifnotempty components%>
-* Components
-<%@loop components%><%=env%><%@endloop%><%@endif%>")
+<%@endif%><%@ifnotempty systems%>
+* Systems<%@loop systems%>
+<%=(doc:publish env :output :string :level 2)%><%@endloop%><%@endif%>")
 
 (defclass component-documentation (id component) ())
 
@@ -50,17 +50,15 @@
     (fmt-rule s (rule-target self) (source self) (kernel-documentation self))))
 
 (defclass project-documentation (document id)
-  ((project :initarg :project :accessor doc-object :type project)
-   ;; TODO 2026-06-20: component-documentation
-   (components :initarg :components :accessor components)))
+  ((project :initarg :project :accessor doc-object :type project)))
 
-(defun project-documentation (&optional (project *project*) components)
+(defun project-documentation (&optional (project *project*) systems)
   "Return the documentation instance of project S."
   (unless (typep project 'project) (setf project (find-project project)))
   (make-instance 'project-documentation
     :id (make-v5-uuid +namespace-oid+ (format nil "PROJECT:~A" (name project)))
     :project project
-    :components components))
+    :ast (or systems (directory-systems (path project)))))
 
 (defmethod print-object ((self project-documentation) stream)
   (print-unreadable-object (self stream :type t)
@@ -87,7 +85,7 @@
   (path (doc-object self)))
 
 (defmethod publish ((self project-documentation) &key output info)
-  (with-slots (project components) self
+  (with-slots (project ast) self
     (let* ((file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
            (email (when (consp #1#) (cdr #1#)))
@@ -100,7 +98,7 @@
                                     :commentary ,(file-commentary file)
                                     :description ,(description self)
                                     :file-description ,(file-description file)
-                                    :components ,(coerce (components self) 'list)
+                                    ;; :components ,(coerce (components self) 'list)
                                     :version ,(version self)
                                     :provide ,(module-provide self)
                                     :rules ,(coerce (rules self) 'list)
@@ -108,7 +106,7 @@
                                     :email ,email
                                     ;; :require ,(module-require self)
                                     ;; :tags ,(file-tag-string self)
-                                    :components ,components))))
+                                    :systems ,ast))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
