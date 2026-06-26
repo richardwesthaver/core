@@ -125,7 +125,7 @@
 :SUMMARY: <%@var summary%>
 :LOCATION: <%@var location%>
 :END:<%@ifnotempty files%>
-<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 3)%>
+<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%>")
 
 (defconstant +max-file-heading-level+ 8)
@@ -288,8 +288,8 @@ after the code start header (see CODE-START-P)."
   (make-instance 'mod-documentation
     :path (path self)
     :name (name self)
-    :ast (mapcar (lambda (x) (change-class x 'file-documentation))
-                 (expand-component-paths self))))
+    :ast (mapcan (lambda (x) (and (typep x 'file-component) (list (change-class x 'file-documentation))))
+                 (components self))))
 
 (defclass file-documentation (file-component id)
   ((path :initarg :path :type pathname :accessor path)

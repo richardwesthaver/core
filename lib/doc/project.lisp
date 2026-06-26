@@ -58,7 +58,8 @@
   (make-instance 'project-documentation
     :id (make-v5-uuid +namespace-oid+ (format nil "PROJECT:~A" (name project)))
     :project project
-    :ast (or systems (directory-systems (path project)))))
+    :ast (mapcar (lambda (x) (change-class x 'system-documentation))
+                 (or systems (directory-systems (path project))))))
 
 (defmethod print-object ((self project-documentation) stream)
   (print-unreadable-object (self stream :type t)
@@ -92,7 +93,7 @@
            (gen (execute-template (keywordicate (class-name (class-of self)))
                                   :env
                                   `(:name ,(name self) :id ,(id self)
-                                    :location ,(enough-namestring (path self))
+                                    :location ,(namestring (project-root self))
                                     :summary ,(file-summary file)
                                     :info ,info
                                     :commentary ,(file-commentary file)
@@ -110,4 +111,7 @@
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
-        (t (write-string gen output))))))
+        (t 
+         (if (pathnamep output)
+             (with-output-to-file (f output) (write-string gen f))
+             (write-string gen output)))))))

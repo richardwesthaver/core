@@ -15,7 +15,8 @@
 <%@endif%><%@ifnotempty definitions%>
 :definitions:
 <%@loop definitions%><%=(doc:publish env)%>
-<%@endloop%>:end:<%@endif%>")
+<%@endloop%>:end:
+<%@endif%>")
 
 #|
 (Public)
@@ -134,7 +135,7 @@
         (pushnew (cdr s) (cdr l) :test 'equalp)
         (push s ret)))))
 
-(deffmt fmt-definition-source "- ~A~@[:~D~]~@[ ~{/~A/~^ ~}~]")
+(deffmt fmt-definition-source "- ~A~@[:~A~]~@[ ~(~A~)~]")
 
 (defmethod publish ((self definition-source) &key)
   (with-output-to-string (s)
@@ -142,7 +143,7 @@
      s
      (definition-source-pathname self) 
      (definition-source-line-number self)
-     (flatten (sb-introspect::definition-source-description self)))))
+     (sb-introspect::definition-source-description self))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
@@ -196,7 +197,7 @@
                 (keywordicate (class-name (class-of self)))
                 :env
                 `(:name ,(name self) :id ,id
-                  :documentation ,(with-output-to-string (s) (describe-object (doc-object self) s))
+                  :documentation ,(ignore-errors (with-output-to-string (s) (describe-object (doc-object self) s)))
                   :tags ,(symbol-tag-string self)
                   ,@(when level `(:level ,level))
                   :definitions 

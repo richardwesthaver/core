@@ -7,8 +7,9 @@
 ;; This module provides the SYSTEM-DOCUMENTATION class which wraps a
 ;; STD:SYSTEM and provides a basic documentation-focused API.
 
-;; SYSTEM-DOCUMENTATION is the most high-level documentation class provided
-;; and is intended to be encoded into a tree of ORG-DOCUMENT objects.
+;; SYSTEM-DOCUMENTATION is the most high-level 'LISP EXCLUSIVE' documentation
+;; class provided - the PROJECT-DOCUMENTATION class follows, being designed
+;; for projects of any type.
 
 ;;; Code:
 (in-package :doc)
@@ -29,11 +30,11 @@
 <%@var commentary%>
 <%@endif%><%@ifnotempty packages%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Packages
-<%@loop packages%><%=(doc:publish env :output :string :level 3)%>
+<%@loop packages%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%><%@ifnotempty components%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Components
-<%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 2)%>
-<%@endloop%><%@endif%><%@ifnotempty provide%>** Modules
+<%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 3)%>
+<%@endloop%><%@endif%><%@ifnotempty provide%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Modules
 <%@loop provide%>- todo
 <%@endloop%><%@endif%>")
 
@@ -46,12 +47,12 @@
     (let ((sys (slot-value self 'system)))
       (format stream "~A ~A" (name sys) (version sys)))))
 
-(defaccessor description ((self system-documentation)) (description (doc-object self)))
-(defaccessor name ((self system-documentation)) (name (doc-object self)))
-(defaccessor version ((self system-documentation)) (version (doc-object self)))
-(defaccessor components ((self system-documentation)) (components (doc-object self)))
-(defaccessor module-provide ((self system-documentation)) (module-provide (doc-object self)))
-(defaccessor module-require ((self system-documentation)) (module-require (doc-object self)))
+(defmethod description ((self system-documentation)) (description (doc-object self)))
+(defmethod name ((self system-documentation)) (name (doc-object self)))
+(defmethod version ((self system-documentation)) (version (doc-object self)))
+(defmethod components ((self system-documentation)) (components (doc-object self)))
+(defmethod module-provide ((self system-documentation)) (module-provide (doc-object self)))
+(defmethod module-require ((self system-documentation)) (module-require (doc-object self)))
 (defmethod path ((self system-documentation)) (path (doc-object self)))
 
 (defun system-documentation (sys &optional packages) 
@@ -63,8 +64,11 @@
                   (collecting
                     (mapc (lambda (x) (when (string-prefix-p (name sys) (package-name x))
                                         (ignore-errors
-                                         (collect (package-documentation x)))))
+                                         (collect (package-documentation x :external)))))
                           (list-all-packages))))))
+
+(defmethod change-class ((self system) (new (eql 'system-documentation)) &key packages)
+  (system-documentation self packages))
 
 (defmethod dependents ((self system-documentation))
   (mapcar #'system-documentation (find-system-dependents (doc-object self))))

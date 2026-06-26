@@ -35,7 +35,6 @@
 <%@endif%><%@if info%>
 #+call:lisp-package-dependencies(\"<%=env%>\")
 #+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty symbols%>
-<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Symbols
 <%@loop symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
 
@@ -125,8 +124,11 @@
                                  `(:name ,(name self) :id ,id
                                    ;; :tags ,(package-tag-string self)
                                    ,@(when level `(:level ,level))
-                                   :symbols ,symbols))))
+                                   :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) symbols)))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
-        (t (write-string gen output))))))
+        (t (if (pathnamep output)
+               (with-output-to-file (f output)
+                 (write-string gen f))
+               (write-string gen output)))))))

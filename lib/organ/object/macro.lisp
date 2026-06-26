@@ -1,8 +1,6 @@
 ;;; lib/organ/object/macro.lisp --- Org Macro Object
 
-;; Macros come in the following patterns:
-
-;; {{{NAME}}} or {{{NAME(ARGUMENTS)}}}
+;; See [[https://orgmode.org/manual/Macro-Replacement.html][Macro Replacement]]
 
 ;;; Code:
 (in-package :organ)

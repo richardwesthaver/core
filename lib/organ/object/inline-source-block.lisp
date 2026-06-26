@@ -1,6 +1,6 @@
 ;; Inline source blocks match the pattern:
 
-;; src_LANG{BODY} or src_LANG[HEADERS]{BODY}
+;; See [[https://orgmode.org/manual/Structure-of-Code-Blocks.html][Structure of Code Blocks]]
 
 ;;; Code:
 (in-package :organ)

@@ -242,6 +242,7 @@ ending with the target component name."
                      (push c parents)))
               finally (return c)))))
 
+#+nil
 (defun expand-component-paths (c)
   "Walk the components of C, expanding PATH slots along the way to
 absolute pathnames. Shouldn't be needed if all system components exist when
@@ -252,7 +253,6 @@ LOAD-SYS is called."
                (when (and (mod-component-p comp) (components comp))
                  (let ((*default-pathname-defaults* (path comp)))
                    (mapc #'%expand (components comp))))))
-      (declare (dynamic-extent (function %expand)))
       (mapc (the (function (component) (values)) #'%expand) (components c)))))
 
 (defun expand-component-requires (c)

@@ -1,6 +1,6 @@
 ;;; lib/organ/object/footnote-ref.lisp --- Org Footnote Reference Object
 
-;; Footnote references matches the following patterns:
+;; See [[https://orgmode.org/guide/Creating-Footnotes.html][Creating Footnotes]]
 
 #|
 [fn:LABEL]

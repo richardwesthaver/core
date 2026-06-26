@@ -654,7 +654,7 @@
    :*default-rule-class* :*project-hook* :rule-target :simple-interactive-rule
    :links :project-link :project-tag-p :list-all-projects
    :defproject :*project-env* :find-project :register-project
-   :project-paths :project-directories))
+   :project-paths :project-directories :project-root))
 
 (defpkg :obj/db
   (:nicknames :db)

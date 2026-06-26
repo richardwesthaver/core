@@ -19,7 +19,9 @@
 ;;; Code:
 (in-package :doc)
 
-(defvar *reprex-format*)
+(deftempo :reprex "")
+
+(deffmt fmt-reprex "")
 
 (defmacro reprex (&body body)
   "Produce a 'reproducible example' from the forms in BODY."

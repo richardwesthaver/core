@@ -1,20 +1,7 @@
 ;; This file covers citations and citation references.
 
-;; Citations match the following patterns:
+;; See [[https://www.gnu.org/software/emacs/manual/html_node/org/Citations.html][Citations]]
 
-#|
-[cite CITESTYLE: REFERENCES]
-[cite CITESTYLE: GLOBALPREFIX;REFERENCES]
-[cite CITESTYLE: REFERENCES;GLOBALSUFFIX]
-[cite CITESTYLE: GLOBALPREFIX;REFERENCES;GLOBALSUFFIX]
-|#
-
-;; Examples:
-
-#|
-[cite:@key]
-[cite/t: see;@source1;@source2;by Smith /et al./]
-|#
 ;; Citation references match the following patterns:
 
 ;; KEYPREFIX @KEY KEYSUFFIX
