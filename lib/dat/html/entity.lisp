@@ -1,4 +1,6 @@
-;;; Entities
+;;; html/entity.lisp --- HTML Entities
+
+;;; Code:
 (in-package :dat/html)
 (defun convert-to-trie (char-list value)
   (if (cdr char-list)

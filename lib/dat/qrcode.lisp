@@ -13,7 +13,7 @@
       (read-sequence content fp)
       content)))
 
-;;;; Galois Field with primitive element 2, as used by Reed-Solomon code
+;;; Galois Field with primitive element 2, as used by Reed-Solomon code
 (defclass galois ()
   ((power :initform nil :initarg :power :reader gf-power
           :documentation "Galois Field GF(2^POWER)")
@@ -398,22 +398,22 @@ interleaving if neccessary")
   (declare (ignore args))
   (validate-and-analysis input))
 
-;;; 0) Data analysis
+;; 0) Data analysis
 (defgeneric validate-and-analysis (input)
   (:documentation "adapt VERSION according to BYTES, and fill SEGMENTS slot"))
-;;; 1) Data encoding
+;; 1) Data encoding
 (defgeneric data-encoding (input)
   (:documentation "encode SEGMENTS into BSTREAM slot"))
-;;; 2) Error correction coding
+;; 2) Error correction coding
 (defgeneric ec-coding (input)
   (:documentation "split BSTREAM into BLOCKS, do rs-ecc, and fill ECC-BLOCKS"))
-;;; 3) Structure final message
+;; 3) Structure final message
 (defgeneric structure-message (input)
   (:documentation "interleaving BLOCKS and ECC-BLOCKS into MSG-CODEWORDS"))
-;;; 4) Codeword placement in matrix, a.k.a, raw QR code symbol
+;; 4) Codeword placement in matrix, a.k.a, raw QR code symbol
 (defgeneric module-placement (input)
   (:documentation "write MSG-CODEWORDS into the raw (without masking) MATRIX"))
-;;; 5) Data masking & Format information
+;; 5) Data masking & Format information
 (defgeneric data-masking (input)
   (:documentation "mask MATRIX with best pattern, generate the final symbol"))
 
@@ -490,8 +490,8 @@ achieve the most efficient conversion of data"))
                    :alnum
                    :numeric))))))))
 
-;;; UNIT: character under a certain mode,
-;;;   a byte under :numeric :alnum & :byte, or a byte-pair under :kanji
+;; UNIT: character under a certain mode,
+;;   a byte under :numeric :alnum & :byte, or a byte-pair under :kanji
 (defun every-unit-matches (bytes usize nunits mode)
   "if every unit of USZIE bytes (at most NUNITS unit) within BYTES matches MODE"
   (declare (type list bytes) (type qr-mode mode))
@@ -1150,7 +1150,7 @@ ever overlap the vertical timing pattern."
                 (decf j 3)
                 (decf j 2)))))))
 
-;;; format information, during and after masking
+;; format information, during and after masking
 (defun format-information (matrix modules level mask-ind)
   ;; format information bistream
   (let ((fib (format-ecc level mask-ind))
@@ -1178,7 +1178,7 @@ ever overlap the vertical timing pattern."
            (incf idx2)))
     (values matrix darks)))
 
-;;; only encoding region modules (excluding format information) are masked
+;; only encoding region modules (excluding format information) are masked
 (defun encoding-module-p (matrix i j)
   "modules belong to encoding region, excluding format & version information"
   (or (eq (aref matrix i j) :light)
@@ -1189,8 +1189,8 @@ ever overlap the vertical timing pattern."
   (case (aref matrix i j)
     (:dark :light) (:light :dark)))
 
-;;; all modules are evaluated:
-;;;  there should be only :dark :light :fdark :flight modules left by now
+;; all modules are evaluated:
+;;  there should be only :dark :light :fdark :flight modules left by now
 (defun dark-module-p (matrix i j)
   (or (eq (aref matrix i j) :fdark)
       (eq (aref matrix i j) :dark)))
@@ -1253,7 +1253,7 @@ ever overlap the vertical timing pattern."
                 best-matrix cur-matrix))))
     (values best-matrix mask-indicator)))
 
-;;; feature 1 & 2 & 3
+;; feature 1 & 2 & 3
 (defun evaluate-feature-123 (matrix modules)
   (let ((penalty 0))
     (incf penalty (evaluate-feature-2 matrix modules))
@@ -1357,7 +1357,7 @@ preceded or followed by light area 4 modules wide. N3 points, N3 = 40"
             (format stream "0 ")))
       (format stream "~%"))))
 
-;;; FIX: other encodings???
+;; FIX: other encodings???
 (defun ascii->bytes (text)
   (map 'list #'char-code text))
 
@@ -1386,19 +1386,19 @@ preceded or followed by light area 4 modules wide. N3 points, N3 = 40"
                         (segments input)))
     (input->symbol input)))
 
-;;;-----------------------------------------------------------------------------
-;;; One Ring to Rule Them All, One Ring to Find Them,
-;;; One Ring to Bring Them All and In the Darkness Blind Them:
-;;;   This function wraps all we need.
-;;;-----------------------------------------------------------------------------
+;;-----------------------------------------------------------------------------
+;; One Ring to Rule Them All, One Ring to Find Them,
+;; One Ring to Bring Them All and In the Darkness Blind Them:
+;;   This function wraps all we need.
+;;-----------------------------------------------------------------------------
 ;; (sdebug :dbg-input)
 (defun encode-symbol (text &key (version 1) (level :level-m) (mode nil))
   "encode final qr symbol, unless you know what you are doing, leave MODE NIL"
   (let ((bytes (ascii->bytes text)))
     (encode-symbol-bytes bytes :version version :level level :mode mode)))
 
-;;; Table 1 - Codeword capacity of all versions of QR Code 2005
-;;; excluding Micro QR Code, varies between version
+;; Table 1 - Codeword capacity of all versions of QR Code 2005
+;; excluding Micro QR Code, varies between version
 (defvar *codeword-capacity-table*
   #2A((-1  -1   -1 -1    -1   -1) ; 0, no such version
       (21  202  31 208   26   0) (25  235  31 359   44   7)
@@ -1448,8 +1448,8 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
     (:level-q 2)
     (:level-h 3)))
 
-;;; (Part I of) Table 9 - Number of Error Correction Codewords (bytes)
-;;; varies between version and level
+;; (Part I of) Table 9 - Number of Error Correction Codewords (bytes)
+;; varies between version and level
 (defvar *ecc-codewords-table*
   ;; (:level-l :level-m :level-q :level-h)
   #2A((-1  -1   -1   -1) ;; 0, no such version
@@ -1472,8 +1472,8 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
 (defun data-words-capacity (version level)
   (- (codeword-capacity version) (ecc-words-capacity version level)))
 
-;;; (Part II of) Table 9 - Error Correction blocks
-;;; varies between version and level
+;; (Part II of) Table 9 - Error Correction blocks
+;; varies between version and level
 (defvar *ecc-blocks*
   ;; (version, level) =>
   ;;   (# of ec codewords for each blk, # of blk 1, # of data words for blk 1,
@@ -1543,7 +1543,7 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
     ((<= 10 version 26) 1)
     ((<= 27 version 40) 2)))
 
-;;; Table 3 - Number of bits in character count indicator for QR Code 2005
+;; Table 3 - Number of bits in character count indicator for QR Code 2005
 (defvar *char-count-indicator*
   ;; :numeric :alnum :byte :kanji
   #2A((10 9  8  8)    ; version-range 0
@@ -1554,8 +1554,8 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
         (j (mode->index mode)))
     (aref *char-count-indicator* i j)))
 
-;;; Table E.1 - Row/column coordinates of center modules of alignment patterns
-;;; varies between versions
+;; Table E.1 - Row/column coordinates of center modules of alignment patterns
+;; varies between versions
 (defvar *align-coord-table*
   #2A((0  ()) ; 0, no such version
       (0  ())                       (1  (6 18))                   (1  (6 22))
@@ -1628,7 +1628,6 @@ Data capacity codewords (bytes, including ecc codewords) | Remainder bits.")
   (aref *mask-pattern-reference* ind))
 
 ;;; png backend for QR code symbol
-
 (defun set-color (pngarray x y color)
   (setf (aref pngarray x y 0) color)
   (setf (aref pngarray x y 1) color)

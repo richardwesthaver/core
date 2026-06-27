@@ -1,3 +1,6 @@
+;;; html/const.lisp --- HTML Constants
+
+;;; Code:
 (in-package :dat/html)
 
 ;;; Constants

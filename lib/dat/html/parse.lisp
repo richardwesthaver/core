@@ -13,8 +13,6 @@
 ;; DOM being the one used in our XML package DAT/XML.
 
 ;;; Code:
-
-;;; inputstream
 (in-package :dat/html)
 
 (deftype array-length ()
@@ -27,6 +25,7 @@
 
 (defparameter *default-encoding* :utf-8)
 
+;;; Input Stream
 (defclass html-input-stream (wrapped-stream)
   ((source :initarg :source)
    (encoding :reader html5-stream-encoding)
