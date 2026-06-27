@@ -17,12 +17,14 @@ necessary for building complete API reference documents."
   (:file "project")
   (:file "srv"))
  :provide 
- (
-  (:proto :nlp)
+ ((:proto :nlp)
   (:proto :doc
-   :variables (*document-class*)
-   :accessors (doc)
-   :methods (document-class publish)
+   :variables (*document-class* *definition-types*)
+   :accessors (doc summary commentary)
+   :methods (document-class publish doc-object document-keyword)
+   :classes (project-documentation system-documentation 
+             package-documentation file-documentation 
+             symbol-documentation)
    :functions (find-definitions definition-source-line-number classify-symbol symbol-classification-string))
   ;; (:proto :publish)?
   (:proto :reprex)

@@ -162,6 +162,10 @@ first value and 'stuff' as the second."
    (bookmarks :accessor vc-bookmarks :initarg :bookmarks :initform nil)
    (requires :accessor vc-requires :initform nil)))
 
+(defmethod vc-remote ((self hg-repo) cmd &key)
+  (or (find cmd (vc-remotes self) :key 'name :test 'string-equal)
+      (find *default-vc-remote* (vc-remotes self) :key 'name :test 'string-equal)))
+  
 (defmethod vc-init ((self (eql :hg)))
   (make-instance 'hg-repo :path (pathname *default-pathname-defaults*)))
 

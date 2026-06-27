@@ -22,10 +22,10 @@
     #+end_example
 <%@endif%><%@ifnotempty set-by%>
 - Set by
-<%@loop set-by%>  - <%=(car env)%>
+<%@loop set-by%>  - <%=env%>
 <%@endloop%><%@endif%><%@ifnotempty bound-by%>
 - Bound by
-<%@loop bound-by%>  - <%=(car env)%>
+<%@loop bound-by%>  - <%=env%>
 <%@endloop%><%@endif%><%@ifnotempty called-by%>
 - Called by
 <%@loop called-by%>  - <%=env%>
@@ -211,6 +211,20 @@
     (format stream "~%Alloc Info: ~S~%" alloc)
     (format stream "~%Definitions: ~S~%" definitions)))
 
+(deftyped normalize-source-location-alist ((l list)) list
+  (mapcar
+   (lambda (x) (if (listp x) (cdr x) x))
+   (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
+              (remove-duplicates 
+               (mapcar 'car l)
+               :test 'equalp))))
+
+(deftyped normalize-alloc-info ((l list)) list
+  (loop for (x  y) on l by 'cddr
+        do (setf x (keywordicate x))
+        collect x
+        collect y))
+
 (defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 
@@ -219,26 +233,10 @@
                 `(:name ,(name self) :id ,id
                   :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
                   :tags ,(symbol-tag-string self)
-                  :set-by ,(mapcan
-                            (lambda (x) (or (and (consp x) (not (car-eql 'lambda x)) (list (cdr x)))
-                                            (list x)))
-                            (remove-duplicates (mapcar 'car (who-sets (doc-object self))) :test 'equalp))
-                  :bound-by ,(mapcan
-                              (lambda (x) (or (and (consp x) (not (car-eql 'lambda x)) (list (cdr x)))
-                                              (list x)))
-                              (remove-duplicates (mapcar 'car (who-binds (doc-object self))) :test 'equalp))
-                  :called-by ,(mapcar
-                               (lambda (x) (if (consp x) (cdr x) x))
-                               (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
-                                          (remove-duplicates 
-                                           (mapcar 'car (who-calls (doc-object self))) 
-                                           :test 'equalp)))
-                  :macroexpanded-by ,(mapcar
-                                      (lambda (x) (if (listp x) (cdr x) x))
-                                      (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
-                                                 (remove-duplicates 
-                                                  (mapcar 'car (who-macroexpands (doc-object self)))
-                                                  :test 'equalp)))
+                  :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))
+                  :bound-by ,(normalize-source-location-alist (who-binds (doc-object self)))
+                  :called-by ,(normalize-source-location-alist (who-calls (doc-object self)))
+                  :macroexpanded-by ,(normalize-source-location-alist (who-macroexpands (doc-object self)))
                   ,@(when level `(:level ,level))
                   :definitions 
                   ,(sort
@@ -250,7 +248,7 @@
                                                       (sb-introspect::definition-source-description y)))))
                     (lambda (x y) (< (length (string (car (flatten (sb-introspect::definition-source-description x)))))
                                      (length (string (car (flatten (sb-introspect::definition-source-description y))))))))
-                  :alloc ,alloc))))
+                  :alloc ,(normalize-alloc-info alloc)))))
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
