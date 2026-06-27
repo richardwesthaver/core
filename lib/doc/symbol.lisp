@@ -231,7 +231,7 @@
                 (keywordicate (class-name (class-of self)))
                 :env
                 `(:name ,(name self) :id ,id
-                  :custom-id ,(print (symbol-name* (doc-object self) nil))
+                  :custom-id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
                   :tags ,(symbol-tag-string self)
                   :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))
