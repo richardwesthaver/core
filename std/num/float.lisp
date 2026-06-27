@@ -2,6 +2,27 @@
 
 ;; IEEE 754 Floating Point encoding and decoding.
 
+;; Copyright (c) 2006 Marijn Haverbeke
+
+;; This software is provided 'as-is', without any express or implied
+;; warranty. In no event will the authors be held liable for any
+;; damages arising from the use of this software.
+
+;; Permission is granted to anyone to use this software for any
+;; purpose, including commercial applications, and to alter it and
+;; redistribute it freely, subject to the following restrictions:
+
+;; 1. The origin of this software must not be misrepresented; you must
+;;    not claim that you wrote the original software. If you use this
+;;    software in a product, an acknowledgment in the product
+;;    documentation would be appreciated but is not required.
+
+;; 2. Altered source versions must be plainly marked as such, and must
+;;    not be misrepresented as being the original software.
+
+;; 3. This notice may not be removed or altered from any source
+;;    distribution.
+
 ;;; Commentary:
 
 ;; This package provides default encoders for float32 and float64 as defined
@@ -14,10 +35,8 @@
 
 ;;; Code:
 
-;;; Functions for converting floating point numbers represented in
-;;; IEEE 754 style to lisp numbers.
-;;;
-;;; See http://common-lisp.net/project/ieee-floats/
+;;; IEEE 754 to lisp numbers
+;; See http://common-lisp.net/project/ieee-floats/
 
 (in-package :std/num)
 (declaim (optimize (speed 3)))
@@ -53,7 +72,6 @@
 ;; (E) Here the exponent offset is subtracted, but also an extra
 ;;     factor to account for the fact that the bits stored in the
 ;;     significand are supposed to come after the 'decimal dot'.
-
 (defmacro make-float-converters (encoder-name
 				 decoder-name
 				 exponent-bits
@@ -129,24 +147,3 @@ point numbers anymore, but also keywords."
 (declaim (inline encode-float32 decode-float32 encode-float64 decode-float64))
 (make-float-converters encode-float32 decode-float32 8 23 nil)
 (make-float-converters encode-float64 decode-float64 11 52 nil)
-
-;;; Copyright (c) 2006 Marijn Haverbeke
-;;;
-;;; This software is provided 'as-is', without any express or implied
-;;; warranty. In no event will the authors be held liable for any
-;;; damages arising from the use of this software.
-;;;
-;;; Permission is granted to anyone to use this software for any
-;;; purpose, including commercial applications, and to alter it and
-;;; redistribute it freely, subject to the following restrictions:
-;;;
-;;; 1. The origin of this software must not be misrepresented; you must
-;;;    not claim that you wrote the original software. If you use this
-;;;    software in a product, an acknowledgment in the product
-;;;    documentation would be appreciated but is not required.
-;;;
-;;; 2. Altered source versions must be plainly marked as such, and must
-;;;    not be misrepresented as being the original software.
-;;;
-;;; 3. This notice may not be removed or altered from any source
-;;;    distribution.

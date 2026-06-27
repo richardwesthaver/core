@@ -319,7 +319,7 @@ after the code start header (see CODE-START-P)."
     (make-instance 'file-documentation
       :path path
       :header header
-      :outline (when code-start (read-file-outline path code-start))
+      :outline (read-file-outline path code-start)
       :name (pathname-name path)
       :type (pathname-type path))))
 

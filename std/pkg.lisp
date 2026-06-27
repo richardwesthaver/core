@@ -178,6 +178,7 @@
    :deferror
    :defcondition
    :car-eql
+   :car-eql-p
    :nyi!
    :get-backtrace
    :required-argument

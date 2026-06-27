@@ -47,6 +47,10 @@ and we may query the user for input.")
   "Return T if the CAR of CONS is EQL to A."
   (eql a (car cons)))
 
+(defun car-eql-p (a b)
+  "Return T if the CAR of A is EQL to the CAR of B."
+  (eql (car a) (car b)))
+
 (defun invoke-transfer-error (error)
   "Equivalent to (invoke-restart 'transfer-error error)."
   (invoke-restart 'transfer-error error))

@@ -14,7 +14,25 @@
 #+begin_example
 <%@var documentation%>
 #+end_example
-<%@endif%><%@ifnotempty definitions%>
+<%@endif%><%@ifnotempty alloc%>
+- Alloc Info 
+  - <%=(car (getf-tempo \"alloc\"))%>
+    #+begin_example
+    <%=(cadr (getf-tempo \"alloc\"))%>
+    #+end_example
+<%@endif%><%@ifnotempty set-by%>
+- Set by
+<%@loop set-by%>  - <%=(car env)%>
+<%@endloop%><%@endif%><%@ifnotempty bound-by%>
+- Bound by
+<%@loop bound-by%>  - <%=(car env)%>
+<%@endloop%><%@endif%><%@ifnotempty called-by%>
+- Called by
+<%@loop called-by%>  - <%=env%>
+<%@endloop%><%@endif%><%@ifnotempty macroexpanded-by%>
+- Macroexpanded by
+<%@loop macroexpanded-by%>  - <%=env%>
+<%@endloop%><%@endif%><%@ifnotempty definitions%>
 :definitions:
 <%@loop definitions%><%=(doc:publish env)%>
 <%@endloop%>:end:
@@ -201,6 +219,26 @@
                 `(:name ,(name self) :id ,id
                   :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
                   :tags ,(symbol-tag-string self)
+                  :set-by ,(mapcan
+                            (lambda (x) (or (and (consp x) (not (car-eql 'lambda x)) (list (cdr x)))
+                                            (list x)))
+                            (remove-duplicates (mapcar 'car (who-sets (doc-object self))) :test 'equalp))
+                  :bound-by ,(mapcan
+                              (lambda (x) (or (and (consp x) (not (car-eql 'lambda x)) (list (cdr x)))
+                                              (list x)))
+                              (remove-duplicates (mapcar 'car (who-binds (doc-object self))) :test 'equalp))
+                  :called-by ,(mapcar
+                               (lambda (x) (if (consp x) (cdr x) x))
+                               (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
+                                          (remove-duplicates 
+                                           (mapcar 'car (who-calls (doc-object self))) 
+                                           :test 'equalp)))
+                  :macroexpanded-by ,(mapcar
+                                      (lambda (x) (if (listp x) (cdr x) x))
+                                      (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
+                                                 (remove-duplicates 
+                                                  (mapcar 'car (who-macroexpands (doc-object self)))
+                                                  :test 'equalp)))
                   ,@(when level `(:level ,level))
                   :definitions 
                   ,(sort
