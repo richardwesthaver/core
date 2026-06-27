@@ -18,7 +18,8 @@
 #+LOCATION: <%@var location%><%@endif%><%@ifnotempty author%>
 #+AUTHOR: <%@var author%><%@endif%><%@if email%>
 #+EMAIL: <%@var email%><%@endif%><%@ifnotempty tags%>
-#+FILETAGS: <%@var tags%><%@endif%>
+#+FILETAGS: <%@var tags%><%@endif%><%@ifnotempty setupfile%>
+#+SETUPFILE: <%@var setupfile%><%@endif%>
 <%@var description%>
 <%@if info%>
 #+BEGIN: project-info
@@ -52,14 +53,14 @@
 (defclass project-documentation (document id)
   ((project :initarg :project :accessor doc-object :type project)))
 
-(defun project-documentation (&optional (project *project*) systems)
+(defun project-documentation (&optional (project *project*) systems include-test-systems)
   "Return the documentation instance of project S."
   (unless (typep project 'project) (setf project (find-project project)))
   (make-instance 'project-documentation
     :id (make-v5-uuid +namespace-oid+ (format nil "PROJECT:~A" (name project)))
     :project project
     :ast (mapcar (lambda (x) (change-class x 'system-documentation))
-                 (or systems (directory-systems (path project))))))
+                 (or systems (directory-systems (path project) include-test-systems)))))
 
 (defmethod print-object ((self project-documentation) stream)
   (print-unreadable-object (self stream :type t)
@@ -85,7 +86,7 @@
 (defmethod path ((self project-documentation))
   (path (doc-object self)))
 
-(defmethod publish ((self project-documentation) &key output info)
+(defmethod publish ((self project-documentation) &key output info setupfile)
   (with-slots (project ast) self
     (let* ((file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
@@ -100,6 +101,7 @@
                                     :description ,(description self)
                                     :file-description ,(file-description file)
                                     ;; :components ,(coerce (components self) 'list)
+                                    :setupfile ,setupfile
                                     :version ,(version self)
                                     :provide ,(module-provide self)
                                     :rules ,(coerce (rules self) 'list)

@@ -103,8 +103,16 @@ project-like objects."))
 (defun register-project (project)
   (setf (find-project (name project)) project))
 
-(defun project-root (project)
+(defun project-root (&optional (project *project*))
   (make-pathname :directory (pathname-directory (path project))))
+
+(defmethod load-project-component ((kind t) (form t) &key (path (project-root)))
+  "Default component loader dispatches to DESERIALIZE."
+  (let ((*default-pathname-defaults* path))
+    (deserialize form kind :path path)))
+
+(defun merge-project-pathnames (path &optional (project *project*))
+  (merge-pathnames path (project-root project)))
 
 (defun make-project (name &rest args &key (class *default-project-class*) &allow-other-keys)
   (apply 'make-instance class :name name (remove-from-plist args :class)))

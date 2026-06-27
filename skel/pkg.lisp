@@ -184,8 +184,6 @@
 (defpkg :sk-user
   (:use :std-lisp :cli :tools
     :cl-user :log :sb-debug :sb-ext
-    :obj/ast :vc :rdb :io :net :pod :uri
-    :project)
-  (:use :skel))
+    :obj :vc :rdb :io :net :pod :skel :doc))
 
 (init :commands :name :skel :copy :cli :clean t)

@@ -152,17 +152,6 @@ skelfile if found."
 ;; (defmacro sk-apply-path-relevancy (path &optional (context *default-pathname-defaults*)))
 (defmethod init ((self (eql :skel)) &key) (init-skel))
 
-(defun project-root (&optional (project *project*))
-  (or (when project (skel/core::src project)) *default-pathname-defaults*))
-
-(defmethod load-project-component ((kind t) (form t) &key (path (project-root)))
-  "Default component loader dispatches to DESERIALIZE."
-  (let ((*default-pathname-defaults* path))
-    (deserialize form kind :path path)))
-
-(defun merge-project-pathnames (path &optional (project *project*))
-  (merge-pathnames path (project-root project)))
-
 (defun skel-project-clean (&optional (project *project*))
   "Default function called to clean a SKEL-PROJECT."
   (with-directory (project-root project)

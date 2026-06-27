@@ -717,10 +717,13 @@ system jobs to be executed in an async context."
                            :test #'equalp))
         (push s r)))))
 
-(defun directory-systems (&optional (dir *default-pathname-defaults*))
-  "Return a list of all systems under DIR."
+(defun directory-systems (&optional (dir *default-pathname-defaults*) include-tests)
+  "Return a list of all systems under DIR. When INCLUDE-TESTS is non-nil also include TEST-SYSTEMs."
   (let ((dir (make-pathname :directory `(,@(pathname-directory (truename dir)) :wild-inferiors))))
-    (remove-if-not (lambda (x) (pathname-match-p (path x) dir)) (list-all-systems))))
+    (remove-if-not 
+     (lambda (x) (or (and include-tests (typep x 'test-system))
+                     (pathname-match-p (path x) dir)))
+     (list-all-systems))))
 
 (defun directory-sysdef-files (&optional (dir *default-pathname-defaults*))
   "Return a list of all sysdef files under DIR."

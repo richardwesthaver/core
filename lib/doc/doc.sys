@@ -3,7 +3,7 @@
  "The official documentation system of the core. Contains all modules
 necessary for building complete API reference documents."
  :version "0.1.0"
- :require (:std :organ :parse :obj :rdb :log :syn)
+ :require (:std :organ :parse :obj :rdb :log :syn :vc)
  :components 
  ((:pkg "pkg")
   (:file "nlp")

@@ -11,7 +11,9 @@
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var name%>
 :END:<%@ifnotempty documentation%>
+#+begin_example
 <%@var documentation%>
+#+end_example
 <%@endif%><%@ifnotempty definitions%>
 :definitions:
 <%@loop definitions%><%=(doc:publish env)%>
@@ -197,7 +199,7 @@
                 (keywordicate (class-name (class-of self)))
                 :env
                 `(:name ,(name self) :id ,id
-                  :documentation ,(ignore-errors (with-output-to-string (s) (describe-object (doc-object self) s)))
+                  :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
                   :tags ,(symbol-tag-string self)
                   ,@(when level `(:level ,level))
                   :definitions 

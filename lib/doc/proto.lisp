@@ -77,7 +77,7 @@ to (SETF DOCUMENTATION).")
   (:documentation "Return the commentary of SELF."))
 
 ;;; Utils
-(deffmt fmt-tags "~@[:~{~A~^:~}:~]" "Format a list of tags as an org tag string, delimited by ':'.")
+(deffmt fmt-tags "~@[:~{~(~A~)~^:~}:~]" "Format a list of tags as an org tag string, delimited by ':'.")
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."

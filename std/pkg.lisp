@@ -1352,9 +1352,8 @@
    :*task-priority*
    :*tasks*
    :*jobs*
-   :*stages*
+   :*stage*
    :*task*
-   :*result*
    :task :job 
    :dependencies :dependents
    :async-task
@@ -1363,8 +1362,7 @@
    :make-job
    :run-job
    :job-p :task-p :task :task-worker
-   :plan :status :planner :plan-bits
-   :task-pool
+   :plan :status :planner :task-pool
    :task-done-p :record-dependency
    :simple-task :simple-plan
    :pressure :task-forced-p :task-prevented-p :pressure-parameters
