@@ -9,7 +9,7 @@
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
 :ID: <%@var id%>
-:CUSTOM_ID: <%@var name%>
+:CUSTOM_ID: <%@var custom-id%>
 :END:<%@ifnotempty documentation%>
 #+begin_example
 <%@var documentation%>
@@ -184,7 +184,7 @@
   (let ((class (classify-symbol s))
         (defs (find-definitions s)))
     (make-instance 'symbol-documentation
-      :id (make-v5-uuid +namespace-oid+ (symbol-name* s))
+      :id (symbol-hash s)
       :symbol s
       :class class
       :definitions defs
@@ -231,6 +231,7 @@
                 (keywordicate (class-name (class-of self)))
                 :env
                 `(:name ,(name self) :id ,id
+                  :custom-id ,(print (symbol-name* (doc-object self) nil))
                   :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
                   :tags ,(symbol-tag-string self)
                   :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))

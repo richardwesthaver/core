@@ -57,7 +57,7 @@
   "Return the documentation instance of project S."
   (unless (typep project 'project) (setf project (find-project project)))
   (make-instance 'project-documentation
-    :id (make-v5-uuid +namespace-oid+ (format nil "PROJECT:~A" (name project)))
+    :id (id project)
     :project project
     :ast (mapcar (lambda (x) (change-class x 'system-documentation))
                  (or systems (directory-systems (path project) include-test-systems)))))

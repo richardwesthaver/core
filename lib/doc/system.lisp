@@ -58,6 +58,7 @@
 (defun system-documentation (sys &optional packages) 
   (unless (typep sys 'system) (setf sys (find-system sys)))
   (make-instance 'system-documentation 
+    ;; FIX 2026-06-27: 
     :id (make-v5-uuid +namespace-oid+ (format nil "SYSTEM:~A" (name sys)))
     :system sys
     :packages (or packages 

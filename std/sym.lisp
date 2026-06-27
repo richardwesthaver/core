@@ -88,7 +88,7 @@ string as the argument."
                                       (find-symbol sym)
                                       (find-symbol (symbol-name sym) (symbol-package sym)))
     (when s
-      (format stream "~A:~@[:~]~A" (symbol-package-name s) (eq access :external) s))))
+      (format stream "~A:~@[~A~]~A" (symbol-package-name s) (unless (eq access :external) #\:) s))))
 
 (sb-ext:with-unlocked-packages (:sb-int)
   (handler-bind
