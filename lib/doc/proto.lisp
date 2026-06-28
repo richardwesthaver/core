@@ -136,6 +136,6 @@ CHAR-COUNT."
   "In addition to left-trimming comments and whitespace, we insert a comma (#\')
 when the first character may be misinterpreted as the start of an org heading."
   (let ((ret (string-left-trim "; " s)))
-    (if (and (positive-integer-p (length ret)) (char= #\* (schar ret 0)))
+    (if (and (positive-integer-p (length ret)) (ppcre:scan "[*]+ " ret))
         (concatenate 'string "," ret)
         ret)))
