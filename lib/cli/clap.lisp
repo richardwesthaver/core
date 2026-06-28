@@ -2,6 +2,20 @@
 
 ;; 
 
+;;; Commentary:
+
+;; =clap= is a name borrowed from the [[https://github.com/clap-rs/clap][clap.rs]] Command Line Argument
+;; Parser for Rust. What can I say, it's a good acronym.
+
+;; Besides the system tests, you can find this package used in our lisp
+;; binaries (=bin=).
+
+;; =clap= provides an object protocol and classes which parse input into
+;; a simple AST and execute the appropriate option and command handlers.
+
+;; Several macros form the public API used to build a CLI including
+;; =defcommand=, =defopt=, =define-cli=, and =defmain=.
+
 ;;; Code:
 (in-package :cli/clap)
 (init :commands :name :cli :class 'cli-command :clean t)

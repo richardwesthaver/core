@@ -2,6 +2,14 @@
 
 ;; 
 
+;;; Commentary:
+
+;; As far as cryptography goes in the Common Lisp world there is really only
+;; one library which shines and that is of course [[https://github.com/sharplispers/ironclad][sharplispers/ironclad]]. The
+;; core =cry= library is dependent on =ironclad= and implements a fully
+;; featured framework for working with security and authentication protocols,
+;; passwords, keyrings, and more.
+
 ;;; Code:
 (defpkg :cry/otp
   (:nicknames :otp)

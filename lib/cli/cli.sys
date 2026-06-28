@@ -1,5 +1,6 @@
 ;;; ~/src/core/lib/cli/cli.sys --- CLI Sytem Definitions
 (defsys :cli
+  "A fully-featured toolkit for working with and building [[https://en.wikipedia.org/wiki/Command-line_interface][CLI]] programs."
  :require (:std :log :dat :obj :io)
  :components 
  ((:pkg "pkg" :internal-package :cli-int :default-package :cli-user :feature :cli)

@@ -7,6 +7,7 @@
 ;;; Code:
 (defpkg :syn/ts
   (:nicknames :ts)
+  (:documentation "Tree-Sitter API")
   (:use :cl :std :tree-sitter)
   (:export 
    :parse-file
@@ -15,10 +16,12 @@
 
 (defpkg :syn/fmt
   (:use :cl :std :config :ast)
+  (:documentation "Code Formatter")
   (:export :fmt :fmt-config))
 
 (defpkg :syn/gen
   (:use :cl :std :id :graph :ast)
+  (:documentation "Code Generator")
   (:export :gen-designator :gen-condition :gen-error
    :simple-gen-error :defsyntax
    :function-call :src-location
@@ -66,6 +69,7 @@
 
 (defpkg :syn/lint
   (:use :std-lisp)
+  (:documentation "Code Linter")
   (:export :lint))
 
 (defpkg :syn/srv

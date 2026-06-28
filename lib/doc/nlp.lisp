@@ -1,5 +1,20 @@
 ;;; nlp.lisp --- Natural Language Processing
 
+;; A small set of NLP algorithms.
+
+;;; Commentary:
+
+;; utilities for [[https://en.wikipedia.org/wiki/Natural_language][Natural Languages]].
+
+;; Much of this code is from the Nyxt analysis library [[https://github.com/atlas-engineer/nyxt/tree/master/libraries/analysis][here]].
+
+;; - Features
+;;   - tokenization
+;;   - stop-words
+;;   - porter stemming
+;;   - dbscan
+;;   - textrank
+
 ;;; Code:
 (in-package :doc/nlp)
 
