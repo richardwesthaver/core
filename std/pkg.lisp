@@ -1,12 +1,33 @@
 ;;; std/pkg.lisp --- Standard Packages
 
-;;
+;; Standard Package Definitions
+
+;;; Commentary:
+
+;; All packages are prefixed with 'STD' followed by our standard separator
+;; '/'. This pattern is adhered to throughout our package /and/ system
+;; definitions.
+
+;; All package definition files (~pkg.lisp~) have at least one primary or
+;; 'top-level' package (defined towards the end) preceded by any number of
+;; sub-packages:
+
+#|
+(defpackage :foo/bar (:use :cl) #+nil ... )
+(defpackage :foo/baz (:use :cl :std) #+nil ... )
+(defpackage :foo (:use :cl :foo/bar :foo/baz) #+nil ... )
+|#
+
+;; You may notice in the standard library package definitions there is no
+;; direct usage of the DEFPACKAGE macro, or even UIOP:DEFINE-PACKAGE.
+;; Instead, we rely on our own incarnation, DEFPKG.
 
 ;;; Code:
 (in-package :std/defpkg)
 ;; #+std (in-package :std-int)
 
 (defpkg :std/sym
+  (:documentation "Important utilities for working with symbols.")
   (:use :cl)
   (:import-from :std/defpkg :symbol-package-name)
   (:mix :sb-int)
@@ -151,6 +172,7 @@
 
 (defpkg :std/condition
   (:use :cl)
+  (:documentation "Standard utilities for defining and handling conditions")
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)
   (:import-from :sb-int :simple-style-warning)
@@ -295,6 +317,7 @@
   (:recycle :sb-c))
 
 (defpkg :std/type
+  (:documentation "Definitions for common types not covered in the ANSI CL standard")
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
@@ -452,6 +475,7 @@
 
 (defpkg :std/num
   (:use :cl)
+  (:documentation "Standard numeric utilities")
   (:import-from :sb-int :power-of-two-ceiling)
   (:import-from :std/string :*whitespaces*)
   (:export
@@ -498,6 +522,7 @@
 
 (defpkg :std/stream
   (:use :cl :sb-gray)
+  (:documentation "Standard stream definitions")
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/prim :definline)
@@ -518,6 +543,7 @@
 
 (defpkg :std/hash
   (:use :cl)
+  (:documentation "Hash Table Utilities")
   (:nicknames :std/ht)
   (:recycle :sb-int)
   (:import-from :sb-int 
@@ -555,6 +581,7 @@
 
 (defpkg :std/curry
   (:use :cl :std/prim)
+  (:documentation "Function composition primitives")
   (:import-from :std/list :mappend)
   (:import-from :std/sym :make-gensym-list)
   (:export
@@ -592,6 +619,7 @@
 
 (defpkg :std/macs
   (:use :cl :std/prim)
+  (:documentation "Standard macros")
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
   (:import-from :std/curry :compose)
@@ -1385,6 +1413,7 @@
 
 (defpkg :std/print
   (:use :cl :std/stream :std/string)
+  (:documentation "Standard format and print-related functions.")
   (:import-from :std/list :group :ensure-cons :assoc-value)
   (:import-from :std/meta :init)
   (:import-from :std/hash :hash-table-alist)

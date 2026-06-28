@@ -1,6 +1,30 @@
 ;;; std.sys --- standard library
 
-;; Standard library system definition
+;; The Core Standard Library
+
+;;; Commentary:
+
+;; This system is depended on by virtually all CC lisp software. It contains our
+;; /standard/ extensions to the Lisp language and implementation, SBCL.
+
+;; The only exception is cl-ppcre which is an implicit dependency of
+;; this system.
+
+;; The /standard library/ itself is the set of symbols exported by the
+;; *STD* package, which is a wrapper for the other /standard packages/.
+
+;; These packages contain all the creature comforts a seasoned Lisper
+;; needs. Some symbols are re-exported from the implementation internal
+;; packages - SB-INT, SB-KERNEL, SB-C, SB-SYS, SB-UNICODE and friends. Others
+;; are ported from long-standing community favorites (aka 'blessed' packages)
+;; such as ALEXANDRIA, SERAPEUM, CL-FAD, TRIVIAL-*, etc.
+
+;; We refrain from re-inventing the wheel as much as possible and in most
+;; cases a dependency on STD may act as a drop-in replacement for multiple
+;; blessed packages. We reference the original source code repositories
+;; liberally in cases of pre-existing lisp systems, but you can expect the
+;; code itself to be re-written according to our [[https://compiler.company/meta/style][style-guide]] and further
+;; enriched or optimized based on our own expectations.
 
 ;;; Code:
 (defsys :std

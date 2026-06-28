@@ -2,6 +2,12 @@
 
 ;; 
 
+;;; Commentary:
+
+;; - =definline= is one of the most commonly used exports - as the name
+;;   suggests it defines a function which is automatically declaimed
+;;   ~inline~.
+
 ;;; Code:
 (in-package :std/prim)
 

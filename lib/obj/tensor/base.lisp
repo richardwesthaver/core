@@ -2,6 +2,22 @@
 
 ;; 
 
+;;; Commentary:
+
+;; The tensor protocol is primarily based on MATLISP/MAXIMA with significant
+;; modifications made to replace all internals with CORE primitives. Many of
+;; these primitives are implemented in the STD system.
+
+;; The tensor protocol is extremely complex and leverages many advanced lisp
+;; features including LOOP extensions, MOP, compiler-macros, memoization, and
+;; a heroic dose of macros. In addition to =TENSOR-CLASS= which subclasses
+;; =STANDARD-CLASS=, we utilize =TENSOR-METHOD-GENERATOR= which subclasses
+;; =STANDARD-GENERIC-FUNCTION= and is implemented via
+;; =DEFINE-TENSOR-METHOD=. Tensor methods will memoize their arguments with
+;; the help of auxiliary =SPECIALIZER= classes, and often use the lower-level
+;; template protocol functions which are prefixed with =T.= for
+;; tensor-specific methods.
+
 ;;; Code:
 (in-package :obj/tensor)
 

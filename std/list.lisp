@@ -1,5 +1,28 @@
 ;;; std/list.lisp --- List utils
 
+;;; Commentary:
+
+;; Lists are the most primitive as well as the most flexible sequence type
+;; available in Lisp. At /run-time/ seasoned Lispers have a tendency to use
+;; arrays instead of large lists when performance is needed, but lists have
+;; some additional properties not shared by arrays which make them the
+;; standard for all sorts of compile-time meta-programming. For starters,
+;; lambda expressions, function calls, and all special forms may be read and
+;; written as lists.
+
+;; - =dlist= is an implementation of doubly-linked lists, originally inspired
+;;   by =matlisp=. The vocabluarly includes =dcons=, =dpush=, =dpop=, =drdc=,
+;;   =dcdr=, =dcar=, and =dappendf=.
+
+;; - =toposort= is a variant on topological-sort also defined in =matlisp=.
+
+;; - common functions, setf-accessors, and macros from =alexandria= and
+;; - =serapeum=
+
+;; - =merge!= and =sort!= from =cl-bench=
+
+;; - list utils from Let over Lambda and On Lisp
+
 ;;; Code:
 (in-package :std/list)
 

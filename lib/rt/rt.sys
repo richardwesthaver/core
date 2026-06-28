@@ -1,5 +1,10 @@
 ;;; rt.sys --- RT System Definitions
+
+;;; Code:
 (defsys :rt
+  "RT is a test framework inspired by the SBCL contrib SB-RT.
+In addition to regression testing this system includes packages for various
+testing and debugging shenanigans."
  :require (:std :log :dat)
  :components 
  ((:pkg "pkg")

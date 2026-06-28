@@ -1,6 +1,15 @@
 ;;; obj/pkg.lisp --- Object Packages
 
-;;
+;; A collection of [[id:8bc4ff14-f001-4515-ac1f-fd59ef8ef506][CLOS]]-based protocols.
+
+;;; Commentary:
+
+;; Each package in the =obj= system is loosely speaking its own
+;; 'protocol', providing various classes and generic functions.
+
+;; There is a special category of package prefixed with =obj/meta/= -
+;; these packages operate on the level of the [[id:f9d8eead-51ab-4589-a5c2-2569ea1b7abd][Meta-Object Protocol]] and
+;; provide special classes called /metaclasses/.
 
 ;;; Code:
 (defpkg :obj/val

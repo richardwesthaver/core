@@ -21,6 +21,29 @@
 ;; - load
 ;; - compile
 
+;; The =std/defsys= package is the last package defined in the =std=
+;; system, it provides a DEFSYS macro which is our equivalent to the more
+;; popular =ASDF:DEFSYSTEM=.
+
+;; Once the =std/defsys= package is loaded the /general preference/
+;; across the =core= is to use =STD/DEFSYS= (nickname is =SYS=) instead
+;; of =ASDF=, although both are generally supported.
+
+;; Defsys is designed in such a way as to be directly integrated with the
+;; host Lisp compiler. System definitions (=SYS:DEFSYS= forms) may be
+;; compiled to a FASL just like any other lisp file. Typically the file
+;; type is changed to =".fsys"= to distinguish them from standard lisp
+;; fasls - see the =SYS:COMPILE-SYS= function for details.
+
+;;;; ASDF Compatibility
+
+;; all =SYS:COMPONENT= classes have relevant =CHANGE-CLASS= methods
+;; defined for their relevant ASDF counterparts so that you can translate
+;; between the two when needed, but in general this is not needed.
+
+;; Many SYS methods accept an ASDF keyword which defaults to the value of
+;; =*ASDF-COMPATIBILITY*=.
+
 ;;; Code:
 (in-package :std/defsys)
 (declaim (optimize (speed 3)))

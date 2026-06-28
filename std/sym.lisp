@@ -2,6 +2,22 @@
 
 ;; inspired by alexandria/symbols.lisp
 
+;;; Commentary:
+
+;; - VBOUNDP! and FBOUNDP! are inspired by the c-mera library and paper,
+;;   providing quite useful for source-to-source compilers.
+
+;; - ALIAS-FUNCTION and ALIAS-MACRO are from the lparallel library,
+;;   implemented in terms of COMPILER-FUNCTION and MACRO-FUNCTION
+;;   respectively.
+
+;; - WITH-GENSYMS is our preferred name as opposed to WITH-UNIQUE-NAMES which
+;;   is already defined by the implementation. Instead of re-writing we set
+;;   the MACRO-FUNCTION of the WITH-GENSYMS symbol directly.
+
+;; - SYMBOLICATE and KEYWORDICATE are popular extensions defined by the
+;;   implementation and re-exported here.
+
 ;;; Code:
 (in-package :std/sym)
 

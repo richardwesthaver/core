@@ -2,6 +2,13 @@
 
 ;;
 
+;;; Commentary:
+
+;; Hash-tables in Lisp are the O(1) older brother of alists and
+;; plists. Sometimes it is convenient to use the cons-based siblings, but for
+;; most instance of key -> value pairs you're often better off with a
+;; hash-table where performance is critical.
+
 ;;; Code:
 (in-package :std/hash)
 
