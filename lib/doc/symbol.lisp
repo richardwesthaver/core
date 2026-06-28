@@ -27,6 +27,9 @@
 <%@endloop%><%@endif%><%@ifnotempty macroexpanded-by%>
 - Macroexpanded by
 <%@loop macroexpanded-by%>  - <%=env%>
+<%@endloop%><%@endif%><%@ifnotempty referenced-by%>
+- Referenced by
+<%@loop referenced-by%>  - <%=env%>
 <%@endloop%><%@endif%><%@ifnotempty definitions%>
 :definitions:
 <%@loop definitions%><%=(doc:publish env)%>
@@ -262,6 +265,7 @@ with a comma."
                   :bound-by ,(normalize-source-location-alist (who-binds (doc-object self)))
                   :called-by ,(normalize-source-location-alist (who-calls (doc-object self)))
                   :macroexpanded-by ,(normalize-source-location-alist (who-macroexpands (doc-object self)))
+                  :referenced-by ,(normalize-source-location-alist (who-references (doc-object self)))
                   ,@(when level `(:level ,level))
                   :definitions 
                   ,(sort

@@ -24,3 +24,5 @@
 ;; list-all-*
 
 ;; explore?
+
+;; sb-vm::*code-alloc-count*
