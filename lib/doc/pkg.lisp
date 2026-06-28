@@ -114,7 +114,6 @@
    :document-class
    :publish
    :doc-files
-   :doc-symbols
    :doc-object
    :doc-packages
    :doc-systems

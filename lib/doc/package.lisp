@@ -38,10 +38,9 @@
 <%@loop symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
 
-(defclass package-documentation (id)
+(defclass package-documentation (document)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
-   (files :initform nil :initarg :files :accessor doc-files)
-   (symbols :initform nil :initarg :symbols :accessor doc-symbols)))
+   (files :initform nil :initarg :files :accessor doc-files)))
 
 (defmethod name ((self package-documentation))
   (package-name (doc-object self)))
@@ -73,7 +72,6 @@
                         (pushnew p paths)))
                     (push doc symbols)))))
     (make-instance 'package-documentation
-      :id (make-v5-uuid +namespace-oid+ (package-name package))
       :package package
       :files (mapcan
               (lambda (x) 
@@ -85,21 +83,21 @@
                          safe-directories)
                   (list (file-documentation x))))
               paths)
-      :symbols symbols)))
+      :ast symbols)))
 
 (defmethod print-object ((self package-documentation) stream)
-  (with-slots (package symbols) self
+  (with-slots (package ast) self
     (print-unreadable-object (self stream :type t)
-      (format stream "~A :symbols ~A" (package-name package) (length symbols)))))
+      (format stream "~A :symbols ~A" (package-name package) (length ast)))))
 
 (defmethod describe-object ((self package-documentation) stream)
-  (with-slots (package symbols) self
+  (with-slots (package ast) self
     (print-standard-describe-header self stream)
     (describe package stream)
     (format stream "~%Symbol Docs: ")
     (pprint-tabular
      stream 
-     (loop for s in symbols
+     (loop for s in ast
            collect (doc-object s)))))
 
 (defmethod dependents ((self package-documentation))
@@ -118,15 +116,15 @@
 ;; (package-documentation)
 
 (defmethod publish ((self package-documentation) &key output level)
-  (with-slots (id symbols) self
+  (with-slots (package ast) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
-                                 `(:name ,(name self) :id ,id
+                                 `(:name ,(name self) :id ,(sb-impl::package-id package)
                                    ;; :tags ,(package-tag-string self)
                                    ,@(when level `(:level ,level))
-                                   :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) symbols)))))
+                                   :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) ast)))))
       (case output
-        ('nil (values (org-parse (document-keyword self) gen) gen))
+        ('nil gen)
         (:string gen)
         (t (if (pathnamep output)
                (with-output-to-file (f output)

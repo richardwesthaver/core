@@ -18,6 +18,8 @@
 (defvar *document-class* 'org-document)
 (defvar *default-document-keyword* :document)
 
+(defvar *document-project-name* nil)
+
 (defparameter *definition-types*
   '(:variable defvar
     :constant defconstant
@@ -77,8 +79,14 @@ to (SETF DOCUMENTATION).")
   (:accessor t)
   (:documentation "Return the commentary of SELF."))
 
+(defmethod document ((self t) &key level from)
+  "Default method for generating a _document_ class from object SELF."
+  (org-parse (document-keyword self) (publish self :output from :level level)))
+
 ;;; Utils
 (deffmt fmt-tags "~@[:~{~(~A~)~^:~}:~]" "Format a list of tags as an org tag string, delimited by ':'.")
+
+(deffmt fmt-vc-link "[[vc:~A~@[:~A~]]~@[[~A]~]]" "Format a vc link from a project-name, project-path, and description.")
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."
@@ -123,3 +131,11 @@ CHAR-COUNT."
   (let ((pathname (sb-introspect:definition-source-pathname def)))
     (when-let ((count (sb-introspect:definition-source-character-offset def)))
       (count-lines-up-to-character pathname count))))
+
+(defun decomment (s) 
+  "In addition to left-trimming comments and whitespace, we insert a comma (#\')
+when the first character may be misinterpreted as the start of an org heading."
+  (let ((ret (string-left-trim "; " s)))
+    (if (and (positive-integer-p (length ret)) (char= #\* (schar ret 0)))
+        (concatenate 'string "," ret)
+        ret)))

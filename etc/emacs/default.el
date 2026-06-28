@@ -858,8 +858,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 	          (cl-case (length f)
 		        (0 "")
 		        (1 (format "/%s" (car f)))
-		        (2 (apply 'format "/%s/file/tip/%s" f))
-		        (t (apply 'format "/%s/file/%s/%s" f))))))
+		        (2 (apply 'format "/%s/file/tip/%s" f))))))
   (setq org-html-htmlize-output-type 'css
 	    org-html-head-include-default-style nil
 	    org-ascii-text-width 80

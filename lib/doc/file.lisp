@@ -163,14 +163,6 @@ stripped. Note that this level is NOT the same as the heading level."
   (multiple-value-bind (name level) (read-comment-line stream)
     (make-instance 'file-heading :name name :level level :description "")))
 
-(defun decomment (s) 
-  "In addition to left-trimming comments and whitespace, we insert a comma (#\')
-when the first character may be misinterpreted as the start of an org heading."
-  (let ((ret (string-left-trim "; " s)))
-    (if (and (positive-integer-p (length ret)) (char= #\* (schar ret 0)))
-        (concatenate 'string "," ret)
-        ret)))
-
 (defclass file-headline (file-heading)
   ((summary :initarg :summary :type string)
    (opts :initform nil :initarg :opts :type list)))
@@ -353,7 +345,7 @@ after the code start header (see CODE-START-P)."
                                    ;; :tags ,(file-tag-string self)
                                    :outline ,outline))))
       (case output
-        ('nil (values (org-parse (document-keyword self) gen) gen))
+        ('nil gen)
         (:string gen)
         (t (write-string gen output))))))
 
@@ -366,7 +358,7 @@ after the code start header (see CODE-START-P)."
                                    :name ,(lastcar (pathname-directory (path self)))
                                    :files ,ast))))
       (case output
-        ('nil (values (org-parse (document-keyword self) gen) gen))
+        ('nil gen)
         (:string gen)
         (t (write-string gen output))))))
 

@@ -10,7 +10,7 @@
 :PROPERTIES:
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var custom-id%><%@ifnotempty alloc%>
-:ALLOC_INFO: <%=(car (getf-tempo \"alloc\"))%> <%=(cadr (getf-tempo \"alloc\"))%><%@endif%>
+:ALLOC_INFO: <%=(car (getf-tempo \"alloc\"))%> <%=(getf (cadr (getf-tempo \"alloc\")) :space)%><%@endif%>
 :END:<%@ifnotempty documentation%> 
 #+begin_example
 <%@var documentation%>
@@ -151,14 +151,22 @@
         (pushnew (cdr s) (cdr l) :test 'equalp)
         (push s ret)))))
 
-(deffmt fmt-definition-source "- ~A~@[:~A~]~@[ ~{~(~A~)~}~]")
+(deffmt fmt-definition-path "~A~@[:~A~]")
+(deffmt fmt-definition-source "- ~A~@[ :: ~{~(~A~)~}~]")
 
 (defmethod publish ((self definition-source) &key)
   (with-output-to-string (s)
     (fmt-definition-source 
      s
-     (definition-source-pathname self) 
-     (definition-source-line-number self)
+     (let* ((%path (definition-source-pathname self))
+            (spath (and (not (sb-int:logical-pathname-p %path))
+                        (with-output-to-string (y)
+                          (fmt-definition-path y (enough-namestring %path)
+                                               (definition-source-line-number self))))))
+       (if (and *document-project-name* spath)
+           (with-output-to-string (x)
+             (fmt-vc-link x *document-project-name* spath spath))
+           %path))
      (sb-introspect::definition-source-description self))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
@@ -267,6 +275,6 @@ with a comma."
                                      (length (string (car (flatten (sb-introspect::definition-source-description y))))))))
                   :alloc ,(normalize-alloc-info alloc)))))
       (case output
-        ('nil (values (org-parse (document-keyword self) gen) gen))
+        ('nil gen)
         (:string gen)
         (t (print gen output))))))

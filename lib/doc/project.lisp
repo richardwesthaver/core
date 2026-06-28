@@ -88,7 +88,9 @@
 
 (defmethod publish ((self project-documentation) &key output info setupfile vc (local t))
   (with-slots (project ast) self
-    (let* ((file (file-documentation (path self)))
+    (let* ((*default-pathname-defaults* (path self))
+           (*document-project-name* (name project))
+           (file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
            (email (when (consp #1#) (cdr #1#)))
            (vc (or vc (uri (vc-remote (vc project) 'default))))
@@ -112,7 +114,7 @@
                                     ;; :tags ,(file-tag-string self)
                                     :systems ,ast))))
       (case output
-        ('nil (values (org-parse (document-keyword self) gen) gen))
+        ('nil gen)
         (:string gen)
         (t 
          (if (pathnamep output)
