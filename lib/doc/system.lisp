@@ -116,4 +116,7 @@
       (case output
         ('nil (values (org-parse (document-keyword self) gen) gen))
         (:string gen)
-        (t (write-string gen output))))))
+        (t (if (pathnamep output)
+               (with-output-to-file (f output)
+                 (write-string gen f))
+               (write-string gen output)))))))

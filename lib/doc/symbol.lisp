@@ -225,6 +225,15 @@
         collect x
         collect y))
 
+(defun org-description (text)
+  "Normalize the description TEXT, prepending any header-looking lines
+with a comma."
+  (apply 'concatenate 'string
+         (loop for l in (split-sequence #\newline text)
+               if (and (char= (char l 0) #\*) (whitespace-p (char l 1)))
+               collect (concatenate 'string "," l)
+               else collect l)))
+        
 (defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 
@@ -232,7 +241,13 @@
                 :env
                 `(:name ,(name self) :id ,id
                   :custom-id ,(symbol-name* (doc-object self) nil)
-                  :documentation ,(ignore-errors (trim (with-output-to-string (s) (describe-object (doc-object self) s))))
+                  :documentation ,(let ((docs (ignore-errors
+                                               (trim
+                                                (with-output-to-string (s)
+                                                  (describe-object (doc-object self) s))))))
+                                    (if (string= (name self) "*")
+                                        (org-description docs)
+                                        docs))
                   :tags ,(symbol-tag-string self)
                   :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))
                   :bound-by ,(normalize-source-location-alist (who-binds (doc-object self)))
