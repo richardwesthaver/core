@@ -565,7 +565,8 @@
    :curry
    :rcurry
    :map-product
-   :rec))
+   :rec
+   :autofuncall))
 
 (defpkg :std/readtable
   (:use :cl :std/prim)
@@ -705,7 +706,7 @@
    :modproj :simplify-array :array-rank-limit :sort-index 
    :binary-search :element-type))
 
-(defpkg :std/sys
+(defpkg :std/core
   (:use :cl :sb-int)
   (:import-from :std/condition :*interactive*)
   (:import-from :sb-kernel :get-lisp-obj-address :with-pinned-objects 
@@ -930,7 +931,7 @@
    :flags-case))
 
 (defpkg :std/io
-  (:use :cl :std/sys :std/type)
+  (:use :cl :std/core :std/type)
   (:import-from :std/prim :definline :parse-body)
   (:import-from :std/condition :deferror)
   (:import-from :std/macs :when-let :eval-always :once-only)
@@ -949,7 +950,7 @@
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :keywordicate :with-gensyms)
   (:import-from :std/array :element-type)
-  (:import-from :std/sys :little-endian-p :32-bit-p)
+  (:import-from :std/core :little-endian-p :32-bit-p)
   (:import-from :std/condition :out-of-bounds-error :invalid-item)
   (:import-from :std/bit :make-octets)
   (:import-from :std/macs :with-memoization :memoizing :destructuring-case :once-only :compile-and-eval)
@@ -1107,7 +1108,7 @@
   (:import-from :std/array :signed-array-length)
   (:import-from :std/sym :symbolicate)
   (:import-from :std/type :array-length :array-index)
-  (:import-from :std/sys :get-internal-time-seconds :time-remaining :with-countdown)
+  (:import-from :std/core :get-internal-time-seconds :time-remaining :with-countdown)
   (:export :sequencep :take :starts-with-subseq 
    :take* :starts-with
    :unsplice :item-predicate
@@ -1418,7 +1419,7 @@
   (:use :cl :sb-alien :std/string)
   (:import-from :std/macs :with-gensyms :if-let :when-let :eval-always)
   (:import-from :std/prim :definline)
-  (:import-from :std/sys :define-logical-pathname :logical-pathname-translation)
+  (:import-from :std/core :define-logical-pathname :logical-pathname-translation)
   (:import-from :std/file :probe-directory)
   (:import-from :std/path :directory-path :merge-homedir-pathnames)
   (:import-from :std/hash :hash-table-keys)
@@ -1560,7 +1561,7 @@
    :std/stream :std/curry :std/array :std/hash
    :std/alien :std/meta :std/thread :std/task
    :std/macs :std/bit :std/print :std/path
-   :std/os :std/file :std/string :std/sys 
+   :std/os :std/file :std/string :std/core
    :std/readtable :std/pipe :std/io :std/rand 
    :std/async :std/seq :std/prim :std/comp 
    :std/defsys))

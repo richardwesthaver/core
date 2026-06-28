@@ -15,6 +15,7 @@ necessary for building complete API reference documents."
   (:file "package")
   (:file "system")
   (:file "project")
+  (:file "core")
   (:file "srv"))
  :provide 
  ((:proto :nlp)

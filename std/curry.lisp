@@ -153,3 +153,9 @@ with and ARGUMENTS to FUNCTION."
   (let ((keypos (or (position-if #'(lambda (x) (member x cl:lambda-list-keywords)) args) (length args))))
     `(labels ((,name (,@(mapcar #'first (subseq args 0 keypos)) ,@(subseq args keypos)) ,@body))
        (,name ,@(mapcar #'second (subseq args 0 keypos))))))
+
+;; util
+(defun autofuncall (v)
+  (if (functionp v)
+      (autofuncall (funcall v))
+      v))

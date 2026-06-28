@@ -94,6 +94,7 @@
                        (when s (path s)))))
     (mapcar #'%rec (components self))))
 
+;; TODO 2026-06-27: export-file-name
 (defmethod publish ((self system-documentation) &key output info level)
   (with-slots (id name packages) self
     (let* ((file (file-documentation (path self)))
@@ -110,7 +111,7 @@
                                    :components ,(components self)
                                    :version ,(version self)
                                    :provide ,(module-provide self)
-                                   ;; :require ,(module-require self)
+                                   :require ,(module-require self)
                                    ;; :tags ,(file-tag-string self)
                                    :packages ,packages))))
       (case output

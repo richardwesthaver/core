@@ -302,7 +302,7 @@ match."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
-(defun user-fasl-cache (&optional (id (std/sys:lisp-implementation-id)))
+(defun user-fasl-cache (&optional (id (std/core:lisp-implementation-id)))
   (directory-path
    (if (xdg-dir :cache-home)
        (xdg-cache-dir "lisp" id)

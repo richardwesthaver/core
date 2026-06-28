@@ -9,17 +9,12 @@
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
 :ID: <%@var id%>
-:CUSTOM_ID: <%@var custom-id%>
-:END:<%@ifnotempty documentation%>
+:CUSTOM_ID: <%@var custom-id%><%@ifnotempty alloc%>
+:ALLOC_INFO: <%=(car (getf-tempo \"alloc\"))%> <%=(cadr (getf-tempo \"alloc\"))%><%@endif%>
+:END:<%@ifnotempty documentation%> 
 #+begin_example
 <%@var documentation%>
 #+end_example
-<%@endif%><%@ifnotempty alloc%>
-- Alloc Info 
-  - <%=(car (getf-tempo \"alloc\"))%>
-    #+begin_example
-    <%=(cadr (getf-tempo \"alloc\"))%>
-    #+end_example
 <%@endif%><%@ifnotempty set-by%>
 - Set by
 <%@loop set-by%>  - <%=env%>
@@ -99,6 +94,7 @@
       (push :generic-function result))
     result))
 
+;; TODO 2026-06-27: 
 (defun symbol-classification-string (symbol)
   "Return a string in the form -f-c---- where each letter stands for:
 - boundp 
@@ -155,7 +151,7 @@
         (pushnew (cdr s) (cdr l) :test 'equalp)
         (push s ret)))))
 
-(deffmt fmt-definition-source "- ~A~@[:~A~]~@[ ~(~A~)~]")
+(deffmt fmt-definition-source "- ~A~@[:~A~]~@[ ~{~(~A~)~}~]")
 
 (defmethod publish ((self definition-source) &key)
   (with-output-to-string (s)
@@ -225,15 +221,20 @@
         collect x
         collect y))
 
-(defun org-description (text)
+(definline org-symbol-normalize-p (sym)
+  "Return T if symbol needs to be normalized before printing (= *)."
+  (string-equal sym '*))
+
+(defun org-normalize-description (text)
   "Normalize the description TEXT, prepending any header-looking lines
 with a comma."
   (apply 'concatenate 'string
-         (loop for l in (split-sequence #\newline text)
-               if (and (char= (char l 0) #\*) (whitespace-p (char l 1)))
+         (loop for l in (lines text)
+               unless (zerop (length l))
+               if (char= (char l 0) #\*)
                collect (concatenate 'string "," l)
                else collect l)))
-        
+
 (defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 
@@ -245,8 +246,8 @@ with a comma."
                                                (trim
                                                 (with-output-to-string (s)
                                                   (describe-object (doc-object self) s))))))
-                                    (if (string= (name self) "*")
-                                        (org-description docs)
+                                    (if (org-symbol-normalize-p (doc-object self))
+                                        (org-normalize-description docs)
                                         docs))
                   :tags ,(symbol-tag-string self)
                   :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))

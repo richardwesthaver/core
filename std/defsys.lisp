@@ -384,9 +384,9 @@ objects of type COMPONENT."
      :bin root 
      (compile-and-eval
       `(lambda ()
-         (std/sys:save-lisp
+         (std/core:save-lisp
           ,(if (pathnamep name) name
-               `(std/sys:stash-pathname ,(string-downcase name)))
+               `(std/core:stash-pathname ,(string-downcase name)))
           :executable t
           ,@args))))))
 
@@ -547,7 +547,7 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
   (with-slots (hook) mod
     (maphash 
      (lambda (k v) (when-let ((x (gethash k (hook-value hook)))) (std/list:appendf v x)))
-     (hook-value std/sys::*sbcl-hooks*))))
+     (hook-value std/core::*sbcl-hooks*))))
 
 (defvar *protocol-keyword-imports*
   '(:methods :functions :types :variables 
@@ -1359,7 +1359,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
   (setf *user-fasl-cache* (ensure-directories-exist (or fasl-cache (std/os:user-fasl-cache)))
         *system-data-directory* (or system-data (xdg-data-directory "lisp/sys"))
         *system-cache-directory* (ensure-directories-exist (or system-cache (xdg-cache-directory "lisp/sys")))
-        (std/sys:logical-pathname-translation "SYS" "CACHE;**;*.*.*") (namestring (merge-pathnames "**/*.*" *user-fasl-cache*)))
+        (std/core:logical-pathname-translation "SYS" "CACHE;**;*.*.*") (namestring (merge-pathnames "**/*.*" *user-fasl-cache*)))
   (ensure-directories-exist (system-data-dir "bin/"))
   (pushnew 'std/defsys::module-provide-system sb-ext:*module-provider-functions*)
   (let ((pool (when pool (make-system-session-pool))))

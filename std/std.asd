@@ -37,7 +37,7 @@
      (:file "memo")))
    (:file "array")
    (:file "pipe")
-   (:file "sys")
+   (:file "core")
    (:file "io")
    (:file "alien")
    (:file "comp")

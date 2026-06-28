@@ -50,6 +50,11 @@ indicates an expr.")
     ("t" . "t")
     ("nil" . "nil")))
 
+#+todo
+(defun tempo-stream-redirect (key &optional args)
+  "Make a new string based on KEY and ARGS which may be bound to
+*TEMPO-STREAM-REDIRECTION*.")
+
 ;; REVIEW 2026-03-23: cleanup
 (defun set-tempo-variables (match &rest registers)
   "Parse parameter(s) of @set and set special variables
@@ -69,11 +74,6 @@ like e.g. *ESCAPE-TYPE*."
     (if setf-pairs
         (format nil "(setf ~A)" setf-pairs)
         "")))
-
-(defun autofuncall (v)
-  (if (functionp v)
-      (autofuncall (funcall v))
-      v))
 
 ;; Code from Edi Weitz's [[http://weitz.de/tbnl/][TBNL]]
 (defun escape-by-table (string replacements)

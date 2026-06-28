@@ -1,9 +1,9 @@
-;;; std/sys.lisp --- Lisp System Utilities
+;;; std/core.lisp --- Lisp Core Utilities
 
 ;;
 
 ;;; Code:
-(in-package :std/sys)
+(in-package :std/core)
 (std/named-readtables:in-readtable :std)
 
 ;;; System Paths
@@ -369,7 +369,7 @@ we can't determine endianness at compile-time.")
   "Eval BODY with an implicit timeout TIME."
   (with-gensyms (start)
     `(let ((,start (get-real-time-seconds)))
-       (flet ((time-remaining () (std/sys::%time-remaining ,start ,g!time)))
+       (flet ((time-remaining () (std/core::%time-remaining ,start ,g!time)))
          (declare (inline time-remaining))
          ,@body))))
 
