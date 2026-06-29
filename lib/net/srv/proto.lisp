@@ -65,7 +65,6 @@
 (defgeneric find-route (self uri))
 (defgeneric add-route (self uri srv &key &allow-other-keys))
 (defgeneric delete-route (self uri &key &allow-other-keys))
-(defgeneric accept (self))
 (defgeneric handle-connection (self conn))
 (defgeneric initialize-connection-hook (self stream))
 (defgeneric reset-connection-stream (self stream))
@@ -269,9 +268,6 @@ had returned RESULT.  See the source code of REDIRECT for an example."
    :message-log-output *error-output*))
 
 ;;; Engine
-;; TODO 2025-09-12: kernels?
-(defclass single-threaded-engine (engine) ())
-
 (defmethod handle-connection ((self single-threaded-engine) socket)
   (process-connection (service self) socket))
 
@@ -299,39 +295,9 @@ had returned RESULT.  See the source code of REDIRECT for an example."
         (ignore-errors
          (close *service-stream* :abort t))))))
 
-;; Multithreaded runtime for services
-(defclass multi-threaded-engine (engine supervisor) ()
-  (:default-initargs :thread nil)
-  (:documentation "A multi-threaded ENGINE with a dedicated thread. This class is technically a
-SUPERVISOR where the SCOPE is bound to a value based on the current SERVICE at
-runtime (a call to RUN-THREAD)."))
-
-(defaccessor name ((self multi-threaded-engine)) (thread-name (supervisor-thread self)))
-
-(defmethod run-thread ((self multi-threaded-engine) thunk &key name scope)
-  (when scope (setf (slot-value self 'scope) scope))
-  (setf (supervisor-thread self) (make-thread thunk :name name)))
-
+;; multi-threaded-engine
 (defmethod handle-connection ((self multi-threaded-engine) socket)
   (run-thread self (lambda () (process-connection (service self) socket))))
-
-(defmethod exec ((self multi-threaded-engine))
-  "Execute the engine SELF which is assumped to have a bound SERVICE slot. ACCEPT
-is called on the service in a separate supervisor thread."
-  (run-thread 
-   self
-   (lambda () (accept (service self)))
-   :name (format nil "~A ~A ~A"
-                 (name (service self))
-                 (or (address (service self)) "*")
-                 (port (service self)))
-   :scope (service self))
-  (values))
-
-(defmethod stop ((self multi-threaded-engine) &key)
-  "Stop the engine SELF by joining its THREAD if it exists, else return NIL."
-  (when-let ((th (supervisor-thread self)))
-    (join-thread th)))
                     
 ;; default class
 (defclass thread-per-connection-engine (multi-threaded-engine thread-pool)

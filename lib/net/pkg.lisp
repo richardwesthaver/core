@@ -446,7 +446,6 @@
    #:delete-route
    #:*router*
    #:http-service-response
-   #:accept
    #:handle-connection
    #:initialize-connection-hook
    #:reset-connection-stream
@@ -499,8 +498,6 @@
    #:session-verify
    #:reset-sessions
    #:service-logger
-   #:single-threaded-engine
-   #:multi-threaded-engine
    #:thread-per-connection-engine
    #:initialize-instance
    #:increment-accept-count

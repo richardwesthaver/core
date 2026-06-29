@@ -877,6 +877,9 @@
   (:export
    #:defservice
    #:with-service
+   #:single-threaded-engine
+   #:multi-threaded-engine
+   #:accept
    #:service
    #:find-service
    #:response-ok-p
