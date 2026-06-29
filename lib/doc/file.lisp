@@ -295,7 +295,7 @@ after the code start header (see CODE-START-P)."
   the full file contents."))
 
 (defmethod initialize-instance :after ((self file-documentation) &key &allow-other-keys)
-  (when (path self) (setf (id self) (cry:crc64-file (path self)))))
+  (when (path self) (setf (id self) (id (pathname (path self))))))
 
 ;; (defmethod print-object ((self file-documentation) stream)
 ;;   (print-unreadable-object (self stream :type t)

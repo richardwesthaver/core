@@ -119,7 +119,7 @@
   (with-slots (package ast) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
-                                 `(:name ,(name self) :id ,(sb-impl::package-id package)
+                                 `(:name ,(name self) :id ,(id package)
                                    ;; :tags ,(package-tag-string self)
                                    ,@(when level `(:level ,level))
                                    :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) ast)))))

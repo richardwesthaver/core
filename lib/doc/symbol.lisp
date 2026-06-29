@@ -195,7 +195,7 @@
   (let ((class (classify-symbol s))
         (defs (find-definitions s)))
     (make-instance 'symbol-documentation
-      :id (symbol-hash s)
+      :id (id s)
       :symbol s
       :class class
       :definitions defs

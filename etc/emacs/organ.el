@@ -414,28 +414,30 @@ inherited by a parent headline."
 ;;; Export
 (defun org-html-format-drawer (name contents)
   "Default function used as value for `org-html-format-drawer-function'."
-  (let ((name (downcase name)))
-    (format "<details class=\"%s\" open><summary>%s</summary>%s</details>"
-	    name
-        name
-	    (pcase name
-	      ("edges"
-	       (unless (null contents)
-		 (let ((es (intersperse "<br>" (s-lines contents))))
-		   (if (> (length es) 3)
-		       (progn
-			 (setf (cadr es) nil
-			       (nth (1- (length es)) es) nil)
-			 (apply 'concat (flatten es)))
-		     (apply 'concat es)))))
-	      (_ contents)))))
+  (when contents
+      (let ((name (downcase name)))
+        (format "<details class=\"%s\" open><summary>%s</summary>%s</details>"
+	            name
+                name
+	            (pcase name
+	              ("edges"
+	               (unless (null contents)
+		             (let ((es (intersperse "<br>" (s-lines contents))))
+		               (if (> (length es) 3)
+		                   (progn
+			                 (setf (cadr es) nil
+			                       (nth (1- (length es)) es) nil)
+			                 (apply 'concat (flatten es)))
+		                 (apply 'concat es)))))
+	              (_ contents))))))
 
 ;; replace hardcoded value
 (defun org-html-property-drawer (_drawer contents _info)
   "Transcode a PROPERTY-DRAWER element from Org to HTML.
 CONTENTS holds the contents of the drawer.  INFO is a plist holding
 contextual information."
-  (format "<details class='properties'><summary>properties</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines contents)))))
+  (and (org-string-nw-p contents)
+       (format "<details class='properties'><summary>properties</summary>\n%s</details>" (apply 'concat (intersperse "<br>" (s-lines (org-export-string-as contents 'cc-html t)))))))
 
 ;;;###autoload
 (defun org-export-get-reference-title (datum info)

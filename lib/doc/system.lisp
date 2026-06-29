@@ -17,7 +17,8 @@
 (deftempo :system-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@ifnotempty id%>:ID: <%@var id%>
+<%@endif%><%@ifnotempty summary%>:SUMMARY: <%@var summary%>
 <%@endif%><%@ifnotempty file-description%>:DESCRIPTION: <%@var file-description%>
 <%@endif%><%@ifnotempty version%>:VERSION: <%@var version%>
 <%@endif%>:LOCATION: <%@var location%>
@@ -60,12 +61,14 @@
   (make-instance 'system-documentation 
     :id (sxhash sys)
     :system sys
-    :packages (or packages 
-                  (collecting
-                    (mapc (lambda (x) (when (string-prefix-p (name sys) (package-name x))
-                                        (ignore-errors
-                                         (collect (package-documentation x :external)))))
-                          (list-all-packages))))))
+    :packages 
+    (or packages 
+        (collecting
+          (mapc (lambda (x) 
+                  (when (string-prefix-p (name sys) (package-name x))
+                    (ignore-errors
+                     (collect (package-documentation x :external)))))
+                (list-all-packages))))))
 
 (defmethod change-class ((self system) (new (eql 'system-documentation)) &key packages)
   (system-documentation self packages))

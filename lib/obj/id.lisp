@@ -28,7 +28,14 @@
   (declare (ignore args))
   (update-global-id self))
 
-(defmethod id (self) (hash-object-address self))
+(defgeneric id (self)
+  (:documentation "Return the identification of SELF.")
+  (:method (self) (hash-object-address self))
+  (:method ((self symbol)) (sb-kernel:symbol-hash self))
+  (:method ((self package)) (sb-impl::package-id self))
+  (:method ((self component)) (sxhash self))
+  (:method ((self module)) (sxhash self))
+  (:method ((self pathname)) (sb-impl::%pathname-sxhash self)))
 
 (defgeneric reset-id (obj)
   (:documentation "Reset the id slot of SELF to 0.")
