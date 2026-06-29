@@ -14,7 +14,7 @@
 (start (srv/http:http-file-server)) ;; start a simple HTTP file server in current
                               ;; directory with all default values
 
-(srv:defservice my-homepage (:port 8080
+(defservice my-homepage (:port 8080
                                  :auth (auth settings ...)
                                  :routes (routes ...)
                                  &rest ...)
@@ -589,7 +589,7 @@ similar to HUNCHENTOOT:ACCEPTOR."))
 (defmethod remove-session-hook ((service net-service) (session t))
   nil)
 
-(defmethod service-make-request (service socket &rest args &key &allow-other-keys)
+(defun service-make-request (service socket &rest args &key &allow-other-keys)
   "Make a REQUEST instance for SERVICE."
   (multiple-value-bind (raddr rport)
       (std:if-let ((remote (getf args :remote)))
@@ -613,10 +613,6 @@ similar to HUNCHENTOOT:ACCEPTOR."))
           *close-service-stream* nil)))
 
 ;;; Macros
-(defmacro defservice (name super slots &rest opts)
-  "Define a subclass of NET/SRV:SERVICE."
-  `(defclass ,name ,(or super '(service)) ,slots ,@opts))
-
 (defmacro defroute (spec args &body body)
   "Define a new ROUTE with BODY and optionally register it with a URI. The
 resulting function is stored within the *ROUTER* collection and may be
@@ -649,7 +645,3 @@ available."
                               ))
                         (t (funcall uri req))))
         do (return router)))
-  
-(defmacro with-service ((name) &body body)
-  `(let ((*service* (gethash ,name *service-table*)))
-     ,@body))

@@ -107,9 +107,9 @@
 (deftempo :file-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-:SUMMARY: <%@var summary%>
-:LOCATION: <%@var location%>
-:END:<%@ifnotempty description%>
+<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
+<%@endif%>:END:<%@ifnotempty description%>
 <%@var description%>
 <%@endif%><%@if commentary%>
 <%@var commentary%>
@@ -122,9 +122,9 @@
 (deftempo :mod-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-:SUMMARY: <%@var summary%>
-:LOCATION: <%@var location%>
-:END:<%@ifnotempty files%>
+<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
+<%@endif%>:END:<%@ifnotempty files%>
 <%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%>")
 
@@ -337,7 +337,14 @@ after the code start header (see CODE-START-P)."
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
-                                   :location ,(enough-namestring (path self))
+                                   :location 
+                                   ,(if *document-project-name*
+                                        (with-output-to-string (s)
+                                          (fmt-vc-link s
+                                                       *document-project-name*
+                                                       #1=(enough-namestring (path self))
+                                                       #1#))
+                                        (enough-namestring (path self)))
                                    :description ,(file-description self)
                                    :summary ,(file-summary self)
                                    :commentary ,(file-commentary self)
@@ -353,7 +360,14 @@ after the code start header (see CODE-START-P)."
   (with-slots (ast path) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
-                                 `(:location ,(enough-namestring (path self))
+                                 `(:location 
+                                   ,(if *document-project-name*
+                                        (with-output-to-string (s)
+                                          (fmt-vc-link s
+                                                       *document-project-name*
+                                                       #1=(enough-namestring (path self))
+                                                       #1#))
+                                        (enough-namestring (path self)))
                                    ,@(when level `(:level ,level))
                                    :name ,(lastcar (pathname-directory (path self)))
                                    :files ,ast))))

@@ -522,7 +522,6 @@ objects of type COMPONENT."
 
 (definline provider-name-coerce (name)
   ":PACKAGE -> :PACKAGES.
-
 Other conveniences as needed."
   (if (eql name :package) :packages name))
 

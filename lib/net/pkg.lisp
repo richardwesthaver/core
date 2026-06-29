@@ -436,9 +436,9 @@
   (:import-from :sb-thread :make-mutex :with-mutex)
   (:import-from :std/thread :shutdown :start :stop :started-p)
   (:export
-   :service-make-request
-   :with-request-count-incf
-   :shutdown-p
+   #:service-make-request
+   #:with-request-count-incf
+   #:shutdown-p
    #:+handler-tag+
    #:process-request
    #:default-web-directory
@@ -476,8 +476,7 @@
    #:remove-session
    #:session-expired-p
    #:defroute
-   #:defservice
-   :service-log
+   #:service-log
    #:*headers-sent*
    #:*log-service-errors*
    #:net-service-config

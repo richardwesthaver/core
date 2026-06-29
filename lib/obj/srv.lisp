@@ -171,4 +171,10 @@ logging, etc."))
 (defmethod make-config ((self (eql :service)) &rest args &key (class 'service-config))
   (apply 'make-instance class (remove-from-plist args class)))
 
-#+nil (defmacro defservice ())
+(defmacro defservice (name super slots &rest opts)
+  "Define a SERVICE subclass."
+  `(defclass ,name ,(or super '(service)) ,slots ,@opts))
+
+(defmacro with-service ((name) &body body)
+  `(let ((*service* (gethash ,name *service-table*)))
+     ,@body))

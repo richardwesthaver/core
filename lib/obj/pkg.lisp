@@ -875,6 +875,8 @@
   (:nicknames :srv)
   (:use :cl :std :config :id :ast)
   (:export
+   #:defservice
+   #:with-service
    #:service
    #:find-service
    #:response-ok-p

@@ -89,8 +89,8 @@
 
 (defmethod doc-files ((self mod-component))
   (labels ((%rec (s) (if (typep s 'mod-component)
-                       (doc-files s)
-                       (when s (path s)))))
+                         (doc-files s)
+                         (when s (path s)))))
     (mapcar #'%rec (components self))))
 
 ;; TODO 2026-06-27: export-file-name
@@ -98,25 +98,27 @@
   (with-slots (id name packages) self
     (let* ((file (file-documentation (path self)))
            (gen (execute-template (keywordicate (class-name (class-of self)))
-                                 :env
-                                 `(:name ,(name self) :id ,id
-                                   :location ,(if *document-project-name* 
-                                                  (fmt-vc-link *document-project-name*
-                                                               #1=(enough-namestring (path self))
-                                                               #1#)
-                                                  (enough-namestring (path self)))
-                                   :summary ,(file-summary file)
-                                   :level ,level
-                                   :info ,info
-                                   :commentary ,(file-commentary file)
-                                   :description ,(description self)
-                                   :file-description ,(file-description file)
-                                   :components ,(components self)
-                                   :version ,(version self)
-                                   :provide ,(module-provide self)
-                                   :require ,(module-require self)
-                                   ;; :tags ,(file-tag-string self)
-                                   :packages ,packages))))
+                                  :env
+                                  `(:name ,(name self) :id ,id
+                                    :location ,(if *document-project-name*
+                                                   (with-output-to-string (s)
+                                                     (fmt-vc-link s
+                                                                  *document-project-name*
+                                                                  #1=(enough-namestring (path self))
+                                                                  #1#))
+                                                   (enough-namestring (path self)))
+                                    :summary ,(file-summary file)
+                                    :level ,level
+                                    :info ,info
+                                    :commentary ,(file-commentary file)
+                                    :description ,(description self)
+                                    :file-description ,(file-description file)
+                                    :components ,(components self)
+                                    :version ,(version self)
+                                    :provide ,(module-provide self)
+                                    :require ,(module-require self)
+                                    ;; :tags ,(file-tag-string self)
+                                    :packages ,packages))))
       (case output
         ('nil gen)
         (:string gen)
