@@ -28,9 +28,9 @@
 (deftempo :package-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-:SUMMARY: <%@var summary%>
-:LOCATION: <%@var location%>
-:END:<%@ifnotempty description%>
+<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
+<%@endif%>:END:<%@ifnotempty description%>
 <%@var description%>
 <%@endif%><%@if info%>
 #+call:lisp-package-dependencies(\"<%=env%>\")

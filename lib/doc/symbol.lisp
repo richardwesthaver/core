@@ -155,6 +155,7 @@
         (push s ret)))))
 
 (deffmt fmt-definition-path "~A~@[:~A~]")
+(deffmt fmt-definition-link "~A~@[#l~A~]")
 (deffmt fmt-definition-source "- ~A~@[ :: ~{~(~A~)~}~]")
 
 (defmethod publish ((self definition-source) &key)
@@ -162,13 +163,16 @@
     (fmt-definition-source 
      s
      (let* ((%path (definition-source-pathname self))
+            (%line (definition-source-line-number self))
             (spath (and (not (sb-int:logical-pathname-p %path))
                         (with-output-to-string (y)
-                          (fmt-definition-path y (enough-namestring %path)
-                                               (definition-source-line-number self))))))
-       (if (and *document-project-name* spath)
+                          (fmt-definition-path y (enough-namestring %path) %line))))
+            (slink (and (not (sb-int:logical-pathname-p %path))
+                        (with-output-to-string (y)
+                          (fmt-definition-link y (enough-namestring %path) %line)))))
+       (if (and *document-project-name* slink)
            (with-output-to-string (x)
-             (fmt-vc-link x *document-project-name* spath spath))
+             (fmt-vc-link x *document-project-name* slink spath))
            %path))
      (sb-introspect::definition-source-description self))))
 

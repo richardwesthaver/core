@@ -91,8 +91,6 @@ communication as well as the engine which drives it."))
   ((content-type :reader content-type)
    (content-length :reader content-length :initform nil)))
 
-(defmethod response-ok-p ((res response)) t)
-
 (defclass request ()
   ((data :initarg :data :accessor data))
   (:documentation "Base class for request objects, often paired with RESPONSE objects."))
@@ -130,7 +128,8 @@ logging, etc."))
 (defgeneric receive-response (service stream &key))
 (defgeneric receive-request (client res &key))
 
-(defgeneric response-ok-p (res))
+(defgeneric response-ok-p (res)
+  (:method ((res response)) t))
 
 (defgeneric response-status (res))
 
@@ -171,3 +170,5 @@ logging, etc."))
 
 (defmethod make-config ((self (eql :service)) &rest args &key (class 'service-config))
   (apply 'make-instance class (remove-from-plist args class)))
+
+#+nil (defmacro defservice ())

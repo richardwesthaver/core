@@ -100,7 +100,11 @@
            (gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
-                                   :location ,(enough-namestring (path self))
+                                   :location ,(if *document-project-name* 
+                                                  (fmt-vc-link *document-project-name*
+                                                               #1=(enough-namestring (path self))
+                                                               #1#)
+                                                  (enough-namestring (path self)))
                                    :summary ,(file-summary file)
                                    :level ,level
                                    :info ,info
