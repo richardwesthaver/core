@@ -562,7 +562,9 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
 (defsetf find-module (name &optional kind key append) (val)
   `(set-module ,name ,val ,kind ,key ,append))
 
-;;  TODO 2026-06-22: (defmacro do-modules (var supermod))
+;; TODO 2026-06-22: (defmacro do-modules (var supermod))
+
+;; (defmacro module-case (mod &body body))
 
 (defun init-module (mod)
   "Initialize module MOD, loading all implementation hooks."
@@ -1174,8 +1176,8 @@ inputs."))
 
 SYSTEM objects register their own ASDF:SYSTEM objects as needed and provide
 the following extensions:
-- :PROVIDE    system-provided features, modules, readtables
 - :HOOK       hook specs
+- :PROVIDE    system-provided features, modules, readtables
 - :REQUIRE    system/component required modules, features, and components"
   (multiple-value-bind (%body dec doc) (std/prim:parse-body body :documentation t)
     (declare (ignore dec))
@@ -1202,11 +1204,13 @@ the following extensions:
                  (slot-value ,sys 'components) (%parse-components-form ',comp)
                  (slot-value ,sys 'provide) (%parse-provide-form ',prov)
                  (slot-value ,sys 'require) ',req)
-           (mapc (lambda (x) (add-hook (hook ,sys) (if (or (symbolp (cadr x)) (functionp (cadr x)))
-                                                       x
-                                                       (list (car x) 
-                                                             (compile (gensym (string (car x)))
-                                                                      `(lambda () ,@(cdr x)))))))
+           (mapc (lambda (x) (add-hook 
+                              (hook ,sys) 
+                              (if (or (symbolp (cadr x)) (functionp (cadr x)))
+                                  x
+                                  (list (car x) 
+                                        (compile (gensym (string (car x)))
+                                                 `(lambda () ,@(cdr x)))))))
                  ',hooks)
            (expand-component-requires ,sys)
            (setf (gethash ,name *system-table*) ,sys)
@@ -1566,9 +1570,6 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
   (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
       (apply #'test-system sys args))))
-
-;;; Printer
-(define-printer :sys)
 
 ;;; Explorer
 (defmethod explore ((self system) &key)

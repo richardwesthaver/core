@@ -112,6 +112,7 @@
    :symbol-info
    :doc
    :document-class
+   :module-documentation
    :publish
    :doc-files
    :doc-object

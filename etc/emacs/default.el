@@ -304,7 +304,11 @@ TABLE."
   (setopt speedbar-sort-tags t
 	      speedbar-prefer-window t
 	      speedbar-track-mouse-flag t
-          speedbar-use-images t)
+          speedbar-use-images t
+          speedbar-verbosity-level 4)
+  (speedbar-add-supported-extension ".lisp")
+  (speedbar-add-supported-extension ".sys")
+  (speedbar-add-supported-extension "skelfile")
   (add-to-list 'speedbar-obj-alist '("\\.lisp$" . ".fasl"))
   (add-to-list 'speedbar-obj-alist '("\\.sys$" . ".fsys")))
 

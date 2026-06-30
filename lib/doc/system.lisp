@@ -36,7 +36,7 @@
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Components
 <%@loop components%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 3)%>
 <%@endloop%><%@endif%><%@ifnotempty provide%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>* Modules
-<%@loop provide%>- todo
+<%@loop provide%>**<%=(doc:module-documentation env)%>
 <%@endloop%><%@endif%>")
 
 (defclass system-documentation (document id)
@@ -95,6 +95,14 @@
                          (doc-files s)
                          (when s (path s)))))
     (mapcar #'%rec (components self))))
+
+(defun module-documentation (form)
+  "Return a simple org-heading describing the module designated by FORM as a
+string."
+  (format nil "* ~A :~A:~%~A" (cadr form) (car form) (cddr form)))
+
+(defmethod documentation ((object list) (doc-type (eql 'module)))
+  (module-documentation object))
 
 ;; TODO 2026-06-27: export-file-name
 (defmethod publish ((self system-documentation) &key output info level)
