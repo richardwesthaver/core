@@ -562,10 +562,6 @@ to match all systems and optional KIND (a provider-designator) specified by KEY.
 (defsetf find-module (name &optional kind key append) (val)
   `(set-module ,name ,val ,kind ,key ,append))
 
-;; TODO 2026-06-22: (defmacro do-modules (var supermod))
-
-;; (defmacro module-case (mod &body body))
-
 (defun init-module (mod)
   "Initialize module MOD, loading all implementation hooks."
   (with-slots (hook) mod

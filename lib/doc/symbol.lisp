@@ -54,6 +54,7 @@
 :TYPE
 :ALIEN-TYPE
 :VARIABLE
+:GLOBAL
 :DECLARATION
 
 (Internal)
@@ -63,7 +64,6 @@
 :TRANSFORM
 :VOP
 :IR1-CONVERT
-
 (Custom)
 :SYSTEM
 :MODULE
@@ -73,7 +73,10 @@
   "Return the classification list of SYMBOL."
   (check-type symbol symbol)
   (let (result)
-    (when (boundp symbol)             (push (if (constantp symbol) :constant :boundp) result))
+    (when (boundp symbol) 
+      (cond ((constantp symbol) (push :constant result))
+            ((eql (info :variable :always-bound symbol) :always-bound) (push :global result))
+            (t (push :variable result))))
     (or (when (find-system symbol) (push :system result))
         (when (find-module symbol) (push :module result)))
     (when (find-class symbol nil) (push :class result))
@@ -250,12 +253,25 @@ with a comma."
                collect (concatenate 'string "," l)
                else collect l)))
 
+(define-constant +org-emphasis-chars+ '(#\* #\+ #\~)
+  :test 'equalp)
+
+(defun org-normalize-symbol-name (symbol)
+  "Prepend the symbol-name of SYMBOL with a zero-width space if it starts and
+  end with an org-emphasis marker (~,+,*)."
+  (let* ((name (name symbol))
+         (len (1- (length name))))
+    (if (and (memq (char name 0) +org-emphasis-chars+)
+             (memq (char name len) +org-emphasis-chars+))
+        (concat (subseq name 0 len) (coerce `(#\zero_width_space ,(char name len)) 'string))
+        name)))
+  
 (defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 
                 (keywordicate (class-name (class-of self)))
                 :env
-                `(:name ,(name self) :id ,id
+                `(:name ,(org-normalize-symbol-name (doc-object self)) :id ,id
                   :custom-id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(let ((docs (ignore-errors
                                                (trim

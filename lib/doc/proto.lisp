@@ -30,6 +30,7 @@
     :function defun
     :generic-function defgeneric
     :method defmethod
+    :global defglobal
     :setf-expander define-setf-expander
     :structure defstruct
     :condition define-condition
