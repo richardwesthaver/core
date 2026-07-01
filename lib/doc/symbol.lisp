@@ -248,12 +248,12 @@ with a comma."
                   :custom-id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(let ((docs (ignore-errors
                                                (trim
-                                                (concatenate 
-                                                 'string
-                                                 (cddr
-                                                  (lines
-                                                   (with-output-to-string (s)
-                                                     (describe-object (doc-object self) s)))))))))
+                                                (apply 'concatenate 
+                                                       'string
+                                                       (cddr
+                                                        (lines
+                                                         (with-output-to-string (s)
+                                                           (describe-object (doc-object self) s)))))))))
                                     (if (org-symbol-normalize-p (doc-object self))
                                         (org-normalize-description docs)
                                         docs))
