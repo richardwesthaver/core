@@ -26,7 +26,7 @@ necessary for building complete API reference documents."
    :classes (project-documentation system-documentation 
              package-documentation file-documentation 
              symbol-documentation)
-   :functions (find-definitions definition-source-line-number classify-symbol symbol-classification-string))
+   :functions (find-definitions definition-source-line-number classify-symbol))
   ;; (:proto :publish)?
   (:proto :reprex)
   (:proto :search)

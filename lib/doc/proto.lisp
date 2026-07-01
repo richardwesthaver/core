@@ -19,6 +19,7 @@
 (defvar *default-document-keyword* :document)
 
 (defvar *document-project-name* nil)
+(defvar *document-module* nil)
 
 (defparameter *definition-types*
   '(:variable defvar
@@ -88,6 +89,12 @@ to (SETF DOCUMENTATION).")
 (deffmt fmt-tags "~@[:~{~(~A~)~^:~}:~]" "Format a list of tags as an org tag string, delimited by ':'.")
 
 (deffmt fmt-vc-link "[[vc:~(~A~)~@[:~A~]]~@[[~A]~]]" "Format a vc link from a project-name, project-path, and description.")
+
+(deffmt fmt-org-id-link "[[id:~A]~@[[~A]~]]" "Format a link to an org ID.")
+
+(definline org-symbol-id (sym) 
+  (with-output-to-string (s)
+    (fmt-org-id-link s (id sym) sym)))
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."

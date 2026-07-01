@@ -84,11 +84,12 @@
   (:use-reexport :doc/nlp :doc/fuzzy)
   (:export
    :*document-class*
+   :org-symbol-id
    :*definition-types*
    :definition-specifier
    :find-definitions
    :definition-source-line-number
-   :classify-symbol :symbol-classification-string
+   :classify-symbol
    :fmt-tags :symbol-tag-string
    :file-commentary
    :file-summary

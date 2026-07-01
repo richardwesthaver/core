@@ -5,10 +5,13 @@
 ;;; Code:
 (in-package :obj/id)
 (declaim (optimize (debug 3)))
-(defglobal *global-id-table* (make-hash-table))
+(defglobal *global-id-table* (make-hash-table)
+    "A table containing a mapping of names to some sort of unique
+identifier. Should only be used for 'top-level' namespace-like objects.")
 
 (defclass id ()
-  ((id :initarg :id :initform 0 :accessor id :type fixnum)))
+  ((id :initarg :id :initform 0 :accessor id :type fixnum))
+  (:documentation "Base class for objects with an ID slot."))
 
 (defclass global-id (id) ())
 

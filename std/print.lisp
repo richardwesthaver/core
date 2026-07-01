@@ -744,7 +744,7 @@ STYLE indicates the level of decoration to apply to the output:
 (defvar *annotation-table* (make-hash-table))
 (defvar *annotations* nil
   "The currently active mapping of annotations.")
-(declaim (base-char *annotation-prefix*))
+(declaim (base-char +annotation-prefix+))
 (defconstant +annotation-prefix+ #\%)
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))

@@ -100,34 +100,6 @@
       (push :generic-function result))
     result))
 
-;; TODO 2026-06-27: 
-(defun symbol-classification-string (symbol)
-  "Return a string in the form -f-c---- where each letter stands for:
-- boundp 
-- fboundp 
-- generic-function 
-- class 
-- macro 
-- special-operator 
-- package"
-  (let ((letters "bfgctmsp")
-        (result (copy-seq "--------")))
-    (flet ((flip (letter)
-             (setf (char result (position letter letters))
-                   letter)))
-      (when (boundp symbol) (flip #\b))
-      (when (fboundp symbol)
-        (flip #\f)
-        (when (typep (ignore-errors (fdefinition symbol))
-                     'generic-function)
-          (flip #\g)))
-      (when (deftype-lambda-list symbol) (flip #\t))
-      (when (find-class symbol nil)   (flip #\c) )
-      (when (macro-function symbol)   (flip #\m))
-      (when (special-operator-p symbol) (flip #\s))
-      (when (find-package symbol)       (flip #\p))
-      result)))
-
 (defun symbol-tag-string (sym)
   "Return a string consisting of tags separated by ':'."
   (when-let ((tags (mapcar 'symbol-name (if (typep sym 'symbol-documentation)
@@ -159,7 +131,7 @@
 
 (deffmt fmt-definition-path "~A~@[:~A~]")
 (deffmt fmt-definition-link "~A~@[#l~A~]")
-(deffmt fmt-definition-source "- ~A~@[ :: ~{~(~A~)~}~]")
+(deffmt fmt-definition-source "- ~A~@[~%~{  - ~(~A~)~^~%~}~]")
 
 (defmethod publish ((self definition-source) &key)
   (with-output-to-string (s)
@@ -177,7 +149,7 @@
            (with-output-to-string (x)
              (fmt-vc-link x *document-project-name* slink spath))
            %path))
-     (sb-introspect::definition-source-description self))))
+     (remove 't (sb-introspect::definition-source-description self)))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
@@ -227,11 +199,12 @@
 
 (deftyped normalize-source-location-alist ((l list)) list
   (mapcar
-   (lambda (x) (if (listp x) (cdr x) x))
-   (remove-if (lambda (x) (and (consp x) (car-eql 'lambda x)))
-              (remove-duplicates 
-               (mapcar 'car l)
-               :test 'equalp))))
+   (lambda (x) (if (listp x) (cdr x) (org-symbol-id x)))
+   (remove-if 
+    (lambda (x) (and (consp x) (car-eql 'lambda x)))
+    (remove-duplicates 
+     (mapcar 'car l)
+     :test 'equalp))))
 
 (deftyped normalize-alloc-info ((l list)) list
   (loop for (x  y) on l by 'cddr
@@ -248,8 +221,8 @@
 with a comma."
   (apply 'concatenate 'string
          (loop for l in (lines text)
-               unless (zerop (length l))
-               if (char= (char l 0) #\*)
+               unless (< (length l) 2)
+               if (and (char= (char l 0) #\*) (char= (char l 1) #\space))
                collect (concatenate 'string "," l)
                else collect l)))
 
@@ -275,8 +248,12 @@ with a comma."
                   :custom-id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(let ((docs (ignore-errors
                                                (trim
-                                                (with-output-to-string (s)
-                                                  (describe-object (doc-object self) s))))))
+                                                (concatenate 
+                                                 'string
+                                                 (cddr
+                                                  (lines
+                                                   (with-output-to-string (s)
+                                                     (describe-object (doc-object self) s)))))))))
                                     (if (org-symbol-normalize-p (doc-object self))
                                         (org-normalize-description docs)
                                         docs))

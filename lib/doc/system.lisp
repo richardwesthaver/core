@@ -96,18 +96,38 @@
                          (when s (path s)))))
     (mapcar #'%rec (components self))))
 
-(defun module-documentation (form)
+(defun module-documentation (form &optional (module *document-module*))
   "Return a simple org-heading describing the module designated by FORM as a
 string."
-  (format nil "* ~A :~A:~%~A" (cadr form) (car form) (cddr form)))
+  (with-output-to-string (s)
+    (destructuring-bind (key &rest args) form
+      (let ((name))
+        (case key
+          (:tests 
+           (format s "* ~A :~A:~%" (if module (concatenate 'string (string module) "/" (string key)) key) key))
+          (:prelude
+           (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (format s "- Exports~%~{  - ~A~%~}" 
+                   (mapcar 
+                    (lambda (x) 
+                      (with-output-to-string (s) 
+                        (fmt-org-id-link s (id x) x)))
+                    (cons name args))))
+          (t
+           (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (doplist (k v) args
+             (when v
+               (format s "- ~A~%  #+begin_src lisp-data :eval no~%~<  ~;~S~>~%  #+end_src~%" 
+                       k v)))))))))
 
 (defmethod documentation ((object list) (doc-type (eql 'module)))
   (module-documentation object))
 
-;; TODO 2026-06-27: export-file-name
+;; TODO 2026-06-27: export-file-name?
 (defmethod publish ((self system-documentation) &key output info level)
-  (with-slots (id name packages) self
-    (let* ((file (file-documentation (path self)))
+  (with-slots (id packages) self
+    (let* ((*document-module* (name self))
+           (file (file-documentation (path self)))
            (gen (execute-template (keywordicate (class-name (class-of self)))
                                   :env
                                   `(:name ,(name self) :id ,id
