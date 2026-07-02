@@ -199,7 +199,12 @@
 
 (deftyped normalize-source-location-alist ((l list)) list
   (mapcar
-   (lambda (x) (if (listp x) (cdr x) (org-symbol-id x)))
+   (lambda (x) 
+     (if (listp x) (cdr x)
+         (multiple-value-bind (val access) (find-symbol (symbol-name x))
+           (if val
+               (org-symbol-id val)
+               (symbol-name* x)))))
    (remove-if 
     (lambda (x) (and (consp x) (car-eql 'lambda x)))
     (remove-duplicates 

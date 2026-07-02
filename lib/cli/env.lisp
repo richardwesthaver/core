@@ -33,10 +33,10 @@
   "Return a list of all members of PATH"
   (let ((var (sb-posix:getenv "PATH")))
     (let ((lst (loop for i = 0 then (1+ j)
-		     as j = (position #\: var :start i)
+		             as j = (position #\: var :start i)
                      when (uiop:directory-exists-p (probe-file (subseq var i j)))
-		       collect (probe-file (subseq var i j))
-		     while j)))
+		             collect (probe-file (subseq var i j))
+		             while j)))
       (unless (null (car lst))
         (mapcar (lambda (x) (car (directory x)))
                 lst)))))

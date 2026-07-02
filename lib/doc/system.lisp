@@ -96,6 +96,8 @@
                          (when s (path s)))))
     (mapcar #'%rec (components self))))
 
+(defun protocol-documentation (form &optional (module *document-module*)))
+
 (defun module-documentation (form &optional (module *document-module*))
   "Return a simple org-heading describing the module designated by FORM as a
 string."
@@ -104,7 +106,9 @@ string."
       (let ((name))
         (case key
           (:tests 
-           (format s "* ~A :~A:~%" (if module (concatenate 'string (string module) "/" (string key)) key) key))
+           (format s "* ~A :~A:~%" (if module (concatenate 'string (string module) "/" (string key)) key) key)
+           ;; (find-module module key)
+           )
           (:prelude
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
            (format s "- Exports~%~{  - ~A~%~}" 
