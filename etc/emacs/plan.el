@@ -62,7 +62,7 @@
 ;; inherited. The 'PROJECT' property itself can be inherited.
 
 ;; project-info
-(defcustom org-project-info-order '(details html status churn files agenda tasks log vc links)
+(defcustom org-project-info-order '(details html status agenda churn tasks files log vc links)
   "Order in which sections of the 'project-info' dblock will appear."
   :type 'list
   :group 'plan)
@@ -153,7 +153,8 @@ The following keyword parameters can be passed to the info dynamic block:
                      (message "building project vc churn...")
                      (insert "#+CALL: hg-churn() :dir " project-root "\n")))
            ('log (when log
-                   (message "building project vc log...")))
+                   (message "building project vc log...")
+                   (insert "#+CALL: project-vc-log() :dir " project-root "\n")))
 	       ('html (when html
 		            (message "building project html files...")
 		            (insert "#+CALL: project-html-files() :dir " project-root "\n")))

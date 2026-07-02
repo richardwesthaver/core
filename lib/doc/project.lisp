@@ -18,8 +18,9 @@
 #+LOCATION: <%@var location%><%@endif%><%@ifnotempty author%>
 #+AUTHOR: <%@var author%><%@endif%><%@if email%>
 #+EMAIL: <%@var email%><%@endif%><%@ifnotempty tags%>
-#+FILETAGS: <%@var tags%><%@endif%><%@ifnotempty setupfile%>
+#+FILETAGS:<%@loop tags%> <%=env%><%@endloop%><%@endif%><%@ifnotempty setupfile%>
 #+SETUPFILE: <%@var setupfile%><%@endif%>
+#+TODO:
 <%@var description%>
 <%@if info%>
 #+BEGIN: project-info
@@ -93,6 +94,7 @@
            (file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
            (email (when (consp #1#) (cdr #1#)))
+           (tags (tags project))
            (vc (or vc (uri (vc-remote (vc project) 'default))))
            (gen (execute-template (keywordicate (class-name (class-of self)))
                                   :env
@@ -111,7 +113,7 @@
                                     :author ,author
                                     :email ,email
                                     ;; :require ,(module-require self)
-                                    ;; :tags ,(file-tag-string self)
+                                    :tags ,tags
                                     :systems ,ast))))
       (case output
         ('nil gen)
