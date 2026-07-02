@@ -138,7 +138,7 @@ CHAR-COUNT."
 (defun definition-source-line-number (def)
   (let ((pathname (sb-introspect:definition-source-pathname def)))
     (when-let ((count (sb-introspect:definition-source-character-offset def)))
-      (count-lines-up-to-character pathname count))))
+      (1+ (count-lines-up-to-character pathname count)))))
 
 (defun decomment (s) 
   "In addition to left-trimming comments and whitespace, we insert a comma (#\')
