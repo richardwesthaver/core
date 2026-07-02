@@ -542,7 +542,7 @@
 ;;; Backup
 (def-with-errptr rocksdb-backup-engine-verify-backup void
   (be (* rocksdb-backup-engine))
-  (backup-id (unsigned 32)))
+  (backup-id (unsigned 32)))  
 
 (def-with-errptr rocksdb-backup-engine-open
     (* rocksdb-backup-engine)
@@ -568,6 +568,8 @@
   (wal-dir c-string)
   (res-opts (* rocksdb-restore-options))
   (backup-id unsigned-int))
+
+(defar rocksdb-backup-engine-stop-backup void (be (* rocksdb-backup-engine)))
 
 (defar rocksdb-backup-engine-close void
   (be (* rocksdb-backup-engine)))

@@ -46,11 +46,14 @@
 (define-opt-accessor rocksdb-backup-engine-options callback-trigger-interval-size (unsigned 64))
 (define-opt-accessor rocksdb-backup-engine-options max-valid-backups-to-open int)
 (define-opt-accessor rocksdb-backup-engine-options shared-files-with-checksum-naming int)
-(define-opt rocksdb-restore-options)
+(defar rocksdb-backup-engine-options-set-backup-rate-limiter void
+  (opts (* rocksdb-backup-engine-options)) (limiter (* rocksdb-ratelimiter)))
+(defar rocksdb-backup-engine-options-set-restore-rate-limiter void
+  (opts (* rocksdb-backup-engine-options)) (limiter (* rocksdb-ratelimiter)))
+(define-opt rocksdb-restore-options)  
 (defar rocksdb-restore-options-set-keep-log-files void
   (opts (* rocksdb-restore-options))
   (v int))
-
 (define-opt rocksdb-hyper-clock-cache-options)
 (defar rocksdb-hyper-clock-cache-options-set-capacity void
   (opts (* rocksdb-hyper-clock-cache-options))
@@ -222,6 +225,7 @@
 (define-opt-accessor rocksdb-options allow-mmap-writes)
 (define-opt-accessor rocksdb-options use-direct-reads)
 (define-opt-accessor rocksdb-options use-direct-io-for-flush-and-compaction)
+(define-opt-accessor rocksdb-options use-direct-io-for-compaction-reads)
 (define-opt-accessor rocksdb-options is-fd-close-on-exec)
 (define-opt-accessor rocksdb-options inplace-update-num-locks size-t)
 (define-opt-accessor rocksdb-options inplace-update-support)
@@ -586,6 +590,12 @@ will be set to NULL.
   (list-column-family-names (* c-string))
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))
+
+(def-with-errptr rocksdb-set-db-options void
+  (db (* rocksdb))
+  (count int)
+  (keys (array c-string))
+  (values (array c-string)))
 
 (def-with-errptr rocksdb-set-options void
   (db (* rocksdb))

@@ -51,7 +51,7 @@
   (with-output-to-string (s)
     (fmt-rule s (rule-target self) (source self) (kernel-documentation self))))
 
-(defclass project-documentation (document id)
+(defclass project-documentation (document)
   ((project :initarg :project :accessor doc-object :type project)))
 
 (defun project-documentation (&optional (project *project*) systems include-test-systems)
@@ -74,7 +74,7 @@
 (defmethod dependencies ((self project-documentation))
   (mapcar #'system-documentation (component-require (doc-object self))))
 
-;; (defaccessor id ((self project-documentation)) (id (doc-object self)))
+(defmethod id ((self project-documentation)) (id (doc-object self)))
 (defaccessor name ((self project-documentation)) (name (doc-object self)))
 (defaccessor version ((self project-documentation)) (version (doc-object self)))
 (defaccessor description ((self project-documentation)) (description (doc-object self)))
