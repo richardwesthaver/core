@@ -112,11 +112,13 @@ string."
           (:prelude
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
            (format s "- Exports~%~{  - ~A~%~}" 
-                   (mapcar 
-                    (lambda (x) 
-                      (with-output-to-string (s) 
-                        (fmt-org-id-link s (id x) x)))
-                    (cons name args))))
+                   (mapcar #'find-symbol-normalize args)))
+          (:proto
+           (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (doplist (k v) args
+             (when v
+               (format s "- ~A~%~<  - ~;~A~>~%" 
+                       k v))))
           (t
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
            (doplist (k v) args

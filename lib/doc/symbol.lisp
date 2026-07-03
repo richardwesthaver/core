@@ -197,14 +197,16 @@
     (format stream "~%Alloc Info: ~S~%" alloc)
     (format stream "~%Definitions: ~S~%" definitions)))
 
+(defun find-symbol-normalize (sym)
+  (multiple-value-bind (val access) (find-symbol (symbol-name sym))
+    (declare (ignore access))
+    (if val
+        (org-symbol-id val)
+        (symbol-name* sym))))
+
 (deftyped normalize-source-location-alist ((l list)) list
   (mapcar
-   (lambda (x) 
-     (if (listp x) (cdr x)
-         (multiple-value-bind (val access) (find-symbol (symbol-name x))
-           (if val
-               (org-symbol-id val)
-               (symbol-name* x)))))
+   (lambda (x) (if (listp x) (cdr x) (find-symbol-normalize x)))
    (remove-if 
     (lambda (x) (and (consp x) (car-eql 'lambda x)))
     (remove-duplicates 

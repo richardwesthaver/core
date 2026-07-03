@@ -1523,6 +1523,8 @@
    :*system-table*
    :*module-table*
    :*provider-table*
+   :call-provider
+   :find-provider
    :*component-class-table*
    :components
    :sysdefs
