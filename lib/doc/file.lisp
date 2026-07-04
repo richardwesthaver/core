@@ -117,6 +117,10 @@ CODE
 :outline:
 <%@loop outline%><%=(doc:publish env)%>
 <%@endloop%>:end:
+<%@endif%><%@ifnotempty tasks%>
+:tasks:
+<%@loop tasks%><%=(doc:publish env)%>
+<%@endloop%>:end:
 <%@endif%>")
 
 (deftempo :mod-documentation
@@ -130,6 +134,18 @@ CODE
 
 (defconstant +max-file-heading-level+ 8)
 (defconstant +min-file-heading-level+ 3)
+
+(defstruct inline-file-task keyword date description)
+
+(defmethod publish ((self inline-file-task) &key)
+  (format nil "- ~A~@[ ~A~] :: ~A"
+          (state self) 
+          (format-date-simple nil (date self))
+          (description self)))
+
+(defmethod description ((self inline-file-task)) (inline-file-task-description self))
+(defmethod state ((self inline-file-task)) (inline-file-task-keyword self))
+(defmethod date ((self inline-file-task)) (inline-file-task-date self))
 
 (defclass file-heading ()
   ((name :initarg :name :type string :accessor name)
@@ -230,7 +246,7 @@ optional top-level FILE-HEADINGs."))
         until (code-start-p l)
         finally (return (file-position stream))))
 
-(defun read-file-header (path &optional (if-does-not-exist :error))
+(defun read-file-header (path)
   "Read a FILE-HEADER from PATH.
 
 File headers always appear at the very start of a file so the stream position
@@ -238,7 +254,7 @@ is always assumed to be 0.
 
 Return two values: the file-header and the position of the first character
 after the code start header (see CODE-START-P)."
-  (with-open-file (f path :if-does-not-exist if-does-not-exist)
+  (with-open-file (f path)
     (multiple-value-bind (hl next) (read-file-headline f)
       (when hl
         (let ((h (make-instance 'file-header :headline hl))
@@ -260,16 +276,29 @@ after the code start header (see CODE-START-P)."
                                   collect (make-string 1 :initial-element #\newline)))))))
           (values h body-start))))))
 
-(defun read-file-outline (path &optional start (if-does-not-exist :error))
-  "Return a list of file-headings defined in PATH."
-  (with-open-file (f path :if-does-not-exist if-does-not-exist)
+(defun read-file-outline (path &optional start)
+  "Return a list of file-headings defined in PATH. START is the file-position to
+start from and when TASKS is non-nil (the default) include the list of inline
+tasks as a second value."
+  (with-open-file (f path)
     ;; calculate offset of first line after ';;; Code:'
     (file-position f (or start (read-until-code-start f)))
     (trace! "code starts at ~d" (file-position f))
-    (loop for l = (read-line f nil)
-          while l
-          if (heading-line-p l)
-          collect (with-input-from-string (s l) (read-file-heading s)))))
+    (let ((headings) (%tasks))
+      (loop for l = (read-line f nil)
+            while l
+            if (heading-line-p l)
+            do (push (with-input-from-string (s l) (read-file-heading s)) headings)
+            else
+            do (when-let ((task (parse-ulang-comment l)))
+                 (destructuring-bind (kw date desc) task
+                   (push 
+                    (make-inline-file-task 
+                     :keyword kw
+                     :date (unless (zerop (length date)) (parse-timestring date))
+                     :description desc)
+                    %tasks))))
+      (values headings %tasks))))
 
 ;; (read-file-outline "proto.lisp")
 ;; (defmacro define-file-heading (type slots))
@@ -285,8 +314,9 @@ after the code start header (see CODE-START-P)."
 
 (defclass file-documentation (file-component id)
   ((path :initarg :path :type pathname :accessor path)
-   (header :initform nil :initarg :header :type file-header)
+   (header :initform nil :initarg :header)
    (outline :initform nil :initarg :outline :type sequence)
+   (tasks :initform nil :initarg :tasks :accessor tasks)
    (links :initform nil :initarg :links :type sequence))
   (:documentation "An object containing the header, outline, and relevant
   links in a source file. Note that this object only contains inline
@@ -307,13 +337,15 @@ after the code start header (see CODE-START-P)."
 
 (defun file-documentation (path)
   "Return the FILE-DOCUMENTATION for PATH."
-  (multiple-value-bind (header code-start) (read-file-header path nil)
-    (make-instance 'file-documentation
-      :path path
-      :header header
-      :outline (read-file-outline path code-start)
-      :name (pathname-name path)
-      :type (pathname-type path))))
+  (multiple-value-bind (header code-start) (read-file-header path)
+    (multiple-value-bind (outline tasks) (read-file-outline path code-start)
+      (make-instance 'file-documentation
+        :path path
+        :header header
+        :outline outline
+        :tasks tasks
+        :name (pathname-name path)
+        :type (pathname-type path)))))
 
 (definline file-header (doc) (slot-boundp! doc 'header))
 (definline file-headline (doc) (when-let ((h (file-header doc))) (slot-boundp! h 'headline)))
@@ -333,7 +365,7 @@ after the code start header (see CODE-START-P)."
 (defmethod commentary ((self file-documentation)) (file-commentary self))
 
 (defmethod publish ((self file-documentation) &key output level)
-  (with-slots (id name outline) self
+  (with-slots (id name outline tasks) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,id
@@ -348,6 +380,7 @@ after the code start header (see CODE-START-P)."
                                    :description ,(file-description self)
                                    :summary ,(file-summary self)
                                    :commentary ,(file-commentary self)
+                                   :tasks ,tasks
                                    ,@(when level `(:level ,level))
                                    ;; :tags ,(file-tag-string self)
                                    :outline ,outline))))

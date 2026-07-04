@@ -31,7 +31,7 @@
 (defgroup ulang nil "ULANG")
 
 (defcustom ulang-properties
-  '("VERSION" "LOCATION" "PRONOUNCE" "AKA" "CREATED")
+  '("VERSION" "LOCATION" "PRONOUNCE" "AKA" "CREATED" "ALLOC")
   nil
   :group 'ulang)
 

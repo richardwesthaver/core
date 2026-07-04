@@ -140,7 +140,10 @@
    :org-keywords
    :org-title
    :org-tags
-   :org-file-headings))
+   :org-file-headings
+   :*ulang-todo-keywords*
+   :ulang-comment-rx
+   :parse-ulang-comment))
 
 (defpkg :organ/graph
   (:use :cl :std :organ :graph :db :rdb :id :uuid :q :schema :graph :ast :time :uri :url :equiv :val)

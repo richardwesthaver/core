@@ -10,7 +10,7 @@
 :PROPERTIES:
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var custom-id%><%@ifnotempty alloc%>
-:ALLOC_INFO: <%=(car (getf-tempo \"alloc\"))%> <%=(getf (cadr (getf-tempo \"alloc\")) :space)%><%@endif%>
+:ALLOC: <%=(car (getf-tempo \"alloc\"))%> <%=(getf (cadr (getf-tempo \"alloc\")) :space)%><%@endif%>
 :END:<%@ifnotempty documentation%> 
 #+begin_example
 <%@var documentation%>
@@ -131,7 +131,7 @@
 
 (deffmt fmt-definition-path "~A~@[:~A~]")
 (deffmt fmt-definition-link "~A~@[#l~A~]")
-(deffmt fmt-definition-source "- ~A~@[~%~{  - ~(~A~)~^~%~}~]")
+(deffmt fmt-definition-source "- ~A~@[~%  - ~A~^~%~]")
 
 (defmethod publish ((self definition-source) &key)
   (with-output-to-string (s)
@@ -149,7 +149,12 @@
            (with-output-to-string (x)
              (fmt-vc-link x *document-project-name* slink spath))
            %path))
-     (remove 't (sb-introspect::definition-source-description self)))))
+     (let ((desc (remove 't (sb-introspect::definition-source-description self))))
+       (if (= 1 (length desc))
+           (if (not (listp (car desc)))
+               (find-symbol-normalize (car desc))
+               (car desc))
+           desc)))))
 
 (defclass symbol-documentation (id) ;; package-id? (sb-c::symbol-package-id s)
   ((symbol :initarg :symbol :type symbol :accessor doc-object)
