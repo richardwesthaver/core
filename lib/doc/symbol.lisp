@@ -147,7 +147,8 @@
                           (fmt-definition-link y (enough-namestring %path) %line)))))
        (if (and *document-project-name* slink)
            (with-output-to-string (x)
-             (fmt-vc-link x *document-project-name* slink spath))
+             (fmt-vc-link x *document-project-name* 
+                          slink spath))
            %path))
      (let ((desc (remove 't (sb-introspect::definition-source-description self))))
        (if (= 1 (length desc))

@@ -105,7 +105,7 @@ CODE
 (in-package :doc)
 
 (deftempo :file-documentation
-  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
+  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
 <%@ifnotempty summary%>:SUMMARY: <%@var summary%>
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
@@ -383,7 +383,7 @@ tasks as a second value."
                                    :commentary ,(file-commentary self)
                                    :tasks ,tasks
                                    ,@(when level `(:level ,level))
-                                   ;; :tags ,(file-tag-string self)
+                                   :tags ,(with-output-to-string (s) (fmt-tags s (pathname-type (path self))))
                                    :outline ,outline))))
       (case output
         ('nil gen)

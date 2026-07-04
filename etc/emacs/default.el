@@ -824,7 +824,34 @@ With prefix ARG non-nil, insert the result at the end of region."
 (use-package newsticker
   :bind 
   ("C-c e n" . newsticker-plainview)
-  ("C-c e N" . newsticker-treeview))
+  ("C-c e N" . newsticker-treeview)
+  :config
+  (setopt newsticker-url-list
+          '(("VC:CORE" "https://vc.compiler.company/core/atom-log")
+            ("VC:INFRA" "https://vc.compiler.company/infra/atom-log")
+            ("VC:ORG" "https://vc.compiler.company/org/atom-log")
+            ("VC:SHED" "https://vc.compiler.company/shed/atom-log")
+            ("GH:ROCKSDB" "https://github.com/facebook/rocksdb/commits.atom")
+            ("GH:SBCL" "https://github.com/sbcl/sbcl/commits.atom")
+            ("GH:SLIME" "https://github.com/slime/slime/commits.atom")
+            ("Sacha Chua" "https://sachachua.com/blog/feed/index.xml")
+            ("Huffpost" "https://www.huffpost.com/section/world-news/feed")
+            ("NYT" "https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml")
+            ("FOX News" "http://feeds.foxnews.com/foxnews/latest")
+            ("LA Times" "https://www.latimes.com/world-nation/rss2.0.xml")
+            ("WSJ" "https://feeds.a.dj.com/rss/RSSWorldNews.xml")
+            ("CNN" "http://rss.cnn.com/rss/edition.rss")
+            ("Yahoo" "https://news.yahoo.com/rss/mostviewed")
+            ("CNBC" "https://www.cnbc.com/id/100003114/device/rss/rss.html")
+            ("Politico" "https://rss.politico.com/playbook.xml")
+            ("OzBargain" "https://www.ozbargain.com.au/deals/feed")
+            ("Al Jazeera" "https://www.aljazeera.com/xml/rss/all.xml")
+            ("NPR" "https://feeds.npr.org/1004/rss.xml")
+            ("NBC" "https://feeds.nbcnews.com/nbcnews/public/news")
+            ("Financial Times" "https://www.ft.com/world?format=rss")
+            ("Mexico News Daily" "https://mexiconewsdaily.com/feed/")
+            ("Rio Times" "https://www.riotimesonline.com/feed")
+            ("Colombia Reports" "https://colombiareports.com/feed/"))))
 
 ;;; Diary
 (use-package diary-lib
