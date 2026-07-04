@@ -1393,6 +1393,7 @@
    :run-job
    :job-p :task-p :task :task-worker
    :plan :status :planner :task-pool
+   :plan-traversal
    :task-done-p :record-dependency
    :simple-task :simple-plan
    :pressure :task-forced-p :task-prevented-p :pressure-parameters
