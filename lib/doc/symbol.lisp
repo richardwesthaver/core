@@ -151,7 +151,7 @@
            %path))
      (let ((desc (remove 't (sb-introspect::definition-source-description self))))
        (if (= 1 (length desc))
-           (if (not (listp (car desc)))
+           (if (and (not (listp (car desc))) (not (eql 'null (car desc))))
                (find-symbol-normalize (car desc))
                (car desc))
            desc)))))
