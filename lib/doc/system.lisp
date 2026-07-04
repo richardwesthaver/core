@@ -21,6 +21,7 @@
 <%@endif%><%@ifnotempty summary%>:SUMMARY: <%@var summary%>
 <%@endif%><%@ifnotempty file-description%>:DESCRIPTION: <%@var file-description%>
 <%@endif%><%@ifnotempty version%>:VERSION: <%@var version%>
+<%@endif%><%@if export-file-name%>:EXPORT_FILE_NAME: <%@var export-file-name%>
 <%@endif%>:LOCATION: <%@var location%>
 :END:<%@ifnotempty description%>
 <%@var description%>
@@ -130,7 +131,7 @@ string."
   (module-documentation object))
 
 ;; TODO 2026-06-27: export-file-name?
-(defmethod publish ((self system-documentation) &key output info level)
+(defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*))
   (with-slots (id packages) self
     (let* ((*document-module* (name self))
            (file (file-documentation (path self)))
@@ -149,6 +150,8 @@ string."
                                     :info ,info
                                     :commentary ,(file-commentary file)
                                     :description ,(description self)
+                                    ,@(when file-name-p
+                                        `(:export-file-name ,(format nil "api/~(~A~)" (name self))))
                                     :file-description ,(file-description file)
                                     :components ,(components self)
                                     :version ,(version self)

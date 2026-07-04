@@ -86,6 +86,7 @@
    :*document-class*
    :org-symbol-id
    :*definition-types*
+   :*document-multi-file*
    :definition-specifier
    :find-definitions
    :definition-source-line-number

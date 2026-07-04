@@ -20,6 +20,7 @@
 
 (defvar *document-project-name* nil)
 (defvar *document-module* nil)
+(defvar *document-multi-file* nil)
 
 (defparameter *definition-types*
   '(:variable defvar
