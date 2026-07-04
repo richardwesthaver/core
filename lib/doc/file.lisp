@@ -138,8 +138,8 @@ CODE
 (defstruct inline-file-task keyword date description)
 
 (defmethod publish ((self inline-file-task) &key)
-  (format nil "- ~A~@[ ~A~] :: ~A"
-          (state self) 
+  (format nil "- ~A~@[ ~A~]~@[ :: ~A~]"
+          (state self)
           (format-date-simple nil (date self))
           (description self)))
 
@@ -292,12 +292,13 @@ tasks as a second value."
             else
             do (when-let ((task (parse-ulang-comment l)))
                  (destructuring-bind (kw date desc) task
-                   (push 
-                    (make-inline-file-task 
-                     :keyword kw
-                     :date (unless (zerop (length date)) (parse-timestring date))
-                     :description desc)
-                    %tasks))))
+                   (let ((date (unless (zerop (length date)) (ignore-errors (parse-timestring date)))))
+                     (push 
+                      (make-inline-file-task 
+                       :keyword kw
+                       :date date
+                       :description desc)
+                      %tasks)))))
       (values headings %tasks))))
 
 ;; (read-file-outline "proto.lisp")

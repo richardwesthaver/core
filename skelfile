@@ -206,11 +206,12 @@
   (with-directory ".."
    #$tar --exclude='.hg' --exclude='.stash' --exclude='*.tar.zst' --exclude='#*#' -I 'zstd' -cf ./core/core.tar.zst core/$#))
  (docs ()
-  (:build () 
-   (time (publish (project-documentation)
-          :output #p".stash/api.org" 
-          ;; :info t 
-          :setupfile "../../clean.theme"))))
+  (:build ()
+   (let ((*document-multi-file* t))
+    (time (publish (project-documentation)
+           :output #p".stash/api.org" 
+           ;; :info t 
+           :setupfile "../../clean.theme")))))
  (deploy (dist dist-repo)
   (move-file ".stash/core.zst" "/opt/store/packy/dist/x86_64/core.zst")
   (make *project* :dist-source)
