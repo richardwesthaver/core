@@ -53,14 +53,14 @@ This covers variations of make-source-header-comment, make-source-file-header,
 make-shebang-comment, and make-shebang-file-header."
   (issubtype 'file-header 
              (type-of (make-shebang-file-header 
-               (make-shebang-comment "/dev/null"))))
+                       (make-shebang-comment "/dev/null"))))
   (issubtype 'file-header 
              (type-of (make-source-file-header 
-               (make-source-header-comment 
-                "foo-test"
-                :timestamp t
-                :description "nothing to see here"
-                :opts '("Definitely-Not_Emacs: T;"))))))
+                       (make-source-header-comment 
+                        "foo-test"
+                        :timestamp t
+                        :description "nothing to see here"
+                        :opts '("Definitely-Not_Emacs: T;"))))))
 
 ;; TODO 2025-08-18: 
 (deftest doc-db (:skip :todo)

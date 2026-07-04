@@ -58,7 +58,7 @@ A higher score means the suggestion comes first."
   (+ (* 1.0 (norm-damerau-levenshtein suggestion input))
      (* 1.0 (substring-norm (std:ssplit " " input) suggestion))))
 
-; TODO: Learn good value and enable low-score filtering below.
+                                        ; TODO: Learn good value and enable low-score filtering below.
 (defvar score-threshold 0.0             
   "The threshold under which suggestions are eleminated.")
 
@@ -115,7 +115,7 @@ then all suggestions that are not exactly matched by at least one substring are 
                          suggestion-pairs))
         suggestion-pairs)))
 
-; TODO: Make score functions customizable, e.g. for global history.
+                                        ; TODO: Make score functions customizable, e.g. for global history.
 (defun fuzzy-match (input suggestions &key suggestions-display (score-suggestion 'score-suggestion))
   "From the user input and a list of suggestions, return a filtered list of
 suggestions that have all the input words in them, and sort this list to have

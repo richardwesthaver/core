@@ -251,7 +251,7 @@ with a comma."
              (memq (char name len) +org-emphasis-chars+))
         (concat (subseq name 0 len) (coerce `(#\zero_width_space ,(char name len)) 'string))
         name)))
-  
+
 (defmethod publish ((self symbol-documentation) &key output level)
   (with-slots (id definitions alloc) self
     (let ((gen (execute-template 

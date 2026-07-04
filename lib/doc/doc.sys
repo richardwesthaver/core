@@ -1,34 +1,34 @@
 ;;; core/lib/doc/doc.sys --- Doc Sytem Definitions
 (defsys :doc
- "The official documentation system of the core. Contains all modules
+  "The official documentation system of the core. Contains all modules
 necessary for building complete API reference documents."
- :version "0.1.0"
- :require (:std :organ :parse :obj :rdb :log :syn :vc)
- :components 
- ((:pkg "pkg")
-  (:file "nlp")
-  (:file "fuzzy")
-  (:file "proto")
-  (:file "reprex")
-  (:file "symbol")
-  (:file "file")
-  (:file "package")
-  (:file "system")
-  (:file "project")
-  (:file "core")
-  (:file "srv"))
- :provide 
- ((:proto :nlp)
-  (:proto :doc
-   :variables (*document-class* *definition-types*)
-   :accessors (doc summary commentary)
-   :methods (document-class publish doc-object document-keyword)
-   :classes (project-documentation system-documentation 
-             package-documentation file-documentation 
-             symbol-documentation)
-   :functions (find-definitions definition-source-line-number classify-symbol))
-  ;; (:proto :publish)?
-  (:proto :reprex)
-  (:proto :search)
-  (:readtable :doc)
-  (:tests :require (:rt :doc :rdb :obj))))
+  :version "0.1.0"
+  :require (:std :organ :parse :obj :rdb :log :syn :vc)
+  :components 
+  ((:pkg "pkg")
+   (:file "nlp")
+   (:file "fuzzy")
+   (:file "proto")
+   (:file "reprex")
+   (:file "symbol")
+   (:file "file")
+   (:file "package")
+   (:file "system")
+   (:file "project")
+   (:file "core")
+   (:file "srv"))
+  :provide 
+  ((:proto :nlp)
+   (:proto :doc
+    :variables (*document-class* *definition-types*)
+    :accessors (doc summary commentary)
+    :methods (document-class publish doc-object document-keyword)
+    :classes (project-documentation system-documentation 
+                                    package-documentation file-documentation 
+                                    symbol-documentation)
+    :functions (find-definitions definition-source-line-number classify-symbol))
+   ;; (:proto :publish)?
+   (:proto :reprex)
+   (:proto :search)
+   (:readtable :doc)
+   (:tests :require (:rt :doc :rdb :obj))))

@@ -383,7 +383,7 @@ tasks as a second value."
                                    :commentary ,(file-commentary self)
                                    :tasks ,tasks
                                    ,@(when level `(:level ,level))
-                                   :tags ,(with-output-to-string (s) (fmt-tags s (pathname-type (path self))))
+                                   :tags ,(with-output-to-string (s) (fmt-tags s (list (pathname-type (path self)))))
                                    :outline ,outline))))
       (case output
         ('nil gen)

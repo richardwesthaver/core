@@ -86,10 +86,10 @@
 (defmethod path ((self project-documentation))
   (path (doc-object self)))
 
-(defmethod publish ((self project-documentation) &key output info setupfile vc (local t) parent)
+(defmethod publish ((self project-documentation) &key output info setupfile vc (local t) parent (if-exists :supersede))
   (with-slots (project ast) self
     (let* ((*default-pathname-defaults* (path self))
-           (*document-project-name* (format nil "~@[~A:~]~A" parent (name project)))
+           (*document-project-name* (format nil "~@[~A/~]~A" parent (name project)))
            (file (file-documentation (path self)))
            (author (if (consp #1=(author self)) (car #1#) #1#))
            (email (when (consp #1#) (cdr #1#)))
@@ -119,5 +119,5 @@
         (:string gen)
         (t 
          (if (pathnamep output)
-             (with-output-to-file (f output) (write-string gen f))
+             (with-output-to-file (f output :if-exists if-exists) (write-string gen f))
              (write-string gen output)))))))
