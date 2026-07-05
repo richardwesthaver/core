@@ -792,6 +792,8 @@ and execution of concurrent work using a pool of 'worker' threads."))
 
 (defun find-thread-pool (name) (gethash name *thread-pool-table*))
 
+(defun list-all-thread-pools () (std/hash:hash-table-list *thread-pool-table*))
+
 (defmethod call ((self thread-pool) args)
   (if (sb-int:singleton-p args)
       (funcall (kernel self) (car args) self)
@@ -1015,6 +1017,8 @@ provided. *THREAD-POOL* is returned."
           :interactive (lambda () (print "Value for *THREAD-POOL*: ") (read))
           (check-type value thread-pool)
           (setf *thread-pool* value)))))
+
+(defmethod check ((self (eql :thread-pool)) &key) (check-thread-pool))
 
 (defun worker-count (pool)
   "Return the worker count of POOL."

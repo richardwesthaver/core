@@ -81,6 +81,6 @@
     (is= 99 (pfind 99 (iota 100)))
     (is= 14 (pmap-reduce #'1+ #'+ #(1 2 3 4)))
     (is= 1 (aref (pmap 'vector #'1+ '(0 0)) 0)))
-    ;; FIX 2025-09-02: pquantifier
+  ;; FIX 2025-09-02: pquantifier
   ;; (psome #'atom '(1) '(2) '(3) '(4))
     )

@@ -1106,7 +1106,7 @@
    :assignee :started-p
    :verb-p :init
    :reset :state
-   :stat
+   :stat :check
    :init* :pause
    :install :uninstall
    :send :receive
@@ -1313,6 +1313,7 @@
    :receive-cancelables :receive-result
    :try-receive-result :shutdown-channel
    :broadcast-work :find-thread-pool
+   :list-all-thread-pools
    :run-thread :thread-support-p
    :print-top-level :println-top-level
    :find-thread-by-id :thread-id-list

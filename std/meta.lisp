@@ -50,6 +50,8 @@ function NAME and be skipped for (setf NAME)."
 ;; make-method-lambda-using-specializers
 (defverb init (self &key &allow-other-keys)
   (:documentation "Intiailize SELF."))
+(defverb check (self &key &allow-other-keys)
+  (:documentation "Check SELF."))
 (defverb start (self)
   (:documentation "Start object SELF."))
 (defverb started-p (self)
