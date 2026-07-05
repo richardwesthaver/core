@@ -107,4 +107,6 @@
      (:file "mpk")
      (:file "cli")))
    (:file "cli"))
-  :provide ((:tests) (:bin)))
+  :provide 
+  ((:tests) 
+   (:bin)))

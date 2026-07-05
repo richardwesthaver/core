@@ -414,8 +414,7 @@ had returned RESULT.  See the source code of REDIRECT for an example."
   (:documentation "The service class is designed primarily for webservers and functionally
 similar to HUNCHENTOOT:ACCEPTOR."))
 
-(defmethod shared-initialize :after ((self net-service) slots &key port address name)
-  (when name (register-service name self))
+(defmethod shared-initialize :after ((self net-service) slots &key port address &allow-other-keys)
   (when (consp port) ; assumed to be a port range - we select one at random, ensure it is free, and replace
     (destructuring-bind (lo . hi) port
       (setf (port self) (find-port :min (+ lo (random (- hi lo))) :max hi :host (or address *localhost*))))))

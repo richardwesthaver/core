@@ -521,7 +521,6 @@
    #:net-service
    #:*access-log-lock*
    #:*message-log-lock*
-   #:make-service
    #:net-service-response
    #:net-service-request
    #:abort-request-handler

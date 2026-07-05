@@ -121,6 +121,9 @@ communication as well as the engine which drives it."))
 (defclass response () ()
   (:documentation "Base class for response objects, usually generated in reply to a REQUEST."))
 
+(defmethod initialize-instance :after ((self service) &key name &allow-other-keys)
+  (when name (register-service name self)))
+
 (defclass service-response (response)
   ((content-type :reader content-type)
    (content-length :reader content-length :initform nil)))
@@ -211,6 +214,11 @@ logging, etc."))
   "Define a SERVICE subclass."
   `(defclass ,name ,(or super '(service)) ,slots ,@opts))
 
-(defmacro with-service ((name) &body body)
+(defmacro with-service ((name &key pool) &body body)
+  "Bind *SERVICE* around BODY.
+
+When POOL is non-nil it should be a form passed to WITH-THREAD-POOL."
   `(let ((*service* (gethash ,name *service-table*)))
-     ,@body))
+     ,@(if pool
+           `((with-thread-pool ,pool ,@body))
+           body)))

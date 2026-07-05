@@ -63,6 +63,7 @@
       
 (defpun async-test-foo ()
   "An asynchronous test function."
+  ;; plet/plet-if are local to DEFPUN
   (plet-if #'numberp ((a 1) (b 1))
            (is= 2 (+ a b))))
 
@@ -81,5 +82,5 @@
     (is= 14 (pmap-reduce #'1+ #'+ #(1 2 3 4)))
     (is= 1 (aref (pmap 'vector #'1+ '(0 0)) 0)))
     ;; FIX 2025-09-02: pquantifier
-    ;; (psome #'atom '(1) '(2) '(3) '(4))
+  ;; (psome #'atom '(1) '(2) '(3) '(4))
     )

@@ -6,14 +6,12 @@
 (in-package :skel/core)
 
 (defclass skel-message (request response message) 
-  ((type :initarg :type :initform :ack)
-   )
-  (:documentation "In-memory representation of a binary-encoded, unencrypted, uncompressed
-message sent over UDP.
+  ((type :initarg :type :initform :ack))
+  (:documentation "In-memory representation of a simple SKEL message.
 
 This object should have its DATA slot initialized with an octet-vector which
 the remaining slots will be serialized to/from. Messages never store header
-information. For a lower-level interface which preserves the header see SK-PACKET."))
+information."))
 
 (defclass skel-service (service) ()
   (:documentation "Base class for SKEL services.")
@@ -22,7 +20,7 @@ information. For a lower-level interface which preserves the header see SK-PACKE
    :response-class 'skel-message))
 
 (defclass skel-engine (multi-threaded-engine thread-pool) ())
-
+(make-instance 'skel-engine :thread (make-ephemeral-thread "skel"))
 (defmethod print-object ((self skel-service) stream)
   (print-unreadable-object (self stream :type t)
     (format stream "~A" (id:id self))))
