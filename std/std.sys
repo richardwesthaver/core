@@ -201,7 +201,7 @@
    :components 
    ((:mod "tests"
      :components
-     ((:pkg "pkg" :internal-package :std-int :readtable :std)
+     ((:pkg "pkg" :readtable :std)
       (:file "num")
       (:file "seq")
       (:file "pipe")

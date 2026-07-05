@@ -436,15 +436,14 @@ objects of type COMPONENT."
     (let ((sys (compile-and-eval
                 `(defsys ,(%test-system-name name) ,@args 
                    :require ,req :class 'test-system 
-                   :components ,(when (eql comp :null) '((:file "tests")))
+                   :components ,(if (eql comp :null) '((:file "tests")) comp)
                    :path ,(or (system-path name)
                               *compile-file-truename* 
                               *load-truename*)))))
       (register-module
        :tests
        name
-       sys
-       t))))
+       sys))))
 
 (defprovider :bench (name &rest args)
   (register-module 
