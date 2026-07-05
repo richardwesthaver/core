@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :skel/srv)
+(in-package :skel/core)
 
 (defclass skel-message (request response message) 
   ((type :initarg :type :initform :ack)

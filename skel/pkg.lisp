@@ -132,7 +132,7 @@
 
 (defpkg :skel/net
   (:nicknames :sk-net)
-  (:use :cl :std :net/srv/udp :skel/core :srv :log :skel/srv))
+  (:use :cl :std :net/srv/udp :skel/core :srv :log))
 
 (defpkg :skel
   (:nicknames :sk)
