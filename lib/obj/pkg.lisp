@@ -882,7 +882,7 @@
    #:accept
    #:service
    #:find-service
-   #:make-service
+   #:list-all-services
    #:response-ok-p
    #:response-status
    #:dispatch-request

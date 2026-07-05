@@ -54,6 +54,8 @@
 (std:definline register-service (name srv)
   (setf (find-service name) srv))
 
+(defun list-all-services () (hash-table-values *service-table*))
+
 ;;; Conditions
 (define-condition service-condition (condition) ())
 (eval-always
