@@ -1,85 +1,110 @@
-;;; core/skel/skel.sys --- Skel Sytem Definitions
+;;; core/skel/skel.sys --- Skel System
+
+;;
+
+;;; Commentary:
+
+;; The SKEL system consists of a core package SKEL/CORE, component packages in
+;; SKEL/COMP, and some default but optional packages SKEL/DB and SKEL/NET.
+
+;; The core contains all of the low-level protocol implementations required
+;; for SKEL.
+
+;; The component packages depend on the core and provide serializers for
+;; translating SKEL objects into foreign formats. For example, RULE objects
+;; may be translated into a corresponding GNU Make Rule. The component
+;; packages extend the PROJECT package defined in the core and may serve as a
+;; useful guide for further extending the system yourself.
+
+;; SKEL/DB provides a database interface for individual project caches as well
+;; as global storage.
+
+;; SKEL/NET provides a wire protocol and client/server for communication
+;; amongst any number of remote hosts.
+
+;;; Code:
 (defsys :skel
- :version "0.1.2"
- :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
- :components 
- ((:pkg "pkg" :internal-package :skel-int :feature :skel :default-package :sk-user)
-  (:mod "core"
-   :components 
-   ((:file "condition")
-    (:file "var")
-    (:file "cfg")
-    (:file "project")
-    (:file "db")
-    (:file "log")
-    (:file "util")))
-  (:mod "comp"
-   :components
-   ((:file "lisp")
-    (:file "make")
-    (:file "rust")
-    (:file "python")
-    (:file "emacs")
-    (:file "shell")
-    (:file "box")
-    (:file "pod")
-    (:file "infer")))
-  (:file "net")
-  (:file "srv")
-  (:mod "packy"
-   :components
-   ((:pkg "pkg" 
-     :feature :packy 
-     :internal-package :skel-int 
-     :default-package :pk-user)
-    (:file "var")
-    (:file "proto")
-    (:file "pkgfile")
-    (:file "db")
-    (:file "client")
-    (:file "srv")
-    (:file "cfg")
-    (:file "cli")))
-  (:mod "krypt"
-   :components 
-   ((:pkg "pkg" 
-     :feature :krypt
-     :internal-package :skel-int
-     :default-package :kr-user)
-    (:file "condition")
-    (:file "var")
-    (:file "cfg")
-    (:file "util")
-    (:file "cli")))
-  (:mod "homer"
-   :components 
-   ((:pkg "pkg" 
-     :feature :homer 
-     :internal-package :skel-int
-     :default-package :hr-user)
-    (:file "var")
-    (:file "log")
-    (:file "util")
-    (:file "task")
-    (:file "cfg")
-    (:file "srv")
-    (:file "cli")))
-  (:mod "mpk"
-   :components
-   ((:pkg "pkg" 
-     :feature :mpk 
-     :internal-package :skel-int
-     :default-package :mk-user)
-    (:file "mpd")
-    (:file "var")
-    (:file "proto" :require ("proto"))
-    (:file "util")
-    (:file "db")
-    (:file "cfg")
-    #+todo (:file "clean")
-    (:file "net")
-    (:file "metro")
-    (:file "mpk")
-    (:file "cli")))
-  (:file "cli"))
- :provide ((:tests) (:bin)))
+  :version "0.1.2"
+  :description "Project composition library"
+  :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
+  :components 
+  ((:pkg "pkg" :internal-package :skel-int :feature :skel :default-package :sk-user)
+   (:mod "core"
+    :components 
+    ((:file "condition")
+     (:file "var")
+     (:file "cfg")
+     (:file "project")
+     (:file "db")
+     (:file "log")
+     (:file "util")
+     (:file "srv")))
+   (:mod "comp"
+    :components
+    ((:file "lisp")
+     (:file "make")
+     (:file "rust")
+     (:file "python")
+     (:file "emacs")
+     (:file "shell")
+     (:file "box")
+     (:file "pod")
+     (:file "infer")))
+   (:file "net")
+   (:mod "packy"
+    :components
+    ((:pkg "pkg" 
+      :feature :packy 
+      :internal-package :skel-int 
+      :default-package :pk-user)
+     (:file "var")
+     (:file "proto")
+     (:file "pkgfile")
+     (:file "db")
+     (:file "client")
+     (:file "srv")
+     (:file "cfg")
+     (:file "cli")))
+   (:mod "krypt"
+    :components 
+    ((:pkg "pkg" 
+      :feature :krypt
+      :internal-package :skel-int
+      :default-package :kr-user)
+     (:file "condition")
+     (:file "var")
+     (:file "cfg")
+     (:file "util")
+     (:file "cli")))
+   (:mod "homer"
+    :components 
+    ((:pkg "pkg" 
+      :feature :homer 
+      :internal-package :skel-int
+      :default-package :hr-user)
+     (:file "var")
+     (:file "log")
+     (:file "util")
+     (:file "task")
+     (:file "cfg")
+     (:file "srv")
+     (:file "cli")))
+   (:mod "mpk"
+    :components
+    ((:pkg "pkg" 
+      :feature :mpk 
+      :internal-package :skel-int
+      :default-package :mk-user)
+     (:file "mpd")
+     (:file "var")
+     (:file "proto" :require ("proto"))
+     (:file "util")
+     (:file "db")
+     (:file "cfg")
+     #+todo (:file "clean")
+     (:file "net")
+     (:file "metro")
+     (:file "mpk")
+     (:file "cli")))
+   (:file "cli"))
+  :provide ((:tests) (:bin)))

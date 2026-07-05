@@ -1,42 +1,10 @@
-;;; skel/pkg.lisp --- Project Skeletons
+;;; skel/pkg.lisp --- SKEL Packages
 
-;; Project composition library.
-
-;;; Commentary:
-
-;; The SKEL system consists of a core package SKEL/CORE, a required compiler
-;; package SKEL/COMP, and some default but optional modules SKEL/DB and
-;; SKEL/NET. 
-
-;; The core contains all of the low-level bits and a CLOS API for interacting
-;; with SKEL objects. 
-
-;; The compiler package depends on the core and provides primitive compilers
-;; for translating SKEL objects into foreign formats. For example, RULE
-;; objects may be translated into a corresponding GNU Make Rule. The compiler
-;; packages implement the CLOS API defined in the core and may serve as a
-;; useful guide for further extending the system yourself.
-
-;; SKEL/DB provides a database interface for individual project caches as well
-;; as global storage. SKEL/NET provides a wire protocol and client/server for
-;; communication amongst any number of remote hosts.
-
-;; Additionally there is a collection of default extensions which may be
-;; toggled off via the SKEL-CONFIG FEATURES slot:
-
-;; - VIEW provides an API for generating visualizations of SKEL objects
-
-;; - PACKY enables package management and distribution.
-
-;; - POD enables Podman API functionality.
-
-;; - BOX enables QEMU/libvirt features.
-
-;; - DEPLOY enables CI/Deploy features.
+;;
 
 ;;; Code:
 (defpkg :skel/core
-  (:use :std-lisp :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc)
+  (:use :std-lisp :ast :doc :log :config :project :schema :rdb :db :store :stored :id :vc :srv)
   (:import-from :sb-unix :uid-username :unix-getuid)
   (:import-from :cli :find-exe)
   (:export
@@ -66,22 +34,18 @@
    #:*skel-project-macros*
    #:*default-clean-function*
    ;; objects
-   :sk-stash :sk-data :user
-   :sk-push :sk-pull
    :edit-skelrc :skel
    :def-sk-class :skel-project
-   :sk-command :scripts :skel-config :skel-store
+   :scripts :skel-config :skel-store :user
    :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*
    :print-skel-object
    :*skel-slot-exclusions*
    ;; schema
-   :sk-object-schema :*skel-registry-schema* :*skel-cache-schema*
+   :*skel-registry-schema* :*skel-cache-schema*
    ;; db
-   :skel-db 
-   :skel-db-path
+   :skel-db :skel-db-path
    ;; log
-   :sk-log-schema
    :*skel-log-schema*
    :skel-db-logger
    :*skel-logger-config*
@@ -103,7 +67,11 @@
    :find-sk-file
    :setf-skel-vars
    :project-root
-   :merge-project-pathnames))
+   :merge-project-pathnames
+   ;; srv
+   #:skel-service
+   #:skel-request
+   #:skel-response))
 
 (defpkg :skel/comp/make
   (:use :std-lisp :skel/core :project)
@@ -161,14 +129,6 @@
 (defpkg :skel/cli
   (:nicknames :sk-cli)
   (:use :cl :std :log :skel/core :sb-ext :clap :cli/main :project))
-
-(defpkg :skel/srv
-  (:use :cl :std :db 
-   :store :config :skel/core
-   :net/srv/udp :net/srv/http :srv :project)
-  (:export #:skel-service
-           #:skel-request
-           #:skel-response))
 
 (defpkg :skel/net
   (:nicknames :sk-net)

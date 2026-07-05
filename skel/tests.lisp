@@ -1,4 +1,6 @@
 ;;; skel/tests.lisp --- skel tests
+
+;;; Code:
 (defpackage :skel/tests
   (:use :std-lisp :skel :rt :log :obj :skel/packy :skel/krypt :doc)
   (:import-from :uiop :file-exists-p))
