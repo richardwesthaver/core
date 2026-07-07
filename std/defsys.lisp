@@ -517,7 +517,7 @@ objects of type COMPONENT."
     (if (> (length match) 1)
         (progn
           ;; TODO 2026-07-06: 
-          (when (some 'identity match)  
+          (when (or kind name)
             (warn "Multiple matches found for module ~A ~A" kind name))
           (values match parents providers))
         (values (car match) (car parents) (car providers)))))
