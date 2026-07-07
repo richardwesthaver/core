@@ -73,10 +73,11 @@
   "Return the classification list of SYMBOL."
   (check-type symbol symbol)
   (let (result)
-    (when (boundp symbol) 
+    (when (boundp symbol)
+      (push :var result)
       (cond ((constantp symbol) (push :constant result))
-            ((eql (info :variable :always-bound symbol) :always-bound) (push :global result))
-            (t (push :variable result))))
+            ((eql (info :variable :always-bound symbol) :always-bound)
+             (push :global result))))
     (or (when (find-system symbol) (push :system result))
         (when (find-module symbol) (push :module result)))
     (when (find-class symbol nil) (push :class result))
@@ -97,7 +98,7 @@
     (when (and (fboundp symbol)
                (typep (ignore-errors (fdefinition symbol))
                       'generic-function))
-      (push :generic-function result))
+      (push :generic result))
     result))
 
 (defun symbol-tag-string (sym)
@@ -162,7 +163,7 @@
    (class :initarg :class :type list :accessor doc-class)
    (definitions :initform nil :initarg :definitions :type list :accessor doc-definitions)
    (specs :initform nil :initarg :specs :type list :accessor doc-specs)
-   (info :initarg :info :type (or list packed-info) :accessor doc-info)
+   ;; (info :initarg :info :type (or list packed-info) :accessor doc-info)
    (alloc :initarg :alloc :type list :accessor doc-alloc)))
 
 (defmethod name ((self symbol-documentation))
@@ -180,7 +181,7 @@
       :symbol s
       :class class
       :definitions defs
-      :info (symbol-info s)
+      ;; :info (symbol-info s)
       :alloc (multiple-value-list (allocation-information s)))))
 
 (defmethod print-object ((self symbol-documentation) stream)

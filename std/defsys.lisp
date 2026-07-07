@@ -516,7 +516,9 @@ objects of type COMPONENT."
     (nreversef providers)
     (if (> (length match) 1)
         (progn
-          (warn "Multiple matches found for module ~A ~A" kind name)
+          ;; TODO 2026-07-06: 
+          (when (some 'identity match)  
+            (warn "Multiple matches found for module ~A ~A" kind name))
           (values match parents providers))
         (values (car match) (car parents) (car providers)))))
 
