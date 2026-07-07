@@ -61,7 +61,16 @@
 inference.")
   (:proto :xsubseq
    :description "Optimized SUBSEQ.")
-  (:proto :static
-   :description "Vectors allocated in static memory which can be shared with C code.")
   (:proto :disk
-   :description "Disk-driven IO.")))
+   :description "Disk-driven IO."
+   :classes (disk disk-partition)
+   :functions 
+   (statvfs disk-space disk-total-space disk-free-space disk-available-space
+    list-disks disk-info list-disk-info)
+   :variables (*default-filesystem* *disks*))
+  (:proto :static
+   :description "Vectors allocated in static memory which can be shared with C code."
+   :functions (make-static-vector free-static-vector static-vector-pointer reset-static-stream)
+   :macros (with-static-vector with-static-vectors with-static-stream with-static-streams)
+   :classes (static-stream)
+   :variables (*default-static-stream-size*))))
