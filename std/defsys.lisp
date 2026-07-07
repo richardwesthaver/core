@@ -397,7 +397,8 @@ objects of type COMPONENT."
    :sys
    root
    (compile-and-eval 
-    `(defsys ,@args :path ,(or (system-path root) *compile-file-truename* *load-truename*)))))
+    `(defsys ,@args :path ,(or (system-path root) *compile-file-truename* *load-truename*)))
+   t))
 
 (defprovider :bin (root &rest args)
   (let* ((namep (oddp (length args)))

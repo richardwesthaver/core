@@ -42,16 +42,16 @@ $ sbcl --script bootstrap.lisp
 (init :sys)
 (let ((build-order 
         (list :std
-              :ironclad/core
-              :ironclad/ciphers
-              :ironclad/digests
-              :ironclad/macs
-              :ironclad/prngs
-              :ironclad/aeads
-              :ironclad/kdfs
-              :ironclad/public-keys
+              :ironclad
+              :ironclad/cipher
+              :ironclad/digest
+              :ironclad/mac
+              :ironclad/prng
+              :ironclad/aead
+              :ironclad/kdf
+              :ironclad/public-key
               :swank
-              :swank/exts
+              :swank/ext
               :xkb
               :evdev
               :btrfs

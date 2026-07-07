@@ -1,172 +1,172 @@
 ;;; ~/src/core/lib/obj/obj.sys --- Obj Sytem Definitions
 (defsys :obj "Lisp object library"
- :require (:std)
- :components 
- ((:pkg "pkg" :feature :obj :internal-package :obj-int)
-  (:mod "meta"
-   :components 
-   ((:file "sealed")
-    (:file "stealth")
-    (:file "filtered")
-    (:file "fast")
-    (:file "lazy")
-    (:file "overloaded")
-    (:file "stored")
-    (:file "dynamic")
-    (:file "mix")
-    (:file "method")))
-  (:file "val")
-  (:file "id")
-  (:mod "uri"
-   :components 
-   ((:file "punycode")
-    (:file "domain")
-    (:file "uri")
-    (:file "mask")
-    (:file "state")
-    (:file "parse")
-    (:file "print")
-    (:file "path")
-    (:file "intern")))
-  (:file "url")
-  (:mod "tensor"
-   :components 
-   ((:file "var")
-    (:file "condition")
-    (:file "meta")
-    (:file "base")
-    (:file "num")
-    (:file "template")
-    (:file "loop")
-    (:file "zeros")
-    (:file "ref")
-    (:file "print")
-    (:file "stride")
-    (:file "graph")
-    (:file "coord")
-    (:file "foreign")
-    (:file "copy")
-    (:file "perm")
-    (:file "einstein")
-    (:file "slice")
-    (:file "bool")
-    (:file "complex")
-    (:file "dot")
-    (:file "scal")
-    (:file "transpose")
-    (:file "dfs")
-    (:file "rand")
-    (:file "map")
-    (:file "misc")))
-  (:file "node")
-  (:file "btree")
-  (:file "equiv")
-  (:mod "color"
-   :components 
-   ((:file "color")
-    (:file "palette")
-    (:file "x11")
-    (:file "base16")
-    (:file "modus")
-    (:file "theme")
-    (:file "print")))
-  (:file "time")
-  (:file "uuid")
-  (:file "ast")
-  (:file "config")
-  (:file "schema")
-  (:file "project")
-  (:file "cmd")
-  (:file "db")
-  (:file "graph")
-  (:file "secret")
-  (:file "store")
-  (:file "cache")
-  (:file "srv")
-  (:file "obj"))
- :provide
- ((:proto :ast
-   :description "Abstract Syntax Trees."
-   :classes (ast node)
-   :accessors (ast)
-   :conditions (syntax-condition syntax-warning invalid-ast)
-   :variables (*ast* *keep-ast*)
-   :predicates (formp)
-   :types (form)
-   :macros (defnode)
-   :functions (wrap-object unwrap-object))
-  (:proto :node)
-  (:proto :btree)
-  (:proto :db)
-  (:proto :graph)
-  (:proto :config)
-  (:proto :schema)
-  (:proto :project
-   :description "Simple Project API."
-   :functions (make-project register-project)
-   :globals (*project-table*)
-   :classes (project-config project-metadata project simple-project)
-   :variables (*default-project-class*))
-  (:proto :cmd
-   :description "Command object definition framework."
-   :methods (parse-args command-class interactive)
-   :classes (command)
-   :functions (read-args run-commands call-commands eval-command compile-command icount icount* check-itype
-               list-commands list-all-commands list-command-types command command-type command-table make-commands)
-   :declarations (interactive)
-   :parameters (*command-names-p* *interactive-optional-args-p* *interactive-rest-args-p* *interactive-key-args-p*)
-   :variables (*command* *command-io* *command-class* *commands* *commands-types* *command-table* *commander*
-               *command-delimiter* *command-hook*)
-   :constants (+interactive-place-hoder-tag+)
-   :conditions (undefined-command undefined-command-type invalid-command-type command-eval-error invalid-itype)
-   :types (interactive-ds-lambda-list)
-   :macros (defcommand define-command-type cmd))
-  (:proto :help
-   :package :obj/cmd
-   :description "Interactive command help and usage printing."
-   :methods (print-help print-usage))
-  (:proto :secret
-   :description "Secret Object API."
-   :classes (secret)
-   :methods (conceal reveal ensure-concealed ensure-revealed))
-  (:proto :store)
-  (:proto :cache)
-  (:proto :srv)
-  (:proto :color)
-  (:proto :val
-   :description "Simple Value API."
-   :accessors (rem-val get-val get-value val)
-   :conditions (value-error)
-   :functions (slot-val))
-  (:proto :id
-   :description "Base Identity API."
-   :accessors (id)
-   :classes (id))
-  (:proto :time
-   :description "Time parsing and arithmetic.")
-  (:proto :uri
-   :description "URI/IRI/URN support library."
-   :constants (+uri-max-string-length+)
-   :variables (*uris* *default-etld-names* *etlds* *render-include-slash-on-null-path* *uri-scheme-print-case*)
-   :classes (uri iri)
-   :conditions (uri-condition uri-error uri-parse-error)
-   :accessors (uri-space)
-   :methods (uri uri= intern-uri render-uri uri-to-string iri-to-string merge-uris enough-uri)
-   :functions (percent-encode-string percent-decode-string parse-uri parse-path
-               make-uri-space uri-hash unintern-uri load-etld-data
-               parse-domain uri-tld uri-domain ip-addr=
-               uri-pathname pathname-to-uri)
-   :macros (do-all-uris)
-   :predicates (uri-p iri-p ipv4-addr-p ipv6-addr-p ip-addr-p cookie-domain-p))
-  (:proto :url
-   :description "URL encoding/decoding."
-   :functions (url-encode url-decode url-encode-params url-decode-params rewrite-urls))
-  (:proto :tensor)
-  (:tests
-   :components 
-   ((:mod "tests" 
-     :components 
-     ((:pkg "pkg")
-      (:file "sealed")
-      (:file "meta")
-      (:file "tensor")))))))
+  :require (:std)
+  :components 
+  ((:pkg "pkg" :feature :obj :internal-package :obj-int)
+   (:mod "meta"
+    :components 
+    ((:file "sealed")
+     (:file "stealth")
+     (:file "filtered")
+     (:file "fast")
+     (:file "lazy")
+     (:file "overloaded")
+     (:file "stored")
+     (:file "dynamic")
+     (:file "mix")
+     (:file "method")))
+   (:file "val")
+   (:file "id")
+   (:mod "uri"
+    :components 
+    ((:file "punycode")
+     (:file "domain")
+     (:file "uri")
+     (:file "mask")
+     (:file "state")
+     (:file "parse")
+     (:file "print")
+     (:file "path")
+     (:file "intern")))
+   (:file "url")
+   (:mod "tensor"
+    :components 
+    ((:file "var")
+     (:file "condition")
+     (:file "meta")
+     (:file "base")
+     (:file "num")
+     (:file "template")
+     (:file "loop")
+     (:file "zeros")
+     (:file "ref")
+     (:file "print")
+     (:file "stride")
+     (:file "graph")
+     (:file "coord")
+     (:file "foreign")
+     (:file "copy")
+     (:file "perm")
+     (:file "einstein")
+     (:file "slice")
+     (:file "bool")
+     (:file "complex")
+     (:file "dot")
+     (:file "scal")
+     (:file "transpose")
+     (:file "dfs")
+     (:file "rand")
+     (:file "map")
+     (:file "misc")))
+   (:file "node")
+   (:file "btree")
+   (:file "equiv")
+   (:mod "color"
+    :components 
+    ((:file "color")
+     (:file "palette")
+     (:file "x11")
+     (:file "base16")
+     (:file "modus")
+     (:file "theme")
+     (:file "print")))
+   (:file "time")
+   (:file "uuid")
+   (:file "ast")
+   (:file "config")
+   (:file "schema")
+   (:file "project")
+   (:file "cmd")
+   (:file "db")
+   (:file "graph")
+   (:file "secret")
+   (:file "store")
+   (:file "cache")
+   (:file "srv")
+   (:file "obj"))
+  :provide
+  ((:proto :ast
+    :description "Abstract Syntax Trees."
+    :classes (ast node)
+    :accessors (ast)
+    :conditions (syntax-condition syntax-warning invalid-ast)
+    :variables (*ast* *keep-ast*)
+    :predicates (formp)
+    :types (form)
+    :macros (defnode)
+    :functions (wrap-object unwrap-object))
+   (:proto :node)
+   (:proto :btree)
+   (:proto :db)
+   (:proto :graph)
+   (:proto :config)
+   (:proto :schema)
+   (:proto :project
+    :description "Simple Project API."
+    :functions (make-project register-project)
+    :globals (*project-table*)
+    :classes (project-config project-metadata project simple-project)
+    :variables (*default-project-class*))
+   (:proto :cmd
+    :description "Command object definition framework."
+    :methods (parse-args command-class interactive)
+    :classes (command)
+    :functions (read-args run-commands call-commands eval-command compile-command icount icount* check-itype
+                          list-commands list-all-commands list-command-types command command-type command-table make-commands)
+    :declarations (interactive)
+    :parameters (*command-names-p* *interactive-optional-args-p* *interactive-rest-args-p* *interactive-key-args-p*)
+    :variables (*command* *command-io* *command-class* *commands* *commands-types* *command-table* *commander*
+                          *command-delimiter* *command-hook*)
+    :constants (+interactive-place-hoder-tag+)
+    :conditions (undefined-command undefined-command-type invalid-command-type command-eval-error invalid-itype)
+    :types (interactive-ds-lambda-list)
+    :macros (defcommand define-command-type cmd))
+   (:proto :help
+    :package :obj/cmd
+    :description "Interactive command help and usage printing."
+    :methods (print-help print-usage))
+   (:proto :secret
+    :description "Secret Object API."
+    :classes (secret)
+    :methods (conceal reveal ensure-concealed ensure-revealed))
+   (:proto :store)
+   (:proto :cache)
+   (:proto :srv)
+   (:proto :color)
+   (:proto :val
+    :description "Simple Value API."
+    :accessors (rem-val get-val get-value val)
+    :conditions (value-error)
+    :functions (slot-val))
+   (:proto :id
+    :description "Base Identity API."
+    :accessors (id)
+    :classes (id))
+   (:proto :time
+    :description "Time parsing and arithmetic.")
+   (:proto :uri
+    :description "URI/IRI/URN support library."
+    :constants (+uri-max-string-length+)
+    :variables (*uris* *default-etld-names* *etlds* *render-include-slash-on-null-path* *uri-scheme-print-case*)
+    :classes (uri iri)
+    :conditions (uri-condition uri-error uri-parse-error)
+    :accessors (uri-space)
+    :methods (uri uri= intern-uri render-uri uri-to-string iri-to-string merge-uris enough-uri)
+    :functions (percent-encode-string percent-decode-string parse-uri parse-path
+                                      make-uri-space uri-hash unintern-uri load-etld-data
+                                      parse-domain uri-tld uri-domain ip-addr=
+                                      uri-pathname pathname-to-uri)
+    :macros (do-all-uris)
+    :predicates (uri-p iri-p ipv4-addr-p ipv6-addr-p ip-addr-p cookie-domain-p))
+   (:proto :url
+    :description "URL encoding/decoding."
+    :functions (url-encode url-decode url-encode-params url-decode-params rewrite-urls))
+   (:proto :tensor)
+   (:tests
+    :components 
+    ((:mod "tests" 
+      :components 
+      ((:pkg "pkg")
+       (:file "sealed")
+       (:file "meta")
+       (:file "tensor")))))))

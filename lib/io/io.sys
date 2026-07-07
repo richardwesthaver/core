@@ -2,7 +2,7 @@
 (defsys :io
  "Lisp IO Interface"
  :require (:std
-           :ironclad/digests
+           :ironclad/digest
            :ironclad/digest/crc32
            :zstd
            :sys
