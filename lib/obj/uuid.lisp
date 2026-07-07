@@ -271,8 +271,8 @@ characters.~@:>" string (length string))
 		  :node (arr-to-bytes 10 15 array)))
 
 (defun digest-uuid (digest uuid name)
-  "Helper function that produces a digest from a namespace (a byte array) and a string. Used for the
-generation of version 3 and 5 uuids."
+  "Helper function that produces a digest from a namespace (a byte array) and a
+string. Used for the generation of version 3 and 5 uuids."
   (declare (ignorable digest uuid name))
   ;; FIX 2025-10-10: 
   (let ((digester (symbol-call :ironclad 'make-digest digest)))

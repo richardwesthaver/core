@@ -3,7 +3,6 @@
  "Lisp IO Interface"
  :require (:std
            :ironclad/digest
-           :ironclad/digest/crc32
            :zstd
            :sys
            :security
