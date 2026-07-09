@@ -1,0 +1,40 @@
+;;; swank.sys --- Swank Sysdefs
+(defsys :swank
+ :require (:std)
+  :components 
+  ((:file "swank-loader")
+   (:file "pkg")
+   ;; (:file "xref" :if-feature :clisp)
+   ;; (:file "metering" :if-feature (:or :clozure :clisp :clasp))
+   (:mod "backend"
+    :components ((:file "backend")
+                 (:file "source-path-parser")
+                 (:file "source-file-cache")
+                 (:file "sbcl")
+                 (:file "gray")
+                 (:file "match")
+                 (:file "rpc")))
+   (:file "swank"))
+   :provide
+   ((:sys :swank/ext
+     :require (:swank)
+     :components 
+     ((:mod "contrib"
+       :components
+       ((:file "swank-util")
+        (:file "swank-repl")
+        (:file "swank-c-p-c")
+        (:file "swank-arglists")
+        (:file "swank-fuzzy")
+        (:file "swank-fancy-inspector")
+        (:file "swank-presentations")
+        (:file "swank-presentation-streams")
+        (:file "swank-asdf")
+        (:file "swank-package-fu")
+        (:file "swank-hyperdoc")
+        (:file "swank-indentation")
+        (:file "swank-sbcl-exts")
+        (:file "swank-mrepl")
+        (:file "swank-trace-dialog")
+        (:file "swank-macrostep")
+        (:file "swank-quicklisp")))))))
