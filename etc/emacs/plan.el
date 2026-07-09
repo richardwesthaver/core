@@ -95,7 +95,7 @@ The following keyword parameters can be passed to the info dynamic block:
         branch name is 'default'.
 
 :churn   when nil don't include the vc churn report.
-:log     when nil don't include the vc log.
+:log     when non-nil include the vc log.
 :status  when nil don't include vc status.
 :details when nil don't include the project details section.
 :vc      when non-nil include the vc files table.
@@ -120,9 +120,8 @@ The following keyword parameters can be passed to the info dynamic block:
          (status (if-let* ((val (plist-member params :status)))
                      (cadr val)
                    t))
-         (log (if-let* ((val (plist-member params :log)))
-                  (cadr val)
-		        t))
+         (log (when-let* ((val (plist-member params :log)))
+                  (cadr val)))
          (tasks (when-let* ((val (plist-member params :tasks)))
                     (cadr val)))
          (details (if-let* ((val (plist-member params :details)))
