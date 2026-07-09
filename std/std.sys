@@ -4,11 +4,8 @@
 
 ;;; Commentary:
 
-;; This system is depended on by virtually all CC lisp software. It contains our
-;; /standard/ extensions to the Lisp language and implementation, SBCL.
-
-;; The only exception is cl-ppcre which is an implicit dependency of
-;; this system.
+;; This system is depended on by virtually all CC lisp software. It contains
+;; our /standard/ extensions to the Lisp language and implementation, SBCL.
 
 ;; The /standard library/ itself is the set of symbols exported by the
 ;; *STD* package, which is a wrapper for the other /standard packages/.
@@ -28,203 +25,221 @@
 
 ;;; Code:
 (defsys :std
- "CC Standard Library"
- :version "0.1.0"
- :require (:ppcre)
- :components 
- ((:file defpkg)
-  (:pkg pkg :default-package :std-user :feature :std :internal-package :std-int)
-  (:file condition)
-  (:file sym)
-  (:file list)
-  (:file prim)
-  (:file kernel)
-  (:file named-readtables)
-  (:dir "num" :exclude ".*[.]fasl")
-  (:file type)
-  (:file string)
-  (:file stream)
-  (:file curry)
-  (:file hash)
-  (:file readtable)
-  (:mod "macs"
-   :components
-   ((:file ana)
-    (:file pan)
-    (:file control)
-    (:file sugar)
-    (:file unit)
-    (:file memo)))
-  (:file array)
-  (:file pipe)
-  (:file core)
-  (:file io)
-  (:file alien)
-  (:file comp)
-  (:file meta)
-  (:file bit)
-  (:file seq)
-  (:file thread)
-  (:file async)
-  (:file defpun)
-  (:file task)
-  (:file print)
-  (:file path)
-  (:file os)
-  (:file file)
-  (:file rand)
-  (:file defsys))
- :provide
- (#+nil (:asdf "std.asd")
-  (:io :alien)
-  (:readtable :std)
-  (:annotations :std)
-  (:pool :default)
-  (:pool :sys)
-  (:proto :serde
-   :package :std/io
-   :description "SERialize/DEserialize."
-   :conditions (serde-error serializer-error deserializer-error)
-   :methods (serialize deserialize serde)
-   :accessors (ser de))
-  (:proto :pipe
-   :package :std/pipe
-   :description "CLOS-based element pipelines."
-   :conditions (unknown-element invalid-element)
-   :functions (make-pipe defpipe*)
-   :macros (defpipe)
-   :methods 
-   (sink source query resolve-element find-element find-parent-element insert-element*
-    withdraw-element add-element remove-element insert-element replace-element set-element-id
-    move-element msg format-message)
-   :classes 
-   (element sink stream-sink file-sink source stream-source file-source filter bin predicate-filter
-    print-filter switch-filter pipe message event bus simple-message condition-message))
-  (:proto :kernel
-   :package :std/prim
-   :description "Standard funcallable object extensions."
-   :variables (*kernel*)
-   :conditions (kernel-init-error no-kernel-error)
-   :accessors (kernel kernel-info kernel-documentation)
-   :methods (kernel-expression)
-   :functions (check-kernel make-kernel)
-   :macros (defkernel)
-   :predicates (kernelp)
-   :classes (kernel-class kernel-object))
-  (:proto :hook
-   :package :std/prim
-   :description "Define funcallable hook objects."
-   :methods (add-hook remove-hook)
-   :macros (defhook compile-key-hook)
-   :classes (hook value-hook key-hook dynamic-hook))
-  (:proto :verb
-   :package :std/meta
-   :description "Define 'simple' generic functions."
-   :variables (*verbs*)
-   :functions (register-verb map-verbs)
-   :macros (defverb)
-   :predicates (verb-p verb-accessor-p))
-  (:proto :io
-   :package :std/io
-   :description "Define sets of readers and writers for a category of objects."
-   :variables (*io-table*)
-   :macros (define-io))
-  (:proto :printer
-   :package :std/print
-   :description "Named pprint-dispatch tables."
-   :macros (defprint define-printer with-printer in-printer)
-   :functions (find-printer unknown-printer use-printer copy-printer))
-  (:proto :annotations
-   :package :std/print
-   :description "Named annotation tables."
-   :variables (*annotation-table* *annotations* *annotation-mod-left* *annotation-mod-right*)
-   :constants (+annotation-prefix+)
-   :functions 
-   (annotations expand-annotation expand-annotated-string save-annotations 
-    copy-annotations load-annotations aformat)
-   :macros (with-annotations defnotation))
-  (:proto :readtable
-   :package :std/named-readtables
-   :description "Named reader-dispatch tables."
-   :variables 
-   (*readtables* *standard-readtable* *empty-readtable* *case-preserving-standard-readtable* 
-    *reserved-readtable-names*)
-   :conditions (readtable-error readtable-does-not-exist readtable-does-already-exist reader-macro-conflict)
-   :macros (defreadtable with-readtable in-readtable)
-   :functions 
-   (find-readtable ensure-readtable make-readtable copy-readtable readtable-name register-readtable 
-    unregister-readtable))
-  (:proto :queue
-   :package :std/seq
-   :description "High-level queue API."
-   :conditions (queue-size-limit-reached)
-   :functions 
-   (make-queue push-queue push-queue* pop-queue pop-queue* peek-queue peek-queue* queue-count queue-count*
-    try-pop-queue try-pop-queue*)
-   :predicates (queue-empty-p queue-empty-p* queue-full-p queue-full-p*)
-   :macros (with-queue-lock)
-   :structs (basic-queue raw-queue vector-queue cons-queue priority-queue hnode fib-heap pqueue spin-queue))
-  (:proto :task
-   :package :std/task
-   :description "Async units of work."
-   :variables (*tasks* *jobs* *job* *stage* *task* *task-class* *task-priority*)
-   :accessors (status)
-   :methods (jobs tasks results result job task dependencies dependents mark-task-done record-dependency)
-   :functions (make-task make-job)
-   :classes 
-   (async-task simple-task plan plan-traversal simple-plan planner task-pool
-    planned-task descending-task ascending-task sibling-task child-task solo-task)
-   :structs (pressure status)
-   :predicates (task-p job-p task-force-p task-prevented-p))
-  (:proto :bitfield
-   :package :std/bit
-   :description "Efficiently store multiple discrete states in an unsigned integer."
-   :types (bitfield)
-   :macros (define-bitfield))
-  (:proto :foreign-vector
-   :package :std/alien
-   :description "Foreign octet-vector class wrapper with element-type-based memoization."
-   :classes (foreign-vector-class foreign-vector)
-   :parameters (*fvref-range-check*)
-   :functions (fvref foreign-vector-length foreign-vector-element-type))
-  (:proto :template
-   :package :std/meta
-   :description "Short-circuit CLOS method dispatch with a global hash-table."
-   :variables (*template-table*)
-   :macros (define-template-generic define-template-method)
-   :methods (compute-template-dispatch preprocess-template-dispatch)
-   :functions (remove-template-method)
-   :predicates (template-function-p single-arg-template-function-p))
-  (:tests
-   :require (:std :rt)
-   :description "CC Standard Library Tests"
-   :components 
-   ((:mod "tests"
-     :components
-     ((:pkg "pkg" :readtable :std)
-      (:file "num")
-      (:file "seq")
-      (:file "pipe")
-      (:file "thread")
-      (:file "async")
-      (:file "task")
-      (:file "macs")))))
-  (:prelude :alien* 
-   :defar :define-alien-enum :sap :free)
-  (:prelude :os*
-   :current-user :sudo-p
-   :forkable-p :user-info
-   :list-all-users :list-all-groups
-   :with-umask :with-fd :ioctl :xdg-dir
-   :xdg-config-dir :xdg-config-directory
-   :xdg-config-file :user-add :group-add :file-kind
-   :unmerge-pathnames :current-directory
-   :with-directory-iterator :merge-env-pathnames
-   :open-pipe :pathname-executable-p
-   :set-signal-handler)
-  (:prelude :meta* 
-   :defverb :*verbs* :verb-p :safe-superclasses
-   :list-class-methods :list-class-slots
-   :slot-values :defclass!
-   :defmethods :defaccessor
-   :defaccessor* :subclassp)))
+  "CC Standard Library"
+  :version "0.1.0"
+  :components 
+  ((:file defpkg)
+   (:pkg pkg :default-package :std-user :feature :std :internal-package :std-int)
+   (:file condition)
+   (:file sym)
+   (:file list)
+   (:file prim)
+   (:file kernel)
+   (:file named-readtables)
+   (:dir "num" :exclude ".*[.]fasl")
+   (:file type)
+   (:file string)
+   (:file stream)
+   (:file curry)
+   (:file hash)
+   (:mod "ppcre"
+    :components
+    ((:file "var")
+     (:file "util")
+     (:file "errors")
+     (:file "charset")
+     (:file "charmap")
+     (:file "chartest")
+     (:file "lexer")
+     (:file "parser")
+     (:file "regex-class")
+     (:file "regex-class-util")
+     (:file "convert")
+     (:file "optimize")
+     (:file "closures")
+     (:file "repetition-closures")
+     (:file "scanner")
+     (:file "api")))
+   (:file readtable)
+   (:mod "macs"
+    :components
+    ((:file ana)
+     (:file pan)
+     (:file control)
+     (:file sugar)
+     (:file unit)
+     (:file memo)))
+   (:file array)
+   (:file pipe)
+   (:file core)
+   (:file io)
+   (:file alien)
+   (:file comp)
+   (:file meta)
+   (:file bit)
+   (:file seq)
+   (:file thread)
+   (:file async)
+   (:file defpun)
+   (:file task)
+   (:file print)
+   (:file path)
+   (:file os)
+   (:file file)
+   (:file rand)
+   (:file defsys))
+  :provide
+  ((:io :alien)
+   (:readtable :std)
+   (:annotations :std)
+   (:pool :default)
+   (:pool :sys)
+   (:proto :serde
+    :package :std/io
+    :description "SERialize/DEserialize."
+    :conditions (serde-error serializer-error deserializer-error)
+    :methods (serialize deserialize serde)
+    :accessors (ser de))
+   (:proto :pipe
+    :package :std/pipe
+    :description "CLOS-based element pipelines."
+    :conditions (unknown-element invalid-element)
+    :functions (make-pipe defpipe*)
+    :macros (defpipe)
+    :methods 
+    (sink source query resolve-element find-element find-parent-element insert-element*
+          withdraw-element add-element remove-element insert-element replace-element set-element-id
+          move-element msg format-message)
+    :classes 
+    (element sink stream-sink file-sink source stream-source file-source filter bin predicate-filter
+             print-filter switch-filter pipe message event bus simple-message condition-message))
+   (:proto :kernel
+    :package :std/prim
+    :description "Standard funcallable object extensions."
+    :variables (*kernel*)
+    :conditions (kernel-init-error no-kernel-error)
+    :accessors (kernel kernel-info kernel-documentation)
+    :methods (kernel-expression)
+    :functions (check-kernel make-kernel)
+    :macros (defkernel)
+    :predicates (kernelp)
+    :classes (kernel-class kernel-object))
+   (:proto :hook
+    :package :std/prim
+    :description "Define funcallable hook objects."
+    :methods (add-hook remove-hook)
+    :macros (defhook compile-key-hook)
+    :classes (hook value-hook key-hook dynamic-hook))
+   (:proto :verb
+    :package :std/meta
+    :description "Define 'simple' generic functions."
+    :variables (*verbs*)
+    :functions (register-verb map-verbs)
+    :macros (defverb)
+    :predicates (verb-p verb-accessor-p))
+   (:proto :io
+    :package :std/io
+    :description "Define sets of readers and writers for a category of objects."
+    :variables (*io-table*)
+    :macros (define-io))
+   (:proto :printer
+    :package :std/print
+    :description "Named pprint-dispatch tables."
+    :macros (defprint define-printer with-printer in-printer)
+    :functions (find-printer unknown-printer use-printer copy-printer))
+   (:proto :annotations
+    :package :std/print
+    :description "Named annotation tables."
+    :variables (*annotation-table* *annotations* *annotation-mod-left* *annotation-mod-right*)
+    :constants (+annotation-prefix+)
+    :functions 
+    (annotations expand-annotation expand-annotated-string save-annotations 
+                 copy-annotations load-annotations aformat)
+    :macros (with-annotations defnotation))
+   (:proto :readtable
+    :package :std/named-readtables
+    :description "Named reader-dispatch tables."
+    :variables 
+    (*readtables* *standard-readtable* *empty-readtable* *case-preserving-standard-readtable* 
+                  *reserved-readtable-names*)
+    :conditions (readtable-error readtable-does-not-exist readtable-does-already-exist reader-macro-conflict)
+    :macros (defreadtable with-readtable in-readtable)
+    :functions 
+    (find-readtable ensure-readtable make-readtable copy-readtable readtable-name register-readtable 
+                    unregister-readtable))
+   (:proto :queue
+    :package :std/seq
+    :description "High-level queue API."
+    :conditions (queue-size-limit-reached)
+    :functions 
+    (make-queue push-queue push-queue* pop-queue pop-queue* peek-queue peek-queue* queue-count queue-count*
+                try-pop-queue try-pop-queue*)
+    :predicates (queue-empty-p queue-empty-p* queue-full-p queue-full-p*)
+    :macros (with-queue-lock)
+    :structs (basic-queue raw-queue vector-queue cons-queue priority-queue hnode fib-heap pqueue spin-queue))
+   (:proto :task
+    :package :std/task
+    :description "Async units of work."
+    :variables (*tasks* *jobs* *job* *stage* *task* *task-class* *task-priority*)
+    :accessors (status)
+    :methods (jobs tasks results result job task dependencies dependents mark-task-done record-dependency)
+    :functions (make-task make-job)
+    :classes 
+    (async-task simple-task plan plan-traversal simple-plan planner task-pool
+                planned-task descending-task ascending-task sibling-task child-task solo-task)
+    :structs (pressure status)
+    :predicates (task-p job-p task-force-p task-prevented-p))
+   (:proto :bitfield
+    :package :std/bit
+    :description "Efficiently store multiple discrete states in an unsigned integer."
+    :types (bitfield)
+    :macros (define-bitfield))
+   (:proto :foreign-vector
+    :package :std/alien
+    :description "Foreign octet-vector class wrapper with element-type-based memoization."
+    :classes (foreign-vector-class foreign-vector)
+    :parameters (*fvref-range-check*)
+    :functions (fvref foreign-vector-length foreign-vector-element-type))
+   (:proto :template
+    :package :std/meta
+    :description "Short-circuit CLOS method dispatch with a global hash-table."
+    :variables (*template-table*)
+    :macros (define-template-generic define-template-method)
+    :methods (compute-template-dispatch preprocess-template-dispatch)
+    :functions (remove-template-method)
+    :predicates (template-function-p single-arg-template-function-p))
+   (:tests
+    :require (:std :rt)
+    :description "CC Standard Library Tests"
+    :components 
+    ((:mod "tests"
+      :components
+      ((:pkg "pkg" :readtable :std)
+       (:file "num")
+       (:file "seq")
+       (:file "pipe")
+       (:file "thread")
+       (:file "async")
+       (:file "task")
+       (:file "macs")
+       (:file "ppcre")
+       (:file "perl-tests")))))
+   (:prelude :alien* 
+    :defar :define-alien-enum :sap :free)
+   (:prelude :os*
+    :current-user :sudo-p
+    :forkable-p :user-info
+    :list-all-users :list-all-groups
+    :with-umask :with-fd :ioctl :xdg-dir
+    :xdg-config-dir :xdg-config-directory
+    :xdg-config-file :user-add :group-add :file-kind
+    :unmerge-pathnames :current-directory
+    :with-directory-iterator :merge-env-pathnames
+    :open-pipe :pathname-executable-p
+    :set-signal-handler)
+   (:prelude :meta* 
+    :defverb :*verbs* :verb-p :safe-superclasses
+    :list-class-methods :list-class-slots
+    :slot-values :defclass!
+    :defmethods :defaccessor
+    :defaccessor* :subclassp)))
