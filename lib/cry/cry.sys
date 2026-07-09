@@ -1,7 +1,7 @@
 ;;; ~/src/core/lib/cry/cry.sys --- Cry Sytem Definitions
 (defsys :cry
  :require 
- (:ironclad
+ (:ironclad :math
   :std :log :obj :dat
   :keyutils
   :openssl :io)

@@ -1,0 +1,170 @@
+;;; ironclad.sys
+(defsys :ironclad
+  :require ("std")
+  :version "0.61"
+  :components 
+  ((:mod "src"
+    :components 
+    ((:pkg "pkg")
+     (:file "condition")
+     (:file "generic")
+     (:file "macro-utils")
+     (:file "util")
+     (:mod "opt"
+      :components 
+      ((:mod "sbcl"
+        :components ((:file "fndb")
+                     (:file "x86oid-vm")
+                     (:file "cpu-features")))))
+     (:file "common")
+     (:mod "cipher"
+      :components ((:file "cipher")
+                   (:file "padding")
+                   (:file "make-cipher")
+                   (:file "modes")
+                   (:file "aes")
+                   (:file "chacha")
+                   (:file "salsa20")))
+     (:mod "digest"
+      :components ((:file "digest")
+                   ;; defaults
+                   (:file "crc32")
+                   (:file "md5")
+                   (:file "blake2")
+                   (:file "sha256")
+                   (:file "sha3")
+                   (:file "sha512")))
+     (:mod "mac"
+      :components ((:file "mac")
+                   (:file "hmac")))
+     (:mod "prng"
+      :components ((:file "prng")
+                   ;; default
+                   (:file "os-prng")))
+     (:file "math")
+     (:file "octet-stream")
+     (:mod "aead"
+      :components ((:file "aead")))
+     (:mod "kdf"
+      :components ((:file "kdf")
+                   (:file "pkcs5")
+                   (:file "password-hash")
+                   (:file "argon2")
+                   (:file "hmac")))
+     (:mod "public-key"
+      :components ((:file "public-key")
+                   (:file "pkcs1")
+                   (:file "elliptic-curve")
+                   (:file "curve25519")
+                   (:file "ed25519")))))))
+
+(macrolet ((define-ironclad-subsystem (aggregate-system path &body components)
+             (let ((subsystems (loop for spec in (mapcar #'ensure-list components)
+                                     collect (keywordicate (string-upcase 
+                                                            (format nil "~a/~a" aggregate-system (first spec)))))))
+               `(progn
+                  (defsys ,(keywordicate (string-upcase aggregate-system))
+                    :require (:ironclad)
+                    :provide
+                    ,(loop for (component . options) in (mapcar #'ensure-list components)
+                           for subsystem in subsystems
+                           collect 
+                              `(:sys ,(keywordicate (string-upcase subsystem))
+                                :description
+                                ,(format nil "~a: ~a" aggregate-system component)
+                                :require ,(cons :ironclad (getf options :require))
+                                :components 
+                                ,(or (getf options :components)
+                                     `((:file ,(namestring (merge-pathnames component path))))))))))))
+  (define-ironclad-subsystem ironclad/cipher #p"src/cipher/"
+    "arcfour"
+    "aria"
+    "blowfish"
+    "camellia"
+    "cast5"
+    "xsalsa20"
+    "xchacha"
+    "des"
+    "idea"
+    "kalyna"
+    ("keystream" :require (:ironclad/cipher/chacha
+                           :ironclad/cipher/salsa20))
+    "kuznyechik"
+    "misty1"
+    "rc2"
+    "rc5"
+    "rc6"
+    "seed"
+    "serpent"
+    "sm4"
+    "sosemanuk"
+    "square"
+    "tea"
+    "threefish"
+    "twofish"
+    "xor"
+    "xtea")
+
+  (define-ironclad-subsystem
+      "ironclad/digest" #p"src/digest/"
+    "adler32"
+    "blake2s"
+    "crc24"
+    "groestl"
+    "jh"
+    ("kupyna" :require (:ironclad/cipher/kalyna))
+    "md2"
+    "md4"
+    "ripemd-128"
+    "ripemd-160"
+    "sha1"
+    ("skein" :require (:ironclad/cipher/threefish))
+    "sm3"
+    "streebog"
+    "tiger"
+    ("tree-hash" :require (:ironclad/digest/tiger))
+    "whirlpool")
+
+  (define-ironclad-subsystem
+      "ironclad/mac" #p"src/mac/"
+    ("blake2-mac" :require (:ironclad/digest/blake2))
+    ("blake2s-mac" :require (:ironclad/digest/blake2s))
+    "cmac"
+    "gmac"
+    "poly1305"
+    "siphash"
+    ("skein-mac" :require (:ironclad/cipher/threefish
+                           :ironclad/digest/skein)))
+
+  (define-ironclad-subsystem
+      "ironclad/prng" #p"src/prng/"
+    ("fortuna" :require (:ironclad/cipher/aes
+                         :ironclad/digest/sha256)
+               :components ((:file "src/prng/generator")
+                            (:file "src/prng/fortuna"))))
+
+  (define-ironclad-subsystem
+      "ironclad/aead" #p"src/aead/"
+    ("eax" :require ("ironclad/mac/cmac"))
+    "etm"
+    ("gcm" :require ("ironclad/mac/gmac")))
+
+  (define-ironclad-subsystem
+      "ironclad/kdf" #p"src/kdf/"
+    ("bcrypt" :require (:ironclad/cipher/blowfish
+                        :ironclad/digest/sha512))
+    ("scrypt" :require (:ironclad/cipher/salsa20
+                        :ironclad/digest/sha256
+                        :ironclad/kdf/pkcs5)))
+
+  (define-ironclad-subsystem
+      "ironclad/public-key" #p"src/public-key/"
+    "dsa"
+    "rsa"
+    "elgamal"
+    "curve448"
+    ("ed448" :require (:ironclad/digest/sha3))
+    "secp256k1"
+    "secp256r1"
+    "secp384r1"
+    "secp521r1"))

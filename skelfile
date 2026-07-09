@@ -54,13 +54,11 @@
              (update-repo repo :push t)
              (setf (vc-remotes repo) (remotes name))
              (vc-export repo :upstream "gh" :delete t :force t :branch "default"))))
-   (bump "ironclad")
    (bump "slime")
    (vc-export (vc *project*) :filter-regexp "^std$" :upstream nil) ;; yuck
    (with-repo (r :path "/tmp/core" :type :git :delete t)
     (loop for remote across (setf (vc-remotes r) (remotes "core"))
      do (vc-remote r :add :name (name remote) :url (uri remote)))
-    (vc-submodule r :add :url "https://github.com/richardwesthaver/ironclad")
     (vc-submodule r :add :url "https://github.com/richardwesthaver/slime")
     (vc-add r ".gitmodules")
     (vc-commit r "gitmodules")

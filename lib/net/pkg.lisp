@@ -425,7 +425,7 @@
    :ignore-and-continue))
 
 (defpkg :net/srv
-  (:use :cl :obj/uri :log
+  (:use :std-lisp :obj/uri :log
    :net/core :net/proto/http :net/cookie :dat/base64
    :sb-gray :dat/mime :obj/db :obj/schema :config :srv :ast :std/thread)
   (:import-from :chunky :chunked-stream :input-chunking-p :output-chunking-p)
