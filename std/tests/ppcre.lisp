@@ -58,7 +58,7 @@ returns a true value iff it succeeds.  Prints each test form to
 otherwise.  EXTERNAL-FORMAT is the external format which is used to read the
 file.  Returns a true value iff all tests succeeded."
   (with-open-file (stream file-name :element-type 'std:octet :external-format external-format)
-    (let ((*package* (find-package :ppcre/tests)))
+    (let ((*package* (find-package :std/tests)))
       (do-tests ((format nil "Simple tests from file ~S" (file-namestring file-name))
                  (not verbose))
         (let ((form (or (read stream nil) (done))))

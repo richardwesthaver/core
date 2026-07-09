@@ -113,7 +113,7 @@
    :parse-string-with-language
    :tree-sitter-error
    :with-ts-node
-   :parse-string
+   :parse-lang-string
    :with-ts-cursor
    :convert-ts-tree
    :ts-language-next-state

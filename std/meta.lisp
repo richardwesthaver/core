@@ -174,9 +174,6 @@ function NAME and be skipped for (setf NAME)."
   "Call the default initializer on each arg."
   (mapc 'init keys))
 
-;; TODO 2025-11-01: 
-(defverb scan (self seq &key))
-
 (defverb send (self buffer &rest args &key start end))
 (defverb receive (self &rest args &key buffer length start end &allow-other-keys))
 

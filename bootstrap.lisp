@@ -15,10 +15,6 @@ $ sbcl --script bootstrap.lisp
    sb-posix sb-bsd-sockets sb-cltl2 sb-concurrency
    sb-introspect sb-rotate-byte asdf uiop))
 
-;; load ppcre
-(asdf:load-asd (probe-file "ppcre/ppcre.asd"))
-(asdf:load-system :ppcre)
-
 ;; load std
 (asdf:load-asd (probe-file "std/std.asd"))
 (asdf:load-system :std)

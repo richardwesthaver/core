@@ -81,7 +81,7 @@
   `(let ((,var (ts-query-cursor-new)))
      ,@body))
 
-(defun parse-string (language string &key (start 0) end)
+(defun parse-lang-string (language string &key (start 0) end)
   "Parse a STRING that represents LANGUAGE code using tree-sitter. START is
 where to start parsing STRING. END is where to stop parsing STRING.
 

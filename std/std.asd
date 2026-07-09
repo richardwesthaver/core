@@ -3,7 +3,6 @@
 (defsystem :std
   :version "0.1.0"
   :description "CC Standard Library"
-  :depends-on (:ppcre)
   :serial t
   :components 
   ((:file "defpkg")
@@ -25,6 +24,24 @@
    (:file "stream")
    (:file "curry")
    (:file "hash")
+   (:module "ppcre"
+    :components
+    ((:file "var")
+     (:file "util")
+     (:file "errors")
+     (:file "charset")
+     (:file "charmap")
+     (:file "chartest")
+     (:file "lexer")
+     (:file "parser")
+     (:file "regex-class")
+     (:file "regex-class-util")
+     (:file "convert")
+     (:file "optimize")
+     (:file "closures")
+     (:file "repetition-closures")
+     (:file "scanner")
+     (:file "api")))
    (:file "readtable")
    (:module "macs"
     :components

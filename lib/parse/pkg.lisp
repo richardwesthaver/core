@@ -41,7 +41,7 @@
 
 (defpkg :parse/lex
   (:nicknames :lex)
-  (:use :cl :ppcre :std :parse/proto)
+  (:use :std-lisp :parse/proto)
   (:shadowing-import-from :parse/bytes :advance :peek)
   (:export
    #:*string*

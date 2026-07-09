@@ -62,11 +62,11 @@ like e.g. *ESCAPE-TYPE*."
   (declare (ignore match))
   (let ((setf-pairs
           (let ((setf-list nil))
-            (dolist (pair (cl-ppcre:split "\\s+" (first registers))
+            (dolist (pair (ppcre:split "\\s+" (first registers))
                           (when (first setf-list)
                             (format nil "~{ ~A~}" (reverse setf-list))))
               (destructuring-bind (left right)
-                  (cl-ppcre:split "=" pair)
+                  (ppcre:split "=" pair)
                 (let ((place (rest (assoc left *tempo-variables* :test #'equalp)))
                       (value (rest (assoc right *tempo-parameters* :test #'equalp))))
                   (when (and place value)
@@ -175,7 +175,7 @@ STRING can be NIL."
 
 (let ((scanner-hash (make-hash-table :test #'equal)))
   (defun scanner-for-expand-template-tag (tag)
-    "Returns a CL-PPCRE scanner which matches a template tag expanded by EXPAND-TEMPLATE-TAGS.
+    "Returns a PPCRE scanner which matches a template tag expanded by EXPAND-TEMPLATE-TAGS.
 Scanners are memoized in SCANNER-HASH once they are created."
     (or (gethash tag scanner-hash)
         (setf (gethash tag scanner-hash)
@@ -311,7 +311,7 @@ containing the lisp code that implements that tempo code."
                     (make-tempo-body-string
                      code
                      (if trim-end-whitespaces
-                         (let ((next-pos (cl-ppcre:scan "(?:\\S|\\n)" code :start (+ end-code (length *tempo-end*)))))
+                         (let ((next-pos (ppcre:scan "(?:\\S|\\n)" code :start (+ end-code (length *tempo-end*)))))
                            (cond
                              ((null next-pos) (length code))
                              ((char= (elt code next-pos) #\Newline)

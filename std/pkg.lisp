@@ -1635,7 +1635,7 @@
    :std/os :std/file :std/string :std/core
    :std/readtable :std/pipe :std/io :std/rand 
    :std/async :std/seq :std/prim :std/comp 
-   :std/defsys))
+   :std/defsys :std/ppcre))
 
 (define-lisp-package :std)
 

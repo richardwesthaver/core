@@ -38,7 +38,7 @@ pub fn main {} " 15)))
 
 (deftest ts-query-c ()
   (load-tree-sitter-c)
-  (let ((src (tree-sitter:parse-string :c "#define __bitwise__ __bitwise")))
+  (let ((src (tree-sitter:parse-lang-string :c "#define __bitwise__ __bitwise")))
     (with-ts-query :c (q '(_))
       (istype 'sb-alien::alien-value q)
       (with-ts-query-cursor c

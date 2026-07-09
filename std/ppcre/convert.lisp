@@ -644,7 +644,7 @@ when NAME is not NIL."
 (defmethod convert-compound-parse-tree ((token (eql :regex)) parse-tree &key)
   "The case for \(:REGEX <string>)."
   (declare #.*standard-optimize-settings*)
-  (convert-aux (parse-string (second parse-tree))))
+  (convert-aux (ppcre:parse-string (second parse-tree))))
 
 (defmethod convert-compound-parse-tree ((token (eql :char-class)) parse-tree &key invertedp)
   "The case for \(:CHAR-CLASS {<item>}*) where item is one of

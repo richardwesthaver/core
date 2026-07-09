@@ -210,7 +210,7 @@
 
 (defpkg :dat/svg
   (:nicknames :svg)
-  (:use :cl :ppcre :dat/xml :std)
+  (:use :std-lisp :dat/xml)
   (:import-from :std/string :*whitespaces*)
   (:export :parse-svg-file :parse-svg-string))
 

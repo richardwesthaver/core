@@ -21,4 +21,4 @@
     })();"#)
 
 (deftest js-src ()
-  (istype 'sb-alien::alien-value (parse-string :javascript *js-src*)))
+  (istype 'sb-alien::alien-value (parse-lang-string :javascript *js-src*)))

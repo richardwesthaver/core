@@ -38,7 +38,7 @@ modify its first argument \(but only if it's a parse tree)."))
          (*syntax-error-string* (copy-seq quoted-regex-string)))
     ;; wrap the result with :GROUP to avoid infinite loops for
     ;; constant strings
-    (create-scanner (cons :group (list (parse-string quoted-regex-string)))
+    (create-scanner (cons :group (list (ppcre:parse-string quoted-regex-string)))
                     :case-insensitive-mode case-insensitive-mode
                     :multi-line-mode multi-line-mode
                     :single-line-mode single-line-mode

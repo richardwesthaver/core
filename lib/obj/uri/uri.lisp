@@ -146,17 +146,17 @@ urn:oasis:names:specification:docbook:dtd:xml:4.1.2
 (defmethod (setf uri-host) (v (uri uri))
   (prog1
       (if* (null v)
-	 then (set-host uri nil nil nil)
+	     then (set-host uri nil nil nil)
        elseif (stringp v)
-	 then (multiple-value-bind (found whole ipv6 zone-id)
-		  ;; This embodies knowledge of the URI IPv6 syntax
-		  (ppcre:scan "^(.*:.*?)(%.*)?$" v)
-		(declare (ignore whole))
-		(if* found
-		   then (set-host uri nil ipv6 zone-id)
-		   else (set-host uri v nil nil))
-		v)
-	 else (error "host value must be a string: ~s." v))
+	     then (multiple-value-bind (found whole ipv6 zone-id)
+		          ;; This embodies knowledge of the URI IPv6 syntax
+		          (ppcre:scan "^(.*:.*?)(%.*)?$" v)
+		        (declare (ignore whole))
+		        (if* found
+		           then (set-host uri nil ipv6 zone-id)
+		           else (set-host uri v nil nil))
+		        v)
+	     else (error "host value must be a string: ~s." v))
     ;; This slot doesn't use clear-computed-uri-slots, so we must do this
     ;; manually:
     (setf (uri-string uri) nil)

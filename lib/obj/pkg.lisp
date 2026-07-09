@@ -230,7 +230,7 @@
 
 (defpkg :obj/uri
   (:nicknames :uri)
-  (:use :cl :std :std/seq :punycode)
+  (:use :std-lisp :punycode)
   (:export
    :uri
    :uri-p
@@ -289,12 +289,12 @@
 
 (pkg:defpkg :obj/url
   (:nicknames :url)
-  (:use :cl :std :obj/uri :sb-ext)
+  (:use :std-lisp :obj/uri :sb-ext)
   (:export :url-encode :url-decode :url-encode-params :url-decode-params :rewrite-urls))
 
 (defpkg :obj/tensor
   (:nicknames :tensor)
-  (:use :cl :std)
+  (:use :std-lisp)
   (:export :tensor 
    :foreign-dense-tensor :foreign-tensor 
    :blas-mixin #:orphanize 
@@ -347,7 +347,7 @@
 
 (defpkg :obj/ast
   (:nicknames :ast)
-  (:use :cl :std :std/seq)
+  (:use :std-lisp)
   (:export :ast 
    :load-ast
    :wrap :unwrap
