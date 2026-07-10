@@ -358,3 +358,23 @@ It must never be modified, though only good implementations will even enforce th
 ;;; Aliases
 ;; see emacs `lisp-arglist-command'
 (alias-function arglist function-lambda-list)
+
+;;; Partial evaluation helpers
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (defun partial-macroexpand-all (form env)
+    "Trivial and very restricted code-walker used in partial evaluation macros.
+Only supports atoms and function forms, no special forms."
+    (let ((real-form (macroexpand form env)))
+      (cond
+        ((atom real-form)
+         real-form)
+        (t
+         (list* (car real-form)
+                (mapcar #'(lambda (x) (partial-macroexpand-all x env))
+                        (cdr real-form))))))))
+
+(defmacro dotimes-unrolled ((var limit) &body body &environment env)
+  "Unroll the loop body at compile-time."
+  (loop for x from 0 below (eval (partial-macroexpand-all limit env))
+        collect `(symbol-macrolet ((,var ,x)) ,@body) into forms
+        finally (return `(progn ,@forms))))

@@ -93,6 +93,16 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
               (error "Bad let bindings")))
        (let-binding-transform (cdr bs)))))
 
+;; SUBSEQ is defined to error on circular lists, so we define our own
+(defun circular-list-subseq (list start end)
+  (let* ((length (- end start))
+         (subseq (make-list length)))
+    (do ((i 0 (1+ i))
+         (list (nthcdr start list) (cdr list))
+         (xsubseq subseq (cdr xsubseq)))
+        ((>= i length) subseq)
+      (setf (first xsubseq) (first list)))))
+
 (defun circular-list (&rest elements)
   "Creates a circular list of ELEMENTS."
   (let ((cycle (copy-list elements)))

@@ -77,7 +77,7 @@
                                                          (logxor (logand ,a ,b)
                                                                  (logand ,a ,c)
                                                                  (logand ,b ,c)))))))))
-        #.(let ((xvars (make-circular-list 'a 'b 'c 'd 'e 'f 'g 'h)))
+        #.(let ((xvars (circular-list 'a 'b 'c 'd 'e 'f 'g 'h)))
             (loop for i from 0 below 80
                   for vars on xvars by #'(lambda (x) (nthcdr 7 x))
                  collect `(sha512-round ,i ,@(circular-list-subseq vars 0 8)) into forms

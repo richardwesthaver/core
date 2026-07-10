@@ -3,6 +3,16 @@
 ;;; Code:
 (in-package :crypto)
 
+;; interning
+(defun ironclad-symbol (symbol)
+  (let ((package (symbol-package symbol))
+        (ironclad (load-time-value (find-package :ironclad))))
+    (cond
+      ((eq package ironclad) symbol)
+      ((eq package (load-time-value (find-package :keyword)))
+       (find-symbol (symbol-name symbol) ironclad))
+      (t nil))))
+
 (defun byte-array-to-hex-string (vector &key (start 0) end (element-type 'base-char))
   "Return a string containing the hexadecimal representation of the
 subsequence of VECTOR between START and END.  ELEMENT-TYPE controls

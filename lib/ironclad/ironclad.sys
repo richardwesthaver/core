@@ -8,7 +8,6 @@
     ((:pkg "pkg")
      (:file "condition")
      (:file "generic")
-     (:file "macro-utils")
      (:file "util")
      (:mod "opt"
       :components 
@@ -56,7 +55,45 @@
                    (:file "pkcs1")
                    (:file "elliptic-curve")
                    (:file "curve25519")
-                   (:file "ed25519")))))))
+                   (:file "ed25519"))))))
+  :provide
+  ((:tests 
+    :description "Ironclad Tests"
+    :components
+    ((:mod "tests"
+      :components
+      ((:pkg "pkg")))))
+   (:proto :cipher
+    :functions (make-cipher list-all-ciphers encrypt-in-place decrypt-in-place)
+    :predicates (cipher-supported-p)
+    :methods (encrypt decrypt encrypt-message decrypt-message key-lengths block-length))
+   (:proto :digest
+    :functions (make-digest list-all-digests)
+    :methods (update-digest produce-digest digest-sequence digest-file digest-stream digest-length)
+    :predicates (digest-supported-p))
+   (:proto :kdf
+    :functions 
+    (make-kdf list-all-kdfs pbkdf2-hash-password pbkdf2-hash-password-to-combined-string pbkdf2-check-password)
+    :methods (derive-key))
+   (:proto :mac
+    :functions (make-mac list-all-macs)
+    :predicates (mac-supported-p)
+    :methods (update-mac produce-mac))
+   (:proto :prng
+    :variables (*prng*)
+    :functions (list-all-prngs random-data random-bits strong-random read-os-random-seed write-seed read-seed)
+    :methods (make-prng)
+   (:proto :aead
+    :functions (make-authenticated-encryption-mode list-all-authenticated-encryption-modes)
+    :predicates (authenticated-encryption-mode-supported-p)
+    :methods (process-associated-data produce-tag))
+   (:proto :public-key
+    :functions (list-all-key-pair-kinds make-public-key make-private-key make-message)
+    :methods 
+    (generate-key-pair destructure-public-key destructure-private-key sign-message verify-signature
+     make-signature generate-signature-nonce destructure-signature diffie-hellman ec-make-point ec-destructure-point
+     ec-point-on-curve ec-point-equal ec-double ec-add ec-scalar-mult ec-scalar-inv ec-encode-scalar ec-decode-scalar
+     ec-encode-point ec-decode-point)))))
 
 (macrolet ((define-ironclad-subsystem (aggregate-system path &body components)
              (let ((subsystems (loop for spec in (mapcar #'ensure-list components)

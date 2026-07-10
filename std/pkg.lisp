@@ -51,7 +51,9 @@
    :alias-macro
    :alias-function
    :do-symbols*
-   :symbol-name*))
+   :symbol-name*
+   :quotationp
+   :unquote))
 
 (defpkg :std/list
   (:use :cl)
@@ -103,6 +105,7 @@
    :maptree-eki :let-binding-transform
    :ensure-list :recons :memq :assq
    :circular-list :circular-list-p :circular-tree-p :merge!
+   :circular-list-subseq
    :sort!
    :set-equal
    :dcons :dpush
@@ -122,6 +125,7 @@
    :function-lambda-list
    :arglist ; alias
    :pswap
+   :partial-macroexpand-all :dotimes-unrolled
    :read-until-end
    :read-lisp-until-end
    :read-lisp-string

@@ -197,11 +197,11 @@
 
 (defun %find-cipher (name)
   (and (symbolp name)
-       (let ((name (massage-symbol name)))
+       (let ((name (ironclad-symbol name)))
          (and name (get name '%cipher-info)))))
 
 (defun (setf %find-cipher) (cipher-info name)
-  (setf (get (massage-symbol name) '%cipher-info) cipher-info))
+  (setf (get (ironclad-symbol name) '%cipher-info) cipher-info))
 
 (defmethod key-lengths (cipher)
   (let ((cipher-info (%find-cipher cipher)))
@@ -211,7 +211,7 @@
   (key-lengths (class-name (class-of cipher))))
 
 (defmethod block-length ((cipher symbol))
-  (let ((cipher-info (%find-cipher (massage-symbol cipher))))
+  (let ((cipher-info (%find-cipher (ironclad-symbol cipher))))
     (and cipher-info (%block-length cipher-info))))
 
 (defmethod block-length ((cipher cipher))

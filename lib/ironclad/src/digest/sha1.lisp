@@ -55,7 +55,7 @@
         (e (sha1-regs-e regs)))
     (macrolet ((sha1-rounds (block func constant low high &rest initial-order)
                  ;; Yay for "implementation-dependent" behavior (6.1.1.4).
-                 (let ((xvars (apply #'make-circular-list initial-order)))
+                 (let ((xvars (apply #'circular-list initial-order)))
                    (loop for i from low upto high
                          for vars on xvars by #'cddddr
                          collect (let ((a-var (first vars))

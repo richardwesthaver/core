@@ -10,7 +10,7 @@
 (defmethod shared-initialize :after ((kdf pbkdf1) slot-names &rest initargs
                                      &key digest &allow-other-keys)
   (declare (ignore slot-names initargs))
-  (let ((digest-name (massage-symbol digest)))
+  (let ((digest-name (ironclad-symbol digest)))
     (cond
       ;; Permit DIGEST to be NULL to indicate reinitializing the whole
       ;; instance.

@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpkg :ironclad
-  (:use :cl)
+  (:use :std-lisp)
   (:nicknames :crypto)
   (:export
    ;; referencing multiple-octet values in an octet vector (SETF-able)

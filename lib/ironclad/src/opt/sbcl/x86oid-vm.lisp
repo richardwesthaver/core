@@ -280,7 +280,7 @@
                    (dword-inst lea e (ea k3 t1 e))
                    (dword-inst add e t2))
                  (sha1-rounds (start end f)
-                   (let ((xvars (ironclad::make-circular-list a b c d e)))
+                   (let ((xvars (std/list:circular-list a b c d e)))
                      (loop for i from start upto end
                            for vars on xvars by #'cddddr
                            do (multiple-value-bind (a b c d e)

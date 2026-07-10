@@ -144,3 +144,7 @@ passed as the first argument to `gensym'."
   `(progn
      (setf (macro-function ',alias) (macro-function ',orig))
      ',alias))
+
+(defun quotationp (thing)
+  (and (consp thing) (consp (rest thing))
+       (null (cddr thing)) (eq (first thing) 'quote)))

@@ -15,19 +15,19 @@
 N, p, and r are cost factors for scrypt.
 block-count, additional-key and additional-data are parameters for
 argon2"
-  (case (massage-symbol kind)
+  (case (ironclad-symbol kind)
     (pbkdf1
-     (let ((digest-name (massage-symbol digest)))
+     (let ((digest-name (ironclad-symbol digest)))
        (unless (digestp digest-name)
          (error 'unsupported-digest :name digest))
        (make-instance 'pbkdf1 :digest digest-name)))
     (pbkdf2
-     (let ((digest-name (massage-symbol digest)))
+     (let ((digest-name (ironclad-symbol digest)))
        (unless (digestp digest-name)
          (error 'unsupported-digest :name digest))
        (make-instance 'pbkdf2 :digest digest-name)))
     (hmac-kdf
-     (let ((digest-name (massage-symbol digest)))
+     (let ((digest-name (ironclad-symbol digest)))
        (unless (digestp digest-name)
          (error 'unsupported-digest :name digest))
        (make-instance 'hmac-kdf :digest digest-name :info additional-data)))

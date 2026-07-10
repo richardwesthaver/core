@@ -17,7 +17,7 @@
 (defun mac-supported-p (name)
   "Return T if the mac NAME is a valid mac name."
   (and (symbolp name)
-       (not (null (macp (massage-symbol name))))))
+       (not (null (macp (ironclad-symbol name))))))
 
 (defmacro defmac (name maker updater producer)
   `(progn
@@ -49,7 +49,7 @@
 initialized with a KEY."
   (typecase mac-name
     (symbol
-     (let ((name (massage-symbol mac-name)))
+     (let ((name (ironclad-symbol mac-name)))
        (if (macp name)
            (apply (the function (get name '%make-mac)) key args)
            (error 'unsupported-mac :name mac-name))))

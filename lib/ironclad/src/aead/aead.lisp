@@ -29,7 +29,7 @@ make-authenticated-encryption-mode."
 (defun authenticated-encryption-mode-supported-p (name)
   "Returns T if NAME would be in the list returned by
 list-all-authenticated-encryption-modes NIL otherwise."
-  (and (symbolp name) (aeadp (massage-symbol name))))
+  (and (symbolp name) (aeadp (ironclad-symbol name))))
 
 (defmacro defaead (name)
   `(setf (get ',name 'aead) t))
@@ -39,7 +39,7 @@ list-all-authenticated-encryption-modes NIL otherwise."
 encryption and decryption."
   (typecase name
     (symbol
-     (let ((name (massage-symbol name)))
+     (let ((name (ironclad-symbol name)))
        (if (aeadp name)
            (apply #'make-instance name args)
            (error 'unsupported-authenticated-encryption-mode :name name))))

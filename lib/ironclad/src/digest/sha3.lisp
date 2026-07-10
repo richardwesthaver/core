@@ -58,8 +58,8 @@
 
 (defmacro get-keccak-rotate-offset (x y &environment env)
   (aref +keccak-rotate-offsets+
-        (eval (trivial-macroexpand-all x env))
-        (eval (trivial-macroexpand-all y env))))
+        (eval (partial-macroexpand-all x env))
+        (eval (partial-macroexpand-all y env))))
 
 (declaim (inline get-keccak-round-constant)
          (ftype (function ((integer 0 23)) keccak-lane) get-keccak-round-constant))
@@ -139,8 +139,8 @@ the content on normal form exit."
                                            :format-control "Strange: ~S!"
                                            :format-arguments (list state)))
                       (aref (cdr entry)
-                            (eval (trivial-macroexpand-all x env))
-                            (eval (trivial-macroexpand-all y env))))))
+                            (eval (partial-macroexpand-all x env))
+                            (eval (partial-macroexpand-all y env))))))
          (multiple-value-prog1 (progn ,@body)
            ,@save-forms)))))
 
@@ -165,8 +165,8 @@ the content on normal form exit."
                                            :format-control "Strange: ~S!"
                                            :format-arguments (list temp)))
                       (aref (cdr entry)
-                            (eval (trivial-macroexpand-all x env))
-                            (eval (trivial-macroexpand-all y env))))))
+                            (eval (partial-macroexpand-all x env))
+                            (eval (partial-macroexpand-all y env))))))
          ,@body))))
 
 (defmacro with-temp-keccak-rows ((&rest rows) &body body)
@@ -189,7 +189,7 @@ the content on normal form exit."
                                            :format-control "Strange: ~S!"
                                            :format-arguments (list row)))
                       (aref (cdr entry)
-                            (eval (trivial-macroexpand-all x env))))))
+                            (eval (partial-macroexpand-all x env))))))
          ,@body))))
 
 (declaim (ftype (function (keccak-state)) keccak-rounds))

@@ -290,7 +290,7 @@
   "Return a digest object which uses the algorithm DIGEST-NAME."
   (typecase digest-name
     (symbol
-     (let ((name (massage-symbol digest-name)))
+     (let ((name (ironclad-symbol digest-name)))
        (if (digestp name)
            (apply (the function (get name '%make-digest)) keys)
            (error 'unsupported-digest :name digest-name))))
@@ -310,10 +310,10 @@
 (defun digest-supported-p (name)
   "Return T if the digest NAME is a valid digest name."
   (and (symbolp name)
-       (not (null (digestp (massage-symbol name))))))
+       (not (null (digestp (ironclad-symbol name))))))
 
 (defmethod digest-length ((digest-name symbol))
-  (or (digestp (massage-symbol digest-name))
+  (or (digestp (ironclad-symbol digest-name))
       (error 'unsupported-digest :name digest-name)))
 
 (defmethod digest-length (digest-name)
@@ -347,7 +347,7 @@
   (cond
     ((or (keywordp name)
          (and (quotationp name) (symbolp name)))
-     (let ((name (massage-symbol (unquote name))))
+     (let ((name (ironclad-symbol (unquote name))))
        (if (digestp name)
            `(,(optimized-maker-name name) ,@keys)
            form)))
@@ -358,7 +358,7 @@
   (cond
     ((or (keywordp name)
          (and (quotationp name) (symbolp name)))
-     (let ((name (massage-symbol (unquote name))))
+     (let ((name (ironclad-symbol (unquote name))))
        (if (digestp name)
            `(,funname (,(optimized-maker-name name)) ,2nd-arg ,@keys)
            form)))

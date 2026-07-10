@@ -1883,9 +1883,14 @@ up.
 /event/ is up to 32 bytes of data (for longer events, hash them down
 or break them up into chunks).
 
-* Gray streams
+* TODO Gray streams
 :PROPERTIES:
 :CUSTOM_ID: gray-streams
+:CREATED:  <2026-07-09 Thu 22:38>
+:ID:       e281ef6d-69f3-4600-84db-b01aa34843a5
+:END:
+:LOGBOOK:
+- State "TODO"       from              [2026-07-09 Thu 22:38]
 :END:
 
 Ironclad includes support for several convenient stream abstractions
