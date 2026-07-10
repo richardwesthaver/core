@@ -3,59 +3,57 @@
   :require ("std")
   :version "0.61"
   :components 
-  ((:mod "src"
+  ((:pkg "pkg")
+   (:file "condition")
+   (:file "generic")
+   (:file "util")
+   (:mod "opt"
     :components 
-    ((:pkg "pkg")
-     (:file "condition")
-     (:file "generic")
-     (:file "util")
-     (:mod "opt"
-      :components 
-      ((:mod "sbcl"
-        :components ((:file "fndb")
-                     (:file "x86oid-vm")
-                     (:file "cpu-features")))))
-     (:file "common")
-     (:mod "cipher"
-      :components ((:file "cipher")
-                   (:file "padding")
-                   (:file "make-cipher")
-                   (:file "modes")
-                   (:file "aes")
-                   (:file "chacha")
-                   (:file "salsa20")))
-     (:mod "digest"
-      :components ((:file "digest")
-                   ;; defaults
-                   (:file "crc32")
-                   (:file "md5")
-                   (:file "blake2")
-                   (:file "sha256")
-                   (:file "sha3")
-                   (:file "sha512")))
-     (:mod "mac"
-      :components ((:file "mac")
-                   (:file "hmac")))
-     (:mod "prng"
-      :components ((:file "prng")
-                   ;; default
-                   (:file "os-prng")))
-     (:file "math")
-     (:file "octet-stream")
-     (:mod "aead"
-      :components ((:file "aead")))
-     (:mod "kdf"
-      :components ((:file "kdf")
-                   (:file "pkcs5")
-                   (:file "password-hash")
-                   (:file "argon2")
-                   (:file "hmac")))
-     (:mod "public-key"
-      :components ((:file "public-key")
-                   (:file "pkcs1")
-                   (:file "elliptic-curve")
-                   (:file "curve25519")
-                   (:file "ed25519"))))))
+    ((:mod "sbcl"
+      :components ((:file "fndb")
+                   (:file "x86oid-vm")
+                   (:file "cpu-features")))))
+   (:file "common")
+   (:mod "cipher"
+    :components ((:file "cipher")
+                 (:file "padding")
+                 (:file "make-cipher")
+                 (:file "modes")
+                 (:file "aes")
+                 (:file "chacha")
+                 (:file "salsa20")))
+   (:mod "digest"
+    :components ((:file "digest")
+                 ;; defaults
+                 (:file "crc32")
+                 (:file "md5")
+                 (:file "blake2")
+                 (:file "sha256")
+                 (:file "sha3")
+                 (:file "sha512")))
+   (:mod "mac"
+    :components ((:file "mac")
+                 (:file "hmac")))
+   (:mod "prng"
+    :components ((:file "prng")
+                 ;; default
+                 (:file "os-prng")))
+   (:file "math")
+   (:file "octet-stream")
+   (:mod "aead"
+    :components ((:file "aead")))
+   (:mod "kdf"
+    :components ((:file "kdf")
+                 (:file "pkcs5")
+                 (:file "password-hash")
+                 (:file "argon2")
+                 (:file "hmac")))
+   (:mod "public-key"
+    :components ((:file "public-key")
+                 (:file "pkcs1")
+                 (:file "elliptic-curve")
+                 (:file "curve25519")
+                 (:file "ed25519"))))
   :provide
   ((:tests 
     :description "Ironclad Tests"
@@ -113,7 +111,7 @@
                                 :components 
                                 ,(or (getf options :components)
                                      `((:file ,(namestring (merge-pathnames component path))))))))))))
-  (define-ironclad-subsystem ironclad/cipher #p"src/cipher/"
+  (define-ironclad-subsystem ironclad/cipher #p"cipher/"
     "arcfour"
     "aria"
     "blowfish"
@@ -143,7 +141,7 @@
     "xtea")
 
   (define-ironclad-subsystem
-      "ironclad/digest" #p"src/digest/"
+      "ironclad/digest" #p"digest/"
     "adler32"
     "blake2s"
     "crc24"
@@ -163,7 +161,7 @@
     "whirlpool")
 
   (define-ironclad-subsystem
-      "ironclad/mac" #p"src/mac/"
+      "ironclad/mac" #p"mac/"
     ("blake2-mac" :require (:ironclad/digest/blake2))
     ("blake2s-mac" :require (:ironclad/digest/blake2s))
     "cmac"
@@ -174,20 +172,20 @@
                            :ironclad/digest/skein)))
 
   (define-ironclad-subsystem
-      "ironclad/prng" #p"src/prng/"
+      "ironclad/prng" #p"prng/"
     ("fortuna" :require (:ironclad/cipher/aes
                          :ironclad/digest/sha256)
-               :components ((:file "src/prng/generator")
-                            (:file "src/prng/fortuna"))))
+               :components ((:file "prng/generator")
+                            (:file "prng/fortuna"))))
 
   (define-ironclad-subsystem
-      "ironclad/aead" #p"src/aead/"
+      "ironclad/aead" #p"aead/"
     ("eax" :require ("ironclad/mac/cmac"))
     "etm"
     ("gcm" :require ("ironclad/mac/gmac")))
 
   (define-ironclad-subsystem
-      "ironclad/kdf" #p"src/kdf/"
+      "ironclad/kdf" #p"kdf/"
     ("bcrypt" :require (:ironclad/cipher/blowfish
                         :ironclad/digest/sha512))
     ("scrypt" :require (:ironclad/cipher/salsa20
@@ -195,7 +193,7 @@
                         :ironclad/kdf/pkcs5)))
 
   (define-ironclad-subsystem
-      "ironclad/public-key" #p"src/public-key/"
+      "ironclad/public-key" #p"public-key/"
     "dsa"
     "rsa"
     "elgamal"
