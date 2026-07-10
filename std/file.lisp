@@ -420,6 +420,10 @@ consider FILE-SIZE-IN-OCTETS instead."
   "Like FILE-WRITE-DATE but return NIL when file does not exist."
   (when (probe-file file) (file-write-date file)))
 
+(defun file-newer-p (new-file old-file)
+  "Returns true if NEW-FILE is newer than OLD-FILE."
+  (> (file-write-date new-file) (file-write-date old-file)))
+
 (defvar *hidden-paths* (list ".hg" ".git"))
 
 (defun hidden-path-p (path &optional strict)

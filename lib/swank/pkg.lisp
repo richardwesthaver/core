@@ -29,7 +29,6 @@
            #:declaration-arglist
            #:type-specifier-arglist
            #:with-struct
-           #:when-let
            #:defimplementation
            #:converting-errors-to-error-location
            #:make-error-location
@@ -138,6 +137,14 @@
     #:swank/rpc)
   (:import-from :std/macs :defvar-unbound)
   (:export 
+   ;; loader.lisp
+   :init-swank
+   :list-fasls
+   :*swank-source-directory*
+   :*slime-source-directory*
+   :*swank-fasl-directory*
+   :*started-from-emacs*
+
    #:startup-multiprocessing
    #:select-match
    #:start-server

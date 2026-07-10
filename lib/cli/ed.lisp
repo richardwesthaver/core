@@ -297,6 +297,7 @@ state of each file in FILES."
 
 (defgeneric editor-insert-mode (self)
   (:method ((self editor)) t))
+
 (defgeneric (setf editor-insert-mode) (new self))
 
 (defun save-state (editor)

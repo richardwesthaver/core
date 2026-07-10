@@ -1288,6 +1288,7 @@
    :octet-vector=
    :file-date
    :file-write-date*
+   :file-newer-p
    :file-timestamp
    :*hidden-paths*
    :hidden-path-p

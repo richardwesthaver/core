@@ -85,7 +85,7 @@ When :STARTED-FROM-EMACS redirect when launched by M-x slime")
 (defun globally-redirect-io-p ()
   (case *globally-redirect-io*
     ((t) t)
-    (:started-from-emacs swank-loader:*started-from-emacs*)))
+    (:started-from-emacs swank:*started-from-emacs*)))
 
 (defun open-streams (connection)
   "Return the 4 streams for IO redirection:

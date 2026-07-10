@@ -2,8 +2,8 @@
 (defsys :swank
  :require (:std)
   :components 
-  ((:file "swank-loader")
-   (:pkg "pkg")
+  ((:pkg "pkg")
+   (:file "loader")
    ;; (:file "xref" :if-feature :clisp)
    ;; (:file "metering" :if-feature (:or :clozure :clisp :clasp))
    (:file "backend")

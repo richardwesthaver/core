@@ -171,7 +171,7 @@ This applies to the *inferior-lisp* buffer and the network connections."
   :prefix "slime-"
   :group 'slime)
 
-(defcustom slime-backend "swank-loader.lisp"
+(defcustom slime-backend "loader.lisp"
   "The name of the Lisp file that loads the Swank server.
 This name is interpreted relative to the directory containing
 slime.el, but could also be set to an absolute filename."
@@ -1242,7 +1242,7 @@ See `slime-start'."
             `(progn
                (load ,(slime-to-lisp-filename (expand-file-name loader))
                      :verbose t)
-               (funcall (read-from-string "swank-loader:init-swank")
+               (funcall (read-from-string "swank:init-swank")
                         :from-emacs t)
                (funcall (read-from-string "swank:start-server")
                         ,(slime-to-lisp-filename port-filename))))))

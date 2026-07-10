@@ -146,10 +146,6 @@ This will be used like so:
                        (t (error "Malformed syntax in WITH-STRUCT: ~A" name))))
             ,@body)))))
 
-(defmacro when-let ((var value) &body body)
-  `(let ((,var ,value))
-     (when ,var ,@body)))
-
 (defun boolean-to-feature-expression (value)
   "Converts a boolean VALUE to a form suitable for testing with #+."
   (if value

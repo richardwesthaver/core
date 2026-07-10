@@ -1,4 +1,4 @@
-;;; swank-loader.lisp --- Compile and load the Slime backend.
+;;; loader.lisp --- Compile and load the Slime backend.
 
 ;; Created 2003, James Bielman <jamesjb@jamesjb.com>
 
@@ -6,40 +6,36 @@
 ;; are disclaimed.
 
 ;; If you want customize the source- or fasl-directory you can set
-;; swank-loader:*source-directory* resp. swank-loader:*fasl-directory*
+;; swank:*slime-source-directory* resp. swank:*slime-fasl-directory*
 ;; before loading this files.
 ;; E.g.:
 ;;
-;;   (load ".../swank-loader.lisp")
-;;   (setq swank-loader::*fasl-directory* "/tmp/fasl/")
-;;   (swank-loader:init)
+;;   (load "../loader.lisp")
+;;   (setq swank::*slime-fasl-directory* "/tmp/fasl/")
+;;   (swank:init-swank)
 
 ;;; Code:
-(cl:defpackage :swank-loader
-  (:use :cl :std)
-  (:export 
-   :init-swank
-   :dump-image
-   :list-fasls
-   :*source-directory*
-   :*fasl-directory*
-   :*started-from-emacs*
-   :define-package))
-
-(cl:in-package :swank-loader)
+(in-package :swank)
 
 (defvar *started-from-emacs* nil)
 
-(defvar *source-directory*
+(defvar *swank-source-directory*
   (make-pathname :name nil :type nil
                  :defaults (or (when-let ((sys (find-system :swank))) (path sys))
                                *load-pathname* 
                                *default-pathname-defaults*))
   "The directory where to look for the source.")
 
+(defvar *slime-source-directory*
+  (make-pathname :name nil :type nil
+                 :defaults (or (when-let ((sys (find-system :core))) 
+                                 (merge-pathnames "etc/emacs/slime/" (path sys)))
+                               *load-pathname* 
+                               *default-pathname-defaults*))
+  "The directory where to look for the source.")
+
 (defparameter *sysdep-files*
-  '((backend source-path-parser) (backend source-file-cache) (backend sbcl)
-    (backend gray)))
+  '(source-path-parser source-file-cache sbcl gray))
 
 (defparameter *os-features*
   '(:macosx :linux :windows :mswindows :win32 :solaris :darwin :sunos :hpux
@@ -51,8 +47,6 @@
     :pentium3 :pentium4
     :mips :mipsel
     :java-1.4 :java-1.5 :java-1.6 :java-1.7))
-
-(defun q (s) (read-from-string s))
 
 (defun lisp-version-string ()
   (format nil "~a~:[~;-no-threads~]"
@@ -81,10 +75,6 @@ operating system, and hardware architecture."
                                 implementation version.")))
       (format nil "~(~@{~a~^-~}~)" "core" version os arch))))
 
-(defun file-newer-p (new-file old-file)
-  "Returns true if NEW-FILE is newer than OLD-FILE."
-  (> (file-write-date new-file) (file-write-date old-file)))
-
 (defun string-starts-with (string prefix)
   (string-equal string prefix :end1 (min (length string) (length prefix))))
 
@@ -102,7 +92,7 @@ Return nil if nothing appropriate is available."
 
 (defun default-fasl-dir () (merge-pathnames "slime/" (user-fasl-cache)))
 
-(defvar *fasl-directory* (default-fasl-dir)
+(defvar *slime-fasl-directory* (default-fasl-dir)
   "The directory where fasl files should be placed.")
 
 (defun binary-pathname (src-pathname binary-dir)
@@ -151,17 +141,6 @@ If LOAD is true, load the fasl file."
             (load dest :verbose (not quiet))))))))
 
 ;; TODO 2026-02-27: replace with xdg/rc
-(defun load-user-init-file ()
-  "Load the user init file, return NIL if it does not exist."
-  (load (merge-pathnames (user-homedir-pathname)
-                         (make-pathname :name ".swank" :type "lisp"))
-        :if-does-not-exist nil))
-
-(defun load-site-init-file (dir)
-  (load (make-pathname :name "site-init" :type "lisp"
-                       :defaults dir)
-        :if-does-not-exist nil))
-
 (defun src-files (names src-dir)
   (mapcar (lambda (name)
             (multiple-value-bind (dirs name)
@@ -179,7 +158,7 @@ If LOAD is true, load the fasl file."
 
 (defvar *swank-files*
   `(pkg
-    (backend backend) ,@*sysdep-files* (backend match) (backend rpc)
+    backend ,@*sysdep-files* select-match rpc
     swank))
 
 (defvar *contribs*
@@ -202,14 +181,14 @@ If LOAD is true, load the fasl file."
    absolute))
 
 (defun contrib-dir (base-dir)
-  (append-dir base-dir "contrib"))
+  (append-dir base-dir "ext"))
 
-(defun load-swank (&key (src-dir *source-directory*)
-                     (fasl-dir *fasl-directory*)
+(defun load-swank (&key (src-dir *swank-source-directory*)
+                     (fasl-dir *slime-fasl-directory*)
                         quiet)
   (with-compilation-unit ()
     (compile-files (src-files *swank-files* src-dir) fasl-dir t quiet))
-  (funcall (q "swank::before-init")
+  (funcall (read-from-string "swank::before-init")
            (slime-version-string)
            (list (contrib-dir fasl-dir)
                  (contrib-dir src-dir))))
@@ -222,9 +201,9 @@ If LOAD is true, load the fasl file."
                    (<= (file-write-date fasl) newest))
           (delete-file fasl))))))
 
-(defun compile-contribs (&key (src-dir (contrib-dir *source-directory*))
-                           (fasl-dir (contrib-dir *fasl-directory*))
-                           (swank-src-dir *source-directory*)
+(defun compile-contribs (&key (src-dir (contrib-dir *swank-source-directory*))
+                           (fasl-dir (contrib-dir *slime-fasl-directory*))
+                           (swank-src-dir *swank-source-directory*)
                            load quiet)
   (let* ((swank-src-files (src-files *swank-files* swank-src-dir))
          (contrib-src-files (src-files *contribs* src-dir)))
@@ -237,18 +216,16 @@ If LOAD is true, load the fasl file."
   (compile-contribs :load t))
 
 (defun setup ()
-  (load-site-init-file *source-directory*)
-  (load-user-init-file)
-  (when (probe-file (contrib-dir *source-directory*))
-    (eval `(pushnew 'compile-contribs ,(q "swank::*after-init-hook*"))))
-  (funcall (q "swank::start-swank")))
+  (when (probe-file (contrib-dir *swank-source-directory*))
+    (eval `(pushnew 'compile-contribs ,(read-from-string "swank::*after-init-hook*"))))
+  (funcall (read-from-string "swank::start-swank")))
 
 (defun list-swank-packages ()
-  (remove-if-not (lambda (package)
-                   (let ((name (package-name package)))
-                     (and (string-not-equal name "swank-loader")
-                          (string-starts-with name "swank"))))
-                 (list-all-packages)))
+  (remove-if-not 
+   (lambda (package)
+     (let ((name (package-name package)))
+       (string-starts-with name "swank")))
+   (list-all-packages)))
 
 (defun delete-packages (packages)
   (dolist (package packages)
@@ -284,10 +261,6 @@ global variabes in SWANK."
   (when setup
     (setup)))
 
-(defun dump-image (filename &key load-contribs)
-  (init-swank :setup nil :load-contribs load-contribs)
-  (funcall (q "swank/backend:save-image") filename))
-
 (defun list-fasls (&key (include-contribs t) (compile t)
                         (quiet (not *compile-verbose*)))
   "List up SWANK's fasls along with their dependencies."
@@ -297,9 +270,9 @@ global variabes in SWANK."
            (loop for src in files
                  when (probe-file (binary-pathname src fasl-dir))
                    collect it)))
-    (append (collect-fasls (src-files *swank-files* *source-directory*)
-                           *fasl-directory*)
+    (append (collect-fasls (src-files *swank-files* *slime-source-directory*)
+                           *slime-fasl-directory*)
             (when include-contribs
               (collect-fasls (src-files *contribs*
-                                        (contrib-dir *source-directory*))
-                             (contrib-dir *fasl-directory*))))))
+                                        (contrib-dir *slime-source-directory*))
+                             (contrib-dir *slime-fasl-directory*))))))
