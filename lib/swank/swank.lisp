@@ -471,13 +471,6 @@ corresponding values in the CDR of VALUE."
                       `(,getter ,',var))))
          ,@body))))
 
-(defmacro define-special (name doc)
-  "Define a special variable NAME with doc string DOC.
-This is like defvar, but NAME will not be initialized."
-  `(progn
-    (defvar ,name)
-    (setf (documentation ',name 'variable) ,doc)))
-
 (defvar *connection-lock* (make-lock))
 
 (defvar *connections* '()
@@ -1430,13 +1423,13 @@ VERSION: the protocol version"
   (setf (debug-on-swank-error) (not (debug-on-swank-error))))
 
 ;;; Reading and printing
-(define-special *buffer-package*     
+(defvar-unbound *buffer-package*     
     "Package corresponding to slime-buffer-package.  
 
 EVAL-FOR-EMACS binds *buffer-package*.  Strings originating from a slime
 buffer are best read in this package.  See also FROM-STRING and TO-STRING.")
 
-(define-special *buffer-readtable*
+(defvar-unbound *buffer-readtable*
     "Readtable associated with the current buffer")
 
 (defmacro with-buffer-syntax ((&optional package) &body body)
@@ -1553,8 +1546,7 @@ considered to represent a symbol internal to some current package.)"
 
   (untokenize-symbol \"quux\" nil \"foo\") ==> \"quux:foo\"
   (untokenize-symbol \"quux\" t \"foo\")   ==> \"quux::foo\"
-  (untokenize-symbol nil nil \"foo\")    ==> \"foo\"
-"
+  (untokenize-symbol nil nil \"foo\")    ==> \"foo\""
   (cond ((not package-name) 	symbol-name)
         (internal-p 		(cat package-name "::" symbol-name))
         (t 			(cat package-name ":" symbol-name))))
@@ -2542,7 +2534,7 @@ the filename of the module (or nil if the file doesn't exist).")
     (make-pathname :directory `(:relative ,dirname) :defaults defaults)
     defaults)))
 
-(defvar *load-path* (list (std:system-relative-pathname :swank "contrib/"))
+(defvar *load-path* (list (std:system-relative-pathname :swank "ext/"))
   "A list of directories to search for modules.")
 
 (defun module-candidates (name dir)

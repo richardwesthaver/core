@@ -187,14 +187,12 @@ If LOAD is true, load the fasl file."
     swank-c-p-c swank-arglists swank-fuzzy
     swank-fancy-inspector
     swank-presentations
-    swank-asdf
     swank-package-fu
     swank-hyperdoc
     swank-sbcl-exts
-    swank-mrepl
+    ;; swank-mrepl
     swank-trace-dialog
     swank-macrostep
-    swank-quicklisp
     swank-indentation)
   "List of names for contrib modules.")
 

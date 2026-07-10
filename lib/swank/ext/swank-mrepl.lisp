@@ -52,7 +52,7 @@
          (ch (make-instance 'listener-channel :remote remote :thread thread)))
     (setf (slot-value ch 'env) (initial-listener-env ch))
     (when thread
-      (swank/backend:send thread `(:serve-channel ,ch)))
+      (swank/backend::send thread `(:serve-channel ,ch)))
     (list (channel-id ch)
 	  (swank/backend:thread-id (or thread (swank/backend:current-thread)))
 	  (package-name pkg)

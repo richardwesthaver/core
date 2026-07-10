@@ -1047,7 +1047,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
         arglist))))
 
 (defmethod arglist-dispatch ((operator (eql 'defmethod)) arguments)
-  (match (cons operator arguments)
+  (select-match (cons operator arguments)
     (('defmethod (#'function-exists-p gf-name) . rest)
      (let ((gf (fdefinition gf-name)))
        (when (typep gf 'generic-function)
@@ -1064,7 +1064,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
   (call-next-method))
 
 (defmethod arglist-dispatch ((operator (eql 'define-compiler-macro)) arguments)
-  (match (cons operator arguments)
+  (select-match (cons operator arguments)
     (('define-compiler-macro (#'function-exists-p fun-name) . _)
      (with-available-arglist (arglist) (decode-arglist (arglist fun-name))
        (return-from arglist-dispatch
@@ -1088,7 +1088,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
          (typedecl-arglist (arglist-for-type-declaration declaration)))
     (if (arglist-available-p typedecl-arglist)
         typedecl-arglist
-        (match declaration
+        (select-match declaration
           (('declare ((#'consp typespec) . decl-args))
            (with-available-arglist (typespec-arglist)
                (decoded-arglist-for-type-specifier typespec)
@@ -1113,7 +1113,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
                                     :provided-args (list identifier)
                                     :required-args (list typespec-arglist)
                                     :rest rest-var-name))))))
-    (match declaration
+    (select-match declaration
       (('declare ('type (#'consp typespec) . decl-args))
        (%arglist-for-type-declaration 'type typespec '#:variables))
       (('declare ('ftype (#'consp typespec) . decl-args))
@@ -1492,7 +1492,7 @@ to the argument (NTH `provided-argument-index' `provided-arguments')."
                 (provided-keys (subseq provided-arguments positional-args#)))
            (loop for (key value) on provided-keys by #'cddr
                  when (eq value argument)
-                 return (match key
+                 return (select-match key
                             (('quote symbol) symbol)
                             (_ key)))))))))
 
@@ -1517,7 +1517,7 @@ represent key parameters."
          (ref-keyword-arg (arglist keyword)
            ;; keyword argument may be any symbol,
            ;; not only from the KEYWORD package.
-           (let ((keyword (match keyword
+           (let ((keyword (select-match keyword
                             (('quote symbol) symbol)
                             (_ keyword))))
              (do-decoded-arglist arglist
@@ -1560,13 +1560,13 @@ ARGLIST-DUMMY."
   (unless (null raw-form)
     (loop for element in raw-form
           collect (etypecase element
-                    (string (read-conversatively element))
+                    (string (read-conservatively element))
                     (list   (parse-raw-form element))
                     (symbol (prog1 element
                               ;; Comes after list, so ELEMENT can't be NIL.
                               (assert (eq element +cursor-marker+))))))))
 
-(defun read-conversatively (string)
+(defun read-conservatively (string)
   "Tries to find the symbol that's represented by STRING.
 
 If it can't, this either means that STRING does not represent a

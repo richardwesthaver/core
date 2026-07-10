@@ -82,10 +82,7 @@
 ;;      case, like OTHER above.
 
 ;;; Code:
-(in-package swank/match)
-
-(defmacro match (expression &body patterns)
-  `(select-match ,expression ,@patterns))
+(in-package swank)
 
 (defmacro select-match (expression &rest patterns)
   (let* ((do-let (not (atom expression)))

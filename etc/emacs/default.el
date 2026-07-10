@@ -448,7 +448,6 @@ TABLE."
 	    "^(\\(cl:\\|common-lisp:\\|uiop:\\|uiop/package:\\|std:\\|std/defpkg:\\|pkg:\\)?\\(defpackage\\|define-package\\|defpkg\\)\\>[ \t']*"
 	    slime-threads-update-interval 4
 	    slime-contribs '(slime-fancy
-			             slime-quicklisp
 			             slime-hyperdoc
 			             ;; slime-listener-hooks
 			             ;; slime-enclosing-context

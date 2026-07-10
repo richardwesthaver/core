@@ -9,9 +9,9 @@
            #:sldb-condition
            #:compiler-condition
            #:original-condition
-           #:message
            #:source-context
            #:condition
+           #:message
            #:severity
            #:with-compilation-hooks
            #:make-location
@@ -48,7 +48,6 @@
            ;; package helper for backend
            #:import-to-swank-mop
            #:import-swank-mop-symbols
-           ;;
            #:default-directory
            #:set-default-directory
            #:frame-source-location
@@ -56,13 +55,11 @@
            #:gdb-initial-commands
            #:sldb-break-on-return
            #:buffer-first-change
-
            #:profiled-functions
            #:unprofile-all
            #:profile-report
            #:profile-reset
            #:profile-package
-
            #:with-collected-macro-forms
            #:auto-flush-loop
            #:*auto-flush-interval*
@@ -72,17 +69,14 @@
            #:without-slime-interrupts))
 
 (defpkg #:swank/rpc
-  (:use #:cl)
-  (:export #:read-message
-           #:read-packet
-           #:swank-reader-error
-           #:swank-reader-error.packet
-           #:swank-reader-error.cause
-           #:write-message))
-
-(defpkg #:swank/match
-  (:use #:cl)
-  (:export #:match))
+  (:use #:std-lisp)
+  (:export 
+   #:read-message
+   #:read-packet
+   #:swank-reader-error
+   #:swank-reader-error.packet
+   #:swank-reader-error.cause
+   #:write-message))
 
 ;; FIXME: rename to sawnk/mop
 (defpkg #:swank-mop
@@ -140,70 +134,72 @@
 
 (defpkg #:swank
   (:use #:cl
-        #:swank/backend
-        #:swank/match
-        #:swank/rpc)
-  (:export #:startup-multiprocessing
-           #:start-server
-           #:create-server
-           #:stop-server
-           #:restart-server
-           #:ed-in-emacs
-           #:inspect-in-emacs
-           #:print-indentation-lossage
-           #:invoke-slime-debugger
-           #:swank-debugger-hook
-           #:emacs-inspect
-           ;;#:inspect-slot-for-emacs
-           ;; These are user-configurable variables:
-           #:*communication-style*
-           #:*dont-close*
-           #:*fasl-pathname-function*
-           #:*log-events*
-           #:*configure-emacs-indentation*
-           #:*readtable-alist*
-           #:*globally-redirect-io*
-           #:*global-debugger*
-           #:*sldb-quit-restart*
-           #:*backtrace-printer-bindings*
-           #:*default-worker-thread-bindings*
-           #:*macroexpand-printer-bindings*
-           #:*swank-pprint-bindings*
-           #:*record-repl-results*
-           #:*inspector-verbose*
-           ;; This is SETFable.
-           #:debug-on-swank-error
-           ;; These are re-exported directly from the backend:
-           #:buffer-first-change
-           #:frame-source-location
-           #:gdb-initial-commands
-           #:restart-frame
-           #:sldb-step
-           #:sldb-break
-           #:sldb-break-on-return
-           #:profiled-functions
-           #:profile-report
-           #:profile-reset
-           #:unprofile-all
-           #:profile-package
-           #:default-directory
-           #:set-default-directory
-           #:quit-lisp
-           #:eval-for-emacs
-           #:eval-in-emacs
-           #:ed-rpc
-           #:ed-rpc-no-wait
-           #:y-or-n-p-in-emacs
-           #:*find-definitions-right-trim*
-           #:*find-definitions-left-trim*
-           #:*after-toggle-trace-hook*
-           #:unreadable-result
-           #:unreadable-result-p
-           #:unreadable-result-string
-           #:parse-string
-           #:from-string
-           #:to-string
-           #:*swank-debugger-condition*
-           #:run-hook-with-args-until-success
-           #:make-output-function-for-target
-           #:make-output-stream-for-target))
+    #:swank/backend
+    #:swank/rpc)
+  (:import-from :std/macs :defvar-unbound)
+  (:export 
+   #:startup-multiprocessing
+   #:select-match
+   #:start-server
+   #:create-server
+   #:stop-server
+   #:restart-server
+   #:ed-in-emacs
+   #:inspect-in-emacs
+   #:print-indentation-lossage
+   #:invoke-slime-debugger
+   #:swank-debugger-hook
+   #:emacs-inspect
+   ;;#:inspect-slot-for-emacs
+   ;; These are user-configurable variables:
+   #:*communication-style*
+   #:*dont-close*
+   #:*fasl-pathname-function*
+   #:*log-events*
+   #:*configure-emacs-indentation*
+   #:*readtable-alist*
+   #:*globally-redirect-io*
+   #:*global-debugger*
+   #:*sldb-quit-restart*
+   #:*backtrace-printer-bindings*
+   #:*default-worker-thread-bindings*
+   #:*macroexpand-printer-bindings*
+   #:*swank-pprint-bindings*
+   #:*record-repl-results*
+   #:*inspector-verbose*
+   ;; This is SETFable.
+   #:debug-on-swank-error
+   ;; These are re-exported directly from the backend:
+   #:buffer-first-change
+   #:frame-source-location
+   #:gdb-initial-commands
+   #:restart-frame
+   #:sldb-step
+   #:sldb-break
+   #:sldb-break-on-return
+   #:profiled-functions
+   #:profile-report
+   #:profile-reset
+   #:unprofile-all
+   #:profile-package
+   #:default-directory
+   #:set-default-directory
+   #:quit-lisp
+   #:eval-for-emacs
+   #:eval-in-emacs
+   #:ed-rpc
+   #:ed-rpc-no-wait
+   #:y-or-n-p-in-emacs
+   #:*find-definitions-right-trim*
+   #:*find-definitions-left-trim*
+   #:*after-toggle-trace-hook*
+   #:unreadable-result
+   #:unreadable-result-p
+   #:unreadable-result-string
+   #:parse-string
+   #:from-string
+   #:to-string
+   #:*swank-debugger-condition*
+   #:run-hook-with-args-until-success
+   #:make-output-function-for-target
+   #:make-output-stream-for-target))

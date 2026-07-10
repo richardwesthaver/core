@@ -246,7 +246,7 @@ character translation."
   "The opposite of EAT."
   `(unread-char ,char (state-stream s)))
 
-(defmacro match (&rest matchers)
+(defmacro xml-match (&rest matchers)
   "Attempts to match the next input character with one of the supplied matchers."
   `(let ((c (peek-stream (state-stream s))))
      (and c
@@ -261,20 +261,20 @@ character translation."
 (defmacro match-seq (&rest sequence)
   "Tries to match the supplied matchers in sequence with characters in the input stream."
   `(and ,@(loop for s in sequence
-                collect `(match ,s))))
+                collect `(xml-match ,s))))
 
-(defmacro match* (&rest sequence)
+(defmacro xml-match* (&rest sequence)
   "Matches any occurances of any of the supplied matchers."
   `(loop with data = (make-extendable-string 10)
-         for c = (match ,@sequence)
+         for c = (xml-match ,@sequence)
          while c
          do (push-string c data)
          finally (return data)))
 
-(defmacro match+ (&rest sequence)
+(defmacro xml-match+ (&rest sequence)
   "Matches one or more occurances of any of the supplied matchers."
   `(and (peek ,@sequence)
-        (match* ,@sequence)))
+        (xml-match* ,@sequence)))
 
 (defmacro peek (&rest matchers)
   "Looks ahead for an occurance of any of the supplied matchers."
@@ -315,7 +315,7 @@ character translation."
                    (values res (cons val nextval)))
                  (values t nil)))))
   (declare (dynamic-extent #'none-or-more))
-  (macrolet ((matchfn (name) `(lambda (s) (match ,name)))
+  (macrolet ((matchfn (name) `(lambda (s) (xml-match ,name)))
              (def (name &rest body)
                  `(defun ,name (c) ,@body))
              (defrule (name &rest body)
@@ -344,14 +344,14 @@ character translation."
     ;; Rules
     (defrule ncname
         (and (peek letter #\_)
-             (match+ ncname-char)))
+             (xml-match+ ncname-char)))
     (defrule qname
         (let (name suffix)
           (and
            (setf name (ncname s))
            (or
             (and
-             (match #\:)
+             (xml-match #\:)
              (setf suffix (ncname s)))
             t))
           (values name suffix)))
@@ -362,36 +362,36 @@ character translation."
            (or
             (and
              (progn
-               (match* ws-char)
-               (match #\=))
+               (xml-match* ws-char)
+               (xml-match #\=))
              (or
               (and
                (progn
-                 (match* ws-char)
-                 (match #\"))
-               (setf val (match* attr-text-dq))
-               (match #\"))
+                 (xml-match* ws-char)
+                 (xml-match #\"))
+               (setf val (xml-match* attr-text-dq))
+               (xml-match #\"))
               (and
                (progn
-                 (match* ws-char)
-                 (match #\'))
-               (setf val (match* attr-text-sq))
-               (match #\'))))
+                 (xml-match* ws-char)
+                 (xml-match #\'))
+               (setf val (xml-match* attr-text-sq))
+               (xml-match #\'))))
             t)
            (if (string= "xmlns" name)
-	       (list 'nsdecl suffix val)
-	       ;; If SUFFIX is true, then NAME is Prefix and SUFFIX is
-	       ;; LocalPart.
-	       (if suffix
-	           (list 'attr suffix val :attr-ns name)
-	           (list 'attr name val))))))
+	           (list 'nsdecl suffix val)
+	           ;; If SUFFIX is true, then NAME is Prefix and SUFFIX is
+	           ;; LocalPart.
+	           (if suffix
+	               (list 'attr suffix val :attr-ns name)
+	               (list 'attr name val))))))
     (defrule ws
-        (and (match+ ws-char)
+        (and (xml-match+ ws-char)
              (%make-element :type 'whitespace :val nil)))
     (defrule %name
         (and
          (peek namechar #\_ #\:)
-         (match* namechar)))
+         (xml-match* namechar)))
     (defrule ws-attr-or-nsdecl
         (and
          (ws s)
@@ -418,10 +418,10 @@ character translation."
     (defrule end-tag
         (let (name suffix)
           (and
-           (match #\/)
+           (xml-match #\/)
            (setf (values name suffix) (qname s))
            (or (ws s) t)
-           (match #\>)
+           (xml-match #\>)
            (%make-element :type 'end-tag :val (or suffix name)))))
     (defrule comment
         (and
@@ -480,13 +480,13 @@ character translation."
                                                  'simple-string)))))))))
     (declaim (ftype function %element))     ; forward decl for content rule
     (defrule content
-        (if (match #\<)
+        (if (xml-match #\<)
             (must (or (comment-or-cdata s)
                       (processing-instruction s)
                       (%element s)
                       (end-tag s)))
             (or (let (content)
-                  (and (setf content (match+ chardata))
+                  (and (setf content (xml-match+ chardata))
                        (%make-element :type 'data :val (compress-whitespace content)))))))
     (defrule %element
         (let (elem children nsdecls end-name)
@@ -506,7 +506,7 @@ character translation."
            (or
             (match-seq #\/ #\>)
             (and
-             (match #\>)
+             (xml-match #\>)
              (loop for c = (content s)
                    while c
                    do (etypecase c
@@ -529,7 +529,7 @@ character translation."
     (defrule processing-instruction
         (let (name contents)
           (and
-           (match #\?)
+           (xml-match #\?)
            (setf name (%name s))
            (not (string= name "xml"))
            ;; contents of a processing instruction can be arbitrary stuff, as long
@@ -569,7 +569,7 @@ character translation."
     (defrule xmldecl
         (let (name contents)
           (and
-           (match #\?)
+           (xml-match #\?)
            (setf name (%name s))
            (string= name "xml")
            (setf contents (none-or-more s #'ws-attr-or-nsdecl))
@@ -596,13 +596,13 @@ character translation."
     (defrule misc
         (or
          (ws s)
-         (and (match #\<) (must (or (processing-instruction s)
-                                    (comment-or-doctype s)
-                                    (%element s))))))
+         (and (xml-match #\<) (must (or (processing-instruction s)
+                                        (comment-or-doctype s)
+                                        (%element s))))))
 
     (defrule document
         (let (elem)
-          (if (match #\<)
+          (if (xml-match #\<)
               (must (or (xmldecl s)
                         (comment-or-doctype s)
                         (setf elem (%element s)))))
