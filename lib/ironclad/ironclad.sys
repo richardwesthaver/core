@@ -62,19 +62,23 @@
       :components
       ((:pkg "pkg")))))
    (:proto :cipher
-    :functions (make-cipher list-all-ciphers encrypt-in-place decrypt-in-place)
+    :functions 
+    (make-cipher list-all-ciphers encrypt-in-place decrypt-in-place make-encrypting-stream make-decrypting-stream)
     :predicates (cipher-supported-p)
+    :macros (with-encrypting-stream with-decrypting-stream)
     :methods (encrypt decrypt encrypt-message decrypt-message key-lengths block-length))
    (:proto :digest
     :functions (make-digest list-all-digests)
     :methods (update-digest produce-digest digest-sequence digest-file digest-stream digest-length)
+    :macros (with-digesting-stream)
     :predicates (digest-supported-p))
    (:proto :kdf
     :functions 
     (make-kdf list-all-kdfs pbkdf2-hash-password pbkdf2-hash-password-to-combined-string pbkdf2-check-password)
     :methods (derive-key))
    (:proto :mac
-    :functions (make-mac list-all-macs)
+    :functions (make-mac list-all-macs make-authenticating-stream)
+    :macros (with-authenticating-stream)
     :predicates (mac-supported-p)
     :methods (update-mac produce-mac))
    (:proto :prng

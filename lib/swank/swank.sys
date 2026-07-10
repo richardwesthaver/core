@@ -6,20 +6,19 @@
    (:file "pkg")
    ;; (:file "xref" :if-feature :clisp)
    ;; (:file "metering" :if-feature (:or :clozure :clisp :clasp))
-   (:mod "backend"
-    :components ((:file "backend")
-                 (:file "source-path-parser")
-                 (:file "source-file-cache")
-                 (:file "sbcl")
-                 (:file "gray")
-                 (:file "match")
-                 (:file "rpc")))
+   (:file "backend")
+   (:file "source-path-parser")
+   (:file "source-file-cache")
+   (:file "sbcl")
+   (:file "gray")
+   (:file "match")
+   (:file "rpc")
    (:file "swank"))
    :provide
    ((:sys :swank/ext
      :require (:swank)
      :components 
-     ((:mod "contrib"
+     ((:mod "ext"
        :components
        ((:file "swank-util")
         (:file "swank-repl")
