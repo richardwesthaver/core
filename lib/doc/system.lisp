@@ -69,7 +69,8 @@
           (mapc (lambda (x) 
                   (when (string-prefix-p (name sys) (package-name x))
                     (ignore-errors
-                     (collect (package-documentation x :external)))))
+                     (when-let ((pkg (package-documentation x :external)))
+                       (collect pkg)))))
                 (list-all-packages))))))
 
 (defmethod change-class ((self system) (new (eql 'system-documentation)) &key packages)
@@ -132,7 +133,7 @@ string."
   (module-documentation object))
 
 ;; TODO 2026-06-27: export-file-name?
-(defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*))
+(defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*) (prune t))
   (with-slots (id packages) self
     (let* ((*document-module* (name self))
            (file (file-documentation (path self)))
@@ -159,7 +160,11 @@ string."
                                     :provide ,(module-provide self)
                                     :require ,(module-require self)
                                     ;; :tags ,(file-tag-string self)
-                                    :packages ,packages))))
+                                    :packages ,(if prune
+                                                   (remove-if 
+                                                    (lambda (x) (null (ast x))) 
+                                                    packages)
+                                                   packages)))))
       (case output
         ('nil gen)
         (:string gen)

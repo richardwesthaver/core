@@ -1591,7 +1591,7 @@ datum for subsequent logics to rely on."
             (:string             (if (> length 1)
                                      (subseq string 1 (1- length))
                                      string)))
-	  (make-%arglist-dummy string)))))
+	  (make-arglist-dummy string)))))
 
 (defun test-print-arglist ()
   (flet ((test (arglist &rest strings)

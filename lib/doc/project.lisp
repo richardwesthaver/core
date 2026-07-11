@@ -86,7 +86,7 @@
 (defmethod path ((self project-documentation))
   (path (doc-object self)))
 
-(defmethod publish ((self project-documentation) &key output info setupfile vc (local t) parent (if-exists :supersede))
+(defmethod publish ((self project-documentation) &key output info setupfile vc (local t) parent (if-exists :supersede) (top-level t))
   (with-slots (project ast) self
     (let* ((*default-pathname-defaults* (path self))
            (*document-project-name* (format nil "~@[~A/~]~A" parent (name project)))
@@ -113,7 +113,9 @@
                                     :email ,email
                                     ;; :require ,(module-require self)
                                     :tags ,tags
-                                    :systems ,ast))))
+                                    :systems ,(if top-level 
+                                                  (remove-if (lambda (x) (search "/" (string (name x)))) ast)
+                                                  ast)))))
       (case output
         ('nil gen)
         (:string gen)
