@@ -81,7 +81,7 @@ operating system, and hardware architecture."
 (defun slime-version-string ()
   "Return a string identifying the SLIME version.
 Return nil if nothing appropriate is available."
-  (with-open-file (s (merge-pathnames "slime.el" *source-directory*)
+  (with-open-file (s (merge-pathnames "slime.el" *slime-source-directory*)
                      :if-does-not-exist nil)
     (when s
       (loop with prefix = ";; Version: "

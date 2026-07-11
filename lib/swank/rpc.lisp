@@ -25,7 +25,7 @@
 (defun read-packet (stream)
   (let* ((length (parse-header stream))
          (octets (read-chunk stream length)))
-    (handler-case (swank/backend:utf8-to-string octets)
+    (handler-case (octets-to-string octets)
       (error (c) 
         (error 'swank-reader-error 
                :packet (asciify octets)
@@ -93,7 +93,7 @@
 ;;; Output
 (defun write-message (message package stream)
   (let* ((string (prin1-to-string-for-emacs message package))
-         (octets (handler-case (swank/backend:string-to-utf8 string)
+         (octets (handler-case (string-to-octets string)
                    (error (c) (encoding-error c string))))
          (length (length octets)))
     (write-header stream length)
@@ -102,11 +102,11 @@
 
 ;; FIXME: for now just tell emacs that we and an encoding problem.
 (defun encoding-error (condition string)
-  (swank/backend:string-to-utf8
+  (string-to-octets
    (prin1-to-string-for-emacs
     `(:reader-error
       ,(asciify string)
-      ,(format nil "Error during string-to-utf8: ~a"
+      ,(format nil "Error during string-to-octets: ~a"
                (or (ignore-errors (asciify (princ-to-string condition)))
                    (asciify (princ-to-string (type-of condition))))))
     (find-package :cl))))

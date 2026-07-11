@@ -74,18 +74,6 @@
 (defimplementation getpid ()
   (sb-posix:getpid))
 
-;;; UTF8
-
-(defimplementation string-to-utf8 (string)
-  (sb-ext:string-to-octets string :external-format '(:utf8 :replacement
-                                                     #+sb-unicode #\Replacement_Character
-                                                     #-sb-unicode #\? )))
-
-(defimplementation utf8-to-string (octets)
-  (sb-ext:octets-to-string octets :external-format '(:utf8 :replacement
-                                                     #+sb-unicode #\Replacement_Character
-                                                     #-sb-unicode #\? )))
-
 ;;; TCP Server
 
 (defimplementation preferred-communication-style ()
@@ -95,7 +83,6 @@
     ((member :sb-thread *features*) :spawn)
     ((member :win32 *features*) nil)
     (t :fd-handler)))
-
 
 (defun resolve-hostname (host)
   "Returns valid IPv4 or IPv6 address for the host."
@@ -108,7 +95,6 @@
     ;; get-host-by-name will signal NAME-SERVICE-ERROR condition
     ;; if there isn't any address for the host.
     (first addresses)))
-
 
 (defimplementation create-socket (host port &key backlog)
   (let* ((host-ent (resolve-hostname host))
@@ -374,15 +360,6 @@
   (sb-ext:package-local-nicknames package))
 
 ;;; Utilities
-
-#+#.(swank/backend:with-symbol 'function-lambda-list 'sb-introspect)
-(defimplementation arglist (fname)
-  (sb-introspect:function-lambda-list fname))
-
-#-#.(swank/backend:with-symbol 'function-lambda-list 'sb-introspect)
-(defimplementation arglist (fname)
-  (sb-introspect:function-arglist fname))
-
 (defimplementation function-name (f)
   (check-type f function)
   (sb-impl::%fun-name f))
@@ -1038,9 +1015,6 @@ Return a list of the form (NAME LOCATION)."
                  (function-source-location fn name)))))
 
 ;;; macroexpansion
-
-(defimplementation macroexpand-all (form &optional env)
-  (sb-cltl2:macroexpand-all form env))
 
 (defimplementation collect-macro-forms (form &optional environment)
   (let ((macro-forms '())

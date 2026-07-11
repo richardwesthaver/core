@@ -235,25 +235,6 @@ form suitable for testing with #+."
                   (t
                    (return (values index start)))))))))
 
-(defun default-utf8-to-string (octets)
-  (let* ((limit (length octets))
-         (str (make-string limit)))
-    (multiple-value-bind (i s) (utf8-decode-into octets 0 limit str 0 limit)
-      (if (= i limit)
-          (if (= limit s)
-              str
-              (adjust-array str s))
-          (loop
-           (let ((end (+ (length str) (- limit i))))
-             (setq str (adjust-array str end))
-             (multiple-value-bind (i2 s2)
-                 (utf8-decode-into octets i limit str s end)
-               (cond ((= i2 limit)
-                      (return (adjust-array str s2)))
-                     (t
-                      (setq i i2)
-                      (setq s s2))))))))))
-
 (defmacro utf8-encode-aux (code buffer start end n)
   `(cond ((< (- ,end ,start) ,n)
           ,start)
@@ -305,31 +286,6 @@ form suitable for testing with #+."
                   (t
                    (setq index i2)
                    (incf start))))))))
-
-(defun default-string-to-utf8 (string)
-  (let* ((len (length string))
-         (b (make-array len :element-type 'octet)))
-    (multiple-value-bind (s i) (utf8-encode-into string 0 len b 0 len)
-      (if (= s len)
-          b
-          (loop
-           (let ((limit (+ (length b) (- len s))))
-             (setq b (coerce (adjust-array b limit) 'octets))
-             (multiple-value-bind (s2 i2)
-                 (utf8-encode-into string s len b i limit)
-               (cond ((= s2 len)
-                      (return (coerce (adjust-array b i2) 'octets)))
-                     (t
-                      (setq i i2)
-                      (setq s s2))))))))))
-
-(definterface string-to-utf8 (string)
-  "Convert the string STRING to a (simple-array (unsigned-byte 8))"
-  (default-string-to-utf8 string))
-
-(definterface utf8-to-string (octets)
-  "Convert the (simple-array (unsigned-byte 8)) OCTETS to a string."
-  (default-utf8-to-string octets))
 
 ;;;; TCP server
 (definterface create-socket (host port &key backlog)
@@ -546,7 +502,7 @@ like `compile-file'")
              :accessor severity)
 
    (message :initarg :message
-            :accessor message)
+            :accessor std:message)
 
    ;; Macro expansion history etc. which may be helpful in some cases
    ;; but is often very verbose.
@@ -636,15 +592,6 @@ The stream calls READ-STRING when input is needed.")
   (finish-output stream))
 
 ;;;; Documentation
-(definterface arglist (name)
-   "Return the lambda list for the symbol NAME. NAME can also be
-a lisp function object, on lisps which support this.
-
-The result can be a list or the :not-available keyword if the
-arglist cannot be determined."
-   (declare (ignore name))
-   :not-available)
-
 (defgeneric declaration-arglist (decl-identifier)
   (:documentation
    "Return the argument list of the declaration specifier belonging to the
@@ -713,10 +660,6 @@ available."
     (or (symbolp form)
         (and (consp form) (length=2 form)
              (eq (first form) 'setf) (symbolp (second form))))))
-
-(definterface macroexpand-all (form &optional env)
-   "Recursively expand all macros in FORM.
-Return the resulting form.")
 
 (definterface compiler-macroexpand-1 (form &optional env)
   "Call the compiler-macro for form.
@@ -860,9 +803,7 @@ debug the debugger! Instead, such conditions can be reported to the
 user without (re)entering the debugger by wrapping them as
 `sldb-condition's."))
 
-;;; The following functions in this section are supposed to be called
-;;; within the dynamic contour of CALL-WITH-DEBUGGING-ENVIRONMENT only.
-
+;;; CALL-WITH-DEBUGGING-ENVIRONMENT
 (definterface compute-backtrace (start end)
    "Returns a backtrace of the condition currently being debugged,
 that is an ordered list consisting of frames. ``Ordered list''
@@ -1457,7 +1398,6 @@ but that thread may hold it more than once."
                       "Linefeed" "Return" "Backspace")
      when (funcall matchp prefix name)
      collect name))
-
 
 (defparameter *type-specifier-arglists*
   '((and                . (&rest type-specifiers))

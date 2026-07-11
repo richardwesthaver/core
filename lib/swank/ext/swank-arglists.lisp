@@ -13,7 +13,6 @@
   (swank-require :swank-c-p-c))
 
 ;;; Utilities
-
 (defun compose (&rest functions)
   "Compose FUNCTIONS right-associatively, returning a function"
   #'(lambda (x)
@@ -29,10 +28,6 @@
               ((or (<= i 0) (null list))
                (and (zerop i) (null list)))))
     (sequence (= (length seq) n))))
-
-(declaim (inline memq))
-(defun memq (item list)
-  (member item list :test #'eq))
 
 (defun exactly-one-p (&rest values)
   "If exactly one value in VALUES is non-NIL, this value is returned.
@@ -76,9 +71,7 @@ Otherwise NIL is returned."
          :not-available
          (progn ,@body))))
 
-
 ;;; Optional autodoc extensions
-
 (defvar *autodoc-operator-functions* '()
   "Functions called with an operator symbol.
 
@@ -107,10 +100,8 @@ values: a documentation string and a boolean cache flag.")
         (return-from extended-autodoc
           (values doc cache-p))))))
 
-
 ;;; Arglist Definition
-
-(defstruct (arglist (:conc-name arglist.) (:predicate arglist-p))
+(defstruct (%arglist (:conc-name arglist.) (:predicate arglist-p))
   provided-args         ; list of the provided actual arguments
   required-args         ; list of the required arguments
   optional-args         ; list of the optional arguments
@@ -275,7 +266,6 @@ values: a documentation string and a boolean cache flag.")
 		     append (cddr (gethash keyword finally-clauses)))))))))
 
 ;;; Arglist Printing
-
 (defun undummy (x)
   (if (typep x 'arglist-dummy)
       (arglist-dummy.string-representation x)
@@ -398,7 +388,7 @@ values: a documentation string and a boolean cache flag.")
                (list          (princ arg))
                (arglist-dummy (princ
                                (arglist-dummy.string-representation arg)))
-               (arglist       (print-decoded-arglist-as-template arg)))
+               (%arglist       (print-decoded-arglist-as-template arg)))
              (pprint-newline :fill)))
       (pprint-logical-block (nil nil :prefix prefix :suffix suffix)
         (do-decoded-arglist decoded-arglist
@@ -461,7 +451,6 @@ values: a documentation string and a boolean cache flag.")
                                          :suffix suffix))))
 
 ;;; Arglist Decoding / Encoding
-
 (defun decode-required-arg (arg)
   "ARG can be a symbol or a destructuring pattern."
   (etypecase arg
@@ -472,7 +461,7 @@ values: a documentation string and a boolean cache flag.")
 (defun encode-required-arg (arg)
   (etypecase arg
     (symbol arg)
-    (arglist (encode-arglist arg))))
+    (%arglist (encode-arglist arg))))
 
 (defun canonicalize-default-arg (form)
   (if (equalp ''nil form)
@@ -567,7 +556,7 @@ Return an OPTIONAL-ARG structure."
       :not-available
       (loop
         with mode = nil
-        with result = (make-arglist)
+        with result = (make-%arglist)
         for arg = (if (consp arglist)
                       (pop arglist)
                       (progn
@@ -720,8 +709,6 @@ to determine the extra keywords."))
 ;; This matters tremendeously on Allegro in combination with
 ;; AllegroCache as that does some evil tinkering with initargs,
 ;; obfuscating the arglist of MAKE-INSTANCE.
-
-
 (defmethod extra-keywords :around (op args)
   (declare (ignorable op args))
   (multiple-value-bind (keywords aok enrichments) (call-next-method)
@@ -932,7 +919,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 
 (defmethod compute-enriched-decoded-arglist (operator-form argument-forms)
   (with-available-arglist (decoded-arglist)
-      (decode-arglist (arglist operator-form))
+      (decode-arglist (std:arglist operator-form))
     (enrich-decoded-arglist-with-extra-keywords decoded-arglist
                                                 (cons operator-form
                                                       argument-forms))))
@@ -964,7 +951,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
                                                    (cdr argument-forms))))
             (return-from compute-enriched-decoded-arglist
               (values
-               (make-arglist :required-args
+               (make-%arglist :required-args
                              (list 'function)
                              :optional-args
                              (append
@@ -1016,10 +1003,9 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 
 (defun remove-given-args (decoded-arglist args)
   ;; FIXME: We actually needa deep copy here.
-  (delete-given-args (copy-arglist decoded-arglist) args))
+  (delete-given-args (copy-%arglist decoded-arglist) args))
 
 ;;; Arglist Retrieval
-
 (defun arglist-from-form (form)
   (if (null form)
       :not-available
@@ -1057,7 +1043,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
                                      until (or (listp x) (empty-arg-p x))
                                      collect x)))
                (return-from arglist-dispatch
-                 (make-arglist :provided-args (cons gf-name qualifiers)
+                 (make-%arglist :provided-args (cons gf-name qualifiers)
                                :required-args (list arglist)
                                :rest "body" :body-p t))))))))
     (_)) ; Fall through
@@ -1066,9 +1052,9 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 (defmethod arglist-dispatch ((operator (eql 'define-compiler-macro)) arguments)
   (select-match (cons operator arguments)
     (('define-compiler-macro (#'function-exists-p fun-name) . _)
-     (with-available-arglist (arglist) (decode-arglist (arglist fun-name))
+     (with-available-arglist (arglist) (decode-arglist (std:arglist fun-name))
        (return-from arglist-dispatch
-         (make-arglist :provided-args (list fun-name)
+         (make-%arglist :provided-args (list fun-name)
                        :required-args (list arglist)
                        :rest "body" :body-p t))))
     (_)) ; Fall through
@@ -1078,8 +1064,8 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 (defmethod arglist-dispatch ((operator (eql 'eval-when)) arguments)
   (declare (ignore arguments))
     (let ((eval-when-args '(:compile-toplevel :load-toplevel :execute)))
-    (make-arglist
-     :required-args (list (make-arglist :any-p t :any-args eval-when-args))
+    (make-%arglist
+     :required-args (list (make-%arglist :any-p t :any-args eval-when-args))
      :rest '#:body :body-p t)))
 
 
@@ -1092,13 +1078,13 @@ If the arglist is not available, return :NOT-AVAILABLE."))
           (('declare ((#'consp typespec) . decl-args))
            (with-available-arglist (typespec-arglist)
                (decoded-arglist-for-type-specifier typespec)
-             (make-arglist
-              :required-args (list (make-arglist
+             (make-%arglist
+              :required-args (list (make-%arglist
                                     :required-args (list typespec-arglist)
                                     :rest '#:variables)))))
           (('declare (decl-identifier . decl-args))
            (decoded-arglist-for-declaration decl-identifier decl-args))
-          (_ (make-arglist :rest '#:declaration-specifiers))))))
+          (_ (make-%arglist :rest '#:declaration-specifiers))))))
 
 (defmethod arglist-dispatch ((operator (eql 'declaim)) arguments)
   (arglist-dispatch 'declare arguments))
@@ -1108,8 +1094,8 @@ If the arglist is not available, return :NOT-AVAILABLE."))
   (flet ((%arglist-for-type-declaration (identifier typespec rest-var-name)
            (with-available-arglist (typespec-arglist)
                (decoded-arglist-for-type-specifier typespec)
-             (make-arglist
-              :required-args (list (make-arglist
+             (make-%arglist
+              :required-args (list (make-%arglist
                                     :provided-args (list identifier)
                                     :required-args (list typespec-arglist)
                                     :rest rest-var-name))))))
@@ -1121,8 +1107,8 @@ If the arglist is not available, return :NOT-AVAILABLE."))
       (('declare ((#'consp typespec) . decl-args))
        (with-available-arglist (typespec-arglist)
            (decoded-arglist-for-type-specifier typespec)
-         (make-arglist
-          :required-args (list (make-arglist
+         (make-%arglist
+          :required-args (list (make-%arglist
                                 :required-args (list typespec-arglist)
                                 :rest '#:variables)))))
       (_ :not-available))))
@@ -1132,7 +1118,7 @@ If the arglist is not available, return :NOT-AVAILABLE."))
     (with-available-arglist (arglist)
       (decode-arglist (declaration-arglist decl-identifier))
     (setf (arglist.provided-args arglist) (list decl-identifier))
-    (make-arglist :required-args (list arglist))))
+    (make-%arglist :required-args (list arglist))))
 
 (defun decoded-arglist-for-type-specifier (type-specifier)
   (etypecase type-specifier
@@ -1534,7 +1520,7 @@ represent key parameters."
 (defun provided-arguments-ref (provided-args arglist &rest indices)
   "Returns the argument in PROVIDED-ARGUMENT along the INDICES path
 relative to ARGLIST."
-  (check-type arglist arglist)
+  (check-type arglist %arglist)
   (flet ((ref (provided-args arglist index)
            (if (numberp index)
                (nth index provided-args)
@@ -1605,7 +1591,7 @@ datum for subsequent logics to rely on."
             (:string             (if (> length 1)
                                      (subseq string 1 (1- length))
                                      string)))
-	  (make-arglist-dummy string)))))
+	  (make-%arglist-dummy string)))))
 
 (defun test-print-arglist ()
   (flet ((test (arglist &rest strings)

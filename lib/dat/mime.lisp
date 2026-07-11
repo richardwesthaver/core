@@ -153,7 +153,7 @@ Example:
                    and do (if rest
                               (warn "Clauses after T and OTHERWISE are not reachable.")
                               (return clauses))
-                 collect `((member ,mime (list ,@(uiop:ensure-list mimes)) :test #'mime-equal)
+                 collect `((member ,mime (list ,@(ensure-list mimes)) :test #'mime-equal)
                            ,@body)
                    into clauses
                  finally (return clauses))))))

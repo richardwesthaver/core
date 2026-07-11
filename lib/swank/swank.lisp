@@ -525,10 +525,6 @@ recently established one."
 (defun current-thread-id ()
   (thread-id (current-thread)))
 
-(declaim (inline ensure-list))
-(defun ensure-list (thing)
-  (if (listp thing) thing (list thing)))
-
 ;;;; Symbols
 ;; FIXME: this docstring is more confusing than helpful.
 (defun symbol-status (symbol &optional (package (symbol-package symbol)))
@@ -2473,10 +2469,6 @@ Record compiler notes signalled as `compiler-condition's."
                                      :position position 
                                      :filename filename
                                      :policy policy)))))))
-
-(defun file-newer-p (new-file old-file)
-  "Returns true if NEW-FILE is newer than OLD-FILE."
-  (> (file-write-date new-file) (file-write-date old-file)))
 
 (defun requires-compile-p (source-file)
   (let ((fasl-file (probe-file (compile-file-pathname source-file))))

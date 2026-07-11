@@ -11,7 +11,6 @@
            #:original-condition
            #:source-context
            #:condition
-           #:message
            #:severity
            #:with-compilation-hooks
            #:make-location
@@ -133,9 +132,15 @@
 
 (defpkg #:swank
   (:use #:cl
-    #:swank/backend
-    #:swank/rpc)
-  (:import-from :std/macs :defvar-unbound)
+    :swank/backend
+    :swank/rpc
+    :std/macs
+    :std/list
+    :std/defsys
+    :std/path
+    :std/os)
+  (:shadowing-import-from :std/pipe :message)
+  (:shadowing-import-from :std/prim :arglist)
   (:export 
    ;; loader.lisp
    :init-swank
@@ -144,7 +149,6 @@
    :*slime-source-directory*
    :*swank-fasl-directory*
    :*started-from-emacs*
-
    #:startup-multiprocessing
    #:select-match
    #:start-server
