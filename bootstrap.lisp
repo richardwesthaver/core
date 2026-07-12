@@ -45,7 +45,7 @@ $ sbcl --script bootstrap.lisp
               :ironclad/prng
               :ironclad/aead
               :ironclad/kdf
-              :ironclad/public-key
+              :ironclad/pki
               :swank
               :swank/ext
               :xkb
