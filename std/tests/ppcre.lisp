@@ -12,7 +12,7 @@
                      (or #.*compile-file-pathname* *load-pathname*))
   "The location of this source file.")
 
-(defmacro do-tests ((name &optional show-progress-p) &body body)
+(defmacro %do-tests ((name &optional show-progress-p) &body body)
   "Helper macro which repeatedly executes BODY until the code in body
 calls the function DONE.  It is assumed that each invocation of BODY
 will be the execution of one test which returns NIL in case of success
@@ -59,7 +59,7 @@ otherwise.  EXTERNAL-FORMAT is the external format which is used to read the
 file.  Returns a true value iff all tests succeeded."
   (with-open-file (stream file-name :element-type 'std:octet :external-format external-format)
     (let ((*package* (find-package :std/tests)))
-      (do-tests ((format nil "Simple tests from file ~S" (file-namestring file-name))
+      (%do-tests ((format nil "Simple tests from file ~S" (file-namestring file-name))
                  (not verbose))
         (let ((form (or (read stream nil) (done))))
           (when verbose
@@ -102,13 +102,13 @@ agree on it."
 (defun test-optimized-test-functions (&key verbose)
   "Runs TEST-OPTIMIZED-TEST-FUNCTIONS% with different probabilities."
   (let ((probabilities '(0 .001 .01 .1 1)))
-    (do-tests ("Optimized test functions - this might take some time..." (not verbose))
+    (%do-tests ("Optimized test functions - this might take some time..." (not verbose))
       (let ((probability (or (pop probabilities) (done))))
         (when verbose
           (format t "~&Probability is ~A" probability))
         (not (test-optimized-test-functions% probability))))))
 
-(defun run-all-tests (&key more-tests verbose)
+(defun run-all-ppcre-tests (&key more-tests verbose)
   "Runs all tests for PPCRE and returns a true value iff all tests
 succeeded.  VERBOSE is interpreted by the individual test suites.
 MORE-TESTS can be a list of function designators designating

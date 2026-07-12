@@ -17,7 +17,7 @@ characters as lists where those characters are represented by their
 character code."
   (etypecase input
     ((or null string) input)
-    (list (string-list-to-simple-string
+    (list (ppcre::string-list-to-simple-string
            (loop for element in input
                  if (stringp element)
                  collect element
@@ -50,7 +50,7 @@ function and to the Perl script perltest.pl which generates such test files."
           (*use-bmh-matchers* (if file-name-provided-p *use-bmh-matchers* nil))
           ;; some tests in the Perl suite explicitly check for this
           (*allow-quoting* (if file-name-provided-p *allow-quoting* t)))
-      (do-tests ((format nil "Running tests in file ~S" (file-namestring file-name))
+      (%do-tests ((format nil "Running tests in file ~S" (file-namestring file-name))
                  (not verbose))
         (let ((input-line (or (read stream nil) (done)))
               errors)
