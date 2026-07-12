@@ -222,8 +222,7 @@
        (:file "async")
        (:file "task")
        (:file "macs")
-       (:file "ppcre")
-       (:file "perl-tests")))))
+       (:file "ppcre")))))
    (:prelude :alien* 
     :defar :define-alien-enum :sap :free)
    (:prelude :os*
