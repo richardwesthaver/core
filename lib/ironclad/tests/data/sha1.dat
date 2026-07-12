@@ -1,5 +1,4 @@
-;;; standard tests
-
+;;; tests/data/sha1.dat
 (:digest-test #a"" #h"DA39A3EE5E6B4B0D3255BFEF95601890AFD80709")
 (:digest-test #a"a" #h"86F7E437FAA5A7FCE15D1DDCB9EAEAEA377667B8")
 (:digest-test #a"abc" #h"A9993E364706816ABA3E25717850C26C9CD0D89D")

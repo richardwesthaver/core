@@ -51,6 +51,23 @@
   (iseq :special (vboundp! '*standard-output*))
   (is= (foo-car (list 1 2)) 1))
 
+(deftest quotationp.1 ()
+  (is (quotationp '(quote foo))))
+
+(deftest quotationp.2 ()
+  (isnt (quotationp '(quote foo bar))))
+
+(deftest unquote.1 ()
+  (istype 'sb-impl::comma (crypto::unquote (quote foo))))
+
+(deftest unquote.2 ()
+  (is= 2 (unquote 2)))
+
+(deftest unquote.3 ()
+  (isequalp
+   (comma-expr (unquote #1=(list 'foo 'bar)))
+   #1#))
+
 (deftest string ()
   "Test standard string utils"
   (is (typep "test" 'string-designator))

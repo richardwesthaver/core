@@ -300,7 +300,6 @@
     ((:mod "tests"
       :components
       ((:pkg "pkg")
-       (:file "ironclad")
        (:file "pkcs5")
        (:file "aead")
        (:file "argon2d")

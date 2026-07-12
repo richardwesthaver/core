@@ -33,6 +33,7 @@
   (:mix :sb-int)
   (:shadowing-import-from :sb-int :once-only)
   (:shadow :make-gensym :make-gensyms :make-gensym-list)
+  (:import-from :sb-impl :comma :comma-expr)
   (:export
    :ensure-symbol
    :symb
@@ -53,7 +54,9 @@
    :do-symbols*
    :symbol-name*
    :quotationp
-   :unquote))
+   :unquote
+   :comma
+   :comma-expr))
 
 (defpkg :std/list
   (:use :cl)
