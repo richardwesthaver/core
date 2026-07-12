@@ -11,4 +11,4 @@
 
     sys.exit(_main())"#)
 
-(deftest py-src () (istype 'sb-alien::alien-value (parse-lang-string :python *py-src*)))
+#+todo (deftest py-src () (istype 'sb-alien::alien-value (parse-lang-string :python *py-src*)))

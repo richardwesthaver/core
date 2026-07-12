@@ -4,7 +4,7 @@
 
 ;;; Code:
 (defpackage :syn/tests/gen
-  (:use :cl :std :rt :syn/gen)
+  (:use :cl :std :rt :syn/gen :syn/ts)
   (:export
    #:with-gen-test
    #:%in

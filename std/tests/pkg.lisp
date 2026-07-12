@@ -6,7 +6,7 @@
 
 ;;; Code:
 (defpkg :std/tests
-  (:use :cl :std :rt :sb-thread :sb-alien))
+  (:use :cl :std :rt :sb-thread :sb-alien :ppcre))
 (in-package :std/tests)
 (defsuite :std)
 (in-suite :std)

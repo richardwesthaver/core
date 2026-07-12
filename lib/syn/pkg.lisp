@@ -8,7 +8,8 @@
 (defpkg :syn/ts
   (:nicknames :ts)
   (:documentation "Tree-Sitter API")
-  (:use :cl :std :tree-sitter)
+  (:use :cl :std)
+  (:use-reexport :tree-sitter)
   (:export 
    :parse-file
    :parse-string

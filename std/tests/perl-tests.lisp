@@ -37,7 +37,7 @@ the file.  Returns a true value if all tests succeeded.
 
 For the syntax of the tests in FILE-NAME refer to the source code of this
 function and to the Perl script perltest.pl which generates such test files."
-  (declare #.*standard-optimize-settings*)
+  (declare #.ppcre::*standard-optimize-settings*)
   (with-open-file (stream file-name :element-type 'octet :external-format external-format)
     (let (;; the standard Perl tests don't need full Unicode support
           (*regex-char-code-limit* (if file-name-provided-p *regex-char-code-limit* 256))
