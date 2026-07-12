@@ -1,0 +1,22 @@
+;;; ironclad/pki.lisp
+
+;;; Code:
+(in-package :ironclad/tests)
+(deftest :rsa-oaep-encryption () (run-test-vector-file :rsa-enc *public-key-encryption-tests*) t)
+(deftest :elgamal-encryption () (run-test-vector-file :elgamal-enc *public-key-encryption-tests*) t)
+(deftest :rsa-pss-signature () (run-test-vector-file :rsa-sig *public-key-signature-tests*) t)
+(deftest :elgamal-signature () (run-test-vector-file :elgamal-sig *public-key-signature-tests*) t)
+(deftest :dsa-signature () (run-test-vector-file :dsa *public-key-signature-tests*) t)
+(deftest :ed25519-signature () (run-test-vector-file :ed25519 *public-key-signature-tests*) t)
+(deftest :ed448-signature () (run-test-vector-file :ed448 *public-key-signature-tests*) t)
+(deftest :secp256k1-signature () (run-test-vector-file :secp256k1-sig *public-key-signature-tests*) t)
+(deftest :secp256r1-signature () (run-test-vector-file :secp256r1-sig *public-key-signature-tests*) t)
+(deftest :secp384r1-signature () (run-test-vector-file :secp384r1-sig *public-key-signature-tests*) t)
+(deftest :secp521r1-signature () (run-test-vector-file :secp521r1-sig *public-key-signature-tests*) t)
+(deftest :curve25519-dh () (run-test-vector-file :curve25519 *public-key-diffie-hellman-tests*) t)
+(deftest :curve448-dh () (run-test-vector-file :curve448 *public-key-diffie-hellman-tests*) t)
+(deftest :elgamal-dh () (run-test-vector-file :elgamal-dh *public-key-diffie-hellman-tests*) t)
+(deftest :secp256k1-dh () (run-test-vector-file :secp256k1-dh *public-key-diffie-hellman-tests*) t)
+(deftest :secp256r1-dh () (run-test-vector-file :secp256r1-dh *public-key-diffie-hellman-tests*) t)
+(deftest :secp384r1-dh () (run-test-vector-file :secp384r1-dh *public-key-diffie-hellman-tests*) t)
+(deftest :secp521r1-dh () (run-test-vector-file :secp521r1-dh *public-key-diffie-hellman-tests*) t)

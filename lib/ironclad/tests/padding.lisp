@@ -1,9 +1,9 @@
-;;;; -*- mode: lisp; indent-tabs-mode: nil -*-
-;;;; padding.lisp
+;;; tests/padding.lisp
 
-(in-package :crypto-tests)
+;;; Code:
+(in-package :ironclad/tests)
 
-(rtest:deftest pkcs7-padding
+(deftest pkcs7-padding ()
   (let* ((block-size 16)
          (buffer (make-array block-size
                              :element-type '(unsigned-byte 8)
@@ -21,7 +21,7 @@
           :error)))
   :ok)
 
-(rtest:deftest ansi-x923-padding
+(deftest ansi-x923-padding ()
   (let* ((block-size 16)
          (buffer (make-array block-size
                              :element-type '(unsigned-byte 8)
@@ -40,7 +40,7 @@
           :error)))
   :ok)
 
-(rtest:deftest iso-7816-4-padding
+(deftest iso-7816-4-padding ()
   (let* ((block-size 16)
          (buffer (make-array block-size
                              :element-type '(unsigned-byte 8)

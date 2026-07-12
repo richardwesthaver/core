@@ -7,15 +7,11 @@
   (:export
    ;; referencing multiple-octet values in an octet vector (SETF-able)
    #:ub16ref/be #:ub16ref/le #:ub32ref/be #:ub32ref/le #:ub64ref/le #:ub64ref/be
-
    ;; hash functions
    #:digest-sequence #:digest-stream #:digest-file
    #:make-digest #:copy-digest #:update-digest #:produce-digest
-
    ;; MACs
    #:make-mac #:update-mac #:produce-mac
-
-   ;;; Deprecated MAC functions
    ;; HMACs
    #:make-hmac #:update-hmac #:hmac-digest
    ;; CMACs
@@ -28,7 +24,6 @@
    #:make-blake2-mac #:update-blake2-mac #:blake2-mac-digest
    ;; Blake2s-MAC
    #:make-blake2s-mac #:update-blake2s-mac #:blake2s-mac-digest
-
    ;; introspection
    #:cipher-supported-p #:list-all-ciphers
    #:digest-supported-p #:list-all-digests
@@ -38,33 +33,26 @@
    #:keystream-position
    #:authenticated-encryption-mode-supported-p
    #:list-all-authenticated-encryption-modes
-
    ;; high-level block cipher operators
    #:make-cipher #:encrypt #:decrypt #:encrypt-in-place #:decrypt-in-place
-
    ;; arguments to (MAKE-CIPHER ... :MODE X)
    #:ecb #:cbc #:ctr #:ofb #:cfb #:stream
-
    ;; block cipher padding
    #:pkcs7 #:ansi-x923 #:iso-7816-4
-
    ;; authenticated encryption
    #:make-authenticated-encryption-mode
    #:process-associated-data
    #:produce-tag
    #:gcm #:etm #:eax
-
    ;; KDFs
    #:list-all-kdfs
    #:pbkdf1 #:pbkdf2 #:hmac-kdf #:scrypt-kdf #:argon2i #:argon2d #:argon2id
    #:bcrypt #:bcrypt-pbkdf
    #:make-kdf #:derive-key
-
    ;; KDF convenience functions
    #:make-random-salt #:pbkdf2-hash-password
    #:pbkdf2-hash-password-to-combined-string
    #:pbkdf2-check-password
-
    ;; public-key encryption operations
    #:list-all-key-pair-kinds
    #:make-public-key #:destructure-public-key
@@ -76,23 +64,19 @@
    #:sign-message #:verify-signature
    #:encrypt-message #:decrypt-message
    #:diffie-hellman
-
    ;; public-key encryption/signature padding
    #:oaep-encode #:oaep-decode #:pss-encode #:pss-verify
-
    ;; elliptic curve operations
    #:ec-point-on-curve-p #:ec-point-equal
    #:ec-double #:ec-add #:ec-scalar-mult #:ec-scalar-inv
    #:ec-make-point #:ec-destructure-point
    #:ec-encode-scalar #:ec-decode-scalar
    #:ec-encode-point #:ec-decode-point
-
    ;; elliptic curve points
    #:curve25519-point #:curve448-point
    #:ed25519-point #:ed448-point
    #:secp256k1-point #:secp256r1-point
    #:secp384r1-point #:secp521r1-point
-
    ;; public/private keys
    #:curve25519-public-key #:curve25519-private-key
    #:curve448-public-key #:curve448-private-key
@@ -105,7 +89,6 @@
    #:secp256r1-public-key #:secp256r1-private-key
    #:secp384r1-public-key #:secp384r1-private-key
    #:secp521r1-public-key #:secp521r1-private-key
-
    ;; public-key slot readers
    #:dsa-key-p #:dsa-key-q #:dsa-key-g #:dsa-key-y #:dsa-key-x
    #:elgamal-key-p #:elgamal-key-g #:elgamal-key-y #:elgamal-key-x
@@ -118,25 +101,19 @@
    #:secp256r1-key-x #:secp256r1-key-y
    #:secp384r1-key-x #:secp384r1-key-y
    #:secp521r1-key-x #:secp521r1-key-y
-
    ;; pseudo-random number generators
    #:list-all-prngs #:make-prng #:random-data #:read-os-random-seed
    #:read-seed #:write-seed #:random-bits #:*prng* #:strong-random #:prng-reseed
-
    ;; default OS PRNG
    #:os-prng
-
    ;; Fortuna PRNG
    #:fortuna-prng #:add-random-event
-
    ;; Fortuna generator
    #:fortuna-generator
-
    ;; cryptographic math
    #:*number-of-miller-rabin-tests*
    #:generate-prime #:prime-p #:generate-prime-in-range #:egcd
    #:generate-safe-prime #:find-generator
-
    ;; conditions
    #:ironclad-error #:initialization-vector-not-supplied
    #:invalid-initialization-vector #:invalid-key-length
@@ -153,7 +130,6 @@
    #:invalid-public-key-length #:oaep-decoding-error
    #:unsupported-authenticated-encryption-mode
    #:bad-authentication-tag
-
    ;; utilities
    #:byte-array-to-hex-string #:hex-string-to-byte-array
    #:ascii-string-to-byte-array
@@ -242,6 +218,5 @@
 (dolist (f (ironclad-implementation-features))
   (pushnew f *features*))
 
-;; Enable assembly optimizations, unless we are either in ECL using only the
-;; bytecode compiler or in an older version of CCL.
+;; Enable assembly optimizations
 (pushnew :ironclad-assembly *features*)

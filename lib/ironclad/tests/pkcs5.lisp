@@ -1,11 +1,15 @@
-;;;; -*- mode: lisp; indent-tabs-mode: nil -*-
-(in-package :crypto-tests)
+;;; tests/pkcs5.lisp
 
-;;; Test vectors for "bare" PBKDF* are impossible to find; RSA has some,
-;;; but they're tied up with other PKCS bits, making the tests a wee bit
-;;; more complicated than I'd like.  The ones used here are from:
-;;;
-;;; http://www.di-mgt.com.au/cryptoKDFs.html
+;;; Commentary:
+
+;; Test vectors for "bare" PBKDF* are impossible to find; RSA has some,
+;; but they're tied up with other PKCS bits, making the tests a wee bit
+;; more complicated than I'd like.  The ones used here are from:
+;;
+;; http://www.di-mgt.com.au/cryptoKDFs.html
+
+;;; Code:
+(in-package :ironclad/tests)
 
 (defvar *password*
   (coerce #(#x70 #x61 #x73 #x73 #x77 #x6F #x72 #x64)
@@ -23,12 +27,12 @@
             #xAF #x10 #xEB #xFB #x4A #x3D #x2A #x20)
           '(vector (unsigned-byte 8))))
 
-(rtest:deftest pbkdf1
+(deftest pbkdf1 ()
     (run-kdf-test (crypto:make-kdf 'crypto:pbkdf1 :digest 'ironclad:sha1)
                   *password* *salt* 1000 16 *pbkdf1-key*)
   t)
 
-(rtest:deftest pbkdf1.valid-hashes
+(deftest pbkdf1.valid-hashes ()
     (loop with valid-hashes = '(:md2 :md5 :sha1)
        for hash in (crypto:list-all-digests)
        when (handler-case (crypto:make-kdf 'crypto:pbkdf1 :digest hash)
@@ -46,25 +50,24 @@
             #x32 #x7C #xB9 #x36 #xFF #xE9 #x36 #x43)
           '(vector (unsigned-byte 8))))
 
-(rtest:deftest pbkdf2
+(deftest pbkdf2 ()
     (run-kdf-test (crypto:make-kdf 'crypto:pbkdf2 :digest 'ironclad:sha1)
                   *password* *salt* 2048 24 *pbkdf2-key*)
   t)
 
-(rtest:deftest pbkdf2-convenience
-    (ironclad:pbkdf2-check-password
-     *password*
-     "PBKDF2$SHA256:1000$78578e5a5d63cb06$aa2ae650dc866dc4de4fc3c8f06eddac1abc3011a99402fbc46d7e131fac06d5")
-  t)
+(deftest pbkdf2-convenience ()
+  (is (ironclad:pbkdf2-check-password
+       *password*
+       "PBKDF2$SHA256:1000$78578e5a5d63cb06$aa2ae650dc866dc4de4fc3c8f06eddac1abc3011a99402fbc46d7e131fac06d5")))
 
-(rtest:deftest unsupported-kdf
+(deftest unsupported-kdf ()
   (handler-case
       (crypto:make-kdf :random-name)
     (crypto:unsupported-kdf () :ok)
     (:no-error () :error))
   :ok)
 
-(rtest:deftest pbkdf1-invalid-iteration-count
+(deftest pbkdf1-invalid-iteration-count ()
   (handler-case
       (ironclad:derive-key (ironclad:make-kdf 'ironclad:pbkdf1 :digest 'ironclad:sha1)
                            *password* *salt* -1 24)
@@ -72,7 +75,7 @@
     (:no-error () :error))
   :ok)
 
-(rtest:deftest pbkdf1-invalid-key-length
+(deftest pbkdf1-invalid-key-length ()
   (handler-case
       (ironclad:derive-key (ironclad:make-kdf 'ironclad:pbkdf1 :digest 'ironclad:sha1)
                            *password* *salt* 2048 -1)
@@ -80,7 +83,7 @@
     (:no-error () :error))
   :ok)
 
-(rtest:deftest pbkdf2-invalid-iteration-count
+(deftest pbkdf2-invalid-iteration-count ()
   (handler-case
       (ironclad:derive-key (ironclad:make-kdf 'ironclad:pbkdf2 :digest 'ironclad:sha1)
                            *password* *salt* -1 24)
@@ -88,7 +91,7 @@
     (:no-error () :error))
   :ok)
 
-(rtest:deftest pbkdf2-invalid-key-length
+(deftest pbkdf2-invalid-key-length ()
   (handler-case
       (ironclad:derive-key (ironclad:make-kdf 'ironclad:pbkdf2 :digest 'ironclad:sha1)
                            *password* *salt* 2048 -1)

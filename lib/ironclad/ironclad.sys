@@ -299,7 +299,23 @@
     :components
     ((:mod "tests"
       :components
-      ((:pkg "pkg")))))
+      ((:pkg "pkg")
+       (:file "ironclad")
+       (:file "pkcs5")
+       (:file "aead")
+       (:file "argon2d")
+       (:file "argon2id")
+       (:file "argon2i")
+       (:file "bcrypt")
+       (:file "ciphers")
+       (:file "digests")
+       (:file "hmac-kdf")
+       (:file "macs")
+       (:file "modes")
+       (:file "padding")
+       (:file "prng")
+       (:file "pki")
+       (:file "scrypt")))))
    (:proto :cipher
     :functions 
     (make-cipher list-all-ciphers encrypt-in-place decrypt-in-place make-encrypting-stream make-decrypting-stream)

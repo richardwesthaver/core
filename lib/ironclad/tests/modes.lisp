@@ -1,28 +1,28 @@
-;;;; -*- mode: lisp; indent-tabs-mode: nil -*-
-;;;; modes.lisp -- sanity checks for mode reversibility
+;;; tests/modes.lisp --- sanity checks for mode reversibility
 
-(in-package :crypto-tests)
+;;; Code:
+(in-package :ironclad/tests)
 
-(rtest:deftest :modes.cbc
+(deftest :modes.cbc ()
   (run-test-vector-file :cbc *mode-tests*)
   t)
 
-(rtest:deftest :modes.cbc.padding
+(deftest :modes.cbc.padding ()
   (run-test-vector-file :cbc *mode-padding-tests*)
   t)
 
-(rtest:deftest :modes.cfb
+(deftest :modes.cfb ()
   (run-test-vector-file :cfb *mode-tests*)
   t)
 
-(rtest:deftest :modes.cfb8
+(deftest :modes.cfb8 ()
   (run-test-vector-file :cfb8 *mode-tests*)
   t)
 
-(rtest:deftest :modes.ofb
+(deftest :modes.ofb ()
   (run-test-vector-file :ofb *mode-tests*)
   t)
 
-(rtest:deftest :modes.ctr
+(deftest :modes.ctr ()
   (run-test-vector-file :ctr *mode-tests*)
   t)

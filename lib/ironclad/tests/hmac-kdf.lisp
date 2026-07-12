@@ -1,9 +1,9 @@
 ;;;; -*- mode: lisp; indent-tabs-mode: nil -*-
-(in-package :crypto-tests)
+(in-package :ironclad/tests)
 ;;; from RFC 5869
 
 ;;; with SHA-256
-(rtest:deftest hmac-kdf-1
+(deftest hmac-kdf-1 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha256
                                    :additional-data (ironclad:hex-string-to-byte-array "f0f1f2f3f4f5f6f7f8f9"))
@@ -14,7 +14,7 @@
                   (ironclad:hex-string-to-byte-array "3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf34007208d5b887185865"))
   t)
 
-(rtest:deftest hmac-kdf-2
+(deftest hmac-kdf-2 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha256
                                    :additional-data (ironclad:hex-string-to-byte-array "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"))
@@ -25,7 +25,7 @@
                   (ironclad:hex-string-to-byte-array "b11e398dc80327a1c8e7f78c596a49344f012eda2d4efad8a050cc4c19afa97c59045a99cac7827271cb41c65e590e09da3275600c2f09b8367793a9aca3db71cc30c58179ec3e87c14c01d5c1f3434f1d87"))
   t)
 
-(rtest:deftest hmac-kdf-3
+(deftest hmac-kdf-3 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha256)
                   (ironclad:hex-string-to-byte-array "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
@@ -36,7 +36,7 @@
   t)
 
 ;;; with SHA-1
-(rtest:deftest hmac-kdf-4
+(deftest hmac-kdf-4 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha1
                                    :additional-data (ironclad:hex-string-to-byte-array "f0f1f2f3f4f5f6f7f8f9"))
@@ -47,7 +47,7 @@
                   (ironclad:hex-string-to-byte-array "085a01ea1b10f36933068b56efa5ad81a4f14b822f5b091568a9cdd4f155fda2c22e422478d305f3f896"))
   t)
 
-(rtest:deftest hmac-kdf-5
+(deftest hmac-kdf-5 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha1
                                    :additional-data (ironclad:hex-string-to-byte-array "b0b1b2b3b4b5b6b7b8b9babbbcbdbebfc0c1c2c3c4c5c6c7c8c9cacbcccdcecfd0d1d2d3d4d5d6d7d8d9dadbdcdddedfe0e1e2e3e4e5e6e7e8e9eaebecedeeeff0f1f2f3f4f5f6f7f8f9fafbfcfdfeff"))
@@ -58,7 +58,7 @@
                   (ironclad:hex-string-to-byte-array "0bd770a74d1160f7c9f12cd5912a06ebff6adcae899d92191fe4305673ba2ffe8fa3f1a4e5ad79f3f334b3b202b2173c486ea37ce3d397ed034c7f9dfeb15c5e927336d0441f4c4300e2cff0d0900b52d3b4"))
   t)
 
-(rtest:deftest hmac-kdf-6
+(deftest hmac-kdf-6 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha1)
                   (ironclad:hex-string-to-byte-array "0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b0b")
@@ -68,7 +68,7 @@
                   (ironclad:hex-string-to-byte-array "0ac1af7002b3d761d1e55298da9d0506b9ae52057220a306e07b6b87e8df21d0ea00033de03984d34918"))
   t)
 
-(rtest:deftest hmac-kdf-7
+(deftest hmac-kdf-7 ()
     (run-kdf-test (crypto:make-kdf 'crypto:hmac-kdf
                                    :digest :sha1)
                   (ironclad:hex-string-to-byte-array "0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c0c")

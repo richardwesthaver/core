@@ -1,16 +1,17 @@
-;;;; -*- mode: lisp; indent-tabs-mode: nil -*-
+;;; tests/aead.lisp
 
-(in-package :crypto-tests)
+;;; Code:
+(in-package :ironclad/tests)
 
 #.(loop for mode in (crypto:list-all-authenticated-encryption-modes)
-        collect `(rtest:deftest ,mode
+        collect `(deftest ,mode ()
                    (run-test-vector-file ',mode *authenticated-encryption-tests*)
                    t)
           into forms
         finally (return `(progn ,@forms)))
 
 #.(loop for mode in (crypto:list-all-authenticated-encryption-modes)
-        collect `(rtest:deftest ,(crypto::symbolicate mode '#:/incremental)
+        collect `(deftest ,(crypto::symbolicate mode '#:/incremental) ()
                    (run-test-vector-file ',mode *authenticated-encryption-incremental-tests*)
                    t)
           into forms
