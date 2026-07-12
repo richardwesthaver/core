@@ -1302,11 +1302,9 @@ internally. On success the path is added to the *SYSDEFS* list."
 (defun compile-pkg-component (comp)
   "Compile a PKG-COMPONENT."
   (let ((output (ensure-fasl-cache-file (path comp))))
-    (multiple-value-bind (out warnings-p failure-p)
-        (checked-compile-file (path comp) :output-file output :verbose *verbose*)
-      (std/comp:check-lisp-compile-results out warnings-p failure-p))))
+    (checked-compile-file (path comp) :output-file output)))
 
-(defun compile-component (comp &key (verbose *verbose*) force)
+(defun compile-component (comp &key (verbose *compile-verbose*) force)
   "Compile a component."
   (declare (ftype (sfunction (component &key (verbose boolean) (force boolean)) component)))
   (when (or (component-recompile-p comp) force)
@@ -1325,7 +1323,7 @@ internally. On success the path is added to the *SYSDEFS* list."
   (when force (compile-component comp :verbose verbose :force t))
   (load-component comp :force force :verbose verbose))
 
-(defun load-component (comp &key force (verbose *verbose*))
+(defun load-component (comp &key force (verbose *load-verbose*))
   "Load a component."
   (declare (ftype (sfunction (component &key (force boolean)) component)))
   (when (or (component-reload-p comp) force)
@@ -1397,7 +1395,7 @@ optionally calling LOAD-SYS on them when PRELOAD is T (default)."
        (setf (system-session-pool *system-session*) pool))))
   (when (and sysdefs preload) 
     (mapc (lambda (x)
-            (when *verbose* (mumble "loading systems from ~A" x))
+            (when *load-verbose* (mumble "loading systems from ~A" x))
             (load-sys x))
           *sysdefs*))
   (values))
@@ -1483,7 +1481,7 @@ object SELF remains unmodified."
 
 (defgeneric load-system (self &key &allow-other-keys)
   (:documentation "Load the system SELF by ensuring all dependencies and components are loaded.")
-  (:method ((self system) &key force (verbose *verbose*) (asdf *asdf-compatibility*) (init t) tests)
+  (:method ((self system) &key force (verbose *load-verbose*) (asdf *asdf-compatibility*) (init t) tests)
     (or
      (with-system-session (_ self)
        (declare (ignore _))
@@ -1507,7 +1505,7 @@ object SELF remains unmodified."
 
 (defgeneric compile-system (self &key &allow-other-keys)
   (:documentation "Compile system SELF.")
-  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *verbose*) (init t) force)
+  (:method ((self system) &key (asdf *asdf-compatibility*) (verbose *compile-verbose*) (init t) force)
     (or         
      (with-system-session ()
        (compile-sys (keywordicate (name self)) force)

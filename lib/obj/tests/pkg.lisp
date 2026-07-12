@@ -93,7 +93,7 @@
 
 (deftest btree (:skip :todo)
   ;; FIX 2025-02-27: 
-  (is (make-instance 'btree:btree :store (default-store))))
+  (is (make-instance 'btree:btree :store *default-store*)))
 
 ;;; Graphs
 (deftest basic-graph ()

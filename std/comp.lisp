@@ -783,7 +783,7 @@ and save those warnings to the given file for latter use,
 possibly in a different process. Otherwise just call THUNK."
   (declare (ignorable source-namestring))
   (if warnings-file
-      (with-compilation-unit (:override t #+sbcl :source-namestring #+sbcl source-namestring)
+      (with-compilation-unit (:override t :source-namestring source-namestring)
         (unwind-protect
              (let (#+sbcl (sb-c::*undefined-warnings* nil))
                (multiple-value-prog1
