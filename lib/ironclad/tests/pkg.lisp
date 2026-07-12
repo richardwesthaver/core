@@ -28,9 +28,9 @@
 
 ;;; test vector files
 (defun test-vector-filename (ident)
-  (merge-pathnames (make-pathname :directory '(:relative "test-vectors")
+  (merge-pathnames (make-pathname :directory '(:relative "data")
                                   :name (substitute #\- #\/ (format nil "~(~A~)" ident))
-                                  :type "testvec")
+                                  :type "dat")
                    #.*compile-file-pathname*))
 
 (defun sharp-a (stream sub-char numarg)
