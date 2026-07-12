@@ -93,12 +93,12 @@
       (list :x x))))
 
 (defmethod ec-encode-scalar ((kind (eql :curve25519)) n)
-  (integer-to-octets n :n-bits +curve25519-bits+ :big-endian nil))
+  (integer-to-octets* n :bits +curve25519-bits+ :big-endian nil))
 
 (defmethod ec-decode-scalar ((kind (eql :curve25519)) octets)
   (declare (optimize (speed 3) (safety 0) (space 0) (debug 0)))
   (let ((x (ldb (byte (1- +curve25519-bits+) 0)
-                (octets-to-integer octets :big-endian nil))))
+                (octets-to-integer-le octets))))
     (setf (ldb (byte 3 0) x) 0)
     (setf (ldb (byte 1 (- +curve25519-bits+ 2)) x) 1)
     x))
@@ -110,7 +110,7 @@
 
 (defmethod ec-decode-point ((kind (eql :curve25519)) octets)
   (let ((x (ldb (byte (1- +curve25519-bits+) 0)
-                (octets-to-integer octets :big-endian nil))))
+                (octets-to-integer-le octets))))
     (ec-make-point :curve25519 :x x)))
 
 (defun curve25519-public-key (sk)

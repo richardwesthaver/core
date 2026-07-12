@@ -163,10 +163,10 @@
       (list :x x :y y))))
 
 (defmethod ec-encode-scalar ((kind (eql :secp521r1)) n)
-  (integer-to-octets n :n-bits +secp521r1-bits+ :big-endian t))
+  (integer-to-octets* n :bits +secp521r1-bits+ :big-endian t))
 
 (defmethod ec-decode-scalar ((kind (eql :secp521r1)) octets)
-  (octets-to-integer octets :big-endian t))
+  (octets-to-integer octets))
 
 (defmethod ec-encode-point ((p secp521r1-point))
   (let* ((coordinates (ec-destructure-point p))

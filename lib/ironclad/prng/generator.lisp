@@ -40,8 +40,8 @@
   (with-slots (cipher key counter) generator
     (assert (and cipher (plusp counter)))
     (loop for i from 1 to num-blocks
-       collect (let ((block (integer-to-octets counter
-                                               :n-bits 128
+       collect (let ((block (integer-to-octets* counter
+                                               :bits 128
                                                :big-endian nil)))
                       (encrypt-in-place cipher block)
                       block)

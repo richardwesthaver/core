@@ -51,7 +51,7 @@ Messages are packed as follows:
         (obj (make-instance 'log-message)))
     (setf (timestamp obj) ts
           (level obj) (when level (aref octets len))
-          (content obj) (sb-ext:octets-to-string octets :start pos :end (+ pos len)))
+          (content obj) (octets-to-string octets :start pos :end (+ pos len)))
     obj))
 
 (defmethod msg ((elt alien-sink) (msg log-message)))

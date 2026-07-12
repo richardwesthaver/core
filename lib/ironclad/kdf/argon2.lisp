@@ -65,7 +65,7 @@
   (values))
 
 (defun argon2-update-digester-32 (digester input)
-  (update-mac digester (integer-to-octets input :n-bits 32 :big-endian nil))
+  (update-mac digester (integer-to-octets* input :bits 32 :big-endian nil))
   (values))
 
 (defun argon2-extended-hash (state digest digest-size input input-size)

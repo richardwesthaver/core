@@ -138,8 +138,8 @@
            :parameter 'n-bits
            :description "modulus size"))
   (concatenate '(simple-array (unsigned-byte 8) (*))
-               (integer-to-octets c1 :n-bits n-bits)
-               (integer-to-octets c2 :n-bits n-bits)))
+               (integer-to-octets* c1 :bits n-bits)
+               (integer-to-octets* c2 :bits n-bits)))
 
 (defmethod destructure-message ((kind (eql :elgamal)) message)
   (let ((length (length message)))
@@ -147,9 +147,9 @@
         (error 'invalid-message-length :kind 'elgamal)
         (let* ((middle (/ length 2))
                (n-bits (* middle 8))
-               (c1 (octets-to-integer message :start 0 :end middle))
-               (c2 (octets-to-integer message :start middle)))
-          (list :c1 c1 :c2 c2 :n-bits n-bits)))))
+               (c1 (octets-to-integer* message :start 0 :end middle))
+               (c2 (octets-to-integer* message :start middle)))
+          (list :c1 c1 :c2 c2 :bits n-bits)))))
 
 (defmethod encrypt-message ((key elgamal-public-key) msg &key (start 0) end oaep &allow-other-keys)
   (let* ((p (elgamal-key-p key))
@@ -157,14 +157,14 @@
          (g (elgamal-key-g key))
          (y (elgamal-key-y key))
          (m (if oaep
-                (octets-to-integer (oaep-encode oaep (subseq msg start end) (/ pbits 8)))
-                (octets-to-integer msg :start start :end end)))
+                (octets-to-integer* (oaep-encode oaep (subseq msg start end) (/ pbits 8)))
+                (octets-to-integer* msg :start start :end end)))
          (k (generate-signature-nonce key msg p))
          (c1 (expt-mod g k p))
          (c2 (mod (* m (expt-mod y k p)) p)))
     (unless (< m p)
       (error 'invalid-message-length :kind 'elgamal))
-    (make-message :elgamal :c1 c1 :c2 c2 :n-bits pbits)))
+    (make-message :elgamal :c1 c1 :c2 c2 :bits pbits)))
 
 (defmethod decrypt-message ((key elgamal-private-key) msg &key (start 0) end n-bits oaep &allow-other-keys)
   (let* ((p (elgamal-key-p key))
@@ -178,8 +178,8 @@
            (c2 (getf message-elements :c2))
            (m (mod (* c2 (modular-inverse-with-blinding (expt-mod c1 x p) p)) p)))
       (if oaep
-          (oaep-decode oaep (integer-to-octets m :n-bits pbits))
-          (integer-to-octets m :n-bits n-bits)))))
+          (oaep-decode oaep (integer-to-octets* m :bits pbits))
+          (integer-to-octets* m :bits n-bits)))))
 
 (defmethod make-signature ((kind (eql :elgamal)) &key r s n-bits &allow-other-keys)
   (unless r
@@ -198,8 +198,8 @@
            :parameter 'n-bits
            :description "modulus size"))
   (concatenate '(simple-array (unsigned-byte 8) (*))
-               (integer-to-octets r :n-bits n-bits)
-               (integer-to-octets s :n-bits n-bits)))
+               (integer-to-octets* r :bits n-bits)
+               (integer-to-octets* s :bits n-bits)))
 
 (defmethod destructure-signature ((kind (eql :elgamal)) signature)
   (let ((length (length signature)))
@@ -207,12 +207,12 @@
         (error 'invalid-signature-length :kind 'elgamal)
         (let* ((middle (/ length 2))
                (n-bits (* middle 8))
-               (r (octets-to-integer signature :start 0 :end middle))
-               (s (octets-to-integer signature :start middle)))
-          (list :r r :s s :n-bits n-bits)))))
+               (r (octets-to-integer* signature :start 0 :end middle))
+               (s (octets-to-integer* signature :start middle)))
+          (list :r r :s s :bits n-bits)))))
 
 (defmethod sign-message ((key elgamal-private-key) msg &key (start 0) end &allow-other-keys)
-  (let* ((m (octets-to-integer msg :start start :end end))
+  (let* ((m (octets-to-integer* msg :start start :end end))
          (p (elgamal-key-p key))
          (pbits (integer-length p)))
     (unless (< m (- p 1))
@@ -223,11 +223,11 @@
            (r (expt-mod g k p))
            (s (mod (* (- m (* r x)) (modular-inverse-with-blinding k (- p 1))) (- p 1))))
       (if (not (zerop s))
-          (make-signature :elgamal :r r :s s :n-bits pbits)
+          (make-signature :elgamal :r r :s s :bits pbits)
           (sign-message key msg :start start :end end)))))
 
 (defmethod verify-signature ((key elgamal-public-key) msg signature &key (start 0) end &allow-other-keys)
-  (let* ((m (octets-to-integer msg :start start :end end))
+  (let* ((m (octets-to-integer* msg :start start :end end))
          (p (elgamal-key-p key))
          (pbits (integer-length p)))
     (unless (= (* 4 (length signature)) pbits)
@@ -254,4 +254,4 @@
     (let ((pbits (integer-length p))
           (x (elgamal-key-x private-key))
           (y (elgamal-key-y public-key)))
-      (integer-to-octets (expt-mod y x p) :n-bits pbits))))
+      (integer-to-octets* (expt-mod y x p) :bits pbits))))

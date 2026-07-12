@@ -173,10 +173,10 @@
       (list :x x :y y))))
 
 (defmethod ec-encode-scalar ((kind (eql :ed448)) n)
-  (integer-to-octets n :n-bits +ed448-bits+ :big-endian nil))
+  (integer-to-octets* n :bits +ed448-bits+ :big-endian nil))
 
 (defmethod ec-decode-scalar ((kind (eql :ed448)) octets)
-  (octets-to-integer octets :big-endian nil))
+  (octets-to-integer* octets :big-endian nil))
 
 (defmethod ec-encode-point ((p ed448-point))
   (let* ((coordinates (ec-destructure-point p))

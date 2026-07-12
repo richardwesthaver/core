@@ -88,8 +88,8 @@
                             (pad an)
                             c
                             (pad cn)
-                            (integer-to-octets (* 8 an) :n-bits 64)
-                            (integer-to-octets (* 8 cn) :n-bits 64)))))
+                            (integer-to-octets* (* 8 an) :bits 64)
+                            (integer-to-octets* (* 8 cn) :bits 64)))))
     (let* ((n (length iv))
            (n*8 (* 8 n)))
       (cond

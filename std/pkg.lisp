@@ -956,7 +956,7 @@
 
 (defpkg :std/bit
   (:use :cl :std/macs)
-  (:import-from :std/type :octet :octet-vector)
+  (:import-from :std/type :octet :octet-vector :simple-octet-vector)
   (:mix :sb-sys)
   (:export
    :+hex-digits+
@@ -971,6 +971,7 @@
    :signed-to-unsigned
    :unsigned-to-signed
    :logbit
+   :maybe-integrize
    :bitfield
    :bitfield-slot-name
    :bitfield-slot-start
@@ -993,6 +994,8 @@
    :integer-to-octets
    :octets-to-integer-le
    :integer-to-octets-le
+   :octets-to-integer*
+   :integer-to-octets*
    :read-little-endian
    :write-little-endian
    :hexchar-to-int

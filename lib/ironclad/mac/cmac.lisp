@@ -22,9 +22,9 @@
     (encrypt-in-place cipher L)
     (flet ((gen-subkey (b)
              (let* ((n-bits (* block-length 8))
-                    (k (integer-to-octets
+                    (k (integer-to-octets*
                         (ldb (byte n-bits 0) (ash (octets-to-integer b) 1))
-                        :n-bits n-bits)))
+                        :bits n-bits)))
                (when (logbitp 7 (aref b 0))
                  (ecase block-length
                    (8 (setf (aref k 7) (logxor (aref k 7) #x1b)))

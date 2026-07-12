@@ -46,7 +46,7 @@ replacement for COMMON-LISP:RANDOM."
      (let* ((log-limit (integer-length limit))
             (num-bytes (ceiling log-limit 8))
             (mask (1- (ash 1 log-limit))))
-       (loop for random = (logand (ironclad:octets-to-integer
+       (loop for random = (logand (octets-to-integer
                                    (prng-random-data num-bytes prng))
                                   mask)
           until (< random limit)

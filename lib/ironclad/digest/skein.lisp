@@ -211,9 +211,9 @@
                          :initial-element 0)))
     (setf (subseq cfg 0 4) #(83 72 65 51))
     (setf (subseq cfg 4 6)
-          (integer-to-octets 1 :n-bits 16 :big-endian nil))
+          (integer-to-octets-le 1 16))
     (setf (subseq cfg 8 16)
-          (integer-to-octets output-length :n-bits 64 :big-endian nil))
+          (integer-to-octets-le output-length 64))
     cfg))
 
 ;;; UBI (unique block iteration chaining)
@@ -350,7 +350,7 @@
           (progn
             (replace digest output :start1 digest-start :end2 digest-length)
             digest))
-      (replace msg (integer-to-octets i :n-bits 64 :big-endian nil) :end2 8)
+      (replace msg (integer-to-octets-le i 64) :end2 8)
       (replace (skein-value state) value)
       (skein-update-tweak tweak :first t :final t :type +skein-out+ :position 8)
       (skein-ubi state msg 0 block-length t)

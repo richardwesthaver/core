@@ -11,7 +11,7 @@
      with digest-len = (digest-length digest-name)
      for digest = (make-digest digest-name) then (reinitialize-instance digest)
      for counter from 0 to (floor num-bytes digest-len)
-     for counter-bytes = (integer-to-octets counter :n-bits 32)
+     for counter-bytes = (integer-to-octets* counter :bits 32)
      for tmp = (digest-sequence digest (concatenate '(vector (unsigned-byte 8))
                                                     seed
                                                     counter-bytes))

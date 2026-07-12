@@ -135,8 +135,8 @@
            :parameter 'n-bits
            :description "subgroup modulus size"))
   (concatenate '(simple-array (unsigned-byte 8) (*))
-               (integer-to-octets r :n-bits n-bits)
-               (integer-to-octets s :n-bits n-bits)))
+               (integer-to-octets* r :bits n-bits)
+               (integer-to-octets* s :bits n-bits)))
 
 (defmethod destructure-signature ((kind (eql :dsa)) signature)
   (let ((length (length signature)))
@@ -144,9 +144,9 @@
         (error 'invalid-signature-length :kind 'dsa)
         (let* ((middle (/ length 2))
                (n-bits (* middle 8))
-               (r (octets-to-integer signature :start 0 :end middle))
-               (s (octets-to-integer signature :start middle)))
-          (list :r r :s s :n-bits n-bits)))))
+               (r (octets-to-integer* signature :start 0 :end middle))
+               (s (octets-to-integer* signature :start middle)))
+          (list :r r :s s :bits n-bits)))))
 
 ;;; Note that hashing is not performed here.
 (defmethod sign-message ((key dsa-private-key) message &key (start 0) end &allow-other-keys)
@@ -156,7 +156,7 @@
     (when (> (* 8 (- end start)) qbits)
       ;; Only keep the required number of bits of message
       (setf end (+ start (/ qbits 8))))
-    (let* ((m (octets-to-integer message :start start :end end))
+    (let* ((m (octets-to-integer* message :start start :end end))
            (p (dsa-key-p key))
            (g (dsa-key-g key))
            (x (dsa-key-x key))
@@ -166,7 +166,7 @@
            (s (mod (* k-inverse (+ (* x r) m)) q)))
       (assert (= (mod (* k k-inverse) q) 1))
       (if (not (or (zerop r) (zerop s)))
-          (make-signature :dsa :r r :s s :n-bits qbits)
+          (make-signature :dsa :r r :s s :bits qbits)
           (sign-message key message :start start :end end)))))
 
 (defmethod verify-signature ((key dsa-public-key) message signature &key (start 0) end &allow-other-keys)
@@ -178,7 +178,7 @@
     (when (> (* 8 (- end start)) qbits)
       ;; Only keep the required number of bits of message
       (setf end (+ start (/ qbits 8))))
-    (let* ((m (octets-to-integer message :start start :end end))
+    (let* ((m (octets-to-integer* message :start start :end end))
            (p (dsa-key-p key))
            (g (dsa-key-g key))
            (y (dsa-key-y key))
