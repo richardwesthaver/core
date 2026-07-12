@@ -1,11 +1,12 @@
-;;; ironclad.sys
+;;; ironclad.sys --- Mid-level Crypto Library
 
-;; Ironclad is a cryptography library written entirely in Common Lisp. It
-;; includes support for several popular ciphers, digests, MACs and public key
-;; cryptography algorithms. For several implementations that support Gray
-;; streams, support is included for convenient stream wrappers.
+;; A cryptography library written entirely in Lisp.
 
 ;;; Commentary:
+
+;; Ironclad includes support for several popular ciphers, digests, MACs and
+;; public key cryptography algorithms. For several implementations that
+;; support Gray streams, support is included for convenient stream wrappers.
 
 ;; Most of the algorithms were written with efficiency for specific
 ;; Common Lisp implementations in mind, although portable code is
@@ -286,7 +287,7 @@
                  (:file "password-hash")
                  (:file "argon2")
                  (:file "hmac")))
-   (:mod "public-key"
+   (:mod "pki"
     :components ((:file "public-key")
                  (:file "pkcs1")
                  (:file "elliptic-curve")
@@ -334,7 +335,7 @@
     :predicates (authenticated-encryption-mode-supported-p)
     :methods (process-associated-data produce-tag)
     :conditions (unsupported-authenticated-encryption-mode bad-authentication-tag))
-   (:proto :public-key
+   (:proto :pki
     :functions (list-all-key-pair-kinds make-public-key make-private-key make-message)
     :methods 
     (generate-key-pair destructure-public-key destructure-private-key sign-message verify-signature
@@ -445,7 +446,7 @@
                         :ironclad/kdf/pkcs5)))
 
   (define-ironclad-subsystem
-      "ironclad/public-key" #p"public-key/"
+      "ironclad/pki" #p"pki/"
     "dsa"
     "rsa"
     "elgamal"

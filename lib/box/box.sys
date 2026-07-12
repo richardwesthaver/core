@@ -1,6 +1,6 @@
 ;;; ~/src/core/lib/box/box.sys --- Box Sytem Definitions
 (defsys :box
- :require (:std :cli :obj :dat :net :log)
+ :require (:std :cli :obj :dat :net :log :syn)
  :components 
  ((:pkg "pkg" :feature :box)
   (:file "proto")
