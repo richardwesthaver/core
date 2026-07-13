@@ -85,10 +85,10 @@ to hold data read from the stream."))
 
 (defgeneric digest-stream (digest-spec stream &rest args &key buffer start end digest digest-start)
   (:documentation "Return the digest of the contents of STREAM using the algorithm
-DIGEST-NAME.  STREAM-ELEMENT-TYPE of STREAM should be (UNSIGNED-BYTE 8).
+DIGEST-NAME. STREAM-ELEMENT-TYPE of STREAM should be (UNSIGNED-BYTE 8).
 
 If DIGEST is provided, the digest will be placed into DIGEST starting at
-DIGEST-START.  DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
+DIGEST-START. DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
 An error will be signaled if there is insufficient room in DIGEST.
 
 If BUFFER is provided, the portion of BUFFER between START and END will
@@ -100,13 +100,13 @@ specified by START and END using the algorithm DIGEST-SPEC.
 SEQUENCE can be any vector with an element-type of (UNSIGNED-BYTE 8).
 
 If DIGEST is provided, the digest will be placed into DIGEST starting at
-DIGEST-START.  DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
+DIGEST-START. DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
 An error will be signaled if there is insufficient room in DIGEST."))
 
 (defgeneric copy-digest (digester &optional copy)
   (:documentation "Return a copy of DIGESTER.  If COPY is not NIL, it
 should be of the same type as DIGESTER and will receive the copied data,
-rather than creating a new object.  The copy is a deep copy, not a
+rather than creating a new object. The copy is a deep copy, not a
 shallow copy as might be returned by COPY-STRUCTURE."))
 
 (defgeneric update-digest (digester thing &key &allow-other-keys)
@@ -118,7 +118,7 @@ The exact method is determined by the type of THING."))
 DIGESTER so far.
 
 If DIGEST is provided, the hash will be placed into DIGEST starting at
-DIGEST-START.  DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
+DIGEST-START. DIGEST must be a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
 An error will be signaled if there is insufficient room in DIGEST."))
 
 (defgeneric digest-length (digest)
@@ -146,7 +146,7 @@ An error will be signaled if there is insufficient room in DIGEST."))
 ;;; Padding
 (defgeneric add-padding-bytes (padding text start block-offset block-size)
   (:documentation "Add padding to the block in TEXT beginning at position
-START.  Padding is done according to PADDING and assumes that text
+START. Padding is done according to PADDING and assumes that text
 prior to BLOCK-OFFSET is user-supplied.
 
 This function assumes that the portion of TEXT from START to
@@ -154,13 +154,13 @@ This function assumes that the portion of TEXT from START to
 
 (defgeneric count-padding-bytes (padding text start block-size)
   (:documentation "Return the number of bytes of padding in the block in
-TEXT beginning at START.  The padding algorithm used for the block is
+TEXT beginning at START. The padding algorithm used for the block is
 PADDING."))
 
 ;;; Pseudo random number generators
 (defgeneric make-prng (name &key seed)
   (:documentation "Create a new NAME-type random number generator,
-  seeding it from SEED.  If SEED is a pathname or namestring, read data
+  seeding it from SEED. If SEED is a pathname or namestring, read data
   from the indicated file; if it is sequence of bytes, use those bytes
   directly; if it is :RANDOM then read from /dev/random; if it
   is :URANDOM then read from /dev/urandom; if it is NIL then the

@@ -2,7 +2,7 @@
 
 ;;; Code:
 (defpkg :ironclad
-  (:use :std-lisp)
+  (:use :std-lisp :sb-gray)
   (:nicknames :crypto)
   (:export
    ;; referencing multiple-octet values in an octet vector (SETF-able)
@@ -136,9 +136,6 @@
    #:expt-mod #:expt-mod/unsafe
    #:constant-time-equal
    ;; streams
-   #:make-octet-input-stream #:make-octet-output-stream
-   #:with-octet-input-stream #:with-octet-output-stream
-   #:get-output-stream-octets
    #:make-digesting-stream
    #:execute-with-digesting-stream #:with-digesting-stream
    #:execute-with-digesting-text-stream #:with-digesting-text-stream
@@ -174,12 +171,13 @@
            #:kalyna128 #:kalyna256 #:kalyna512
            #:sm4)
   ;; supported stream ciphers
-  (:export #:arcfour
-           #:salsa20 #:salsa20/12 #:salsa20/8
-           #:xsalsa20 #:xsalsa20/12 #:xsalsa20/8
-           #:chacha #:chacha/12 #:chacha/8
-           #:xchacha #:xchacha/12 #:xchacha/8
-           #:sosemanuk))
+  (:export 
+   #:arcfour
+   #:salsa20 #:salsa20/12 #:salsa20/8
+   #:xsalsa20 #:xsalsa20/12 #:xsalsa20/8
+   #:chacha #:chacha/12 #:chacha/8
+   #:xchacha #:xchacha/12 #:xchacha/8
+   #:sosemanuk))
 
 (in-package :crypto)
 

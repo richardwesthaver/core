@@ -60,8 +60,138 @@ compatible element-types."
       (finish-output output))
     output-position))
 
-;; from SBCL manual
+;;; Octet Streams
+;; from ironclad
+
+;; These could be specialized for particular implementations by hooking
+;; in directly to the "native" stream methods for the implementation.
+(defclass octet-stream ()
+  ((buffer :accessor buffer :initarg :buffer :type simple-octet-vector)))
+
+(defmethod stream-element-type ((stream octet-stream))
+  '(unsigned-byte 8))
+
+(defmacro define-octet-stream-read-sequence (specializer type &body body)
+  `(defmethod sb-gray:stream-read-sequence ((stream ,specializer) seq &optional (start 0) end)
+     (typecase seq
+       (,type
+        (let ((end (or end (length seq))))
+          ,@body))
+       (t
+        (call-next-method)))))
+
+(defmacro define-octet-stream-write-sequence (specializer type &body body)
+  `(defmethod sb-gray:stream-write-sequence ((stream ,specializer) seq &optional (start 0) end)
+     (typecase seq
+       (,type
+        (let ((end (or end (length seq))))
+          ,@body))
+       (t
+        (call-next-method)))))
+
+;;;; input streams
+(defclass octet-input-stream (octet-stream fundamental-binary-input-stream)
+  ((index :accessor index :initarg :index :type index)
+   (end :accessor end :initarg :end :type index)))
+
+(defmethod stream-read-byte ((stream octet-input-stream))
+  (let ((buffer (buffer stream))
+        (index (index stream)))
+    (declare (type simple-octet-vector buffer))
+    (cond
+      ((>= index (end stream)) :eof)
+      (t
+       (setf (index stream) (1+ index))
+       (aref buffer index)))))
+
+(define-octet-stream-read-sequence octet-input-stream simple-octet-vector
+  (let ((buffer (buffer stream))
+        (index (index stream))
+        (buffer-end (end stream)))
+    (declare (type simple-octet-vector buffer))
+    (let* ((remaining (- buffer-end index))
+           (length (- end start))
+           (amount (min remaining length)))
+      (replace seq buffer :start1 start :end1 end
+               :start2 index :end2 buffer-end)
+      (setf (index stream) (+ index amount))
+      (+ start amount))))
+
+(defun make-octet-input-stream (buffer &optional (start 0) end)
+  "As MAKE-STRING-INPUT-STREAM, only with octets instead of characters."
+  (declare (type simple-octet-vector buffer)
+           (type array-index start)
+           (type (or array-index null) end))
+  (let ((end (or end (length buffer))))
+    (make-instance 'octet-input-stream
+                   :buffer buffer :index start :end end)))
+
+(defmacro with-octet-input-stream ((var buffer &optional (start 0) end) &body body)
+  `(with-open-stream (,var (make-octet-input-stream ,buffer ,start ,end))
+     ,@body))
+
+;;;; output streams
+(defclass octet-output-stream (octet-stream fundamental-binary-output-stream)
+  ((index :accessor index :initform 0 :type index)))
+
+(defmethod stream-write-byte ((stream octet-output-stream) integer)
+  (declare (type (unsigned-byte 8) integer))
+  (let* ((buffer (buffer stream))
+         (length (length buffer))
+         (index (index stream)))
+    (declare (type simple-octet-vector buffer))
+    (when (>= index (length buffer))
+      (let ((new-buffer (make-array (* 2 length)
+                                    :element-type '(unsigned-byte 8))))
+        (declare (type simple-octet-vector new-buffer))
+        (replace new-buffer buffer)
+        (setf buffer new-buffer
+              (buffer stream) new-buffer)))
+    (setf (aref buffer index) integer
+          (index stream) (1+ index))
+    integer))
+
+(define-octet-stream-write-sequence octet-output-stream simple-octet-vector
+  (let* ((buffer (buffer stream))
+         (length (length buffer))
+         (index (index stream))
+         (amount (- end start)))
+    (declare (type simple-octet-vector buffer))
+    (when (>= (+ index amount) length)
+      (let ((new-buffer (make-array (* 2 (max amount length))
+                                    :element-type '(unsigned-byte 8))))
+        (declare (type simple-octet-vector new-buffer))
+        (replace new-buffer buffer)
+        (setf buffer new-buffer
+              (buffer stream) new-buffer)))
+    (replace buffer seq :start1 index :start2 start :end2 end)
+    (incf (index stream) amount)
+    seq))
+
+(defmethod stream-clear-output ((stream octet-output-stream))
+  (setf (index stream) 0)
+  nil)
+
+(defun get-output-stream-octets (stream)
+  "As GET-OUTPUT-STREAM-STRING, only with an octet output-stream instead
+of a string output-stream."
+  (let ((buffer (buffer stream))
+        (index (index stream)))
+    (setf (index stream) 0)
+    (subseq buffer 0 index)))
+
+(defun make-octet-output-stream ()
+  "As MAKE-STRING-OUTPUT-STREAM, only with octets instead of characters."
+  (make-instance 'octet-output-stream
+                 :buffer (make-array 128 :element-type '(unsigned-byte 8))))
+
+(defmacro with-octet-output-stream ((var) &body body)
+  `(with-open-stream (,var (make-octet-output-stream))
+     ,@body
+     (get-output-stream-octets ,var)))
+
 ;;; Wrapped Streams
+;; from SBCL manual
 (defclass wrapped-stream (fundamental-stream)
   ((stream :initform nil :initarg :stream :accessor stream-of))
   (:documentation "A stream which wraps another stream accessible via STREAM-OF."))

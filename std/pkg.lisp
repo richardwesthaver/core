@@ -528,7 +528,7 @@
    :count-permutations))
 
 (defpkg :std/stream
-  (:use :cl :sb-gray)
+  (:use :cl :sb-gray :std/type)
   (:documentation "Standard stream definitions")
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
@@ -546,7 +546,10 @@
    :stream-of :char-count-of :line-count-of :col-count-of
    :prev-col-count-of :col-index-of :write-prefix
    :prefix-of
-   :with-input-from-file :with-output-to-file))
+   :with-input-from-file :with-output-to-file
+   #:make-octet-input-stream #:make-octet-output-stream
+   #:with-octet-input-stream #:with-octet-output-stream
+   #:get-output-stream-octets))
 
 (defpkg :std/hash
   (:use :cl)

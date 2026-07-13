@@ -39,13 +39,6 @@ $ sbcl --script bootstrap.lisp
 (let ((build-order 
         (list :std
               :ironclad
-              :ironclad/cipher
-              :ironclad/digest
-              :ironclad/mac
-              :ironclad/prng
-              :ironclad/aead
-              :ironclad/kdf
-              :ironclad/pki
               :swank
               :swank/ext
               :xkb

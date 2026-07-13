@@ -3,193 +3,21 @@
 ;;; Code:
 (in-package :crypto)
 
-;;; portability definitions
-;; TRIVIAL-GRAY-STREAMS has it, we might as well, too...
-(eval-when (:compile-toplevel :load-toplevel :execute)
-(defvar *binary-input-stream-class*
-  (quote sb-gray:fundamental-binary-input-stream))
-
-(defvar *binary-output-stream-class*
-  (quote
-   sb-gray:fundamental-binary-output-stream))
-
-;;; FIXME: how to do CMUCL support for this?
-(defvar *stream-element-type-function*
-  (quote
-   sb-gray::stream-element-type))
-
-(defvar *stream-read-byte-function*
-  (quote
-   sb-gray:stream-read-byte))
-
-(defvar *stream-write-byte-function*
-  (quote
-   sb-gray:stream-write-byte))
-
-(defvar *stream-read-sequence-function*
-  (quote
-   sb-gray:stream-read-sequence))
-
-(defvar *stream-write-sequence-function*
-  (quote
-   sb-gray:stream-write-sequence))
-
-(defvar *stream-finish-output-function*
-  (quote
-   sb-gray:stream-finish-output))
-
-(defvar *stream-force-output-function*
-  (quote
-   sb-gray:stream-force-output))
-
-(defvar *stream-clear-output-function*
-  (quote
-   sb-gray:stream-clear-output)))
-
-;;; implementation via Gray streams
-
-;;; These could be specialized for particular implementations by hooking
-;;; in directly to the "native" stream methods for the implementation.
-(defclass octet-stream ()
-  ((buffer :accessor buffer :initarg :buffer :type simple-octet-vector)))
-
-(defmethod #.*stream-element-type-function* ((stream octet-stream))
-  '(unsigned-byte 8))
-
-(defmacro define-stream-read-sequence (specializer type &body body)
-  `(defmethod sb-gray:stream-read-sequence ((stream ,specializer) seq &optional (start 0) end)
-     (typecase seq
-       (,type
-        (let ((end (or end (length seq))))
-          ,@body))
-       (t
-        (call-next-method)))))
-
-(defmacro define-stream-write-sequence (specializer type &body body)
-  `(defmethod sb-gray:stream-write-sequence ((stream ,specializer) seq &optional (start 0) end)
-     (typecase seq
-       (,type
-        (let ((end (or end (length seq))))
-          ,@body))
-       (t
-        (call-next-method)))))
-
-;;; input streams
-(defclass octet-input-stream (octet-stream #.*binary-input-stream-class*)
-  ((index :accessor index :initarg :index :type index)
-   (end :accessor end :initarg :end :type index)))
-
-(defmethod #.*stream-read-byte-function* ((stream octet-input-stream))
-  (let ((buffer (buffer stream))
-        (index (index stream)))
-    (declare (type simple-octet-vector buffer))
-    (cond
-      ((>= index (end stream)) :eof)
-      (t
-       (setf (index stream) (1+ index))
-       (aref buffer index)))))
-
-(define-stream-read-sequence octet-input-stream simple-octet-vector
-  (let ((buffer (buffer stream))
-        (index (index stream))
-        (buffer-end (end stream)))
-    (declare (type simple-octet-vector buffer))
-    (let* ((remaining (- buffer-end index))
-           (length (- end start))
-           (amount (min remaining length)))
-      (replace seq buffer :start1 start :end1 end
-               :start2 index :end2 buffer-end)
-      (setf (index stream) (+ index amount))
-      (+ start amount))))
-
-(defun make-octet-input-stream (buffer &optional (start 0) end)
-  "As MAKE-STRING-INPUT-STREAM, only with octets instead of characters."
-  (declare (type simple-octet-vector buffer)
-           (type index start)
-           (type (or index null) end))
-  (let ((end (or end (length buffer))))
-    (make-instance 'octet-input-stream
-                   :buffer buffer :index start :end end)))
-
-(defmacro with-octet-input-stream ((var buffer &optional (start 0) end) &body body)
-  `(with-open-stream (,var (make-octet-input-stream ,buffer ,start ,end))
-     ,@body))
-
-;;; output streams
-(defclass octet-output-stream (octet-stream #.*binary-output-stream-class*)
-  ((index :accessor index :initform 0 :type index)))
-
-(defmethod #.*stream-write-byte-function* ((stream octet-output-stream) integer)
-  (declare (type (unsigned-byte 8) integer))
-  (let* ((buffer (buffer stream))
-         (length (length buffer))
-         (index (index stream)))
-    (declare (type simple-octet-vector buffer))
-    (when (>= index (length buffer))
-      (let ((new-buffer (make-array (* 2 length)
-                                    :element-type '(unsigned-byte 8))))
-        (declare (type simple-octet-vector new-buffer))
-        (replace new-buffer buffer)
-        (setf buffer new-buffer
-              (buffer stream) new-buffer)))
-    (setf (aref buffer index) integer
-          (index stream) (1+ index))
-    integer))
-
-(define-stream-write-sequence octet-output-stream simple-octet-vector
-  (let* ((buffer (buffer stream))
-         (length (length buffer))
-         (index (index stream))
-         (amount (- end start)))
-    (declare (type simple-octet-vector buffer))
-    (when (>= (+ index amount) length)
-      (let ((new-buffer (make-array (* 2 (max amount length))
-                                    :element-type '(unsigned-byte 8))))
-        (declare (type simple-octet-vector new-buffer))
-        (replace new-buffer buffer)
-        (setf buffer new-buffer
-              (buffer stream) new-buffer)))
-    (replace buffer seq :start1 index :start2 start :end2 end)
-    (incf (index stream) amount)
-    seq))
-
-(defmethod #.*stream-clear-output-function* ((stream octet-output-stream))
-  (setf (index stream) 0)
-  nil)
-
-(defun get-output-stream-octets (stream)
-  "As GET-OUTPUT-STREAM-STRING, only with an octet output-stream instead
-of a string output-stream."
-  (let ((buffer (buffer stream))
-        (index (index stream)))
-    (setf (index stream) 0)
-    (subseq buffer 0 index)))
-
-(defun make-octet-output-stream ()
-  "As MAKE-STRING-OUTPUT-STREAM, only with octets instead of characters."
-  (make-instance 'octet-output-stream
-                 :buffer (make-array 128 :element-type '(unsigned-byte 8))))
-
-(defmacro with-octet-output-stream ((var) &body body)
-  `(with-open-stream (,var (make-octet-output-stream))
-     ,@body
-     (get-output-stream-octets ,var)))
-
 ;;; digesting streams
-(defclass digesting-stream (#.*binary-output-stream-class*)
+(defclass digesting-stream (fundamental-binary-output-stream)
   ((digest :initarg :digest :reader stream-digest)
    (buffer :initform (make-array 64 :element-type '(unsigned-byte 8))
            :reader stream-buffer)
    (position :initform 0
              :reader stream-buffer-position)))
 
-(defmethod #.*stream-element-type-function* ((stream digesting-stream))
+(defmethod stream-element-type ((stream digesting-stream))
   '(unsigned-byte 8))
 
 (defun make-digesting-stream (digest &rest args)
   (make-instance 'digesting-stream :digest (apply #'make-digest digest args)))
 
-(defmethod #.*stream-write-byte-function* ((stream digesting-stream) byte)
+(defmethod stream-write-byte ((stream digesting-stream) byte)
   (declare (type (unsigned-byte 8) byte))
   (with-slots (digest buffer position) stream
     (setf (aref buffer position) byte)
@@ -198,7 +26,7 @@ of a string output-stream."
       (setf position 0))
     byte))
 
-(define-stream-write-sequence digesting-stream simple-octet-vector
+(define-octet-stream-write-sequence digesting-stream simple-octet-vector
   (unless (zerop (stream-buffer-position stream))
     (update-digest (stream-digest stream)
                    (stream-buffer stream)
@@ -207,7 +35,7 @@ of a string output-stream."
   (update-digest (stream-digest stream) seq :start start :end end)
   seq)
 
-(defmethod #.*stream-clear-output-function* ((stream digesting-stream))
+(defmethod stream-clear-output ((stream digesting-stream))
   (with-slots (digest position) stream
     (setf position 0)
     (reinitialize-instance digest)
@@ -239,13 +67,13 @@ of a string output-stream."
    (position :initform 0 :reader stream-buffer-position)
    (wrapped-stream :initarg :stream :reader stream-wrapped-stream)))
 
-(defmethod #.*stream-element-type-function* ((stream crypting-stream))
+(defmethod stream-element-type ((stream crypting-stream))
   '(unsigned-byte 8))
 
-(defclass encrypting-input-stream (crypting-stream #.*binary-input-stream-class*) ())
-(defclass encrypting-output-stream (crypting-stream #.*binary-output-stream-class*) ())
-(defclass decrypting-input-stream (crypting-stream #.*binary-input-stream-class*) ())
-(defclass decrypting-output-stream (crypting-stream #.*binary-output-stream-class*) ())
+(defclass encrypting-input-stream (crypting-stream fundamental-binary-input-stream) ())
+(defclass encrypting-output-stream (crypting-stream fundamental-binary-output-stream) ())
+(defclass decrypting-input-stream (crypting-stream fundamental-binary-input-stream) ())
+(defclass decrypting-output-stream (crypting-stream fundamental-binary-output-stream) ())
 
 (deftype stream-direction () '(member :input :output))
 
@@ -279,31 +107,31 @@ of a string output-stream."
         (make-instance 'decrypting-output-stream :stream stream
                        :cipher context :buffer buffer))))
 
-(defmethod #.*stream-read-byte-function* ((stream encrypting-input-stream))
+(defmethod stream-read-byte ((stream encrypting-input-stream))
   (with-slots (wrapped-stream cipher buffer n-bytes-valid position)
       stream
     (when (= position n-bytes-valid)
       (setf n-bytes-valid (read-sequence buffer wrapped-stream)
             position 0)
       (when (zerop n-bytes-valid)
-        (return-from #.*stream-read-byte-function* :eof))
+        (return-from stream-read-byte :eof))
       (encrypt cipher buffer buffer :plaintext-end n-bytes-valid))
     (prog1 (aref buffer position)
       (incf position))))
 
-(defmethod #.*stream-read-byte-function* ((stream decrypting-input-stream))
+(defmethod stream-read-byte ((stream decrypting-input-stream))
   (with-slots (wrapped-stream cipher buffer n-bytes-valid position)
       stream
     (when (= position n-bytes-valid)
       (setf n-bytes-valid (read-sequence buffer wrapped-stream)
             position 0)
       (when (zerop n-bytes-valid)
-        (return-from #.*stream-read-byte-function* :eof))
+        (return-from stream-read-byte :eof))
       (decrypt cipher buffer buffer :ciphertext-end n-bytes-valid))
     (prog1 (aref buffer position)
       (incf position))))
 
-(defmethod #.*stream-write-byte-function* ((stream encrypting-output-stream) byte)
+(defmethod stream-write-byte ((stream encrypting-output-stream) byte)
   (declare (type (unsigned-byte 8) byte))
   (with-slots (wrapped-stream cipher buffer)
       stream
@@ -312,7 +140,7 @@ of a string output-stream."
     (write-byte (aref buffer 0) wrapped-stream)
     byte))
 
-(defmethod #.*stream-write-byte-function* ((stream decrypting-output-stream) byte)
+(defmethod stream-write-byte ((stream decrypting-output-stream) byte)
   (declare (type (unsigned-byte 8) byte))
   (with-slots (wrapped-stream cipher buffer)
       stream
@@ -321,7 +149,7 @@ of a string output-stream."
     (write-byte (aref buffer 0) wrapped-stream)
     byte))
 
-(define-stream-read-sequence encrypting-input-stream simple-octet-vector
+(define-octet-stream-read-sequence encrypting-input-stream simple-octet-vector
   (with-slots (wrapped-stream cipher buffer n-bytes-valid position)
       stream
     (do ((n 0))
@@ -337,7 +165,7 @@ of a string output-stream."
       (incf start n)
       (incf position n))))
 
-(define-stream-read-sequence decrypting-input-stream simple-octet-vector
+(define-octet-stream-read-sequence decrypting-input-stream simple-octet-vector
   (with-slots (wrapped-stream cipher buffer n-bytes-valid position)
       stream
     (do ((n 0))
@@ -353,7 +181,7 @@ of a string output-stream."
       (incf start n)
       (incf position n))))
 
-(define-stream-write-sequence encrypting-output-stream simple-octet-vector
+(define-octet-stream-write-sequence encrypting-output-stream simple-octet-vector
   (with-slots (wrapped-stream cipher buffer)
       stream
     (do ((buffer-length (length buffer))
@@ -367,7 +195,7 @@ of a string output-stream."
       (incf start n))
     seq))
 
-(define-stream-write-sequence decrypting-output-stream simple-octet-vector
+(define-octet-stream-write-sequence decrypting-output-stream simple-octet-vector
   (with-slots (wrapped-stream cipher buffer)
       stream
     (do ((buffer-length (length buffer))
@@ -398,18 +226,18 @@ of a string output-stream."
      ,@body))
 
 ;;; authenticating streams
-(defclass authenticating-stream (#.*binary-output-stream-class*)
+(defclass authenticating-stream (fundamental-binary-output-stream)
   ((mac :initarg :mac :reader stream-mac)
    (buffer :initform (make-array 64 :element-type '(unsigned-byte 8)) :reader stream-buffer)
    (position :initform 0 :reader stream-buffer-position)))
 
-(defmethod #.*stream-element-type-function* ((stream authenticating-stream))
+(defmethod stream-element-type ((stream authenticating-stream))
   '(unsigned-byte 8))
 
 (defun make-authenticating-stream (mac key &rest args)
   (make-instance 'authenticating-stream :mac (apply #'make-mac mac key args)))
 
-(defmethod #.*stream-write-byte-function* ((stream authenticating-stream) byte)
+(defmethod stream-write-byte ((stream authenticating-stream) byte)
   (declare (type (unsigned-byte 8) byte))
   (with-slots (mac buffer position) stream
     (setf (aref buffer position) byte)
@@ -418,7 +246,7 @@ of a string output-stream."
       (setf position 0))
     byte))
 
-(define-stream-write-sequence authenticating-stream simple-octet-vector
+(define-octet-stream-write-sequence authenticating-stream simple-octet-vector
   (unless (zerop (stream-buffer-position stream))
     (update-mac (stream-mac stream) (stream-buffer stream) :end (stream-buffer-position stream))
     (setf (slot-value stream 'position) 0))

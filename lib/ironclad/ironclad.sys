@@ -8,18 +8,17 @@
 ;; public key cryptography algorithms. For several implementations that
 ;; support Gray streams, support is included for convenient stream wrappers.
 
-;; Most of the algorithms were written with efficiency for specific
-;; Common Lisp implementations in mind, although portable code is
-;; provided as an alternative in nearly all instances. The framework
-;; should be flexible enough to accommodate implementation-specific
-;; optimizations when possible.
+;; Most of the algorithms were written with efficiency for specific Common
+;; Lisp implementations in mind, although portable code is provided as an
+;; alternative in nearly all instances. The framework should be flexible
+;; enough to accommodate implementation-specific optimizations when possible.
 
-;; Test vectors for many of the algorithms are included to provide
-;; a level of confidence in the correctness of the implementations.
+;; Test vectors for many of the algorithms are included to provide a level of
+;; confidence in the correctness of the implementations.
 
 ;;;; TODOs
 
-;; - cleanup octet-stream: positions are either INDEX or POSITION, not both
+;; - cleanup stream: positions are either INDEX or POSITION, not both
 ;; The latter requires :SHADOW adjustments in Ironclad's DEFPACKAGE.
 
 ;; - ciphers to add
@@ -30,10 +29,10 @@
 
 ;; - add OpenPGP functions
 
-;; This would involve writing some simple base64 encoding and decoding.
-;; I'm not sure how to add this and achieve the right amount of generality
-;; and functionality.  Just writing an OpenPGP parser is straightforward,
-;; but determining what to do with the data is a little more complicated.
+;; This would involve writing some simple base64 encoding and decoding.  I'm
+;; not sure how to add this and achieve the right amount of generality and
+;; functionality. Just writing an OpenPGP parser is straightforward, but
+;; determining what to do with the data is a little more complicated.
 
 ;; - make a condition hierarchy for the library
 
@@ -42,22 +41,22 @@
 
 ;; - remove generic function calls from inner loops
 
-;; ENCRYPT-WITH-MODE, by virtue of calling <CIPHER>-ENCRYPT-BLOCK on
-;; every iteration of the loop, requires <CIPHER>-ENCRYPT-BLOCK to
-;; repeatedly extract the cipher-specific data from the provided cipher
-;; context.  No idea if this is a bottleneck (probably not).
+;; ENCRYPT-WITH-MODE, by virtue of calling <CIPHER>-ENCRYPT-BLOCK on every
+;; iteration of the loop, requires <CIPHER>-ENCRYPT-BLOCK to repeatedly
+;; extract the cipher-specific data from the provided cipher context. No idea
+;; if this is a bottleneck (probably not).
 
 ;; Doing this extraction on every iteration of the loop is overhead,
-;; though--unnecessary overhead compared to a C implementation.  Pulling
-;; the extraction out of the loop in a clean, cipher-independent manner is
+;; though--unnecessary overhead compared to a C implementation. Pulling the
+;; extraction out of the loop in a clean, cipher-independent manner is
 ;; probably pretty hairy, however.
 
 ;; - figure out interface for extra cipher creation parameters
 
-;; RC5, for instance, is configurable in the number of rounds.  The number
-;; of rounds must be fixed the way the current system works.  Configuring
-;; the number of rounds for TEA and XTEA would be another example of where
-;; this is useful.  Surely there are other reasons, too.
+;; RC5, for instance, is configurable in the number of rounds. The number of
+;; rounds must be fixed the way the current system works. Configuring the
+;; number of rounds for TEA and XTEA would be another example of where this is
+;; useful. Surely there are other reasons, too.
 
 ;; - add more cipher modes of operation
 
@@ -70,14 +69,14 @@
 ;; - efficient 32-bit implementations of SHA2-{512,384}
 
 ;; These digests are currently implemented with straight 64-bit arithmetic,
-;; which is elegant, but causes a lot of consing on 32-bit platforms.  Is
-;; it worth spending the time to tweak these?
+;; which is elegant, but causes a lot of consing on 32-bit platforms.  Is it
+;; worth spending the time to tweak these?
 
 ;; -  add other MACs
 
-;; The NESSIE project has a boatload of MAC recommendations with test
-;; vectors and everything.  Adding other MACs would help with cleaning up
-;; the MAC interface (or lack thereof).
+;; The NESSIE project has a boatload of MAC recommendations with test vectors
+;; and everything.  Adding other MACs would help with cleaning up the MAC
+;; interface (or lack thereof).
 
 ;; - add other digests
 
@@ -95,66 +94,64 @@
 
 ;; Ironclad is written with implementations that are capable of performing
 ;; 32-bit unboxed arithmetic in mind.  However, there is no reason to leave
-;; other implementations out in the cold.  I particularly have in mind
-;; ABCL, whose clean Java integration could facilitate using Java's crypto
-;; routines for many of the algorithms Ironclad provides.
+;; other implementations out in the cold.  I particularly have in mind ABCL,
+;; whose clean Java integration could facilitate using Java's crypto routines
+;; for many of the algorithms Ironclad provides.
 
 ;; Using 32-bit integer arithmetic in LispWorks (SYSTEM:INT32-*) and
-;; DEF*LAPFUNCTION in ClozureCL, along with architecture-specific VOPs
-;; and/or DEF{KNOWN,OPTIMIZER,TRANSFORM} in SBCL/CMUCL are other ways of
-;; doing this.
+;; DEF*LAPFUNCTION in ClozureCL, along with architecture-specific VOPs and/or
+;; DEF{KNOWN,OPTIMIZER,TRANSFORM} in SBCL/CMUCL are other ways of doing this.
 
 ;; - compilable encryption and decryption routines
 
 ;; One trick that's commonly used in high-performance crypto libraries is
-;; unrolling inner loops of ciphers, which are generally Feistel networks
-;; of some sort.  This transformation has many benefits: avoiding jumps and
+;; unrolling inner loops of ciphers, which are generally Feistel networks of
+;; some sort.  This transformation has many benefits: avoiding jumps and
 ;; compiling more efficient code for structure accesses, to name two.
 ;; Ironclad features unrolled loops in various places (e.g. the CAST5 and
 ;; Blowfish ciphers).  Unrolled loops can be particularly helpful in Common
-;; Lisp because the compiler can often optimize away things like array
-;; bounds checks.
+;; Lisp because the compiler can often optimize away things like array bounds
+;; checks.
 
-;; Unfortunately, this tends to limit the libraries to only handling a
-;; fixed number of rounds (or other configurable parameters of block
-;; ciphers).  Accomodating variable numbers of rounds makes life easier for
-;; the truly paranoid and is more in the spirit of the ciphers as
-;; originally designed.
+;; Unfortunately, this tends to limit the libraries to only handling a fixed
+;; number of rounds (or other configurable parameters of block ciphers).
+;; Accomodating variable numbers of rounds makes life easier for the truly
+;; paranoid and is more in the spirit of the ciphers as originally designed.
 
 ;; One way of getting around this limitation would be to use Common Lisp's
 ;; provision of the COMPILE function at create-the-cipher time.  One could
 ;; compile--on demand--specialized encryption/decryption routines that only
 ;; accommodated a fixed number of rounds (or other static configuration
-;; parameters).  This facility would be particularly helpful for those
-;; ciphers whose round keys are variable in the number of rounds chosen;
-;; bounds checking for accesses to these keys could be done away with
-;; entirely (except perhaps for a check to ensure the round key vector is
-;; of the proper length and type).  Furthermore, the round keys could
-;; actually be compiled directly into the code--as 32-bit constant
-;; arguments on the x86, for example.  Such a change would necessarily make
-;; the compiled routines key-specific, but perhaps that would be OK.
+;; parameters).  This facility would be particularly helpful for those ciphers
+;; whose round keys are variable in the number of rounds chosen; bounds
+;; checking for accesses to these keys could be done away with entirely
+;; (except perhaps for a check to ensure the round key vector is of the proper
+;; length and type).  Furthermore, the round keys could actually be compiled
+;; directly into the code--as 32-bit constant arguments on the x86, for
+;; example.  Such a change would necessarily make the compiled routines
+;; key-specific, but perhaps that would be OK.
 
-;; (When reading the specifications for Blowfish and Twofish, the authors
-;; make much of this capability by citing screaming performance numbers for
-;; this scenario while noting that modifying the code for each individual
-;; key is difficult.  In Ironclad, providing three differing levels of
+;; (When reading the specifications for Blowfish and Twofish, the authors make
+;; much of this capability by citing screaming performance numbers for this
+;; scenario while noting that modifying the code for each individual key is
+;; difficult.  In Ironclad, providing three differing levels of
 ;; generality--general, n-rounds-specific, and key-specific--would be
 ;; relatively easy compared to the difficulty of doing it in C.)
 
 ;; Changes to MAKE-CIPHER--a keyword argument specifying the level of
 ;; specialization--would be necessary.  Extensive changes to the individual
-;; block ciphers would also be necessary.  Perhaps this sort of facility
-;; need not be added to all ciphers; the common ones could come first
-;; (e.g. AES) and less-common ones would be converted as people contributed
-;; patches or needs were found for them.
+;; block ciphers would also be necessary.  Perhaps this sort of facility need
+;; not be added to all ciphers; the common ones could come first (e.g. AES)
+;; and less-common ones would be converted as people contributed patches or
+;; needs were found for them.
 
 ;; - use word-aligned loads when possible
 
-;; The current code uses byte loads + shifts and ors to fetch
-;; (UNSIGNED-BYTE 32) values out of a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).
-;; Some implementations (I have in mind particularly SBCL and CMUCL) could
-;; use a more efficient mechanism if the offset of the (UNSIGNED-BYTE 32)
-;; value was known to be four-byte aligned.  Once this was done for each
+;; The current code uses byte loads + shifts and ors to fetch (UNSIGNED-BYTE
+;; 32) values out of a (SIMPLE-ARRAY (UNSIGNED-BYTE 8) (*)).  Some
+;; implementations (I have in mind particularly SBCL and CMUCL) could use a
+;; more efficient mechanism if the offset of the (UNSIGNED-BYTE 32) value was
+;; known to be four-byte aligned.  Once this was done for each
 ;; encryption/decryption function for a particular block cipher, the
 ;; high-level generic functions could call efficient versions if possible,
 ;; eliminating some overhead.
@@ -162,9 +159,9 @@
 ;; There is actually some (SBCL) support for this in cipher.lisp, in the
 ;; alternate definition for WITH-WORDS.  It doesn't make that much of a
 ;; difference--at least not in the case where WITH-WORDS needs to check for
-;; alignment and safety.  It might be a win if there were several
-;; different *-ENCRYPT-BLOCK functions and the high-level ones knew which
-;; one to call, but...
+;; alignment and safety.  It might be a win if there were several different
+;; *-ENCRYPT-BLOCK functions and the high-level ones knew which one to call,
+;; but...
 
 ;; - add option to allow INTEGER-TO-OCTETS to output directly to a buffer
 
@@ -175,33 +172,31 @@
 ;; *Ironclad should not be considered safe against side channel attacks.*
 
 ;; Some algorithms can be safe against side channel attacks on some
-;; architectures using some Common Lisp implementations, but in the
-;; general case it can't be guaranteed. This is due to the fact that
-;; integers and arithmetic functions of Common Lisp implementations are
-;; usually not safe against side channel attacks.
-
+;; architectures using some Common Lisp implementations, but in the general
+;; case it can't be guaranteed. This is due to the fact that integers and
+;; arithmetic functions of Common Lisp implementations are usually not safe
+;; against side channel attacks.
 
 ;; *Ironclad's digest, MAC and cipher objects should not be considered thread
 ;; safe.*
 
-;; Creating a digest, a MAC or a cipher object and using it in several threads at
-;; the same time can lead to an undefined result. If you need to do that, you must
-;; put locks in your application where necessary.
+;; Creating a digest, a MAC or a cipher object and using it in several threads
+;; at the same time can lead to an undefined result. If you need to do that,
+;; you must put locks in your application where necessary.
 
-
-;; *Ironclad's pseudo random number generation should only be considered thread
-;; safe with bordeaux-threads.*
+;; *Ironclad's pseudo random number generation should only be considered
+;; thread safe with bordeaux-threads.*
 
 ;; If you have a multi-threaded application in which you want to use functions
 ;; requiring some random numbers (key derivation, key generation, public key
-;; encryption, signature, etc.) in several threads, each of these threads must have
-;; its own PRNG, or they might generate the same "random" numbers. If the threads
-;; are created using the *bordeaux-threads* library (or by a library using
-;; *bordeaux-threads*, like *lparallel*), this is done automatically. However, if
-;; you are using the threading functions of your Common Lisp implementation
-;; directly, you have to bind the ~*prng*~ special variable to a new PRNG in each
-;; thread. There is an example showing how it can be done in the section about
-;; make-prng.
+;; encryption, signature, etc.) in several threads, each of these threads must
+;; have its own PRNG, or they might generate the same "random" numbers. If the
+;; threads are created using the *bordeaux-threads* library (or by a library
+;; using *bordeaux-threads*, like *lparallel*), this is done
+;; automatically. However, if you are using the threading functions of your
+;; Common Lisp implementation directly, you have to bind the ~*prng*~ special
+;; variable to a new PRNG in each thread. There is an example showing how it
+;; can be done in the section about make-prng.
 
 ;;;; License:
 
@@ -210,32 +205,30 @@
 ;; All rights reserved.
 
 ;; Redistribution and use in source and binary forms, with or without
-;; modification, are permitted provided that the following conditions are
-;; met:
+;; modification, are permitted provided that the following conditions are met:
 
 ;; - Redistributions of source code must retain the above copyright notice,
 ;;   this list of conditions and the following disclaimer.
 
-;; - Redistributions in binary form must reproduce the above copyright
-;;   notice, this list of conditions and the following disclaimer in the
-;;   documentation and/or other materials provided with the distribution.
+;; - Redistributions in binary form must reproduce the above copyright notice,
+;;   this list of conditions and the following disclaimer in the documentation
+;;   and/or other materials provided with the distribution.
 
-;; - Neither the name of the copyright holders nor the names of
-;;   contributors to this software may be used to endorse or promote
-;;   products derived from this software without specific prior written
-;;   permission.
+;; - Neither the name of the copyright holders nor the names of contributors
+;;   to this software may be used to endorse or promote products derived from
+;;   this software without specific prior written permission.
 
 ;; THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS ``AS
-;; IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
-;; TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
-;; PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER
-;; OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+;; IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+;; THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+;; PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+;; CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
 ;; EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-;; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
-;; PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
-;; LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
-;; NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-;; SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+;; PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
+;; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+;; WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
+;; OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
+;; ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ;;; Code:
 (defsys :ironclad
@@ -278,7 +271,7 @@
                  ;; default
                  (:file "os-prng")))
    (:file "math")
-   (:file "octet-stream")
+   (:file "stream")
    (:mod "aead"
     :components ((:file "aead")))
    (:mod "kdf"
@@ -373,7 +366,7 @@
    (:sys :ironclad/cipher/kalyna :components ((:file "cipher/kalyna")))
    (:sys :ironclad/cipher/keystream 
     :components ((:file "cipher/kalyna"))
-    :requires (:ironclad/cipher/chacha :ironclad/cipher/salsa20))
+    :require (:ironclad/cipher/chacha :ironclad/cipher/salsa20))
     (:sys :ironclad/cipher/kuznyechik :components ((:file "cipher/kuznyechik")))
     (:sys :ironclad/cipher/misty1 :components ((:file "cipher/misty1")))
     (:sys :ironclad/cipher/rc2 :components ((:file "cipher/rc2")))
