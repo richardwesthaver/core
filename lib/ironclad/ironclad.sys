@@ -359,115 +359,98 @@
      ec-encode-point ec-decode-point)
     :conditions 
     (invalid-signature-length missing-key-parameter missing-message-parameter missing-signature-parameter
-     incompatible-keys invalid-curve-point invalid-public-key-length deep-decoding-error))))
+     incompatible-keys invalid-curve-point invalid-public-key-length deep-decoding-error))
+   (:sys :ironclad/cipher/arcfour :components ((:file "cipher/arcfour")))
+   (:sys :ironclad/cipher/aria :components ((:file "cipher/aria")))
+   (:sys :ironclad/cipher/blowfish :components ((:file "cipher/blowfish")))
+   (:sys :ironclad/cipher/blowfish :components ((:file "cipher/")))
+   (:sys :ironclad/cipher/camellia :components ((:file "cipher/camellia")))
+   (:sys :ironclad/cipher/cast5 :components ((:file "cipher/cast5")))
+   (:sys :ironclad/cipher/xsalsa20 :components ((:file "cipher/xsalsa20")))
+   (:sys :ironclad/cipher/xchacha :components ((:file "cipher/xchacha")))
+   (:sys :ironclad/cipher/des :components ((:file "cipher/des")))
+   (:sys :ironclad/cipher/idea :components ((:file "cipher/idea")))
+   (:sys :ironclad/cipher/kalyna :components ((:file "cipher/kalyna")))
+   (:sys :ironclad/cipher/keystream 
+    :components ((:file "cipher/kalyna"))
+    :requires (:ironclad/cipher/chacha :ironclad/cipher/salsa20))
+    (:sys :ironclad/cipher/kuznyechik :components ((:file "cipher/kuznyechik")))
+    (:sys :ironclad/cipher/misty1 :components ((:file "cipher/misty1")))
+    (:sys :ironclad/cipher/rc2 :components ((:file "cipher/rc2")))
+    (:sys :ironclad/cipher/rc5 :components ((:file "cipher/rc5")))
+    (:sys :ironclad/cipher/rc6 :components ((:file "cipher/rc6")))
+    (:sys :ironclad/cipher/seed :components ((:file "cipher/seed")))
+    (:sys :ironclad/cipher/serpent :components ((:file "cipher/serpent")))
+    (:sys :ironclad/cipher/sm4 :components ((:file "cipher/sm4")))
+    (:sys :ironclad/cipher/sosemanuk :components ((:file "cipher/sosemanuk")))
+    (:sys :ironclad/cipher/square :components ((:file "cipher/square")))
+    (:sys :ironclad/cipher/tea :components ((:file "cipher/tea")))
+    (:sys :ironclad/cipher/threefish :components ((:file "cipher/threefish")))
+    (:sys :ironclad/cipher/twofish :components ((:file "cipher/twofish")))
+    (:sys :ironclad/cipher/xor :components ((:file "cipher/xor")))
+    (:sys :ironclad/cipher/xtea :components ((:file "cipher/xtea")))
 
-(macrolet ((define-ironclad-subsystem (aggregate-system path &body components)
-             (let ((subsystems (loop for spec in (mapcar #'ensure-list components)
-                                     collect (keywordicate (string-upcase 
-                                                            (format nil "~a/~a" aggregate-system (first spec)))))))
-               `(progn
-                  (defsys ,(keywordicate (string-upcase aggregate-system))
-                    :require (:ironclad)
-                    :provide
-                    ,(loop for (component . options) in (mapcar #'ensure-list components)
-                           for subsystem in subsystems
-                           collect 
-                              `(:sys ,(keywordicate (string-upcase subsystem))
-                                :description
-                                ,(format nil "~a: ~a" aggregate-system component)
-                                :require ,(cons :ironclad (getf options :require))
-                                :components 
-                                ,(or (getf options :components)
-                                     `((:file ,(namestring (merge-pathnames component path))))))))))))
-  (define-ironclad-subsystem ironclad/cipher #p"cipher/"
-    "arcfour"
-    "aria"
-    "blowfish"
-    "camellia"
-    "cast5"
-    "xsalsa20"
-    "xchacha"
-    "des"
-    "idea"
-    "kalyna"
-    ("keystream" :require (:ironclad/cipher/chacha
-                           :ironclad/cipher/salsa20))
-    "kuznyechik"
-    "misty1"
-    "rc2"
-    "rc5"
-    "rc6"
-    "seed"
-    "serpent"
-    "sm4"
-    "sosemanuk"
-    "square"
-    "tea"
-    "threefish"
-    "twofish"
-    "xor"
-    "xtea")
+    (:sys :ironclad/digest/adler32 :components ((:file "digest/adler32")))
+    (:sys :ironclad/digest/blake2s :components ((:file "digest/blake2s")))
+    (:sys :ironclad/digest/crc24 :components ((:file "digest/crc24")))
+    (:sys :ironclad/digest/groestl :components ((:file "digest/groestl")))
+    (:sys :ironclad/digest/jh :components ((:file "digest/jh")))
+    (:sys :ironclad/digest/md2 :components ((:file "digest/md2")))
+    (:sys :ironclad/digest/md4 :components ((:file "digest/md4")))
+    (:sys :ironclad/digest/ripemd-128 :components ((:file "digest/ripemd-128")))
+    (:sys :ironclad/digest/ripemd-160 :components ((:file "digest/ripemd-160")))
+    (:sys :ironclad/digest/sha1 :components ((:file "digest/sha1")))
+    (:sys :ironclad/digest/sm3 :components ((:file "digest/sm3")))
+    (:sys :ironclad/digest/streebog :components ((:file "digest/streebog")))
+    (:sys :ironclad/digest/tiger :components ((:file "digest/tiger")))
+    (:sys :ironclad/digest/whirlpool :components ((:file "digest/whirlpool")))
+    (:sys :ironclad/digest/kupyna 
+     :components ((:file "digest/kupyna")) 
+     :require (:ironclad/cipher/kalyna))
+    (:sys :ironclad/digest/skein 
+     :components ((:file "digest/skein"))
+     :require (:ironclad/cipher/threefish))
+    (:sys :ironclad/digest/tree-hash
+     :components ((:file "digest/tree-hash"))
+     :require (:ironclad/digest/tiger))
 
-  (define-ironclad-subsystem
-      "ironclad/digest" #p"digest/"
-    "adler32"
-    "blake2s"
-    "crc24"
-    "groestl"
-    "jh"
-    ("kupyna" :require (:ironclad/cipher/kalyna))
-    "md2"
-    "md4"
-    "ripemd-128"
-    "ripemd-160"
-    "sha1"
-    ("skein" :require (:ironclad/cipher/threefish))
-    "sm3"
-    "streebog"
-    "tiger"
-    ("tree-hash" :require (:ironclad/digest/tiger))
-    "whirlpool")
-
-  (define-ironclad-subsystem
-      "ironclad/mac" #p"mac/"
-    ("blake2-mac" :require (:ironclad/digest/blake2))
-    ("blake2s-mac" :require (:ironclad/digest/blake2s))
-    "cmac"
-    "gmac"
-    "poly1305"
-    "siphash"
-    ("skein-mac" :require (:ironclad/cipher/threefish
-                           :ironclad/digest/skein)))
-
-  (define-ironclad-subsystem
-      "ironclad/prng" #p"prng/"
-    ("fortuna" :require (:ironclad/cipher/aes
-                         :ironclad/digest/sha256)
-               :components ((:file "prng/generator")
-                            (:file "prng/fortuna"))))
-
-  (define-ironclad-subsystem
-      "ironclad/aead" #p"aead/"
-    ("eax" :require ("ironclad/mac/cmac"))
-    "etm"
-    ("gcm" :require ("ironclad/mac/gmac")))
-
-  (define-ironclad-subsystem
-      "ironclad/kdf" #p"kdf/"
-    ("bcrypt" :require (:ironclad/cipher/blowfish
-                        :ironclad/digest/sha512))
-    ("scrypt" :require (:ironclad/cipher/salsa20
-                        :ironclad/digest/sha256
-                        :ironclad/kdf/pkcs5)))
-
-  (define-ironclad-subsystem
-      "ironclad/pki" #p"pki/"
-    "dsa"
-    "rsa"
-    "elgamal"
-    "curve448"
-    ("ed448" :require (:ironclad/digest/sha3))
-    "secp256k1"
-    "secp256r1"
-    "secp384r1"
-    "secp521r1"))
+    (:sys :ironclad/mac/cmac :components ((:file "mac/cmac")))
+    (:sys :ironclad/mac/gmac :components ((:file "mac/gmac")))
+    (:sys :ironclad/mac/poly1305 :components ((:file "mac/poly1305")))
+    (:sys :ironclad/mac/siphash :components ((:file "mac/siphash")))
+    (:sys :ironclad/mac/blake2-mac
+     :components ((:file "mac/blake2-mac"))
+     :require (:ironclad/digest/blake2))
+    (:sys :ironclad/mac/blake2s-mac 
+     :components ((:file "mac/blake2s-mac"))
+     :require (:ironclad/digest/blake2s))
+    (:sys :ironclad/mac/skein-mac 
+     :components ((:file "mac/skein-mac"))
+     :require (:ironclad/cipher/threefish :ironclad/digest/skein))
+    (:sys :ironclad/prng/fortuna 
+     :require (:ironclad/cipher/aes :ironclad/digest/sha256)
+     :components ((:file "prng/generator") (:file "prng/fortuna")))
+    (:sys :ironclad/aead/eax 
+     :components ((:file "aead/eax"))
+     :require (:ironclad/mac/cmac))
+    (:sys :ironclad/aead/etm :components ((:file "aead/etm")))
+    (:sys :ironclad/aead/gcm 
+     :components ((:file "gcm")) 
+     :require (:ironclad/mac/gmac))
+    (:sys :ironclad/kdf/bcrypt
+     :components ((:file "kdf/bcrypt"))
+     :require (:ironclad/cipher/blowfish :ironclad/digest/sha512))
+    (:sys :ironclad/kdf/scrypt
+     :components ((:file "kdf/scrypt"))
+     :require (:ironclad/cipher/salsa20 :ironclad/digest/sha256))
+    (:sys :ironclad/pki/dsa :components ((:file "pki/dsa")))
+    (:sys :ironclad/pki/rsa :components ((:file "pki/rsa")))
+    (:sys :ironclad/pki/elgamal :components ((:file "pki/elgamal")))
+    (:sys :ironclad/pki/curve448 :components ((:file "pki/curve448")))
+    (:sys :ironclad/pki/ed448 
+     :components ((:file "pki/ed448"))
+     :require (:ironclad/digest/sha3))
+    (:sys :ironclad/pki/secp256k1 :components ((:file "pki/secp256k1")))
+    (:sys :ironclad/pki/secp256r1 :components ((:file "pki/secp256r1")))
+    (:sys :ironclad/pki/secp384r1 :components ((:file "pki/secp384r1")))
+    (:sys :ironclad/pki/secp521r1 :components ((:file "pki/secp521r1")))))
