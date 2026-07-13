@@ -129,14 +129,14 @@ compression LEVEL and write them to the OUTPUT-STREAM."
         (min-level (zstd::zstd-minclevel))
         (max-level (zstd::zstd-maxclevel)))
     (setf (output-stream stream) output-stream)
-    (with-slots (zstd-context input-buffer zstd-in-buffer
+    (with-slots (state input-buffer zstd-in-buffer
                  output-buffer zstd-out-buffer)
         stream
       (if (and (integerp level) (<= min-level level max-level))
           (let ((context (zstd::zstd-createcctx)))
             (if (null-alien context)
                 (zstd-error "Failed to create compression context.")
-                (setf zstd-context (initialize-context context level))))
+                (setf state (initialize-context context level))))
           (zstd-error "LEVEL must be between ~d and ~d." min-level max-level))
       (setf input-buffer (io/static:make-static-vector input-buffer-size :initial-element 0))
       (setf zstd-in-buffer (make-alien zstd-inbuffer))

@@ -34,7 +34,8 @@
 ;;; Code:
 (in-package :vc/hg)
 
-(deferror hg-error (vc-error) () (:reporter t))
+(eval-always
+  (deferror hg-error (vc-error) () (:reporter t)))
 
 (defvar *default-hg-client-buffer-size* 4096)
 (defvar *hg-program* (or (cli:find-exe "rhg") (cli:find-exe "hg")))

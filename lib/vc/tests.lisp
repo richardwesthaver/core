@@ -8,6 +8,7 @@
 (defmacro with-temp-repo (kind &body body)
   `(let ((repo (make-repo ".")))
      (setf (path repo) (merge-pathnames (format nil "~A" (gensym "repo")) "/tmp/"))
+     (when-let ((dir (probe-directory (path repo)))) (delete-directory dir :recursive t))
      (case ,kind
        (:hg (sb-mop::change-class repo 'hg-repo))
        (:git (sb-mop::change-class repo 'git-repo))

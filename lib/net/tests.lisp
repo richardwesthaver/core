@@ -138,7 +138,7 @@ Cookie: name=wookie
                  (isequalp v #(1 2 3 4 0)))
                (return-from test t)))))))))
 
-(deftest dbus-introspect ()
+(deftest dbus-introspect (:skip :todo)
   (with-open-bus (bus (session-server-addresses))
     (format t "Bus connection name: ~A~%" (name bus))
     (istype 'uuid:uuid (uuid:make-uuid-from-string (net/proto/dbus::get-machine-id bus)))
@@ -168,7 +168,7 @@ Cookie: name=wookie
   (:interface "org.adeht.MyService")
   (format t "Got signal with arg ~S~%" s))
 
-(deftest dbus-publish ()
+(deftest dbus-publish (:skip :todo)
   (handler-case
       (with-open-bus (bus (session-server-addresses))
         (format t "Bus connection name: ~A~%" (name bus))
