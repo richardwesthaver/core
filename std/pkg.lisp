@@ -549,7 +549,8 @@
    :with-input-from-file :with-output-to-file
    #:make-octet-input-stream #:make-octet-output-stream
    #:with-octet-input-stream #:with-octet-output-stream
-   #:get-output-stream-octets))
+   #:get-output-stream-octets #:define-octet-stream-read-sequence
+   #:define-octet-stream-write-sequence))
 
 (defpkg :std/hash
   (:use :cl)
