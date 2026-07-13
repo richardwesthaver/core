@@ -59,6 +59,7 @@
    :comma-expr))
 
 (defpkg :std/list
+  (:documentation "Standard list utilities.")
   (:use :cl)
   (:shadowing-import-from :sb-impl
    :ensure-list :recons :memq :assq
@@ -120,6 +121,7 @@
    :with-stack-list :with-stack-list*))
 
 (defpkg :std/prim
+  (:documentation "Standard Lisp Primitives.")
   (:use :cl :std/list)
   (:import-from :std/sym :symb :with-gensyms :alias-function)
   (:import-from :sb-introspect :function-lambda-list)
@@ -179,7 +181,7 @@
 
 (defpkg :std/condition
   (:use :cl)
-  (:documentation "Standard utilities for defining and handling conditions")
+  (:documentation "Standard utilities for defining and handling conditions.")
   (:shadowing-import-from :asdf :error-name)
   (:import-from :std/list :flatten :removef)
   (:import-from :sb-int :simple-style-warning)
@@ -250,6 +252,7 @@
    :retry))
 
 (defpkg :std/named-readtables
+  (:documentation "Named Readtables.")
   (:use :cl :std/prim :std/condition :std/list)
   (:import-from :std/prim :parse-lambda-list)
   (:export
@@ -275,6 +278,7 @@
    :readtable-does-not-exist))
 
 (defpkg :std/comp
+  (:documentation "Standard compiler utilities.")
   (:use :cl)
   (:import-from :std/prim :definline :with-safe-io-syntax :read-lisp-file)
   (:import-from :sb-c :deftransform :defoptimizer 
@@ -283,8 +287,8 @@
    :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
    :assemble :without-scheduling :inst :inst* 
    :*emit-cfasl* :describe-component :describe-ir2-component
-   :make-file-source-info :make-lisp-source-info
-   :def-ir1-translator :defknown :ctype-of :type-specifier)
+                :make-file-source-info :make-lisp-source-info
+                :def-ir1-translator :defknown :ctype-of :type-specifier)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* 
@@ -301,15 +305,15 @@
    :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
    :*backend-sbs* :*backend-sc-names* :emit :assemble
    :without-scheduling :inst :inst*
-   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
-   :*compile-progress* :*emit-cfasl* :*compile-component-hook*
+           :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
+           :*compile-progress* :*emit-cfasl* :*compile-component-hook*
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
    :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
    :print-arguments :ea
    :with-ds-lambda-list-parts
-   :without-compiler-notes
+           :without-compiler-notes
    :checked-compile :runtime :asm-search :inspect-ir
    :compile-condition :compile-condition-context-format
    :compile-condition-context-arguments :compile-condition-description
@@ -324,7 +328,7 @@
   (:recycle :sb-c))
 
 (defpkg :std/type
-  (:documentation "Definitions for common types not covered in the ANSI CL standard")
+  (:documentation "Definitions for common types not covered in the ANSI CL standard.")
   (:use :cl)
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
@@ -434,9 +438,7 @@
    #:positive-rational-p
    #:of-type
    #:type=
-   #:word
-   :u1 :u2 :u3 :u4 :u5 :u6 :u7
-   :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
+   #:word :u1 :u2 :u3 :u4 :u5 :u6 :u7 :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
    :*simple-types* :*primitive-object-table* 
    :*simple-type-table* :*core-types*
    :*core-type-table* :register-type-id
@@ -444,6 +446,7 @@
    :type-id :simple-type-id))
 
 (defpkg :std/string
+  (:documentation "Standard string utilities.")
   (:use :cl :std/sym :std/list :sb-ext)
   (:use-reexport :sb-unicode)
   (:import-from :std/prim :parse-body)
@@ -482,7 +485,7 @@
 
 (defpkg :std/num
   (:use :cl)
-  (:documentation "Standard numeric utilities")
+  (:documentation "Standard numeric utilities.")
   (:import-from :sb-int :power-of-two-ceiling)
   (:import-from :std/string :*whitespaces*)
   (:export
@@ -529,7 +532,7 @@
 
 (defpkg :std/stream
   (:use :cl :sb-gray :std/type)
-  (:documentation "Standard stream definitions")
+  (:documentation "Standard stream definitions.")
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/prim :definline)
@@ -554,7 +557,7 @@
 
 (defpkg :std/hash
   (:use :cl)
-  (:documentation "Hash Table Utilities")
+  (:documentation "Standard hash utilities.")
   (:nicknames :std/ht)
   (:recycle :sb-int)
   (:import-from :sb-int 
@@ -592,7 +595,7 @@
 
 (defpkg :std/curry
   (:use :cl :std/prim)
-  (:documentation "Function composition primitives")
+  (:documentation "Function composition primitives.")
   (:import-from :std/list :mappend)
   (:import-from :std/sym :make-gensym-list)
   (:export
@@ -608,44 +611,47 @@
 
 (defpkg :std/ppcre
   (:nicknames :ppcre)
+  (:documentation "Portable Perl-compatible regular expressions. A fork of CL-PPCRE.")
   (:use :cl)
   (:shadow :digit-char-p :defconstant)
-  (:export :parse-string
-           :create-scanner
-           :create-optimized-test-function
-           :parse-tree-synonym
-           :define-parse-tree-synonym
-           :scan
-           :scan-to-strings
-           :do-scans
-           :do-matches
-           :do-matches-as-strings
-           :count-matches
-           :all-matches
-           :all-matches-as-strings
-           :split
-           :regex-replace
-           :regex-replace-all
-           :regex-apropos
-           :regex-apropos-list
-           :quote-meta-chars
-           :*regex-char-code-limit*
-           :*use-bmh-matchers*
-           :*allow-quoting*
-           :*allow-named-registers*
-           :*optimize-char-classes*
-           :*property-resolver*
-           :*look-ahead-for-suffix*
-           :ppcre-error
-           :ppcre-invocation-error
-           :ppcre-syntax-error
-           :ppcre-syntax-error-string
-           :ppcre-syntax-error-pos
-           :register-groups-bind
-           :do-register-groups))
+  (:export 
+   :parse-string
+   :create-scanner
+   :create-optimized-test-function
+   :parse-tree-synonym
+   :define-parse-tree-synonym
+   :scan
+   :scan-to-strings
+   :do-scans
+   :do-matches
+   :do-matches-as-strings
+   :count-matches
+   :all-matches
+   :all-matches-as-strings
+   :split
+   :regex-replace
+   :regex-replace-all
+   :regex-apropos
+   :regex-apropos-list
+   :quote-meta-chars
+   :*regex-char-code-limit*
+   :*use-bmh-matchers*
+   :*allow-quoting*
+   :*allow-named-registers*
+   :*optimize-char-classes*
+   :*property-resolver*
+   :*look-ahead-for-suffix*
+   :ppcre-error
+   :ppcre-invocation-error
+   :ppcre-syntax-error
+   :ppcre-syntax-error-string
+   :ppcre-syntax-error-pos
+   :register-groups-bind
+   :do-register-groups))
 
 (defpkg :std/readtable
   (:use :cl :std/prim)
+  (:documentation "Standard readtable definitions.")
   (:import-from :std/named-readtables :defreadtable :in-readtable)
   (:import-from :std/curry :curry :rcurry :compose)
   (:import-from :std/sym :symb)
@@ -668,7 +674,7 @@
 
 (defpkg :std/macs
   (:use :cl :std/prim)
-  (:documentation "Standard macros")
+  (:documentation "Standard macros.")
   (:import-from :std/sym :symb :mkstr :make-gensym-list :with-gensyms :symbolicate :keywordicate)
   (:import-from :sb-int :make-macro-lambda :parse-lambda-list :lambda-list-keyword-mask :check-lambda-list-names)
   (:import-from :std/curry :compose)
@@ -765,6 +771,7 @@
    :multiple-value-case))
 
 (defpkg :std/array
+  (:documentation "Standard array utilities.")
   (:use :cl)
   (:import-from :sb-ext :maybe-inline)
   (:import-from :std/prim :definline)
@@ -962,6 +969,7 @@
    :store-pathname))
 
 (defpkg :std/bit
+  (:documentation "Standard bit manipulation utilities.")
   (:use :cl :std/macs)
   (:import-from :std/type :octet :octet-vector :simple-octet-vector)
   (:mix :sb-sys)
@@ -1011,6 +1019,8 @@
    :flags-case))
 
 (defpkg :std/io
+  (:documentation "Standard IO utilities. This package provides the DEFINE-IO macro, SERDE
+protocol, and binary stream helpers.")
   (:use :cl :std/core :std/type)
   (:import-from :std/prim :definline :parse-body)
   (:import-from :std/condition :deferror)
@@ -1027,6 +1037,8 @@
    :with-binary-readers :with-binary-writers))
 
 (defpkg :std/alien
+  (:documentation "Standard alien utilities. This package provides the C FFI interface used to
+define the core ALIEN systems.")
   (:use :cl :sb-alien)
   (:import-from :std/sym :symbolicate :keywordicate :with-gensyms)
   (:import-from :std/array :element-type)
@@ -1126,6 +1138,8 @@
    :syscall-return-type))
 
 (defpkg :std/meta
+  (:documentation "Standard CLOS and MOP utilities. This package defines several useful
+dispatch protocols including template functions, class maps, and sham classes.")
   (:use :cl :sb-pcl)
   (:use-reexport :sb-mop)
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
@@ -1145,7 +1159,7 @@
    :exec :copy-object :safe-superclasses :run-object
    :make :description
    :slot-boundp* :slot-values
-   :slot-boundp!
+   :slot-boundp! :define-class-map
    :explore :with-fslots
    :upgrade :version
    :validate :resume
@@ -1167,14 +1181,14 @@
    :*standard-metaobjects* :find-slot-def-by-name
    :find-direct-slot-def-by-name :find-slot-defs-by-type
    :find-slot-def-names-by-type :struct-slots-and-values
-   :slots-and-values
+   :slots-and-values :clone
    :remove-template-method :define-template-method
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
-   :defsham :save
-   :clone :define-class-map))
+   :defsham :save))
 
 (defpkg :std/seq
+  (:documentation "Standard sequence utilities.") 
   (:use :cl :std/prim)
   (:shadow :queue :make-queue :queue-count :queue-empty-p)
   (:import-from :sb-thread :with-mutex :make-mutex :condition-notify :make-waitqueue :condition-wait)
@@ -1234,6 +1248,7 @@
    :repeat :pqueue-empty-p))
 
 (defpkg :std/path
+  (:documentation "Standard pathname utilities.")
   (:use :cl)
   (:import-from :uiop :directory-files :subdirectories :absolute-pathname-p :pathname-equal
    :pathname-parent-directory-pathname)
@@ -1269,6 +1284,7 @@
    :walk-directory))
 
 (defpkg :std/file
+  (:documentation "Standard file utilities.")
   (:use :cl)
   (:import-from :std/macs :define-constant :eval-always :once-only :when-let)
   (:import-from :std/condition :deferror)
@@ -1309,6 +1325,7 @@
    :move-file))
 
 (defpkg :std/pipe
+  (:documentation "Standard piping interface. This is a fork of Shinmera's PIPING library.")
   (:use :cl :std/array :std/meta)
   (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
@@ -1328,6 +1345,7 @@
    :defpipe* :event :bus :format-message))
 
 (defpkg :std/thread
+  (:documentation "Standard thread utilities and thread pools.")
   (:use :cl :std/prim)
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
@@ -1407,6 +1425,8 @@
    :timer-p))
 
 (defpkg :std/async
+  (:documentation "Futures, Promises, DEFPUN and related macros. Uses thread pools to provide
+asynchronous primitives and a set of useful 'cognates' for dynamic threading.")
   (:use :cl :std/thread :std/prim :std/seq :std/sym :std/list :std/macs)
   (:import-from :std/meta :state)
   (:import-from :std/macs :with-gensyms :when-let)
@@ -1422,6 +1442,8 @@
    :pfind-if :pfind-if-not :*defpuns* ))
 
 (defpkg :std/task
+  (:documentation "The standard task interface. Tasks are containers for arbitrary units of work,
+useful in a variety of contexts.")
   (:use :cl :std/thread :std/meta :std/seq :std/prim :std/async)
   (:import-from :std/thread :%make-thread)
   (:import-from :std/type :positive-fixnum)
@@ -1455,6 +1477,7 @@
 
 (defpkg :std/rand
   (:use :cl)
+  (:documentation "Simple randomization utilities.")
   (:import-from :std/type :octet)
   (:export
    :shuffle
@@ -1500,6 +1523,7 @@
    :print-slot-exclusion))
 
 (defpkg :std/os
+  (:documentation "Standard OS Interface.")
   (:use :cl :sb-alien :std/string)
   (:import-from :std/macs :with-gensyms :if-let :when-let :eval-always)
   (:import-from :std/prim :definline)
@@ -1558,6 +1582,8 @@
    :disable-echo :without-echo))
 
 (pkg:defpkg :std/defsys
+  (:documentation "The DEFSYS macro and core SYSTEM-based interface. This package is a complete
+replacement for ASDF.")
   (:nicknames :defsys)
   (:use :cl :std/prim :std/meta 
     :std/macs :std/thread :std/task :std/io 
@@ -1642,6 +1668,7 @@
 
 (defpkg :std
   (:use :cl)
+  (:documentation "STD top-level system package.")
   (:use-reexport :std/named-readtables :std/defpkg :std/condition
    :std/sym :std/list :std/type :std/num 
    :std/stream :std/curry :std/array :std/hash
@@ -1655,6 +1682,7 @@
 (define-lisp-package :std)
 
 (defpkg :std-user
+  (:documentation "The default package for STD user code and data.")
   (:use :std-lisp :sb-ext :sb-alien 
     :sb-thread :sb-bsd-sockets :sb-gray :sb-mop 
     :sb-debug :std/defsys))
