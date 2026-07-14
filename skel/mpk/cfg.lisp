@@ -11,7 +11,7 @@
    (mpd :initarg :mpd :type mpd:mpd-config :initform (mpd::load-mpd-config))
    (audio :initarg :audio :type audio-system-config) ;; alsa/pipewire/jack
    (video :initarg :video :type video-system-config)
-   (metro :initarg :metro :type mpk/metro:metro-config)
+   (metro :initarg :metro :type metro-config)
    (db :initarg :db :type mpk/db:mpk-db-config)
    (picard :initarg :picard :type cli/tools/media:picard-config :initform (cli/tools/media:load-picard-config))
    (transmission :initarg :transmission :type cli/tools/net::transmission-config :initform (cli/tools/net::load-transmission-config))

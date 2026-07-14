@@ -569,9 +569,8 @@ available, some examples:
 
 (defmethod tf-idf-vectorize ((document search-document) (collection document-collection) dictionary)
   "Transform a document into a vector using tf-idf.
-Definition: tf-idf: term frequency, inverse document frequency. How
-often does a term a appear in a document as compared to all other
-documents?"
+Definition: tf-idf: term frequency, inverse document frequency. How often does
+a term a appear in a document as compared to all other documents?"
   (let ((vector-data (make-array (length dictionary) :initial-element 0)))
     (loop for word in dictionary
           for index from 0 below (length vector-data)
@@ -581,8 +580,7 @@ documents?"
 
 (defmethod tf-vectorize ((document search-document) dictionary)
   "Transform a document into a vector using tf.
-Definition: tf: term frequency. How often does a term appear in a
-document?"
+Definition: tf: term frequency. How often does a term appear in a document?"
   (let ((vector-data (make-array (length dictionary) :initial-element 0)))
     (loop for word in dictionary
           for index from 0 below (length vector-data)

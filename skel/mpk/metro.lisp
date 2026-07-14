@@ -3,7 +3,7 @@
 ;; 
 
 ;;; Code:
-(in-package :mpk/metro)
+(in-package :mpk)
 
 (defvar *metro* nil)
 (defvar *metro-table* (make-hash-table))

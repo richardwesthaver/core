@@ -64,6 +64,9 @@ destructuring lambda list."
 ARRAY-DIMENSION-LIMIT."
   `(integer 0 (,length)))
 
+;; copied from sb-int
+(deftype index () `(integer 0 (,array-dimension-limit)))
+
 (deftype array-length (&optional (length (1- array-dimension-limit)))
   "Type designator for a dimension of an array of LENGTH: an integer between
 0 (inclusive) and LENGTH (inclusive). LENGTH defaults to one less than

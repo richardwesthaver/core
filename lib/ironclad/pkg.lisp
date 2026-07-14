@@ -3,6 +3,8 @@
 ;;; Code:
 (defpkg :ironclad
   (:use :std-lisp :sb-gray)
+  ;; anaphors exposed in DEFINE-OCTET-STREAM-READ-SEQUENCE
+  (:import-from :std/stream :end :seq)
   (:nicknames :crypto)
   (:export
    ;; referencing multiple-octet values in an octet vector (SETF-able)

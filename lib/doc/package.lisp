@@ -28,13 +28,34 @@
 (deftempo :package-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-<%@ifnotempty summary%>:SUMMARY: <%@var summary%>
+<%@ifnotempty id%>:ID: <%@var id%>
+<%@endif%><%@ifnotempty lock%>:LOCK: <%@var lock%>
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
+<%@endif%><%@ifnotempty nicknames%>:AKA:<%@loop nicknames%> <%=env%><%@endloop%>
 <%@endif%>:END:<%@ifnotempty description%>
 <%@var description%>
-<%@endif%><%@if info%>
-#+call:lisp-package-dependencies(\"<%=env%>\")
-#+call:lisp-package-dependents(\"<%=env%>\")<%@endif%><%@ifnotempty symbols%>
+<%@endif%><%@ifnotempty shadowing%>
+- shadowed symbols
+<%@loop shadowing%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty local-nicknames%>
+- local nicknames
+<%@loop local-nicknames%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty locally-nicknamed-by%>
+- locally nicknamed by
+<%@loop locally-nicknamed-by%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty dependencies%>
+- dependencies
+<%@loop dependencies%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty dependents%>
+- dependents
+<%@loop dependents%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty implements%>
+- implements
+<%@loop implements%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty implemented-by%>
+- implemented by
+<%@loop implemented-by%>  - <%=(name env)%>
+<%@endloop%><%@endif%><%@ifnotempty symbols%>
 <%@loop symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
 
@@ -120,9 +141,19 @@
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
                                  `(:name ,(name self) :id ,(id package)
-                                         ;; :tags ,(package-tag-string self)
-                                         ,@(when level `(:level ,level))
-                                         :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) ast)))))
+                                   :description ,(documentation package t)
+                                   :lock ,(sb-ext:package-locked-p package)
+                                   :dependents ,(dependents self)
+                                   :dependencies ,(dependencies self)
+                                   :implements ,(sb-ext:package-implements-list package)
+                                   :shadowing ,(package-shadowing-symbols package)
+                                   :local-nicknames ,(sb-ext:package-local-nicknames package)
+                                   :locally-nicknamed-by ,(sb-ext:package-locally-nicknamed-by-list package)
+                                   :implemented-by ,(sb-ext:package-implemented-by-list package)
+                                   :nicknames ,(package-nicknames package)
+                                   ;; :tags ,(package-tag-string self)
+                                   ,@(when level `(:level ,level))
+                                   :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) ast)))))
       (case output
         ('nil gen)
         (:string gen)

@@ -352,6 +352,7 @@
    :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
+   :index
    :parse-optional-arg-spec :parse-key-arg-spec 
    :ds-lambda-list-matcher :parse-ds-lambda-list
    :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
@@ -530,31 +531,6 @@
    :subfactorial
    :count-permutations))
 
-(defpkg :std/stream
-  (:use :cl :sb-gray :std/type)
-  (:documentation "Standard stream definitions.")
-  (:import-from :std/type :non-negative-integer :positive-integer)
-  (:import-from :std/sym :with-gensyms)
-  (:import-from :std/prim :definline)
-  (:export
-   :stream-fd
-   :copy-stream
-   :wrapped-stream :wrapped-stream-p
-   :wrapped-character-input-stream
-   :wrapped-character-output-stream
-   :counting-character-input-stream
-   :prefixed-character-output-stream
-   :timestamped-stream
-   :mumble-stream :fmt-stream
-   :stream-of :char-count-of :line-count-of :col-count-of
-   :prev-col-count-of :col-index-of :write-prefix
-   :prefix-of
-   :with-input-from-file :with-output-to-file
-   #:make-octet-input-stream #:make-octet-output-stream
-   #:with-octet-input-stream #:with-octet-output-stream
-   #:get-output-stream-octets #:define-octet-stream-read-sequence
-   #:define-octet-stream-write-sequence))
-
 (defpkg :std/hash
   (:use :cl)
   (:documentation "Standard hash utilities.")
@@ -608,69 +584,6 @@
    :map-product
    :rec
    :autofuncall))
-
-(defpkg :std/ppcre
-  (:nicknames :ppcre)
-  (:documentation "Portable Perl-compatible regular expressions. A fork of CL-PPCRE.")
-  (:use :cl)
-  (:shadow :digit-char-p :defconstant)
-  (:export 
-   :parse-string
-   :create-scanner
-   :create-optimized-test-function
-   :parse-tree-synonym
-   :define-parse-tree-synonym
-   :scan
-   :scan-to-strings
-   :do-scans
-   :do-matches
-   :do-matches-as-strings
-   :count-matches
-   :all-matches
-   :all-matches-as-strings
-   :split
-   :regex-replace
-   :regex-replace-all
-   :regex-apropos
-   :regex-apropos-list
-   :quote-meta-chars
-   :*regex-char-code-limit*
-   :*use-bmh-matchers*
-   :*allow-quoting*
-   :*allow-named-registers*
-   :*optimize-char-classes*
-   :*property-resolver*
-   :*look-ahead-for-suffix*
-   :ppcre-error
-   :ppcre-invocation-error
-   :ppcre-syntax-error
-   :ppcre-syntax-error-string
-   :ppcre-syntax-error-pos
-   :register-groups-bind
-   :do-register-groups))
-
-(defpkg :std/readtable
-  (:use :cl :std/prim)
-  (:documentation "Standard readtable definitions.")
-  (:import-from :std/named-readtables :defreadtable :in-readtable)
-  (:import-from :std/curry :curry :rcurry :compose)
-  (:import-from :std/sym :symb)
-  (:import-from :std/prim :defmacro!)
-  (:export
-   :ignore-numarg
-   ;; readtable
-   :|#"-reader|
-   :|#`-reader|
-   :|#f-reader|
-   :|#$-reader|
-   :|[-reader|
-   :|{-reader|
-   :|#l-reader|
-   :segment-reader
-   :match-mode-ppcre-lambda-form
-   :subst-mode-ppcre-lambda-form
-   :|#~-reader|
-   :_))
 
 (defpkg :std/macs
   (:use :cl :std/prim)
@@ -769,6 +682,146 @@
    :memoizing
    :match :lambda-match
    :multiple-value-case))
+
+(defpkg :std/meta
+  (:documentation "Standard CLOS and MOP utilities. This package defines several useful
+dispatch protocols including template functions, class maps, and sham classes.")
+  (:use :cl :sb-pcl)
+  (:use-reexport :sb-mop)
+  (:import-from :std/sym :symb :make-keyword :with-gensyms)
+  (:import-from :std/named-readtables :readtable :readtable-name)
+  (:import-from :std/list :toposort)
+  (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
+  (:import-from :sb-ext :without-package-locks)
+  (:import-from :std/macs :eval-always :if-let :when-let)
+  (:import-from :std/prim :definline)
+  (:shadow :reset)
+  (:export :list-slot-values-using-class
+   :defverb :*verbs*
+   :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start
+   :stop :stopped-p :shutdown :reset
+   :defaccessor :defaccessor* :defmethods :defclass!
+   :data :name :tags :shallow-copy-object
+   :exec :copy-object :safe-superclasses :run-object
+   :make :description
+   :slot-boundp* :slot-values
+   :slot-boundp! :define-class-map
+   :explore :with-fslots
+   :upgrade :version
+   :validate :resume
+   :deadline :sync
+   :lock :bind
+   :head :tail
+   :call :swap
+   :copy :assign
+   :clean :purge
+   :assignee :started-p
+   :verb-p :init
+   :reset :state
+   :stat :check
+   :init* :pause
+   :install :uninstall
+   :send :receive
+   :build :build-from
+   :class-equalp :slots-boundp
+   :*standard-metaobjects* :find-slot-def-by-name
+   :find-direct-slot-def-by-name :find-slot-defs-by-type
+   :find-slot-def-names-by-type :struct-slots-and-values
+   :slots-and-values :clone
+   :remove-template-method :define-template-method
+   :define-template-generic :*template-table*
+   :template-function-p :*sham-classes*
+   :defsham :save))
+
+(defpkg :std/stream
+  (:use :cl :sb-gray :std/type :std/meta)
+  (:documentation "Standard stream definitions.")
+  (:import-from :std/type :non-negative-integer :positive-integer)
+  (:import-from :std/sym :with-gensyms)
+  (:import-from :std/prim :definline)
+  (:export
+   :stream-fd
+   :copy-stream
+   :stream
+   :end
+   :wrapped-stream :wrapped-stream-p
+   :wrapped-character-input-stream
+   :wrapped-character-output-stream
+   :counting-character-input-stream
+   :prefixed-character-output-stream
+   :timestamped-stream
+   :mumble-stream :fmt-stream
+   :stream-of :char-count-of :line-count-of :col-count-of
+   :prev-col-count-of :col-index-of :write-prefix
+   :prefix-of
+   :with-input-from-file :with-output-to-file
+   #:make-octet-input-stream #:make-octet-output-stream
+   #:with-octet-input-stream #:with-octet-output-stream
+   #:get-output-stream-octets #:define-octet-stream-read-sequence
+   #:define-octet-stream-write-sequence))
+
+(defpkg :std/ppcre
+  (:nicknames :ppcre)
+  (:documentation "Portable Perl-compatible regular expressions. A fork of CL-PPCRE.")
+  (:use :cl)
+  (:shadow :digit-char-p :defconstant)
+  (:export 
+   :parse-string
+   :create-scanner
+   :create-optimized-test-function
+   :parse-tree-synonym
+   :define-parse-tree-synonym
+   :scan
+   :scan-to-strings
+   :do-scans
+   :do-matches
+   :do-matches-as-strings
+   :count-matches
+   :all-matches
+   :all-matches-as-strings
+   :split
+   :regex-replace
+   :regex-replace-all
+   :regex-apropos
+   :regex-apropos-list
+   :quote-meta-chars
+   :*regex-char-code-limit*
+   :*use-bmh-matchers*
+   :*allow-quoting*
+   :*allow-named-registers*
+   :*optimize-char-classes*
+   :*property-resolver*
+   :*look-ahead-for-suffix*
+   :ppcre-error
+   :ppcre-invocation-error
+   :ppcre-syntax-error
+   :ppcre-syntax-error-string
+   :ppcre-syntax-error-pos
+   :register-groups-bind
+   :do-register-groups))
+
+(defpkg :std/readtable
+  (:use :cl :std/prim)
+  (:documentation "Standard readtable definitions.")
+  (:import-from :std/named-readtables :defreadtable :in-readtable)
+  (:import-from :std/curry :curry :rcurry :compose)
+  (:import-from :std/sym :symb)
+  (:import-from :std/prim :defmacro!)
+  (:export
+   :ignore-numarg
+   ;; readtable
+   :|#"-reader|
+   :|#`-reader|
+   :|#f-reader|
+   :|#$-reader|
+   :|[-reader|
+   :|{-reader|
+   :|#l-reader|
+   :segment-reader
+   :match-mode-ppcre-lambda-form
+   :subst-mode-ppcre-lambda-form
+   :|#~-reader|
+   :_))
 
 (defpkg :std/array
   (:documentation "Standard array utilities.")
@@ -1137,56 +1190,6 @@ define the core ALIEN systems.")
    :defsyscall :*syscall-type-table*
    :syscall-return-type))
 
-(defpkg :std/meta
-  (:documentation "Standard CLOS and MOP utilities. This package defines several useful
-dispatch protocols including template functions, class maps, and sham classes.")
-  (:use :cl :sb-pcl)
-  (:use-reexport :sb-mop)
-  (:import-from :std/sym :symb :make-keyword :with-gensyms)
-  (:import-from :std/named-readtables :readtable :readtable-name)
-  (:import-from :std/list :toposort)
-  (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
-  (:import-from :sb-ext :without-package-locks)
-  (:import-from :std/macs :eval-always :if-let :when-let)
-  (:import-from :std/prim :definline)
-  (:shadow :reset)
-  (:export :list-slot-values-using-class
-   :defverb :*verbs*
-   :list-class-methods :list-class-slots :ensure-finalized :subclassp :write-object :start
-   :stop :stopped-p :shutdown :reset
-   :defaccessor :defaccessor* :defmethods :defclass!
-   :data :name :tags :shallow-copy-object
-   :exec :copy-object :safe-superclasses :run-object
-   :make :description
-   :slot-boundp* :slot-values
-   :slot-boundp! :define-class-map
-   :explore :with-fslots
-   :upgrade :version
-   :validate :resume
-   :deadline :sync
-   :lock :bind
-   :head :tail
-   :call :swap
-   :copy :assign
-   :clean :purge
-   :assignee :started-p
-   :verb-p :init
-   :reset :state
-   :stat :check
-   :init* :pause
-   :install :uninstall
-   :send :receive
-   :build :build-from
-   :class-equalp :slots-boundp
-   :*standard-metaobjects* :find-slot-def-by-name
-   :find-direct-slot-def-by-name :find-slot-defs-by-type
-   :find-slot-def-names-by-type :struct-slots-and-values
-   :slots-and-values :clone
-   :remove-template-method :define-template-method
-   :define-template-generic :*template-table*
-   :template-function-p :*sham-classes*
-   :defsham :save))
-
 (defpkg :std/seq
   (:documentation "Standard sequence utilities.") 
   (:use :cl :std/prim)
@@ -1326,25 +1329,23 @@ dispatch protocols including template functions, class maps, and sham classes.")
 
 (defpkg :std/pipe
   (:documentation "Standard piping interface. This is a fork of Shinmera's PIPING library.")
-  (:use :cl :std/array :std/meta)
+  (:use :cl :std/array :std/meta :std/type)
   (:import-from :std/condition :required-argument :invalid-item :invalid-argument)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/type :octet)
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
-  (:import-from :sb-int :index)
   (:export :sink :source :element 
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate :filter
-   :element-stream :value :index :resolve-element
+   :element-stream :value :resolve-element
    :find-element :find-parent-element :insert-element :withdraw-element
    :remove-element :set-element-id :move-element :message
    :condition-message :message-condition
    :stream-sink :stream-source :file-sink :file-source
    :add-element :insert-element*
    :defpipe :make-pipe :simple-message :message-content
-   :defpipe* :event :bus :format-message
-   #+nil :index+1))
+   :defpipe* :event :bus :format-message))
 
 (defpkg :std/thread
   (:documentation "Standard thread utilities and thread pools.")
@@ -1352,7 +1353,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
   (:shadowing-import-from :std/seq :queue-empty-p :queue :queue-count :make-queue)
   (:use :sb-thread :std/meta :std/macs :std/sym :std/type :std/condition :std/seq)
   (:import-from :std/seq :do-indexes :repeat)
-  (:import-from :std/pipe :index :make-pipe :source :sink :filter :event :message)
+  (:import-from :std/pipe :make-pipe :source :sink :filter :event :message)
   (:import-from :sb-thread :*all-threads*)
   (:import-from :std/list :flatten)
   (:import-from :std/prim :definline)

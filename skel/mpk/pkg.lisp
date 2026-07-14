@@ -74,20 +74,21 @@
    :composer
    :position-in-playlist
    :mpd-error
-   :mpc-artists
-   :mpc-albums
-   :mpc-songs
-   :mpc-uptime
-   :mpc-playtime
-   :mpc-db-playtime
-   :mpc-db-update
+   :artists
+   :albums
+   :songs
+   :uptime
+   :playtime
+   :db-playtime
+   :db-update
    :mpd-config
    :ensure-mpc
    :mpc-connect))
 
 (defpkg :skel/mpk
   (:nicknames :mpk)
-  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp :progress)
+  (:use :cl :std :log :id :config :ast :cli/tools/net :cli/tools/media :time :dsp :progress :net/codec/osc :schema
+    :midi :db)
   (:export
    #:*mpk-directory*
    #:mpk-path
@@ -135,34 +136,22 @@
   (:nicknames :mpk/db)
   (:use :cl :std :log :rdb :dsp/aud :dsp/gst :mpk :schema :db :id :uuid :config)
   (:import-from :sb-ext :string-to-octets)
-  (:export :*mpk-db* :*mpk-db-schema* :mpk-db 
+  (:export :mpk-db 
    :mpk-db-init :mpk-db-shutdown
    :mpk-db-info
    :ingest-metadata-sst
-   :make-metadata-sst
+   ;; :make-metadata-sst
    :get-metadata*
    :*mpk-db-table*
    :update-music-metadata
    :mpk-db-config))
-
-(defpkg :skel/mpk/metro
-  (:nicknames :mpk/metro)
-  (:use :cl :std :log :mpk :schema :db :id :config :net/codec/osc :midi)
-  (:import-from :sb-ext :string-to-octets)
-  (:export :*mpk-metro*
-   :mpk-metro-init :mpk-metro-shutdown
-   :*mpk-metro-table*
-   :metro
-   :metro-config))
 
 (defpkg :mpk-user
   (:use-reexport :sk-user :mpk :mpk/db :mpk/mpd))
 
 (defpkg :skel/mpk/cli
   (:nicknames :mpk/cli)
-  (:use :cl :std :log :mpk :cli :clap :cmd)
-  (:export
-   #:*mpk-cli*))
+  (:use :cl :std :log :mpk :cli :clap :cmd))
 
 (defpkg :mk-user
   (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)

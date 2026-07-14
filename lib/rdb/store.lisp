@@ -16,7 +16,7 @@
    (metadata :accessor controller-metadata)
    (btrees :accessor controller-btrees)
    (dup-btrees :accessor controller-dup-btrees)
-   (index :accessor index)
+   (index :accessor idx)
    (rindex :accessor rindex))
   (:default-initargs
    :spec '(:rdb)
@@ -105,7 +105,7 @@ serialized object schemas."))
                    :free-space free-space))
 
 (defsclass rdb-indexed-btree (indexed-btree rdb-btree)
-  ((index :accessor index :initarg :index :initform (make-hash-table))
+  ((index :accessor idx :initarg :index :initform (make-hash-table))
    (index-cache :accessor index-cache :transient t))
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
@@ -117,7 +117,7 @@ serialized object schemas."))
   ;; for complex objects).  -- Red Daly 07/10/2010
   (aif (slot-value instance 'index-cache)
        it
-       (setf (index-cache instance) (index instance))))
+       (setf (index-cache instance) (idx instance))))
 
 (defmethod shared-initialize :after ((instance rdb-indexed-btree) slot-names
                                      &rest rest)
@@ -142,13 +142,13 @@ serialized object schemas."))
         ;; Can it be that this fails?
         (let ((index
                 (ensure-transaction (:store sc)
-                  (let ((ht (index bt))
+                  (let ((ht (idx bt))
                         (index (build-btree-index sc 
                                                   :primary bt 
                                                   :key-form key-form)))
                     (setf (gethash index-name (index-cache bt)) index)
                     (setf (gethash index-name ht) index)
-                    (setf (index bt) ht)
+                    (setf (idx bt) ht)
                     index))))
           (when populate (populate bt index))
           index)
@@ -157,7 +157,7 @@ serialized object schemas."))
 (defmethod populate ((bt rdb-indexed-btree) index)
   (let ((sc (get-store bt)))
     (with-static-streams ((primary-buf) (secondary-buf))
-      (flet ((index (key skey)
+      (flet ((idx (key skey)
                (write-oid (oid bt) primary-buf)
                (serialize key sc :buffer primary-buf)
                (write-oid (oid index) secondary-buf)
@@ -165,7 +165,7 @@ serialized object schemas."))
                ;; should silently do nothing if
                ;; the key/value already exists
                (insert-key
-                (index sc)
+                (idx sc)
                 secondary-buf primary-buf
                 :transaction (current-transaction sc))
                (reset-static-stream primary-buf)
@@ -186,7 +186,7 @@ serialized object schemas."))
                                 (multiple-value-bind (valid? k v) (cursor-current cursor)
                                   (unless valid? (return-from populate t))
                                   (multiple-value-bind (index? skey) (funcall key-fn index k v)
-                                    (when index? (index k skey))))
+                                    (when index? (idx k skey))))
                                 (multiple-value-bind (valid? k v) (cursor-next cursor)
                                   (declare (ignore v))
                                   (if valid? 
@@ -202,9 +202,9 @@ serialized object schemas."))
 
 (defmethod remove-index ((bt rdb-indexed-btree) index-name)
   (remhash index-name (index-cache bt))
-  (let ((index (index bt)))
+  (let ((index (idx bt)))
     (remhash index-name index)
-    (setf (index bt) index)))
+    (setf (idx bt) index)))
 
 (defmethod (setf get-value) (value key (bt rdb-indexed-btree))
   "Set a key / value pair, and update secondary index."
@@ -227,7 +227,7 @@ serialized object schemas."))
                        ;; Insert
                        (write-oid (oid idx) secondary-buf)
                        (serialize secondary-key sc :buffer secondary-buf)
-                       (insert-key (index sc)
+                       (insert-key (idx sc)
                                    secondary-buf key-buf
                                    :no-dup t
                                    :transaction (current-transaction sc))
@@ -255,7 +255,7 @@ serialized object schemas."))
                        ;; need to remove kv pairs with a cursor! --
                        ;; this is a C performance hack
                        (delete-key
-                        (index (get-store bt))
+                        (idx (get-store bt))
                         key-buf
                         :buffer secondary-buf
                         :transaction (current-transaction sc))
@@ -290,7 +290,7 @@ serialized object schemas."))
       (write-oid (oid bt) key-buf)
       (serialize key sc :buffer key-buf)
       (let ((buf (get-key
-                  (index sc)
+                  (idx sc)
                   key-buf 
                   :buffer value-buf
                   :transaction (current-transaction sc))))

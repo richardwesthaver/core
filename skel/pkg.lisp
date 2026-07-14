@@ -17,9 +17,7 @@
    :skel-compile-error
    ;; vars
    :*default-skelrc*
-   :*skel-project*
    :*default-skelfile* :*default-skel-user* 
-   :*default-skel-cache* :*skelfile-extension* :*skelfile-boundary*
    #:*skel-stash*
    #:*skel-store*
    #:*skel-cache*
@@ -40,14 +38,12 @@
    :skel-user-config :skel-system-config
    :*skel-user-config* :*skel-system-config*
    :print-skel-object
-   :*skel-slot-exclusions*
    ;; schema
    :*skel-registry-schema* :*skel-cache-schema*
    ;; db
    :skel-db :skel-db-path
    ;; log
    :*skel-log-schema*
-   :skel-db-logger
    :*skel-logger-config*
    :*skel-logger*
    :init-skel-logger
@@ -64,14 +60,10 @@
    :init-skelfile
    :load-skelfile
    :find-skelfile
-   :find-sk-file
    :setf-skel-vars
    :project-root
-   :merge-project-pathnames
    ;; srv
-   #:skel-service
-   #:skel-request
-   #:skel-response))
+   #:skel-service))
 
 (defpkg :skel/comp/make
   (:use :std-lisp :skel/core :project)
@@ -89,11 +81,11 @@
 
 (defpkg :skel/comp/rust
   (:use :std-lisp :skel/core :toml :config :cli/tools/build :project)
-  (:export :rust-system :parse-rust-system))
+  (:export :rust-system))
 
 (defpkg :skel/comp/python
   (:use :std-lisp :skel/core :toml :config :cli/tools/build :project)
-  (:export :python-system :parse-python-system))
+  (:export :python-system))
 
 (defpkg :skel/comp/lisp
   (:shadowing-import-from :std :version)
@@ -109,7 +101,7 @@
 (defpkg :skel/comp/emacs
   (:use :cl :std :skel/core :ast :id :organ :project)
   (:export :*dir-locals-file* :dir-local-var-designator :dir-locals :emacs-component :emacs-lisp-file
-   :org-file))
+   :project-org-file))
 
 (defpkg :skel/comp/box
   (:use :cl :std :skel/core :box :id :project)

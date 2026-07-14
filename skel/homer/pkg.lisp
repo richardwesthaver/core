@@ -8,7 +8,6 @@
   (:import-from :srv :request :response :service :engine)
   ;; (:import-from :mpk :mpk-config :load-mpkrc)
   (:export
-   #:*user-homedir*
    #:*user-homerc*
    #:*home-config*
    #:*home-hidden-paths*
@@ -25,8 +24,6 @@
    #:home-config
    :home-config-slot
    #:homer-job
-   #:homer-service-start
-   #:homer-service-restart
    #:systemd-service-config
    #:homer-service-config
    #:*systemd-config-directory*
