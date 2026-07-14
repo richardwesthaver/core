@@ -3,19 +3,17 @@
 ;;; Code:
 (in-package :crypto)
 
-(defparameter +min-pool-size+
-  128
-  "Minimum pool size before a reseed is allowed.  This should be the
+(defparameter +min-pool-size+ 128
+  "Minimum pool size before a reseed is allowed. This should be the
   number of bytes of pool data that are likely to contain 128 bits of
-  entropy.  Defaults to a pessimistic estimate of 1 bit of entropy per
-  byte.")
+  entropy. Defaults to a pessimistic estimate of 1 bit of entropy per byte.")
 
 (defparameter +fortuna-seed-length+ 64)
 
 (defclass fortuna-pool ()
   ((digest :initform (make-digest :sha256))
    (length :initform 0))
-  (:documentation "A Fortuna entropy pool.  DIGEST contains its current
+  (:documentation "A Fortuna entropy pool. DIGEST contains its current
   state; LENGTH the length in bytes of the entropy it contains."))
 
 (defclass fortuna-prng ()
@@ -24,7 +22,7 @@
    (reseed-count :initform 0)
    (last-reseed :initform 0)
    (generator))
-  (:documentation "A Fortuna random number generator.  Contains 32
+  (:documentation "A Fortuna random number generator. Contains 32
   entropy pools which are used to reseed GENERATOR."))
 
 (defmethod prng-random-data (num-bytes (prng fortuna-prng))

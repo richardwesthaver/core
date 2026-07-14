@@ -14,7 +14,7 @@
   (p :initarg :p :reader scrypt-kdf-p)))
 
 (defun scrypt-vector-salsa (b)
-  (declare (type (simple-octet-vector 64) b))
+  (declare (type (octet-vector 64) b))
   (let ((x (make-array 16 :element-type '(unsigned-byte 32))))
     (declare (type (simple-array (unsigned-byte 32) (16)) x))
     (declare (dynamic-extent x))

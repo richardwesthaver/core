@@ -3,7 +3,7 @@
 ;;; Code:
 (in-package :crypto)
 
-(declaim (type (simple-octet-vector 16) salsa20-sigma salsa20-tau))
+(declaim (type (octet-vector 16) salsa20-sigma salsa20-tau))
 (defconst salsa20-sigma
   #.(coerce (map 'vector #'char-code "expand 32-byte k") 'simple-octet-vector))
 
@@ -11,7 +11,7 @@
   #.(coerce (map 'vector #'char-code "expand 16-byte k") 'simple-octet-vector))
 
 (deftype salsa20-state () '(simple-array (unsigned-byte 32) (16)))
-(deftype salsa20-keystream-buffer () '(simple-octet-vector 64))
+(deftype salsa20-keystream-buffer () '(octet-vector 64))
 
 (declaim (inline salsa-core))
 (defun salsa-core (n-rounds buffer state)

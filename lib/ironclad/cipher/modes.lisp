@@ -170,7 +170,7 @@
                     (let ((temp-block (make-array ,block-length-expr
                                                   :element-type '(unsigned-byte 8)))
                           (offset in-start))
-                      (declare (type (simple-octet-vector ,block-length-expr) temp-block))
+                      (declare (type (octet-vector ,block-length-expr) temp-block))
                       (declare (dynamic-extent temp-block))
                       (declare (type index offset))
                       (loop with end = (if (and handle-final-block padding)
@@ -216,7 +216,7 @@
                       (iv (iv mode))
                       (padding (padding mode)))
                   (declare (type function efun dfun))
-                  (declare (type (simple-octet-vector ,block-length-expr) iv))
+                  (declare (type (octet-vector ,block-length-expr) iv))
                   (declare (inline xor-block))
                   (declare (inline copy-block))
                   (values
@@ -255,7 +255,7 @@
                     (let ((temp-block (make-array ,block-length-expr
                                                   :element-type '(unsigned-byte 8)))
                           (offset in-start))
-                      (declare (type (simple-octet-vector ,block-length-expr) temp-block))
+                      (declare (type (octet-vector ,block-length-expr) temp-block))
                       (declare (dynamic-extent temp-block))
                       (declare (type index offset))
                       (loop with end = (if (and handle-final-block padding)
@@ -304,7 +304,7 @@
                       (iv (iv mode))
                       (iv-position (iv-position mode)))
                   (declare (type function function))
-                  (declare (type (simple-octet-vector ,block-length-expr) iv))
+                  (declare (type (octet-vector ,block-length-expr) iv))
                   (declare (type (integer 0 (,block-length-expr)) iv-position))
                   (values
                    (mode-lambda
@@ -354,7 +354,7 @@
                                                   :element-type '(unsigned-byte 8)))
                           (remaining (- in-end in-start))
                           (offset in-start))
-                      (declare (type (simple-octet-vector ,block-length-expr) temp-block)
+                      (declare (type (octet-vector ,block-length-expr) temp-block)
                                (dynamic-extent temp-block)
                                (type index remaining offset))
 
@@ -413,7 +413,7 @@
                     (iv (iv mode))
                     (encrypted-iv (make-array ,block-length-expr :element-type '(unsigned-byte 8))))
                 (declare (type function function))
-                (declare (type (simple-octet-vector ,block-length-expr) iv encrypted-iv))
+                (declare (type (octet-vector ,block-length-expr) iv encrypted-iv))
                 (declare (inline copy-block))
                 (values
                   (mode-lambda
@@ -458,7 +458,7 @@
                                                (mode ofb-mode))
                 (let ((iv (iv mode))
                       (iv-position (iv-position mode)))
-                  (declare (type (simple-octet-vector ,block-length-expr) iv))
+                  (declare (type (octet-vector ,block-length-expr) iv))
                   (declare (type (integer 0 (,block-length-expr)) iv-position))
                   (flet ((ofb-crypt-function (function)
                            (declare (type function function))
@@ -517,7 +517,7 @@
                                                (mode ctr-mode))
                 (let ((iv (iv mode))
                       (encrypted-iv (make-array ,block-length-expr :element-type '(unsigned-byte 8))))
-                  (declare (type (simple-octet-vector ,block-length-expr) iv encrypted-iv))
+                  (declare (type (octet-vector ,block-length-expr) iv encrypted-iv))
                   (flet ((ctr-crypt-function (function)
                            (declare (type function function))
                            (mode-lambda

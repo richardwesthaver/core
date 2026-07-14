@@ -11,7 +11,7 @@
   (defconstant +xor-block-length+ 8))
 
 (defclass xor (cipher 8-byte-block-mixin)
-  ((key :accessor xor-key :type simple-octet-vector)
+  ((key :accessor xor-key :type octet-vector)
    (key-index :accessor xor-key-index :initform 0 :type fixnum)))
 
 (defun xor-crypt-block (context in in-start out out-start)

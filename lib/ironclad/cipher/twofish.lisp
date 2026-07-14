@@ -5,9 +5,9 @@
 (in-ironclad-readtable)
 
 ;;; various constant data arrays used by Twofish
-(declaim (type (simple-octet-vector 256)
+(declaim (type (octet-vector 256)
                +twofish-q0+ +twofish-q1+))
-(declaim (type (simple-octet-vector 255)
+(declaim (type (octet-vector 255)
                +twofish-exp-to-poly+ +twofish-poly-to-exp+))
 (defconst +twofish-q0+
 #8@(#xA9 #x67 #xB3 #xE8 #x04 #xFD #xA3 #x76 #x9A #x92 #x80 #x78 #xE4
@@ -294,7 +294,7 @@
    (s-boxes :accessor s-boxes :type twofish-s-boxes)))
 
 (defun reed-solomon-multiply (box box-offset key rs0 rs1 rs2 rs3)
-  (declare (type (simple-octet-vector 16) box))
+  (declare (type (octet-vector 16) box))
   (declare (type (integer 0 12) box-offset))
   (unless (zerop key)
     (let ((temp (aref +twofish-poly-to-exp+ (1- key))))
@@ -322,7 +322,7 @@
                             :initial-element 0))
         (round-keys (make-array 40 :element-type '(unsigned-byte 32)))
         (s-boxes (make-array 1024 :element-type '(unsigned-byte 32))))
-    (declare (type (simple-octet-vector 16) rs-box))
+    (declare (type (octet-vector 16) rs-box))
     (declare (dynamic-extent rs-box))
     ;; fill the rs-box
     (dotimes (i (length key))
@@ -346,7 +346,7 @@
   (defun twofish-schedule-16-byte-key (round-keys s-boxes key box)
     (declare (type twofish-round-keys round-keys)
              (type twofish-s-boxes s-boxes)
-             (type (simple-octet-vector 16) key box))
+             (type (octet-vector 16) key box))
     (macrolet ((q-frob (i1 i2 d1 d2)
                  (let ((q0 (symbolicate '#:+twofish-q (ldb (byte 1 1) i1) '#:+))
                        (q1 (symbolicate '#:+twofish-q (ldb (byte 1 0) i1) '#:+)))
@@ -388,8 +388,8 @@
   (defun twofish-schedule-24-byte-key (round-keys s-boxes key box)
     (declare (type twofish-round-keys round-keys)
              (type twofish-s-boxes s-boxes)
-             (type (simple-octet-vector 24) key)
-             (type (simple-octet-vector 16) box))
+             (type (octet-vector 24) key)
+             (type (octet-vector 16) box))
     (macrolet ((q-frob (i1 i2 d1 d2 d3)
                  (let ((q0 (symbolicate '#:+twofish-q (ldb (byte 1 2) i1) '#:+))
                        (q1 (symbolicate '#:+twofish-q (ldb (byte 1 1) i1) '#:+))
@@ -435,8 +435,8 @@
   (defun twofish-schedule-32-byte-key (round-keys s-boxes key box)
     (declare (type twofish-round-keys round-keys)
              (type twofish-s-boxes s-boxes)
-             (type (simple-octet-vector 32) key)
-             (type (simple-octet-vector 16) box))
+             (type (octet-vector 32) key)
+             (type (octet-vector 16) box))
     (macrolet ((q-frob (i1 i2 d1 d2 d3 d4)
                  (let ((q0 (symbolicate '#:+twofish-q (ldb (byte 1 3) i1) '#:+))
                        (q1 (symbolicate '#:+twofish-q (ldb (byte 1 2) i1) '#:+))

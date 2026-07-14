@@ -11,20 +11,7 @@
          (symbol-value ',name)
          ,value)))
 
-;;; CMUCL and SBCL both have an internal type for this, but we'd like to
-;;; be portable, so we define our own.
-
-(deftype index () '(mod #.array-dimension-limit))
-(deftype index+1 () `(mod ,(1+ array-dimension-limit)))
-
-;;; We write something like this all over the place.
-
-(deftype simple-octet-vector (&optional length)
-  (let ((length (or length '*)))
-    `(simple-array (unsigned-byte 8) (,length))))
-
 ;;; a global specification of optimization settings
-
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun burn-baby-burn ()
     '(optimize (speed 3) (safety 0) (space 0)

@@ -437,3 +437,5 @@ when the slot is already filled."
           (loop for (i . id) in idx
                 do (set-element-id parent (list c i) id))))
       parent)))
+
+;; (deftype index+1 () `(mod ,(1+ array-dimension-limit)))

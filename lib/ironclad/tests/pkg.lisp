@@ -355,7 +355,7 @@
 (defun fortuna-test (name seed entropy expected-sequence)
   (declare (ignore name))
   (let ((prng (crypto:make-prng :fortuna
-                                :seed (coerce seed 'crypto::simple-octet-vector)))
+                                :seed (coerce seed 'simple-octet-vector)))
         (num-bytes (length expected-sequence)))
     (loop for (source pool-id event) in entropy
        do (crypto:add-random-event source pool-id event prng))

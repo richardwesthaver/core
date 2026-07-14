@@ -1333,6 +1333,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
   (:import-from :std/macs :when-let :eval-always :once-only)
   (:import-from :std/list :removef)
   (:import-from :std/file :file)
+  (:import-from :sb-int :index)
   (:export :sink :source :element 
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate :filter
    :element-stream :value :index :resolve-element
@@ -1342,7 +1343,8 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :stream-sink :stream-source :file-sink :file-source
    :add-element :insert-element*
    :defpipe :make-pipe :simple-message :message-content
-   :defpipe* :event :bus :format-message))
+   :defpipe* :event :bus :format-message
+   #+nil :index+1))
 
 (defpkg :std/thread
   (:documentation "Standard thread utilities and thread pools.")

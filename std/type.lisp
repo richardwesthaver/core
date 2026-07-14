@@ -42,10 +42,14 @@ destructuring lambda list."
 (deftype simple-octet-vector ()
   `(simple-array (unsigned-byte 8) (*)))
 
-(deftype octet-vector (&optional length)
+;; from ironclad:
+;; (deftype simple-octet-vector (&optional length)
+;;   (let ((length (or length '*)))
+;;     `(simple-array (unsigned-byte 8) (,length))))
+
+(deftype octet-vector (&optional (length '*))
   "A simple-array of OCTETs."
-  (if length `(simple-array octet (,length))
-      `(simple-vector octet)))
+  `(simple-array octet (,length)))
 
 (defun octet-vector-p (self &optional length)
   "Return T if SELF is an OCTET-VECTOR, optionally with a fixed LENGTH."

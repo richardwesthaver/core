@@ -3,7 +3,7 @@
 ;;; Code:
 (in-package :crypto)
 
-(declaim (type (simple-octet-vector 16) chacha-sigma chacha-tau))
+(declaim (type (octet-vector 16) chacha-sigma chacha-tau))
 (defconst chacha-sigma
   #.(coerce (map 'vector #'char-code "expand 32-byte k") 'simple-octet-vector))
 
@@ -11,7 +11,7 @@
   #.(coerce (map 'vector #'char-code "expand 16-byte k") 'simple-octet-vector))
 
 (deftype chacha-state () '(simple-array (unsigned-byte 32) (16)))
-(deftype chacha-keystream-buffer () '(simple-octet-vector 64))
+(deftype chacha-keystream-buffer () '(octet-vector 64))
 
 (declaim (inline chacha-core))
 (defun chacha-core (n-rounds buffer state)

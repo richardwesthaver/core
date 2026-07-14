@@ -4,18 +4,17 @@
 (in-package :crypto)
 
 (defvar +fortuna-cipher-block-size+ 16
-  "Fortuna is only defined for 128-bit (16-byte) cyphers")
+  "Fortuna is only defined for 128-bit (16-byte) ciphers")
 
 (defclass fortuna-generator ()
   ((key
-    :initform (make-array 32
-                          :element-type '(unsigned-byte 8)
-                          :initial-element 0))
+    :initform (make-array 32 :element-type '(unsigned-byte 8)
+                             :initial-element 0))
    (counter :initform 0)
    (digest :initform (make-digest :sha256))
    (cipher :initform :aes
            :initarg :cipher))
-  (:documentation "Fortuna generator.  KEY is the key used to initialise
+  (:documentation "Fortuna generator. KEY is the key used to initialize
   CIPHER as an instance of CIPHER-NAME (which must be a valid NAME
   recognised by MAKE-CIPHER)."))
 
