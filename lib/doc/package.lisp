@@ -28,6 +28,7 @@
 (deftempo :package-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
+:CUSTOM_ID: <%@var name%>
 <%@ifnotempty id%>:ID: <%@var id%>
 <%@endif%><%@ifnotempty lock%>:LOCK: <%@var lock%>
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
@@ -48,13 +49,13 @@
 <%@loop dependencies%>  - <%=(name env)%>
 <%@endloop%><%@endif%><%@ifnotempty dependents%>
 - dependents
-<%@loop dependents%>  - <%=(name env)%>
+<%@loop dependents%>  - [[<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implements%>
 - implements
-<%@loop implements%>  - <%=(name env)%>
+<%@loop implements%>  - [[<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implemented-by%>
 - implemented by
-<%@loop implemented-by%>  - <%=(name env)%>
+<%@loop implemented-by%>  - [[<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty symbols%>
 <%@loop symbols%>
 <%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
