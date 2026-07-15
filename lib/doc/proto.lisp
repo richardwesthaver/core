@@ -49,16 +49,6 @@
   "Map SB-INTROSPECT definition type names to Slime-friendly forms")
 
 ;;; Protocol
-(defgeneric doc (self type)
-  (:documentation "Return the TYPE documentation associated with SELF. By default dispatch to
-DOCUMENTATION.")
-  (:method (self type) (documentation self type)))
-
-(defgeneric (setf doc) (new self type)
-  (:documentation "Set the TYPE documentation associated with SELF to NEW. By default dispatch
-to (SETF DOCUMENTATION).")
-  (:method (new self type) (setf (documentation self type) new)))
-
 (defgeneric doc-object (self)
   (:documentation "Return the object associated with documentation SELF."))
 
@@ -131,15 +121,15 @@ CHAR-COUNT."
           with lf = nil
           for char = (read-char s)
           ;; do (format t "~& ~5,d ~5,d: ~@C ~a" count line char lf)
-          if (char= #\Newline char)
+          while (char= #\Newline char)
           do (incf line)
           until (> count char-count)
-          finally (return (1+ line)))))
+          finally (return line))))
 
 (defun definition-source-line-number (def)
   (let ((pathname (sb-introspect:definition-source-pathname def)))
     (when-let ((count (sb-introspect:definition-source-character-offset def)))
-      (1+ (count-lines-up-to-character pathname count)))))
+      (count-lines-up-to-character pathname count))))
 
 (defun decomment (s) 
   "In addition to left-trimming comments and whitespace, we insert a comma (#\')

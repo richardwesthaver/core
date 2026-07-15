@@ -113,7 +113,6 @@
    :package-documentation
    :symbol-documentation
    :symbol-info
-   :doc
    :document-class
    :module-documentation
    :publish

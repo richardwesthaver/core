@@ -218,7 +218,7 @@ associated vector."))
                     ((eq peek-type 't)
                      (plusp byte))
                     ((= byte peek-type)))
-       :finally (setf (slot-value stream 'index) new-index)
+       :finally (setf (slot-value stream 'idx) new-index)
                 (return byte))))
 
 (defmethod peek-byte ((stream list-input-stream) &optional peek-type (eof-error-p t) eof-value)
@@ -250,6 +250,10 @@ associated vector."))
       stream
     (transform-octet stream (or (pop list) (return-from stream-read-byte :eof)))))
 
+(defmethod stream-read-char ((stream list-input-stream))
+  "Reads one char and increments INDEX pointer."
+  (code-char (stream-read-byte stream)))
+
 (defmethod stream-listen ((stream list-input-stream))
   "Checks whether list is not empty."
   (declare (optimize (speed 3) (safety 0)))
@@ -258,13 +262,13 @@ associated vector."))
       stream
     list))
 
-(defmethod stream-read-sequence ((stream list-input-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream list-input-stream) sequence &optional (start 0) end)
   "Repeatedly pops elements from the list until it's empty."
   (declare (optimize (speed 3) (safety 0)))
   (with-accessors ((list buffer))
       stream
     (loop with transformer = (transformer stream)
-          for index of-type fixnum from start below end
+          for index of-type fixnum from start below end 
           while list
           do (let ((elt (pop list)))
                (setf (elt sequence index)
@@ -289,6 +293,10 @@ END pointer."
              (transform-octet stream (aref vector current-index)))
             (t :eof)))))
 
+(defmethod stream-read-char ((stream vector-input-stream))
+  "Reads one char and increments INDEX pointer."
+  (code-char (stream-read-byte stream)))
+
 (defmethod stream-listen ((stream vector-input-stream))
   "Checking whether INDEX is beyond END."
   (declare (optimize (speed 3) (safety 0)))
@@ -298,7 +306,7 @@ END pointer."
       stream
     (< (the fixnum index) (the fixnum end))))
 
-(defmethod stream-read-sequence ((stream vector-input-stream) sequence &optional start end)
+(defmethod stream-read-sequence ((stream vector-input-stream) sequence &optional (start 0) (end (length sequence)))
   "Traverses both sequences in parallel until the end of one of them
 is reached."
   (declare (optimize (speed 3) (safety 0)))
@@ -324,12 +332,12 @@ is reached."
       stream
     (vector-push-extend (transform-octet stream byte) vector)))
 
-(defmethod stream-write-sequence ((stream vector-output-stream) sequence &optional start end)
+(defmethod stream-write-sequence ((stream vector-output-stream) sequence &optional (start 0) end)
   "Just calls VECTOR-PUSH-EXTEND repeatedly."
   (declare (optimize (speed 3) (safety 0)))
   (with-accessors ((vector buffer))
       stream
-    (loop for index of-type fixnum from start below end
+    (loop for index of-type fixnum from start below (or end (length sequence))
           do (vector-push-extend (transform-octet stream (elt sequence index)) vector))
     sequence))
 
@@ -400,7 +408,7 @@ TRANSFORMER function."
   (declare (optimize (speed 3) (safety 0)))
   (make-instance 'vector-input-stream
                  :buffer vector
-                 :index start
+                 :idx start
                  :end end
                  :transformer transformer))
 
@@ -653,8 +661,11 @@ stream within BODY."
           (incf (%position stream))
           (decf (%remaining stream))))))
 
+(defmethod stream-read-char ((stream bound-input-stream))
+  (code-char (stream-read-byte stream)))
+
 (defmethod stream-read-sequence ((stream bound-input-stream)
-                                 sequence &optional start end)
+                                 sequence &optional (start 0) end)
   (if (zerop (%remaining stream))
       start
       (progn
@@ -728,7 +739,7 @@ functions and via PEEKED."))
         (decf (unread-peeked stream)))))
 
 (defmethod stream-read-sequence ((stream peeking-input-stream)
-                                 sequence &optional start end)
+                                 sequence &optional (start 0) end)
   (if (zerop (unread-peeked stream))
       (read-sequence sequence (stream-of stream) :start start :end end)
       (let* ((end (or end (length sequence)))

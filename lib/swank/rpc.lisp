@@ -2,11 +2,11 @@
 
 ;; Created 2010, Terje Norderhaug <terje@in-progress.com>
 
-;; This code has been placed in the Public Domain.  All warranties
-;; are disclaimed.
+;; This code has been placed in the Public Domain. All warranties are
+;; disclaimed.
 
 ;;; Code:
-(in-package swank/rpc)
+(in-package :swank/rpc)
 
 ;;; Input
 (define-condition swank-reader-error (reader-error)
@@ -140,14 +140,15 @@
 
 #| TEST/DEMO:
 (defparameter *transport*
-  (with-output-to-string (out)
-    (write-message '(:message (hello "world")) *package* out)
-    (write-message '(:return 5) *package* out)
-    (write-message '(:emacs-rex NIL) *package* out)))
+ (io:with-output-to-sequence (out)
+  (write-message '(:message (hello "world")) *package* out)
+  (write-message '(:return 5) *package* out)
+  (write-message '(:emacs-rex NIL) *package* out)))
 
 *transport*
                  
-(with-input-from-string (in *transport*)
+;; FIX 2026-07-14: 
+(io:with-input-from-sequence (in *transport*)
   (loop while (peek-char T in NIL)
         collect (read-message in *package*)))
 
