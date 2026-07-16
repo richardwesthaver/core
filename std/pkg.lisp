@@ -736,7 +736,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
 (defpkg :std/stream
   (:use :cl :std/type :std/meta)
   (:use-reexport :sb-gray)
-  (:documentation "Standard stream definitions.")
+  (:documentation "Standard stream definitions and helpers. Re-exports SB-GRAY.")
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/prim :definline)
