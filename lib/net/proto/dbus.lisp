@@ -16,10 +16,7 @@
 ;;; Addresses
 (defclass server-address () ())
 
-(define-class-map
-    :class server-address
-  :map *server-address-classes*
-  :find find-server-address-class)
+(define-class-map *server-address-classes* server-address find-server-address-class)
 
 (defclass standard-server-address (server-address)
   ((transport-name :initarg :transport-name :reader server-address-transport-name)
@@ -364,10 +361,7 @@ Domain Sockets.")
     (force-output s)))
 
 ;;; Authentication
-(define-class-map
-    :class authenticator
-  :map *authenticator-classes*
-  :find find-authenticator-class)
+(define-class-map *authenticator-classes* authenticator find-authenticator-class)
 
 (defclass standard-authenticator (authenticator)
   ((name :initarg :name :reader name)

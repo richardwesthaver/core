@@ -132,7 +132,8 @@
     :classes (hook value-hook key-hook dynamic-hook))
    (:proto :verb
     :package :std/meta
-    :description "Define 'simple' generic functions."
+    :description "Verbs are special generic-functions which we want to be able to perform
+interesting operations on via Template Functions, OBJ/META/SEALED, OBJ/META/FAST, and more."
     :variables (*verbs*)
     :functions (register-verb map-verbs)
     :macros (defverb)
@@ -202,7 +203,14 @@
     :functions (fvref foreign-vector-length foreign-vector-element-type))
    (:proto :template
     :package :std/meta
-    :description "Short-circuit CLOS method dispatch with a global hash-table."
+    :description "Short-circuit CLOS method dispatch with a global hash-table.
+*TEMPLATE-TABLE* stores the global mapping of template-function names to a
+plist with the following keywords:
+
+LAMBDA-LIST - arguments to this function
+PREDICATE - dispatch predicate
+SORTER - sort predicate (defaults to predicate)
+SORT-FUNCTION - sort function (defaults to TOPOSORT)"
     :variables (*template-table*)
     :macros (define-template-generic define-template-method)
     :methods (compute-template-dispatch preprocess-template-dispatch)

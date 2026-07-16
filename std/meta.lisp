@@ -1,14 +1,9 @@
 ;;; std/meta.lisp --- Standard MOP Utilities
 
-;;
-
 ;;; Code:
 (in-package :std/meta)
 
 ;;; Verbs
-
-;; Verbs are special generic-functions which we want to be able to perform
-;; interesting operations on via OBJ/META/SEALED, OBJ/META/FAST, and more.
 (sb-ext:defglobal *verbs* nil)
 
 (defun register-verb (v) 
@@ -367,22 +362,25 @@ Example:
 (defvar *ignored-slots* nil
   "A list of slot names which may be ignored. See the function LIST-SLOT-VALUES-USING-CLASS.")
 
-(defun list-slot-values-using-class (class obj slots &optional nullp unboundp)
-  "List the values of SLOTS bound in OBJ according to CLASS. When NULLP is T also
-include NIL values. Likewise with UNBOUNDP for unbound slot values."
+(defun list-slot-values-using-class (class obj slots &optional nullp unboundp (ignored *ignored-slots*))
+  "List the values of SLOTS bound in OBJ according to CLASS.
+When NULLP is T also include NIL values. Likewise with UNBOUNDP for unbound
+slot values. IGNORED is a list of slot names (as keywords) which should be
+ignored."
   (remove-if
    #'null
    (mapcar
     (lambda (s)
       (let ((n (slot-definition-name s)))
         (let ((ns (make-keyword (symbol-name n))))
-          (if (slot-boundp-using-class class obj s)
-              (let ((v (slot-value-using-class class obj s)))
-                (if nullp
-                    `(,ns ,v)
-                    (unless (null v)
-                      `(,ns ,v))))
-              (when unboundp (list ns))))))
+          (unless (sb-int:memq ns ignored)
+            (if (slot-boundp-using-class class obj s)
+                (let ((v (slot-value-using-class class obj s)))
+                  (if nullp
+                      `(,ns ,v)
+                      (unless (null v)
+                        `(,ns ,v))))
+                (when unboundp (list ns)))))))
     slots)))
 
 (defmacro make-instance! (name &rest args)
@@ -461,19 +459,14 @@ argument."
 
       (loop with class = (get-class class)
             with superclass = (get-class superclass)
-
             for superclasses = (list class)
             then (set-difference
                   (union (class-direct-superclasses current-class) superclasses)
                   seen)
-
             for current-class = (first superclasses)
-
             while current-class
-
             if (eq current-class superclass) return t
             else collect current-class into seen
-
             finally (return nil))))
 
 (defun safe-superclasses (super classes)
@@ -484,17 +477,6 @@ subclass of SUPER."
       (push super classes)))
 
 ;;; Template Functions
-;; Derived from MATLISP, this protocol provides a way to short-circuit the
-;; standard method dispatch.
-
-;; *TEMPLATE-TABLE* stores the global mapping of template-function names to a
-;; plist with the following keywords:
-
-;; LAMBDA-LIST - arguments to this function
-;; PREDICATE - dispatch predicate
-;; SORTER - sort predicate (defaults to predicate)
-;; SORT-FUNCTION - sort function (defaults to TOPOSORT)
-
 (defvar *template-table* (make-hash-table)
   "Global hash-table containing a mapping of template-function names to 'specs' (plists).")
 
@@ -537,7 +519,7 @@ macroexpanded.")
   (:method ((name symbol) args)
     (funcall (if (single-arg-template-function-p name) #'funcall #'mapcar)
              #'macroexpand-1 args)))
-;;
+
 (defmacro define-template-generic ((name predicate &optional sorter (sort-function 'toposort)) disp args)
   "Define a template generic function stored in *TEMPLATE-TABLE*."
   (when (consp disp)
@@ -562,7 +544,6 @@ macroexpanded.")
                      (data (or (gethash name *template-table*) (error "Undefined template : ~a~%" name)))
                      (ll (getf data :lambda-list))
                      (single? (not (consp (first ll))))
-                     ;;
                      (disp-vars (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (car x) x)) disp))
                      (disp-spls (funcall (if single? #'funcall #'mapcar) #'(lambda (x) (if (consp x) (cadr x) t)) disp)))
       (assert (std/list:match-lambda-lists (list disp-vars args) ll) nil "mismatch in lambda-lists.")
@@ -603,7 +584,7 @@ given the name and specializer."
 
 ;;; Class Maps
 ;; inspired by death's dbus::define-name-class-mapping
-(defmacro define-class-map (&key class map find)
+(defmacro define-class-map (map class find)
   "Define an interface for mapping names (strings) to classes (or class names)."
   (let ((map-docstring (format nil "Map names to ~A classes or class names." class))
         (find-docstring (format nil "Return the ~A class (or class name) corresponding to NAME." class))
