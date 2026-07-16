@@ -116,12 +116,12 @@ DEFINITION-SOURCEs."
   "Reads through PATHNAME and counts the number of newlines before reaching
 CHAR-COUNT."
   (with-open-file (s pathname)
-    (loop for count from 0 by 1
+    (loop for count from 0
           with line = 1
           with lf = nil
           for char = (read-char s)
           ;; do (format t "~& ~5,d ~5,d: ~@C ~a" count line char lf)
-          while (char= #\Newline char)
+          when (char= #\Newline char)
           do (incf line)
           until (> count char-count)
           finally (return line))))
