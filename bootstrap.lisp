@@ -13,7 +13,8 @@ $ sbcl --script bootstrap.lisp
  'require 
  '(sb-md5 sb-sprof sb-cover sb-grovel 
    sb-posix sb-bsd-sockets sb-cltl2 sb-concurrency
-   sb-introspect sb-rotate-byte asdf uiop))
+   sb-introspect sb-rotate-byte asdf uiop
+   sb-simd))
 
 ;; load std
 (asdf:load-asd (probe-file "std/std.asd"))

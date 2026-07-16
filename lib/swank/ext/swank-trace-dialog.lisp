@@ -4,26 +4,27 @@
 (defpackage :swank-trace-dialog
   (:use :cl)
   (:import-from :swank :defslimefun :from-string :to-string)
-  (:export #:clear-trace-tree
-           #:dialog-toggle-trace
-           #:dialog-trace
-           #:dialog-traced-p
-           #:dialog-untrace
-           #:dialog-untrace-all
-           #:inspect-trace-part
-           #:report-partial-tree
-           #:report-specs
-           #:report-total
-           #:report-trace-detail
-           #:report-specs
-           #:trace-format
-           #:still-inside
-           #:exited-non-locally
-           #:*record-backtrace*
-           #:*traces-per-report*
-           #:*dialog-trace-follows-trace*
-           #:find-trace-part
-           #:find-trace))
+  (:export 
+   #:clear-trace-tree
+   #:dialog-toggle-trace
+   #:dialog-trace
+   #:dialog-traced-p
+   #:dialog-untrace
+   #:dialog-untrace-all
+   #:inspect-trace-part
+   #:report-partial-tree
+   #:report-specs
+   #:report-total
+   #:report-trace-detail
+   #:report-specs
+   #:trace-format
+   #:still-inside
+   #:exited-non-locally
+   #:*record-backtrace*
+   #:*traces-per-report*
+   #:*dialog-trace-follows-trace*
+   #:find-trace-part
+   #:find-trace))
 
 (in-package :swank-trace-dialog)
 
@@ -47,9 +48,7 @@ program.")
 (defclass trace-entry ()
   ((id         :reader   id-of)
    (children   :accessor children-of :initform nil)
-   (backtrace  :accessor backtrace-of :initform (when *record-backtrace*
-                                                  (useful-backtrace)))
-
+   (backtrace  :accessor backtrace-of :initform (when *record-backtrace* (useful-backtrace)))
    (spec       :initarg  :spec      :accessor spec-of
                :initform (error "must provide a spec"))
    (args       :initarg  :args      :accessor args-of
@@ -108,9 +107,9 @@ program.")
 (defslimefun dialog-trace (spec)
   (flet ((before-hook (args)
            (setf (current-trace) (make-instance 'trace-entry
-                                                :spec      spec
-                                                :args      args
-                                                :parent    (current-trace))))
+                                   :spec      spec
+                                   :args      args
+                                   :parent    (current-trace))))
          (after-hook (retlist)
            (let ((trace (current-trace)))
              (when trace
@@ -163,9 +162,9 @@ program.")
   "Make a string from FORMAT-SPEC and FORMAT-ARGS and as a trace."
   (let* ((line (apply #'format nil format-spec format-args)))
     (make-instance 'trace-entry :spec line
-                                :args format-args
-                                :parent (current-trace)
-                                :retlist nil)))
+                   :args format-args
+                   :parent (current-trace)
+                   :retlist nil)))
 
 ;;;; Reporting to emacs
 (defparameter *visitor-idx* 0)
@@ -194,25 +193,25 @@ program.")
                  for trace in *unfinished-traces*
                  while (< i *traces-per-report*)
                  when (completed-p trace)
-                   collect trace
-                   and do
-                     (incf i)
-                     (setq *unfinished-traces*
-                           (remove trace *unfinished-traces*))))
+                 collect trace
+                 and do
+                    (incf i)
+                    (setq *unfinished-traces*
+                          (remove trace *unfinished-traces*))))
          (new (loop for i
-                      from (length recently-finished)
-                        below *traces-per-report*
+                    from (length recently-finished)
+                    below *traces-per-report*
                     while (< *visitor-idx* (length *traces*))
                     for trace = (aref *traces* *visitor-idx*)
                     collect trace
                     unless (completed-p trace)
-                      do (push trace *unfinished-traces*)
+                    do (push trace *unfinished-traces*)
                     do (incf *visitor-idx*))))
     (list
      (mapcar #'describe-trace-for-emacs
              (append recently-finished new))
      (- (length *traces*) *visitor-idx*)
-    key)))
+     key)))
 
 (defslimefun report-trace-detail (trace-id)
   (swank::call-with-bindings
@@ -245,7 +244,6 @@ program.")
 ;; HACK: `swank::*inspector-history*' is unbound by default and needs
 ;; a reset in that case so that it won't error `swank::inspect-object'
 ;; before any other object is inspected in the slime session.
-;;
 (unless (boundp 'swank::*inspector-history*)
   (swank::reset-inspector))
 

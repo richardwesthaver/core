@@ -145,33 +145,36 @@
    #:with-encrypting-stream #:with-decrypting-stream
    #:make-authenticating-stream #:with-authenticating-stream)
   ;; supported digests
-  (:export #:whirlpool #:md2 #:md4 #:md5 #:adler32 #:crc24 #:crc32 #:crc32c
-           #:tiger #:sha1 #:sha224 #:sha256 #:sha384 #:sha512
-           #:tree-hash #:make-tiger-tree-hash #:ripemd-128 #:ripemd-160
-           #:skein256 #:skein256/128 #:skein256/160 #:skein256/224
-           #:skein512 #:skein512/128 #:skein512/160 #:skein512/224
-           #:skein512/256 #:skein512/384
-           #:skein1024 #:skein1024/384 #:skein1024/512
-           #:sha3 #:sha3/384 #:sha3/256 #:sha3/224
-           #:shake128 #:shake256
-           #:keccak #:keccak/384 #:keccak/256 #:keccak/224
-           #:groestl #:groestl/384 #:groestl/256 #:groestl/224
-           #:blake2 #:blake2/384 #:blake2/256 #:blake2/160
-           #:blake2s #:blake2s/224 #:blake2s/160 #:blake2s/128
-           #:jh #:jh/384 #:jh/256 #:jh/224
-           #:streebog #:streebog/256
-           #:kupyna #:kupyna/256
-           #:sm3)
+  (:export 
+   #:whirlpool #:md2 #:md4 #:md5 #:adler32 #:crc24 #:crc32 #:crc32c
+   #:tiger #:sha1 #:sha224 #:sha256 #:sha384 #:sha512
+   #:tree-hash #:make-tiger-tree-hash #:ripemd-128 #:ripemd-160
+   #:skein256 #:skein256/128 #:skein256/160 #:skein256/224
+   #:skein512 #:skein512/128 #:skein512/160 #:skein512/224
+   #:skein512/256 #:skein512/384
+   #:skein1024 #:skein1024/384 #:skein1024/512
+   #:sha3 #:sha3/384 #:sha3/256 #:sha3/224
+   #:shake128 #:shake256
+   #:keccak #:keccak/384 #:keccak/256 #:keccak/224
+   #:groestl #:groestl/384 #:groestl/256 #:groestl/224
+   #:blake2 #:blake2/384 #:blake2/256 #:blake2/160
+   #:blake2s #:blake2s/224 #:blake2s/160 #:blake2s/128
+   #:jh #:jh/384 #:jh/256 #:jh/224
+   #:streebog #:streebog/256
+   #:kupyna #:kupyna/256
+   #:sm3)
   ;; supported macs
-  (:export #:blake2-mac #:blake2s-mac #:cmac #:hmac #:poly1305 #:skein-mac
-           #:gmac #:siphash)
+  (:export 
+   #:blake2-mac #:blake2s-mac #:cmac #:hmac #:poly1305 #:skein-mac
+   #:gmac #:siphash)
   ;; supported block ciphers
-  (:export #:blowfish #:tea #:xtea #:square #:rc2 #:rc5 #:rc6 #:des #:3des
-           #:aes #:twofish #:cast5 #:idea #:misty1 #:xor
-           #:threefish256 #:threefish512 #:threefish1024
-           #:serpent #:camellia #:seed #:aria #:kuznyechik
-           #:kalyna128 #:kalyna256 #:kalyna512
-           #:sm4)
+  (:export 
+   #:blowfish #:tea #:xtea #:square #:rc2 #:rc5 #:rc6 #:des #:3des
+   #:aes #:twofish #:cast5 #:idea #:misty1 #:xor
+   #:threefish256 #:threefish512 #:threefish1024
+   #:serpent #:camellia #:seed #:aria #:kuznyechik
+   #:kalyna128 #:kalyna256 #:kalyna512
+   #:sm4)
   ;; supported stream ciphers
   (:export 
    #:arcfour

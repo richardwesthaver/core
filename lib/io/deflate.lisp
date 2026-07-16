@@ -510,23 +510,19 @@ decompressing BZIP2-related formats."))
              (:conc-name dstate-))
   (state nil :type (or null function))
   (done nil)
-
   (input (make-array 1 :element-type '(unsigned-byte 8))
          :type octet-vector)
   (input-start 0 :type (and fixnum (integer 0 *)))
   (input-index 0 :type (and fixnum (integer 0 *)))
   (input-end 0 :type (and fixnum (integer 0 *)))
-
   (output (make-array 1 :element-type '(unsigned-byte 8))
           :type octet-vector)
   (output-start 0 :type (and fixnum (integer 0 *)))
   (output-index 0 :type (and fixnum (integer 0 *)))
   (output-end 0 :type (and fixnum (integer 0 *)))
-
   ;; Checksums of various sorts.
   (checksum nil)
   (update-checksum nil :type (or null function))
-
   ;; Bit buffer.
   (bits 0 :type (unsigned-byte 32))
   (n-bits 0 :type (integer 0 32)))
@@ -1341,11 +1337,9 @@ the input and the number of bytes written to the output."
   (block-randomized-p nil)
   (rntogo 0 :type (unsigned-byte 32))
   (rntpos 0 :type (unsigned-byte 32))
-
   (100k-block-size 1 :type (integer 1 9))
   (small-decompression-p nil)
   (current-block-number 0)
-
   ;; For undoing the Burrows-Wheeler transform.  */
   (original-pointer 0)
   (t-position 0 :type (integer 0 (900000)))
@@ -1357,17 +1351,14 @@ the input and the number of bytes written to the output."
          :type (simple-array (unsigned-byte 32) (257)))
   (cftab-copy (make-array 257 :element-type '(unsigned-byte 32))
               :type (simple-array (unsigned-byte 32) (257)))
-
   ;; For undoing the Burrows-Wheeler transform (FAST).
   (tt (make-array 0 :element-type '(unsigned-byte 32))
       :type (simple-array (unsigned-byte 32) (*)))
-
   ;; Stored and calculated CRCs.
   (stored-block-crc 0 :type (unsigned-byte 32))
   (stored-combined-crc 0 :type (unsigned-byte 32))
   (calculated-block-crc #xffffffff :type (unsigned-byte 32))
   (calculated-combined-crc 0 :type (unsigned-byte 32))
-
   ;; Map of bytes used in block ("mapping table").
   (n-in-use 0 :type (integer 0 256))
   (in-use (make-array 256 :initial-element nil)
@@ -1377,7 +1368,6 @@ the input and the number of bytes written to the output."
   (in-use-16 0 :type (unsigned-byte 16))
   (seq-to-unseq (make-array 256 :element-type '(unsigned-byte 8))
                 :type (simple-array (unsigned-byte 8) (256)))
-
   ;; For decoding the MTF values.
   (mtfa (make-array +mtfa-size+ :element-type '(unsigned-byte 8))
         :type (simple-array (unsigned-byte 8) (#.+mtfa-size+)))
@@ -1391,7 +1381,6 @@ the input and the number of bytes written to the output."
                    :element-type '(unsigned-byte 8))
        :type (simple-array (unsigned-byte 8) (#.+bz-n-groups+ #.+bz-max-alpha-size+)))
   (mtf-continuation nil :type (or null function))
-
   (limit #1=(let ((w (make-array +bz-n-groups+)))
            (dotimes (i +bz-n-groups+ w)
              (setf (aref w i) (make-array +bz-max-alpha-size+
@@ -1403,7 +1392,6 @@ the input and the number of bytes written to the output."
         :type (simple-array t (#.+bz-n-groups+)))
   (min-lengths (make-array #.+bz-n-groups+ :element-type '(unsigned-byte 32))
                :type (simple-array (unsigned-byte 32) (#.+bz-n-groups+)))
-
   ;; Save variables for scalars in the decompression code.
   (i 0)
   (j 0)
@@ -1598,11 +1586,10 @@ the input and the number of bytes written to the output."
                   (bzip2-state-output-index state) index)
           nil)))))
 
-;; decompress.c has various logic relating to whether the user has
-;; chosen "small" decompression, which uses less memory.  We're just
-;; going to be memory-intensive and always pick the large option.  Maybe
-;; someday we can come back and add the small option.
-
+;; decompress.c has various logic relating to whether the user has chosen
+;; "small" decompression, which uses less memory.  We're just going to be
+;; memory-intensive and always pick the large option. Maybe someday we can
+;; come back and add the small option.
 (defun %bzip2-state-machine (state)
   (declare (type bzip2-state state))
   (declare (optimize (speed 3) (debug 1) (space 0) (compilation-speed 0)))

@@ -735,7 +735,6 @@ SPECIAL-OPERATOR groups."
         (internal-symbols     '()) (internal-symbols-length  0)
         (inherited-symbols    '()) (inherited-symbols-length 0)
         (external-symbols     '()) (external-symbols-length  0))
-
     (do-symbols* (sym package)
       (let ((status (symbol-status sym package)))
         (when (eq status :inherited)
@@ -747,7 +746,6 @@ SPECIAL-OPERATOR groups."
               (t
                (push sym external-symbols) (incf external-symbols-length))))
       :continue)
-
     (setf package-nicknames    (sort (copy-list package-nicknames)
                                      #'string<)
           package-use-list     (sort (copy-list package-use-list)
@@ -763,28 +761,22 @@ SPECIAL-OPERATOR groups."
           inherited-symbols    (sort inherited-symbols #'string<))
     `("" ;; dummy to preserve indentation.
       "Name: " (:value ,package-name) (:newline)
-
       "Nicknames: " ,@(common-seperated-spec package-nicknames) (:newline)
-
       ,@(when local-nicknames
           `("Package-local nicknames: " (:value ,local-nicknames) (:newline)))
-
       ,@(when (documentation package t)
           `("Documentation:" (:newline)
                              ,(documentation package t) (:newline)))
-
       "Use list: " ,@(common-seperated-spec
                       package-use-list
                       (lambda (package)
                         `(:value ,package ,(package-name package))))
       (:newline)
-
       "Used by list: " ,@(common-seperated-spec
                           package-used-by-list
                           (lambda (package)
                             `(:value ,package ,(package-name package))))
       (:newline)
-
       ,(display-link "present" present-symbols  present-symbols-length
                      :title
                      (format nil "All present symbols of package \"~A\""
@@ -798,7 +790,6 @@ SPECIAL-OPERATOR groups."
                        (:newline)
                        "(CLHS glossary entry for `present')"
                        (:newline)))
-
       (:newline)
       ,(display-link "external" external-symbols external-symbols-length
                      :title
@@ -852,7 +843,6 @@ SPECIAL-OPERATOR groups."
                      (format nil "All shadowed symbols of package \"~A\""
                              package-name)
                      :description nil))))
-
 
 (defmethod emacs-inspect ((pathname pathname))
   `(,(if (wild-pathname-p pathname)

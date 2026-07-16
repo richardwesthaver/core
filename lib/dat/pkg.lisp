@@ -503,9 +503,8 @@
 
 (defpkg :dat/zip
   (:nicknames :zip)
-  (:use :cl :std 
-   :io/proto :io/chunky :sb-ext :io/stream
-   :std/stream :std/macs :std/ht :io/flate))
+  (:use :cl :std :io)
+  (:export :zip-file :zip-entry))
 
 (defpkg :dat/parquet
   (:use :cl :std :obj/id :dat/json)

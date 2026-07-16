@@ -239,12 +239,9 @@
    (:file "condition")
    (:file "generic")
    (:file "util")
-   (:mod "opt"
-    :components 
-    ((:mod "sbcl"
-      :components ((:file "fndb")
-                   (:file "x86oid-vm")
-                   (:file "cpu-features")))))
+   (:file "fndb")
+   (:file "x86oid-vm")
+   (:file "cpu-features")
    (:file "common")
    (:mod "cipher"
     :components ((:file "cipher")
