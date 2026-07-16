@@ -80,15 +80,15 @@
 
 (defun cipher-stream-test-guts (cipher-name mode key input output
                                 &optional extra-args)
-  (let* ((out-stream (crypto:make-octet-output-stream))
-         (enc-stream (apply #'crypto:make-encrypting-stream
+  (let* ((out-stream (make-octet-output-stream))
+         (enc-stream (apply #'make-encrypting-stream
                             out-stream cipher-name mode key extra-args))
-         (in-stream (crypto:make-octet-input-stream output))
+         (in-stream (make-octet-input-stream output))
          (dec-stream (apply #'crypto:make-decrypting-stream
                             in-stream cipher-name mode key extra-args)))
     (write-byte (aref input 0) enc-stream)
     (write-sequence input enc-stream :start 1)
-    (let ((result (crypto:get-output-stream-octets out-stream)))
+    (let ((result (get-output-stream-octets out-stream)))
       (when (mismatch result output)
         (error "stream encryption failed for ~A on key ~A, input ~A, output ~A"
                cipher-name key input output)))
@@ -378,9 +378,7 @@
   `((:fortuna-test . ,'fortuna-test)
     (:generator-test . ,'generator-test)))
 
-
 ;;; Public key testing routines
-
 (defun rsa-oaep-encryption-test (name n e d input seed output)
   ;; Redefine oaep-encode to use a defined seed for the test instead of a random one
   (setf (symbol-function 'ironclad::oaep-encode)

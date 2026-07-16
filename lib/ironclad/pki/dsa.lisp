@@ -5,7 +5,7 @@
 
 ;;; class definitions
 (defclass dsa-key ()
-  ((group :initarg :group :reader group)))
+  ((group :initarg :group :reader key-group)))
 
 (defclass dsa-public-key (dsa-key)
   ((y :initarg :y :reader dsa-key-y :type integer)))
@@ -15,11 +15,11 @@
    (x :initarg :x :reader dsa-key-x :type integer)))
 
 (defun dsa-key-p (dsa-key)
-  (group-pval (group dsa-key)))
+  (group-pval (key-group dsa-key)))
 (defun dsa-key-q (dsa-key)
-  (group-qval (group dsa-key)))
+  (group-qval (key-group dsa-key)))
 (defun dsa-key-g (dsa-key)
-  (group-gval (group dsa-key)))
+  (group-gval (key-group dsa-key)))
 
 ;;; function definitions
 (defmethod make-public-key ((kind (eql :dsa))

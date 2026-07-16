@@ -559,9 +559,9 @@ bytes from the start."
       ((>= j bytes) sum)
     (setf sum (+ (aref octet-vec j) (ash sum 8)))))
 
-(defun integer-to-octets (bignum &optional (n-bits (integer-length bignum)))
-  "Return an octet-vector representation of BIGNUM using N-BITS number of bits."
-  (let* ((n-bytes (ceiling n-bits 8))
+(defun integer-to-octets (bignum &optional (bits (integer-length bignum)))
+  "Return an octet-vector representation of BIGNUM using BITS number of bits."
+  (let* ((n-bytes (ceiling bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8) (*)) octet-vec))
     (loop for i from (1- n-bytes) downto 0
@@ -576,10 +576,10 @@ BYTES number of bytes from the start."
   (loop for i from 0 below bytes
         sum (ash (aref octet-vec i) (* 8 i))))
 
-(defun integer-to-octets-le (bignum &optional (n-bits (integer-length bignum)))
-  "Return an octet-vector representation of BIGNUM in little-endian using N-BITS
+(defun integer-to-octets-le (bignum &optional (bits (integer-length bignum)))
+  "Return an octet-vector representation of BIGNUM in little-endian using BITS
 number of bits."
-  (let* ((n-bytes (ceiling n-bits 8))
+  (let* ((n-bytes (ceiling bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8)) octet-vec))
     (loop for i from 0 below n-bytes
@@ -587,14 +587,14 @@ number of bits."
           finally (return octet-vec))))
 
 ;; from ironclad
-(defun octets-to-integer* (octet-vec &key (start 0) end (big-endian t) n-bits)
+(defun octets-to-integer* (octet-vec &key (start 0) end (big-endian t) bits)
   (declare (type (simple-array (unsigned-byte 8) (*)) octet-vec)
            (optimize (speed 3) (space 0) (safety 1) (debug 0)))
   (let ((end (or end (length octet-vec))))
-    (multiple-value-bind (n-bits n-bytes)
+    (multiple-value-bind (bits n-bytes)
         (let ((size (- end start)))
-          (if n-bits
-              (values n-bits (min (ceiling n-bits 8) size))
+          (if bits
+              (values bits (min (ceiling bits 8) size))
               (values (* 8 size) size)))
       (let ((sum (if big-endian
                      (loop with sum = 0
@@ -604,13 +604,13 @@ number of bits."
                      (loop for i from start below (+ start n-bytes)
                            for j from 0 by 8
                            sum (ash (aref octet-vec i) j)))))
-        (ldb (byte n-bits 0) sum)))))
+        (ldb (byte bits 0) sum)))))
 
-(defun integer-to-octets* (bignum &key n-bits (big-endian t))
+(defun integer-to-octets* (bignum &key bits (big-endian t))
   (declare (optimize (speed 3) (space 0) (safety 1) (debug 0)))
-  (let* ((n-bits (or n-bits (integer-length bignum)))
-         (bignum (ldb (byte n-bits 0) bignum))
-         (n-bytes (ceiling n-bits 8))
+  (let* ((bits (or bits (integer-length bignum)))
+         (bignum (ldb (byte bits 0) bignum))
+         (n-bytes (ceiling bits 8))
          (octet-vec (make-array n-bytes :element-type '(unsigned-byte 8))))
     (declare (type (simple-array (unsigned-byte 8) (*)) octet-vec))
     (if big-endian

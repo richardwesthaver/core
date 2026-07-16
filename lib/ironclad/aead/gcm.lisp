@@ -5,7 +5,6 @@
 ;;; Code:
 (in-package :crypto)
 
-
 (defclass gcm (aead-mode)
   ((cipher :accessor gcm-cipher
            :initform nil)

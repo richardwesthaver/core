@@ -5,7 +5,7 @@
 
 ;;; class definitions
 (defclass elgamal-key ()
-  ((group :initarg :group :reader group)))
+  ((group :initarg :group :reader key-group)))
 
 (defclass elgamal-public-key (elgamal-key)
   ((y :initarg :y :reader elgamal-key-y :type integer)))
@@ -15,10 +15,10 @@
    (x :initarg :x :reader elgamal-key-x :type integer)))
 
 (defun elgamal-key-p (elgamal-key)
-  (group-pval (group elgamal-key)))
+  (group-pval (key-group elgamal-key)))
 
 (defun elgamal-key-g (elgamal-key)
-  (group-gval (group elgamal-key)))
+  (group-gval (key-group elgamal-key)))
 
 ;;; function definitions
 (defmethod make-public-key ((kind (eql :elgamal))

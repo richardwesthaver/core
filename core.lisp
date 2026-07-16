@@ -3,7 +3,9 @@
 ;; Top-level namespaces accessible to Core lisps.
 
 ;;; Code:
-(pkg:defpkg :core 
+(in-package :std-user)
+
+(defpkg :core
   (:use-reexport :std-lisp :log :io :obj :net :parse :dat :sb-ext :sb-debug :math
    :cli :skel :homer :mpk :krypt :packy :rdb :syn :cry :q :vc :box 
    :doc :dsp :pod :organ
@@ -14,18 +16,14 @@
 
 (in-package :core)
 
-(define-lisp-package :core)
+(defreadtable :core (:fuse :modern :std :shell :graph :math :tempo :time :organ :tensor))
 
-(defreadtable :core
-  (:fuse :modern :std :shell :graph :math :tempo :time :organ :tensor))
+(define-lisp-package :core)
 
 (pkg:defpkg :core/user
   (:nicknames :user)
-  (:use :std-lisp :core)
+  (:use :core-lisp)
   (:import-from :tools :with-sbcl))
-
-(eval-when (:compile-toplevel)
-  (setq *default-package* "USER"))
 
 (defconfig core-config (ast)
   (skel homer mpk krypt packy editor))
@@ -48,6 +46,10 @@
     (setf (ast c) nil)
     (if build (build c) c)))
   
+(defmethod find-config ((self (eql :core)) &key load)
+  (let ((path (or (xdg-config-file :core) (xdg-config-file :init))))
+    (if load (load-config :core path) path)))
+
 (defmethod load-ast ((self core-config))
   (with-slots (ast) self
     (if (formp ast)
@@ -71,15 +73,21 @@
             *editor-config* editor))
   self)
 
+(defun user-init-file () 
+  (or (xdg-config-file "rc") (probe-file (merge-homedir-pathnames "init.lisp"))))
+
+(defun sys-init-file () 
+  (or (probe-file #p"/etc/rc") (probe-file #p"/etc/init.lisp")))
+
 (define-multi-main dispatch-core
     (make-toplevel-init
      :package :user
-     :userinit (lambda () (or (xdg-config-file :core) (xdg-config-file :init)))
-     :sysinit (lambda () #p"/etc/corerc"))
+     :userinit #'user-init-file
+     :sysinit #'sys-init-file)
   (:skel (skel/cli::start-skel))
   (:homer (skel/homer/cli::start-homer))
   (:mpk (skel/mpk/cli::start-mpk)))
 
-(defmethod init ((self (eql :core)) &key (readtable :core) config)
+(defmethod init ((self (eql :core)) &key (readtable :core) (config (find-config :core)))
   (setq *readtable* (find-readtable readtable))
   (when config (load-config :core config :build t)))

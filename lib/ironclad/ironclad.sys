@@ -284,28 +284,7 @@
                  (:file "curve25519")
                  (:file "ed25519"))))
   :provide
-  ((:tests 
-    :description "Ironclad Tests"
-    :components
-    ((:mod "tests"
-      :components
-      ((:pkg "pkg")
-       (:file "pkcs5")
-       (:file "aead")
-       (:file "argon2d")
-       (:file "argon2id")
-       (:file "argon2i")
-       (:file "bcrypt")
-       (:file "ciphers")
-       (:file "digests")
-       (:file "hmac-kdf")
-       (:file "macs")
-       (:file "modes")
-       (:file "padding")
-       (:file "prng")
-       (:file "pki")
-       (:file "scrypt")))))
-   (:proto :cipher
+  ((:proto :cipher
     :functions 
     (make-cipher list-all-ciphers encrypt-in-place decrypt-in-place make-encrypting-stream make-decrypting-stream)
     :predicates (cipher-supported-p)
@@ -353,7 +332,6 @@
    (:sys :ironclad/cipher/arcfour :components ((:file "cipher/arcfour")))
    (:sys :ironclad/cipher/aria :components ((:file "cipher/aria")))
    (:sys :ironclad/cipher/blowfish :components ((:file "cipher/blowfish")))
-   (:sys :ironclad/cipher/blowfish :components ((:file "cipher/")))
    (:sys :ironclad/cipher/camellia :components ((:file "cipher/camellia")))
    (:sys :ironclad/cipher/cast5 :components ((:file "cipher/cast5")))
    (:sys :ironclad/cipher/xsalsa20 :components ((:file "cipher/xsalsa20")))
@@ -425,7 +403,7 @@
      :require (:ironclad/mac/cmac))
     (:sys :ironclad/aead/etm :components ((:file "aead/etm")))
     (:sys :ironclad/aead/gcm 
-     :components ((:file "gcm")) 
+     :components ((:file "aead/gcm")) 
      :require (:ironclad/mac/gmac))
     (:sys :ironclad/kdf/bcrypt
      :components ((:file "kdf/bcrypt"))
@@ -443,4 +421,45 @@
     (:sys :ironclad/pki/secp256k1 :components ((:file "pki/secp256k1")))
     (:sys :ironclad/pki/secp256r1 :components ((:file "pki/secp256r1")))
     (:sys :ironclad/pki/secp384r1 :components ((:file "pki/secp384r1")))
-    (:sys :ironclad/pki/secp521r1 :components ((:file "pki/secp521r1")))))
+    (:sys :ironclad/pki/secp521r1 :components ((:file "pki/secp521r1")))
+    (:sys :ironclad/* 
+     :require 
+     (:ironclad/cipher/camellia :ironclad/cipher/blowfish :ironclad/cipher/aria :ironclad/cipher/arcfour
+      :ironclad/cipher/des :ironclad/cipher/xchacha :ironclad/cipher/xsalsa20 :ironclad/cipher/cast5
+      :ironclad/cipher/kuznyechik :ironclad/cipher/keystream :ironclad/cipher/kalyna :ironclad/cipher/idea
+      :ironclad/cipher/rc2 :ironclad/cipher/rc5 :ironclad/cipher/rc6 :ironclad/cipher/misty1
+      :ironclad/cipher/sosemanuk :ironclad/cipher/sm4 :ironclad/cipher/serpent :ironclad/cipher/seed
+      :ironclad/cipher/twofish :ironclad/cipher/threefish :ironclad/cipher/tea :ironclad/cipher/square
+      :ironclad/cipher/xtea :ironclad/cipher/xor :ironclad/digest/blake2s :ironclad/digest/adler32 
+      :ironclad/digest/md2 :ironclad/digest/jh :ironclad/digest/groestl :ironclad/digest/crc24
+      :ironclad/digest/sha1 :ironclad/digest/ripemd-160 :ironclad/digest/ripemd-128 :ironclad/digest/md4
+      :ironclad/digest/kupyna :ironclad/digest/whirlpool :ironclad/digest/streebog :ironclad/digest/sm3
+      :ironclad/digest/skein :ironclad/digest/tiger :ironclad/digest/tree-hash
+      :ironclad/mac/cmac :ironclad/mac/skein-mac :ironclad/mac/blake2s-mac :ironclad/mac/blake2-mac 
+      :ironclad/mac/siphash :ironclad/mac/poly1305 :ironclad/mac/gmac :ironclad/mac/cmac
+      :ironclad/prng/fortuna
+      :ironclad/aead/eax :ironclad/aead/gcm :ironclad/aead/etm :ironclad/kdf/bcrypt :ironclad/kdf/scrypt
+      :ironclad/pki/ed448 :ironclad/pki/curve448 :ironclad/pki/elgamal :ironclad/pki/dsa :ironclad/pki/rsa
+      :ironclad/pki/secp256k1 :ironclad/pki/secp256r1 :ironclad/pki/secp384r1 :ironclad/pki/secp521r1))
+    (:tests 
+     :require (:ironclad/prng/fortuna)
+     :description "Ironclad Tests"
+     :components
+     ((:mod "tests"
+       :components
+       ((:pkg "pkg")
+        (:file "pkcs5")
+        (:file "aead")
+        (:file "argon2d")
+        (:file "argon2id")
+        (:file "argon2i")
+        (:file "bcrypt")
+        (:file "ciphers")
+        (:file "digests")
+        (:file "hmac-kdf")
+        (:file "macs")
+        (:file "modes")
+        (:file "padding")
+        (:file "prng")
+        (:file "pki")
+        (:file "scrypt")))))))
