@@ -646,6 +646,9 @@ the number having BYTES octets (defaulting to 4)."
   "Return an octet-vector with initial contents BYTES."
   (make-octets (length bytes) :initial-contents bytes))
 
+(declaim (ftype (function (array-index) octet-vector) make-octet-vector))
+(definline make-octet-vector (len) (make-array (the array-index len) :element-type 'octet))
+
 (defun signed-to-unsigned (value size)
   "Return the unsigned representation of a signed byte with a given size."
   (ldb (byte size 0) value))

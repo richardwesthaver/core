@@ -734,7 +734,8 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :defsham :save))
 
 (defpkg :std/stream
-  (:use :cl :sb-gray :std/type :std/meta)
+  (:use :cl :std/type :std/meta)
+  (:use-reexport :sb-gray)
   (:documentation "Standard stream definitions.")
   (:import-from :std/type :non-negative-integer :positive-integer)
   (:import-from :std/sym :with-gensyms)
@@ -1023,8 +1024,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
 
 (defpkg :std/bit
   (:documentation "Standard bit manipulation utilities.")
-  (:use :cl :std/macs)
-  (:import-from :std/type :octet :octet-vector :simple-octet-vector)
+  (:use :cl :std/macs :std/prim :std/type)
   (:mix :sb-sys)
   (:export
    :+hex-digits+
@@ -1069,6 +1069,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :hexchar-to-int
    :make-octets
    :octets
+   :make-octet-vector
    :flags-case))
 
 (defpkg :std/io

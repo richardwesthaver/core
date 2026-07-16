@@ -90,7 +90,7 @@
    :reset-static-stream))
 
 (defpkg :io/fast
-  (:use :cl :std :io/proto :io/stream)
+  (:use :cl :std :io/proto :io/stream :sb-gray)
   (:import-from :io/static :make-static-vector)
   (:import-from :std/macs :once-only)
   (:export

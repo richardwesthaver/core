@@ -5,14 +5,7 @@
 ;;; Code:
 (in-package :io/fast)
 
- ;; Vector buffer
-
 (defvar *default-output-buffer-size* 16)
-
-(declaim (ftype (function (array-index) octet-vector) make-octet-vector)
-         (inline make-octet-vector))
-(defun make-octet-vector (len)
-  (make-array (the array-index len) :element-type 'octet))
 
 (declaim (inline output-buffer-vector output-buffer-fill output-buffer-len))
 (defstruct output-buffer
@@ -240,9 +233,8 @@ all data has been flushed to the stream."
        ,@body)))
 
 ;; READx and WRITEx
-;;; WRITE-UNSIGNED-BE, READ-UNSIGNED-BE, etc taken from PACK, which is
-;;; in the public domain.
-
+;; WRITE-UNSIGNED-BE, READ-UNSIGNED-BE, etc taken from PACK, which is
+;; in the public domain.
 (defmacro write-unsigned-be (value size buffer)
   (once-only (value buffer)
     `(progn
@@ -349,7 +341,6 @@ all data has been flushed to the stream."
   (declare (type (unsigned-byte 8) value))
   (fast-write-byte value buffer))
 
-
 (defun read8 (buffer)
   (unsigned-to-signed (fast-read-byte buffer) 1))
 
@@ -367,11 +358,13 @@ all data has been flushed to the stream."
 (setf (symbol-function 'readu8-be) #'readu8)
 
 ;;; Fast Streams
-(defclass fast-io-stream (io-stream sb-gray:fundamental-stream) ())
+(defclass fast-io-stream (io-stream fundamental-stream) ())
 
-(defmethod stream-file-position ((stream fast-io-stream))
+(defmethod stream-file-position ((stream fast-io-stream) &optional spec)
   (with-slots (buffer) stream
-    (buffer-position buffer)))
+    (if spec
+        (setf (buffer-position buffer) spec)
+        (buffer-position buffer))))
 
 (defmethod open-stream-p ((stream fast-io-stream))
   (slot-value stream 'openep))
@@ -402,10 +395,9 @@ all data has been flushed to the stream."
   (with-slots (buffer) stream
     (fast-write-byte byte buffer)))
 
-(defmethod stream-write-sequence ((stream fast-output-stream) sequence start end
-                                  &key &allow-other-keys)
+(defmethod stream-write-sequence ((stream fast-output-stream) sequence &optional (start 0) end)
   (with-slots (buffer) stream
-    (fast-write-sequence sequence buffer start end))
+    (fast-write-sequence sequence buffer start (or end (length sequence))))
   sequence)
 
 (defun finish-output-stream (stream)
@@ -443,10 +435,6 @@ all data has been flushed to the stream."
       (when-let ((stream (input-buffer-stream buffer)))
         (stream-element-type stream)))))
 
-(defmethod (setf stream-file-position) (new-pos (stream fast-input-stream))
-  (with-slots (buffer) stream
-    (setf (buffer-position buffer) new-pos)))
-
 (defmethod peek-byte ((stream fast-input-stream) &optional peek-type (eof-error-p t) eof-value)
   (with-slots (buffer) stream
     (fast-peek-byte buffer peek-type eof-error-p eof-value)))
@@ -455,10 +443,9 @@ all data has been flushed to the stream."
   (with-slots (buffer) stream
     (fast-read-byte buffer)))
 
-(defmethod stream-read-sequence ((stream fast-input-stream) sequence start end
-                                 &key &allow-other-keys)
+(defmethod stream-read-sequence ((stream fast-input-stream) sequence &optional (start 0) end)
   (with-slots (buffer) stream
-    (fast-read-sequence sequence buffer start end)))
+    (fast-read-sequence sequence buffer start (or end (length sequence)))))
 
 (defmethod close ((stream fast-input-stream) &key abort)
   (declare (ignore abort))
