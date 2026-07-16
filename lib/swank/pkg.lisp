@@ -137,6 +137,7 @@
     :swank/rpc
     :std/macs
     :std/list
+    :std/string
     :std/defsys
     :std/path
     :std/os)

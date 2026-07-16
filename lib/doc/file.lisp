@@ -159,7 +159,7 @@ CODE
           (name self) (unless (sequence:emptyp (description self)) (description self))))
 
 (defun heading-line-p (string)
-  (uiop:string-prefix-p #.(make-string +min-file-heading-level+ :initial-element #\;) string))
+  (string-prefix-p #.(make-string +min-file-heading-level+ :initial-element #\;) string))
 
 (defun read-comment-line (stream)
   "Read a comment line from STREAM. Returns two values: the uncommented

@@ -534,13 +534,16 @@ CL:WITH-STANDARD-IO-SYNTAX. Forms are evaluated in the calling thread."
   (if wait (join-worker worker)
       worker))
 
-(defmethod run-object ((self worker) &key)
+(defmethod exec ((self worker))
   (run-worker self))
+
+(defmethod run-object ((self worker) &key)
+  (exec self))
 
 (defun run-with-worker (worker object &key wait)
   (run-worker worker :bind object :wait wait))
 
-(definline thread= (a b) (and (sb-thread:thread-alive-p a) (sb-thread:thread-alive-p b) 
+(definline thread= (a b) (and (eql (sb-thread:thread-alive-p a) (sb-thread:thread-alive-p b) )
                               (= (thread-os-tid a) (thread-os-tid b))))
 
 (definline worker= (a b) 

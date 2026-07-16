@@ -38,7 +38,7 @@ to initialize the instance with custom configuration."
 
 (defun destroy-db-raw (path &optional (opt (rocksdb-options-create)))
   (with-errptr* (err 'destroy-db-error :db path)
-    (rocksdb-destroy-db opt (namestring (uiop:ensure-directory-pathname path)) err)
+    (rocksdb-destroy-db opt (namestring (probe-directory path)) err)
     (rocksdb-options-destroy opt)))
 
 (defun get-metadata-raw (db &optional cf)

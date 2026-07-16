@@ -544,16 +544,16 @@ DATA must be either a string (which is then UTF-8 encoded) or a byte vector."))
               (let ((type (pathname-type file-name)))
                 (cond
                   ((null type) stream)
-                  ((uiop:string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
-                  ((uiop:string-suffix-p type "gz") (make-compression-stream stream direction :gzip))))))
+                  ((string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
+                  ((string-suffix-p type "gz") (make-compression-stream stream direction :gzip))))))
          (:input 
           (if (null file-name)
               stream
               (let ((type (pathname-type file-name)))
                 (cond 
                   ((null type) stream) 
-                  ((uiop:string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
-                  ((uiop:string-suffix-p type "gz") (make-compression-stream stream direction :gzip)))))))))
+                  ((string-suffix-p type "zst") (make-compression-stream stream direction :zstd))
+                  ((string-suffix-p type "gz") (make-compression-stream stream direction :gzip)))))))))
     ((nil) stream)))
 
 (defun open-tar-file (stream &key (direction :input)

@@ -264,7 +264,7 @@
 (gen-string-to-xri string-to-iri parse-iri-string-rfc3987 'iri)
 
 (defun parse-path (path-string escape)
-  (do* ((xpath-list (uiop:split-string path-string :separator '(#\/)))
+  (do* ((xpath-list (ssplit #\/ path-string))
         (path-list
          (let (#+mswindows temp #+mswindows c)
            (cond ((string= "" (car xpath-list))
@@ -282,7 +282,7 @@
      elseif (cdr (setq segments
                    (if* (string= "" (car pl))
                       then '("")
-                      else (uiop:split-string (car pl) :separator '(#\:)))))
+                      else (ssplit #\: (car pl)))))
        then ;; there is a param
             (setf (car pl)
               (mapcar #'(lambda (s)

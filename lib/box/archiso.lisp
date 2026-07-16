@@ -119,7 +119,7 @@ profile/
         (with-open-file (bootstrap (format nil "packages.~A" (machine-target-name (slot-value self 'target))) :direction :output :if-exists :supersede)
           (dolist (p (slot-value self 'packages))
             (write-line (string-downcase p) bootstrap)))
-        (uiop:copy-file (slot-value self 'pacman-conf) "pacman.conf")
+        (copy-file (slot-value self 'pacman-conf) "pacman.conf")
         (with-open-file (profiledef "profiledef.sh" :direction :output :if-exists :supersede)
           (write-line "#!/usr/bin/env bash" profiledef)
           ;; (write-line "# shellcheck disable=SC2634" profiledef)

@@ -104,7 +104,7 @@
 
 (defun delete-temporary-files (&key (stale-seconds 0))
   (let ((now (get-universal-time)))
-    (mapc #'uiop:delete-file-if-exists
+    (mapc #'probe-delete-file
           (remove-if-not (lambda (file)
                            (< stale-seconds (- now (file-write-date file))))
                          (uiop:directory-files *smart-buffer-tmp*)))))

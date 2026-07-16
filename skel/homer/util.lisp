@@ -38,7 +38,7 @@ the last modified timestamp of each file (SRC . HOME) or NIL."
 
 (defun homer-copy (input output)
   (ensure-directories-exist output :verbose t)
-  (uiop:copy-file input output))
+  (copy-file input output))
 
 (defun homer-maybe-push (file)
   (let ((form (compare-home-file file)))

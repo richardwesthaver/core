@@ -168,6 +168,7 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Uninstall object SELF."))
 
 (defverb build (self &key &allow-other-keys))
+;; TODO 2026-07-15: 
 (defgeneric build-from (self from &key &allow-other-keys))
 
 (definline init* (&rest keys)
@@ -179,7 +180,8 @@ function NAME and be skipped for (setf NAME)."
 
 ;;; *-OBJECT
 (defgeneric run-object (self &key &allow-other-keys)
-  (:documentation "Explicitly run the object SELF."))
+  (:documentation "Explicitly run the object SELF.")
+  (:method ((self t) &key) (exec self)))
 
 (defgeneric write-object (self stream &key &allow-other-keys)
   (:documentation "Write object SELF to STREAM.")

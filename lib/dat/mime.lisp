@@ -93,7 +93,7 @@ If the file does not exist or the platform is not unix, NIL is returned."
   #+unix
   (when (probe-file pathname)
     (let ((output (uiop:run-program (list "file" #+darwin "-bI" #-darwin "-bi"
-                                                 (uiop:native-namestring pathname))
+                                                 (namestring pathname))
                                     :output :string)))
       (with-output-to-string (mime)
         (loop for c across output

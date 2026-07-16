@@ -50,6 +50,6 @@
 (defun tree-sitter-language-files ()
   (let ((res))
     (sb-ext:map-directory 
-     (lambda (dir) (push (uiop:directory-files dir "*.json") res)) 
+     (lambda (dir) (push (directory (merge-pathnames "*.json" dir)) res)) 
      *tree-sitter-language-directory*)
     (flatten res)))

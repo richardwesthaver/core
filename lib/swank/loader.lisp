@@ -75,9 +75,6 @@ operating system, and hardware architecture."
                                 implementation version.")))
       (format nil "~(~@{~a~^-~}~)" "core" version os arch))))
 
-(defun string-starts-with (string prefix)
-  (string-equal string prefix :end1 (min (length string) (length prefix))))
-
 (defun slime-version-string ()
   "Return a string identifying the SLIME version.
 Return nil if nothing appropriate is available."

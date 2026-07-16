@@ -744,7 +744,7 @@ to the appropriate home directory."
     (declare (ignore ed))
     (if (zerop (length str))
         (values completions (reduce 'max (mapcar 'length completions)))
-        (when-let ((matches (flatten (mapcar (lambda (x) (when (uiop:string-prefix-p str x) x)) completions))))
+        (when-let ((matches (flatten (mapcar (lambda (x) (when (string-prefix-p str x) x)) completions))))
           (values matches (reduce 'max (mapcar 'length matches)))))))
 
 (defun lisp-complete (string editor)

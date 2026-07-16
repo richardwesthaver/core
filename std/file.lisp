@@ -500,7 +500,19 @@ it only contains spaces or tab characters."
         (probe-delete-directory d :recursive recursive)
         (sb-ext:delete-directory d :recursive recursive))))
 
+(defun concatenate-files (inputs output)
+  "create a new OUTPUT file the contents of which a the concatenate of the INPUTS files."
+  (with-open-file (o output :element-type '(unsigned-byte 8)
+                            :direction :output :if-exists :rename-and-delete)
+    (dolist (input inputs)
+      (with-open-file (i input :element-type '(unsigned-byte 8)
+                               :direction :input :if-does-not-exist :error)
+        (copy-stream i o :element-type '(unsigned-byte 8))))))
+
+(defun copy-file (input output)
+  (concatenate-files (list input) output))
+
 (defun move-file (input output)
   "Move file INPUT to OUTPUT."
-  (progn (uiop:copy-file input output)
+  (progn (copy-file input output)
          (delete-file input)))
