@@ -19,14 +19,14 @@
      (unwind-protect (progn ,@body)
        (sb-ext:delete-directory *tmp* :recursive t))))
 
-(defmacro with-tmp-file ((stream-var &key (name (string (gensym "tmp")))
+(defmacro with-tmp-file ((stream-var &key name
                                           type
                                           (directory *default-tmp-directory*)
                                           (direction :output)
                                           (if-exists :supersede)
                                           (element-type ''character))
                          &body body)
-  `(let ((*tmp* (make-pathname :name ,name :type ,type :directory ,(namestring directory))))
+  `(let ((*tmp* (make-pathname :name (or ,name (string (gensym "tmp"))) :type ,type :directory ,(namestring directory))))
      (with-open-file (,stream-var *tmp* :direction ,direction :element-type ,element-type
                                   :if-exists ,if-exists)
        (unwind-protect (progn ,@body)

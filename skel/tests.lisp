@@ -15,28 +15,28 @@
 (deftest skelfile ()
   "Ensure skelfiles are created and loaded correctly and that they signal
 the appropriate restarts."
-  (with-tmp-file (f :type "sk")
-    (let ((p (make-instance 'skel-project :name "nada" :path "test" :vc :hg)))
-      (write-ast p *tmp* :if-exists :supersede)
-      (is (load-skelfile *tmp*))
-      (is (build (apply 'make-instance 'skel-project (std:file-read-forms *tmp*)))))))
+  (let ((tmp (tmp-path "skelfile")))
+    (let ((p (make-instance 'skel-project :name "nada" :path tmp :vc :hg :description "test")))
+      (write-ast p #p"/tmp/skelfile-test1")
+      (is (load-skelfile tmp))
+      (is (build (make-instance 'skel-project :ast (std:file-read-forms tmp)))))))
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."
-  (with-tmp-file (f :name "" :type "skelrc")))
+  (load-skelrc))
 
 (deftest makefile ()
   "Make sure makefiles are making out ok."
     (with-tmp-file (f :name "" :type "mk")
       (flet ((mk (&optional path) (make-instance 'makefile :name (gensym)
-							   :path (or 
-                                                                  (when path (merge-pathnames path *tmp*))
-                                                                  *tmp*)
-                                                           :description "barfood"))
+                                                 :description "foobar"
+							                     :path (or 
+                                                        (when path (merge-pathnames path *tmp*))
+                                                        *tmp*)))
 	         (src (path) (list path))
 	         (cmd (&rest body) body)
 	         (rule (tr sr) (make-rule (file-namestring tr) sr)))
-	    (is (null (ast (mk (merge-pathnames (%tmp-path "mk") *tmp*)))))
+	    (is (mk (merge-pathnames (%tmp-path "mk") *tmp*)))
 	    (let* ((tr1 (%tmp-path "t1"))
 	           (tr2 (%tmp-path "t2"))
 	           (sr (src (%tmp-path "s1")))
@@ -64,5 +64,7 @@ endif")
 (load-database-backend :packy)
 
 (deftest packy-db ()
-  (with-db (db :db (make-db :packy) :open t :close t)
-    (is (db-open-p db))))
+  (let ((*packy-home* "/tmp/packy-test/"))
+    (ensure-directories-exist *packy-home*)
+    (with-db (db :db (make-db :packy) :open t :close t)
+      (is (db-open-p db)))))

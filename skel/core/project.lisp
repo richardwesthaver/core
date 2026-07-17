@@ -285,7 +285,7 @@ directory.")
   self)
 
 ;; ast -> file
-(defmethod write-ast ((self skel-project) path
+(defmethod write-ast ((self skel-project) (path pathname)
 			          &key (nullp nil) (comment t) (pretty t)
 			               (if-exists :error))
   (build self :nullp nullp)
@@ -342,9 +342,9 @@ directory.")
     (make self x)
     (funcall skel/core::*default-clean-function* self)))
 
-(defmethod build ((self skel-project) &key)
-  (loop for c across (components self)
-	    collect (build c)))
+;; (defmethod build ((self skel-project) &key)
+;;   (loop for c across (components self)
+;; 	    collect (build c)))
 
 (defmethod project-compile ((self skel-project) &key)
   (loop for c across (components self)

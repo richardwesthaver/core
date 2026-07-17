@@ -38,7 +38,7 @@
   (val (make-mk-val) :type mk-val))
 
 ;; https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
-(defclass makefile (project-metadata id)
+(defclass makefile (project-metadata id ast)
   ((directives :initform (make-array 0 :adjustable t :fill-pointer 0)
 	       :type (vector list) :accessor mk-directives)
    (variables :initform (make-hash-table)

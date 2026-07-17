@@ -66,7 +66,8 @@
    #:skel-service))
 
 (defpkg :skel/comp/make
-  (:use :std-lisp :skel/core :project)
+  (:use :std-lisp :skel/core :project :obj)
+  (:import-from :doc :make-source-header-comment)
   (:export
    :*default-makefile* :*makefile-extension* 
    :*mk-magic-vars* :*mk-command-prefixes*

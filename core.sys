@@ -20,6 +20,6 @@
     :parse/tests :pod/tests :rt/tests :rdb/tests
     :dsp/tests :cry/tests :io/tests :net/tests 
     :vc/tests :cli/tests :q/tests :blas/tests
-    :skel/tests)
+    :ironclad/tests :skel/tests)
    :components nil)
   (:bin :core :package :core :toplevel "dispatch-core")))
