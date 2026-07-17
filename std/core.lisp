@@ -8,6 +8,7 @@
 
 ;;; System Paths
 (defun user-config-path () (funcall sb-ext:*userinit-pathname-function*))
+(defun sys-config-path () (funcall sb-ext:*userinit-pathname-function*))
 
 (defmethod std/meta:init ((self (eql :user)) &key (load t))
   (when load (load (user-config-path))))

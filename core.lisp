@@ -73,12 +73,6 @@
             *editor-config* editor))
   self)
 
-(defun user-init-file () 
-  (or (xdg-config-file "rc") (probe-file (merge-homedir-pathnames "init.lisp"))))
-
-(defun sys-init-file () 
-  (or (probe-file #p"/etc/rc") (probe-file #p"/etc/init.lisp")))
-
 (define-multi-main dispatch-core
     (make-toplevel-init
      :package :user

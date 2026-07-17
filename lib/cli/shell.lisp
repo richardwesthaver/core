@@ -185,8 +185,8 @@ An escaped form with parens like the following works fine:
 
 ;;;; Toplevel
 (defun make-toplevel-init (&key (package *package*)
-                                (userinit #'sb-impl::userinit-pathname)
-                                (sysinit #'sb-impl::sysinit-pathname)
+                                (userinit #'user-init-file)
+                                (sysinit #'sys-init-file)
                                 (default #'sb-impl::toplevel-init))
   "Default toplevel initializer - wraps SBCL init when DEFAULT is T."
   (setq *package* (find-package package)

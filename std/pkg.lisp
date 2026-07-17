@@ -1556,6 +1556,8 @@ useful in a variety of contexts.")
    :fd-zero :unix-stat :unix-fstat :unix-lstat
    :fd-type :syscall-type :syscall :syscall*
    :int-syscall :type-syscall :void-syscall
+   :user-init-file
+   :sys-init-file
    :*user-fasl-cache*
    :user-fasl-cache
    :ensure-fasl-cache-file

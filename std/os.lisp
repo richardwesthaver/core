@@ -354,6 +354,12 @@ match."
           (values ret (probe-file ret)))
         (values dir (probe-file dir)))))
 
+(defun user-init-file () 
+  (or (xdg-config-file "rc") (probe-file (merge-homedir-pathnames "init.lisp"))))
+
+(defun sys-init-file () 
+  (or (probe-file #p"/etc/rc") (probe-file #p"/etc/init.lisp")))
+
 ;;; user-add
 (defun user-add (name &key shell home comment base gid uid system groups (defaults t) (output t))
   (let ((useradd (probe-file "/bin/useradd")))

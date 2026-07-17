@@ -4,6 +4,7 @@
 
 ;;; Code:
 (in-package :skel/cli)
+
 (init :commands :name :skel)
 
 (define-command-type rule (&optional 
@@ -151,9 +152,8 @@
      :killring (xdg-data-dir :skel "killring"))
     (cli/shell:make-toplevel-init
      :package :sk-user
-     :userinit (lambda () (or (xdg-config-file :core) 
-                              (merge-homedir-pathnames ".config/corerc") 
-                              (merge-homedir-pathnames ".corerc"))))))
+     :userinit #'user-init-file
+     :sysinit #'sys-init-file)))
 
 (defmain start-skel (:package :sk-user :readtable :shell :commands :skel :cli :skel)
   (init :skel)
