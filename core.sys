@@ -2,7 +2,7 @@
 (defsys :core
   "The top-level system of the Core project.
 Includes Skel and all core library systems. The test system includes all test
-modules defined in this project (including alien, ironclad, etc).
+modules defined in this project.
 
 Benchmarks and examples are provided in the [[vc:demo][demo]] project and a suite of Core
 extensions in the [[vc:shed][shed]]."
