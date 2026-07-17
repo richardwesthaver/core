@@ -14,6 +14,7 @@
 (defsuite :rdb)
 (in-suite :rdb)
 (setq rt:*compile-tests* nil)
+(load-alien :rocksdb)
 (load-database-backend :rdb)
 (setq *temp-db-destroy* t)
 

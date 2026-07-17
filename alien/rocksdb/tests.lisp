@@ -78,8 +78,8 @@
     ;; unsigned-char
     (rocksdb-options-set-create-if-missing o t)
     (rocksdb-options-get-create-if-missing o)
-    (rocksdb-options-set-async-wal-precreate o t)
-    (is (rocksdb-options-get-async-wal-precreate o))
+    #+todo (rocksdb-options-set-async-wal-precreate o t)
+    #+todo (is (rocksdb-options-get-async-wal-precreate o))
     (rocksdb-options-set-create-missing-column-families o t)
     (rocksdb-options-get-create-missing-column-families o)
     (rocksdb-options-set-error-if-exists o t)

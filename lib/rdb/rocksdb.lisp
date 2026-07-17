@@ -438,9 +438,8 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 
 (defun transaction-name-raw (txn)
   (with-errptr* (e 'rdb-alien-error)
-    (with-alien ((len size-t))
-      (let ((name (rocksdb-transaction-get-name txn (addr len)))
-            (ret (make-octets len)))
+    (multiple-value-bind (name len) (rocksdb-transaction-get-name txn)
+      (let ((ret (make-octets len)))
         (octets-to-string (clone-octets-from-alien name ret len))))))
 
 (defun set-transaction-name-raw (txn name)
@@ -451,19 +450,19 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 
 (defsetf transaction-name-raw set-transaction-name-raw)
 
+#+todo
 (defun transaction-get-raw (txn key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-txn-raw (txn e :key key)
-    (with-alien ((vlen size-t))
-      (if pinned
-          (rocksdb-transaction-get-pinned txn opts %key %klen e)
-          (rocksdb-transaction-get txn opts %key %klen (addr vlen) e)))))
+    (if pinned
+        (rocksdb-transaction-get-pinned txn opts %key %klen e)
+        (rocksdb-transaction-get txn opts %key %klen e))))
 
+#+!todo
 (defun transaction-get-cf-raw (txn cf key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-txn-raw (txn e :key key :cf cf)
-    (with-alien ((vlen size-t))
-      (if pinned
-          (rocksdb-transaction-get-pinned-cf txn opts cf %key %klen e)
-          (rocksdb-transaction-get-cf txn opts cf %key %klen (addr vlen) e)))))
+    (if pinned
+        (rocksdb-transaction-get-pinned-cf txn opts cf %key %klen e)
+        (rocksdb-transaction-get-cf txn opts cf %key %klen e))))
 
 (defun transaction-delete-raw (txn key)
   (with-txn-raw (txn e :key key)

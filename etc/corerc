@@ -1,5 +1,0 @@
-;;; corerc --- core init file -*- mode:lisp -*-
-(in-package :user)
-;; (check-logical-hosts)
-;; (setq *verbose* t)
-(init* :xdg)

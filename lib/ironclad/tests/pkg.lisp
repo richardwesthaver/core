@@ -117,7 +117,7 @@
   (let* ((mode (if (= 1 (crypto:block-length cipher-name)) :stream :ctr))
          (cipher (crypto:make-cipher cipher-name :key key :mode mode :initialization-vector iv))
          (buffer (make-array 1000 :element-type '(unsigned-byte 8) :initial-element 0)))
-    (crypto:keystream-position cipher 100)
+    (crypto::keystream-position cipher 100)
     (crypto:encrypt-in-place cipher buffer :start 100 :end 213)
     (crypto:keystream-position cipher 500)
     (crypto:encrypt-in-place cipher buffer :start 500 :end 1000)

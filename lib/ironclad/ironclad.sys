@@ -339,9 +339,7 @@
    (:sys :ironclad/cipher/des :components ((:file "cipher/des")))
    (:sys :ironclad/cipher/idea :components ((:file "cipher/idea")))
    (:sys :ironclad/cipher/kalyna :components ((:file "cipher/kalyna")))
-   (:sys :ironclad/cipher/keystream 
-    :components ((:file "cipher/kalyna"))
-    :require (:ironclad/cipher/chacha :ironclad/cipher/salsa20))
+   (:sys :ironclad/cipher/keystream :components ((:file "cipher/keystream")))
     (:sys :ironclad/cipher/kuznyechik :components ((:file "cipher/kuznyechik")))
     (:sys :ironclad/cipher/misty1 :components ((:file "cipher/misty1")))
     (:sys :ironclad/cipher/rc2 :components ((:file "cipher/rc2")))
@@ -410,7 +408,7 @@
      :require (:ironclad/cipher/blowfish :ironclad/digest/sha512))
     (:sys :ironclad/kdf/scrypt
      :components ((:file "kdf/scrypt"))
-     :require (:ironclad/cipher/salsa20 :ironclad/digest/sha256))
+     :require (:ironclad/digest/sha256))
     (:sys :ironclad/pki/dsa :components ((:file "pki/dsa")))
     (:sys :ironclad/pki/rsa :components ((:file "pki/rsa")))
     (:sys :ironclad/pki/elgamal :components ((:file "pki/elgamal")))

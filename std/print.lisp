@@ -749,11 +749,16 @@ STYLE indicates the level of decoration to apply to the output:
 (defvar *annotation-mod-left* #\()
 (defvar *annotation-mod-right* #\))
 
-(defun list-all-annotations () (std/hash:hash-table-alist *annotation-table*))
+(defun list-all-annotations () 
+  "List all annotations present in *ANNOTATION-TABLE*."
+  (std/hash:hash-table-alist *annotation-table*))
 
 (defun annotations (name)
+  "Get the annotations specified by NAME."
   (gethash name *annotation-table*))
+
 (defun (setf annotations) (new name)
+  "Set the annotations specified by NAME to NEW."
   (setf (gethash name *annotation-table*) new))
 
 (defun expand-annotation (char output args mods)
@@ -811,10 +816,12 @@ substituted with their relevant expansions given ARGS."
   (setf (annotations name) *annotations*))
 
 (defun copy-annotations (name1 name2)
+  "Copy the annotations designated by NAME1 to NAME2."
   (declare (string-designator name1 name2))
   (with-annotations name1 (save-annotations name2)))
 
 (defun load-annotations (name)
+  "Load annotations by NAME, binding *ANNOTATIONS*."
   (declare (string-designator name))
   (setq *annotations* (annotations name)))
 

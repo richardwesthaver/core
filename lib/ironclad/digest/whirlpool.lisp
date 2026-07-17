@@ -153,7 +153,7 @@
         `(ldb (byte 8 ,(- 24 (* 8 (- column 4)))) (,k ,(1+ (* 2 row))))
         `(ldb (byte 8 ,(- 24 (* 8 column))) (,k ,(* 2 row)))))
   
-  (defun split (lst)
+  (defun %split (lst)
     (let* ((n (length lst))
            (mid (floor n 2)))
       (values
@@ -163,7 +163,7 @@
   (defun generate-xor (terms)
     (if (endp (cdr terms))
         (car terms)
-        (multiple-value-bind (terms1 terms2) (split terms)
+        (multiple-value-bind (terms1 terms2) (%split terms)
           `(logxor ,(generate-xor terms1) ,(generate-xor terms2)))))
   
   (defun one-slice (to from i)

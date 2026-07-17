@@ -31,7 +31,6 @@
  (:module "lib")
  (:module "skel" (:sys "skel"))
  (:module "etc"
-  ;; (:file "corerc")
   (:module "lisp")
   (:module "script")
   (:module "emacs")))
@@ -157,6 +156,7 @@
   (:install () (funcall #0$sudo etc/script/install.lisp$# :input t)))
  (tests ()
   (:run ()
+   (load-system :ironclad/*)
    (load-system :core/tests)
    (rt:run-all-tests t))
   (:save () 

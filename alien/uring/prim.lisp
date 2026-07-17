@@ -75,7 +75,7 @@ instead of a pointer."
         (slot sqe 'buf-opt) 0
         (slot sqe 'personality) 0
         (slot sqe 'splice-index-addr) 0
-        (slot sqe 'addr-or-cmd) (deref (make-alien io-uring-sqe-addr3-and-pad)))
+        (slot sqe 'addr-or-cmd) (foreign-alloc '(struct io-uring-sqe-addr3-and-pad)))
   sqe)
 
 (defun io-uring-prep-splice (sqe fd-in off-in fd-out off-out nbytes splice-flags)
@@ -187,14 +187,14 @@ instead of a pointer."
 
 (defun io-uring-initialize-sqe (sqe)
   (declare ((alien (* io-uring-sqe)) sqe))
-  (let ((addr (make-alien io-uring-sqe-addr3-and-pad)))
+  (let ((addr (foreign-alloc '(struct io-uring-sqe-addr3-and-pad))))
     (setf (slot sqe 'flags) 0
           (slot sqe 'ioprio) 0
           (slot sqe 'flags2) 0
           (slot sqe 'buf-opt) 0
           (slot sqe 'personality) 0
           (slot sqe 'splice-index-addr) 0
-          (slot sqe 'addr-or-cmd) (deref addr))))
+          (slot sqe 'addr-or-cmd) (sap-alien addr (struct io-uring-sqe-addr3-and-pad)))))
 
 (defun io-uring-prep-accept-direct (sqe fd addr addrlen flags file-index)
   (io-uring-prep-accept sqe fd addr addrlen flags)
@@ -740,4 +740,3 @@ instead of a pointer."
           (slot sq 'sqe-tail) (+ tail 2))
     (io-uring-initialize-sqe sqe)
     sqe))
-

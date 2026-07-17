@@ -183,6 +183,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-transaction-close
    :rocksdb-transactiondb-property-value
    :rocksdb-transactiondb-get-base-db
+   :rocksdb-transaction-get
    :rocksdb-transaction-get-name
    :rocksdb-transaction-destroy
    :rocksdb-transaction-create-iterator-cf

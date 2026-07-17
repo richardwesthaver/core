@@ -653,7 +653,7 @@
 
 (defar rocksdb-transaction-get-name (* unsigned-char)
   (txn (* rocksdb-transaction))
-  (name-len (* size-t)))
+  (name-len size-t :out))
 
 (defar rocksdb-transaction-put-log-data void
   (txn (* rocksdb-transaction))
@@ -719,7 +719,7 @@
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t)))
+  (vlen size-t :out))
 
 (def-with-errptr rocksdb-transaction-get-pinned (* rocksdb-pinnableslice)
   (txn (* rocksdb-transaction))
@@ -733,7 +733,7 @@
   (cf-handle (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t)))
+  (vlen size-t :out))
 
 (def-with-errptr rocksdb-transaction-get-pinned-cf (* rocksdb-pinnableslice)
   (txn (* rocksdb-transaction))
