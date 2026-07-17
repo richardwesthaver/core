@@ -17,7 +17,7 @@
 the appropriate restarts."
   (let ((tmp (tmp-path "skelfile")))
     (let ((p (make-instance 'skel-project :name "nada" :path tmp :vc :hg :description "test")))
-      (write-ast p #p"/tmp/skelfile-test1")
+      (write-ast p tmp)
       (is (load-skelfile tmp))
       (is (build (make-instance 'skel-project :ast (std:file-read-forms tmp)))))))
 

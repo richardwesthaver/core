@@ -233,7 +233,7 @@ used extensively in the SYN and Q systems."))
       (read-ast self s))))
 
 (defgeneric write-ast (self stream &key)
-  (:method ((self ast) stream &key (pretty *print-pretty*) (case *print-case*))
+  (:method ((self ast) (stream stream) &key (pretty *print-pretty*) (case *print-case*) &allow-other-keys)
       (flet ((.write (x) (write x :stream stream :pretty pretty :case case :readably t :array t :escape t)))
         (if pretty
             (loop for (k v . rest) on (ast self)

@@ -285,25 +285,25 @@ directory.")
   self)
 
 ;; ast -> file
-(defmethod write-ast ((self skel-project) (path pathname)
-			          &key (nullp nil) (comment t) (pretty t)
-			               (if-exists :error))
+(defmethod write-ast :around ((self skel-project) path
+			                  &key (nullp nil) (comment t) (pretty t)
+			                       (if-exists :error))
   (build self :nullp nullp)
-  (prog1 
-      (with-open-file (out path
-			               :direction :output
-			               :if-exists if-exists
-			               :if-does-not-exist :create)
-	    (when comment (princ
-		               (make-source-header-comment
-		                (name self)
-		                :cchar #\;
-		                :timestamp t
-		                :description (description self)
-		                :opts '("mode:skel;"))
-		               out))
-	    (write-ast self out :pretty pretty))
-    (unless *keep-ast* (setf (ast self) nil))))
+  (with-open-file (out path
+                       :direction :output
+                       :if-exists if-exists
+                       :if-does-not-exist :create)
+    (when comment 
+      (princ
+       (make-source-header-comment
+        (name self)
+        :cchar #\;
+        :timestamp t
+        :description (description self)
+        :opts '("mode:skel;"))
+       out))
+    (prog1 (call-next-method self out :pretty pretty :if-exists :append)
+      (unless *keep-ast* (setf (ast self) nil)))))
 
 (defmethod wrap ((self skel-project) (config skel-user-config))
   (with-slots (vc store stash license author) (debug! config) ;; log-level, custom, fmt
