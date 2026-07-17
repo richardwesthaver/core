@@ -23,7 +23,8 @@ the appropriate restarts."
 
 (deftest skelrc ()
   "Ensure skelrc files are created and loaded correctly."
-  (load-skelrc))
+  (load-skelrc)
+  (load-user-skelrc))
 
 (deftest makefile ()
   "Make sure makefiles are making out ok."

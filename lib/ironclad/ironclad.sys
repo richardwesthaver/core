@@ -442,7 +442,7 @@
       :ironclad/pki/ed448 :ironclad/pki/curve448 :ironclad/pki/elgamal :ironclad/pki/dsa :ironclad/pki/rsa
       :ironclad/pki/secp256k1 :ironclad/pki/secp256r1 :ironclad/pki/secp384r1 :ironclad/pki/secp521r1))
     (:tests 
-     :require (:ironclad/prng/fortuna)
+     :require (:ironclad/*)
      :description "Ironclad Tests"
      :components
      ((:mod "tests"
