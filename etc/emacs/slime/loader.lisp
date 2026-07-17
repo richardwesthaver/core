@@ -122,7 +122,7 @@ If LOAD is true, load the fasl file."
                         (:unknown (handle-swank-load-error c "???ing" src))))))
           (when (or needs-recompile
                     (not (probe-file dest))
-                    (file-newer-p src dest))
+                    (std/file:file-newer-p src dest))
             (ensure-directories-exist dest)
             ;; need to recompile SRC, so we'll need to recompile
             ;; everything after this too.

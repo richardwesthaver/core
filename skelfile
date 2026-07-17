@@ -132,7 +132,7 @@
   (:autoload () (funcall #0$sudo emacs -Q --script etc/script/gen-autoloads.el$# :input t))
   (:install () 
    (funcall #0$sudo mkdir -pv $EMACS_HOME/{site-lisp/slime,lisp,native-lisp}$# :input t)
-   (funcall #0$sudo cp -rf etc/emacs/* slime $EMACS_HOME/site-lisp/$# :input t)
+   (funcall #0$sudo cp -rf etc/emacs/* $EMACS_HOME/site-lisp/$# :input t)
    (exec (project-find "autoload-emacs" *project*)))
   (:clean () 
    #$rm -rf $XDG_CONFIG_HOME/emacs/{*.el,lisp,site-lisp,lib,elpa,auto-save*,.cache,eln-cache,ielm-history.eld,tramp,transient,eshell,newsticker,emms,network-security.data,TAGS}$#)

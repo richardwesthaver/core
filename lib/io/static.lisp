@@ -5,8 +5,7 @@
 
 ;;; Commentary:
 
-;; The source here is pulled directly from the STATIC-VECTORS package on
-;; Quicklisp: https://github.com/sionescu/static-vectors
+;; The source here is pulled directly from the [[https://github.com/sionescu/static-vectors][STATIC-VECTORS]] package.
 
 ;;; Code:
 (in-package :io/static)
@@ -50,7 +49,7 @@
                 length-spec)
             type-decl)))
 
-;;; --- SBCL implementation
+;;; SBCL implementation
 (declaim (inline fill-foreign-memory))
 (defun fill-foreign-memory (pointer length value)
   "Fill LENGTH octets in foreign memory area POINTER with VALUE."

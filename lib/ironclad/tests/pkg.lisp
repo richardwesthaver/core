@@ -6,6 +6,8 @@
 (in-package :ironclad/tests)
 (defsuite :ironclad)
 (in-suite :ironclad)
+
+#+nil
 (defun hex-string-to-byte-array (string &key (start 0) (end nil))
   ;; This function disappears from profiles if SBCL can inline the
   ;; POSITION call, so declare SPEED high enough to trigger that.
