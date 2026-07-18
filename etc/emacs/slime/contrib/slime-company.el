@@ -46,8 +46,7 @@
 ;;
 ;;; Code:
 
-;; TODO 2024-08-27: don't need this package but need to translate it
-;; to a cape capf.
+;; TODO 2024-08-27: don't need this package but need to translate it to a cape capf.
 (require 'slime)
 (require 'company)
 (require 'cl-lib)
@@ -68,7 +67,6 @@
    (slime-company-disable)))
 
 ;;; Customization
-
 (defgroup slime-company nil
   "Interaction between slime and the company completion mode."
   :group 'company
@@ -121,8 +119,7 @@ Symbol flags are only returned with the `fuzzy' completion type."
 `simple' just displays the completion candidate,
 `fuzzy' also displays the classification flags as an annotation,
 alignment of annotations via `company-tooltip-align-annotations'
-is recommended. This method also can complete package names.
-"
+is recommended. This method also can complete package names."
   :group 'slime-company
   :type '(choice
           (const simple)

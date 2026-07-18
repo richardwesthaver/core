@@ -26,7 +26,8 @@
 (in-package :doc)
 
 (deftempo :package-documentation
-  "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
+  "<%@ifnotempty setupfile%>#+SETUPFILE: <%@var setupfile%>
+<%@endif%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
 :CUSTOM_ID: <%@var name%>
 <%@ifnotempty id%>:ID: <%@var id%>
@@ -136,7 +137,7 @@
 
 ;; (package-documentation)
 
-(defmethod publish ((self package-documentation) &key output level)
+(defmethod publish ((self package-documentation) &key output level setupfile)
   (with-slots (package ast) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
@@ -154,6 +155,7 @@
                                    :nicknames ,(package-nicknames package)
                                    ;; :tags ,(package-tag-string self)
                                    ,@(when level `(:level ,level))
+                                   ,@(when setupfile `(:setupfile ,setupfile))
                                    :symbols ,(mapcan (lambda (x) (and (home-package-p (doc-object x) (name self)) (list x))) ast)))))
       (case output
         ('nil gen)

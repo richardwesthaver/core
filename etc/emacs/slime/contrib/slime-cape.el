@@ -1,11 +1,12 @@
-;;; slime-cape.el --- slime completion backend for cape mode -*-lexical-binding:t-*-
+;;; slime-cape.el --- slime completion backend for cape mode -*- lexical-binding:t -*-
 
-;; This mode technically just connect slime-company to Cape mode
-;;
+;; Connect slime-company to Cape mode.
+
+;;; Commentary:
+
 ;; See Also:
-;;
-;; [slime-company](https://github.com/anwyn/slime-company)
-;; [cape](https://github.com/minad/cape)
+;; [[https://github.com/anwyn/slime-company][slime-company]]
+;; [[https://github.com/minad/cape][cape]]
 
 ;; Author: ccQpein
 ;; URL: https://github.com/ccqpein/slime-cape
@@ -13,6 +14,7 @@
 ;; Keywords: cape, corfu, slime, lisp
 ;; Package-Requires: ((slime-company "1.6"))
 
+;;; Code:
 (require 'slime)
 (require 'slime-repl)
 (require 'slime-company)
