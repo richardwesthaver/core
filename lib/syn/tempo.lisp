@@ -186,7 +186,7 @@ Scanners are memoized in SCANNER-HASH once they are created."
 
 (defparameter *template-tag-expand*
   `(("\\s*@if\\s+(\\S+)\\s*"      . " (cond ((tempo::autofuncall (tempo::getf-tempo \"\\1\")) ")
-    ("\\s*@ifnotempty\\s+(\\S+)\\s*"      . " (cond ((let* ((value (tempo::autofuncall (tempo::getf-tempo \"\\1\")))) (or (numberp value) (> (length value) 0))) ")
+    ("\\s*@ifnotempty\\s+(\\S+)\\s*"      . " (cond ((let* ((value (tempo::autofuncall (tempo::getf-tempo \"\\1\")))) (or (and (atom value) (not (sequencep value))) (> (length value) 0))) ")
     ("\\s*@ifequal\\s+(\\S+)\\s+(\\S+)\\s*"      . "  (cond ((equal (format nil \"~a\" (tempo::autofuncall (tempo::getf-tempo \"\\1\"))) (format nil \"~a\" (tempo::autofuncall (tempo::getf-tempo \"\\2\")))) ")
     ("\\s*@else\\s*"              . " ) (t ")
     ("\\s*@endif\\s*"             . " )) ")
@@ -257,13 +257,17 @@ Replacement and regex in *TEMPLATE-TAG-EXPAND*"
           :from-end t
           :count 1))
 
-;; Finds the next script or expr tag in TEMPO source.  Returns
-;; nil if none are found, otherwise returns 3 values:
-;;  1. The position of the first character of the start tag.
-;;  2. The position of the contents of the tag.
-;;  3. The type of tag (:script or :expr).
-;;  4. Whether trim whitespaces before the start tag.
 (defun next-code (string start)
+"Find the next script or expr tag in TEMPO source.
+Return nil if none are found, otherwise return 3 values:
+
+ 1. The position of the first character of the start tag.
+
+ 2. The position of the contents of the tag.
+
+ 3. The type of tag (:script or :expr).
+
+ 4. Whether to trim whitespace before the start tag."
   (let ((start-tag (search *tempo-start* string :start2 start)))
     (if (not start-tag)
         nil

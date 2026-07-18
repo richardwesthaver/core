@@ -30,7 +30,7 @@
 :PROPERTIES:
 :CUSTOM_ID: <%@var name%>
 <%@ifnotempty id%>:ID: <%@var id%>
-<%@endif%><%@ifnotempty lock%>:LOCK: <%@var lock%>
+<%@endif%><%@ifnotempty lock%>:LOCK: T
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
 <%@endif%><%@ifnotempty nicknames%>:AKA:<%@loop nicknames%> <%=env%><%@endloop%>
 <%@endif%>:END:<%@ifnotempty description%>
@@ -49,16 +49,15 @@
 <%@loop dependencies%>  - <%=(name env)%>
 <%@endloop%><%@endif%><%@ifnotempty dependents%>
 - dependents
-<%@loop dependents%>  - [[<%=(name env)%>]]
+<%@loop dependents%>  - [[#<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implements%>
 - implements
-<%@loop implements%>  - [[<%=(name env)%>]]
+<%@loop implements%>  - [[#<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implemented-by%>
 - implemented by
-<%@loop implemented-by%>  - [[<%=(name env)%>]]
+<%@loop implemented-by%>  - [[#<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty symbols%>
-<%@loop symbols%>
-<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%><%@endloop%><%@endif%>")
+<%@loop symbols%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%><%@endloop%><%@endif%>")
 
 (defclass package-documentation (document)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)

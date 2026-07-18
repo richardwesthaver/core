@@ -131,10 +131,14 @@ CHAR-COUNT."
     (when-let ((count (sb-introspect:definition-source-character-offset def)))
       (count-lines-up-to-character pathname count))))
 
+(definline org-escape-heading (s)
+  (if (and (not (zerop (length s))) (ppcre:scan "[*]+ " s))
+      (concatenate 'string "," s)
+      s))
+   
 (defun decomment (s) 
   "In addition to left-trimming comments and whitespace, we insert a comma (#\')
 when the first character may be misinterpreted as the start of an org heading."
   (let ((ret (string-left-trim "; " s)))
-    (if (and (positive-integer-p (length ret)) (ppcre:scan "[*]+ " ret))
-        (concatenate 'string "," ret)
-        ret)))
+    (org-escape-heading ret)))
+

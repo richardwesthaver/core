@@ -100,11 +100,17 @@ string as the argument."
 
 (defun symbol-name* (sym &optional stream)
   "Print SYM's fully-qualified SYMBOL-NAME."
-  (multiple-value-bind (s access) (if (stringp sym) 
+  (multiple-value-bind (s access) (if (stringp sym)
                                       (find-symbol sym)
-                                      (find-symbol (symbol-name sym) (symbol-package sym)))
-    (when s
-      (format stream "~A:~@[~A~]~A" (symbol-package-name s) (unless (eq access :external) #\:) s))))
+                                      ;; check if symbol is uninterned (no symbol-package)
+                                      (let ((name (symbol-name sym))
+                                            (pkg (symbol-package sym)))
+                                        (if pkg
+                                            (find-symbol name pkg)
+                                            (values name nil))))
+    (if access
+        (format stream "~A:~@[~A~]~A" (symbol-package-name s) (unless (eq access :external) #\:) s)
+        (format stream "~A" s))))
 
 (sb-ext:with-unlocked-packages (:sb-int)
   (handler-bind

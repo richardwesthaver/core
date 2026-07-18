@@ -129,7 +129,7 @@ CODE
 <%@ifnotempty summary%>:SUMMARY: <%@var summary%>
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
 <%@endif%>:END:<%@ifnotempty files%>
-<%@loop files%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%>*<%=(doc:publish env :output :string :level 3)%>
+<%@loop files%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%>
 <%@endloop%><%@endif%>")
 
 (defconstant +max-file-heading-level+ 8)

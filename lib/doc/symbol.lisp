@@ -84,16 +84,16 @@
         (when (documentation symbol 'type) (push :type result)))
     (when (ignore-errors (subtypep symbol 'condition)) (push :condition result))
     (when (ignore-errors (subtypep symbol 'structure-class)) (push :structure result))
-    (when (ignore-errors (parse-alien-type symbol nil)) (push :alien-type result))
+    (when (ignore-errors (parse-alien-type symbol nil)) (push :alien result))
     (when (fboundp symbol)            (push :function result))
     (when-let ((sym (find-symbol* symbol :sb-vm nil)))
       (when (or (gethash sym sb-c::*backend-parsed-vops*) 
                 (gethash sym sb-c::*backend-template-names*))
         (push :vop result)))
     (when (macro-function symbol)     (push :macro result))
-    (when (special-operator-p symbol) (push :special-operator result))
+    (when (special-operator-p symbol) (push :specop result))
     (when (find-package symbol)       (push :package result))
-    (when (compiler-macro-function symbol) (push :compiler-macro result))
+    (when (compiler-macro-function symbol) (push :cmacro result))
     (when (compiled-function-p (ignore-errors (symbol-function symbol))) (push :compiled result))
     (when (and (fboundp symbol)
                (typep (ignore-errors (fdefinition symbol))
@@ -205,7 +205,9 @@
     (format stream "~%Definitions: ~S~%" definitions)))
 
 (defun find-symbol-normalize (sym)
-  (multiple-value-bind (val access) (find-symbol (symbol-name sym))
+  (multiple-value-bind (val access) (find-symbol 
+                                     (if (stringp sym) (string-upcase sym)
+                                         (symbol-name sym)))
     (declare (ignore access))
     (if val
         (org-symbol-id val)
@@ -264,10 +266,12 @@ with a comma."
                                                (trim
                                                 (apply 'concatenate 
                                                        'string
-                                                       (cddr
-                                                        (lines
-                                                         (with-output-to-string (s)
-                                                           (describe-object (doc-object self) s)))))))))
+                                                       (mapcar
+                                                        'org-escape-heading
+                                                        (cddr
+                                                         (lines
+                                                          (with-output-to-string (s)
+                                                            (describe-object (doc-object self) s))))))))))
                                     (if (org-symbol-normalize-p (doc-object self))
                                         (org-normalize-description docs)
                                         docs))
