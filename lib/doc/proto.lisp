@@ -128,9 +128,9 @@ CHAR-COUNT."
           finally (return line))))
 
 (defun definition-source-line-number (def)
-  (let ((pathname (sb-introspect:definition-source-pathname def)))
-    (when-let ((count (sb-introspect:definition-source-character-offset def)))
-      (count-lines-up-to-character pathname count))))
+  (when-let ((count (sb-introspect:definition-source-character-offset def))
+             (pathname (probe-file (sb-introspect:definition-source-pathname def))))
+    (count-lines-up-to-character pathname count)))
 
 (definline org-escape-heading (s)
   (if (and (not (zerop (length s))) (ppcre:scan "^[*]+ " s))

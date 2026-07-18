@@ -148,7 +148,7 @@ May be overridden by project-local config."
   (when dir
     (when (or (file-exists-p (join-paths dir "skelfile"))
 	          (directory-files dir nil "^.*[.]sk"))
-      (let ((res (project-try-vc--search dir)))
+      (let ((res (project-try-vc dir)))
         (when res 
 	      (vc-file-setprop dir 'project-vc res)
 	      (setf (car res) 'skel))

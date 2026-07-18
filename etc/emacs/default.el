@@ -329,7 +329,7 @@ TABLE."
 (use-package project
   :config
   (setopt project-list-file (expand-file-name "projects" user-emacs-directory)
-          project-mode-line t
+          project-mode-line nil
           project-file-history-behavior 'relativize)
   (defun remember-project ()
     (interactive)
