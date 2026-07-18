@@ -11,7 +11,8 @@
 :ID: <%@var id%>
 :CUSTOM_ID: <%@var custom-id%><%@ifnotempty alloc%>
 :ALLOC: <%=(car (getf-tempo \"alloc\"))%> <%=(getf (cadr (getf-tempo \"alloc\")) :space)%><%@endif%>
-:END:<%@ifnotempty documentation%> 
+:END:
+<%@ifnotempty documentation%> 
 #+begin_example
 <%@var documentation%>
 #+end_example
