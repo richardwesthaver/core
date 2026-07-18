@@ -21,6 +21,7 @@
 (defvar *document-project-name* nil)
 (defvar *document-module* nil)
 (defvar *document-multi-file* nil)
+(defvar *document-prune* nil)
 
 (defparameter *definition-types*
   '(:variable defvar
@@ -132,7 +133,7 @@ CHAR-COUNT."
       (count-lines-up-to-character pathname count))))
 
 (definline org-escape-heading (s)
-  (if (and (not (zerop (length s))) (ppcre:scan "[*]+ " s))
+  (if (and (not (zerop (length s))) (ppcre:scan "^[*]+ " s))
       (concatenate 'string "," s)
       s))
    

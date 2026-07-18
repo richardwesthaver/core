@@ -50,13 +50,13 @@
 <%@loop dependencies%>  - <%=(name env)%>
 <%@endloop%><%@endif%><%@ifnotempty dependents%>
 - dependents
-<%@loop dependents%>  - [[#<%=(name env)%>][<%=(name env)%>]]
+<%@loop dependents%>  - [[id:<%=(id (doc:doc-object env))%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implements%>
 - implements
-<%@loop implements%>  - [[#<%=(name env)%>][<%=(name env)%>]]
+<%@loop implements%>  - [[id:<%=(id env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implemented-by%>
 - implemented by
-<%@loop implemented-by%>  - [[#<%=(name env)%>][<%=(name env)%>]]
+<%@loop implemented-by%>  - [[id:<%=(id env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty symbols%>
 <%@loop symbols%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%><%@endloop%><%@endif%>")
 

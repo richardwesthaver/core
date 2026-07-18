@@ -264,7 +264,6 @@ with a comma."
                 `(:name ,(org-normalize-symbol-name (doc-object self)) :id ,id
                   :custom-id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(let ((docs (ignore-errors
-                                               (trim
                                                 (apply 'concatenate 
                                                        'string
                                                        (mapcar
@@ -272,10 +271,11 @@ with a comma."
                                                         (cddr
                                                          (lines
                                                           (with-output-to-string (s)
-                                                            (describe-object (doc-object self) s))))))))))
-                                    (if (org-symbol-normalize-p (doc-object self))
-                                        (org-normalize-description docs)
-                                        docs))
+                                                            (describe-object (doc-object self) s)))))))))
+                                    ;; (if (org-symbol-normalize-p (doc-object self))
+                                    ;; (org-normalize-description docs)
+                                    docs)
+                                    ;; )
                   :tags ,(symbol-tag-string self)
                   :set-by ,(normalize-source-location-alist (who-sets (doc-object self)))
                   :bound-by ,(normalize-source-location-alist (who-binds (doc-object self)))

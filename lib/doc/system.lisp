@@ -133,7 +133,7 @@ string."
   (module-documentation object))
 
 ;; TODO 2026-06-27: export-file-name?
-(defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*) (prune t))
+(defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*) (prune *document-prune*))
   (with-slots (id packages) self
     (let* ((*document-module* (name self))
            (file (file-documentation (path self)))
