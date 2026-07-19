@@ -25,9 +25,11 @@
 ;;; Code:
 (in-package :doc)
 
+;; NOTE: /level hack - note the double **
 (deftempo :package-documentation
   "<%@ifnotempty setupfile%>#+TITLE: <%@var name%>
 #+SETUPFILE: <%@var setupfile%>
+#+TODO:
 <%@endif%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
 <%@ifnotempty id%>:ID: <%@var id%>
@@ -58,7 +60,7 @@
 - implemented by
 <%@loop implemented-by%>  - [[id:<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty symbols%>
-<%@loop symbols%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%><%@endloop%><%@endif%>")
+<%@loop symbols%><%@if /level%><%@repeat /level%>**<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%><%@endloop%><%@endif%>")
 
 (defclass package-documentation (document)
   ((package :initform *package* :initarg :package :type package :accessor doc-object)
