@@ -8,8 +8,7 @@
 (deftempo :symbol-documentation
   "<%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%><%@ifnotempty tags%> <%@var tags%><%@endif%>
 :PROPERTIES:
-:ID: <%@var id%>
-:CUSTOM_ID: <%@var custom-id%><%@ifnotempty alloc%>
+:ID: <%@var id%><%@ifnotempty alloc%>
 :ALLOC: <%=(car (getf-tempo \"alloc\"))%> <%=(getf (cadr (getf-tempo \"alloc\")) :space)%><%@endif%>
 :END:
 <%@ifnotempty documentation%> 
@@ -257,12 +256,13 @@ with a comma."
         name)))
 
 (defmethod publish ((self symbol-documentation) &key output level)
-  (with-slots (id definitions alloc) self
+  (with-slots (definitions alloc) self
     (let ((gen (execute-template 
                 (keywordicate (class-name (class-of self)))
                 :env
-                `(:name ,(org-normalize-symbol-name (doc-object self)) :id ,id
-                  :custom-id ,(symbol-name* (doc-object self) nil)
+                `(:name ,(org-normalize-symbol-name (doc-object self)) 
+                  ;; :id ,id
+                  :id ,(symbol-name* (doc-object self) nil)
                   :documentation ,(let ((docs (ignore-errors
                                                 (apply 'concatenate 
                                                        'string

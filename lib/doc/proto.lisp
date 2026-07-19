@@ -84,9 +84,9 @@
 
 (deffmt fmt-org-id-link "[[id:~A]~@[[~A]~]]" "Format a link to an org ID.")
 
-(definline org-symbol-id (sym) 
+(definline org-symbol-id (sym)
   (with-output-to-string (s)
-    (fmt-org-id-link s (id sym) sym)))
+    (fmt-org-id-link s (symbol-name* sym) sym)))
 
 (defun definition-specifier (type)
   "Return a pretty specifier for NAME representing a definition of type TYPE."

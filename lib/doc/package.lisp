@@ -26,10 +26,10 @@
 (in-package :doc)
 
 (deftempo :package-documentation
-  "<%@ifnotempty setupfile%>#+SETUPFILE: <%@var setupfile%>
+  "<%@ifnotempty setupfile%>#+TITLE: <%@var name%>
+#+SETUPFILE: <%@var setupfile%>
 <%@endif%><%@if level%><%@repeat level%>*<%@endrepeat%><%@else%>*<%@endif%> <%@var name%>
 :PROPERTIES:
-:CUSTOM_ID: <%@var name%>
 <%@ifnotempty id%>:ID: <%@var id%>
 <%@endif%><%@ifnotempty lock%>:LOCK: T
 <%@endif%><%@ifnotempty location%>:LOCATION: <%@var location%>
@@ -47,16 +47,16 @@
 <%@loop locally-nicknamed-by%>  - <%=(name env)%>
 <%@endloop%><%@endif%><%@ifnotempty dependencies%>
 - dependencies
-<%@loop dependencies%>  - <%=(name env)%>
+<%@loop dependencies%>  - [[id:<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty dependents%>
 - dependents
-<%@loop dependents%>  - [[id:<%=(id (doc:doc-object env))%>][<%=(name env)%>]]
+<%@loop dependents%>  - [[id:<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implements%>
 - implements
-<%@loop implements%>  - [[id:<%=(id env)%>][<%=(name env)%>]]
+<%@loop implements%>  - [[id:<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty implemented-by%>
 - implemented by
-<%@loop implemented-by%>  - [[id:<%=(id env)%>][<%=(name env)%>]]
+<%@loop implemented-by%>  - [[id:<%=(name env)%>][<%=(name env)%>]]
 <%@endloop%><%@endif%><%@ifnotempty symbols%>
 <%@loop symbols%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string)%><%@endloop%><%@endif%>")
 
@@ -141,7 +141,7 @@
   (with-slots (package ast) self
     (let ((gen (execute-template (keywordicate (class-name (class-of self)))
                                  :env
-                                 `(:name ,(name self) :id ,(id package)
+                                 `(:name ,(name self) :id ,(name self)
                                    :description ,(documentation package t)
                                    :lock ,(sb-ext:package-locked-p package)
                                    :dependents ,(dependents self)

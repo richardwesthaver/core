@@ -99,7 +99,7 @@
             args)
       (cond
         ((boundp '*project*)
-         (let ((*skel-slot-exclusions* '(:rules :ast)))
+         (let ((*print-slot-exclude* '(:rules :ast)))
            (print-skel-object *project* *standard-output*)))
         ((boundp '*project-config*) (print-skel-object *project-config* *standard-output*))
         (t (skel-simple-error "skel not installed"))))
