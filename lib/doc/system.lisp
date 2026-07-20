@@ -38,7 +38,7 @@
 <%@loop components%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%><%=(doc:publish env :output :string :level 2)%>
 <%@endloop%><%@endif%><%@ifnotempty provide%>
 <%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%>*<%@endif%>* Modules
-<%@loop provide%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%><%@endif%>**<%=(doc:module-documentation env)%>
+<%@loop provide%><%@if /level%><%@repeat /level%>*<%@endrepeat%><%@else%><%@endif%>*<%=(doc:module-documentation env)%>
 <%@endloop%><%@endif%>")
 
 (defclass system-documentation (document id)
