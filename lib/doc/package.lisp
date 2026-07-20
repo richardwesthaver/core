@@ -125,7 +125,11 @@
            collect (doc-object s)))))
 
 (defmethod dependents ((self package-documentation))
-  (mapcar #'package-documentation (package-used-by-list (doc-object self))))
+  (mapcan
+   (lambda (x)
+     (unless (string-prefix-p "pkg" (name x))
+       `(,(package-documentation x))))
+   (package-used-by-list (doc-object self))))
 
 (defmethod dependencies ((self package-documentation))
   (mapcar #'package-documentation (package-use-list (doc-object self))))
