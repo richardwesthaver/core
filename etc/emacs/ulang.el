@@ -218,6 +218,7 @@ With optional N, search in the Nth line from point."
 (defun ulang-init ()
   (interactive)
   (org-babel-lob-ingest company-babel-file)
+  (org-id-update-id-locations (directory-files-recursively company-org-directory ".*[.]org$"))
   (org-export-translate-to-lang ulang-export-dictionary "ulang")
   (mapadd org-info-other-documents ulang-info-url-alist)
   (mapadd browse-url-filename-alist ulang-info-url-alist)
