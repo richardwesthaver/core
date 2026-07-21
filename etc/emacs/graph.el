@@ -824,8 +824,9 @@ either side, and deletes both sides of a link."
   (interactive)
   (with-temp-buffer
     (beginning-of-buffer)
-    (if json (insert (org-graph-json)) 
-      (pp (org-graph-plist) (current-buffer)))
+    (if json (insert (org-graph-json))
+      (let ((print-length nil))
+        (pp (org-graph-plist) (current-buffer))))
     (write-file (or output org-graph-file))))
 
 (defun org-graph-edge-backlink ()
