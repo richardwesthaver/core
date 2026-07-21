@@ -29,6 +29,9 @@
   "A map-like interface to a BTree object, which stores things in a semi-ordered
 fashion."))
 
+(defmethod build-btree (self)
+  (make-instance 'btree :store self))
+
 (defmethod drop-instance ((self btree))
   "The standard method for reclaiming storage of stored objects"
   (drop-btree self)
@@ -124,7 +127,7 @@ lookup, updating ALL other secondary indices."
   (delete-key (get-primary-key key bt) (primary bt)))
 
 (defun make-btree (&optional (st *store*))
-  "Constructs a new BTree instance for use by the user.  Each backend
+  "Constructs a new BTree instance for use by the user. Each backend
    returns its own internal type as appropriate and ensures that the 
    btree is associated with the store that created it."
   (build-btree st))
@@ -292,7 +295,7 @@ primary key."))
 
 (defgeneric cursor-pget-both-range (cursor key value)
   (:documentation 
-   "Moves the cursor to a the first secondary key / primary
+   "Moves the cursor to the first secondary key / primary
 key pair, with secondary key equal to the key argument, and
 primary key greater or equal to the pkey argument.  Returns
 has-tuple / secondary key / value / primary key."))
@@ -327,13 +330,13 @@ Returns has-pair key value."))
 ;; Default implementation.
 (defmethod cursor-prev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
-    (multiple-value-bind (exists? skey-cur)
+    (multiple-value-bind (existp skey-cur)
         (cursor-current cur)
-      (declare (ignore exists?))
-      (multiple-value-bind (exists? skey value)
+      (declare (ignore existp))
+      (multiple-value-bind (existp skey value)
           (cursor-prev cur)
         (if (compare-equal skey-cur skey)
-            (values exists? skey value)
+            (values existp skey value)
             (setf (cursor-initialized-p cur) nil))))))
 
 (defgeneric cursor-prev-nodup (cursor)
@@ -349,13 +352,13 @@ Returns has-tuple / secondary key / value / primary key."))
 ;; Default implementation.
 (defmethod cursor-pprev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
-    (multiple-value-bind (exists? skey-cur)
+    (multiple-value-bind (existp skey-cur)
         (cursor-current cur)
-      (declare (ignore exists?))
-      (multiple-value-bind (exists? skey value pkey)
+      (declare (ignore existp))
+      (multiple-value-bind (existp skey value pkey)
           (cursor-pprev cur)
         (if (compare-equal skey-cur skey)
-            (values exists? skey value pkey)
+            (values existp skey value pkey)
             (setf (cursor-initialized-p cur) nil))))))
 
 (defgeneric cursor-pprev-nodup (cursor)
@@ -379,9 +382,9 @@ not), evaluates the forms, then closes the cursor."
 
 (defmethod drop-btree ((self btree))
   (with-btree-cursor (cur self)
-    (loop for (exists? key) = (multiple-value-list (cursor-first cur))
+    (loop for (existp key) = (multiple-value-list (cursor-first cur))
           then (multiple-value-list (cursor-next cur))
-          while exists?
+          while existp
           do (delete-key key self))))
 
 (defmethod drop-btree ((bt indexed-btree))
@@ -456,7 +459,7 @@ than by type class (i.e. not serialized lexical values)"
 (defvar *current-cursor* nil
   "This dynamic variable is referenced only when deleting elements using the
 following function. This allows mapping functions to delete elements as they
-map. This is safe as we don't revisit values during maps")
+map. This is safe as we don't revisit values during maps.")
 
 (defmacro with-current-cursor ((cur) &body body)
   `(let ((*current-cursor* ,cur))
@@ -479,7 +482,7 @@ return that list in the same order the calls were made (first to last)."))
 
 (defun validate-map-call (start end)
   (unless (or (null start) (null end) (compare<= start end))
-    (error "map-index called with start = ~A and end = ~A. Start must be less than or equal to end according to compare<=."
+    (error "map-index called with start = ~A and end = ~A.~% Start must be less than or equal to end according to compare<=."
            start end)))
 
 (defmacro with-map-collector ((fn collect-p) &body body)
@@ -503,11 +506,11 @@ cursor"
          ,@body))))
 
 (defmacro with-cursor-values (expr &body body)
-  "Binds exists?, skey, val and pkey from expression assuming expression returns
+  "Binds existp, skey, val and pkey from expression assuming expression returns
 a set of cursor operation values or nil"
-  `(multiple-value-bind (exists? skey val pkey)
+  `(multiple-value-bind (existp skey val pkey)
        (the (values boolean t t t) ,expr)
-     (declare (ignorable exists? skey val pkey))
+     (declare (ignorable existp skey val pkey))
      ,@body))
 
 (defmacro iterate-map-btree (&key start continue step)
@@ -523,12 +526,12 @@ a set of cursor operation values or nil"
      (declare (dynamic-extent (function continue-p)))
      (handler-case 
          (with-cursor-values ,start
-           (when (and exists? (continue-p skey))
+           (when (and existp (continue-p skey))
              (funcall fn skey val)
              (loop  
                 (handler-case
                     (with-cursor-values ,step
-                      (if (and exists? (continue-p skey))
+                      (if (and existp (continue-p skey))
                           (funcall fn skey val)
                           (return (nreverse results))))
                   (error ()
@@ -570,7 +573,7 @@ a set of cursor operation values or nil"
     (iterate-map-btree
      :start (if end
                 (with-cursor-values (cursor-set-range cur end)
-                  (cond ((and exists? (compare-equal skey end))
+                  (cond ((and existp (compare-equal skey end))
                          (cursor-next-nodup cur)
                          (cursor-prev cur))
                         (t (cursor-prev cur))))
@@ -614,11 +617,11 @@ order the calls were made (first to last)"))
               ,continue))
      (declare (dynamic-extent (function continue-p)))
      (with-cursor-values ,start
-       (when (and exists? (continue-p skey))
+       (when (and existp (continue-p skey))
          (funcall fn skey val pkey)
          (loop  
             (with-cursor-values ,step
-              (if (and exists? (continue-p skey))
+              (if (and existp (continue-p skey))
                   (funcall fn skey val pkey)
                   (return (nreverse results)))))))))
 

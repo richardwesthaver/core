@@ -15,7 +15,7 @@ ERR with initargs PARAMS for the duration of BODY."
                         (rocksdb-c-error ,e)))
                     (error (lambda (c)
                              (declare (ignore c))
-                             (error ,err :message (deref (sap-alien ,e (* c-string))) ,@params))))
+                             (apply 'error ,err :message (deref (sap-alien ,e (* c-string))) ',params))))
        (progn ,@body))))
 
 ;;; opts
@@ -118,6 +118,11 @@ ERR with initargs PARAMS for the duration of BODY."
        ,@body)))
 
 (defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
+  "Provide several bindings around BODY. TXN must be a raw transaction instance
+and EPTR a symbol which is bound to an error pointer (via WITH-ERRPTR*).
+
+When KEY is supplied, %KLEN is bound to the key length and %KEY to an
+associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   `(let (,@(when key `((%klen (length ,key))))
          ,@(when val `((%vlen (length ,val)))))
      (with-errptr* (,eptr ',error 

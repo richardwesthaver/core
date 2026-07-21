@@ -450,14 +450,12 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 
 (defsetf transaction-name-raw set-transaction-name-raw)
 
-#+todo
 (defun transaction-get-raw (txn key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-txn-raw (txn e :key key)
     (if pinned
         (rocksdb-transaction-get-pinned txn opts %key %klen e)
         (rocksdb-transaction-get txn opts %key %klen e))))
 
-#+!todo
 (defun transaction-get-cf-raw (txn cf key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-txn-raw (txn e :key key :cf cf)
     (if pinned
@@ -528,6 +526,7 @@ transaction-db."
       (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
         (rocksdb-open-column-families-with-ttl 
          opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))
+
 ;;; Merge Ops
 (defun create-index-merge-op ()
   (with-alien ((state (* t))

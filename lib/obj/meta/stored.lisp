@@ -17,10 +17,10 @@
 ;;; Code:
 (in-package :obj/meta/stored)
 
-(defvar *default-store* nil)
+(defvar *default-store* (cons nil nil))
 (defvar *store* nil)
 ;; support for swapping out multiple stores? compatibility matrix?
-(defvar *stores* nil)
+(defvar *store-table* (make-hash-table))
 
 (deftype oid () '(unsigned-byte 64))
 (deftype cid () '(unsigned-byte 32))

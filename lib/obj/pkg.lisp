@@ -940,6 +940,9 @@
    #:next-cid
    #:spec
    #:stored-object-schema
+   #:get-from-root
+   #:add-to-root
+   #:open-store
    #:optimize-layout
    #:oid->schema-id
    #:default-class-id

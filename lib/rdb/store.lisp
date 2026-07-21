@@ -38,11 +38,7 @@ serialized object schemas."))
 ;; (build-btree (make-instance 'rdb-store :name "/tmp/foo"))
 
 (defun rdb-store-spec-p (spec)
-  (and (eq (first spec) :rdb)
-       (typecase (second spec)
-         (pathname t)
-         (string t)
-         (t nil))))
+  (and spec (consp spec) (eq (first spec) :rdb)))
 
 (defmethod get-value (key (bt rdb-btree))
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
@@ -139,7 +135,7 @@ serialized object schemas."))
     (if (and (not (null index-name))
              (symbolp index-name)
              (or (symbolp key-form) (listp key-form)))
-        ;; Can it be that this fails?
+        ;; could it be that this fails?
         (let ((index
                 (ensure-transaction (:store sc)
                   (let ((ht (idx bt))

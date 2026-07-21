@@ -607,7 +607,6 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (initial-stored-setup instance :oid oid :store store))
 
 (defun initial-stored-setup (instance &key oid store)
-  (assert store)
   (if oid
       (setf (oid instance) oid)
       (register-new-instance instance (class-of instance) store))
@@ -1161,9 +1160,9 @@ stored slots) and specific btrees."))
 
 ;;; Root indexes
 (defun add-to-root (key value &key (st *store*))
-  "Add an arbitrary stored thing to the root, so you can
-   retrieve it in a later session.  Anything referenced by an
-   object added to the root is considered reachable and thus live"
+  "Add an arbitrary stored thing to the root, so you can retrieve it in a later
+session. Anything referenced by an object added to the root is considered
+reachable and thus live"
   (declare (type store st))
   ;; (assert (not (eq key *elephant-properties-label*)))
   (setf (get-value key (store-root st)) value))
