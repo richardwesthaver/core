@@ -33,7 +33,7 @@
   (merge-pathnames (make-pathname :directory '(:relative "data")
                                   :name (substitute #\- #\/ (format nil "~(~A~)" ident))
                                   :type "dat")
-                   #.*compile-file-pathname*))
+                   (system-home :ironclad/tests)))
 
 (defun sharp-a (stream sub-char numarg)
   (declare (ignore sub-char numarg))

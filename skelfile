@@ -158,6 +158,7 @@
   (:run ()
    (load-system :ironclad)
    (load-system :ironclad/*)
+   (load-system :ironclad/tests)
    (load-system :core/tests)
    (rt:run-all-tests t))
   (:save () 
