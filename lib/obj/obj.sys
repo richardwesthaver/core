@@ -1,5 +1,8 @@
-;;; ~/src/core/lib/obj/obj.sys --- Obj Sytem Definitions
-(defsys :obj "Lisp object library"
+;;; ~/src/core/lib/obj/obj.sys --- Obj System
+(defsys :obj 
+  "Lisp OBJect library.
+This system provides a wide range of CLOS/MOP extensions used throughout the
+core."
   :require (:std)
   :components 
   ((:pkg "pkg" :feature :obj :internal-package :obj-int)

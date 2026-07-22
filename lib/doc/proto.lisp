@@ -84,6 +84,15 @@
 
 (deffmt fmt-org-id-link "[[id:~A]~@[[~A]~]]" "Format a link to an org ID.")
 
+(deffmt fmt-module-link "~A:~A:~A")
+
+(definline module-property-drawer (s mod key name)
+  (write-line ":PROPERTIES:" s)
+  (write-string ":ID: " s)
+  (fmt-module-link s mod key name)
+  (terpri s)
+  (write-line ":END:" s))
+
 (definline org-symbol-id (sym)
   (with-output-to-string (s)
     (fmt-org-id-link s (symbol-name* sym) sym)))

@@ -364,6 +364,8 @@ tasks as a second value."
 (defmethod description ((self file-documentation)) (file-description self))
 (defmethod summary ((self file-documentation)) (file-summary self))
 (defmethod commentary ((self file-documentation)) (file-commentary self))
+(defmethod documentation (object (doc-type (eql 'file)))
+  (file-documentation object))
 
 (defmethod publish ((self file-documentation) &key output level)
   (with-slots (id name outline tasks) self

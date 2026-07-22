@@ -181,13 +181,14 @@ to initialize the instance with custom configuration."
       (with-alien ((vlen (* size-t) (make-alien size-t)))
         (let ((val (if pinned
                        (rocksdb-get-pinned db opt %key %klen e)
-                       (rocksdb-get-cf db
-			               opt
-                                       cf
-			               %key 
-                                       %klen
-                                       vlen
-			               e)))
+                       (rocksdb-get-cf 
+                        db
+			            opt
+                        cf
+			            %key 
+                        %klen
+                        vlen
+			            e)))
 	      ;; helps if we know the vlen beforehand, would need a custom
 	      ;; C-side function probably.
 	      (v (make-array (deref vlen) :element-type 'octet)))

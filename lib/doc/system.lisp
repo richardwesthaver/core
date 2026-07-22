@@ -110,20 +110,24 @@ string."
         (case key
           (:tests 
            (format s "* ~A :~A:~%" (if module (concatenate 'string (string module) "/" (string key)) key) key)
+           (module-property-drawer s module key name)
            ;; (find-module module key)
            )
           (:prelude
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (module-property-drawer s module key name)
            (format s "- Exports~%~{  - ~A~%~}" 
                    (mapcar #'find-symbol-normalize args)))
           (:proto
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (module-property-drawer s module key name)
            (doplist (k v) args
              (when v
                (format s "- ~A~%~<  - ~;~A~>~%" 
                        k v))))
           (t
            (format s "* ~A :~A:~%" (setf name (pop args)) key)
+           (module-property-drawer s module key name)
            (doplist (k v) args
              (when v
                (format s "- ~A~%  #+begin_src lisp-data :eval no~%~<  ~;~S~>~%  #+end_src~%" 
@@ -131,6 +135,9 @@ string."
 
 (defmethod documentation ((object list) (doc-type (eql 'module)))
   (module-documentation object))
+
+(defmethod documentation (object (doc-type (eql 'system)))
+  (system-documentation object))
 
 ;; TODO 2026-06-27: export-file-name?
 (defmethod publish ((self system-documentation) &key output info level (file-name-p *document-multi-file*) (prune *document-prune*))

@@ -107,11 +107,14 @@
   (:use :cl :std))
 
 (defpkg :obj/meta/stored
+  "Stored object definitions.
+This package defines the generic MOP machinery which drives the STORE
+protocol."
   (:nicknames :meta/stored :stored)
   (:use :cl :std :sb-mop :val)
   (:export
    :*store*
-   :*stores*
+   :*store-table*
    :*default-store*
    :stored-class :initialize-stored-class
    :stored-slot
