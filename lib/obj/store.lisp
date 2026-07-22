@@ -8,13 +8,24 @@
 
 ;; A STORE plays a similar role to ORMs in blub languages, but better since we
 ;; have CLOS and MOP for ultimate control. The purpose of a STORE is to
-;; orchestrate the persistence of objects of a specific metaclass called
+;; orchestrate the persistence of objects of a specific meta-class called
 ;; STORED. The metaclass adds an additional allocation target :DATABASE for
 ;; slot-objects which indicates that any access to them from Lisp will be
 ;; delegated to the associated STORE.
 
 ;;; Code:
 (in-package :obj/store)
+
+;;; Variables
+(defvar *lazy-db-instance-upgrading* nil
+  "Only upgrade instances when loaded. This may require a chain of
+transformations and delay reclamation of space, but it amortizes upgrade costs
+over time. Not compatible with valid, up-to-date indices!")
+
+(defvar *lazy-memory-instance-upgrading* nil
+  "Walk through a given store's memory cache on class redefinition by default.
+Setting this variable inhibits calling update-instance-for-redefined-class for
+any instances that have been invalidated by the MOP.")
 
 (defparameter *warn-when-dropping-stored-slots* t
   "Signal a continue-able error when the user is about to delete
@@ -27,6 +38,9 @@ bunch in the application rather than just DEFCLASS changes interactively.
 Note that the new class definition will take place even if you abort the
 continue-able error; only the removal of the slots in the database is
 prevented. You can access them again if you redefine your class once more.")
+
+(defvar *store-spec* nil)
+(defvar *store-lock* (make-mutex :name "STORE"))
 
 ;;; Stored Set
 ;; default implementation of simple sets using btrees
@@ -342,6 +356,40 @@ equal comparison"))
     new))
 
 ;;; DB Evolution
+(defmethod upgrade-all-memory-instances ((sc store))
+  "Touch each instance in memory to force update-instance-for-redefined class to
+be called on classes that were just redefined. This in turn calls
+upgrade-instance. This should be called after a redefinition."
+  (loop for inst-pointer being the hash-value of (instance-cache sc)
+        for inst = (sb-ext:weak-pointer-value inst-pointer)
+        do (oid inst)))
+
+(defmethod upgrade-all-db-instances ((sc store) class-schema)
+  "Scan and upgrade each instance of the class referred to
+by CLASS-SCHEMA. If there is a predecessor class in the database, its
+instances are upgraded to the current. If the db-schema and class schema do
+not match (i.e. we are connecting to a store) then go ahead and run
+synchronize-store-class to upgrade class-level info like indices."
+  (let* ((classname (schema-class-name class-schema))
+     (db-schema (get-current-db-schema sc classname)))
+    ;; When the db-schema is not up to date, make it so
+    (unless (match-schemas class-schema db-schema)
+      (synchronize-store-class sc (find-class classname) class-schema db-schema))
+    ;; Update the instances oldest to newest
+    (loop for schema in (get-db-schemas sc classname)
+     unless (eq (id schema) (id db-schema)) do
+     (progn
+       (map-index (lambda (cidx pcidx oid)
+            (declare (ignore cidx pcidx))
+            (let ((instance (store-recreate-instance sc oid classname)))
+              (upgrade-db-instance instance db-schema schema nil)))
+                  (class-index sc)
+              :value (id schema))
+       (awhen (schema-successor (get-store-schema sc (id schema)))
+         (awhen (get-store-schema sc it)
+           (setf (schema-predecessor it) nil)))))))
+;;	   (remove-controller-schema sc (schema-id schema))))))
+
 (defmethod upgrade-db-instance ((instance stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
   "Upgrade a database instance from the old-schema to the new-schema.
    This does mean loading it into memory (for now)!"
@@ -892,6 +940,24 @@ DEFSCLASS for the available class-specific options in the generic interface."))
       (:indexed (add-slot-index sc (make-dup-btree sc) (getf args :base) name))
       (:derived (add-slot-index sc (make-dup-btree sc) (getf args :base) name))
       (:association nil))))
+
+(defmethod upgrade-class-slot ((sc store) class (diff-type (eql :rem)) recs)
+  "Drop index and association storage on upgrade.  Loss of data for associations should
+   be flagged during the redefinition."
+  (declare (ignore class))
+  (with-slots (name type args) (first recs)
+    (case type
+;;      (:indexed (drop-slot-index sc (getf args :base) name))
+      (:association nil))))
+
+(defmethod upgrade-class-slot ((sc store) class (diff-type (eql :change)) recs)
+  "For now, we can effectively remove and add at the store level"
+  (upgrade-class-slot sc class :rem (list (first recs)))
+  (upgrade-class-slot sc class :add (list (second recs))))
+
+(defun lookup-con-spec (spec)
+  (cdr (or (assoc spec *store-spec*)
+           (assoc spec *store-spec* :test #'equalp))))
 
 (defmethod synchronize-stores-for-class (class)
   "Synchronize all stores connected to a given class.  Meant to be
