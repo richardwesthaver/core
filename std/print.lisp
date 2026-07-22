@@ -20,7 +20,7 @@ output. This is usually inferred from the current terminal capabilities.
 
 Default value: NIL")
 
-(defvar *print-slot-exclude* '(ast id)
+(defvar *print-slot-exclude* '(:ast :id)
   "A list of slot names to be excluded from object printing.")
 
 (defvar *print-slot-unbound* nil
@@ -57,6 +57,7 @@ Default value: NIL")
       (fmt *print-lines*)
       (fmt *print-miser-width*)
       (fmt *print-pprint-dispatch*)
+      (fmt *print-vector-length*)
       (fmt *print-pretty*)
       (fmt *print-radix*)
       (fmt *print-readably*)

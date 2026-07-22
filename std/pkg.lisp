@@ -286,9 +286,9 @@
    :ctypecase :ctype-array-dimensions :ctypep :define-source-transform
    :inline-vop :immediate-constant-sc :boxed-immediate-sc-p :emit
    :assemble :without-scheduling :inst :inst* 
-   :*emit-cfasl* :describe-component :describe-ir2-component
-                :make-file-source-info :make-lisp-source-info
-                :def-ir1-translator :defknown :ctype-of :type-specifier)
+   :*emit-cfasl* :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info :fun-info
+   :def-ir1-translator :defknown :ctype-of :type-specifier
+   :give-up-ir1-transform)
   (:import-from :sb-c :vop)
   (:import-from :sb-c :*compilation-unit* :*backend-sc-numbers* 
    :*backend-sbs* :*backend-sc-names* 
@@ -312,19 +312,19 @@
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
    :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
    :print-arguments :ea
-   :with-ds-lambda-list-parts
-           :without-compiler-notes
-   :checked-compile :runtime :asm-search :inspect-ir
-   :compile-condition :compile-condition-context-format
-   :compile-condition-context-arguments :compile-condition-description
-   :compile-file-error :compile-warned-warning
-   :compile-warned-error :compile-failed-warning
-   :compile-failed-error :*compile-file-failure-action*
-   :*compile-file-warning-action* :check-lisp-compile-warnings
-   :check-lisp-compile-results :reset-deferred-warnings
-   :save-deferred-warnings :check-deferred-warnings
-   :call-with-saved-deferred-warnings :with-saved-deferred-warnings
-   :checked-compile-file)
+   :with-ds-lambda-list-parts :fun-info
+   :without-compiler-notes
+           :checked-compile :runtime :asm-search :inspect-ir
+           :compile-condition :compile-condition-context-format
+           :compile-condition-context-arguments :compile-condition-description
+           :compile-file-error :compile-warned-warning
+           :compile-warned-error :compile-failed-warning
+           :compile-failed-error :*compile-file-failure-action*
+           :*compile-file-warning-action* :check-lisp-compile-warnings
+           :check-lisp-compile-results :reset-deferred-warnings
+           :save-deferred-warnings :check-deferred-warnings
+           :call-with-saved-deferred-warnings :with-saved-deferred-warnings
+           :checked-compile-file)
   (:recycle :sb-c))
 
 (defpkg :std/type
@@ -353,98 +353,98 @@
    :*type-classes* :type-class
    :array-index :array-length
    :index
-   :parse-optional-arg-spec :parse-key-arg-spec 
-   :ds-lambda-list-matcher :parse-ds-lambda-list
-   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
-   :parse-meta-ds-lambda-list
-   #:negative-double-float :*ctype-hashsets*
-   #:abstract-ds-lambda-list
-   #:negative-fixnum-p
-   #:negative-float
-   #:negative-float-p
-   #:negative-long-float
-   #:negative-long-float-p
-   #:negative-rational
-   #:negative-rational-p
-   #:negative-real
-   #:negative-single-float-p
-   #:non-negative-double-float
-   #:non-negative-double-float-p
-   #:non-negative-fixnum
-   #:non-negative-fixnum-p
-   #:non-negative-float
-   #:non-negative-float-p
-   #:non-negative-integer-p
-   #:non-negative-long-float
-   #:non-negative-rational
-   #:non-negative-real-p
-   #:non-negative-short-float-p
-   #:non-negative-single-float
-   #:non-negative-single-float-p
-   #:non-positive-double-float
-   #:non-positive-double-float-p
-   #:non-positive-fixnum
-   #:non-positive-fixnum-p
-   #:non-positive-float
-   #:non-positive-float-p
-   #:non-positive-integer
-   #:non-positive-rational
-   #:non-positive-real
-   #:non-positive-real-p
-   #:non-positive-short-float
-   #:non-positive-short-float-p
-   #:non-positive-single-float-p
-   #:positive-double-float
-   #:positive-double-float-p
-   #:positive-fixnum
-   #:positive-fixnum-p
-   #:positive-float
-   #:positive-float-p
-   #:positive-integer
-   #:positive-rational
-   #:positive-real
-   #:positive-real-p
-   #:positive-short-float
-   #:positive-short-float-p
-   #:positive-single-float
-   #:positive-single-float-p
-   #:negative-integer
-   #:negative-double-float-p
-   #:negative-fixnum
-   #:negative-integer
-   #:negative-integer-p
-   #:negative-real-p
-   #:negative-short-float
-   #:negative-short-float-p
-   #:negative-single-float
-   #:non-negative-integer
-   #:non-negative-long-float-p
-   #:non-negative-rational-p
-   #:non-negative-real
-   #:non-negative-short-float
-   #:non-positive-integer-p
-   #:non-positive-long-float
-   #:non-positive-long-float-p
-   #:non-positive-rational-p
-   #:non-positive-single-float
-   #:integer-type-length
-   #:coercef
-   #:octet
-   #:octet-vector
-   #:simple-octet-vector
-   #:octet-vector-p
-   #:positive-integer-p
-   #:positive-long-float
-   #:positive-long-float-p
-   #:positive-rational-p
-   #:of-type
-   #:type=
-   #:word :u1 :u2 :u3 :u4 :u5 :u6 :u7 :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
-   :*simple-types* :*primitive-object-table* 
-   :*simple-type-table* :*core-types*
-   :*core-type-table* :register-type-id
-   :reset-core-types :prim-type 
-   :type-id :simple-type-id))
+           :parse-optional-arg-spec :parse-key-arg-spec 
+           :ds-lambda-list-matcher :parse-ds-lambda-list
+           :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
+           :parse-meta-ds-lambda-list
+           #:negative-double-float :*ctype-hashsets*
+           #:abstract-ds-lambda-list
+           #:negative-fixnum-p
+           #:negative-float
+           #:negative-float-p
+           #:negative-long-float
+           #:negative-long-float-p
+           #:negative-rational
+           #:negative-rational-p
+           #:negative-real
+           #:negative-single-float-p
+           #:non-negative-double-float
+           #:non-negative-double-float-p
+           #:non-negative-fixnum
+           #:non-negative-fixnum-p
+           #:non-negative-float
+           #:non-negative-float-p
+           #:non-negative-integer-p
+           #:non-negative-long-float
+           #:non-negative-rational
+           #:non-negative-real-p
+           #:non-negative-short-float-p
+           #:non-negative-single-float
+           #:non-negative-single-float-p
+           #:non-positive-double-float
+           #:non-positive-double-float-p
+           #:non-positive-fixnum
+           #:non-positive-fixnum-p
+           #:non-positive-float
+           #:non-positive-float-p
+           #:non-positive-integer
+           #:non-positive-rational
+           #:non-positive-real
+           #:non-positive-real-p
+           #:non-positive-short-float
+           #:non-positive-short-float-p
+           #:non-positive-single-float-p
+           #:positive-double-float
+           #:positive-double-float-p
+           #:positive-fixnum
+           #:positive-fixnum-p
+           #:positive-float
+           #:positive-float-p
+           #:positive-integer
+           #:positive-rational
+           #:positive-real
+           #:positive-real-p
+           #:positive-short-float
+           #:positive-short-float-p
+           #:positive-single-float
+           #:positive-single-float-p
+           #:negative-integer
+           #:negative-double-float-p
+           #:negative-fixnum
+           #:negative-integer
+           #:negative-integer-p
+           #:negative-real-p
+           #:negative-short-float
+           #:negative-short-float-p
+           #:negative-single-float
+           #:non-negative-integer
+           #:non-negative-long-float-p
+           #:non-negative-rational-p
+           #:non-negative-real
+           #:non-negative-short-float
+           #:non-positive-integer-p
+           #:non-positive-long-float
+           #:non-positive-long-float-p
+           #:non-positive-rational-p
+           #:non-positive-single-float
+           #:integer-type-length
+           #:coercef
+           #:octet
+           #:octet-vector
+           #:simple-octet-vector
+           #:octet-vector-p
+           #:positive-integer-p
+           #:positive-long-float
+           #:positive-long-float-p
+           #:positive-rational-p
+           #:of-type
+           #:type=
+           #:word :u1 :u2 :u3 :u4 :u5 :u6 :u7 :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
+           :*simple-types* :*primitive-object-table* 
+           :*simple-type-table* :*core-types*
+           :*core-type-table* :register-type-id
+           :reset-core-types :prim-type 
+           :type-id :simple-type-id))
 
 (defpkg :std/string
   (:documentation "Standard string utilities.")
@@ -1344,13 +1344,13 @@ define the core ALIEN systems.")
   (:export :sink :source :element 
    :pipe :msg :print-filter :switch-filter :predicate-filter :bin :predicate :filter
    :element-stream :value :resolve-element
-   :find-element :find-parent-element :insert-element :withdraw-element
-   :remove-element :set-element-id :move-element :message
-   :condition-message :message-condition
-   :stream-sink :stream-source :file-sink :file-source
-   :add-element :insert-element*
-   :defpipe :make-pipe :simple-message :message-content
-   :defpipe* :event :bus :format-message))
+           :find-element :find-parent-element :insert-element :withdraw-element
+           :remove-element :set-element-id :move-element :message
+           :condition-message :message-condition
+           :stream-sink :stream-source :file-sink :file-source
+           :add-element :insert-element*
+           :defpipe :make-pipe :simple-message :message-content
+           :defpipe* :event :bus :format-message))
 
 (defpkg :std/thread
   (:documentation "Standard thread utilities and thread pools.")
@@ -1502,10 +1502,11 @@ useful in a variety of contexts.")
   (:documentation "Standard format and print-related functions.")
   (:import-from :std/list :group :ensure-cons :assoc-value)
   (:import-from :std/meta :init)
+  (:import-from :sb-format :format-error :*format-directive-expanders* :format-directive :make-format-directive)
   (:import-from :std/hash :hash-table-alist)
   (:import-from :std/sym :with-gensyms)
   (:import-from :std/rand :random-booleans)
-  (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors*)
+  (:import-from :sb-ext :*print-circle-not-shared* :*suppress-print-errors* :*print-vector-length*)
   (:import-from :sb-impl :prin1-to-line)
   (:shadowing-import-from :uiop :println)
   (:export :printer-status :fmt-row :format-sxhash 
@@ -1528,7 +1529,7 @@ useful in a variety of contexts.")
    :aformat :expand-annotated-string
    :expand-annotation :word-wrap
    :annotations :*print-slot-exclude* :*print-slot-unbound* :*print-slot-name-width*
-   :print-slot-exclusion))
+   :print-slot-exclusion :*print-vector-length*))
 
 (defpkg :std/os
   (:documentation "Standard OS Interface.")
