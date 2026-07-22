@@ -102,14 +102,14 @@
   (:nicknames :meta/lazy :lazy)
   (:use :cl :std))
 
-(defpkg :obj/meta/overloaded
-  (:nicknames :meta/overloaded :overloaded)
+(defpkg :obj/meta/overload
+  (:nicknames :meta/overload :overload)
   (:use :cl :std))
 
 (defpkg :obj/meta/stored
-  "Stored object definitions.
+  (:documentation "Stored object definitions.
 This package defines the generic MOP machinery which drives the STORE
-protocol."
+protocol.")
   (:nicknames :meta/stored :stored)
   (:use :cl :std :sb-mop :val)
   (:export

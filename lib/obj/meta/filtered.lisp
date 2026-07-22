@@ -1,8 +1,11 @@
 ;;; obj/meta/filtered.lisp --- Filtered generic functions
 
+;;; Commentary:
+
 ;; see https://github.com/pcostanza/filtered-functions
 
 ;; ref: https://www.p-cos.net/documents/filtered-dispatch.pdf
+
 #| ;; factorial as a generic function
 (defmethod fac ((n number))
  (* n (fac (- n 1))))

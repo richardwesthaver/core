@@ -13,7 +13,7 @@ core."
      (:file "filtered")
      (:file "fast")
      (:file "lazy")
-     (:file "overloaded")
+     (:file "overload")
      (:file "stored")
      (:file "dynamic")
      (:file "mix")
