@@ -1,6 +1,6 @@
 ;;; obj/meta/fast.lisp --- Fast generic functions
 
-;; see https://github.com/marcoheisig/fast-generic-functions
+;; Based on [[gh:marcoheisig/fast-generic-functions][macroheisig/fast-generic-functions]]
 
 ;;; Code:
 (in-package :obj/meta/fast)
@@ -194,17 +194,17 @@ Can parse all but specialized lambda lists.
              (error "Invalid &key lambda list item: ~S"
                     item))
            (parse-keyword-var (item)
-           (etypecase item
-             (symbol
-              (values (intern (symbol-name item) :keyword)
-                      item))
-             ((cons symbol null)
-              (values (intern (symbol-name (first item)) :keyword)
-                      (first item)))
-             ((cons keyword (cons symbol null))
-              (values (first item)
-                      (second item)))
-             (t (fail)))))
+             (etypecase item
+               (symbol
+                (values (intern (symbol-name item) :keyword)
+                        item))
+               ((cons symbol null)
+                (values (intern (symbol-name (first item)) :keyword)
+                        (first item)))
+               ((cons keyword (cons symbol null))
+                (values (first item)
+                        (second item)))
+               (t (fail)))))
     (typecase item
       (local-variable
        (make-instance 'keyword-info
@@ -400,33 +400,33 @@ Can parse all but specialized lambda lists.
 ;;; expand-effective-method-body
 (defun expand-effective-method-body (effective-method generic-function lambda-list)
   ;; (sb-ext:without-package-locks
-    (macroexpand-all
-     `(let ((.gf. #',(sb-mop:generic-function-name generic-function)))      
-        (declare (ignorable .gf.))
-        (declare (sb-ext:disable-package-locks common-lisp:call-method))
-        (declare (sb-ext:disable-package-locks common-lisp:make-method))
-        ;; (declare (sb-ext:disable-package-locks sb-pcl::check-applicable-keywords))
-        (declare (sb-ext:disable-package-locks sb-pcl::no-primary-method))
-        (macrolet
-            (;; SBCL introduces explicit keyword argument checking into
-             ;; the effective method. Since we do our own checking, we
-             ;; can safely disable it. However, we touch the relevant
-             ;; variables to prevent unused variable warnings.           
-             (check-applicable-keywords (&rest args)
-               (declare (ignore args)))
-               ; `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
-             ;; SBCL introduces a magic form to report when there are no
-             ;; primary methods.  The problem is that this form contains a
-             ;; reference to the literal generic function, which is not an
-             ;; externalizable object.  Our solution is to replace it with
-             ;; something portable.
-             (sb-pcl::no-primary-method (&rest args)
-               (declare (ignore args))
-               `(apply #'no-primary-method .gf. ,@',(lambda-list-apply-arguments lambda-list))))
-          ,(wrap-in-call-method-macrolet
-            effective-method
-            generic-function
-            lambda-list)))))
+  (macroexpand-all
+   `(let ((.gf. #',(sb-mop:generic-function-name generic-function)))      
+      (declare (ignorable .gf.))
+      (declare (sb-ext:disable-package-locks common-lisp:call-method))
+      (declare (sb-ext:disable-package-locks common-lisp:make-method))
+      ;; (declare (sb-ext:disable-package-locks sb-pcl::check-applicable-keywords))
+      (declare (sb-ext:disable-package-locks sb-pcl::no-primary-method))
+      (macrolet
+          (;; SBCL introduces explicit keyword argument checking into
+           ;; the effective method. Since we do our own checking, we
+           ;; can safely disable it. However, we touch the relevant
+           ;; variables to prevent unused variable warnings.           
+           (check-applicable-keywords (&rest args)
+             (declare (ignore args)))
+                                        ; `(progn sb-pcl::.valid-keys. sb-pcl::.keyargs-start. (values)))
+           ;; SBCL introduces a magic form to report when there are no
+           ;; primary methods.  The problem is that this form contains a
+           ;; reference to the literal generic function, which is not an
+           ;; externalizable object.  Our solution is to replace it with
+           ;; something portable.
+           (sb-pcl::no-primary-method (&rest args)
+             (declare (ignore args))
+             `(apply #'no-primary-method .gf. ,@',(lambda-list-apply-arguments lambda-list))))
+        ,(wrap-in-call-method-macrolet
+          effective-method
+          generic-function
+          lambda-list)))))
 
 (defun wrap-in-call-method-macrolet (form generic-function lambda-list)
   `(macrolet ((call-method (method &optional next-methods)
@@ -524,15 +524,15 @@ Can parse all but specialized lambda lists.
         ,@(loop for g-info in g-optional
                 for m-info in m-optional
                 append
-                (if (null (optional-info-suppliedp g-info))
-                    `(,(optional-info-variable g-info))
-                    (let ((value
-                            `(if ,(optional-info-suppliedp g-info)
-                                 ,(optional-info-variable g-info)
-                                 ,(optional-info-initform m-info))))
-                      (if (null (optional-info-suppliedp m-info))
-                          `(,value)
-                          `(,value ,(optional-info-suppliedp g-info))))))
+                   (if (null (optional-info-suppliedp g-info))
+                       `(,(optional-info-variable g-info))
+                       (let ((value
+                               `(if ,(optional-info-suppliedp g-info)
+                                    ,(optional-info-variable g-info)
+                                    ,(optional-info-initform m-info))))
+                         (if (null (optional-info-suppliedp m-info))
+                             `(,value)
+                             `(,value ,(optional-info-suppliedp g-info))))))
         ;; The rest argument.
         ,@(if (null m-rest-var)
               `()
@@ -542,15 +542,15 @@ Can parse all but specialized lambda lists.
                 for g-info = (find (keyword-info-keyword m-info) g-keyword
                                    :key #'keyword-info-keyword)
                 append
-                (if (null (keyword-info-suppliedp g-info))
-                    `(,(keyword-info-variable g-info))
-                    (let ((value
-                            `(if ,(keyword-info-suppliedp g-info)
-                                 ,(keyword-info-variable g-info)
-                                 ,(keyword-info-initform m-info))))
-                      (if (null (keyword-info-suppliedp m-info))
-                          `(,value)
-                          `(,value ,(keyword-info-suppliedp g-info))))))))))
+                   (if (null (keyword-info-suppliedp g-info))
+                       `(,(keyword-info-variable g-info))
+                       (let ((value
+                               `(if ,(keyword-info-suppliedp g-info)
+                                    ,(keyword-info-variable g-info)
+                                    ,(keyword-info-initform m-info))))
+                         (if (null (keyword-info-suppliedp m-info))
+                             `(,value)
+                             `(,value ,(keyword-info-suppliedp g-info))))))))))
 
 ;;; generic functions
 (defgeneric optimize-function-call (generic-function static-call-signature))
@@ -712,7 +712,6 @@ Can parse all but specialized lambda lists.
            anonymized-lambda-list)))))
 
 ;;; Computing the Effective Method Lambda List
-
 (defun merge-required-infos (g-required m-requireds)
   (dolist (m-required m-requireds g-required)
     (assert (= (length m-required)
@@ -733,25 +732,25 @@ Can parse all but specialized lambda lists.
             ;; to supply its initform or not.  Because of this, the suppliedp
             ;; parameter can only be discarded globally when the initforms of
             ;; all methods are constant and equal.
-            (let ((global-initform (optional-info-initform (first m-infos)))
-                  (no-one-cares (not (optional-info-suppliedp (first m-infos)))))
-              (dolist (m-info m-infos)
-                (with-accessors ((variable optional-info-variable)
-                                 (initform optional-info-initform)
-                                 (suppliedp optional-info-suppliedp))
-                    m-info
-                  (unless (and (constantp initform)
-                               (equal initform global-initform)
-                               (not suppliedp))
-                    (setf no-one-cares nil))))
-              (if no-one-cares
-                  (make-instance 'optional-info
-                    :variable (optional-info-variable g-info)
-                    :initform global-initform)
-                  (make-instance 'optional-info
-                    :variable (optional-info-variable g-info)
-                    :initform nil
-                    :suppliedp (optional-info-suppliedp g-info))))))))
+               (let ((global-initform (optional-info-initform (first m-infos)))
+                     (no-one-cares (not (optional-info-suppliedp (first m-infos)))))
+                 (dolist (m-info m-infos)
+                   (with-accessors ((variable optional-info-variable)
+                                    (initform optional-info-initform)
+                                    (suppliedp optional-info-suppliedp))
+                       m-info
+                     (unless (and (constantp initform)
+                                  (equal initform global-initform)
+                                  (not suppliedp))
+                       (setf no-one-cares nil))))
+                 (if no-one-cares
+                     (make-instance 'optional-info
+                       :variable (optional-info-variable g-info)
+                       :initform global-initform)
+                     (make-instance 'optional-info
+                       :variable (optional-info-variable g-info)
+                       :initform nil
+                       :suppliedp (optional-info-suppliedp g-info))))))))
 
 (defun merge-keyword-infos (g-keyword m-keywords)
   ;; First we assemble an alist whose keys are keywords and whose values
@@ -770,31 +769,31 @@ Can parse all but specialized lambda lists.
           collect
           ;; Merging keyword info objects is handled just like in the case
           ;; of optional info objects above.
-          (let ((global-initform (keyword-info-initform (first m-infos)))
-                (no-one-cares (not (keyword-info-suppliedp (first m-infos))))
-                ;; Not actually g-info, but we need some place to grab a
-                ;; variable name form.
-                (g-info (or (find key g-keyword :key #'keyword-info-keyword)
-                            (first m-infos))))
-            (dolist (m-info m-infos)
-              (with-accessors ((initform keyword-info-initform)
-                               (suppliedp keyword-info-suppliedp))
-                  m-info
-                (unless (and (constantp initform)
-                             (equal initform global-initform)
-                             (not suppliedp))
-                  (setf no-one-cares nil))))
-            (if no-one-cares
-                (make-instance 'keyword-info
-                  :keyword key
-                  :variable (keyword-info-variable g-info)
-                  :initform global-initform)
-                (make-instance 'keyword-info
-                  :keyword key
-                  :variable (keyword-info-variable g-info)
-                  :initform nil
-                  :suppliedp (or (keyword-info-suppliedp g-info)
-                                 (gensymify "SUPPLIEDP"))))))))
+             (let ((global-initform (keyword-info-initform (first m-infos)))
+                   (no-one-cares (not (keyword-info-suppliedp (first m-infos))))
+                   ;; Not actually g-info, but we need some place to grab a
+                   ;; variable name form.
+                   (g-info (or (find key g-keyword :key #'keyword-info-keyword)
+                               (first m-infos))))
+               (dolist (m-info m-infos)
+                 (with-accessors ((initform keyword-info-initform)
+                                  (suppliedp keyword-info-suppliedp))
+                     m-info
+                   (unless (and (constantp initform)
+                                (equal initform global-initform)
+                                (not suppliedp))
+                     (setf no-one-cares nil))))
+               (if no-one-cares
+                   (make-instance 'keyword-info
+                     :keyword key
+                     :variable (keyword-info-variable g-info)
+                     :initform global-initform)
+                   (make-instance 'keyword-info
+                     :keyword key
+                     :variable (keyword-info-variable g-info)
+                     :initform nil
+                     :suppliedp (or (keyword-info-suppliedp g-info)
+                                    (gensymify "SUPPLIEDP"))))))))
 
 (defun merge-allow-other-keys (g-allow-other-keys m-allow-other-keys-list)
   (reduce

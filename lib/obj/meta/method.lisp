@@ -6,8 +6,7 @@
 (in-package :obj/meta/method)
 ;;; From ARNESI - Messing with the MOP
 
-;; https://bese.common-lisp.dev/docs/arnesi/html/Messing_0020with_0020the_0020MOP.html#wrapping-standard_0020method_0020combination
-
+;; [[https://bese.common-lisp.dev/docs/arnesi/html/Messing_0020with_0020the_0020MOP.html#wrapping-standard_0020method_0020combination][Wrapping standard method combination]]
 (define-method-combination wrapping-standard
     (&key (around-order :most-specific-first)
           (before-order :most-specific-first)
@@ -22,7 +21,7 @@
    (primary () :required t)
    (after (:after)))
   "Same semantics as standard method combination but allows
-\"wrapping\" methods. Ordering of methods:
+'wrapping' methods. Ordering of methods:
 
  (wrap-around
    (around

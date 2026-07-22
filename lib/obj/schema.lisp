@@ -443,6 +443,9 @@ gets updated when the class changes."))
                 :direct-slots (slot-defs-from-schema schema args)
                 :metaclass 'stored-class)))
 
+(defgeneric ensure-schemas (self)
+  (:method ((self t)) nil))
+
 ;;; Upgradable
 (defclass upgradable-schema (schema)
   ((version :accessor version :initarg :version :initform 1)

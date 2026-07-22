@@ -380,6 +380,18 @@ not), evaluates the forms, then closes the cursor."
        (sb-sys:without-interrupts
          (cursor-close ,var)))))
 
+(defmethod remove-kv (key value (dbt dup-btree))
+  "Too bad there isn't a direct way to do this, but with
+   ordered duplicates this should be reasonably efficient"
+  (let ((sc (get-store dbt)))
+    (ensure-transaction (:store sc)
+      (with-btree-cursor (cur dbt)
+        (multiple-value-bind (existp k v)
+            (cursor-get-both cur key value)
+          (declare (ignore k v))
+          (when existp 
+            (cursor-delete cur)))))))
+
 (defmethod drop-btree ((self btree))
   (with-btree-cursor (cur self)
     (loop for (existp key) = (multiple-value-list (cursor-first cur))
@@ -396,7 +408,7 @@ not), evaluates the forms, then closes the cursor."
 
 (defmethod drop-btree ((index btree-index))
   "Btree indices don't need to have values removed, this happens on the primary
-when remove-kv is called"
+when REMOVE-KV is called."
   nil)
 
 (defun compare<= (a b)

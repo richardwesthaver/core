@@ -131,7 +131,8 @@ saved."
 ;;; Conditions
 (defcondition db-condition () ()
   (:documentation "Superclass for DB conditions.")
-  (:error-class db-error (error) ()))
+  (:error-class db-error (error) ())
+  (:warning-class db-warning (warning) ()))
 
 (deferror invalid-database (db-error invalid-argument) ()
   (:documentation "Error signaled when an invalid DB is detected.")
@@ -163,9 +164,6 @@ saved."
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
 
-(defgeneric db-lock (self)
-  (:documentation "Return an optional database MUTEX."))
-
 (defgeneric database-version (self)
   (:documentation "Return the version associated with a given database SELF."))
 
@@ -188,7 +186,8 @@ saved."
 
 (defclass database ()
   ((db :initform nil :initarg :db :accessor db))
-  (:documentation "Base class for Database objects."))
+  (:documentation "Base class for Database objects.
+Every database has at least one slot named DB."))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
@@ -199,16 +198,6 @@ usually a key such as :ROCKSDB or :SQLITE."))
 
 (defgeneric connect-db (db &key &allow-other-keys)
   (:documentation "Connect the database DB."))
-
-(defgeneric db-get (db key &key &allow-other-keys)
-  (:documentation "Return the value associated with KEY from DB."))
-
-(defgeneric (setf db-get) (db key val &key &allow-other-keys))
-
-(defgeneric db-set (db key val &key &allow-other-keys)
-  (:documentation "Set the value associated with KEY from DB to VAL.")
-  (:method (db key val &rest args)
-    (setf (apply #'db-get db key args) val)))
 
 (defgeneric close-db (db &key &allow-other-keys)
   (:documentation "Close a database."))

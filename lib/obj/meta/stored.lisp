@@ -149,6 +149,53 @@ STORE is reserved for a special method which operates on stored objects.")
     automatically inherited if you use the STORED-CLASS
     metaclass."))
 
+(defmethod shared-initialize :around ((class stored-class) slot-names &rest args &key direct-superclasses direct-slots index cache-style)
+  "Ensures we inherit from stored-object prior to initializing."
+  (declare (ignorable index))
+  ;; When we declare slots and don't initialize the cache-style and don't
+  ;; inherit cacheable-persistent-object...inform the user
+  (when (and (not cache-style) (cached-slot-specification-p direct-slots)
+             (not (superclass-member-p 'cacheable-persistent-object 
+                                       (class-direct-superclasses class))))
+    (error "Must specify the class caching style if you declare cached slots and don't~%inherit from a cached class.  Class option :cache-style must be one of~% :checkout, :txn or :none"))
+  (let* ((new-direct-superclasses 
+           (if cache-style 
+               ;; TODO 2026-07-21: stored-cache-object
+               (ensure-class-inherits-from class '(stored-cache-object) direct-superclasses)
+               (ensure-class-inherits-from class '(stored-object) direct-superclasses))))
+    ;; Call the next method
+    (prog1
+        (apply #'call-next-method class slot-names
+               :direct-superclasses new-direct-superclasses 
+               (remove-from-plist args :direct-superclasses :index))
+      ;; Make sure we convert the cache argument so it can be used in accessors
+      (when (consp (get-cache-style class))
+        (setf (get-cache-style class) (first (get-cache-style class)))))))
+
+(defun ensure-class-inherits-from (class from-classnames direct-superclasses)
+  (let* ((from-classes (mapcar #'find-class from-classnames))
+     (has-persistent-objects 
+      (every #'(lambda (class) (superclass-member-p class direct-superclasses))
+         from-classes)))
+    (if (not (or (member class from-classes) has-persistent-objects))
+    (progn
+      (dolist (class from-classes)
+        (setf direct-superclasses (remove class direct-superclasses)))
+      (append direct-superclasses from-classes))
+    direct-superclasses)))
+
+(defun superclass-member-p (class superclasses)
+  "Searches superclass list for class"
+  (some #'(lambda (superclass)
+        (or (eq class superclass)
+        (let ((supers (class-direct-superclasses superclass)))
+          (when supers
+            (superclass-member-p class supers)))))
+    superclasses))
+
+(defun cached-slot-specification-p (direct-slot-defs)
+  (some #'(lambda (slot) (getf slot :cached)) direct-slot-defs))
+
 ;;; Slot mixin
 (defclass stored-slot-definition (standard-slot-definition)
   ((stored-p :initarg :stored
@@ -205,6 +252,16 @@ STORE is reserved for a special method which operates on stored objects.")
   (append (stored-slot-defs class)
           (cached-slot-defs class)
           (indexed-slot-defs class)))
+
+(defun compute-derived-index-triggers (class derived-slot-defs)
+  (let* ((sdefs (all-single-valued-slot-defs class))
+     (sdef-names (mapcar #'slot-definition-name sdefs)))
+    (dolist (ddef derived-slot-defs)
+      (dolist (sname (ifret (derived-slot-deps ddef) sdef-names))
+    (unless (member sname sdef-names)
+      (error "Finalization error: derived index dependency hint ~A not a valid slot name"
+         sname))
+    (push ddef (derived-slot-triggers (find-slot-def-by-name class sname)))))))
 
 ;;; From Elephant - for future development
 (defclass cached-slot-definition (standard-slot-definition)
@@ -510,7 +567,7 @@ definition class depending on the keyword."
       (setf (getf initargs :cached) t))
     (when (eq (type-of parent-direct-slot) 'association-direct-slot-definition)
       (setf (getf initargs :associate) (association parent-direct-slot))
-      (setf (getf initargs :inherit) 
+      (setf (getf initargs :inherit)
             (inherit-p parent-direct-slot))
       (setf (getf initargs :many-to-many) (many-to-many-p parent-direct-slot))
       (setf (getf initargs :base-class)

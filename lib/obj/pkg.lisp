@@ -534,6 +534,7 @@ protocol.")
   (:use :cl :std :config :stored :sb-mop :id :ast :dynamic)
   (:export
    #:schema
+   #:ensure-schemas
    #:object-schema
    #:simple-schema
    #:schema-metadata
@@ -682,7 +683,6 @@ protocol.")
    :destroy-db
    :connect-db
    :find-db
-   :db-get
    :db
    :database
    :db-closed-p
@@ -762,7 +762,6 @@ protocol.")
    :set-database-backend-option
    :column-opts
    :transaction-opts
-   :db-lock
    :simple-transaction
    :secondary-db
    :db-backup

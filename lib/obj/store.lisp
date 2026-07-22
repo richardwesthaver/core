@@ -16,6 +16,18 @@
 ;;; Code:
 (in-package :obj/store)
 
+(defparameter *warn-when-dropping-stored-slots* t
+  "Signal a continue-able error when the user is about to delete
+a bunch of stored slot values on class redefinition. This is nil by default to
+stop annoying message and confusing new users, but it will help keep users
+from shooting themselves in the foot and losing significant amounts of data
+during debugging and development. It can be disabled if change-class is used a
+bunch in the application rather than just DEFCLASS changes interactively.
+
+Note that the new class definition will take place even if you abort the
+continue-able error; only the removal of the slots in the database is
+prevented. You can access them again if you redefine your class once more.")
+
 ;;; Stored Set
 ;; default implementation of simple sets using btrees
 (defclass pset (stored-collection) ()
@@ -475,6 +487,38 @@ different objects with the same oid."
   (declare (ignore sc current previous recs))
   nil)
 
+(defun warn-about-dropped-slots (op class names)
+  (when (and *warn-when-dropping-stored-slots* names)
+    (cerror "Drop the slots" 
+        'dropping-stored-slot-data
+        :operation op
+        :class class
+        :slots names)))
+
+(define-condition dropping-stored-slot-data (warning)
+  ((operation :initarg :operation)
+   (class :initarg :class)
+   (slots :initarg :slots))
+  (:report (lambda (c stream)
+         (with-slots (class slots operation) c
+           (format stream "Dropping slot(s) ~A for class ~A in ~A. Continue the synchronization process?"
+               slots class operation)))))
+
+(defun warn-on-reinitialization-data-loss (class)
+  "Warnings at class def time:
+   - set-valued/assoc (warn!)
+   - stored/indexed/cached (warn?)
+   - derived hints?
+   Be nice to be able to restore the slots rather than just
+   avoid updating"
+  (let* ((old-schema (get-class-schema class))
+         (new-schema (class-instance-schema class))
+         (diffs (schema-diff new-schema old-schema)))
+    (dolist (diff diffs)
+      (when (eq (diff-type diff) :rem)
+        (warn-about-dropped-slots :rem class
+                                  (mapcar #'slot-field-name (cdr diff)))))))
+
 ;;; Classes
 (defgeneric recreate-instance (instance &rest initargs &key &allow-other-keys)
   (:method ((instance t) &rest args)
@@ -552,30 +596,31 @@ something like 0, 1 or -1")
    (schema-table 
     :reader schema-table
     :documentation "Schema id to schema database table")
-   (schema-name-index 
+   (schema-name-index
     :reader schema-name-index
     :documentation "Schema name to schema database table")
    (schema-cache 
     :accessor schema-cache :initform (make-cache-table :test 'eq)
-    :documentation "This is a cache of class schemas stored in the database indexed by classid")
+    :documentation "This is a cache of class schemas stored in the database indexed by CID.")
    (schema-classes 
     :accessor schema-classes :initform nil
-    :documentation "Maintains a list of all classes that have a cached schema value so we can shutdown cleanly")
+    :documentation "A list of all classes that have a cached schema value so we can shutdown
+cleanly.")
    (schema-cache-lock 
     :accessor schema-cache-lock :initform (make-mutex :name "cache-lock")
     :documentation "Protection for updates to the cache from multiple threads. Do not override.")
    ;; Instance storage
    (instance-index
     :reader instance-index
-    :documentation "Contains map of oid to class ids")
+    :documentation "OID->CID table.")
    (class-index 
     :reader class-index
-    :documentation "A reverse map of class id to oid")
+    :documentation "CID->OID table (reverse map).")
    (instance-cache 
     :accessor instance-cache :initform (make-cache-table :test 'eql)
     :documentation 
-    "This is an instance cache and part of the metaclass protocol. Data stores
-should not override the default behavior.")
+    "Part of the meta-class protocol - data stores should not override the default
+behavior.")
    (instance-cache-lock 
     :accessor instance-cache-lock :initform (make-mutex :name "instance-cache")
     :documentation "Protection for updates to the cache from multiple threads. Do not override.")
@@ -788,14 +833,14 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (:documentation "Is this OID reserved by the store? GC doesn't touch"))
 
 (defmethod add-class-store-schema (st (class stored-class) schema)
-  ;; NOTE: Needs to be lock protected
+  "NOTE: Needs to be lock protected."
   (pushnew (class-name class) (schema-classes st))
   (remove-class-store-schema st class)
   (setf (get-store-schemas class)
         (acons (spec st) schema (get-store-schemas class))))
 
 (defmethod remove-class-store-schema (st (class stored-class))
-  ;; NOTE: Needs to be lock protected
+  "NOTE: Needs to be lock protected."
   (setf (get-store-schemas class)
         (remove (spec st) (get-store-schemas class) 
                 :key #'car :test #'equalp)))
@@ -834,6 +879,78 @@ DEFSCLASS for the available class-specific options in the generic interface."))
            ;; Also cache in class slot
            (add-class-store-schema st class schema)
            schema)))
+
+(defmethod finalize-inheritance :after ((class stored-class))
+  (ensure-schemas class))
+
+(defmethod upgrade-class-slot ((sc store) class (diff-type (eql :add)) recs)
+  "At the store level, we'll only need to deal with structures that are at the
+   class level, not managed in the individual instance"
+  (declare (ignore class))
+  (with-slots (name type args) (first recs)
+    (case type
+      (:indexed (add-slot-index sc (make-dup-btree sc) (getf args :base) name))
+      (:derived (add-slot-index sc (make-dup-btree sc) (getf args :base) name))
+      (:association nil))))
+
+(defmethod synchronize-stores-for-class (class)
+  "Synchronize all stores connected to a given class.  Meant to be
+   called during class redefinition to keep all DB instances in sync."
+  (let ((class-schema (get-class-schema class)))
+    (loop for (spec . db-schema) in (get-store-schemas class) do
+     (unless (match-schemas class-schema db-schema)
+       (let ((store (lookup-con-spec spec)))
+         (synchronize-store-class store class class-schema db-schema)
+         (unless *lazy-memory-instance-upgrading*
+           (upgrade-all-memory-instances store))
+         (unless *lazy-db-instance-upgrading*
+           (upgrade-all-db-instances store class-schema)))))))
+
+(defmethod synchronize-store-class ((sc store) class class-schema old-schema)
+  "Synchronizing a store means adding/removing indices, upgrading
+   the default schema if necessary, etc."
+  (format t "~&Synchronizing ~A in ~A~%" (schema-class-name class-schema) (spec sc))
+  (let* ((class (or class (find-class (schema-class-name class-schema))))
+         (new-schema (create-store-schema sc class))
+     (diff (schema-diff new-schema old-schema)))
+    ;; Chain schemas
+    (setf (schema-successor old-schema) (id new-schema))
+    (setf (schema-predecessor new-schema) (id old-schema))
+    (update-store-schema sc old-schema)
+    (update-store-schema sc new-schema t)
+    ;; Update the class
+    (loop for entry in diff do
+     (upgrade-class-slot sc class (diff-type entry) (diff-recs entry)))))
+
+(defmethod ensure-schemas ((instance stored-class))
+  "Constructs the metaclass schema when the class hierarchy is valid"
+  (let* ((old-schema (get-class-schema instance))
+     (new-schema (class-instance-schema instance)))
+    (assert new-schema)
+    ;; Stop synchronization if necessary to allow for reversing the
+    ;; interactive re-definition
+    (when (and old-schema *warn-when-dropping-stored-slots*)
+      (warn-on-reinitialization-data-loss instance))
+    ;; Update schema chain
+    (setf (schema-predecessor new-schema) old-schema)
+    (setf (get-class-schema instance) new-schema)
+    (and *store* (not (subtypep (class-name instance) 'btree))
+      (lookup-schema *store* instance)) ; ensure db schema of user-defined classes
+    ;; Cleanup some slot values
+    (let ((idx-state (get-class-indexing instance)))
+      (when (consp idx-state)
+    (setf (get-class-indexing instance) (first idx-state))))
+    ;; Compute derived index triggers
+    (awhen (stored::derived-index-slot-defs instance)
+      (stored::compute-derived-index-triggers instance it))
+    ;; Synchronize instances to new schemas
+    (when (and old-schema (not (match-schemas new-schema old-schema)))
+      (synchronize-stores-for-class instance))
+    (and *store*
+         (not (subtypep (class-name instance) 'btree))
+         (not (match-schemas (lookup-schema *store* instance) new-schema))
+         (synchronize-stores-for-class instance))
+    instance))
 
 (defmethod create-store-schema ((st store) class)
   "We don't have a cached store schema, so create a new one"
