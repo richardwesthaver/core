@@ -286,12 +286,12 @@ gets updated when the class changes."))
 (defun class-instance-schema (class-obj)
   "Compute a schema representation from an instance of stored-class."
   (make-instance 'object-schema
-                 :name (class-name class-obj)
+                 :class-name (class-name class-obj)
                  :fields (compute-slot-fields class-obj)))
 
 (defun compute-transient-schema (class-obj)
   (make-instance 'object-schema
-                 :name (class-name class-obj)
+                 :class-name (class-name class-obj)
                  :fields (append (compute-slot-fields class-obj)
                                  (compute-transient-slot-fields class-obj))))
 
