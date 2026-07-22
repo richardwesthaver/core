@@ -355,218 +355,6 @@ equal comparison"))
       (setf (version new) (version schema)))
     new))
 
-;;; DB Evolution
-(defmethod upgrade-all-memory-instances ((sc store))
-  "Touch each instance in memory to force update-instance-for-redefined class to
-be called on classes that were just redefined. This in turn calls
-upgrade-instance. This should be called after a redefinition."
-  (loop for inst-pointer being the hash-value of (instance-cache sc)
-        for inst = (sb-ext:weak-pointer-value inst-pointer)
-        do (oid inst)))
-
-(defmethod upgrade-all-db-instances ((sc store) class-schema)
-  "Scan and upgrade each instance of the class referred to
-by CLASS-SCHEMA. If there is a predecessor class in the database, its
-instances are upgraded to the current. If the db-schema and class schema do
-not match (i.e. we are connecting to a store) then go ahead and run
-synchronize-store-class to upgrade class-level info like indices."
-  (let* ((classname (schema-class-name class-schema))
-     (db-schema (get-current-db-schema sc classname)))
-    ;; When the db-schema is not up to date, make it so
-    (unless (match-schemas class-schema db-schema)
-      (synchronize-store-class sc (find-class classname) class-schema db-schema))
-    ;; Update the instances oldest to newest
-    (loop for schema in (get-db-schemas sc classname)
-     unless (eq (id schema) (id db-schema)) do
-     (progn
-       (map-index (lambda (cidx pcidx oid)
-            (declare (ignore cidx pcidx))
-            (let ((instance (store-recreate-instance sc oid classname)))
-              (upgrade-db-instance instance db-schema schema nil)))
-                  (class-index sc)
-              :value (id schema))
-       (awhen (schema-successor (get-store-schema sc (id schema)))
-         (awhen (get-store-schema sc it)
-           (setf (schema-predecessor it) nil)))))))
-;;	   (remove-controller-schema sc (schema-id schema))))))
-
-(defmethod upgrade-db-instance ((instance stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
-  "Upgrade a database instance from the old-schema to the new-schema.
-   This does mean loading it into memory (for now)!"
-  (let ((st (get-store instance))
-        (diff (schema-diff new-schema old-schema)))
-    (awhen (upgrade old-schema)
-      (apply-schema-change-fn instance it old-schema))
-    (loop for entry in diff do
-             (upgrade-instance-slot st instance (diff-type entry) (diff-recs entry) old-values))
-    (initialize-new-slots instance diff)
-    (set-instance-schema-id st (oid instance) (id new-schema))))
-
-(defmethod upgrade-instance-slot (sc instance (type (eql :change)) recs old-values)
-  "Handle changes in class type"
-  (destructuring-bind (old-rec new-rec) recs
-    (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
-      (cond ;; If it was not indexed, and now is, we have to notify the index of the new value
-            ((and (member old-type '(:stored :cached))
-                  (eq (slot-field-type new-rec) :indexed)
-                  (slot-boundp instance old-name))
-             (setf (slot-value instance old-name) (slot-value instance old-name)))
-            ;; If it was indexed, and the base index has changed 
-            ;; The new index will get updated as a natural part of the rest of the protocol
-            ((and (member old-type '(:indexed :derived))
-                  (not (eq (getf old-args :base)
-                           (getf (slot-field-args new-rec) :base)))
-                  (slot-boundp instance old-name))
-             (let ((slot-value (slot-value instance old-name)))
-               (unindex-slot-value sc slot-value (oid instance) old-name (getf old-args :base))))
-            ;; If it was a stored slot and now isn't, drop it and add the new type back
-            ((and (member old-type '(:stored :indexed :cached :derived))
-                  (not (member (slot-field-type new-rec) '(:stored :indexed :cached :derived))))
-             (upgrade-instance-slot sc instance :rem (list old-rec) old-values)
-             (upgrade-instance-slot sc instance :add (list new-rec) old-values))
-            ;; If the old slot was indexed
-            ((and (eq old-type :indexed) (eq (slot-field-type new-rec) :indexed)
-                  (not (eq (getf (slot-field-args old-rec) :base)
-                           (getf (slot-field-args new-rec) :base))))
-             nil)
-            (t nil)))))
-
-(defmethod upgrade-instance-slot (sc instance (type (eql :rem)) recs old-values)
-  "Handle slot removal and cleanup of values, such as sets"
-  (with-slots (type name args) (first recs)
-    (when (member type '(:stored :cached :indexed :derived))
-      (stored-slot-makunbound sc instance name))
-    (when (member type '(:indexed :derived))
-      (awhen (getf old-values name)
-        (unindex-slot-value sc (cdr it) (oid instance) name args)))
-    (when (eq type :set-valued)
-      (let ((set (and (stored-slot-boundp sc instance name)
-                      (stored-slot-reader sc instance name))))
-        (when set (drop-btree set))
-        (slot-makunbound instance name)))))
-
-(defmethod upgrade-instance-slot (sc instance (type (eql :add)) recs old-values)
-  "Not needed, new slots are initialized above"
-  (declare (ignore sc instance recs old-values))
-  nil)
-
-(defun initialize-new-slots (instance diff)
-  (labels ((adding-stored? (entry)
-             (when (and (eq :add (diff-type entry))
-                        (member (slot-field-type (first (diff-recs entry)))
-                                '(:stored :indexed :cached :set-valued)))
-               (slot-field-name (first (diff-recs entry)))))
-           (change-to-stored? (entry)
-             (when (and (eq :change (diff-type entry))
-                        (not (member (slot-field-type (first (diff-recs entry)))
-                                     '(:stored :indexed :cached :set-valued)))
-                        (member (slot-field-type (second (diff-recs entry)))
-                                '(:stored :indexed :cached :set-valued)))
-               (slot-field-name (second (diff-recs entry)))))
-           (init-slot? (entry)
-             (or (adding-stored? entry)
-                 (change-to-stored? entry)))
-           (compute-init-slots ()
-             (remove-if #'null (mapcar #'init-slot? diff))))
-    (apply #'shared-initialize instance (compute-init-slots) nil)))
-
-(defmethod change-db-instance ((current stored-object) previous
-                               new-schema old-schema)
-  "Change a database instance from one schema & class to another. These are
-different objects with the same oid."
-  (let ((sc (get-store current))
-        (oid (oid current))
-        (diff (schema-diff new-schema old-schema)))
-      ;; do we need to pass the stored object?  Transient ops require previous?
-      (awhen (upgrade old-schema)
-        (apply-schema-change-fn current it old-schema))
-      ;; Handle changed slots
-      (loop for entry in diff do
-           (change-instance-slot sc current previous (diff-type entry) (diff-recs entry)))
-      ;; Initialize new slots (is this done by default?)
-      (initialize-new-slots current diff)
-      (uncache-instance sc oid)
-      (set-instance-schema-id sc oid (id new-schema))))
-
-(defmethod change-instance-slot (sc current previous (type (eql :change)) recs)
-  "Handle changes in class type"
-;; TODO
-;;   (print recs)
-;;   (dump-btree (instance-index sc))
-;;   (dump-index (index-root sc))
-  (destructuring-bind (old-rec new-rec) recs
-    (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
-      (with-slots ((new-type type) (new-name name) (new-args args)) new-rec
-        (cond ;; If it was not indexed, and now is, we have to notify the index of the new value (?)
-          ((and (member old-type '(:stored :cached))
-                (eq new-type :indexed) (slot-boundp previous old-name))
-           (setf (slot-value previous old-name) (slot-value previous old-name)))
-          ;; If the old slot was indexed, we definitely need to unindex it to avoid
-          ;; having the objects hang around in the index
-          ((and (eq old-type :indexed) (eq new-type :indexed)
-                (slot-boundp previous old-name))
-           (unindex-slot-value sc (slot-value previous old-name)
-                               (oid previous) old-name (getf old-args :base))
-           (setf (slot-value current new-name) (slot-value previous old-name)))
-          ((and (eq old-type :indexed) (slot-boundp previous old-name))
-           (unindex-slot-value sc (slot-value previous old-name)
-                               (oid previous) old-name (getf old-args :base)))
-          ;; If it was a stored slot and now isn't, drop it and add the new type back
-          ((and (member old-type '(:stored :indexed :cached))
-                (not (member new-type '(:stored :indexed :cached))))
-           (change-instance-slot sc current previous :rem (list old-rec))
-           (change-instance-slot sc current previous :add (list new-rec)))
-          (t nil))))))
-
-(defmethod change-instance-slot (sc current previous (type (eql :rem)) recs)
-  "Handle slot removal and cleanup of values, such as sets"
-  (declare (ignore current))
-  (with-slots ((prev-type type) (prev-name name) (prev-args args)) (first recs)
-    (cond ((member prev-type '(:stored :cached :indexed))
-           (slot-makunbound previous prev-name))
-          ((eq type :set-valued)
-           (let ((set (and (stored-slot-boundp sc previous prev-name)
-                           (stored-slot-reader sc previous prev-name))))
-             (when set (drop-btree set))
-             (slot-makunbound previous prev-name))))))
-
-(defmethod change-instance-slot (sc current previous (type (eql :add)) recs)
-  "Not needed, new slots are initialized above"
-  (declare (ignore sc current previous recs))
-  nil)
-
-(defun warn-about-dropped-slots (op class names)
-  (when (and *warn-when-dropping-stored-slots* names)
-    (cerror "Drop the slots" 
-        'dropping-stored-slot-data
-        :operation op
-        :class class
-        :slots names)))
-
-(define-condition dropping-stored-slot-data (warning)
-  ((operation :initarg :operation)
-   (class :initarg :class)
-   (slots :initarg :slots))
-  (:report (lambda (c stream)
-         (with-slots (class slots operation) c
-           (format stream "Dropping slot(s) ~A for class ~A in ~A. Continue the synchronization process?"
-               slots class operation)))))
-
-(defun warn-on-reinitialization-data-loss (class)
-  "Warnings at class def time:
-   - set-valued/assoc (warn!)
-   - stored/indexed/cached (warn?)
-   - derived hints?
-   Be nice to be able to restore the slots rather than just
-   avoid updating"
-  (let* ((old-schema (get-class-schema class))
-         (new-schema (class-instance-schema class))
-         (diffs (schema-diff new-schema old-schema)))
-    (dolist (diff diffs)
-      (when (eq (diff-type diff) :rem)
-        (warn-about-dropped-slots :rem class
-                                  (mapcar #'slot-field-name (cdr diff)))))))
-
 ;;; Classes
 (defgeneric recreate-instance (instance &rest initargs &key &allow-other-keys)
   (:method ((instance t) &rest args)
@@ -1285,6 +1073,219 @@ DEFSCLASS for the available class-specific options in the generic interface."))
         (unless idx
           (setf idx (ensure-slot-def-index slot-def store)))
         idx))))
+
+
+;;; DB Evolution
+(defmethod upgrade-all-memory-instances ((sc store))
+  "Touch each instance in memory to force update-instance-for-redefined class to
+be called on classes that were just redefined. This in turn calls
+upgrade-instance. This should be called after a redefinition."
+  (loop for inst-pointer being the hash-value of (instance-cache sc)
+        for inst = (sb-ext:weak-pointer-value inst-pointer)
+        do (oid inst)))
+
+(defmethod upgrade-all-db-instances ((sc store) class-schema)
+  "Scan and upgrade each instance of the class referred to
+by CLASS-SCHEMA. If there is a predecessor class in the database, its
+instances are upgraded to the current. If the db-schema and class schema do
+not match (i.e. we are connecting to a store) then go ahead and run
+synchronize-store-class to upgrade class-level info like indices."
+  (let* ((classname (schema-class-name class-schema))
+     (db-schema (get-current-db-schema sc classname)))
+    ;; When the db-schema is not up to date, make it so
+    (unless (match-schemas class-schema db-schema)
+      (synchronize-store-class sc (find-class classname) class-schema db-schema))
+    ;; Update the instances oldest to newest
+    (loop for schema in (get-db-schemas sc classname)
+     unless (eq (id schema) (id db-schema)) do
+     (progn
+       (map-index (lambda (cidx pcidx oid)
+            (declare (ignore cidx pcidx))
+            (let ((instance (store-recreate-instance sc oid classname)))
+              (upgrade-db-instance instance db-schema schema nil)))
+                  (class-index sc)
+              :value (id schema))
+       (awhen (schema-successor (get-store-schema sc (id schema)))
+         (awhen (get-store-schema sc it)
+           (setf (schema-predecessor it) nil)))))))
+;;	   (remove-controller-schema sc (schema-id schema))))))
+
+(defmethod upgrade-db-instance ((instance stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
+  "Upgrade a database instance from the old-schema to the new-schema.
+   This does mean loading it into memory (for now)!"
+  (let ((st (get-store instance))
+        (diff (schema-diff new-schema old-schema)))
+    (awhen (upgrade old-schema)
+      (apply-schema-change-fn instance it old-schema))
+    (loop for entry in diff do
+             (upgrade-instance-slot st instance (diff-type entry) (diff-recs entry) old-values))
+    (initialize-new-slots instance diff)
+    (set-instance-schema-id st (oid instance) (id new-schema))))
+
+(defmethod upgrade-instance-slot (sc instance (type (eql :change)) recs old-values)
+  "Handle changes in class type"
+  (destructuring-bind (old-rec new-rec) recs
+    (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
+      (cond ;; If it was not indexed, and now is, we have to notify the index of the new value
+            ((and (member old-type '(:stored :cached))
+                  (eq (slot-field-type new-rec) :indexed)
+                  (slot-boundp instance old-name))
+             (setf (slot-value instance old-name) (slot-value instance old-name)))
+            ;; If it was indexed, and the base index has changed 
+            ;; The new index will get updated as a natural part of the rest of the protocol
+            ((and (member old-type '(:indexed :derived))
+                  (not (eq (getf old-args :base)
+                           (getf (slot-field-args new-rec) :base)))
+                  (slot-boundp instance old-name))
+             (let ((slot-value (slot-value instance old-name)))
+               (unindex-slot-value sc slot-value (oid instance) old-name (getf old-args :base))))
+            ;; If it was a stored slot and now isn't, drop it and add the new type back
+            ((and (member old-type '(:stored :indexed :cached :derived))
+                  (not (member (slot-field-type new-rec) '(:stored :indexed :cached :derived))))
+             (upgrade-instance-slot sc instance :rem (list old-rec) old-values)
+             (upgrade-instance-slot sc instance :add (list new-rec) old-values))
+            ;; If the old slot was indexed
+            ((and (eq old-type :indexed) (eq (slot-field-type new-rec) :indexed)
+                  (not (eq (getf (slot-field-args old-rec) :base)
+                           (getf (slot-field-args new-rec) :base))))
+             nil)
+            (t nil)))))
+
+(defmethod upgrade-instance-slot (sc instance (type (eql :rem)) recs old-values)
+  "Handle slot removal and cleanup of values, such as sets"
+  (with-slots (type name args) (first recs)
+    (when (member type '(:stored :cached :indexed :derived))
+      (stored-slot-makunbound sc instance name))
+    (when (member type '(:indexed :derived))
+      (awhen (getf old-values name)
+        (unindex-slot-value sc (cdr it) (oid instance) name args)))
+    (when (eq type :set-valued)
+      (let ((set (and (stored-slot-boundp sc instance name)
+                      (stored-slot-reader sc instance name))))
+        (when set (drop-btree set))
+        (slot-makunbound instance name)))))
+
+(defmethod upgrade-instance-slot (sc instance (type (eql :add)) recs old-values)
+  "Not needed, new slots are initialized above"
+  (declare (ignore sc instance recs old-values))
+  nil)
+
+(defun initialize-new-slots (instance diff)
+  (labels ((adding-stored? (entry)
+             (when (and (eq :add (diff-type entry))
+                        (member (slot-field-type (first (diff-recs entry)))
+                                '(:stored :indexed :cached :set-valued)))
+               (slot-field-name (first (diff-recs entry)))))
+           (change-to-stored? (entry)
+             (when (and (eq :change (diff-type entry))
+                        (not (member (slot-field-type (first (diff-recs entry)))
+                                     '(:stored :indexed :cached :set-valued)))
+                        (member (slot-field-type (second (diff-recs entry)))
+                                '(:stored :indexed :cached :set-valued)))
+               (slot-field-name (second (diff-recs entry)))))
+           (init-slot? (entry)
+             (or (adding-stored? entry)
+                 (change-to-stored? entry)))
+           (compute-init-slots ()
+             (remove-if #'null (mapcar #'init-slot? diff))))
+    (apply #'shared-initialize instance (compute-init-slots) nil)))
+
+(defmethod change-db-instance ((current stored-object) previous
+                               new-schema old-schema)
+  "Change a database instance from one schema & class to another. These are
+different objects with the same oid."
+  (let ((sc (get-store current))
+        (oid (oid current))
+        (diff (schema-diff new-schema old-schema)))
+      ;; do we need to pass the stored object?  Transient ops require previous?
+      (awhen (upgrade old-schema)
+        (apply-schema-change-fn current it old-schema))
+      ;; Handle changed slots
+      (loop for entry in diff do
+           (change-instance-slot sc current previous (diff-type entry) (diff-recs entry)))
+      ;; Initialize new slots (is this done by default?)
+      (initialize-new-slots current diff)
+      (uncache-instance sc oid)
+      (set-instance-schema-id sc oid (id new-schema))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :change)) recs)
+  "Handle changes in class type"
+;; TODO
+;;   (print recs)
+;;   (dump-btree (instance-index sc))
+;;   (dump-index (index-root sc))
+  (destructuring-bind (old-rec new-rec) recs
+    (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
+      (with-slots ((new-type type) (new-name name) (new-args args)) new-rec
+        (cond ;; If it was not indexed, and now is, we have to notify the index of the new value (?)
+          ((and (member old-type '(:stored :cached))
+                (eq new-type :indexed) (slot-boundp previous old-name))
+           (setf (slot-value previous old-name) (slot-value previous old-name)))
+          ;; If the old slot was indexed, we definitely need to unindex it to avoid
+          ;; having the objects hang around in the index
+          ((and (eq old-type :indexed) (eq new-type :indexed)
+                (slot-boundp previous old-name))
+           (unindex-slot-value sc (slot-value previous old-name)
+                               (oid previous) old-name (getf old-args :base))
+           (setf (slot-value current new-name) (slot-value previous old-name)))
+          ((and (eq old-type :indexed) (slot-boundp previous old-name))
+           (unindex-slot-value sc (slot-value previous old-name)
+                               (oid previous) old-name (getf old-args :base)))
+          ;; If it was a stored slot and now isn't, drop it and add the new type back
+          ((and (member old-type '(:stored :indexed :cached))
+                (not (member new-type '(:stored :indexed :cached))))
+           (change-instance-slot sc current previous :rem (list old-rec))
+           (change-instance-slot sc current previous :add (list new-rec)))
+          (t nil))))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :rem)) recs)
+  "Handle slot removal and cleanup of values, such as sets"
+  (declare (ignore current))
+  (with-slots ((prev-type type) (prev-name name) (prev-args args)) (first recs)
+    (cond ((member prev-type '(:stored :cached :indexed))
+           (slot-makunbound previous prev-name))
+          ((eq type :set-valued)
+           (let ((set (and (stored-slot-boundp sc previous prev-name)
+                           (stored-slot-reader sc previous prev-name))))
+             (when set (drop-btree set))
+             (slot-makunbound previous prev-name))))))
+
+(defmethod change-instance-slot (sc current previous (type (eql :add)) recs)
+  "Not needed, new slots are initialized above"
+  (declare (ignore sc current previous recs))
+  nil)
+
+(defun warn-about-dropped-slots (op class names)
+  (when (and *warn-when-dropping-stored-slots* names)
+    (cerror "Drop the slots" 
+        'dropping-stored-slot-data
+        :operation op
+        :class class
+        :slots names)))
+
+(define-condition dropping-stored-slot-data (warning)
+  ((operation :initarg :operation)
+   (class :initarg :class)
+   (slots :initarg :slots))
+  (:report (lambda (c stream)
+         (with-slots (class slots operation) c
+           (format stream "Dropping slot(s) ~A for class ~A in ~A. Continue the synchronization process?"
+               slots class operation)))))
+
+(defun warn-on-reinitialization-data-loss (class)
+  "Warnings at class def time:
+   - set-valued/assoc (warn!)
+   - stored/indexed/cached (warn?)
+   - derived hints?
+   Be nice to be able to restore the slots rather than just
+   avoid updating"
+  (let* ((old-schema (get-class-schema class))
+         (new-schema (class-instance-schema class))
+         (diffs (schema-diff new-schema old-schema)))
+    (dolist (diff diffs)
+      (when (eq (diff-type diff) :rem)
+        (warn-about-dropped-slots :rem class
+                                  (mapcar #'slot-field-name (cdr diff)))))))
 
 ;;; Controller Protocol
 (defgeneric open-store (st &key recover recover-fatal thread &allow-other-keys)
