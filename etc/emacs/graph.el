@@ -123,11 +123,11 @@
     (insert-file-contents-literally file)
     (secure-hash 'md5 (current-buffer))))
 
-(defun org-graph-edge-list (&optional graph)
+(defun org-graph-list-edges (&optional graph)
   (interactive)
   (hash-table-values (org-graph-edges (or graph org-graph))))
 
-(defun org-graph-node-list (&optional graph)
+(defun org-graph-list-nodes (&optional graph)
   (interactive)
   (hash-table-values (org-graph-nodes (or graph org-graph))))
 
@@ -770,29 +770,28 @@ either side, and deletes both sides of a link."
   (message "closed all org-graph buffers"))
 
 (defun org-graph-install-refile-targets ()
-  (cl-pushnew (org-graph--targets) org-refile-targets 
-	          :test (lambda (a b) (equal (car a) (car b))))
-  (org-refile-get-targets))
+  (cl-pushnew (org-graph--targets) org-refile-targets
+	          :test (lambda (a b) (equal (car a) (car b)))))
 
 ;; TODO 2025-03-01: babel-mode or only no-readme?
 ;;;###autoload
-(defun org-graph-init (&optional no-readme)
+(defun org-graph-init (&optional no-readme refile-targets)
   (interactive)
   (org-graph-kill-all no-readme)
-  (org-id-update-id-locations (org-graph-files))
-  (org-id-locations-save)
-  (org-graph-from-id-locations t))
+  (when refile-target (org-graph-install-refile-targets))
+  ;; (org-id-update-id-locations (org-graph-files))
+  (org-graph-from-files))
 
 ;;;###autoload
-(defun org-graph-load ()
-  "Load the org-graph from the org-graph-db."
-  (interactive))
+;; (defun org-graph-load-db ()
+;;   "Load the org-graph from the org-graph-db."
+;;   (interactive))
 
 (defun org-graph-node-edges (node)
   "Return the edges associated with NODE."
   (gethash (org-graph-node-id node) (org-graph-edges org-graph)))
 
-(defun org-graph-tablist ()
+(defun org-graph-node-list ()
   (mapcar 
    (lambda (x)
      (with-slots (id name file properties) x
@@ -809,11 +808,13 @@ either side, and deletes both sides of a link."
 					                     (with-slots (type out timestamp properties) x
 					                       (list (org-graph-edge-arrow type) out timestamp properties)))
 				                       (if (listp edges) edges (list edges)))))])))
-   (org-graph-node-list)))
+   (org-graph-list-nodes)))
+
+;; (defun org-graph-edge-list ())
 
 (defun org-graph-plist ()
-  (list :nodes (mapcar 'unwrap (org-graph-node-list))
-	    :edges (mapcar 'unwrap (org-graph-edge-list))))
+  (list :nodes (mapcar 'unwrap (org-graph-list-nodes))
+	    :edges (mapcar 'unwrap (org-graph-list-edges))))
 
 (defun org-graph-json ()
   (json-encode-plist (org-graph-plist)))
@@ -977,7 +978,6 @@ either side, and deletes both sides of a link."
   :interactive nil
   (setq tabulated-list-format
 	    `[("Title" ,node-title-column-width graph-menu--title-predicate)
-
 	      ("File"  ,node-file-column-width  graph-menu--file-predicate)
 	      ("Tags"  ,node-tags-column-width  graph-menu--tags-predicate)
 	      ("Edges" ,node-edges-column-width graph-menu--edges-predicate)
@@ -985,18 +985,19 @@ either side, and deletes both sides of a link."
 	      ])
   (setq-local tabulated-list-padding 2
 	          ;; tabulated-list-sort-key (cons "Title" nil)
-	          tabulated-list-entries (org-graph-tablist)
 	          ;; revert-buffer-function 'graph-menu--refresh
 	          )
+  (unless tabulated-list-entries (setq-local tabulated-list-entries (org-graph-node-list)))
   (tabulated-list-init-header)
   (tabulated-list-print))
 
-(defun graph-list ()
-  (interactive)
+(defun org-graph-list (&optional edges)
+  (interactive "P")
   (let ((buf (get-buffer-create "*Graph*")))
     (with-current-buffer buf
       (setq buffer-file-coding-system 'utf-8)
-      (graph-menu-mode))
+      (let ((tabulated-list-entries (if edges (org-graph-edge-list) (org-graph-node-list))))
+        (graph-menu-mode)))
     (pop-to-buffer-same-window buf)))
 
 (provide 'graph)
