@@ -778,7 +778,7 @@ either side, and deletes both sides of a link."
 (defun org-graph-init (&optional no-readme refile-targets)
   (interactive)
   (org-graph-kill-all no-readme)
-  (when refile-target (org-graph-install-refile-targets))
+  (when refile-targets (org-graph-install-refile-targets))
   ;; (org-id-update-id-locations (org-graph-files))
   (org-graph-from-files))
 
