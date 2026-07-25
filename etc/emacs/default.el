@@ -1173,14 +1173,14 @@ With prefix ARG non-nil, insert the result at the end of region."
   (interactive "Foutput: ")
   (when (and name (file-exists-p name))
     (error "%s is an existing file, not overwriting." name))
-  (let* ((name (or name "capture.svg"))
+  (let* ((name (or name (format "%s.svg" (time-convert (current-time) 'integer))))
          (ext (file-name-extension name)))
     (with-temp-file name
       (insert (x-export-frames nil (symb ext))))))
 
 ;;; Multisession
 ;; TODO 2026-06-05: 
-(use-package multisession)
+;; (use-package multisession)
 
 ;;; Dictionary
 (use-package dictionary
