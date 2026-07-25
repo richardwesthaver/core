@@ -43,7 +43,8 @@
 (defclass vertex (id node)
   ()
   (:documentation "generic vertex mixin. The difference between this class and NODE is
-that a vertex always carries an ID slot."))
+that a vertex always carries an ID slot. The GRAPH protocol itself is
+compatible with the NODE class and thus this class as well."))
 
 ;;; Edge
 (defgeneric edge-in (self)

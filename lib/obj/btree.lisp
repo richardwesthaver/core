@@ -6,13 +6,15 @@
 
 ;; Mostly useful in DBMS indexing - is the core data structure for some
 ;; popular K/V stores including RocksDB (B+-tree) and BerkleyDB (B-Tree)
-;; [?cite]
 
 ;; Originally conceived at Boeing Research Labs in the 70s.
 
 ;; https://en.wikipedia.org/wiki/B-tree
 ;; https://github.com/danlentz/cl-btree
 ;; https://planetscale.com/blog/btrees-and-database-indexes
+
+;; in this case our BTREE is based on ELEPHANT's design and used to support
+;; the [[id:OBJ:PROTO:STORE][STORE]] protocol.
 
 ;;; Code:
 (in-package :obj/btree)
@@ -50,19 +52,16 @@ fashion."))
 
 (defgeneric add-index (self &key index-name key-form populate)
   (:documentation 
-   "Add a secondary index.  The indices are stored in an eq
-hash-table, so the index-name should be a symbol.  key-form
-should be a symbol naming a function, a function call form
-eg \'(create-index 3) or a lambda expression -- 
-actual functions aren't supported.
-Lambda expresssions are converted to functions through compile
-and function call forms are transformed applying
-the first element of the list to the rest of the list.
-The function should take 3 arguments: the secondary DB, primary
-key and value, and return two values: a boolean indicating
-whether to index this key / value, and the secondary key if
-so.  If populate = t it will fill in secondary keys for
-existing primary entries (may be expensive!)"))
+   "Add a secondary index.
+The indices are stored in an eq hash-table, so the index-name should be a
+symbol. key-form should be a symbol naming a function, a function call form e.g.
+'(create-index 3) or a lambda expression -- actual functions aren't
+supported. Lambda expresssions are converted to functions through compile and
+function call forms are transformed applying the first element of the list to
+the rest of the list. The function should take 3 arguments: the secondary DB,
+primary key and value, and return two values: a boolean indicating whether to
+index this key/val, and the secondary key if so. If populate = t it will fill
+in secondary keys for existing primary entries (may be expensive!)"))
 
 (defgeneric get-index (self index-name)
   (:documentation "Get a named index."))
@@ -619,11 +618,10 @@ order the calls were made (first to last)"))
 
 (defmacro iterate-map-index (&key start continue step)
   "In context with bound variables: cur, store, value, start, end, fn
-   Provide a start expression that returns index cursor values
-   Provide a continue expression that uses the
-     bound variables key, start, value or end to determine if 
-     the iteration should continue
-   Provide a step expression that returns index cursor values."
+Provide a start expression that returns index cursor values Provide a continue
+expression that uses the bound variables key, start, value or end to determine
+if the iteration should continue Provide a step expression that returns index
+cursor values."
   `(labels ((continue-p (key)
               (declare (ignorable key))
               ,continue))
@@ -639,8 +637,8 @@ order the calls were made (first to last)"))
 
 (defmacro with-map-index-wrapper ((fn btree collect cur) &body body)
   "Binds variable store to the store controller, overrieds fn with a collector
-   if dynamic value of collect is true and binds variable named cur to
-   the current cursor"
+if dynamic value of collect is true and binds variable named cur to the
+current cursor"
   `(with-map-index-collector (,fn ,collect)
      (with-btree-cursor (,cur ,btree)
        (with-current-cursor (,cur)

@@ -120,7 +120,7 @@ equal comparison"))
 (defclass slot-set () ()
   (:documentation "A proxy object for a set stored in a slot."))
 
-(defsclass stored-slot-set (slot-set stored-pset) ()
+(defsclass default-slot-set (slot-set default-pset) ()
   (:documentation "A default slot-set implementation"))
 
 (defgeneric build-slot-set (sc)
@@ -129,17 +129,17 @@ equal comparison"))
 
 (defgeneric slot-set-list (slot-set)
   (:documentation "Convert items of pset into a list for processing")
-  (:method ((set stored-slot-set))
+  (:method ((set default-slot-set))
     (pset-list set)))
 
 (defgeneric map-slot-set (fn slot-set)
   (:documentation "Map operator for psets")
-  (:method (fn (set stored-slot-set))
+  (:method (fn (set default-slot-set))
     (map-pset fn set)))
 
 (defgeneric drop-slot-set (pset)
   (:documentation "Release pset storage to database for reuse")
-  (:method ((set stored-slot-set))
+  (:method ((set default-slot-set))
     (drop-instance set)))
 
 ;;; Associations
@@ -217,9 +217,9 @@ equal comparison"))
              (slot-boundp-using-class class instance slot-def))
         (remove-kv (oid (slot-value-using-class class instance slot-def)) (oid instance) index)
         (when associated ;it is possible that the original association
-                         ;slot was not bound at the time of
-                         ;deletion. thus, remove the entry only when
-                         ;it is bound
+                                        ;slot was not bound at the time of
+                                        ;deletion. thus, remove the entry only when
+                                        ;it is bound
           (remove-kv (oid associated) (oid instance) index)))))
 
 (defun update-other-association-end (class instance slot-def other-instance)
@@ -266,10 +266,10 @@ equal comparison"))
       (ensure-transaction (:store sc)
         (case (association-type slot-def)
           (:ref (update-association-end class instance slot-def associated)
-                (stored-slot-writer sc associated instance (slot-definition-name slot-def)))
+           (stored-slot-writer sc associated instance (slot-definition-name slot-def)))
           (:m21 (update-other-association-end class instance slot-def associated))
           (:m2m (update-association-end class instance slot-def associated)
-                (update-other-association-end class instance slot-def associated)))))))
+           (update-other-association-end class instance slot-def associated)))))))
 
 (defun remove-association (instance slotname associated)
   (let* ((class (class-of instance))
@@ -287,7 +287,7 @@ equal comparison"))
           (:m21 (when (slot-boundp-using-class fclass associated fslot)
                   (slot-makunbound-using-class fclass associated fslot)))
           (:m2m (remove-association-end fclass associated fslot instance)
-                (remove-association-end class instance slot-def associated)))))))
+           (remove-association-end class instance slot-def associated)))))))
 
 (defun get-associations (instance slot)
   (slot-value instance (if (symbolp slot) slot (slot-definition-name slot))))
@@ -344,11 +344,11 @@ equal comparison"))
 (defun copy-schema (type schema)
   (assert (subtypep type 'schema))
   (let ((new 
-         (make-instance type
-                        :name (schema:schema-class-name schema)
-                        :successor (schema:schema-successor schema)
-                        :predecessor (schema:schema-predecessor schema)
-                        :fields (copy-array (schema:fields schema)))))
+          (make-instance type
+            :name (schema:schema-class-name schema)
+            :successor (schema:schema-successor schema)
+            :predecessor (schema:schema-predecessor schema)
+            :fields (copy-array (schema:fields schema)))))
     (when (subtypep (type-of schema) 'upgradable-schema)
       (setf (id new) (id schema))
       (setf (upgrade new) (upgrade schema))
@@ -364,14 +364,14 @@ equal comparison"))
     (declare (ignore args))
     ;; Initialize basic instance data
     (initial-stored-setup instance :oid oid :store st)
-  ;; Update db instance data
-  (when schema
-    (let ((official-schema (lookup-schema st (class-of instance))))
-      (unless (eq (name schema) (name official-schema))
-        (upgrade-db-instance instance official-schema schema nil))))
-  ;; Load cached slots, set, assoc values, etc.
-  (shared-initialize instance t :oid oid)
-  instance)
+    ;; Update db instance data
+    (when schema
+      (let ((official-schema (lookup-schema st (class-of instance))))
+        (unless (eq (name schema) (name official-schema))
+          (upgrade-db-instance instance official-schema schema nil))))
+    ;; Load cached slots, set, assoc values, etc.
+    (shared-initialize instance t :oid oid)
+    instance)
   (:method ((instance stored-collection) &rest initargs &key oid (st *store*))
     (declare (ignore initargs))
     ;; Initialize basic instance data
@@ -389,19 +389,19 @@ equal comparison"))
 (defmethod update-instance-for-redefined-class :around ((instance stored-object) added-slots discarded-slots property-list &rest initargs)
   (declare (ignore discarded-slots added-slots initargs))
   (let* ((st (get-store instance))
-;;	 (class (class-of instance))
+         ;;	 (class (class-of instance))
          (current-schema (get-current-db-schema st (type-of instance))))
-;;    (unless (match-schemas (%class-schema class) current-schema))
-      (prog1 
-          (call-next-method)
-        (let ((prior-schema (aif (schema:schema-predecessor current-schema)
-                                 (get-store-schema st it)
-                                 (error "If the schemas mismatch, a derived store schema should have been computed"))))
-          (assert (and current-schema prior-schema))
-          (upgrade-db-instance instance current-schema prior-schema property-list)))))
+    ;;    (unless (match-schemas (%class-schema class) current-schema))
+    (prog1 
+        (call-next-method)
+      (let ((prior-schema (aif (schema:schema-predecessor current-schema)
+                               (get-store-schema st it)
+                               (error "If the schemas mismatch, a derived store schema should have been computed"))))
+        (assert (and current-schema prior-schema))
+        (upgrade-db-instance instance current-schema prior-schema property-list)))))
 
 (defmethod update-instance-for-different-class :after ((previous stored-object) (current stored-object) 
-                                                        &rest initargs &key)
+                                                       &rest initargs &key)
   ;; Update db to new class configuration
   ;; - handle indices, removals, associations and additions
   (let* ((sc (get-store current))
@@ -511,8 +511,8 @@ DEFSCLASS for the available class-specific options in the generic interface."))
     (setf (get-value oid table) cid)))
 
 (define-condition missing-stored-instance (simple-condition)
-   ((oid :initarg :oid :accessor error-oid)
-    (spec :initarg :spec :accessor error-spec)))
+  ((oid :initarg :oid :accessor error-oid)
+   (spec :initarg :spec :accessor error-spec)))
 
 (defun missing-stored-instance (oid spec)
   (cerror "Return a proxy object"
@@ -571,7 +571,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 (defmethod build-pset ((sc store))
   "Default pset method; override if backend has better policy"
   (let ((btree (make-dup-btree sc)))
-    (make-instance 'default-pset :btree btree :sc sc)))
+    (make-instance 'default-pset :btree btree :store sc)))
 
 (defun make-pset (&key items pset (store *store*))
   (let ((new-pset (build-pset store)))
@@ -625,7 +625,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 
 (defmethod build-slot-set ((sc store))
   (let ((btree (make-btree sc)))
-    (make-instance 'stored-slot-set :btree btree :sc sc)))
+    (make-instance 'default-slot-set :btree btree :store sc)))
 
 (defmethod drop-instance ((inst stored-object))
   (drop-instance-slots inst)
@@ -642,8 +642,8 @@ DEFSCLASS for the available class-specific options in the generic interface."))
    stored slots of instance from the db"
   (let ((class (class-of instance)))
     (loop for slot-def in (class-slots class)
-       when (stored-p slot-def)
-       do (slot-makunbound-using-class class instance slot-def))))
+          when (stored-p slot-def)
+          do (slot-makunbound-using-class class instance slot-def))))
 
 (defun dropped-instance-p (st oid)
   "An instance has not been dropped if it is in the instance
@@ -705,16 +705,16 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (assert (typep schema-id 'fixnum))
   ;; Lookup in store cache
   (std/macs:ifret (get-cache schema-id (schema-cache st))
-         ;; Lookup in store table
-         (let* ((schema (get-value schema-id (schema-table st)))
-                (class (or class (find-class (schema:schema-class-name schema)))))
-           (assert schema)
-           ;; Update store cache
-           (with-mutex ((schema-cache-lock st))
-             (setf (get-cache schema-id (schema-cache st)) schema))
-           ;; Also cache in class slot
-           (add-class-store-schema st class schema)
-           schema)))
+    ;; Lookup in store table
+    (let* ((schema (get-value schema-id (schema-table st)))
+           (class (or class (find-class (schema:schema-class-name schema)))))
+      (assert schema)
+      ;; Update store cache
+      (with-mutex ((schema-cache-lock st))
+        (setf (get-cache schema-id (schema-cache st)) schema))
+      ;; Also cache in class slot
+      (add-class-store-schema st class schema)
+      schema)))
 
 (defmethod finalize-inheritance :after ((class stored-class))
   (ensure-schemas class))
@@ -735,7 +735,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (declare (ignore class))
   (with-slots (name type args) (first recs)
     (case type
-;;      (:indexed (drop-slot-index sc (getf args :base) name))
+      ;;      (:indexed (drop-slot-index sc (getf args :base) name))
       (:association nil))))
 
 (defmethod upgrade-class-slot ((sc store) class (diff-type (eql :change)) recs)
@@ -752,13 +752,13 @@ DEFSCLASS for the available class-specific options in the generic interface."))
    called during class redefinition to keep all DB instances in sync."
   (let ((class-schema (get-class-schema class)))
     (loop for (spec . db-schema) in (get-store-schemas class) do
-     (unless (match-schemas class-schema db-schema)
-       (let ((store (lookup-con-spec spec)))
-         (synchronize-store-class store class class-schema db-schema)
-         (unless *lazy-memory-instance-upgrading*
-           (upgrade-all-memory-instances store))
-         (unless *lazy-db-instance-upgrading*
-           (upgrade-all-db-instances store class-schema)))))))
+             (unless (match-schemas class-schema db-schema)
+               (let ((store (lookup-con-spec spec)))
+                 (synchronize-store-class store class class-schema db-schema)
+                 (unless *lazy-memory-instance-upgrading*
+                   (upgrade-all-memory-instances store))
+                 (unless *lazy-db-instance-upgrading*
+                   (upgrade-all-db-instances store class-schema)))))))
 
 (defmethod synchronize-store-class ((sc store) class class-schema old-schema)
   "Synchronizing a store means adding/removing indices, upgrading
@@ -766,7 +766,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (format t "~&Synchronizing ~A in ~A~%" (schema-class-name class-schema) (spec sc))
   (let* ((class (or class (find-class (schema-class-name class-schema))))
          (new-schema (create-store-schema sc class))
-     (diff (schema-diff new-schema old-schema)))
+         (diff (schema-diff new-schema old-schema)))
     ;; Chain schemas
     (setf (schema-successor old-schema) (id new-schema))
     (setf (schema-predecessor new-schema) (id old-schema))
@@ -774,12 +774,12 @@ DEFSCLASS for the available class-specific options in the generic interface."))
     (update-store-schema sc new-schema t)
     ;; Update the class
     (loop for entry in diff do
-     (upgrade-class-slot sc class (diff-type entry) (diff-recs entry)))))
+             (upgrade-class-slot sc class (diff-type entry) (diff-recs entry)))))
 
 (defmethod ensure-schemas ((instance stored-class))
   "Constructs the metaclass schema when the class hierarchy is valid"
   (let* ((old-schema (get-class-schema instance))
-     (new-schema (class-instance-schema instance)))
+         (new-schema (class-instance-schema instance)))
     (assert new-schema)
     ;; Stop synchronization if necessary to allow for reversing the
     ;; interactive re-definition
@@ -789,11 +789,11 @@ DEFSCLASS for the available class-specific options in the generic interface."))
     (setf (schema-predecessor new-schema) old-schema)
     (setf (get-class-schema instance) new-schema)
     (and *store* (not (subtypep (class-name instance) 'btree))
-      (lookup-schema *store* instance)) ; ensure db schema of user-defined classes
+         (lookup-schema *store* instance)) ; ensure db schema of user-defined classes
     ;; Cleanup some slot values
     (let ((idx-state (get-class-indexing instance)))
       (when (consp idx-state)
-    (setf (get-class-indexing instance) (first idx-state))))
+        (setf (get-class-indexing instance) (first idx-state))))
     ;; Compute derived index triggers
     (awhen (stored::derived-index-slot-defs instance)
       (stored::compute-derived-index-triggers instance it))
@@ -873,7 +873,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
       (when index?
         (update-slot-index sc class instance derived-slot-def new-value)
         (stored-slot-writer sc new-value instance 
-                                (slot-definition-name derived-slot-def))))))
+                            (slot-definition-name derived-slot-def))))))
 
 (defun derived-index-updater (class instance written-slot-def)
   "Compute the derived indices to update from the slot-def that is
@@ -885,15 +885,15 @@ DEFSCLASS for the available class-specific options in the generic interface."))
 (defun update-slot-index (sc class instance slot-def new-value)
   "Update an index value when written"
   (let ((oid (oid instance)))
-      (let* ((idx (get-slot-def-index slot-def sc))
-             (old-value-bound-p (slot-boundp-using-class class instance slot-def))
-             (old-value (when old-value-bound-p
-                          (slot-value-using-class class instance slot-def))))
-        (unless idx
-          (setf idx (ensure-slot-def-index slot-def sc)))
-        (when old-value-bound-p 
-          (remove-kv old-value oid idx))
-        (setf (get-value new-value idx) oid))))
+    (let* ((idx (get-slot-def-index slot-def sc))
+           (old-value-bound-p (slot-boundp-using-class class instance slot-def))
+           (old-value (when old-value-bound-p
+                        (slot-value-using-class class instance slot-def))))
+      (unless idx
+        (setf idx (ensure-slot-def-index slot-def sc)))
+      (when old-value-bound-p 
+        (remove-kv old-value oid idx))
+      (setf (get-value new-value idx) oid))))
 
 (defun get-store-index (slot-def sc)
   "Get the slot-def's index from the store"
@@ -935,9 +935,9 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   "Rebuild all slot indices for CLASS, or all known classes
   if CLASS is NIL. CLASS may be a class or class name."
   (let* ((classes (list* (etypecase class
-                            (null (known-classes sc))
-                            (class class)
-                            (symbol (find-class class)))))
+                           (null (known-classes sc))
+                           (class class)
+                           (symbol (find-class class)))))
          (class-names (mapcar #'class-name classes)))
     (loop for class in classes
           for class-name in class-names
@@ -953,14 +953,14 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   "Return all classes that are known both to SC and the current
   Lisp image."
   (remove-duplicates
-    (remove nil
-            (maphash (lambda (cid schema)
-                         (declare (ignore cid))
-                         (let ((class (find-class (name schema) nil)))
-                           (unless class
-                             (warn "Class ~S not defined, ignoring." (name schema)))
-                           class))
-                       (schema-table sc)))))
+   (remove nil
+           (maphash (lambda (cid schema)
+                      (declare (ignore cid))
+                      (let ((class (find-class (name schema) nil)))
+                        (unless class
+                          (warn "Class ~S not defined, ignoring." (name schema)))
+                        class))
+                    (schema-table sc)))))
 
 (defun map-class (fn class &key collect oids (sc *store*))
   "Perform a map operation over all instances of class.  Takes a
@@ -982,12 +982,12 @@ DEFSCLASS for the available class-specific options in the generic interface."))
         (cerror "Ignore and return nil"
                 "Class ~A is not indexed" classname)
         (return-from map-class nil))
-;;      (dump-schema-status sc classname)
+      ;;      (dump-schema-status sc classname)
       (loop for schema-id in schema-ids appending
-           (map-index (if oids #'map-oid-fn #'map-fn)
-                      (class-index sc)
-                      :value schema-id
-                      :collect collect)))))
+               (map-index (if oids #'map-oid-fn #'map-fn)
+                          (class-index sc)
+                          :value schema-id
+                          :collect collect)))))
 
 (defun map-inverted-index (fn class index &rest args &key start end (value nil value-p) from-end collect oids)
   "map-inverted-index maps a function of two variables, taking key
@@ -1030,29 +1030,29 @@ DEFSCLASS for the available class-specific options in the generic interface."))
             (t (map-btree (if oids fn #'map-obj) btree :start start :end end :from-end from-end :collect collect))))))
 
 (defun get-unique-values (index &aux values)
-    (with-btree-cursor (cur index)
-      (multiple-value-bind (valid? value oid)
-          (cursor-first cur)
-        (declare (ignore oid))
-        (when valid?
-          (push value values)
-          (loop 
-               (multiple-value-bind (valid? value oid)
-                   (btree::cursor-next-nodup cur)
-                 (declare (ignore oid))
-                 (unless valid?
-                   (return-from get-unique-values (nreverse values)))
-                 (push value values)))))))
+  (with-btree-cursor (cur index)
+    (multiple-value-bind (valid? value oid)
+        (cursor-first cur)
+      (declare (ignore oid))
+      (when valid?
+        (push value values)
+        (loop 
+          (multiple-value-bind (valid? value oid)
+              (btree::cursor-next-nodup cur)
+            (declare (ignore oid))
+            (unless valid?
+              (return-from get-unique-values (nreverse values)))
+            (push value values)))))))
 
 (defmethod sb-sequence:emptyp ((btree btree))
-    (with-btree-cursor (cur btree)
-      (multiple-value-bind (valid k) (cursor-next cur)
-        (declare (ignore k))
-        (cond ((not valid) ;; truly empty
-               t)
-              ((eq btree (store-root (get-store btree)))
-               (not (cursor-next cur)))
-              (t nil)))))
+  (with-btree-cursor (cur btree)
+    (multiple-value-bind (valid k) (cursor-next cur)
+      (declare (ignore k))
+      (cond ((not valid) ;; truly empty
+                         t)
+            ((eq btree (store-root (get-store btree)))
+             (not (cursor-next cur)))
+            (t nil)))))
 
 (defmethod find-inverted-index ((class symbol) slot &key (null-on-fail nil) (sc *store*))
   (find-inverted-index (find-class class) slot :null-on-fail null-on-fail :sc sc))
@@ -1091,23 +1091,23 @@ instances are upgraded to the current. If the db-schema and class schema do
 not match (i.e. we are connecting to a store) then go ahead and run
 synchronize-store-class to upgrade class-level info like indices."
   (let* ((classname (schema-class-name class-schema))
-     (db-schema (get-current-db-schema sc classname)))
+         (db-schema (get-current-db-schema sc classname)))
     ;; When the db-schema is not up to date, make it so
     (unless (match-schemas class-schema db-schema)
       (synchronize-store-class sc (find-class classname) class-schema db-schema))
     ;; Update the instances oldest to newest
     (loop for schema in (get-db-schemas sc classname)
-     unless (eq (id schema) (id db-schema)) do
-     (progn
-       (map-index (lambda (cidx pcidx oid)
-            (declare (ignore cidx pcidx))
-            (let ((instance (store-recreate-instance sc oid classname)))
-              (upgrade-db-instance instance db-schema schema nil)))
-                  (class-index sc)
-              :value (id schema))
-       (awhen (schema-successor (get-store-schema sc (id schema)))
-         (awhen (get-store-schema sc it)
-           (setf (schema-predecessor it) nil)))))))
+          unless (eq (id schema) (id db-schema)) do
+             (progn
+               (map-index (lambda (cidx pcidx oid)
+                            (declare (ignore cidx pcidx))
+                            (let ((instance (store-recreate-instance sc oid classname)))
+                              (upgrade-db-instance instance db-schema schema nil)))
+                          (class-index sc)
+                          :value (id schema))
+               (awhen (schema-successor (get-store-schema sc (id schema)))
+                 (awhen (get-store-schema sc it)
+                   (setf (schema-predecessor it) nil)))))))
 ;;	   (remove-controller-schema sc (schema-id schema))))))
 
 (defmethod upgrade-db-instance ((instance stored-object) (new-schema upgradable-schema) (old-schema upgradable-schema) old-values)
@@ -1127,29 +1127,29 @@ synchronize-store-class to upgrade class-level info like indices."
   (destructuring-bind (old-rec new-rec) recs
     (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
       (cond ;; If it was not indexed, and now is, we have to notify the index of the new value
-            ((and (member old-type '(:stored :cached))
-                  (eq (slot-field-type new-rec) :indexed)
-                  (slot-boundp instance old-name))
-             (setf (slot-value instance old-name) (slot-value instance old-name)))
-            ;; If it was indexed, and the base index has changed 
-            ;; The new index will get updated as a natural part of the rest of the protocol
-            ((and (member old-type '(:indexed :derived))
-                  (not (eq (getf old-args :base)
-                           (getf (slot-field-args new-rec) :base)))
-                  (slot-boundp instance old-name))
-             (let ((slot-value (slot-value instance old-name)))
-               (unindex-slot-value sc slot-value (oid instance) old-name (getf old-args :base))))
-            ;; If it was a stored slot and now isn't, drop it and add the new type back
-            ((and (member old-type '(:stored :indexed :cached :derived))
-                  (not (member (slot-field-type new-rec) '(:stored :indexed :cached :derived))))
-             (upgrade-instance-slot sc instance :rem (list old-rec) old-values)
-             (upgrade-instance-slot sc instance :add (list new-rec) old-values))
-            ;; If the old slot was indexed
-            ((and (eq old-type :indexed) (eq (slot-field-type new-rec) :indexed)
-                  (not (eq (getf (slot-field-args old-rec) :base)
-                           (getf (slot-field-args new-rec) :base))))
-             nil)
-            (t nil)))))
+        ((and (member old-type '(:stored :cached))
+              (eq (slot-field-type new-rec) :indexed)
+              (slot-boundp instance old-name))
+         (setf (slot-value instance old-name) (slot-value instance old-name)))
+        ;; If it was indexed, and the base index has changed 
+        ;; The new index will get updated as a natural part of the rest of the protocol
+        ((and (member old-type '(:indexed :derived))
+              (not (eq (getf old-args :base)
+                       (getf (slot-field-args new-rec) :base)))
+              (slot-boundp instance old-name))
+         (let ((slot-value (slot-value instance old-name)))
+           (unindex-slot-value sc slot-value (oid instance) old-name (getf old-args :base))))
+        ;; If it was a stored slot and now isn't, drop it and add the new type back
+        ((and (member old-type '(:stored :indexed :cached :derived))
+              (not (member (slot-field-type new-rec) '(:stored :indexed :cached :derived))))
+         (upgrade-instance-slot sc instance :rem (list old-rec) old-values)
+         (upgrade-instance-slot sc instance :add (list new-rec) old-values))
+        ;; If the old slot was indexed
+        ((and (eq old-type :indexed) (eq (slot-field-type new-rec) :indexed)
+              (not (eq (getf (slot-field-args old-rec) :base)
+                       (getf (slot-field-args new-rec) :base))))
+         nil)
+        (t nil)))))
 
 (defmethod upgrade-instance-slot (sc instance (type (eql :rem)) recs old-values)
   "Handle slot removal and cleanup of values, such as sets"
@@ -1197,23 +1197,23 @@ different objects with the same oid."
   (let ((sc (get-store current))
         (oid (oid current))
         (diff (schema-diff new-schema old-schema)))
-      ;; do we need to pass the stored object?  Transient ops require previous?
-      (awhen (upgrade old-schema)
-        (apply-schema-change-fn current it old-schema))
-      ;; Handle changed slots
-      (loop for entry in diff do
-           (change-instance-slot sc current previous (diff-type entry) (diff-recs entry)))
-      ;; Initialize new slots (is this done by default?)
-      (initialize-new-slots current diff)
-      (uncache-instance sc oid)
-      (set-instance-schema-id sc oid (id new-schema))))
+    ;; do we need to pass the stored object?  Transient ops require previous?
+    (awhen (upgrade old-schema)
+      (apply-schema-change-fn current it old-schema))
+    ;; Handle changed slots
+    (loop for entry in diff do
+             (change-instance-slot sc current previous (diff-type entry) (diff-recs entry)))
+    ;; Initialize new slots (is this done by default?)
+    (initialize-new-slots current diff)
+    (uncache-instance sc oid)
+    (set-instance-schema-id sc oid (id new-schema))))
 
 (defmethod change-instance-slot (sc current previous (type (eql :change)) recs)
   "Handle changes in class type"
-;; TODO
-;;   (print recs)
-;;   (dump-btree (instance-index sc))
-;;   (dump-index (index-root sc))
+  ;; TODO
+  ;;   (print recs)
+  ;;   (dump-btree (instance-index sc))
+  ;;   (dump-index (index-root sc))
   (destructuring-bind (old-rec new-rec) recs
     (with-slots ((old-type type) (old-name name) (old-args args)) old-rec
       (with-slots ((new-type type) (new-name name) (new-args args)) new-rec
@@ -1258,19 +1258,19 @@ different objects with the same oid."
 (defun warn-about-dropped-slots (op class names)
   (when (and *warn-when-dropping-stored-slots* names)
     (cerror "Drop the slots" 
-        'dropping-stored-slot-data
-        :operation op
-        :class class
-        :slots names)))
+            'dropping-stored-slot-data
+            :operation op
+            :class class
+            :slots names)))
 
 (define-condition dropping-stored-slot-data (warning)
   ((operation :initarg :operation)
    (class :initarg :class)
    (slots :initarg :slots))
   (:report (lambda (c stream)
-         (with-slots (class slots operation) c
-           (format stream "Dropping slot(s) ~A for class ~A in ~A. Continue the synchronization process?"
-               slots class operation)))))
+             (with-slots (class slots operation) c
+               (format stream "Dropping slot(s) ~A for class ~A in ~A. Continue the synchronization process?"
+                       slots class operation)))))
 
 (defun warn-on-reinitialization-data-loss (class)
   "Warnings at class def time:
@@ -1334,9 +1334,9 @@ stored slots) and specific btrees."))
   (with-gensyms (ref)
     `(let* ((,ref ,store)
             (*store* 
-             (if (listp ,ref)
-                 (get-store ,ref)
-                 ,ref)))
+              (if (listp ,ref)
+                  (get-store ,ref)
+                  ,ref)))
        (declare (special *store*))
        ,@body)))
 
@@ -1385,11 +1385,11 @@ reachable and thus live"
 (defmethod (setf slot-value-using-class) (new-value (class stored-class) (instance stored-object) (slot-def stored-slot-definition))
   "Set the slot value in the database."
   (let ((name (slot-definition-name slot-def)))
-      (cond
-        ((derived-slot-triggers slot-def)
-         (stored-slot-writer (get-store instance) new-value instance name)
-         (derived-index-updater class instance slot-def))
-        (t (stored-slot-writer (get-store instance) new-value instance name))))
+    (cond
+      ((derived-slot-triggers slot-def)
+       (stored-slot-writer (get-store instance) new-value instance name)
+       (derived-index-updater class instance slot-def))
+      (t (stored-slot-writer (get-store instance) new-value instance name))))
   new-value)
 
 (defmethod slot-boundp-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))
@@ -1401,12 +1401,12 @@ reachable and thus live"
 (defmethod slot-boundp-using-class ((class stored-class) (instance stored-object) (slot-name symbol))
   "Checks if the slot exists in the database."
   (loop for slot in (class-slots class)
-     for matches-p = (eq (slot-definition-name slot) slot-name)
-     until matches-p
-     finally (return (if (and matches-p
-                              (subtypep (type-of slot) 'stored-slot-definition))
-                       (stored-slot-boundp (get-store instance) instance slot-name)
-                       (call-next-method)))))
+        for matches-p = (eq (slot-definition-name slot) slot-name)
+        until matches-p
+        finally (return (if (and matches-p
+                                 (subtypep (type-of slot) 'stored-slot-definition))
+                            (stored-slot-boundp (get-store instance) instance slot-name)
+                            (call-next-method)))))
 
 (defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))
   "Removes the slot value from the database."
@@ -1448,3 +1448,34 @@ reachable and thus live"
 
 INITARGS may contain any number keys that have been registered with the
 current *STORE-BACKEND*.")
+
+;;; HACK: re-implementation of SB-MOP internals (compute-slots)
+(in-package :SB-MOP)
+
+(declaim (sb-ext:disable-package-locks sb-mop:compute-slots 
+                                       sb-mop:class-slots
+                                       sb-pcl::update-slots))
+
+(defmethod find-nonstandard-slot-definition-location ((allocation (eql :database)) slot)
+  (declare (ignore slot))
+  nil)
+
+(defmethod compute-slots :around ((class standard-class))
+  (loop with slotds = (call-next-method) and location = -1
+        for slot in slotds 
+        for allocation = (slot-definition-allocation slot) 
+        do (progn
+             (setf (slot-definition-location slot)
+                   (case allocation
+                     (:instance
+                      (incf location))
+                     (:class
+                         (let* ((name (slot-definition-name slot))
+                                (from-class (sb-pcl::slot-definition-allocation-class slot))
+                                (cell (sb-int:assq name (sb-pcl::class-slot-cells from-class))))
+                           (assert (consp cell))
+                           cell))
+                     (t
+                      (find-nonstandard-slot-definition-location allocation slot)))) 
+             (sb-pcl::initialize-internal-slot-functions slot))	
+        finally (return slotds)))
