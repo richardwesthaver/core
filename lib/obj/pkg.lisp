@@ -934,6 +934,7 @@ protocol.")
    :cache-release :cache-max-size))
 
 (defpkg :obj/store
+  (:documentation "A generic object database protocol based on the STORED metaobject protocol.")
   (:nicknames :store)
   (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor :cache)
   (:export
@@ -941,12 +942,15 @@ protocol.")
    #:next-oid
    #:next-cid
    #:spec
+   #:pset
+   #:make-pset
    #:stored-object-schema
    #:get-from-root
    #:add-to-root
    #:open-store
+   #:close-store
    #:optimize-layout
-   #:oid->schema-id
+   #:oid-to-schema-id
    #:default-class-id
    #:default-class-id-type
    #:reserved-oid-p
@@ -954,9 +958,13 @@ protocol.")
    #:dropped-instance-p
    #:drop-instance-slots
    #:drop-instance
+   #:map-class
+   #:map-class-index
    #:store-recreate-instance
    #:recreate-instance
    #:recreate-instance-using-class
+   #:get-instances-by-class
+   #:get-instances-by-value
    #:valid-stored-reference-p
    #:cross-store-error
    #:signal-cross-store-error

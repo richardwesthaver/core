@@ -526,7 +526,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   "Get the class object using the oid or using the provided classname"
   (when classname
     (return-from get-instance-class (find-class classname)))
-  (let ((cid (oid->schema-id oid st)))
+  (let ((cid (oid-to-schema-id oid st)))
     (unless cid
       (missing-stored-instance oid (spec st))
       (return-from get-instance-class (find-class 'stored-object)))
@@ -652,7 +652,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
       (get-value oid (instance-index st))
     (and cid found?)))
 
-(defmethod oid->schema-id (oid (st store))
+(defmethod oid-to-schema-id (oid (st store))
   (get-value oid (instance-index st)))
 
 (defgeneric default-class-id (base-type sc)

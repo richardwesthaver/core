@@ -217,7 +217,7 @@
   (mapcar
    (lambda (x) (if (listp x) (cdr x) (find-symbol-normalize x)))
    (remove-if 
-    (lambda (x) (and (consp x) (car-eql 'lambda x)))
+    (lambda (x) (or (null x) (and (consp x) (car-eql 'lambda x))))
     (remove-duplicates 
      (mapcar 'car l)
      :test 'equalp))))

@@ -889,6 +889,11 @@ either side, and deletes both sides of a link."
   (interactive "ssrc:")
   (when link (org-graph-edge-insert-related (format "gh:%s" link) (or desc "src"))))
 
+(defun org-graph-search (&optional string edit-at)
+  (interactive "P")
+  (let ((org-agenda-text-search-extra-files (org-graph-files t)))
+    (org-search-view nil string edit-at)))
+
 ;;; Dynamic Blocks
 ;; TODO 2026-05-25: 
 (defun org-dblock-write:links ()

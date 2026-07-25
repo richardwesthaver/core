@@ -472,11 +472,12 @@ committed. Otherwise, the transaction is aborted."
        (when (and ,txn (eq (transaction-db ,txn) ,db))
          (transaction-object ,txn)))))
 
-(defmacro ensure-transaction ((&rest initargs &key
-                                              (db '*db*)
-                                              (store '*store*)
-                                              (txn '*txn*)
-                                              retries wait
+(defmacro ensure-transaction ((&rest initargs 
+                               &key
+                               (db '*db*)
+                               (store '*store*)
+                               (txn '*txn*)
+                               retries wait
                                &allow-other-keys)
                               &body body)
   "Execute BODY with an existing transaction or a new transaction if one does not

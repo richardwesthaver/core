@@ -3,8 +3,7 @@
  :require (:std)
   :components 
   ((:pkg "pkg")
-   ;; (:file "xref" :if-feature :clisp)
-   ;; (:file "metering" :if-feature (:or :clozure :clisp :clasp))
+   (:file "loader")
    (:file "backend")
    (:file "source-path-parser")
    (:file "source-file-cache")

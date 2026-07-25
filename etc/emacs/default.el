@@ -285,6 +285,8 @@ TABLE."
 (use-package time
   :bind (:map status-map ("." . world-clock)))
 
+;; (setopt timeclock-use-24hr-format t)
+
 ;;; Dired
 (use-package dired
   :hook (dired-mode . image-dired-minor-mode)
@@ -1166,6 +1168,15 @@ With prefix ARG non-nil, insert the result at the end of region."
           desktop-base-lock-name ".desktop.lock"
           desktop-save nil)
   (add-to-list 'desktop-path "."))
+
+(defun screenshot-frames (&optional name)
+  (interactive "Foutput: ")
+  (when (and name (file-exists-p name))
+    (error "%s is an existing file, not overwriting." name))
+  (let* ((name (or name "capture.svg"))
+         (ext (file-name-extension name)))
+    (with-temp-file name
+      (insert (x-export-frames nil (symb ext))))))
 
 ;;; Multisession
 ;; TODO 2026-06-05: 
