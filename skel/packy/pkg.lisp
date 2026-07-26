@@ -49,6 +49,6 @@
 (defpkg :skel/packy/cli
   (:use :cl :std :clap :cmd :skel/packy :cli/main))
 
-(defpkg :pk-user
+(defpkg :packy-user
   (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
   (:use :packy))

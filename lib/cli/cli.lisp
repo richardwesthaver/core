@@ -15,6 +15,7 @@
   (:use :cl :std :cli :tools :clap))
 
 (in-package :cli)
+
 ;;; Sudo
 (definline sudop () 
   "Return T if effective user appears to be root."

@@ -142,7 +142,7 @@
   (trace! "starting skel shell")
   (setq *interactive* t)
   (progn
-    (in-package :sk-user)
+    (in-package :skel-user)
     (using :cl-user :sb-ext :std-user)
     (println "Welcome to SKEL")
     (cli/linedit:install-repl 
@@ -151,11 +151,11 @@
      :history (xdg-data-dir :skel "history") 
      :killring (xdg-data-dir :skel "killring"))
     (cli/shell:make-toplevel-init
-     :package :sk-user
+     :package :skel-user
      :userinit #'user-init-file
      :sysinit #'sys-init-file)))
 
-(defmain start-skel (:package :sk-user :readtable :shell :commands :skel :cli :skel)
+(defmain start-skel (:package :skel-user :readtable :shell :commands :skel :cli :skel)
   (init :skel)
   (if-let ((args (cli-args)))
     (destructuring-bind (a1 &rest a2) args

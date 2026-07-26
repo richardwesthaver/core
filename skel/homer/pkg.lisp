@@ -40,6 +40,6 @@
   (:use :cl :std :log :cli)
   (:use-reexport :skel/homer/core))
 
-(defpkg :hr-user
+(defpkg :homer-user
   (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
   (:use :homer))

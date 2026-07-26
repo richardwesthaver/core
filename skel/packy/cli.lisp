@@ -8,7 +8,7 @@
 
 (defcommand (:packy show) (&optional version) (declare (ignore version)))
 
-(defmain start-packy (:package :pk-user :readtable :shell :commands :packy :cli :packy)
+(defmain start-packy (:package :packy-user :readtable :shell :commands :packy :cli :packy)
   (funcall (kernel *cli*)))
 
 (define-cli "packy" #'start-packy

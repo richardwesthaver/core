@@ -28,7 +28,7 @@
   :description "Project composition library"
   :require (:std :obj :dat :cli :organ :doc :vc :pod :net :box :rdb :syn)
   :components 
-  ((:pkg "pkg" :internal-package :skel-int :feature :skel :default-package :sk-user)
+  ((:pkg "pkg" :internal-package :skel-int :feature :skel :default-package :skel-user)
    (:mod "core"
     :components 
     ((:file "condition")
@@ -56,7 +56,7 @@
     ((:pkg "pkg" 
       :feature :packy 
       :internal-package :skel-int 
-      :default-package :pk-user)
+      :default-package :packy-user)
      (:file "var")
      (:file "proto")
      (:file "pkgfile")
@@ -70,7 +70,7 @@
     ((:pkg "pkg" 
       :feature :krypt
       :internal-package :skel-int
-      :default-package :kr-user)
+      :default-package :krypt-user)
      (:file "condition")
      (:file "var")
      (:file "cfg")
@@ -81,7 +81,7 @@
     ((:pkg "pkg" 
       :feature :homer 
       :internal-package :skel-int
-      :default-package :hr-user)
+      :default-package :homer-user)
      (:file "var")
      (:file "log")
      (:file "util")
@@ -94,7 +94,7 @@
     ((:pkg "pkg" 
       :feature :mpk 
       :internal-package :skel-int
-      :default-package :mk-user)
+      :default-package :mpk-user)
      (:file "mpd")
      (:file "var")
      (:file "proto" :require ("proto"))

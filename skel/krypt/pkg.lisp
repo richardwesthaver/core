@@ -28,6 +28,6 @@
    :init-krypt :krypt-condition
    :*krypt-user-config* :*krypt-cli*))
 
-(defpkg :kr-user
+(defpkg :krypt-user
   (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
   (:use :krypt))

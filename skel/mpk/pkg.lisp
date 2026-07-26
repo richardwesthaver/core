@@ -147,12 +147,12 @@
    :mpk-db-config))
 
 (defpkg :mpk-user
-  (:use-reexport :sk-user :mpk :mpk/db :mpk/mpd))
+  (:use-reexport :skel-user :mpk :mpk/db :mpk/mpd))
 
 (defpkg :skel/mpk/cli
   (:nicknames :mpk/cli)
   (:use :cl :std :log :mpk :cli :clap :cmd))
 
-(defpkg :mk-user
+(defpkg :mpk-user
   (:use :std-lisp :log :sb-debug :sb-ext :ast :vc :rdb :uri)
   (:use :mpk))

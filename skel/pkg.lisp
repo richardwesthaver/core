@@ -134,7 +134,7 @@
    :skel/core :skel/comp 
    :skel/net :project))
 
-(defpkg :sk-user
+(defpkg :skel-user
   (:use :std-lisp :cli :tools
     :cl-user :log :sb-debug :sb-ext
     :obj :vc :rdb :io :net :pod :skel :doc))
