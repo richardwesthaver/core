@@ -65,36 +65,43 @@ relying on a designated format and generating an object in the method body."))
 
 BODY contains elements of the form:
 
-(OBJECT &KEY READ WRITE)"
+(OBJECT (:READ (ARGS) BODY) (:WRITE (ARGS) BODY))
+
+and generates functions of the form READ/WRITE-NAME?-OBJECT
+
+OBJECT may also be a cons in which case the car is an alias for the actual
+type in the cdr."
   ;; reset io-table entry
   (when body
     (with-gensyms (readers writers)
-      `(progn
-         (defmacro ,(symbolicate 'read- name) (ty from)
-           `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
-         (defmacro ,(symbolicate 'write- name) (ty obj to)
-           `(,(intern (string (symbolicate 'write- ',name '- ty)) ,*package*) ,to ,obj))
-         (let* ((,readers)
-                (,writers))
-           ,@(loop for form in body
-                   append 
-                      (let* ((type (car form))
-                             (type-name (if (consp type)
-                                            (format nil "~@[~{~A-~^~A~}~]" type)
-                                            type))
-                             (rfn (symbolicate 'read- name '- type-name))
-                             (wfn (symbolicate 'write- name '- type-name)))
-                        `(,@(when-let ((rf (cdr (assoc :read (cdr form)))))
-                              (when #1=(cdr rf)
-                                    `((push (defun ,rfn ,(car rf)
-                                              ,@(if (atom #1#) (list #1#) #1#)) 
-                                            ,readers))))
-                          ,@(when-let ((wf (cdr (assoc :write (cdr form)))))
-                              (when #2=(cdr wf)
-                                    `((push 
-                                       (defun ,wfn ,(car wf) ,@(if (atom #2#) (list #2#) #2#)) 
-                                       ,writers)))))))
-           (setf (gethash ,name *io-table*) (list :read ,readers :write ,writers)))))))
+        `(progn
+           (defmacro ,(symbolicate 'read- name) (ty from)
+             `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
+           (defmacro ,(symbolicate 'write- name) (ty obj to)
+             `(,(intern (string (symbolicate 'write- ',name '- ty)) ,*package*) ,to ,obj))
+           (let* ((,readers)
+                  (,writers))
+             ,@(loop for form in body
+                     append 
+                        (let* ((type (car form))
+                               (type-name (if (consp type)
+                                              (if #1=(and (oddp (length type)) (getf (cdr type) :alias))
+                                                  #1#
+                                                  (format nil "~@[~{~A-~^~A~}~]" type))
+                                              type))
+                               (rfn (symbolicate 'read- name '- type-name))
+                               (wfn (symbolicate 'write- name '- type-name)))
+                          `(,@(when-let ((rf (cdr (assoc :read (cdr form)))))
+                                (when #2=(cdr rf)
+                                      `((push (defun ,rfn ,(car rf)
+                                                ,@(if (atom #2#) (list #2#) #2#)) 
+                                              ,readers))))
+                            ,@(when-let ((wf (cdr (assoc :write (cdr form)))))
+                                (when #3=(cdr wf)
+                                      `((push 
+                                         (defun ,wfn ,(car wf) ,@(if (atom #3#) (list #3#) #3#)) 
+                                         ,writers)))))))
+             (setf (gethash ,name *io-table*) (list :read ,readers :write ,writers)))))))
 
 ;;; Binary Stream IO
 (defvar *stream-read-positions*

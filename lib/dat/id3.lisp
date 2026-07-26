@@ -23,6 +23,14 @@ approval status.
 
 (deftype u28 () '(unsigned-byte 28))
 
+(defstruct id3-header 
+  (version 3 :type octet) 
+  (revision 0 :type octet)
+  (flags 0 :type octet)
+  (size 0 :type u28))
+
+(define-constant +id3-magic+ #(73 68 51) :test 'equalp)
+
 (define-io :id3
   (u28
    (:read (in)
@@ -32,15 +40,20 @@ approval status.
                 finally (return val)))
    (:write (out val)
            (loop for lbit downfrom 21 to 0 by 7 do
-                    (write-byte (ldb (byte 7 lbit) val) out)))))
-
-(defstruct id3-header 
-  (version 3 :type octet) 
-  (revision 0 :type octet)
-  (flags 0 :type octet)
-  (size 0 :type u28))
-
-(define-constant +id3-magic+ #(73 68 51) :test 'equalp)
+                    (write-byte (ldb (byte 7 lbit) val) out))))
+  ((id3-header :alias header)
+   (:read (in)
+          (let ((magic (make-octets 3)))
+            (read-sequence magic in)
+            (assert (equalp magic +id3-magic+)))
+          (let ((header (make-id3-header 
+                         :version (read-byte in) 
+                         :revision (read-byte in)
+                         :flags (read-byte in))))
+            (let ((size (make-array 4 :element-type '(unsigned-byte 7))))
+              (read-sequence size in)
+              (setf (id3-header-size header) (decode-u28 size))
+              header)))))
 
 ;; FIX 2025-02-07: 
 (defun decode-u28 (bytes)
@@ -48,22 +61,11 @@ approval status.
   (declare ((array (unsigned-byte 7)) bytes))
   (octets-to-integer bytes))
 
-(defun read-id3-header (file)
-  (with-open-file (in file :element-type '(unsigned-byte 8))
-    (let ((magic (make-octets 3)))
-      (read-sequence magic in)
-      (assert (equalp magic +id3-magic+)))
-    (let ((header (make-id3-header 
-                   :version (read-byte in) 
-                   :revision (read-byte in)
-                   :flags (read-byte in))))
-      (let ((size (make-array 4 :element-type '(unsigned-byte 7))))
-        (read-sequence size in)
-        (setf (id3-header-size header) (decode-u28 size))
-        header))))
+(defun read-id3-header-from-file (file)
+  (with-open-file (in file :element-type '(unsigned-byte 8))))
 
 (defun show-id3-header (file)
-  (with-slots (major-version revision flags size) (read-id3-header file)
+  (with-slots (major-version revision flags size) (read-id3-header-from-file file)
     (format t "ID3 ~d.~d ~8,'0b ~d bytes -- ~a~%"
             major-version revision flags size (enough-namestring file))))
 

@@ -942,8 +942,11 @@ protocol.")
    #:next-oid
    #:next-cid
    #:spec
-   #:pset
-   #:make-pset
+   #:sset
+   #:set-insert
+   #:set-list
+   #:set-remove
+   #:make-sset
    #:stored-object-schema
    #:get-from-root
    #:add-to-root

@@ -44,37 +44,37 @@ prevented. You can access them again if you redefine your class once more.")
 
 ;;; Stored Set
 ;; default implementation of simple sets using btrees
-(defclass pset (stored-collection) ()
-  (:documentation "An unordered stored collection of unique elements according to serializer
+(defclass sset (stored-collection) ()
+  (:documentation "An unordered stored set of unique elements according to serializer
 equal comparison"))
 
-(defgeneric insert-item (item pset)
-  (:documentation "Insert a new item into the pset"))
+(defgeneric insert-item (item sset)
+  (:documentation "Insert a new item into the sset"))
 
-(defgeneric remove-item (item pset)
-  (:documentation "Remove specified item from pset"))
+(defgeneric remove-item (item sset)
+  (:documentation "Remove specified item from sset"))
 
-(defgeneric map-pset (fn pset)
-  (:documentation "Map operator for psets"))
+(defgeneric map-sset (fn sset)
+  (:documentation "Map operator for ssets"))
 
-(defgeneric find-item (item pset &key key test)
-  (:documentation "Find a an item in the pset using key and test"))
+(defgeneric find-item (item sset &key key test)
+  (:documentation "Find a an item in the sset using key and test"))
 
-(defgeneric pset-list (pset)
-  (:documentation "Convert items of pset into a list for processing"))
+(defgeneric sset-list (sset)
+  (:documentation "Convert items of sset into a list for processing"))
 
-(defgeneric build-pset (sc)
-  (:documentation "Construct an empty default pset or backend specific pset.
-                   This is an internal function used by make-pset"))
+(defgeneric build-sset (sc)
+  (:documentation "Construct an empty default sset or backend specific sset.
+                   This is an internal function used by make-sset"))
 
-(defgeneric drop-pset (pset)
-  (:documentation "Release pset storage to database for reuse"))
+(defgeneric drop-sset (sset)
+  (:documentation "Release sset storage to database for reuse"))
 
-(defsclass default-pset (pset)
-  ((btree :accessor pset-btree :initarg :btree)))
+(defsclass default-sset (sset)
+  ((btree :accessor sset-btree :initarg :btree)))
 
-(defmethod drop-instance ((pset pset))
-  (drop-pset pset)
+(defmethod drop-instance ((sset sset))
+  (drop-sset sset)
   (call-next-method))
 
 ;;; Slot Access
@@ -97,7 +97,7 @@ equal comparison"))
       (insert-item new-value (slot-value-using-class class instance slot-def))))
 
 (defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def set-valued-slot-definition))
-  "Make sure we reclaim the pset storage"
+  "Make sure we reclaim the sset storage"
   (awhen (and (slot-boundp-using-class class instance slot-def)
               (slot-value-using-class class instance slot-def))
     (drop-slot-set it))
@@ -120,25 +120,25 @@ equal comparison"))
 (defclass slot-set () ()
   (:documentation "A proxy object for a set stored in a slot."))
 
-(defsclass default-slot-set (slot-set default-pset) ()
+(defsclass default-slot-set (slot-set default-sset) ()
   (:documentation "A default slot-set implementation"))
 
 (defgeneric build-slot-set (sc)
-  (:documentation "Construct an empty default pset or backend specific pset.
-                   This is an internal function used by make-pset"))
+  (:documentation "Construct an empty default sset or backend specific sset.
+                   This is an internal function used by make-sset"))
 
 (defgeneric slot-set-list (slot-set)
-  (:documentation "Convert items of pset into a list for processing")
+  (:documentation "Convert items of sset into a list for processing")
   (:method ((set default-slot-set))
-    (pset-list set)))
+    (sset-list set)))
 
 (defgeneric map-slot-set (fn slot-set)
-  (:documentation "Map operator for psets")
+  (:documentation "Map operator for ssets")
   (:method (fn (set default-slot-set))
-    (map-pset fn set)))
+    (map-sset fn set)))
 
-(defgeneric drop-slot-set (pset)
-  (:documentation "Release pset storage to database for reuse")
+(defgeneric drop-slot-set (sset)
+  (:documentation "Release sset storage to database for reuse")
   (:method ((set default-slot-set))
     (drop-instance set)))
 
@@ -431,9 +431,11 @@ fixed in the code and does not change between sessions. Usually this is
 something like 0, 1 or -1")
    (schema-table 
     :reader schema-table
+    :initarg :schema-table
     :documentation "Schema id to schema database table")
    (schema-name-index
     :reader schema-name-index
+    :initarg :schema-name-index
     :documentation "Schema name to schema database table")
    (schema-cache 
     :accessor schema-cache :initform (make-cache-table :test 'eq)
@@ -448,8 +450,10 @@ cleanly.")
    ;; Instance storage
    (instance-index
     :reader instance-index
+    :initarg :instance-index
     :documentation "OID->CID table.")
    (class-index 
+    :initarg :class-index
     :reader class-index
     :documentation "CID->OID table (reverse map).")
    (instance-cache 
@@ -568,59 +572,59 @@ DEFSCLASS for the available class-specific options in the generic interface."))
     ok
     (error "This function requires a valid store")))
 
-(defmethod build-pset ((sc store))
-  "Default pset method; override if backend has better policy"
+(defmethod build-sset ((sc store))
+  "Default sset method; override if backend has better policy"
   (let ((btree (make-dup-btree sc)))
-    (make-instance 'default-pset :btree btree :store sc)))
+    (make-instance 'default-sset :btree btree :store sc)))
 
-(defun make-pset (&key items pset (store *store*))
-  (let ((new-pset (build-pset store)))
-    (when (and items pset)
-      (error "Can only initialize a new pset with item list or pset to copy, not both"))
+(defun make-sset (&key items sset (store *store*))
+  (let ((new-sset (build-sset store)))
+    (when (and items sset)
+      (error "Can only initialize a new sset with item list or sset to copy, not both"))
     (when items
       (mapc (lambda (item)
-              (insert-item item new-pset))
+              (insert-item item new-sset))
             items))
-    (when pset
-      (map-pset (lambda (item)
-                  (insert-item item new-pset))
-                pset))
-    new-pset))
+    (when sset
+      (map-sset (lambda (item)
+                  (insert-item item new-sset))
+                sset))
+    new-sset))
 
-(defmethod insert-item (item (pset default-pset))
-  (setf (get-value item (pset-btree pset)) t)
+(defmethod insert-item (item (sset default-sset))
+  (setf (get-value item (sset-btree sset)) t)
   item)
 
-(defmethod remove-item (item (pset default-pset))
-  (delete-key (pset-btree pset) item)
+(defmethod remove-item (item (sset default-sset))
+  (delete-key (sset-btree sset) item)
   item)
 
-(defmethod find-item (item (pset default-pset) &key key (test #'equal))
+(defmethod find-item (item (sset default-sset) &key key (test #'equal))
   (if (not (or key test))
-      (get-value item (pset-btree pset))
+      (get-value item (sset-btree sset))
       (map-btree (lambda (elt dc)
                    (declare (ignore dc))
                    (let ((cmpval (if key (funcall key elt) elt)))
                      (if (funcall test item cmpval)
                          (return-from find-item elt))))
-                 (pset-btree pset))))
+                 (sset-btree sset))))
 
-(defmethod map-pset (fn (pset default-pset))
+(defmethod map-sset (fn (sset default-sset))
   (map-btree (lambda (key value) 
                (declare (ignore value))
                (funcall fn key))
-             (pset-btree pset))
-  pset)
+             (sset-btree sset))
+  sset)
 
-(defmethod pset-list ((pset default-pset))
+(defmethod sset-list ((sset default-sset))
   (map-btree #'(lambda (k v) 
                  (declare (ignore v))
                  k) 
-             (pset-btree pset) :collect t))
+             (sset-btree sset) :collect t))
 
-(defmethod drop-pset ((pset default-pset))
+(defmethod drop-sset ((sset default-sset))
   (ensure-transaction (:store *store*)
-    (awhen (pset-btree pset)
+    (awhen (sset-btree sset)
       (drop-btree it))))
 
 (defmethod build-slot-set ((sc store))
@@ -652,8 +656,9 @@ DEFSCLASS for the available class-specific options in the generic interface."))
       (get-value oid (instance-index st))
     (and cid found?)))
 
-(defmethod oid-to-schema-id (oid (st store))
-  (get-value oid (instance-index st)))
+(defgeneric oid-to-schema-id (oid st)
+  (:method (oid (st store))
+    (get-value oid (instance-index st))))
 
 (defgeneric default-class-id (base-type sc)
   (:documentation "A method implemented by the store for providing
@@ -1054,8 +1059,8 @@ DEFSCLASS for the available class-specific options in the generic interface."))
              (not (cursor-next cur)))
             (t nil)))))
 
-(defmethod find-inverted-index ((class symbol) slot &key (null-on-fail nil) (sc *store*))
-  (find-inverted-index (find-class class) slot :null-on-fail null-on-fail :sc sc))
+(defmethod find-inverted-index ((class symbol) slot &key (null-on-fail nil) (store *store*))
+  (find-inverted-index (find-class class) slot :null-on-fail null-on-fail :store store))
 
 (defmethod find-inverted-index ((class stored-class) slot &key ignore-errors (store *store*))
   (ensure-finalized class)
@@ -1450,7 +1455,9 @@ INITARGS may contain any number keys that have been registered with the
 current *STORE-BACKEND*.")
 
 ;;; HACK: re-implementation of SB-MOP internals (compute-slots)
-(in-package :SB-MOP)
+;; this will require benchmarking to determine if we need to lock this behind
+;; an initialization function.
+(in-package :SB-PCL)
 
 (declaim (sb-ext:disable-package-locks sb-mop:compute-slots 
                                        sb-mop:class-slots

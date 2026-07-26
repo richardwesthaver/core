@@ -13,14 +13,14 @@
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
    (logger :initform (default-logger) :initarg :logger :accessor logger)
-   (metadata :accessor controller-metadata)
-   (btrees :accessor controller-btrees)
-   (dup-btrees :accessor controller-dup-btrees)
+   (metadata :accessor store-metadata)
+   (btrees :accessor store-btrees)
+   (dup-btrees :accessor store-dup-btrees)
    (index :accessor idx)
    (rindex :accessor rindex))
   (:default-initargs
    :spec '(:rdb)
-   :db (make-db :rocksdb :opts (default-rdb-opts))
+   :db (make-db :rocksdb :opts (default-rdb-opts) :name (string (gensym "STORE")))
    :columns (make-array 0 :element-type 'rdb-column-family
                           :adjustable t
                           :fill-pointer t)
@@ -29,13 +29,13 @@
    ;; :root
    :schema-table (make-hash-table :size 100 :weakness :value)
    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value))
-  (:documentation "A RocksDB STORE. Note that the default column family is used to store
+  (:documentation "A RocksDB-based STORE. Note that the default column family is used to store
 serialized object schemas."))
 
 (defmethod build-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
 
-;; (build-btree (make-instance 'rdb-store :name "/tmp/foo"))
+;; (build-btree (make-instance 'rdb-store))
 
 (defun rdb-store-spec-p (spec)
   (and spec (consp spec) (eq (first spec) :rdb)))

@@ -284,7 +284,7 @@ value / primary key."))
   (:documentation 
    "Move the cursor to the first key-value pair with key
 greater or equal to the key argument, according to the lisp
-sorter.  Returns has-pair secondary key value primary key."))
+sorter. Returns has-pair secondary key value primary key."))
 
 (defgeneric cursor-pget-both (cursor key value)
   (:documentation 
