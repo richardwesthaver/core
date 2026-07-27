@@ -525,6 +525,8 @@
 (defar rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
   (vlen-ptr (* size-t)))
+(def-with-errptr rocksdb-iter-refresh void
+  (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-timestamp (* unsigned-char) 
   (iter (* rocksdb-iterator))
   (tslen (* size-t)))

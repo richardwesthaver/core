@@ -2,6 +2,29 @@
 
 ;; OBJ/STORE implementation for RocksDB
 
+;;; Commentary:
+
+;; based on Elephant which is generic but default implementation is BDB - in
+;; our case we use RocksDB (RDB). The semantics are somewhat different.
+
+;; For starters BDB uses the term 'cursor' but RocksDB has 'iterators' which
+;; themselves contain an internal position and bookkeeping. Don't forget about
+;; the iterator refresh feature, which will free resources blocked by the
+;; iterator - something we are likely to need to do often.
+
+;; RocksDB is much more advanced than BDB - there are features which are
+;; likely to come in handy such as Multi-CF Iterators, but may need time to
+;; find where they can be used.
+
+;; The 'default' column-family is the ROOT of the store btree - each CF is an
+;; individual RDB-BTREE. the implementation details are otherwise hidden from
+;; the database and handled in Lisp.
+
+;; TODO: seqno? pull from options
+
+;; Naturally to support Elephant's transaction abstraction we leverage a
+;; TransactionDB and generate transactions via ffi as needed.
+
 ;;; Code:
 (in-package :rdb)
 
@@ -304,8 +327,7 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (make-instance 'rdb-cursor 
       :btree bt
-      :handle (db-cursor (btree sc)
-                         :transaction (current-transaction sc))
+      :handle (db-cursor (btree sc) :transaction (current-transaction sc))
       :oid (oid bt))))
 
 (defmethod cursor-close ((cursor rdb-cursor))
@@ -770,7 +792,6 @@ serialized object schemas."))
 
 
 ;; Duplicated btrees
-
 (defclass rdb-dup-btree (dup-btree rdb-btree) ()
   ;;  (:metaclass persistent-metaclass)
   (:documentation "A RocksDB implementation of the duplicate btree"))

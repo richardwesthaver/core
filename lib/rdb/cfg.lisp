@@ -7,14 +7,13 @@
 ;; The RDB-CONFIG object may be used to specify initialization values for
 ;; RDB-DATABASE/RDB/RDB-STORE.
 
-;; You may call BUILD on an RDB-CONFIG to return the uninitialize RDB db or
-;; store.
+;; You may call MAKE-DB on RDB-CONFIG.
 
 ;;; Code:
 (in-package :rdb)
 
 (defconfig rdb-config (ast id db-config)
-  ((path :initarg :path :type (or pathname string))
+  ((path :initarg :path :initform nil)
    (logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config))
    (schema :initform (make-instance 'rdb-schema) :initarg :schema :type rdb-schema))
   (:default-initargs 
@@ -53,7 +52,7 @@
   (when (slot-boundp self 'schema) 
     (appendf (ast self) (list :schema (ast (slot-value self 'schema)))))
   (when (slot-boundp self 'logger) 
-    (appendf (ast self) (list :logger (ast (build (slot-value self 'logger))))))
+    (appendf (ast self) (list :logger (ast (slot-value self 'logger)))))
   (when (slot-boundp self 'options)
     (appendf (ast self) (list :options (ast (slot-value self 'options)))))
   self)
@@ -67,10 +66,11 @@
 (defmethod make-config ((self (eql :rdb)) &rest args)
   (apply 'make-instance 'rdb-config args))
 
-(defun init-rdbrc (&optional (file (merge-homedir-pathnames ".rdbrc")))
+(defun init-dbrc (&optional (file #p"xdg:config;dbrc"))
   (let ((cfg (make-instance 'rdb-config)))
-    (build-rdb-config cfg)
+    (build cfg)
     (with-open-file (out file
-			 :direction :output
-			 :if-does-not-exist :create)
-      (write-ast cfg out :pretty t :case :downcase))))
+			             :direction :output
+			             :if-does-not-exist :create)
+      (write (ast cfg) :stream out :pretty t :case :downcase))))
+

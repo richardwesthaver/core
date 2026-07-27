@@ -16,6 +16,7 @@
 ;; RocksDB has several variations on the concept of 'transaction':
 
 #| TransactionDB
+
 When using a TransactionDB, all keys that are written are locked internally by
 RocksDB to perform conflict detection. If a key cannot be locked, the
 operation will return an error. When the transaction is committed, it is
@@ -26,6 +27,7 @@ an OptimisticTransactionDB. However, there is a small locking overhead when
 TransactionDB is used. A TransactionDB will do conflict checking for all write
 operations (Put, Delete and Merge), including writes performed outside a
 Transaction.
+
 |#
 
 #| WriteBatch
@@ -655,7 +657,7 @@ only get their type slots updated on non-nil values."
         (when name (setf (name obj) name))
         obj))))
 
-(defmethod execute-transaction ((self rdb-database) (fn function) &key (txn *txn*))
+(defmethod execute-transaction ((self rdb-database) (fn function) &key (txn *transaction*))
   (funcall fn)
   (when txn
     (commit-transaction txn)

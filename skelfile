@@ -43,7 +43,8 @@
    psl.dat x11.lisp kbd.sxp parquet.thrift
    rebuild-core
    deploy))
- (upstream () 
+ (upstream ()
+  "Push our local hg repo to remote git mirrors (github and codeberg)"
   (labels ((remotes (name)
             (vector
              (make-vc-remote :type :hg :name "cb" :url (format nil "ssh://git@codeberg.org/c-c/~A" name))
@@ -59,14 +60,8 @@
   (vc-purge (vc *project*))
   (mapc 'delete-file (directory "**/*.fasl"))
   (mapc 'delete-file (directory "**/*.elc")))
- (readme ()
-  (:update ()
-   (with-emacs (e)
-    (org-babel-lob-ingest company-babel-file)
-    (org-with-file-buffer (join-paths src-directory "core/readme.org")
-     (org-babel-execute-buffer)
-     (save-buffer)))))
  (psl.dat (%stash)
+  "Fetch a public suffix list from publicsuffix.org."
   (reset :ssl)
   (init :ssl)
   (req:fetch "https://publicsuffix.org/list/public_suffix_list.dat"

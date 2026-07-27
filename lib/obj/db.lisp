@@ -356,7 +356,7 @@ column is already closed."))
 
 #| notes
 
-- *TXN* is bound to the current transaction being executed. A value of NIL
+- *TRANSACTION* is bound to the current transaction being executed. A value of NIL
    represents no transaction. The current *DATABASE-BACKEND* may modify this
    variable within the EXECUTE-TRANSACTION method.
    - should never be bound within the body of a transaction
@@ -364,27 +364,30 @@ column is already closed."))
 - The macros WITH-TRANSACTION and ENSURE-TRANSACTION will always abort the
   transaction in response to any non-local exit.
 
-- WITH-TRANSACTION passes *TXN* to EXECUTE-TRANSACTION
+- WITH-TRANSACTION passes *TRANSACTION* to EXECUTE-TRANSACTION
 
 |#
 (deftype simple-transaction () `(and (not null) list))
 
-(defvar *default-txn* '(nil nil nil))
-(defvar *txn* nil
-  "The current transaction.")
+(defvar *default-transaction* '(nil nil nil))
+(defvar *transaction* nil
+  "The current transaction or nil. 
+This variable is reserved for use from within EXECUTE-TRANSACTION and should
+not be rebound otherwise within the body of a transaction.")
 
 (defclass transaction-object () ()
   (:documentation "Base class for transaction objects."))
 
-(defclass transaction-kernel (kernel-object transaction-object) ()
-  (:documentation "Kernel object for transactions.")
-  (:metaclass kernel-class))
+(defkernel transaction-kernel (transaction kernel-object) ()
+  (:documentation "Kernel object for transactions.
+The funcallable-instance may be used to respect a simple commit-based protocol
+which mirrors the backend."))
 
 (defgeneric (setf transaction-opts) (new txn))
 
 (defgeneric make-transaction (self &key &allow-other-keys)
   (:documentation "Make a new transaction object.")
-  (:method ((self null) &key) *default-txn*))
+  (:method ((self null) &key) *default-transaction*))
 
 (defgeneric prepare-transaction (self &key)
   (:documentation "Prepare a transaction."))
@@ -440,14 +443,14 @@ return the same value as DB depending on backend.")
 (define-condition transaction-retry-count-exceeded (error)
   ((count :initarg :count :accessor retry-count :initform 0)))
 
-(defvar *default-txn-wait* 0.1)
-(defvar *default-txn-retry* 0)
+(defvar *default-transaction-wait* 0.1)
+(defvar *default-transaction-retry* 0)
 
 ;; From ELEPHANT
 (defmacro with-transaction ((&rest initargs 
                              &key (db '*db*)
                                   (store '*store*)
-                                  (txn '*txn*)
+                                  (transaction '*transaction*)
                                   ;; retries wait
                              &allow-other-keys)
                             &body body)
@@ -456,19 +459,19 @@ committed. Otherwise, the transaction is aborted."
   (with-gensyms (%txn-fn)
     (remf initargs :db)
     (remf initargs :store)
-    (remf initargs :txn)
+    (remf initargs :transaction)
     `(let ((*db* ,db)
            (*store* ,store)
-           (*txn* ,txn))
+           (*transaction* ,transaction))
        (let ((,%txn-fn (lambda () ,@body)))
          (funcall #'execute-transaction *db* ,%txn-fn 
-                  :txn (aif (known-transaction *db* *txn*) (transaction-object it) it)
+                  :transaction (aif (known-transaction *db* *transaction*) (transaction-object it) it)
                   ,@initargs)))))
 
 (defmacro current-transaction (db)
   "Return the current transaction associated with database DB."
   (with-gensyms (txn)
-    `(let ((,txn *txn*))
+    `(let ((,txn *transaction*))
        (when (and ,txn (eq (transaction-db ,txn) ,db))
          (transaction-object ,txn)))))
 
@@ -476,7 +479,7 @@ committed. Otherwise, the transaction is aborted."
                                &key
                                (db '*db*)
                                (store '*store*)
-                               (txn '*txn*)
+                               (transaction '*transaction*)
                                retries wait
                                &allow-other-keys)
                               &body body)
@@ -486,16 +489,16 @@ atomically regardless of whether there is an existing transaction or not."
   (with-gensyms (%db %txn-fn)
     (remf initargs :db)
     (remf initargs :store)
-    (remf initargs :txn)
+    (remf initargs :transaction)
     (remf initargs :retries)
     (remf initargs :wait)
     `(let ((,%db (or ,db ,store))
            (,%txn-fn (lambda () ,@body)))
-       (if (known-transaction ,%db ,txn)
+       (if (known-transaction ,%db ,transaction)
            (funcall ,%txn-fn)
            (funcall #'execute-transaction ,%db
                     ,%txn-fn
-                    :txn nil
+                    :transaction nil
                     ,@(when retries `(:retries ,retries))
                     ,@(when wait `(:wait ,wait)))))))
 

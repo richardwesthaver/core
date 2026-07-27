@@ -563,6 +563,29 @@ DEFSCLASS for the available class-specific options in the generic interface."))
    inverted-index relation functions on them directly"
   (get-association-index def sc))
 
+(defmethod cache-instance ((sc store) obj)
+  "Cache a persistent object with the controller."
+  (declare (type store sc))
+  (setf (get-cache (oid obj) (instance-cache sc)) obj))
+
+(defmethod get-cached-instance ((sc store) oid)
+  "Get a cached instance, or instantiate!"
+  (declare (type store sc)
+           (type fixnum oid))
+  (awhen (get-cache oid (instance-cache sc))
+    it))
+
+(defmethod uncache-instance ((sc store) oid)
+  (with-mutex ((instance-cache-lock sc))
+    (remhash oid (instance-cache sc))))
+
+(defmethod flush-instance-cache ((sc store))
+  "Reset the instance cache (flush object lookups).  Useful
+for testing.  Does not reclaim existing objects so there will be duplicate
+instances with identical functionality"
+  (with-mutex ((instance-cache-lock sc))
+    (setf (instance-cache sc) (make-cache-table :test 'eql))))
+
 (defun register-new-instance (instance class store)
   (setf (oid instance) (next-oid store))
   (register-instance store class instance))

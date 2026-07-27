@@ -180,6 +180,15 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
 
 (defaccessor name ((self rule)) (id self))
 
+(defmethod print-usage ((self rule) &optional stream)
+  (format stream "~A" (function-lambda-list (kernel self))))
+
+(defmethod print-help ((self rule) &optional stream)
+  (when-let ((doc (kernel-documentation self)))
+    (println doc stream))
+  (princ (format nil "Arg-list: ~A~%" (print-usage self)) stream)
+  (values))
+
 (defmethod write-ast ((self rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(sink self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
 
@@ -195,6 +204,13 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   ((source :type list :accessor source :initarg :source)
    (target :accessor rule-target :initarg :target))
   (:documentation "A 'simple' rule containing a SOURCE and TARGET, similar to GNU Makefile rules."))
+
+(defmethod print-help ((self simple-rule) &optional stream)
+  (format stream "~A: ~A~%" (source self) (rule-target self))
+  (when-let ((doc (kernel-documentation self)))
+    (println doc stream))
+  (princ (format nil "Arg-list: ~A~%" (print-usage self)) stream)
+  (values))
 
 (defmethod write-ast ((self simple-rule) stream &key (pretty t) (case :downcase) &allow-other-keys)
   (write `(,(rule-target self) ,(source self) ,@(ast self)) :stream stream :pretty pretty :case case :readably t :array t :escape t))
@@ -223,7 +239,7 @@ isn't found check *SKEL-SYSTEM-CONFIG*."
   ((args :initform nil :type list))
   (:documentation "Rules which support the command protocol."))
 
-(defkernel simple-interactive-rule (interactive-rule simple-rule)
+(defkernel simple-interactive-rule (simple-rule interactive-rule)
   ((args :initform nil :type list))
   (:documentation "Rules which support the command protocol."))
 

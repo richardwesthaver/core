@@ -146,11 +146,18 @@ just the keys currently present in TABLE."
 
 (defaccessor sap ((self rdb-iter)) (rdb-iter-sap self))
 
+(defmethod free ((self rdb-iter))
+  (rocksdb-iter-destroy (sap self)))
+
+(defmethod reset ((self rdb-iter) &key)
+  (with-errptr e
+    (rocksdb-iter-refresh (sap self) e)))
+
 (defmethod iter-valid-p ((self rdb-iter))
   (rocksdb-iter-valid (sap self)))
 
 (defmethod seek-to-first ((self rdb-iter))
-  (rocksdb-iter-seek-to-first (rdb-iter-sap self))) 
+  (rocksdb-iter-seek-to-first (rdb-iter-sap self)))
 
 (defmethod seek-to-last ((self rdb-iter))
   (rocksdb-iter-seek-to-last (rdb-iter-sap self)))
@@ -532,9 +539,10 @@ internal sap slots are initialized."
                (null nil)
                (alien cf))))
     (unless-null-db () self
-      (make-rdb-iter :sap (if col
-                              (create-cf-iter-raw sap col opts)
-                              (create-iter-raw sap opts))))))
+      (make-rdb-iter 
+       :sap (if col
+                (create-cf-iter-raw sap col opts)
+                (create-iter-raw sap opts))))))
 
 (defmethod print-stats ((self rdb) &optional stream)
   (if stream

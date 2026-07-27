@@ -158,7 +158,7 @@
       (isequal (name txn2) "foofn")
       (abort-transaction txn2))
     (with-transaction (:db db :txn (make-transaction (transaction-db db)))
-      (print (istype 'rdb-transaction *txn*)))))
+      (print (istype 'rdb-transaction *transaction*)))))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."

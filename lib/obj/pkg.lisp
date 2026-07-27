@@ -721,7 +721,7 @@ protocol.")
    :remove-kv
    :with-transaction
    :with-batch-transaction
-   :*txn*
+   :*transaction*
    :transaction-object
    :current-transaction
    :transaction-store
