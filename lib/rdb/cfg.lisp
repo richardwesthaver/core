@@ -73,4 +73,3 @@
 			             :direction :output
 			             :if-does-not-exist :create)
       (write (ast cfg) :stream out :pretty t :case :downcase))))
-

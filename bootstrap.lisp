@@ -31,12 +31,12 @@ $ sbcl --script bootstrap.lisp
 ;; set source location
 (when #1=(sb-posix:getenv "SBCL_SRC") (sb-ext:set-sbcl-source-location (pathname #1#)))
 
+(init :sys)
 ;; set local SYS:SITE for inter-op with LOAD-LOGICAL-PATHNAME-TRANSLATIONS
 (setf (logical-pathname-translation "SYS" "SITE;*.*.*") (merge-pathnames "etc/lisp/*.*"))
 ;; overwrite all logical paths
 (mapcar 'load-logical-host '("SYS" "ETC" "USR" "VAR" "SRV" "USER" "SKEL" "MPK" "PACKY"))
 
-(init :sys)
 (let ((build-order 
         (list :std
               :ironclad

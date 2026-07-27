@@ -222,7 +222,7 @@ arrange for FVAR to be closed after BODY."
 (defmethod std/meta:init ((self (eql :xdg)) &rest args)
   (init-xdg-dirs)
   ;; FIX
-  (init-xdg-logical-pathnames)
+  ;; (init-xdg-logical-pathnames)
   (unless (null args)
     (std/list:doplist (k v) args
       (setf (xdg-dir k) v))))
