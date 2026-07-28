@@ -937,7 +937,7 @@ to be a system which is pushed to the session queue before BODY."
                                     (pathname (directory-namestring (probe-file (path ,sys)))))))))
              ,@%decl
              ,@%body)))
-      `(with-system-restarts (progn ,@body))))
+      `(with-system-restarts ,@body)))
 
 (eval-always
   (defun cached-system-file (f)
@@ -1033,15 +1033,15 @@ image?"))
 corresponding to this action, and a boolean indicating if they have already been subjected
 to relevant output translations and should not be further translated.
 
-Methods on PERFORM *must* call this function to determine where their outputs
-are to be located. They may rely on the order of the files to discriminate
-between outputs."))
+System tasks *must* call this function to determine where their outputs are to
+be located. They may rely on the order of the files to discriminate between
+outputs."))
 
 (defgeneric input-files (operation component)
   (:documentation "A list of input files corresponding to this action.
 
-Methods on PERFORM *must* call this function to determine where their inputs
-are located. They may rely on the order of the files to discriminate between
+System tasks *must* call this function to determine where their inputs are
+located. They may rely on the order of the files to discriminate between
 inputs."))
 
 ;; mark-component-preloaded
@@ -1568,5 +1568,6 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
       (apply #'test-system sys args))))
 
 ;;; Explorer
+#+todo
 (defmethod explore ((self system) &key)
   "Explore a system in the Lisp REPL.")

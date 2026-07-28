@@ -1474,7 +1474,10 @@ useful in a variety of contexts.")
    :scheduled-task
    :make-task
    :make-job
+   :make-status
+   :status-p
    :run-job
+   :tstamp
    :job-p :task-p :task :task-worker
    :plan :status :planner :task-pool
    :plan-traversal

@@ -166,7 +166,15 @@
          restore-rate-limit callback-trigger-interval-size max-valid-backups-to-open
          shared-files-with-checksum-naming))
 
-;; (defvar *rocksdb-intgestexternalfileoptions*)
+(defvar *rocksdb-set-only-transactiondb-options*
+  (%svec write-policy))
+
+(defvar *rocksdb-set-only-transaction-options*
+  (%svec set-snapshot deadlock-detect skip-prepare
+    lock-timeout expiration deadlock-detect-depth max-write-batch-size))
+
+(defvar *rocksdb-set-only-optimistictransaction-options*
+  (%svec set-snapshot))
 
 (defvar *rocksdb-column-family-metadata*
   #("size" "file-count" "name" "level-count" "level-metadata"))

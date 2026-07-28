@@ -9,17 +9,28 @@ $ sbcl --script bootstrap.lisp
 |#
 (in-package :cl-user)
 ;; required sbcl features
-(mapcar 
- 'require 
- '(sb-md5 sb-sprof sb-cover sb-grovel 
-   sb-posix sb-bsd-sockets sb-cltl2 sb-concurrency
-   sb-introspect sb-rotate-byte asdf uiop
-   sb-simd))
+(dolist (m '(sb-md5 sb-sprof sb-cover sb-grovel 
+             sb-posix sb-bsd-sockets sb-cltl2 sb-concurrency
+             sb-introspect sb-rotate-byte sb-simd uiop))
+  (require m))
 
 ;; load std
-(asdf:load-asd (probe-file "std/std.asd"))
-(asdf:load-system :std)
-#+nil (shadowing-import '(reset) :std)
+(let ((*default-pathname-defaults* (merge-pathnames "std/"))
+      (std-sys))
+  (with-open-file (sys "std.sys")
+    ;; skip DEFSYS :STD "docstring", remainder of form is a plist.
+    (setf std-sys (cdddr (read sys))))
+  ;; load components in sequence
+  (labels ((%load (component)
+             (destructuring-bind (type name &rest args) component
+               (case type
+                 (:mod ; load all sub-components
+                  (let ((*default-pathname-defaults* (probe-file (string-downcase name))))
+                    (mapc #'%load (cadr args))))
+                 (:dir ; load directory contents
+                  (mapc #'load (directory (concatenate 'string (string-downcase name) "/*.lisp"))))
+                 (t (load (make-pathname :name (string-downcase name) :type "lisp" :directory '(:relative))))))))
+    (dolist (c (getf std-sys :components)) (%load c))))
 
 (in-package :std-user)
 (in-readtable :std)
@@ -37,57 +48,58 @@ $ sbcl --script bootstrap.lisp
 ;; overwrite all logical paths
 (mapcar 'load-logical-host '("SYS" "ETC" "USR" "VAR" "SRV" "USER" "SKEL" "MPK" "PACKY"))
 
-(let ((build-order 
-        (list :std
-              :ironclad
-              :swank
-              :swank/ext
-              :xkb
-              :evdev
-              :btrfs
-              :zstd
-              :sys
-              :keyutils
-              :tree-sitter
-              :obj
-              :uring
-              :io
-              :log
-              :arrow
-              :glib
-              :gstreamer
-              :rocksdb
-              :blas
-              :lapack
-              :cuda
-              :openssl
-              :ssh2
-              :jpeg
-              :dat
-              :rt
-              :sndfile
-              :alsa
-              :chromaprint
-              :jack
-              :ffmpeg
-              :parse
-              :cry
-              :cli
-              :net
-              :q
-              :rdb
-              :organ
-              :syn
-              :doc
-              :vc
-              :box
-              :pod
-              :math
-              :dsp
-              :alien
-              :skel
-              :core)))
-  (mapc 'load-system build-order))
+(defvar *core-build-order*
+  (list :std
+        :ironclad
+        :swank
+        :swank/ext
+        :xkb
+        :evdev
+        :btrfs
+        :zstd
+        :sys
+        :keyutils
+        :tree-sitter
+        :obj
+        :uring
+        :io
+        :log
+        :arrow
+        :glib
+        :gstreamer
+        :rocksdb
+        :blas
+        :lapack
+        :cuda
+        :openssl
+        :ssh2
+        :jpeg
+        :dat
+        :rt
+        :sndfile
+        :alsa
+        :chromaprint
+        :jack
+        :ffmpeg
+        :parse
+        :cry
+        :cli
+        :net
+        :q
+        :rdb
+        :organ
+        :syn
+        :doc
+        :vc
+        :box
+        :pod
+        :math
+        :dsp
+        :alien
+        :skel
+        :core))
+
+(mapc 'load-system *core-build-order*)
 
 ;; remap MEDIA logical host
 (dsp:load-media-logical-host #l"mpk:media;")

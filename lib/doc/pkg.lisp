@@ -121,5 +121,4 @@
    :doc-systems
    :print-doc
    :print-documentation
-   :asdf-system-documentation
    :project-documentation))
