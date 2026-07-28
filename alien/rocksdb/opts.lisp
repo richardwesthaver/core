@@ -79,7 +79,33 @@
   (write-policy rocksdb-txndb-write-policy))
 
 (define-opt rocksdb-transaction-options)
+(defar rocksdb-transaction-options-set-set-snapshot void
+  (opt (* rocksdb-transaction-options))
+  (v boolean))
+(defar rocksdb-transaction-options-set-deadlock-detect void
+  (opt (* rocksdb-transaction-options))
+  (v boolean))
+(defar rocksdb-transaction-options-set-lock-timeout void
+  (opt (* rocksdb-transaction-options))
+  (lock-timeout (signed 64)))
+(defar rocksdb-transaction-options-set-expiration void
+  (opt (* rocksdb-transaction-options))
+  (expiration (signed 64)))
+(defar rocksdb-transaction-options-set-deadlock-detect-depth void
+  (opt (* rocksdb-transaction-options))
+  (depth (signed 64)))
+(defar rocksdb-transaction-options-set-max-write-batch-size void
+  (opt (* rocksdb-transaction-options))
+  (size size-t))
+(defar rocksdb-transaction-options-set-skip-prepare void
+  (opt (* rocksdb-transaction-options))
+  (v boolean))
+
 (define-opt rocksdb-optimistictransaction-options)
+(defar rocksdb-optimistictransaction-options-set-set-snapshot void
+  (opt (* rocksdb-transaction-options))
+  (v boolean))
+
 (define-opt rocksdb-envoptions)
 (define-opt rocksdb-universal-compaction-options)
 (defar rocksdb-universal-compaction-options-set-size-ratio void

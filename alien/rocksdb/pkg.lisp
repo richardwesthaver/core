@@ -255,10 +255,6 @@ set *errptr to a malloc()ed error message.
    :rocksdb-checkpoint-object-destroy
    :rocksdb-name-function
    :rocksdb-concat-merge-name
-   :rocksdb-compare-never-without-ts
-   :rocksdb-compare-never-with-ts
-   :rocksdb-compare-never-name
-   :rocksdb-compare-never
    :rocksdb-compare-without-ts-function
    :rocksdb-compare-function
    :rocksdb-create-compaction-filter

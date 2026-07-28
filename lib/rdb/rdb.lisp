@@ -681,6 +681,7 @@ internal sap slots are initialized."
 
 (defaccessor sap ((self rdb-transaction)) (rdb-transaction-sap self))
 (defaccessor name ((self rdb-transaction)) (transaction-name-raw (sap self)))
+(defmethod free ((self rdb-transaction)) (rocksdb-transaction-destroy (sap self)))
 
 (defmethod transaction-object-p ((self rdb-transaction)) t)
 
@@ -741,7 +742,7 @@ internal sap slots are initialized."
   (rocksdb-close (sap self)))
 
 ;;; Backup DB
-(defstruct rdb-backup-engine 
+(defstruct rdb-backup-engine
   (sap nil :type (or null (alien (* rocksdb-backup-engine))))
   opts)
 
@@ -827,6 +828,7 @@ internal sap slots are initialized."
 
 (defaccessor sap ((self rdb-env)) (rdb-env-sap self))
 (defaccessor path ((self rdb-env)) (rdb-env-path self))
+(defmethod free ((self rdb-env)) (rocksdb-env-destroy (sap self)))
 
 ;;; Logger
 (defun rdb-log-default (level &optional prefix)

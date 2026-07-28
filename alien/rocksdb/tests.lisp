@@ -180,8 +180,8 @@ DB where K and V are both Lisp strings."
          (db (rocksdb-open opts path nil))
          (key (genkey))
          (val (genval))
-	 (klen (length key))
-	 (vlen (length val))
+	     (klen (length key))
+	     (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
@@ -206,8 +206,8 @@ DB where K and V are both Lisp strings."
       (is (null-alien errptr))
       ;; copy V to RVAL and validate
       (let ((rval (make-array vlen :element-type 'unsigned-byte)))
-	(loop for i from 0 below vlen do (let ((x (deref v i))) (setf (aref rval i) x)))
-	(is (string= (octets-to-string val) (concatenate 'string (map 'vector #'code-char rval)))))
+	    (loop for i from 0 below vlen do (let ((x (deref v i))) (setf (aref rval i) x)))
+	    (is (string= (octets-to-string val) (concatenate 'string (map 'vector #'code-char rval)))))
       (rocksdb-delete db wopts k klen errptr)
       (is (null-alien errptr))
       (rocksdb-writeoptions-destroy wopts)
@@ -577,6 +577,35 @@ DB where K and V are both Lisp strings."
 ;; (define-comparator dummy)
 ;; (define-comparator-with-ts dummy1)
 
+(define-alien-callable rocksdb-compare-never-name c-string () "compare-never")
+(locally
+    (declare (sb-ext:muffle-conditions style-warning))
+  (define-alien-callable rocksdb-compare-never int
+      ((state (* t))
+       (a (* unsigned-char))
+       (alen size-t)
+       (b (* unsigned-char))
+       (blen size-t))
+    0)
+
+  (define-alien-callable rocksdb-compare-never-with-ts int
+      ((state (* t))
+       (a (* unsigned-char))
+       (alen size-t)
+       (b (* unsigned-char))
+       (blen size-t))
+    0)
+
+  (define-alien-callable rocksdb-compare-never-without-ts int
+      ((state (* t))
+       (a (* unsigned-char))
+       (alen size-t)
+       (a-ts unsigned-char)
+       (b (* unsigned-char))
+       (blen size-t)
+       (b-ts unsigned-char))
+    0))
+
 (deftest comparator ()
   "Test low-level comparator API."
   (with-alien ((state (* t))
@@ -684,3 +713,22 @@ DB where K and V are both Lisp strings."
           (dotimes (i 8)
             (test-single-roundtrip db (* 32 (1+ i))))
           (rocksdb-flush db (rocksdb-flushoptions-create) e))))))
+
+(deftest iterators ()
+  "Test basic RocksDB iteration operations."
+  (with-opt (o (test-opts) (rocksdb-options-destroy o))
+    (with-temp-db db (o)
+      (let ((iter (rocksdb-create-iterator db (rocksdb-readoptions-create)))
+            (k (octets-to-alien (string-to-octets "foo")))
+            (v (octets-to-alien (string-to-octets "bar"))))
+        (istype '(alien (* rocksdb-iterator)) iter)
+        (isnt (rocksdb-iter-valid iter))
+        (rocksdb-iter-seek-to-first iter)
+        (isnt (rocksdb-iter-valid iter))
+        ;; (rocksdb-iter-destroy iter)
+        (with-errptr e
+          (rocksdb-put db (rocksdb-writeoptions-create) k 3 v 3 e)
+          (rocksdb-iter-refresh iter e))
+        (isnt (rocksdb-iter-valid iter))
+        (rocksdb-iter-seek-to-first iter)
+        (is (rocksdb-iter-valid iter))))))

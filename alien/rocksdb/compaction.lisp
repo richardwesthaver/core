@@ -11,6 +11,7 @@
 ;; ref: https://github.com/facebook/rocksdb/wiki/Compaction-Filter
 
 #|
+
 * RocksDB snapshots do not guarantee to preserve the state of the DB in the
 presence of CompactionFilter. Data seen from a snapshot might disappear after
 a table file created with a `CompactionFilter` is installed. If you use
@@ -32,6 +33,7 @@ user-defined timestamps are enabled.
 * Exceptions MUST NOT propagate out of overridden functions into RocksDB,
 because RocksDB is not exception-safe. This could cause undefined behavior
 including data loss, unreported corruption, deadlocks, and more.
+
 |#
 ;;; Code:
 (in-package :rocksdb)

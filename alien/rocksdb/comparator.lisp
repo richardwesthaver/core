@@ -60,33 +60,3 @@ timestamp comes first.
   (compare-ts (* rocksdb-compare-ts-function))
   (compare-without-ts (* rocksdb-compare-without-ts-function))
   (name (* rocksdb-name-function)))
-
-(define-alien-callable rocksdb-compare-never-name c-string () "compare-never")
-
-(locally
-    (declare (sb-ext:muffle-conditions style-warning))
-  (define-alien-callable rocksdb-compare-never int
-      ((state (* t))
-       (a (* unsigned-char))
-       (alen size-t)
-       (b (* unsigned-char))
-       (blen size-t))
-    0)
-
-  (define-alien-callable rocksdb-compare-never-with-ts int
-      ((state (* t))
-       (a (* unsigned-char))
-       (alen size-t)
-       (b (* unsigned-char))
-       (blen size-t))
-    0)
-
-  (define-alien-callable rocksdb-compare-never-without-ts int
-      ((state (* t))
-       (a (* unsigned-char))
-       (alen size-t)
-       (a-ts unsigned-char)
-       (b (* unsigned-char))
-       (blen size-t)
-       (b-ts unsigned-char))
-    0))

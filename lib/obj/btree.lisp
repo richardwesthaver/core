@@ -153,15 +153,16 @@ lookup, updating ALL other secondary indices."
   ((oid :accessor cursor-oid :type fixnum :initarg :oid)
    (initialized-p :accessor cursor-initialized-p
                   :type boolean :initform nil :initarg :initialized-p
-                  :documentation "Predicate indicating whether
-the btree in question is initialized or not.  Initialized means
-that the cursor has a legitimate position, not that any
-initialization action has been taken.  The implementors of this
-abstract class should make sure that happens under the
-sheets...  Cursors are initialized when you invoke an operation
-that sets them to something (such as cursor-first), and are
-uninitialized if you move them in such a way that they no longer
-have a legimtimate value.")
+                  :documentation "A predicate indicating whether
+the btree in question is initialized or not. 
+
+Initialized means that the cursor has a legitimate/valid position, not that
+any initialization action has been taken. The implementors of this abstract
+class are responsible for making sure this happens.
+
+Cursors are initialized when you invoke an operation that sets them to
+something (such as cursor-first), and are uninitialized if you move them in
+such a way that they no longer have a legimtimate value.")
    (btree :accessor btree :initarg :btree))
   (:documentation "A cursor for traversing (primary) BTrees."))
 
@@ -169,13 +170,12 @@ have a legimtimate value.")
   (:documentation "Construct a cursor for traversing BTrees."))
 
 (defgeneric make-simple-cursor (bt)
-  (:documentation "Allow users to walk secondary indices and only 
-                   get back primary keys rather than associated 
-                   primary values"))
+  (:documentation "Allow users to walk secondary indices and only get back primary keys rather
+than associated primary values."))
 
 (defgeneric cursor-close (cursor)
   (:documentation 
-   "Close the cursor.  Make sure to close cursors before the
+   "Close the cursor. Make sure to close cursors before the
 enclosing transaction is closed!"))
 
 (defgeneric cursor-duplicate (cursor)
@@ -183,101 +183,103 @@ enclosing transaction is closed!"))
 
 (defgeneric cursor-current (cursor)
   (:documentation 
-   "Get the key / value at the cursor position.  Returns
-has-pair key value, where has-pair is a boolean indicating
+   "Get the key / value at the cursor position.  Returns values
+(has-pair key value), where has-pair is a boolean indicating
 there was a pair."))
 
 (defgeneric cursor-first (cursor)
   (:documentation 
-   "Move the cursor to the beginning of the BTree, returning
-has-pair key value."))
+   "Move the cursor to the beginning of the BTree.
+Return: (has-pair key value)"))
 
 (defgeneric cursor-last (cursor)
   (:documentation 
-   "Move the cursor to the end of the BTree, returning
-has-pair key value."))
+   "Move the cursor to the end of the BTree.
+Return: (has-pair key value)"))
 
 (defgeneric cursor-next (cursor)   
   (:documentation 
-   "Advance the cursor, returning has-pair key value."))
+   "Advance the cursor.
+Return: (has-pair key value)"))
 
 (defgeneric cursor-prev (cursor)
   (:documentation 
-   "Move the cursor back, returning has-pair key value."))
+   "Move the cursor back.
+Return: (has-pair key value)"))
 
 (defgeneric cursor-set (cursor key)
   (:documentation 
-   "Move the cursor to a particular key, returning has-pair
-key value."))
+   "Move the cursor to a particular key. 
+Return: (has-pair key value)"))
 
 (defgeneric cursor-set-range (cursor key) 
   (:documentation 
    "Move the cursor to the first key-value pair with key
 greater or equal to the key argument, according to the lisp
-sorter.  Returns has-pair key value."))
+sorter. Return values: (has-pair key value)"))
 
 (defclass secondary-cursor (cursor) ()
   (:documentation "Cursor for traversing secondary indices."))
 
 (defgeneric cursor-get-both (cursor key value)
   (:documentation 
-   "Moves the cursor to a particular key / value pair,
-returning has-pair key value.")
+   "Moves the cursor to a particular KV pair,
+Return values: (has-pair key value)")
   (:method :before ((cursor secondary-cursor) key value)
     (declare (ignore key value) (ignorable cursor))
     (error "Cannot use get-both on secondary cursor; use pget-both")))
 
 (defgeneric cursor-get-both-range (cursor key value)
   (:documentation 
-   "Moves the cursor to the first key / value pair with key
-equal to the key argument and value greater or equal to the
-value argument.  Not really useful for us since primaries
-don't have duplicates.  Returns has-pair key value.")
+   "Move the cursor to the first KV pair with key
+equal to the key argument and value greater or equal to the value
+argument. Not really useful for us since primaries don't have
+duplicates. Return has-pair key value.")
   (:method :before ((cursor secondary-cursor) key value)
     (declare (ignore key value) (ignorable cursor))
     (error "Cannot use get-both-range on secondary cursor; use pget-both-range")))
 
 (defgeneric cursor-delete (cursor)
   (:documentation 
-   "Delete by cursor.  The cursor is at an invalid position,
-and uninitialized, after a successful delete."))
+   "Delete by cursor. The cursor is at an invalid position, and uninitialized,
+after a successful delete."))
 
 (defgeneric cursor-put (cursor value &key key)
   (:documentation 
-  "Overwrite value at current cursor location.  Cursor remains
-   at the current location")
+  "Overwrite value at current cursor location. Cursor remains at the current
+location")
   (:method :before ((cursor secondary-cursor) value &key key)
     (declare (ignore key value) (ignorable cursor))
     (error "Cannot use put on a secondary cursor; use (setf get-value) on primary")))
 
 (defgeneric cursor-pcurrent (cursor)
   (:documentation 
-   "Returns has-tuple / secondary key / value / primary key
+   "Return has-tuple / secondary key / value / primary key
 at the current position."))
 
 (defgeneric cursor-pfirst (cursor)
   (:documentation 
-   "Moves the key to the beginning of the secondary index.
-Returns has-tuple / secondary key / value / primary key."))
+   "Move the key to the beginning of the secondary index.
+Return has-tuple / secondary key / value / primary key."))
 
 (defgeneric cursor-plast (cursor)
   (:documentation 
-   "Moves the key to the end of the secondary index.  Returns
+   "Move the key to the end of the secondary index.  Return
 has-tuple / secondary key / value / primary key."))
 
 (defgeneric cursor-pnext (cursor)
   (:documentation 
-   "Advances the cursor.  Returns has-tuple / secondary key /
+   "Advances the cursor. Return has-tuple / secondary key /
 value / primary key."))
 
 (defgeneric cursor-pprev (cursor)
   (:documentation 
-   "Moves the cursor back.  Returns has-tuple / secondary key
+   "Moves the cursor back. Returns has-tuple / secondary key
 / value / primary key."))
 
 (defgeneric cursor-pset (cursor key)
   (:documentation 
-  "Moves the cursor to a particular key.  Returns has-tuple
+  "Moves the cursor to a particular key. Returns has-tuple
 / secondary key / value / primary key."))
 
 (defgeneric cursor-pset-range (cursor key)
@@ -289,42 +291,42 @@ sorter. Returns has-pair secondary key value primary key."))
 (defgeneric cursor-pget-both (cursor key value)
   (:documentation 
    "Moves the cursor to a particular secondary key / primary
-key pair.  Returns has-tuple / secondary key / value /
+key pair. Returns has-tuple / secondary key / value /
 primary key."))
 
 (defgeneric cursor-pget-both-range (cursor key value)
   (:documentation 
-   "Moves the cursor to the first secondary key / primary
+   "Move the cursor to the first secondary key / primary
 key pair, with secondary key equal to the key argument, and
-primary key greater or equal to the pkey argument.  Returns
+primary key greater or equal to the pkey argument.  Return
 has-tuple / secondary key / value / primary key."))
 
 (defgeneric cursor-next-dup (cursor)
   (:documentation 
    "Move to the next duplicate element (with the same key.)
-Returns has-pair key value."))
+Return has-pair key value."))
 
 (defgeneric cursor-next-nodup (cursor)
   (:documentation 
    "Move to the next non-duplicate element (with different
-key.)  Returns has-pair key value."))
+key.)  Return has-pair key value."))
 
 (defgeneric cursor-pnext-dup (cursor)
   (:documentation 
    "Move to the next duplicate element (with the same key.)
-Returns has-tuple / secondary key / value / primary key."))
+Return has-tuple / secondary key / value / primary key."))
 
 (defgeneric cursor-pnext-nodup (cursor)
   (:documentation 
    "Move to the next non-duplicate element (with different
-key.)  Returns has-tuple / secondary key / value / primary
+key.)  Return has-tuple / secondary key / value / primary
 key."))
 
 
 (defgeneric cursor-prev-dup (cursor)
   (:documentation 
    "Move to the previous duplicate element (with the same key.)
-Returns has-pair key value."))
+Return has-pair key value."))
 
 ;; Default implementation.
 (defmethod cursor-prev-dup ((cur cursor))
@@ -341,12 +343,12 @@ Returns has-pair key value."))
 (defgeneric cursor-prev-nodup (cursor)
   (:documentation 
    "Move to the previous non-duplicate element (with
-different key.)  Returns has-pair key value."))
+different key.)  Return has-pair key value."))
 
 (defgeneric cursor-pprev-dup (cursor)
   (:documentation 
    "Move to the previous duplicate element (with the same key.)
-Returns has-tuple / secondary key / value / primary key."))
+Return has-tuple / secondary key / value / primary key."))
 
 ;; Default implementation.
 (defmethod cursor-pprev-dup ((cur cursor))
@@ -367,8 +369,8 @@ different key.) Returns has-tuple / secondary key / value /
 primary key."))
 
 (defmacro with-btree-cursor ((var bt) &body body)
-  "Macro which opens a named cursor on a BTree (primary or
-not), evaluates the forms, then closes the cursor."
+  "Open a named cursor on a BTree (primary or not), evaluate BODY, then
+close the cursor."
   (declare (inline make-cursor))
   `(let (,var)
      (declare (dynamic-extent ,var))
@@ -381,7 +383,7 @@ not), evaluates the forms, then closes the cursor."
 
 (defmethod remove-kv (key value (dbt dup-btree))
   "Too bad there isn't a direct way to do this, but with
-   ordered duplicates this should be reasonably efficient"
+ordered duplicates this should be reasonably efficient"
   (let ((sc (get-store dbt)))
     (ensure-transaction (:store sc)
       (with-btree-cursor (cur dbt)
@@ -467,20 +469,20 @@ than by type class (i.e. not serialized lexical values)"
 (defun compare>= (a b)
   (not (compare< a b)))
 
-(defvar *current-cursor* nil
+(defvar *cursor* nil
   "This dynamic variable is referenced only when deleting elements using the
 following function. This allows mapping functions to delete elements as they
 map. This is safe as we don't revisit values during maps.")
 
-(defmacro with-current-cursor ((cur) &body body)
-  `(let ((*current-cursor* ,cur))
-     (declare (special *current-cursor*))
+(defmacro with-cursor ((cur) &body body)
+  `(let ((*cursor* ,cur))
+     (declare (special *cursor*))
      ,@body))
 
 (defun remove-current-kv ()
-  (unless *current-cursor*
+  (unless *cursor*
     (error "Cannot call remove-current-kv outside of a map-btree or map-index function argument"))
-  (cursor-delete *current-cursor*))
+  (cursor-delete *cursor*))
 
 ;; The primary mapping function
 (defgeneric map-btree (fn btree &rest args &key start end value from-end collect &allow-other-keys)
@@ -513,7 +515,7 @@ dynamic value of collect is true and binds variable named cur to the current
 cursor"
   `(with-map-collector (,fn ,collect)
      (with-btree-cursor (,cur ,btree)
-       (with-current-cursor (,cur)
+       (with-cursor (,cur)
          ,@body))))
 
 (defmacro with-cursor-values (expr &body body)
@@ -641,7 +643,7 @@ if dynamic value of collect is true and binds variable named cur to the
 current cursor"
   `(with-map-index-collector (,fn ,collect)
      (with-btree-cursor (,cur ,btree)
-       (with-current-cursor (,cur)
+       (with-cursor (,cur)
          ,@body))))
 
 (defun pset-range-for-descending (cur end)

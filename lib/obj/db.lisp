@@ -509,3 +509,10 @@ immediately following LIST."
   `(loop for ,batch in (group ,list ,size)
          do (with-transaction ,txn-options
               ,@body)))
+
+;;; Iteration
+;; database iteration is a complex topic - for Lisp we follow the idioms built
+;; into the Elephant object database system which includes a CURSOR api.
+
+(defgeneric db-cursor (db &key &allow-other-keys)
+  (:documentation "Return a database cursor."))
