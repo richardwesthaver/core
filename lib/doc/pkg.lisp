@@ -108,7 +108,6 @@
    :file-documentation
    :inline-file-task
    :system-documentation
-   ;; :image-documentation
    :package-documentation
    :symbol-documentation
    :symbol-info

@@ -459,9 +459,7 @@
 
 ;;; Documents
 (defclass search-document (document)
-  ((source :accessor source :initarg :source
-           :documentation "The source object for the document.")
-   (string-contents :initarg :string-contents :accessor string-contents)
+  ((string-contents :initarg :string-contents :accessor string-contents)
    (term-count-table :initform (make-hash-table :test #'equal)
                      :documentation "Contains a mapping of term ->
 amount of times word appears in the document.")

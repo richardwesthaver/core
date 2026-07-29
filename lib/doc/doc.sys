@@ -1,7 +1,7 @@
 ;;; core/lib/doc/doc.sys --- Doc Sytem Definitions
 (defsys :doc
-  "The official documentation system of the core. Contains all modules
-necessary for building complete API reference documents."
+  "The official documentation system of the core. 
+Contains all modules necessary for building complete API reference documents."
   :version "0.1.0"
   :require (:std :organ :parse :obj :rdb :log :syn :vc)
   :components 
@@ -15,7 +15,6 @@ necessary for building complete API reference documents."
    (:file "package")
    (:file "system")
    (:file "project")
-   (:file "core")
    (:file "srv"))
   :provide 
   ((:proto :nlp)
