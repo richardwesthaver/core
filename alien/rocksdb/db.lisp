@@ -94,6 +94,27 @@
   (keylen size-t) 
   (vallen (* size-t)))
 
+(def-with-errptr rocksdb-get-into-buffer boolean
+  (db (* rocksdb))
+  (options (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (keylen size-t) 
+  (buffer (* unsigned-char))
+  (buffer-size size-t)
+  (vallen (* size-t))
+  (found (* unsigned-char)))
+
+(def-with-errptr rocksdb-get-into-buffer-cf boolean
+  (db (* rocksdb))
+  (options (* rocksdb-readoptions))
+  (column-family (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (keylen size-t)
+  (buffer (* unsigned-char))
+  (buffer-size size-t)
+  (vallen (* size-t))
+  (found (* unsigned-char)))
+
 (def-with-errptr rocksdb-get-with-ts c-string
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
@@ -283,6 +304,8 @@
 (defar rocksdb-livefiles-largest-key c-string (lf (* rocksdb-livefiles)) (index int) (size (* size-t)))
 (defar rocksdb-livefiles-entries unsigned-long (lf (* rocksdb-livefiles)) (index int))
 (defar rocksdb-livefiles-deletions unsigned-long (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-smallest-seqno unsigned-long (lf (* rocksdb-livefiles)) (index int))
+(defar rocksdb-livefiles-largest-seqno unsigned-long (lf (* rocksdb-livefiles)) (index int))
 ;; return NULL if prop name is unknown, else return pointer to
 ;; malloc-ed null-term value.
 (defar rocksdb-property-value c-string

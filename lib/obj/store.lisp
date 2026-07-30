@@ -564,7 +564,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
   (get-association-index def sc))
 
 (defmethod cache-instance ((sc store) obj)
-  "Cache a persistent object with the controller."
+  "Cache a stored object with the controller."
   (declare (type store sc))
   (setf (get-cache (oid obj) (instance-cache sc)) obj))
 
@@ -990,8 +990,58 @@ instances with identical functionality"
                         class))
                     (schema-table sc)))))
 
+(defun slot-index-sane-p (sc class slotname &key errorp)
+  (declare (optimize (safety 3))
+           (store sc)
+           ((or class symbol) class)
+           (symbol slotname))
+  (ensure-finalized (etypecase class (class class) (symbol (find-class class))))
+  (flet ((exit (fmt &rest args)
+           (if errorp
+             (apply #'error fmt args)
+             (return-from slot-index-sane-p
+                          (values nil (apply #'format nil fmt args))))))
+    (let* ((*store* sc)
+           (objects<-class-index (remove-if-not (lambda (obj)
+                                                  (slot-boundp obj slotname))
+                                                (get-instances-by-class class)))
+           (objects<-inverted-index (map-inverted-index
+                                      (lambda (key inst)
+                                        (cond
+                                          ((not (slot-exists-p inst slotname))
+                                           (warn "Slot ~S is missing from obj ~S, ignoring." slotname inst)
+                                           inst)
+                                          ((not (slot-boundp inst slotname))
+                                           (exit "Slot ~S is unbound in obj ~S but present in the index with key ~S"
+                                                 slotname inst key))
+                                          ((not (compare-equal key (slot-value inst slotname)))
+                                           (exit "The value ~S of slot ~S in obj ~S disagrees with the index key ~S"
+                                                 (slot-value inst slotname) slotname inst key))
+                                          (t inst)))
+                                      class slotname :collect t))
+           (diff (set-difference objects<-class-index objects<-inverted-index)))
+      (unless (null diff)
+        (exit "Objects are missing from the inverted index ~S for class ~S: ~S" slotname class diff))
+      t)))
+
+(defun slot-indices-sane-p (sc class &rest args)
+  "Check slot index sanity for CLASS or all classes known to SC if
+  CLASS is NIL."
+  (let ((classes (ensure-list (etypecase class
+                                (null (known-classes sc))
+                                (class class)
+                                (symbol (find-class class))))))
+    (loop for class in classes
+          ;do (format t "=== class ~S~%" class)
+          collect (cons (class-name class)
+                        (loop for slotname in (indexed-slot-names class)
+                              for sane-p = (multiple-value-list
+                                             (apply #'slot-index-sane-p sc class slotname args))
+                              ;do (format t "slot ~S~%" slotname)
+                              collect (cons slotname sane-p))))))
+
 (defun map-class (fn class &key collect oids (sc *store*))
-  "Perform a map operation over all instances of class.  Takes a
+  "Perform a map operation over all instances of CLASS. Takes a
    function of one argument, a class instance."
   (flet ((map-fn (cidx pcidx oid)
            (declare (ignore cidx pcidx))
@@ -1283,6 +1333,102 @@ different objects with the same oid."
   (declare (ignore sc current previous recs))
   nil)
 
+;; Main protocol
+
+(defmethod initialize-instance :around ((instance stored-object) &rest initargs 
+                    &key (sc *store*) &allow-other-keys)
+  "Ensure instance creation is inside a transaction, huge (5x) performance impact per object"
+  (declare (ignore initargs))
+  (assert sc nil "You must have an open store controller to create ~A" instance)
+  (ensure-transaction (:store sc)
+    (call-next-method)))
+
+(eval-always
+  (defun compute-bindings (class slots bindings)
+    "Helper function for bind-slot-defs"
+    (loop for (name accessor) in bindings collect
+     `(,name (get-init-slotnames ,class #',accessor ,slots)))))
+
+(defmacro bind-slot-defs (class slots bindings &body body)
+  "Bindings contain name, accessor pairs.  Extract 
+   slot-definitions into variable name using accessor and
+   filter by the list of valid slots"
+  (with-gensyms (classref slotrefs)
+    `(let* ((,classref ,class)
+        (,slotrefs ,slots)
+        ,@(compute-bindings classref slotrefs bindings))
+     ,@body)))
+
+(defmethod shared-initialize :around ((instance stored-object) slot-names &rest initargs &key from-oid &allow-other-keys)
+  "Initializes the stored slots via initargs or forms.
+This seems to be necessary because it is typical for implementations to
+optimize setting the slots via initforms and initargs in such a way that
+slot-value-using-class et al aren't used. We also handle writing any indices
+after the class is fully initialized. Calls the next method for the transient
+slots."
+  (let ((class (class-of instance)))
+    (bind-slot-defs 
+     class slot-names
+     ((transient-slots transient-slot-names)
+      (cached-slots cached-slot-names)
+      (indexed-slots indexed-slot-names)
+      (derived-slots derived-index-slot-names)
+      (association-end-slots association-end-slot-names)
+      (stored-slots stored-slot-names))
+     ;; Slot initialization
+     (let* ((stored-initializable-slots 
+              (union (union stored-slots indexed-slots) association-end-slots))
+            (set-slots (get-init-slotnames class #'set-valued-slot-names slot-names)))
+       ;;      NOTE: backing store for cached slots is only initialized on checkout or txn
+       (cond (from-oid ;; If re-starting, make sure we read the cached values
+                       nil)
+             (t ;; If new instance, initialize all slots
+                (setq transient-slots (union transient-slots cached-slots))
+                (initialize-stored-slots class instance stored-initializable-slots initargs from-oid)))
+       ;; Always initialize transients
+       (apply #'call-next-method instance transient-slots initargs)
+       ;; Initialize set slots after transient initialization
+       (unless from-oid
+         (initialize-set-slots class instance set-slots))
+       (loop for dslotname in derived-slots do
+                (derived-index-updater class instance (find-slot-def-by-name class dslotname)))))))
+
+(defun initialize-stored-slots (class instance stored-slot-inits initargs object-exists)
+  (dolist (slotname stored-slot-inits)
+    (let ((slot-def (find-slot-def-by-name class slotname)))
+      (unless (or (initialize-from-initarg class instance slot-def 
+                       (slot-definition-initargs slot-def) initargs)
+          object-exists
+          (slot-boundp-using-class class instance slot-def))
+    (awhen (slot-definition-initfunction slot-def)
+      (setf (slot-value-using-class class instance slot-def)
+        (funcall it)))))))
+
+(defun initialize-set-slots (class instance set-slots)
+  (declare (ignore class instance))
+  (dolist (slotname set-slots)
+    (declare (ignorable slotname))
+;;    (setf (slot-value-using-class class instance
+;;				  (find-slot-def-by-name class slotname))
+;;	  nil)
+    ))
+
+(defun initialize-from-initarg (class instance slot-def slot-initargs initargs)
+  (loop for slot-initarg in slot-initargs
+     when (member slot-initarg initargs :test #'eq)
+     do
+       (setf (slot-value-using-class class instance slot-def)
+         (getf initargs slot-initarg))
+       (return t)
+     finally (return nil)))
+
+(defun get-init-slotnames (class accessor slot-names)
+  (let ((slotnames (funcall accessor class)))
+    (if (not (eq slot-names t))
+    (intersection slotnames slot-names :test #'equal)
+    slotnames)))
+
+
 (defun warn-about-dropped-slots (op class names)
   (when (and *warn-when-dropping-stored-slots* names)
     (cerror "Drop the slots" 
@@ -1314,6 +1460,7 @@ different objects with the same oid."
       (when (eq (diff-type diff) :rem)
         (warn-about-dropped-slots :rem class
                                   (mapcar #'slot-field-name (cdr diff)))))))
+
 
 ;;; Controller Protocol
 (defgeneric open-store (st &key recover recover-fatal thread &allow-other-keys)
@@ -1464,18 +1611,293 @@ reachable and thus live"
           :home-store (get-store object)
           :guest-store sc))
 
+;;; Indexed slot access
+(defmethod (setf slot-value-using-class)
+    (new-value (class stored-class) (instance stored-object) (slot-def indexed-slot-definition))
+  "Update indices when writing an indexed slot.  Make around method to ensure a single transaction
+   for write + index update"
+  (let ((store (get-store instance)))
+    (ensure-transaction (:store store)
+      (update-slot-index store class instance slot-def new-value)
+      (call-next-method))))
+
+(defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def indexed-slot-definition))
+  "Removes the slot value from the database."
+  (let ((sc (get-store instance))
+    (oid (oid instance)))
+    (ensure-transaction (:store sc)
+      (let* ((idx (get-slot-def-index slot-def sc))
+             (old-value-bound-p (slot-boundp-using-class class instance slot-def))
+             (old-value (when old-value-bound-p
+                          (slot-value-using-class class instance slot-def))))
+    (unless idx
+      (setf idx (ensure-slot-def-index slot-def sc)))
+    (when old-value-bound-p
+      (remove-kv old-value oid idx)))
+      (call-next-method))))
+
+;;;; Derived slot index access
+(defmethod (setf slot-value-using-class)
+    (new-value (class stored-class) (instance stored-object) (slot-def derived-index-slot-definition))
+  "Derived slot values are always set in response to a slot write"
+  (declare (ignore new-value))
+  (error "Cannot write computed (derived) slot ~A in ~A for class ~A; for read/index retrieval only"
+         (slot-definition-name slot-def) instance (class-name class)))
+
+(defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def derived-index-slot-definition))
+  "Unbinding cannot be performed explicitly.  It is effectively 
+   inhibited when the derived fn says 'no'"
+  (warn "Cannot unbind derived slot values for ~A in class ~A" 
+    (slot-definition-name slot-def) (class-name class)))
+
+;;; Cached slot access
+(defsclass stored-cache-object (stored-object)
+  ((pchecked-out :accessor pchecked-out-p :initform nil)
+   (checked-out :accessor checked-out-p :initform nil :transient t))
+  (:documentation "Adds a special value slot to store checkout state"))
+
+(defmethod shared-initialize :around ((instance stored-cache-object) slot-names &key from-oid (make-cached-instance nil make-cached-instance-p) &allow-other-keys)
+  ;; User asked us to start in cached mode?  Otherwise default to not.
+  (when make-cached-instance-p
+    (setf (slot-value instance 'pchecked-out) make-cached-instance
+      (slot-value instance 'checked-out) make-cached-instance))
+  (when (and from-oid (eq (get-cache-style (class-of instance)) :checkout))
+    (unless make-cached-instance-p
+      (setf (slot-value instance 'checked-out) 
+        (slot-value instance 'pchecked-out)))
+    (when (checked-out-p instance)
+      (bind-slot-defs (class-of instance) slot-names
+      ((cached-slots cached-slot-names))
+    (refresh-cached-slots instance cached-slots))))
+  (call-next-method))
+
+(defmethod slot-value-using-class
+    ((class stored-class) (instance stored-object) (slot-def cached-slot-definition))
+  (case (%cache-style class)
+    (:checkout
+     (if (checked-out-p instance)
+     (call-next-method)
+     (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def))))
+    (:txn
+     (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def)))
+    (t 
+     (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def)))))
+
+(defmethod (setf slot-value-using-class)
+    (new-value (class stored-class) (instance stored-object) (slot-def cached-slot-definition))
+  "Always write local slot value; maybe write stored value if no caching or write-through"
+  (case (%cache-style class)
+    (:checkout
+     (if (ignore-errors (checked-out-p instance))
+     (call-next-method)
+     (stored-slot-writer (get-store instance) new-value instance 
+                 (slot-definition-name slot-def))))
+;;	 (error "Cannot write to checkout-style cached objects when not checked out")))
+    (t
+     (stored-slot-writer (get-store instance) new-value instance 
+                 (slot-definition-name slot-def)))))
+
+(defmethod slot-boundp-using-class 
+    ((class stored-class) (instance stored-object) (slot-def cached-slot-definition))
+  "Checks if the slot exists in the database."
+  (case (%cache-style class)
+    (:checkout
+     (if (checked-out-p instance)
+     (call-next-method)
+     (stored-slot-boundp (get-store instance) instance (slot-definition-name slot-def))))
+    (t (stored-slot-boundp (get-store instance) instance (slot-definition-name slot-def)))))
+
+(defmethod slot-makunbound-using-class 
+    ((class stored-class) (instance stored-object) (slot-def cached-slot-definition))
+  "Removes the slot value from the database."
+  (case (%cache-style class)
+    (:checkout
+     (if (checked-out-p instance)
+     (call-next-method)
+     (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def))))
+    (t (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def)))))
+
+;;;; Cache mode and class-level ops
+(defmethod caching-style ((class stored-class))
+  (%cache-style class))
+
+(defmethod (setf caching-style) (style (class stored-class))
+  (case style
+    ((or :checkout :txn)
+     (unless (cached-slot-defs class)
+       (error "Cannot enable caching for classes with no cached slots"))
+     (setf (obj/meta/stored::%cache-style class) style))
+    (:none 
+     (setf (obj/meta/stored::%cache-style class) style))
+    (t (error "Unknown caching mode ~A" style))))
+
+(defmethod cached-class ((class stored-class))
+  (when (cached-slot-defs class) t))
+
+;;;; Cached instance ops
+(defmethod stored-checked-out-p ((object stored-cache-object))
+  (pchecked-out-p object))
+
+(defmethod stored-checkout ((object stored-cache-object))
+  "Set the checkout state and refresh the memory slots"
+  (ensure-transaction ()
+    (unless (eq (%cache-style (class-of object)) :checkout)
+      (error "Class ~A for object ~A is not enabled for checkout.  (mode=~A)"
+         (class-of object) object (%cache-style (class-of object))))
+    (when (pchecked-out-p object)
+      ;; This should be a condition that can fail silently?
+      (error "Object ~A is already checked out" object))
+    (setf (pchecked-out-p object) t) ;; grab write lock, rollback parallel txns
+    ;; THIS IS BAD / READER ON OBJECT BEFORE CHECKOUT GETS STALE DATA
+    ;; CAN WE BYPASS PROTOCOL TO WRITE MEMORY STORAGE DIRECTLY IN REFRESH?
+    (setf (checked-out-p object) t)
+    (refresh-cached-slots object (cached-slot-names (class-of object)))
+    object))
+
+(defmethod stored-sync ((object stored-cache-object))
+  "Synchronize the slots to the database without a checkin"
+  (ensure-transaction ()
+    (assert (pchecked-out-p object))
+    (flush-cached-slots object (cached-slot-names (class-of object)))
+    object))
+
+(defmethod maybe-stored-sync ((instance stored-object))
+  nil)
+
+(defmethod maybe-stored-sync ((instance stored-cache-object))
+  "Synchronize the slots to the database without a checkin"
+  (ensure-transaction ()
+    (when (and (eq (get-cache-style (class-of instance)) :checkout)
+           (checked-out-p instance))
+      (stored-sync instance))))
+
+(defmethod stored-checkout-cancel ((object stored-cache-object))
+  (ensure-transaction ()
+    (assert (pchecked-out-p object))
+    (setf (pchecked-out-p object) nil)
+    (setf (checked-out-p object) nil)))
+
+(defmethod stored-checkin ((object stored-cache-object))
+  "Flush the slot states to the database and release the checkout state.
+   NOTE: Can this operation fail under concurrency if user enforces 
+   single writer - e.g. checkin parallel with access, checkin parallel
+   with attempted checkout?"
+  (let ((checked-out t))
+    (ensure-transaction ()
+      (unless (eq (obj/meta/stored::%cache-style (class-of object)) :checkout)
+        ;; TEST 2026-07-29: 
+        (stored-checkout-cancel object)
+        (error "Cannot checkin if class caching style is ~A. Canceling checkout." 
+               (obj/meta/stored::%cache-style (class-of object))))
+      (when (pchecked-out-p object)
+    (setf (pchecked-out-p object) t) ;; establish a write lock
+    (flush-cached-slots object (cached-slot-names (class-of object)))
+    (setf (pchecked-out-p object) nil)
+    (setf checked-out nil)))
+    (setf (checked-out-p object) checked-out)
+    object))
+
+(defmacro with-stored-checkouts (objects &rest body)
+  "Make sure objects are checked out in the body and are
+   checked back in when the form returns.  This acts as
+   a guard by "
+  (with-gensyms (object objs)
+    `(let ((,objs (list ,@objects)))
+       (unwind-protect 
+        (progn
+          (dolist (,object ,objs)
+        (stored-checkout ,object))
+          ,@body)
+     (dolist (,object ,objs)
+       (stored-checkin ,object))))))
+
+;;;; Cached slot value manipulation utils
+(defun refresh-cached-slots (instance slots)
+  "Assumes checkout mode is t so side effects are only
+   in memory"
+  (assert (pchecked-out-p instance))
+  (assert (eq (%cache-style (class-of instance)) :checkout))
+  (let ((sc (get-store instance)))
+    (dolist (slot slots)
+      (if (stored-slot-boundp sc instance slot)
+      (setf (slot-value instance slot)
+        (stored-slot-reader sc instance slot))
+      (slot-makunbound instance slot)))))
+
+(defun flush-cached-slots (instance slots)
+  "Assumes object is checked out"
+  (assert (pchecked-out-p instance))
+  (let ((sc (get-store instance)))
+    (dolist (slot slots)
+      (if (slot-boundp instance slot)
+      (stored-slot-writer sc (slot-value instance slot) instance slot)
+      (stored-slot-makunbound sc instance slot)))))
+
+;;; Set API
+(defgeneric get-instances-by-class (stored-class)
+  (:documentation "Retrieve all instances from the class index as a list of objects."))
+
+(defgeneric get-instance-by-value (stored-class slot-name value)
+  (:documentation "Retrieve instances from a slot index by value. 
+Return only the first instance if there are duplicates."))
+
+(defgeneric get-instances-by-value (stored-class slot-name value)
+  (:documentation "Return a list of all instances where the slot value is equal to value."))
+
+(defgeneric get-instances-by-range (stored-class slot-name start end)
+  (:documentation "Returns a list of all instances that match values between start and end.
+An argument of nil to start or end indicates, respectively, the lowest or
+highest value in the index"))
+
+(defun identity2 (k v)
+  (declare (ignore k))
+  v)
+
+(defun identity3 (k v pk)
+  (declare (ignore k pk))
+  v)
+
+(defmethod get-instances-by-class ((class symbol))
+  (get-instances-by-class (find-class class)))
+
+(defmethod get-instances-by-class ((class stored-class))
+  (map-class #'identity class :collect t))
+
+(defmethod get-instances-by-value ((class symbol) slot-name value)
+  (get-instances-by-value (find-class class) slot-name value))
+
+(defmethod get-instances-by-value ((class stored-class) slot-name value)
+  (declare (type (or string symbol) slot-name))
+  (map-inverted-index #'identity2 class slot-name :value value :collect t))
+
+(defmethod get-instance-by-value ((class stored-class) slot-name value)
+  (awhen (find-inverted-index class slot-name)
+    (multiple-value-bind (oid found?)
+    (get-value value it)
+      (when found?
+    (store-recreate-instance (get-store it) oid)))))
+
+(defmethod get-instance-by-value ((class symbol) slot-name value)
+ (get-instance-by-value (find-class class) slot-name value))
+
+(defmethod get-instances-by-range ((class symbol) slot-name start end)
+  (get-instances-by-range (find-class class) slot-name start end))
+
+(defmethod get-instances-by-range ((class stored-class) idx-name start end)
+  (declare (type (or number symbol string null) start end)
+       (type symbol idx-name))
+  (map-inverted-index #'identity2 class idx-name :start start :end end :collect t))
+
 ;;; Macros
+#+nil
 (defmacro defstore (name super spec &rest options)
   "Define a new STORE class.")
 
-;; TODO 2024-12-05: do we want to pass DB by value here (in the environment of
-;; WITH-STORE) or are we better off binding DATABASE instances as
-;; *STORE-BACKEND*?
+#+nil
 (defmacro with-store ((sym &rest initargs &key &allow-other-keys) &body body)
   "Similar to WITH-DB but for STORE objects instead of DATABASEs. 
 
-INITARGS may contain any number keys that have been registered with the
-current *STORE-BACKEND*.")
+INITARGS are passed to OPEN-STORE.")
 
 ;;; HACK: re-implementation of SB-MOP internals (compute-slots)
 ;; this will require benchmarking to determine if we need to lock this behind

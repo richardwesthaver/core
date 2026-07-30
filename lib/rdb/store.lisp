@@ -20,22 +20,35 @@
 ;; individual RDB-BTREE. the implementation details are otherwise hidden from
 ;; the database and handled in Lisp.
 
-;; TODO: seqno? pull from options
+;; The sequence number, which is an arbitrarily increasing integer is used as
+;; a state indicator on opening a store and is pulled from the RocksDB
+;; livefiles object. See `rocksdb::rocksdb-livefiles-largest-seqno'. 
 
 ;; Naturally to support Elephant's transaction abstraction we leverage a
-;; TransactionDB and generate transactions via ffi as needed.
+;; TransactionDB and generate transactions via ffi as needed. The transaction
+;; protocol is not specific to stores though - be careful of overlapping with
+;; a plain DB transaction.
 
 ;;; Code:
 (in-package :rdb)
 
-;; what should the underlying datastructure be? transaction-db wbwi or cf?
+;; (:rdb "/tmp/rdb-store-test")
+(defun rdb-store-spec-p (spec)
+  (and (eq (first spec) :rdb)
+       (typecase (second spec)
+         (pathname t)
+         (string t)
+         (t nil))))
+
+;; BTrees are Column Families
 (defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
 (defclass rdb-store (store rdb-database)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
-   (logger :initform (default-logger) :initarg :logger :accessor logger)
+   ;; FIX 2026-07-28: we should use something like 'mix' when we need a logger
+   ;; (logger :initform (default-logger) :initarg :logger :accessor logger)
    (metadata :accessor store-metadata)
    (btrees :accessor store-btrees)
    (dup-btrees :accessor store-dup-btrees)

@@ -129,8 +129,12 @@ protocol.")
    :indexed-slot-defs
    :stored-slot-definition
    :indexed-slot-definition
+   :derived-index-slot-definition
+   :derived-index-effective-slot-definition
+   :derived-index-direct-slot-definition
    :derived-slot-triggers
    :derived-fn
+   :derived-index-slot-names
    :get-slot-def-index
    :add-slot-def-index
    :clear-slot-def-index
@@ -139,6 +143,7 @@ protocol.")
    :get-store-schemas
    :get-class-indexing
    :get-cache-style
+   :cached-slot-defs
    :find-slot-defs-by-type
    :migrate-class-index-p
    :class-indexing-enabled-p
@@ -183,6 +188,7 @@ protocol.")
    :get-association-slot-index
    :add-association-slot-index
    :remove-association-slot-index
+   :set-valued-slot-names
    :set-valued-slot-definition
    :set-valued-direct-slot-definition
    :set-valued-effective-slot-definition))
@@ -865,7 +871,12 @@ protocol.")
    #:dump-btree
    #:print-btree-entry
    #:with-btree-cursor
-   #:make-dup-btree))
+   #:make-dup-btree
+   #:*cursor*
+   #:compare-equal
+   #:compare>=
+   #:compare<
+   #:compare<=))
 
 (defpkg :obj/secret
   (:nicknames :secret)
@@ -936,6 +947,7 @@ protocol.")
 (defpkg :obj/store
   (:documentation "A generic object database protocol based on the STORED metaobject protocol.")
   (:nicknames :store)
+  (:import-from :stored :%cache-style)
   (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor :cache)
   (:export
    #:store
