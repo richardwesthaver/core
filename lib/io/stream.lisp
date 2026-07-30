@@ -130,17 +130,12 @@ stream will behave as if no more input is available."
          (std:remove-from-plist args :external-format)))
 
 ;;; In-memory streams
-
-;; REVIEW 2026-04-12: octet-streams? already in IRONCLAD - could impl with
-;; ring-buffer and add as fast-path here.
-
 (defclass in-memory-stream ()
   ((transformer 
     :initarg :transformer
     :accessor transformer
-    :documentation "A function used to transform the
-written/read octet to the value stored/retrieved in/from the
-underlying vector."))
+    :documentation "A function used to transform the written/read octet to the value
+stored/retrieved in/from the underlying vector."))
   (:documentation "An IN-MEMORY-STREAM is a binary stream that reads
 octets from or writes octets to a sequence in RAM."))
 
@@ -759,3 +754,15 @@ functions and via PEEKED."))
   (:default-initargs :open-p nil)
   (:documentation
    "A stream backed by a foreign (* unsigned-char)."))
+
+;;; Buffer Streams
+
+;; low-level binary serialization using an alien buffer. Based on the
+;; SYS::IO-VECTOR class.
+
+(defclass buffer-stream (io-stream io-vec)
+  ((size :initform 0 :initarg :size :accessor size)
+   (index :initform 0 :initarg :position :accessor idx))
+  (:metaclass io-vector-class))
+
+(define-io buffer)

@@ -51,8 +51,7 @@
            #:endianness #:+endianness+ #:find-swap-byte-function))
 
 (defpkg :io/stream
-  (:use :cl :io/proto :sb-gray :std/meta)
-  (:import-from :std :deferror :eval-always :stream-of :wrapped-stream)
+  (:use :std-lisp :io/proto :sb-gray :std/meta :sys)
   (:export :io-stream-error :io-stream :make-bound-stream
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked
