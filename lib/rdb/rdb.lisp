@@ -626,26 +626,38 @@ internal sap slots are initialized."
 (defaccessor sap ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
 (defaccessor db-opts ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
 
+(defmethod iter ((self rdb-transaction-db) &key cf (opts (rocksdb-readoptions-create)))
+  (let ((col (etypecase cf
+               (rdb-cf (rdb-cf-sap cf))
+               ;; (string (rdb-cf-sap (find-column cf self)))
+               (null nil)
+               (alien cf))))
+    (unless-null-db () self
+      (make-rdb-iter 
+       :sap (if col
+                (transactiondb-create-iter-cf-raw sap col opts)
+                (transactiondb-create-iter-raw sap opts))))))
+
 (defstruct rdb-optimistic-transaction-db 
   (sap nil :type (or null (alien (* rocksdb-optimistictransactiondb)))))
 
 (defaccessor sap ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
 
-(defmethod open-transaction-db ((self rdb) &key path db-opts opts optimistic)
-  (let ((db-opts (or db-opts (default-rocksdb-options)))
-        (opts (or opts (rocksdb-transactiondb-options-create))))
-  (if optimistic
-      (make-rdb-optimistic-transaction-db 
-       :sap (open-optimistictransactiondb-raw db-opts path))
-      (make-rdb-transaction-db
-       :sap (open-transactiondb-raw db-opts opts path)
-       :opts opts))))
+(defmethod make-db ((engine (eql :rocksdb-transaction)) &key path db-opts opts optimistic)
+  (let ((db-opts (or db-opts (default-rocksdb-options))))
+    (if optimistic
+        (make-rdb-optimistic-transaction-db 
+         :sap (open-optimistictransactiondb-raw db-opts path))
+        (let ((opts (or opts (rocksdb-transactiondb-options-create))))
+          (make-rdb-transaction-db
+           :sap (open-transactiondb-raw db-opts opts path)
+           :opts opts)))))
 
-(defmethod close-transaction-db ((self rdb-transaction-db))
+(defmethod close-db ((self rdb-transaction-db) &key)
   (when-let ((sap (sap self)))
     (rocksdb-transactiondb-close sap)))
 
-(defmethod close-transaction-db ((self rdb-optimistic-transaction-db))
+(defmethod close-db ((self rdb-optimistic-transaction-db) &key)
   (when-let ((sap (sap self)))
     (rocksdb-optimistictransactiondb-close sap)))
 
@@ -724,6 +736,18 @@ internal sap slots are initialized."
 
 (defun rdb-transaction-wbwi (self)
   (rocksdb-transaction-get-writebach-wi (sap self)))
+
+(defmethod iter ((self rdb-transaction) &key cf (opts (rocksdb-readoptions-create)))
+  (let ((col (etypecase cf
+               (rdb-cf (rdb-cf-sap cf))
+               ;; (string (rdb-cf-sap (find-column cf self)))
+               (null nil)
+               (alien cf))))
+    (unless-null-db () self
+      (make-rdb-iter 
+       :sap (if col
+                (transaction-create-iter-cf-raw sap col opts)
+                (transaction-create-iter-raw sap opts))))))
 
 ;;; Secondary DB
 (defstruct rdb-secondary-db 

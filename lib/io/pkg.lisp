@@ -40,7 +40,8 @@
    :output-available-p :input-available-p
    :fill-buffer :header
    :header-type :header-length
-   :offset :snapshot))
+   :offset :snapshot
+   :buffer))
 
 (defpkg :io/swap-bytes
   (:use :cl :sb-c :sb-assem)
@@ -67,7 +68,7 @@
    :dec-fill-buffer :needs-to-fill-buffer-p))
 
 (defpkg :io/static
-  (:use :cl :std :sb-alien :io/stream)
+  (:use :cl :std :sb-alien :io/stream :io/proto)
   (:shadow :constantp)
   (:export
    ;; Constructors and destructors

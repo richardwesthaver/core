@@ -756,13 +756,14 @@ functions and via PEEKED."))
    "A stream backed by a foreign (* unsigned-char)."))
 
 ;;; Buffer Streams
-
+;; TODO 2026-07-30: 
 ;; low-level binary serialization using an alien buffer. Based on the
 ;; SYS::IO-VECTOR class.
 
+#+todo
 (defclass buffer-stream (io-stream io-vec)
   ((size :initform 0 :initarg :size :accessor size)
    (index :initform 0 :initarg :position :accessor idx))
   (:metaclass io-vector-class))
-
+#+nil
 (define-io buffer)

@@ -39,6 +39,7 @@
 (define-opaque rocksdb-ratelimiter)
 (define-opaque rocksdb-perfcontext)
 (define-opaque rocksdb-pinnableslice)
+(define-opaque rocksdb-pinnable-handle)
 (define-opaque rocksdb-transactiondb)
 (define-opaque rocksdb-optimistictransactiondb)
 (define-opaque rocksdb-transaction)

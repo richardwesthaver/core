@@ -544,8 +544,11 @@ extractor."
      db))
   (((engine (eql :rdb-backup)) &key path (db *db*))
    (setf (db-backup db) (backup-db db :path path)))
-  (((engine (eql :rdb-transaction)) &key path opts (db *db*))
-   (setf (transaction-db db) (open-transaction-db db :opts opts :path path)))
+  (((engine (eql :rdb-transaction)) &rest initargs &key columns &allow-other-keys)
+   (remf initargs :columns)
+   (let ((db (make-instance 'rdb-database :db (apply 'make-db :rocksdb-transaction initargs))))
+     (when columns (setf (columns db) (coerce (mapcar (lambda (x) (cf x)) columns) 'vector)))
+     db))
   (((engine (eql :rdb-secondary)) &key path opts (db *db*))
    (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
 
@@ -555,9 +558,6 @@ extractor."
                collect (cf-to-field (cf c)))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
-
-(defmethod open-transaction-db ((self rdb-database) &key path (opts (rocksdb-transactiondb-options-create)) optimistic)
-  (setf (transaction-db self) (open-transaction-db (db self) :opts opts :path path :optimistic optimistic)))
 
 (defmethod open-backup-engine ((self rdb-database) &key path) 
   (setf (db-backup self) (open-backup-engine (db self) :path path)))
@@ -588,13 +588,8 @@ extractor."
     (unless (null backup)
       (setf backup (close-backup-engine backup)))))
 
-(defmethod close-transaction-db ((self rdb-database))
-  (when-let ((sap (transaction-db self)))
-    (close-transaction-db sap)))
-
 (defmethod shutdown-db ((self rdb-database) &key) 
   (close-backup-engine self)
-  (close-transaction-db self)
   (close-columns self)
   (shutdown-db (db self)))
 
@@ -641,19 +636,15 @@ only get their type slots updated on non-nil values."
 ;;; Transactions
 (defmethod make-transaction ((self rdb-database)
                              &key (write-opts (rocksdb-writeoptions-create))
-                                  path
                                   (name (name self))
                                   txn
-                                  optimistic
-                                  (opts (rocksdb-transaction-options-create))
-                                  (db-opts (rocksdb-transactiondb-options-create)))
+                                  (opts (rocksdb-transaction-options-create)))
   (with-errptr e
-    (let ((txn-db (or (transaction-db self)
-                      (setf (transaction-db self)
-                            (open-transaction-db self :opts db-opts :path path :optimistic optimistic)))))
-      (let ((obj (make-transaction txn-db :write-opts write-opts 
-                                          :opts opts 
-                                          :txn txn)))
+    (let ((txn-db (db self)))
+      (let ((obj (make-transaction txn-db 
+                                   :write-opts write-opts 
+                                   :opts opts 
+                                   :txn txn)))
         (when name (setf (name obj) name))
         obj))))
 

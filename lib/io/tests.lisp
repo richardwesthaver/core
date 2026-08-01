@@ -82,7 +82,20 @@
 (deftest static-vector ()
   (with-static-vector (v 4 :initial-element 0)
     (isequalp #(0 0 0 0) v))
-  (isequalp #(1 2 3 4) (make-static-vector 4 :initial-contents '(1 2 3 4))))
+  (isequalp #(1 2 3 4) (make-static-vector 4 :initial-contents '(1 2 3 4)))
+  (with-static-stream (s)
+    (dotimes (i 20)
+      (is= (1+ (write-byte i s))
+           (offset s)))
+    (let ((k (symbol-name (gensym "static-stream-test"))))
+      (write-sequence (string-to-octets k) s)
+      ;; todo: (read-sequence)
+      (isequalp (octets-to-string 
+                 (buffer s) 
+                 :start (offset s) 
+                 :end (+ (offset s) (length k))) 
+                k))
+    (buffer s)))
 
 ;;; Smart Buffers
 (deftest smart-buffer ()
@@ -107,7 +120,7 @@
   (let ((disk (make-instance 'btrfs-disk)))
     (issubclass 'disk (class-of disk)))
   ;; will return NIL on non-btrfs file systems
-  (islist (btrfs-subvolumes "/tmp")))
+  (islist (btrfs-subvolumes "/")))
 
 ;;; KBD
 (deftest keys ()

@@ -6,7 +6,6 @@
 (in-package :io/proto)
 
 (deferror io-error () () (:reporter t))
-
 (defgeneric input (self))
 (defgeneric (setf input) (new self))
 (defgeneric input-size (self))
@@ -30,3 +29,5 @@
 (defgeneric header-length (self))
 (defgeneric offset (self))
 (defgeneric snapshot (self &rest args &key &allow-other-keys))
+(defgeneric buffer (self))
+(defgeneric (setf buffer) (new self))

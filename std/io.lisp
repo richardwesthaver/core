@@ -60,6 +60,13 @@ relying on a designated format and generating an object in the method body."))
 
 (defglobal *io-table* (make-hash-table))
 
+(definline %io-type-name (type)
+  (if (consp type)
+      (if #1=(and (oddp (length type)) (getf (cdr type) :alias))
+          #1#
+          (format nil "~@[~{~A-~^~A~}~]" type))
+      type))
+
 (defmacro define-io (name &body body)
   "Define a set of readers and writers of category NAME.
 
@@ -76,19 +83,15 @@ type in the cdr."
     (with-gensyms (readers writers)
         `(progn
            (defmacro ,(symbolicate 'read- name) (ty from)
-             `(,(intern (string (symbolicate 'read- ',name '- ty)) ,*package*) ,from))
+             `(,(intern (string (symbolicate 'read- ,(%io-type-name name) '- ty)) ,*package*) ,from))
            (defmacro ,(symbolicate 'write- name) (ty obj to)
-             `(,(intern (string (symbolicate 'write- ',name '- ty)) ,*package*) ,to ,obj))
+             `(,(intern (string (symbolicate 'write- ,(%io-type-name name) '- ty)) ,*package*) ,to ,obj))
            (let* ((,readers)
                   (,writers))
              ,@(loop for form in body
                      append 
                         (let* ((type (car form))
-                               (type-name (if (consp type)
-                                              (if #1=(and (oddp (length type)) (getf (cdr type) :alias))
-                                                  #1#
-                                                  (format nil "~@[~{~A-~^~A~}~]" type))
-                                              type))
+                               (type-name (%io-type-name type))
                                (rfn (symbolicate 'read- name '- type-name))
                                (wfn (symbolicate 'write- name '- type-name)))
                           `(,@(when-let ((rf (cdr (assoc :read (cdr form)))))

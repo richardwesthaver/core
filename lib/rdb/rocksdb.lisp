@@ -237,6 +237,18 @@ to initialize the instance with custom configuration."
 (defun create-cf-iter-raw (db cf &optional (opt (rocksdb-readoptions-create)))
   (rocksdb-create-iterator-cf db opt cf))
 
+(defun transaction-create-iter-raw (txn &optional (opts (rocksdb-readoptions-create)))
+  (rocksdb-transaction-create-iterator txn opts))
+
+(defun transaction-create-iter-cf-raw (txn cf &optional (opts (rocksdb-readoptions-create)))
+  (rocksdb-transaction-create-iterator-cf txn opts cf))
+
+(defun transactiondb-create-iter-raw (txndb &optional (opts (rocksdb-readoptions-create)))
+  (rocksdb-transactiondb-create-iterator txndb opts))
+
+(defun transactiondb-create-iter-cf-raw (txndb cf &optional (opts (rocksdb-readoptions-create)))
+  (rocksdb-transactiondb-create-iterator-cf txndb opts cf))
+
 (defun destroy-iter-raw (iter)
   (rocksdb-iter-destroy iter))
 

@@ -171,8 +171,8 @@
 
 (defar rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen (* size-t)))
 
-;; NOTE 2023-12-19: only the VOID-returning functions in the multi-
-;; family perform parallel IO:
+;; NOTE 2023-12-19: only the VOID-returning functions in the multi-* family
+;; perform parallel IO:
 ;; https://github.com/facebook/rocksdb/wiki/MultiGet-Performance
 (defar rocksdb-multi-get void
   (db (* rocksdb))
@@ -1075,7 +1075,20 @@
   (key (* unsigned-char))
   (keylen size-t))
 
+(def-with-errptr rocksdb-get-pinned-v2 (* rocksdb-pinnable-handle)
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
+  (keylen size-t))
+
 (def-with-errptr rocksdb-get-pinned-cf (* rocksdb-pinnableslice)
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf-handle (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (keylen size-t))
+
+(def-with-errptr rocksdb-get-pinned-cf-v2 (* rocksdb-pinnable-handle)
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf-handle (* rocksdb-column-family-handle))
@@ -1086,6 +1099,12 @@
 
 (defar rocksdb-pinnableslice-value (* unsigned-char) 
   (ty (* rocksdb-pinnableslice))
+  (vlen (* size-t)))
+
+(defar rocksdb-pinnable-handle-destroy void (v (* rocksdb-pinnable-handle)))
+
+(defar rocksdb-pinnable-handle-get-value (* unsigned-char)
+  (ty (* rocksdb-pinnable-handle))
   (vlen (* size-t)))
 
 ;;; Memory Consumers

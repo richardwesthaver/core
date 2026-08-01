@@ -371,14 +371,15 @@ within its dynamic extent. The vector is freed upon exit."
   (declare (ignore char))
   (decf (offset stream)))
 
-(defmacro with-static-stream ((var &rest args
-                                   &key (element-type ''(unsigned-byte 8))
-                                        (size *default-static-stream-size*)
-                                        initial-contents
-                                        initial-element)
+(defmacro with-static-stream ((var 
+                               &rest args
+                               &key (element-type ''(unsigned-byte 8))
+                                    (size *default-static-stream-size*)
+                                    initial-contents
+                                    initial-element)
                               &body body &environment env)
-  "Bind VAR to a static stream with an internal static vector buffer and execute BODY
-within its dynamic extent. The static vector is freed upon exit."
+  "Bind VAR to a static stream with an internal static vector buffer and execute
+BODY within its dynamic extent. The static vector is freed upon exit."
   (declare (ignorable element-type initial-contents initial-element))
   (multiple-value-bind (real-element-type size)
         (canonicalize-args env element-type size)
@@ -394,11 +395,12 @@ within its dynamic extent. The static vector is freed upon exit."
              (unwind-protect
                   (sb-sys:with-local-interrupts ,@body)))))))
 
-(defmacro with-static-streams (((var &rest args) &rest more-clauses)
+(defmacro with-static-streams ((clause &rest more-clauses)
                                &body body)
   "Allocate multiple static streams at once."
-  `(with-static-stream (,var ,@args)
-     ,@(if more-clauses
-           `((with-static-streams ,more-clauses
-               ,@body))
-           body)))
+  (destructuring-bind (var &rest args) (ensure-list clause)
+    `(with-static-stream (,var ,@args)
+       ,@(if more-clauses
+             `((with-static-streams ,more-clauses
+                 ,@body))
+             body))))
