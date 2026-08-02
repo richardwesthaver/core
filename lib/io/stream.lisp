@@ -149,11 +149,11 @@ reads octets from a sequence in RAM."))
   (:documentation "An IN-MEMORY-OUTPUT-STREAM is a binary stream that
 writes octets to a sequence in RAM."))
 
-(defclass buffered-stream ()
+(defclass buffered-stream (io-stream)
   ((buffer 
     :initarg :buffer
     :accessor buffer
-    :documentation "The underlying stream buffer.")))
+    :documentation "The underlying buffer of this stream.")))
 
 (defclass buffered-input-stream (buffered-stream in-memory-input-stream)
   ()

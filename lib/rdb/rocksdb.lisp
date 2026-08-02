@@ -622,5 +622,5 @@ transaction-db."
 
 (defun db-get-key-buffered (db kbuf vbuf &key (transaction (txn-default *transaction*)))
   (declare (buffer-stream kbuf vbuf)
-           ((alien (* t)) db transaction))
+           ((alien (* t)) db transaction)))
 
