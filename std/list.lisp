@@ -137,6 +137,27 @@ the result of calling DELETE with ITEM, place, and the KEYWORD-ARGUMENTS.")
                             (circularp elt (cons object seen))))))))))
     (circularp object nil)))
 
+(defmacro do-subsets ((subset subset-size list) &body body)
+  "Loop over subsets of LIST.
+SUBSET is a symbol bound in the loop form and SUBSET-SIZE is passed to
+`subsets'."
+  `(loop for ,subset in (subsets ,subset-size ,list) do
+    ,@body))
+
+(defun subsets (size list)
+  "Generate subsets of length SIZE from LIST. 
+The last subset has the remaining elements if size does not represent an equal
+division."
+  (let ((subsets (cons nil nil)))
+    (loop for elt in list
+      for i from 0 do
+       (when (and (= 0 (mod i size)) (car subsets))
+     (setf (car subsets) (nreverse (car subsets)))
+     (push nil subsets))
+       (push elt (car subsets)))
+    (setf (car subsets) (nreverse (car subsets)))
+    (nreverse subsets)))
+
 ;;; On Lisp
 (declaim (inline group))
 (defun group (source n)

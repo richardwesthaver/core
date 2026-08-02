@@ -102,7 +102,7 @@
   (buffer (* unsigned-char))
   (buffer-size size-t)
   (vallen (* size-t))
-  (found (* unsigned-char)))
+  (found (* boolean)))
 
 (def-with-errptr rocksdb-get-into-buffer-cf boolean
   (db (* rocksdb))
@@ -113,7 +113,7 @@
   (buffer (* unsigned-char))
   (buffer-size size-t)
   (vallen (* size-t))
-  (found (* unsigned-char)))
+  (found (* boolean)))
 
 (def-with-errptr rocksdb-get-with-ts c-string
   (db (* rocksdb))
@@ -240,7 +240,7 @@
   (val-len (* size-t))
   (timestamp c-string)
   (timestamp-len size-t)
-  (value-found (* unsigned-char)))
+  (value-found (* boolean)))
 
 (defar rocksdb-key-may-exist-cf unsigned-char
   (db (* rocksdb))
@@ -252,7 +252,7 @@
   (val-len (* size-t))
   (timestamp c-string)
   (timestamp-len size-t)
-  (value-found (* unsigned-char)))
+  (value-found (* boolean)))
 
 (defar rocksdb-cache-create-lru (* rocksdb-cache) (capacity size-t))
 

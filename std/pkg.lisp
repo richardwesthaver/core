@@ -101,6 +101,8 @@
    :ziprm
    :pairs :pair
    :nconsc
+   :subsets
+   :do-subsets
    :cart :mapcart
    :cart-case :cart-ecase
    :cart-typecase :cart-etypecase

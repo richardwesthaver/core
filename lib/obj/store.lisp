@@ -39,6 +39,10 @@ Note that the new class definition will take place even if you abort the
 continue-able error; only the removal of the slots in the database is
 prevented. You can access them again if you redefine your class once more.")
 
+(defparameter *return-null-on-missing-instance* t
+  "During instance recreation, references to missing instances
+simply return null instead of signaling an error.")
+
 (defvar *store-spec* nil)
 (defvar *store-lock* (make-mutex :name "STORE"))
 
@@ -165,9 +169,7 @@ equal comparison"))
     (remove-association-end class instance slot-def nil)
     (call-next-method))) ;; remove storage
 
-;; =========================
 ;; Handling reads
-;; =========================
 (defun type-check-association (instance slot-def other-instance)
   (when (null other-instance)
     (return-from type-check-association t))
@@ -198,9 +200,7 @@ equal comparison"))
       (declare (dynamic-extent (function map-obj)))
       (map-btree #'map-obj index :value (oid instance) :collect t))))
 
-;; ==========================
 ;;  Handling updates
-;; ==========================
 (defun update-association-end (class instance slot-def target)
   "Get the association index and add the target object as a key that
    refers back to this instance so we can get the set of referrers to target"
@@ -471,8 +471,8 @@ behavior.")
     "This is another root for class indexing that is also a data store specific
 stored btree instance with a unique OID that persists between sessions. No
 cache is needed because we cache in the class slots.")
-   (serializer :accessor serializer :initform nil)
-   (deserializer :accessor deserializer :initform nil))
+   (ser :accessor ser :initform nil)
+   (de :accessor de :initform nil))
   (:documentation "Base class for all STOREs. The role of a STORE is similar to an ORM in the
 sense that it supports querying and modification of persistent CLOS objects
 via database access. A STORE maintains a collection of tables and a btree. It
@@ -544,7 +544,7 @@ DEFSCLASS for the available class-specific options in the generic interface."))
          (values (find-class (schema-class-name schema)) schema))))
 
 (defmethod store-recreate-instance ((st store) oid &optional classname)
-  "Called by the deserializer to return an instance"
+  "Method called by the deserializer to return an instance."
   (handler-case 
       (progn 
         ;; Quick test since only the GC deletes object references
@@ -556,7 +556,8 @@ DEFSCLASS for the available class-specific options in the generic interface."))
                (multiple-value-bind (class schema) (get-instance-class st oid classname)
                  (recreate-instance-using-class class :oid oid :store st :schema schema)))))
     (missing-stored-instance (e)
-      (signal e))))
+      (unless *return-null-on-missing-instance*
+        (signal e)))))
 
 (defmethod get-slot-def-index ((def association-effective-slot-definition) sc)
   "Since endpoints of an association implement an index we should be able to perform
@@ -657,6 +658,16 @@ instances with identical functionality"
 (defmethod drop-instance ((inst stored-object))
   (drop-instance-slots inst)
   (call-next-method))
+
+(defun drop-instances (instances &key (store *store*) (txn-size 500))
+  "Removes a list of stored objects from all class indices and unbinds any
+stored slot values associated with those instances."
+  (declare (optimize (speed 1) (debug 3) (safety 3)))
+  (awhen (ensure-list instances)
+    (assert (consp it))
+    (do-subsets (subset txn-size it)
+      (ensure-transaction (:store store)
+        (mapc #'drop-instance subset)))))
 
 (defmethod drop-instance ((inst stored))
   (let ((sc (get-store inst)))
@@ -1463,20 +1474,18 @@ slots."
 
 
 ;;; Controller Protocol
-(defgeneric open-store (st &key recover recover-fatal thread &allow-other-keys)
-  (:documentation "Opens the underlying environment and all the necessary
-database tables. Different data stores may use different keys so all methods
-should &allow-other-keys. There are three standard keywords: :recover,
-:recover-fatal and :thread. Recover means that recovery should be checked for
-or performed on startup. Recover fatal means a full rebuild from log files is
-requested. Thread merely indicates to the data store that it is a threaded
-application and any steps that need to be taken (for example transaction
-implementation) are taken. :thread is usually true."))
+(defgeneric open-store (st &key recover recover-fatal &allow-other-keys)
+  (:documentation "Open the store and all necessary database tables.
+Different data stores may use different keys so all methods should
+&allow-other-keys. The only standard keyword is RECOVER which means that
+recovery should be checked for or performed on startup. When the value is
+`:fatal' full rebuild from log files is requested."))
 
 (defgeneric close-store (st)
-  (:documentation "Close the db handles and environment. Should be in a state where lisp could be
-shut down without causing an inconsistent state in the db. Also, the object
-could be used by open-store to reopen the database."))
+  (:documentation "Close the store and underlying database tables.
+Should be in a state where lisp could be shut down without causing an
+inconsistent state in the db. Also, the object could be used by open-store to
+reopen the database."))
 
 (defgeneric optimize-layout (st &key &allow-other-keys)
   (:documentation "If supported, speed up the index and allocation by freeing up any available
@@ -1484,14 +1493,11 @@ storage and return it to the free list. See the methods of data stores to
 determine what options are valid. Supported both on stores (all btrees and
 stored slots) and specific btrees."))
 
-
 ;;; Controller User API
 
 ;; start stop
 
-;; (defun close-all-stores ()
-;;  (loop for pair in *stores*
-;;       do (close-store (cdr pair))))
+;; (defun close-all-stores () (maphash-values #'close-store *store-table*))
 
 ;; (pushnew 'close-all-stores sb-ext:*exit-hooks*)
 

@@ -757,13 +757,26 @@ functions and via PEEKED."))
 
 ;;; Buffer Streams
 ;; TODO 2026-07-30: 
-;; low-level binary serialization using an alien buffer. Based on the
+
+;; low-level binary deserialization using an alien buffer. Based on the
 ;; SYS::IO-VECTOR class.
 
-#+todo
-(defclass buffer-stream (io-stream io-vec)
+;; Note that the LENGTH slot is static and refers to the length of the alien
+;; buffer on initialization. This is the total available space. The SIZE slot
+;; refers to the total consumed elements in the buffer.
+
+;; This class wins in situations where memory is allocated primarily by
+;; foreign libraries instead of by the Lisp process - for example by a DB get
+;; function called in a loop. The BUFFER-STREAM class maintains a built-in
+;; cache of pre-allocated foreign buffers for us to pull from. If allocation
+;; is Lisp-driven consider STATIC-STREAM instead.
+
+;; This class is also better-suited for extension as it is not dependent on
+;; the implementation-specific representation of Lisp Arrays.
+(defclass buffer-stream (buffered-stream)
   ((size :initform 0 :initarg :size :accessor size)
-   (index :initform 0 :initarg :position :accessor idx))
+   (offset :initform 0 :initarg :offset :accessor offset))
   (:metaclass io-vector-class))
+
 #+nil
 (define-io buffer)

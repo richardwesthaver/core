@@ -1,4 +1,4 @@
-;;; rdb/low.lisp --- Intermediate API to ROCKSDB aliens
+;;; rdb/rocksdb.lisp --- Intermediate API to ROCKSDB aliens
 
 ;;; Code:
 (in-package :rdb)
@@ -581,3 +581,46 @@ transaction-db."
      cf
      %key %klen
      %val %vlen)))
+
+;;; zero-copy
+(defun get-kv-pinned-raw (db key &optional (opt (rocksdb-readoptions-create)))
+  "DB get using the v2 zero-copy API."
+  (with-kv-raw (db key e :error get-kv-error)
+    (rocksdb-get-pinned-v2 db opt %key %klen e)))
+
+(defun get-kv-cf-pinned-raw (db key cf &optional (opt (rocksdb-readoptions-create)))
+  "DB get CF using the v2 zero-copy API."
+  (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
+    (rocksdb-get-pinned-cf-v2 db opt cf %key %klen e)))
+
+(defun get-kv-buffer-raw (db key buffer &optional (opt (rocksdb-readoptions-create)))
+  "DB get using the 'into_buffer' API."
+  (with-kv-raw (db key e :error get-kv-error)
+    (with-alien ((vallen size-t 0)
+                 (found boolean nil))
+      (values (rocksdb-get-into-buffer db opt %key %klen buffer (length buffer) (addr vallen) (addr found) e)
+              vallen
+              found))))
+
+(defun get-kv-cf-buffer-raw (db key cf buffer &optional (opt (rocksdb-readoptions-create)))
+  "DB get CF using the 'into_buffer' API."
+  (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
+    (with-alien ((vallen size-t 0)
+                 (found boolean nil))
+      (values (rocksdb-get-into-buffer-cf db opt cf %key %klen buffer (length buffer) (addr vallen) (addr found) e)
+              vallen
+              found))))
+
+;;; Buffered API
+;; The functions in this section use the BUFFER-STREAM protocol from the IO
+;; system backed by an RDB-SLICE and are used to implement the STORE protocol
+;; for RocksDB.
+(defmacro txn-default (dvar)
+  `(progn
+     (assert (null ,dvar))
+     nil))
+
+(defun db-get-key-buffered (db kbuf vbuf &key (transaction (txn-default *transaction*)))
+  (declare (buffer-stream kbuf vbuf)
+           ((alien (* t)) db transaction))
+

@@ -9,8 +9,7 @@
 
 ;;; Code:
 (in-package :io/static)
-;;; --- Checking for compile-time constants and evaluating such forms
-
+;;; Checking for compile-time constants and evaluating such forms
 (defun quotedp (form)
   (and (listp form)
        (= 2 (length form))
@@ -50,16 +49,14 @@
             type-decl)))
 
 ;;; SBCL implementation
-(declaim (inline fill-foreign-memory))
-(defun fill-foreign-memory (pointer length value)
+(definline fill-foreign-memory (pointer length value)
   "Fill LENGTH octets in foreign memory area POINTER with VALUE."
   (std/alien:memset pointer value length)
   pointer)
 
-(declaim (inline replace-foreign-memory))
-(defun replace-foreign-memory (dst-ptr src-ptr length)
+(definline replace-foreign-memory (dst-ptr src-ptr length)
   "Copy LENGTH octets from foreign memory area SRC-PTR to DST-PTR."
-  (std/alien:memcpy dst-ptr src-ptr length)
+  (memcpy dst-ptr src-ptr length)
   dst-ptr)
 
 ;;; We have to handle all the low-level bits including setting the array header
@@ -167,15 +164,13 @@ for a given type specifier."
           (sb-kernel:%make-lisp-obj (logior (sb-sys:sap-int lisp-header-pointer)
                                             sb-vm:other-pointer-lowtag)))))))
 
-(declaim (inline static-vector-address))
-(defun static-vector-address (vector)
+(definline static-vector-address (vector)
   "Return a foreign pointer to start of the Lisp VECTOR (including its header).
 VECTOR must be a vector created by MAKE-STATIC-VECTOR."
   (logandc2 (sb-kernel:get-lisp-obj-address vector)
             sb-vm:lowtag-mask))
 
-(declaim (inline static-vector-pointer))
-(defun static-vector-pointer (vector &key (offset 0))
+(definline static-vector-pointer (vector &key (offset 0))
   "Return a foreign pointer to the beginning of VECTOR + OFFSET octets.
 VECTOR must be a vector created by MAKE-STATIC-VECTOR."
   (check-type offset unsigned-byte)
@@ -183,8 +178,7 @@ VECTOR must be a vector created by MAKE-STATIC-VECTOR."
                    +array-header-size+
                    offset)))
 
-(declaim (inline free-static-vector))
-(defun free-static-vector (vector)
+(definline free-static-vector (vector)
   "Free VECTOR, which must be a vector created by MAKE-STATIC-VECTOR."
   (declare (sb-ext:muffle-conditions sb-ext:compiler-note))
   (let* ((extra-header-pointer
@@ -194,16 +188,14 @@ VECTOR must be a vector created by MAKE-STATIC-VECTOR."
     (free-alien (sap-alien (sb-sys:sap+ extra-header-pointer (- start-offset)) (* (unsigned 8)))))
   (values))
 
-;;; --- MAKE-STATIC-VECTOR
-(declaim (inline check-initial-element))
-(defun check-initial-element (element-type initial-element)
+;;; MAKE-STATIC-VECTOR
+(definline check-initial-element (element-type initial-element)
   (when (not (typep initial-element element-type))
     (error "MAKE-STATIC-VECTOR: The type of :INITIAL-ELEMENT ~S is not a subtype ~
 of the array's :ELEMENT-TYPE ~S"
            initial-element element-type)))
 
-(declaim (inline check-initial-contents))
-(defun check-initial-contents (length initial-contents)
+(definline check-initial-contents (length initial-contents)
   (let ((initial-contents-length (length initial-contents)))
     (when (/= length initial-contents-length)
       ;; FIX: signal TYPE-ERROR
@@ -211,8 +203,7 @@ of the array's :ELEMENT-TYPE ~S"
 but requested vector length is ~A."
              initial-contents-length length))))
 
-(declaim (inline check-initialization-arguments))
-(defun check-initialization-arguments (initial-element-p initial-contents-p)
+(definline check-initialization-arguments (initial-element-p initial-contents-p)
   (when (and initial-element-p initial-contents-p)
     ;; FIX: signal ARGUMENT-LIST-ERROR
     (error "MAKE-STATIC-VECTOR: You must not specify both ~
@@ -231,8 +222,7 @@ but requested vector length is ~A."
 (defconstant +default-alignment+ 16)
 (defconstant +max-alignment+ 4096)
 
-(declaim (inline make-static-vector))
-(defun make-static-vector (length &key (element-type '(unsigned-byte 8))
+(definline make-static-vector (length &key (element-type '(unsigned-byte 8))
                                        (initial-element nil initial-element-p)
                                        (initial-contents nil initial-contents-p)
                                        (alignment nil alignp))
@@ -297,13 +287,12 @@ within its dynamic extent. The vector is freed upon exit."
 
 (defvar *default-static-stream-size* 100)
 
-(defclass static-stream (io-stream sb-gray:fundamental-stream)
-  ((buffer :initform (make-static-vector *default-static-stream-size*)
-           :initarg :buffer 
-           :accessor buffer)
-   (offset :initform 0 
+(defclass static-stream (buffered-stream)
+  ((offset :initform 0 
            :initarg :offset 
            :accessor offset))
+  (:default-initargs
+   :buffer (make-static-vector *default-static-stream-size*))
   (:documentation
    "A stream backed by a STATIC-VECTOR."))
 
@@ -311,6 +300,9 @@ within its dynamic extent. The vector is freed upon exit."
   (declare (static-stream s))
   (setf (offset s) 0
         (buffer s) (make-static-vector (length (buffer s)))))
+
+(defmethod reset ((self static-stream) &key)
+  (reset-static-stream self))
 
 (defmethod sap ((self static-stream))
   (static-vector-address (buffer self)))

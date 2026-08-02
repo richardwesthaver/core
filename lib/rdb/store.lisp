@@ -44,6 +44,9 @@
 (defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
+(defmethod iter ((self rdb-btree) &key)
+  (iter (sap self)))
+
 (defclass rdb-store (store rdb-database)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
@@ -333,14 +336,16 @@ serialized object schemas."))
 
 (defclass rdb-cursor (cursor)
   ((handle :accessor cursor-handle :initarg :handle))
-  (:documentation "A cursor for traversing (primary) RDB-BTrees."))
+  (:documentation "A cursor for traversing (primary) RDB-BTrees.
+The handle slot contains an RDB-ITER struct containing the SAP to the
+underlying DBIter C struct."))
 
 (defmethod make-cursor ((bt rdb-btree))
   "Make a cursor from a btree."
   (let ((sc (get-store bt)))
     (make-instance 'rdb-cursor 
       :btree bt
-      :handle (db-cursor (btree sc) :transaction (current-transaction sc))
+      :handle (iter (or (current-transaction sc) (btree sc)))
       :oid (oid bt))))
 
 (defmethod cursor-close ((cursor rdb-cursor))
@@ -547,13 +552,12 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (make-instance 'rdb-secondary-cursor 
       :btree bt
-      :handle (db-cursor (rindex sc)
-                         :transaction (current-transaction sc))
+      :handle (iter (or (current-transaction sc) (rindex sc)))
       :oid (oid bt))))
 
 (defmethod cursor-pcurrent ((cursor rdb-secondary-cursor))
   (when (cursor-initialized-p cursor)
-    (with-static-streams ((key-buf) (pkey-buf) (value-buf))
+    (with-static-streams (key-buf pkey-buf value-buf)
       (multiple-value-bind (key pkey val)
           (db-cursor-pmove-buffered (cursor-handle cursor)
                                     key-buf pkey-buf value-buf
@@ -867,7 +871,7 @@ serialized object schemas."))
   (let ((sc (get-store bt)))
     (make-instance 'rdb-dup-cursor
       :btree bt
-      :handle (db-cursor (btree sc) :transaction (current-transaction sc))
+      :handle (iter (or (current-transaction sc) (btree sc)))
       :oid (oid bt))))
 
 (defmethod cursor-next-nodup ((cursor rdb-dup-cursor))

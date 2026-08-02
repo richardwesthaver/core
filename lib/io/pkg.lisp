@@ -65,6 +65,7 @@
    :flex-input-stream :flex-output-stream
    :flex-io-stream :make-decoding-stream
    :decoding-stream :+buffer-size+
+   :buffered-stream
    :dec-fill-buffer :needs-to-fill-buffer-p))
 
 (defpkg :io/static
