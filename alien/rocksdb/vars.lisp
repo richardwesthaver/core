@@ -97,7 +97,7 @@
          merge-operator db-log-dir wal-dir wal-ttl-seconds wal-size-limit-mb
          memtable-vector-rep prepare-for-bulk-load universal-compaction-options
          hash-skip-list-rep plain-table-factory min-level-to-compress
-         ratelimiter row-cache prefix-extractor))
+         ratelimiter row-cache prefix-extractor compaction-service))
 
 (defvar *rocksdb-options*
   (%svec create-if-missing create-missing-column-families error-if-exists

@@ -109,3 +109,86 @@ including data loss, unreported corruption, deadlocks, and more.
 
 (define-alien-callable rocksdb-filter-never-name c-string () "core:never")
 
+;;; Remote Compactions
+
+;; see https://github.com/facebook/rocksdb/wiki/Remote-Compaction
+
+;; rocksdb-compaction-service-schedule-cb
+;; rocksdb-compaction-service-wait-cb
+;; rocksdb-compaction-service-cancel-awaiting-jobs-cb
+;; rocksdb-compaction-service-on-installation-cb
+
+(def-with-errptr rocksdb-open-and-compact c-string
+  (db-path c-string)
+  (output-directory c-string)
+  (input (* char))
+  (input-len size-t)
+  (output-len (* size-t))
+  (override-options (* rocksdb-compaction-service-options-override)))
+
+(def-with-errptr rocksdb-open-and-compact-with-options c-string
+  (options (* rocksdb-open-and-compact-options))
+  (db-path c-string)
+  (output-directory c-string)
+  (input (* char))
+  (input-len size-t)
+  (output-len (* size-t))
+  (override-options (* rocksdb-compaction-service-options-override)))
+
+(def-with-errptr rocksdb-compactionservice-scheduleresponse-create (* rocksdb-compactionservice-jobstatus)
+  (scheduled-job-id c-string)
+  (status int))
+(def-with-errptr rocksdb-compactionservice-scheduleresponse-create-with-status (* rocksdb-compactionservice-jobstatus)
+  (status int))
+
+(defar rocksdb-compactionservice-scheduleresponse-getstatus int
+  (response (* rocksdb-compactionservice-scheduleresponse)))
+
+(defar rocksdb-compactionservice-scheduleresponse-get-schedule-job-id (* char)
+  (response (* rocksdb-compactionservice-scheduleresponse))
+  (len (* size-t)))
+
+(defar rocksdb-compactionservice-scheduleresponse-t-destroy void
+  (response (* rocksdb-compactionservice-scheduleresponse)))
+
+(defar rocksdb-compactionservice-jobinfo-t-get-db-name (* char)
+  (info (* rocksdb-compactionservice-jobinfo))
+  (len (* size-t)))
+
+(defar rocksdb-compactionservice-jobinfo-t-get-db-id (* char)
+  (info (* rocksdb-compactionservice-jobinfo))
+  (len (* size-t)))
+(defar rocksdb-compactionservice-jobinfo-t-get-db-session-id (* char)
+  (info (* rocksdb-compactionservice-jobinfo))
+  (len (* size-t)))
+(defar rocksdb-compactionservice-jobinfo-t-get-cf-name (* char)
+  (info (* rocksdb-compactionservice-jobinfo))
+  (len (* size-t)))
+(defar rocksdb-compactionservice-jobinfo-t-get-cf-id (unsigned 32)
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-get-job-id (unsigned 64)
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-get-priority int
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-get-compaction-reason int
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-get-base-input-level int
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-get-output-level int
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-is-full-compaction boolean
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-is-manual-compaction boolean
+  (info (* rocksdb-compactionservice-jobinfo)))
+(defar rocksdb-compactionservice-jobinfo-t-is-bottommost-level boolean
+  (info (* rocksdb-compactionservice-jobinfo)))
+
+#+nil
+(defar rocksdb-compactionservice-create (* rocksdb-compactionservice)
+  (state (* t))
+  (destructor (* function))
+  ;; todo
+  (schedule (* function))
+  (wait (* function))
+  (cancel-awaiting-jobs (* function))
+  (on-installation (* function)))

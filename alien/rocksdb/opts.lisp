@@ -300,6 +300,10 @@
 (defar rocksdb-option-set-block-based-table-factory void
   (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
 
+(defar rocksdb-options-set-compaction-service void
+  (options (* rocksdb-options))
+  (service (* rocksdb-compactionservice)))
+
 (define-opt-accessor rocksdb-options comparator (* rocksdb-comparator))
 (defar rocksdb-options-set-merge-operator void
   (opt (* rocksdb-options))
@@ -639,6 +643,73 @@ will be set to NULL.
 
 (defar rocksdb-options-create-copy (* rocksdb-options)
   (src (* rocksdb-options)))
+
+;;; Remote Compaction
+(define-opt rocksdb-open-and-compact-options)
+(defar rocksdb-open-and-compact-options-set-canceled void
+  (options (* rocksdb-open-and-compact-options))
+  (canceled (* unsigned-char)))
+(defar rocksdb-open-and-compact-options-set-allow-resumption void
+  (options (* rocksdb-open-and-compact-options))
+  (allow-resumption boolean))
+
+(define-opt rocksdb-open-and-compact-canceled)
+(defar rocksdb-open-and-compact-canceled-set void
+  (canceled (* unsigned-char))
+  (value boolean))
+
+(define-opt rocksdb-compaction-service-options-override)
+(defar rocksdb-compaction-service-options-override-create-from-options
+  (* rocksdb-compaction-service-options-override)
+  (option (* rocksdb-options)))
+
+(defar rocksdb-compaction-service-options-override-set-env void
+  (opts (* rocksdb-compaction-service-options-override))
+  (env (* rocksdb-env)))
+(defar rocksdb-compaction-service-options-override-set-comparator void
+  (opts (* rocksdb-compaction-service-options-override))
+  (comparator (* rocksdb-comparator)))
+(defar rocksdb-compaction-service-options-override-set-merge-operator void
+  (opts (* rocksdb-compaction-service-options-override))
+  (merge-operator (* rocksdb-mergeoperator)))
+(defar rocksdb-compaction-service-options-override-set-compaction-filter void
+  (opts (* rocksdb-compaction-service-options-override))
+  (compaction-filter (* rocksdb-compactionfilter)))
+(defar rocksdb-compaction-service-options-override-set-compaction-filter-factor void
+  (opts (* rocksdb-compaction-service-options-override))
+  (compaction-filter-factory (* rocksdb-compactionfilterfactory)))
+(defar rocksdb-compaction-service-options-override-set-prefix-extractor void
+  (opts (* rocksdb-compaction-service-options-override))
+  (prefix-extractor (* rocksdb-slicetransform)))
+(defar rocksdb-compaction-service-options-override-set-block-based-table-factory void
+  (opts (* rocksdb-compaction-service-options-override))
+  (table-options (* rocksdb-block-based-table-options)))
+(defar rocksdb-compaction-service-options-override-set-cuckoo-table-factory void
+  (opts (* rocksdb-compaction-service-options-override))
+  (table-options (* rocksdb-cuckoo-table-options)))
+(defar rocksdb-compaction-service-options-override-add-event-listener void
+  (opts (* rocksdb-compaction-service-options-override))
+  (event-listener (* rocksdb-eventlistener)))
+(defar rocksdb-compaction-service-options-override-set-statistics void
+  (opts (* rocksdb-compaction-service-options-override))
+  (options (* rocksdb-options)))
+(defar rocksdb-compaction-service-options-override-set-info-log void
+  (opts (* rocksdb-compaction-service-options-override))
+  (logger (* rocksdb-logger)))
+(defar rocksdb-compaction-service-options-override-set-option void
+  (opts (* rocksdb-compaction-service-options-override))
+  (key c-string)
+  (value c-string))
+
+(defar rocksdb-compaction-service-options-override-set-file-checksum-gen-factory void
+  (opts (* rocksdb-compaction-service-options-override))
+  (factory (* rocksdb-file-checksum-gen-factory)))
+(defar rocksdb-compaction-service-options-override-set-sst-partitioner-factory void
+  (opts (* rocksdb-compaction-service-options-override))
+  (factory (* rocksdb-sst-partitioner-factory)))
+(defar rocksdb-compaction-service-options-override-add-table-properties-collector-factory void
+  (opts (* rocksdb-compaction-service-options-override))
+  (factory (* rocksdb-table-properties-collector-factory)))
 
 ;;; Aliases
 ;; some of the RocksDB options don't follow the standard naming

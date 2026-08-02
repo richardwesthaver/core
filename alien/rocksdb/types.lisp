@@ -53,6 +53,9 @@
 (define-opaque rocksdb-writestallcondition)
 (define-opaque rocksdb-writestallinfo)
 (define-opaque rocksdb-memtableinfo)
+(define-opaque rocksdb-compactionservice)
+(define-opaque rocksdb-compactionservice-scheduleresponse)
+(define-opaque rocksdb-compactionservice-jobinfo)
 (define-opaque rocksdb-compactionjobinfo)
 (define-opaque rocksdb-subcompactionjobinfo)
 (define-opaque rocksdb-externalfileingestioninfo)
@@ -62,3 +65,8 @@
   :include-memtable (ash 1 0)
   :include-files (ash 1 1)
   :include-blob-files (ash 1 2))
+(define-alien-enum (rocksdb-compactionservice-jobstatus)
+  :success 0
+  :failure 1
+  :aborted 2
+  :use-local 3)
