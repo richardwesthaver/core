@@ -52,7 +52,7 @@
            #:endianness #:+endianness+ #:find-swap-byte-function))
 
 (defpkg :io/stream
-  (:use :std-lisp :io/proto :sb-gray :std/meta :sys)
+  (:use :std-lisp :io/proto :sb-gray :std/meta :sys :sb-alien)
   (:export :io-stream-error :io-stream :make-bound-stream
    :bound-input-stream :ensure-file-position
    :peeking-input-stream :peeked

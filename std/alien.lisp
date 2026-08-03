@@ -33,13 +33,17 @@
 ;;  		 :sanctify-for-execution))
 
 ;;; Types
-(deftype alien-or-lisp-octets () '(or array 
-                                   (alien (* char)) 
-                                   (alien (array char))
-                                   (alien (* unsigned-char))
-                                   (alien (array unsigned-char))))
-
 (deftype alien-array (element-type &rest dimensions) `(alien (sb-alien:array ,element-type ,@dimensions)))
+
+(deftype alien-octets () 
+  `(or system-area-pointer
+       (alien (* unsigned-char))
+       (alien (* char))
+       (alien-array unsigned-char)
+       (alien-array char)))
+
+(deftype alien-or-lisp-octets () 
+  '(or array alien-octets))
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defun element-type-to-alien (ty)
@@ -609,8 +613,20 @@ variant associated with this value." type name)
 ;; all operations are performed on (* unsigned-char)
 (define-io :alien
   ((unsigned-char 8) 
-   (:read (vec) 
-          vec))
+   (:read (buf &optional (offset 0))
+          (declare (type (alien (* unsigned-char)) buf)
+                   (type fixnum offset))
+          (the octet
+               (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                            (* (unsigned 8))))))
+   (:write (buf num &optional (offset 0))
+           "Write an octet to a foreign char buffer."
+           (declare ((alien (* unsigned-char)) buf)
+                    (octet num)
+                    (fixnum offset))
+           (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
+                              (* (unsigned 8))))
+                 num)))
   ((signed-byte 64)
    (:read (buf &optional (offset 0))
           "Read a 64-bit signed integer from a foreign char buffer."
@@ -676,9 +692,10 @@ variant associated with this value." type name)
                  num)))
   #+x86-64
   (fixnum 
-   (:read (buf)
-          (declare (type (alien (* unsigned-char)) buf))
-          (read-alien-signed-byte-64 buf))
+   (:read (buf &optional (offset 0))
+          (declare ((alien (* unsigned-char)) buf)
+                   (fixnum offset))
+          (read-alien-signed-byte-64 buf offset))
    (:write (buf num &optional (offset 0))
            "Write a 32-bit signed integer to a foreign char buffer."
            (declare (type (alien (* unsigned-char)) buf)
@@ -736,6 +753,20 @@ variant associated with this value." type name)
            (setf (deref (cast (sap-alien (sap+ (alien-sap buf) offset) (* unsigned-char))
                               (* (unsigned 32))))
                  num)))
+  (fixnum32
+   (:read (buf &optional (offset 0))
+          #+32-bit (read-alien-fixnum buf offset)
+          #+64-bit (read-alien-signed-byte-32 buf offset))
+   (:write (buf num &optional (offset 0))
+           #+32-bit (write-alien-fixnum buf num offset)
+           #+64-bit (write-alien-signed-byte-32 buf num offset)))
+  (fixnum64
+   (:read (buf &optional (offset 0))
+          #+32-bit (read-alien-signed-byte-64 buf offset)
+          #+64-bit (read-alien-fixnum buf offset))
+   (:write (buf num &optional (offset 0))
+           #+32-bit (write-alien-signed-byte-64 buf num offset)
+           #+64-bit (write-alien-fixnum buf num offset)))
   ;; complex types
   (octet-vector
    (:read (buf len)

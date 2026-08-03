@@ -2525,12 +2525,10 @@ actual error.")
 
 (define-condition store-type-deserialization-error (store-deserialization-error)
   ((tag :initarg :type-tag :initform nil :accessor type-deserialization-error-tag))
-  (:documentation "This error is signaled when a tag is not
-                   recognized in the deserializer.  This error is
-                   more specific than the generalized error
-                   condition and aids in diagnosis.  This may be
-                   due to a mistake in counts in the serializer
-                   or a corruption of the source data"))
+  (:documentation "Error signaled when a tag is not recognized by the deserializer.
+This error is more specific than the generalized error condition and aids in
+diagnosis. This may be due to a mistake in counts in the serializer or a
+corruption of the source data."))
 
 (defun deserialize-object (buf-str sc &optional oid-only)
   "Deserialize a lisp value from a buffer-stream."

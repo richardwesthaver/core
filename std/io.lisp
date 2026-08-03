@@ -76,8 +76,8 @@ BODY contains elements of the form:
 
 and generates functions of the form READ/WRITE-NAME?-OBJECT
 
-OBJECT may also be a cons in which case the car is an alias for the actual
-type in the cdr."
+OBJECT may also be a list containing an ALIAS keyword - which is used for the
+function name of the type in the car."
   ;; reset io-table entry
   (when body
     (with-gensyms (readers writers)

@@ -783,6 +783,81 @@ functions and via PEEKED."))
    (offset :initform 0 :initarg :offset :accessor offset))
   (:metaclass io-vector-class))
 
+(defaccessor sap ((self buffer-stream)) (buffer self))
+
+(with-memoization ()
+  (memoizing
+   (defun buffer-stream (length)
+     (or (std/macs:if-let ((class (find length (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'length)))
+           (class-name class)
+           (let* ((cl-name (intern (format nil "<BUFFER-STREAM:~a>"  length) (find-package "IO/STREAM"))))
+             (compile-and-eval
+              `(progn
+                 (defclass ,cl-name (buffer-stream) ()
+                   (:metaclass io-vector-class))
+                 (setf (slot-value (find-class ',cl-name) 'length) ',length)))
+             cl-name))))))
+
+(defmethod element-type ((self buffer-stream)) 'octet)
+
+(defmethod alloc ((self buffer-stream))
+  (setf (sap self) (foreign-alloc `(array unsigned-char ,(io-vector-length self)))))
+
+(defmethod free ((self buffer-stream))
+  (unless (or (not (sap self)) (null-pointer-p (sap self)))
+    (foreign-free (sap self)))
+  (setf (sap self) (null-pointer)))
+
+(defparameter *bsref-range-check* t)
+
+(defun bsref (x i)
+  (declare (type buffer-stream x))
+  (let ((n (slot-value (the buffer-stream x) 'length)))
+    (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
+    (sap-svref (slot-value x 'buffer) 'sb-alien:unsigned-char i)))
+
+(define-compiler-macro bsref (&whole form x i)
+  (if (listp x)
+      (destructuring-case x
+        ((the fv obj)
+         (with-gensyms (obj-v i-v n-v)
+             `(lety ((,obj-v ,obj :type ,fv)
+                     (,i-v ,i :type fixnum))
+                ,@(when *bsref-range-check*
+                    `((let ((,n-v (slot-value ,obj-v 'length)))
+                        (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
+                (sap-ref (slot-value (the ,fv ,obj-v) 'sap) 'unsigned-char (the fixnum (* (the fixnum ,i-v) (the fixnum 1)))))))
+        ((t) form))
+      form))
+
+(defun (setf bsref) (value x i)  
+  (declare (type buffer-stream x))
+  (let ((n (slot-value (the buffer-stream x) 'length)))
+    (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
+    (setf (sap-svref (slot-value x 'sap) 'sb-alien:unsigned-char i) value)))
+
+(define-compiler-macro (setf bsref) (&whole form value x i)
+  (if (and (listp x) (listp value) 
+           (eql 'the (car x)) 
+           (eql 'the (car value)) 
+           (subtypep #1=(second x) 'buffer-stream)
+           (eql (second value) (element-type #1#)))
+      (let ((fv (second x))
+            (lt (second value))
+            (obj (third x))
+            (val (third value)))
+        (let ((alien-type (element-type-to-alien (element-type fv))))
+          (with-gensyms (obj-v i-v n-v)
+            `(lety ((,obj-v ,obj :type ,fv)
+                    (,i-v ,i :type fixnum))
+               ,@(if *bsref-range-check*
+                     `((let ((,n-v (slot-value ,obj-v 'length)))
+                         (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
+               (setf (sap-ref (slot-value (the ,fv ,obj-v) 'sap) 
+                              ,alien-type (the fixnum ,i-v))
+                     (the ,lt ,val))))))
+      form))
+
 (defun reset-buffer-stream (bs)
   "'Empty' the buffer-stream."
   (declare #-ccl (type buffer-stream bs))
@@ -821,21 +896,95 @@ stream to the pool on exit."
   "Resize the underlying buffer of a buffer-stream, copying the old data."
   (declare #-ccl (type buffer-stream bs)
            (type fixnum length))
-  (with-slots ((buf buffer) size (len buffer-stream-length)) bs
+  (let ((len (io-vector-length bs))
+        (size (size bs))
+        (buf (buffer bs)))
     (declare (fixnum size len)
-             ;; ((alien (* sb-alien:unsigned-char)) buf)
-             )
+             (alien-octets buf))
     (when (> length len)
       (let ((newlen (max length (* len 2))))
     (declare (type fixnum newlen))
         ;; FIXME: async unwinds between alloc of newbuf and free of buf
         ;; will leave us with a memory leak of size NEWLEN.
-        (let ((newbuf (foreign-alloc :unsigned-char :count newlen)))
-          ;; technically we just need to copy from position to size.....
-          (when (null-pointer-p newbuf)
+        ;; technically we just need to copy from position to size.....
+        (let ((new (make-instance (buffer-stream newlen))))
+          (when (null-pointer-p (alloc new))
             (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
-          (copy-bufs newbuf 0 buf 0 size)
-          (free buf)
-          (setf buf newbuf)
-          (setf len newlen)
+          (copy-bufs (buffer new) 0 buf 0 size)
+          (free bs)
+          (setf bs new)
           nil)))))
+
+(defun resize-buffer-stream-no-copy (bs length)
+  "Resize the underlying buffer of a buffer-stream."
+  (declare (buffer-stream bs)
+           (fixnum length))
+  (let ((len (io-vector-length bs)))
+    (when (> length len)
+      (let ((newlen (max length (* len 2))))
+        (declare (fixnum newlen))
+        ;; FIXME: async unwinds between alloc of newbuf and free of buf
+        ;; will leave us with a memory leak of size NEWLEN.
+        ;; (free buf)
+        (free bs)
+        (setf bs (make-instance (buffer-stream newlen)))
+        (alloc bs)))))
+      ;; (setf buf newbuf)
+      ;; (setf len newlen)
+
+(define-io :buffer
+  ((octet :alias byte)
+   (:read (bs)
+          "Read a byte from a buffer-stream."
+          (declare (buffer-stream bs))
+          (let ((position (offset bs)))
+            (declare (fixnum position))
+            (incf (offset bs))
+            (bsref bs position)))
+   (:write (b bs)
+           "Write a byte to a buffer-stream."
+           (declare #-ccl (type buffer-stream bs)
+                    (type (unsigned-byte 8) b))
+           (with-slots (size) bs
+             (declare (fixnum size))
+             (let ((needed (the fixnum (+ size 1))))
+               (declare (fixnum needed))
+               (when (> needed (the fixnum (io-vector-length bs))) (resize-buffer-stream bs needed))
+               (setf (bsref bs size) b)
+               (setf size needed)))))
+  (((signed-byte 32) :alias int32)
+   (:write (i bs)
+           "Write a 32-bit signed integer to a buffer-stream."
+           (declare (buffer-stream bs) ((signed-byte 32) i))
+           (with-slots ((buf buffer) size) bs
+             (let ((needed (the fixnum (+ size 4))))
+               (declare (fixnum needed))
+               (when (> needed (io-vector-length bs))
+                 (resize-buffer-stream bs needed))
+               (write-alien-signed-byte-32 buf i size)
+               (setf size needed)
+               nil))))
+  (fixnum32
+   (:read ())
+   (:write ()))
+  (((unsigned-byte 32) :alias uint32)
+   (:read ())
+   (:write ()))
+  (((signed-byte 64) :alias int64)
+   (:read ())
+   (:write ()))
+  (fixnum64
+   (:read ())
+   (:write ()))
+  (((unsigned-byte 64) :alias uint64)
+   (:read ())
+   (:write ()))
+  ((single-float :alias float)
+   (:read ())
+   (:write ()))
+  ((double-float :alias double)
+   (:read ())
+   (:write ()))
+  (string
+   (:read ())
+   (:write ())))

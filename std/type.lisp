@@ -12,6 +12,9 @@
   "An 8-bit unsigned-byte."
   '(unsigned-byte 8))
 
+(deftype fixnum32 () #+32-bit 'fixnum #+64-bit '(signed-byte 32))
+(deftype fixnum64 () #+32-bit '(signed-byte 64) #+64-bit 'fixnum)
+
 (deftype abstract-ds-lambda-list () 
   "The SBCL type used internally for the abstract representation of a
 destructuring lambda list."

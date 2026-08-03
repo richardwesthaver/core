@@ -632,4 +632,18 @@ at the end."
   (and (string-prefix-p prefix string)
        (string-suffix-p string suffix)))
 
-;;; Unicode
+;; from build-all-cores.sh
+(defun interpolate (string substitutions)
+  (sb-int:collect ((fragments))
+    (let ((start 0))
+      (loop
+       (let ((p (position #\{ string :start start)))
+         (unless p
+           (fragments (subseq string start))
+           (return (apply #'concatenate 'string (fragments))))
+         (fragments (subseq string start p))
+         (let* ((end (the (not null) (position #\} string :start (1+ p))))
+                (var (subseq string (1+ p) end))
+                (pair (assoc var substitutions :test #'string=)))
+           (fragments (the string (cdr pair)))
+           (setq start (1+ end))))))))

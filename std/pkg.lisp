@@ -353,6 +353,7 @@
    :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
+   :fixnum32 :fixnum64
    :index :uniquely-identified-by-print-p
    :parse-optional-arg-spec :parse-key-arg-spec 
    :ds-lambda-list-matcher :parse-ds-lambda-list
@@ -1179,6 +1180,7 @@ define the core ALIEN systems.")
    :write-alien-signed-byte-64 :*cpus*
    :num-cpus :list-all-shared-objects
    :alien-or-lisp-octets :foreign-alloc
+   :alien-octets
    :foreign-free :read-alien
    :write-alien :loff-t
    :pid-t :uid-t
