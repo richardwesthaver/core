@@ -423,7 +423,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
 return the same value as DB depending on backend.")
-  (:method ((self t)) *db*))
+  (:method ((self t)) (db self)))
 (defgeneric transaction-prior (self)
   (:documentation "Return the previous transaction of SELF if any.")
   (:method ((self list)) (third self))

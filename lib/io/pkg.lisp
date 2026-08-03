@@ -41,7 +41,7 @@
    :fill-buffer :header
    :header-type :header-length
    :offset :snapshot
-   :buffer))
+   :buffer :size))
 
 (defpkg :io/swap-bytes
   (:use :cl :sb-c :sb-assem)

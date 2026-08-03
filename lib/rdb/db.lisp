@@ -159,14 +159,15 @@ extractor."
          (when backfill (backfill-opts (db-opts db) :full (eq backfill :full)))
          cfs)))
 
-(defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key 
-                    name
-                    merge-op
-                    prefix-op
-                    logger
-                    event-listener
-                    (opts (default-rdb-opts))
-                    path)
+(defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key
+                                                           type
+                                                           name
+                                                           merge-op
+                                                           prefix-op
+                                                           logger
+                                                           event-listener
+                                                           (opts (default-rdb-opts))
+                                                           path)
   (declare (ignore engine initargs))
   (when merge-op
     (set-db-opt opts :merge-operator merge-op :push t))
@@ -176,9 +177,12 @@ extractor."
     (set-db-opt opts :info-log logger :push t))
   (when event-listener
     (set-db-opt opts :event-listener event-listener :push t))
-  (let ((db (make-rdb 
-             :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
-             :opts opts)))
+  (let ((db (funcall (case type 
+                       (:optimistic-transaction #'make-rdb-optimistic-transaction-db)
+                       (:transaction #'make-rdb-transaction-db)
+                       (t #'make-rdb))
+                     :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
+                     :opts opts)))
     (push-opts db)
     db))
 
@@ -241,8 +245,7 @@ object. (SAP CF) is the raw pointer."))
 
 ;;; Database
 (defclass rdb-database (database)
-  ((txn :initform nil :type (or null rdb-optimistic-transaction-db) :initarg :txn :accessor transaction-db)
-   (backup :initform nil :type (or null rdb-backup-engine) :initarg :backup :accessor db-backup)
+  ((backup :initform nil :type (or null rdb-backup-engine) :initarg :backup :accessor db-backup)
    (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
               :type (vector rdb-snapshot)
               :initarg :snapshots 

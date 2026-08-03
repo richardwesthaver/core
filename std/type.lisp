@@ -202,7 +202,7 @@ determined: primary value of NIL and secondary value of T indicates that the
 types are not equivalent."
   (multiple-value-bind (sub ok) (subtypep type1 type2)
     (cond ((and ok sub) ; type1 is known to be a subtype of type 2
-           ; so type= return values come from the second invocation of subtypep
+                                        ; so type= return values come from the second invocation of subtypep
            (subtypep type2 type1))
           ;; type1 is assuredly NOT a subtype of type2,
           ;; so assuredly type1 and type2 cannot be type=
@@ -240,7 +240,6 @@ non-unique ID prefix.")
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defvar *simple-type-table* (make-hash-table :test 'equal)
     "A hash-table mapping simple type names to integers.")
-
   (defvar *simple-types* (make-array 128 :adjustable nil)
     "A vector containing the simple set of lisp objects .")
 
@@ -249,61 +248,61 @@ non-unique ID prefix.")
   (defvar *core-type-table*)
   (defvar *core-types*)
 
-(definline next-type-id (&optional (table *core-type-table*))
-  (hash-table-count table))
+  (definline next-type-id (&optional (table *core-type-table*))
+    (hash-table-count table))
 
-(defun reset-core-types ()
-  (setq *core-type-table* *simple-type-table*
-        *core-types* *simple-types*))
+  (defun reset-core-types ()
+    (setq *core-type-table* *simple-type-table*
+          *core-types* *simple-types*))
 
-(defun register-type-id (type &optional id (table *core-type-table*) (vector *core-types*))
-  (declare (simple-vector vector) (hash-table table))
-  (unless id (setf id (next-type-id table)))
-  (setf (gethash type table) id
-        (aref vector id) type))
+  (defun register-type-id (type &optional id (table *core-type-table*) (vector *core-types*))
+    (declare (simple-vector vector) (hash-table table))
+    (unless id (setf id (next-type-id table)))
+    (setf (gethash type table) id
+          (aref vector id) type))
 
-(macrolet ((simple-id (type id)
-             `(register-type-id ,type ,id *simple-type-table* *simple-types*))
-           (simple-id-order (&rest types &aux (i 0))
-             `(progn
-                ,@(mapcar (lambda (x) (prog1 `(simple-id ',x ,i) (incf i))) types))))
-  (simple-id-order 
-   t
-   character base-char
-   double-float  single-float 
-   (complex double-float) (complex single-float) 
-   integer
-   bignum
-   fixnum
-   bit 
-   symbol 
-   boolean
-   null cons 
-   standard-object structure-object
-   pathname hash-table
-   array
-   (array character)
-   (array base-char)
-   (array double-float)
-   (array single-float)
-   (array (complex double-float))
-   (array (complex single-float))
-   (array fixnum)
-   (array bit)
-   vector
-   (vector character)
-   (vector base-char)
-   (vector double-float)
-   (vector single-float)
-   (vector (complex double-float))
-   (vector (complex single-float))
-   (vector fixnum)
-   (vector bit)
-   string
-   simple-array simple-vector 
-   simple-string base-string
-   octet-vector)
-  (reset-core-types)))
+  (macrolet ((simple-id (type id)
+               `(register-type-id ,type ,id *simple-type-table* *simple-types*))
+             (simple-id-order (&rest types &aux (i 0))
+               `(progn
+                  ,@(mapcar (lambda (x) (prog1 `(simple-id ',x ,i) (incf i))) types))))
+    (simple-id-order 
+     t
+     character base-char
+     double-float  single-float 
+     (complex double-float) (complex single-float) 
+     integer
+     bignum
+     fixnum
+     bit 
+     symbol 
+     boolean
+     null cons 
+     standard-object structure-object
+     pathname hash-table
+     array
+     (array character)
+     (array base-char)
+     (array double-float)
+     (array single-float)
+     (array (complex double-float))
+     (array (complex single-float))
+     (array fixnum)
+     (array bit)
+     vector
+     (vector character)
+     (vector base-char)
+     (vector double-float)
+     (vector single-float)
+     (vector (complex double-float))
+     (vector (complex single-float))
+     (vector fixnum)
+     (vector bit)
+     string
+     simple-array simple-vector 
+     simple-string base-string
+     octet-vector)
+    (reset-core-types)))
 
 (defmacro simple-type-id (obj)
   (let ((cases))
@@ -345,3 +344,41 @@ extended by the user using the REGISTER-TYPE-ID function. "
 
 (defun array-type= (t1 t2)
   (and (subtypep t1 t2) (subtypep t2 t1)))
+
+(declaim (type hash-table *element-type-table* *element-byte-table*))
+(defvar *element-type-table* (make-hash-table :test 'equalp))
+(defvar *element-byte-table* (make-hash-table :test 'equalp))
+
+(setf (gethash 'T *element-type-table*) #x00)
+(setf (gethash 'base-char *element-type-table*) #x01)
+(setf (gethash 'character *element-type-table*) #x02)
+(setf (gethash 'single-float *element-type-table*) #x03)
+(setf (gethash 'double-float *element-type-table*) #x04)
+(setf (gethash '(complex single-float) *element-type-table*) #x05)
+(setf (gethash '(complex double-float) *element-type-table*) #x06)
+(setf (gethash 'fixnum *element-type-table*) #x07)
+(setf (gethash 'bit *element-type-table*) #x08)
+
+(let ((counter 8))
+  (loop for i from 2 to 65
+    for spec = (list 'unsigned-byte i)
+    for uspec = (upgraded-array-element-type spec)
+    when (array-type= spec uspec)
+    do
+    (setf (gethash spec *element-type-table*) (incf counter)))
+  (loop for i from 2 to 65
+    for spec = (list 'signed-byte i)
+    for uspec = (upgraded-array-element-type spec)
+    when (array-type= spec uspec)
+    do
+    (setf (gethash spec *element-type-table*) (incf counter))))
+
+(loop for key being the hash-key of *element-type-table*
+      using (hash-value value)
+      do (setf (gethash value *element-byte-table*) key))
+
+(defun element-type-from-octet (b)
+  (gethash b *element-byte-table*))
+
+(defun octet-from-element-type (ty)
+  (the octet (gethash ty *element-type-table*)))

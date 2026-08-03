@@ -759,7 +759,12 @@ functions and via PEEKED."))
 ;; TODO 2026-07-30: 
 
 ;; low-level binary deserialization using an alien buffer. Based on the
-;; SYS::IO-VECTOR class.
+;; SYS::IO-VECTOR-CLASS metaclass.
+
+(defvar *buffer-streams* (make-array 0 :adjustable t :fill-pointer t)
+  "Vector of buffer-streams, which you can grab / return.")
+
+(defvar *buffer-streams-lock* (sb-thread:make-mutex :name "buffer-streams"))
 
 ;; Note that the LENGTH slot is static and refers to the length of the alien
 ;; buffer on initialization. This is the total available space. The SIZE slot
@@ -778,5 +783,26 @@ functions and via PEEKED."))
    (offset :initform 0 :initarg :offset :accessor offset))
   (:metaclass io-vector-class))
 
-#+nil
-(define-io buffer)
+(defun grab-buffer-stream ()
+  "Grab a buffer-stream from the *buffer-streams* resource pool."
+  (or (with-mutex (*buffer-streams-lock*)
+        (and (plusp (length *buffer-streams*))
+             (vector-pop *buffer-streams*)))
+      (buffer-stream 10)))
+
+(defun return-buffer-stream (bs)
+  "Return a buffer-stream to the *buffer-streams* resource pool."
+  (reset-buffer-stream bs)
+  (with-mutex (*buffer-streams-lock*)
+    (vector-push-extend bs *buffer-streams*)))
+
+(defmacro with-buffer-streams (names &body body)
+  "Grab a buffer-stream, executes forms, and returns the
+stream to the pool on exit."
+  `(let ,(loop for name in names collect (list name '(grab-buffer-stream)))
+     (declare (type buffer-stream ,@names))
+     (unwind-protect
+      (progn ,@body)
+       (progn
+     ,@(loop for name in names 
+          collect (list 'return-buffer-stream name))))))

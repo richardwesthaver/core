@@ -948,7 +948,7 @@ protocol.")
   (:documentation "A generic object database protocol based on the STORED metaobject protocol.")
   (:nicknames :store)
   (:import-from :stored :%cache-style)
-  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor :cache)
+  (:use :cl :std :stored :sb-mop :btree :id :db :schema :config :cache :val :tensor :cache :io)
   (:export
    #:store
    #:next-oid

@@ -314,6 +314,14 @@ non-nil, also include indirect (parent) methods."
 
 (defgeneric find-slot-defs-by-type (class type &optional by-subtype))
 (defgeneric find-slot-def-names-by-type (class type &optional by-subtype))
+(defgeneric struct-constructor (class)
+  (:documentation "Called to get the constructor name for a struct class.  Users
+                  should overload this when they want to serialize non-standard
+                  constructor names.  The default constructor make-xxx will work by 
+                  default.  The argument is an eql style type: i.e. of type (eql 'my-struct)")
+  (:method ((class t))
+    (symbol-function (intern (concatenate 'string "MAKE-" (symbol-name class))
+                             (symbol-package class)))))
 
 (defun slots-and-values (o)
   "List of slot names followed by values for object"

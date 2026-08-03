@@ -611,23 +611,25 @@ at the end."
 (defun string-starts-with (string prefix)
   (string-equal string prefix :end1 (min (length string) (length prefix))))
 
-  (defun string-prefix-p (prefix string)
-    "Does STRING begin with PREFIX?"
-    (let* ((x (string prefix))
-           (y (string string))
-           (lx (length x))
-           (ly (length y)))
-      (and (<= lx ly) (string= x y :end2 lx))))
+(defun string-prefix-p (prefix string)
+  "Does STRING begin with PREFIX?"
+  (let* ((x (string prefix))
+         (y (string string))
+         (lx (length x))
+         (ly (length y)))
+    (and (<= lx ly) (string= x y :end2 lx))))
 
-  (defun string-suffix-p (string suffix)
-    "Does STRING end with SUFFIX?"
-    (let* ((x (string string))
-           (y (string suffix))
-           (lx (length x))
-           (ly (length y)))
-      (and (<= ly lx) (string= x y :start1 (- lx ly)))))
+(defun string-suffix-p (string suffix)
+  "Does STRING end with SUFFIX?"
+  (let* ((x (string string))
+         (y (string suffix))
+         (lx (length x))
+         (ly (length y)))
+    (and (<= ly lx) (string= x y :start1 (- lx ly)))))
 
-  (defun string-enclosed-p (prefix string suffix)
-    "Does STRING begin with PREFIX and end with SUFFIX?"
-    (and (string-prefix-p prefix string)
-         (string-suffix-p string suffix)))
+(defun string-enclosed-p (prefix string suffix)
+  "Does STRING begin with PREFIX and end with SUFFIX?"
+  (and (string-prefix-p prefix string)
+       (string-suffix-p string suffix)))
+
+;;; Unicode

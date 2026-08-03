@@ -46,6 +46,14 @@ simply return null instead of signaling an error.")
 (defvar *store-spec* nil)
 (defvar *store-lock* (make-mutex :name "STORE"))
 
+(defvar *store-code-version* '(1 0 0)
+  "The current database version supported by the code base.")
+(defvar *store-code-version-int* 100
+  "The current database version supported by the code base.")
+(defvar *store-unmarked-code-version* '(1 0 0)
+  "If a database is opened with existing data but no version then
+   we assume it's version 1.0.0")
+
 ;;; Stored Set
 ;; default implementation of simple sets using btrees
 (defclass sset (stored-collection) ()
@@ -423,6 +431,7 @@ equal comparison"))
          :initarg :spec
          :documentation "Data store initialization functions are
          expected to initialize :spec on the call to make-instance")
+   (version :type fixnum :accessor version :initform 100)
    ;; Generic support for the object, indexing and root protocols
    (root 
     :reader store-root 
@@ -1009,27 +1018,27 @@ stored slot values associated with those instances."
   (ensure-finalized (etypecase class (class class) (symbol (find-class class))))
   (flet ((exit (fmt &rest args)
            (if errorp
-             (apply #'error fmt args)
-             (return-from slot-index-sane-p
-                          (values nil (apply #'format nil fmt args))))))
+               (apply #'error fmt args)
+               (return-from slot-index-sane-p
+                 (values nil (apply #'format nil fmt args))))))
     (let* ((*store* sc)
            (objects<-class-index (remove-if-not (lambda (obj)
                                                   (slot-boundp obj slotname))
                                                 (get-instances-by-class class)))
            (objects<-inverted-index (map-inverted-index
-                                      (lambda (key inst)
-                                        (cond
-                                          ((not (slot-exists-p inst slotname))
-                                           (warn "Slot ~S is missing from obj ~S, ignoring." slotname inst)
-                                           inst)
-                                          ((not (slot-boundp inst slotname))
-                                           (exit "Slot ~S is unbound in obj ~S but present in the index with key ~S"
-                                                 slotname inst key))
-                                          ((not (compare-equal key (slot-value inst slotname)))
-                                           (exit "The value ~S of slot ~S in obj ~S disagrees with the index key ~S"
-                                                 (slot-value inst slotname) slotname inst key))
-                                          (t inst)))
-                                      class slotname :collect t))
+                                     (lambda (key inst)
+                                       (cond
+                                         ((not (slot-exists-p inst slotname))
+                                          (warn "Slot ~S is missing from obj ~S, ignoring." slotname inst)
+                                          inst)
+                                         ((not (slot-boundp inst slotname))
+                                          (exit "Slot ~S is unbound in obj ~S but present in the index with key ~S"
+                                                slotname inst key))
+                                         ((not (compare-equal key (slot-value inst slotname)))
+                                          (exit "The value ~S of slot ~S in obj ~S disagrees with the index key ~S"
+                                                (slot-value inst slotname) slotname inst key))
+                                         (t inst)))
+                                     class slotname :collect t))
            (diff (set-difference objects<-class-index objects<-inverted-index)))
       (unless (null diff)
         (exit "Objects are missing from the inverted index ~S for class ~S: ~S" slotname class diff))
@@ -1043,12 +1052,12 @@ stored slot values associated with those instances."
                                 (class class)
                                 (symbol (find-class class))))))
     (loop for class in classes
-          ;do (format t "=== class ~S~%" class)
+                                        ;do (format t "=== class ~S~%" class)
           collect (cons (class-name class)
                         (loop for slotname in (indexed-slot-names class)
                               for sane-p = (multiple-value-list
-                                             (apply #'slot-index-sane-p sc class slotname args))
-                              ;do (format t "slot ~S~%" slotname)
+                                            (apply #'slot-index-sane-p sc class slotname args))
+                                        ;do (format t "slot ~S~%" slotname)
                               collect (cons slotname sane-p))))))
 
 (defun map-class (fn class &key collect oids (sc *store*))
@@ -1347,7 +1356,7 @@ different objects with the same oid."
 ;; Main protocol
 
 (defmethod initialize-instance :around ((instance stored-object) &rest initargs 
-                    &key (sc *store*) &allow-other-keys)
+                                                                 &key (sc *store*) &allow-other-keys)
   "Ensure instance creation is inside a transaction, huge (5x) performance impact per object"
   (declare (ignore initargs))
   (assert sc nil "You must have an open store controller to create ~A" instance)
@@ -1358,7 +1367,7 @@ different objects with the same oid."
   (defun compute-bindings (class slots bindings)
     "Helper function for bind-slot-defs"
     (loop for (name accessor) in bindings collect
-     `(,name (get-init-slotnames ,class #',accessor ,slots)))))
+             `(,name (get-init-slotnames ,class #',accessor ,slots)))))
 
 (defmacro bind-slot-defs (class slots bindings &body body)
   "Bindings contain name, accessor pairs.  Extract 
@@ -1366,9 +1375,9 @@ different objects with the same oid."
    filter by the list of valid slots"
   (with-gensyms (classref slotrefs)
     `(let* ((,classref ,class)
-        (,slotrefs ,slots)
-        ,@(compute-bindings classref slotrefs bindings))
-     ,@body)))
+            (,slotrefs ,slots)
+            ,@(compute-bindings classref slotrefs bindings))
+       ,@body)))
 
 (defmethod shared-initialize :around ((instance stored-object) slot-names &rest initargs &key from-oid &allow-other-keys)
   "Initializes the stored slots via initargs or forms.
@@ -1379,65 +1388,65 @@ after the class is fully initialized. Calls the next method for the transient
 slots."
   (let ((class (class-of instance)))
     (bind-slot-defs 
-     class slot-names
-     ((transient-slots transient-slot-names)
-      (cached-slots cached-slot-names)
-      (indexed-slots indexed-slot-names)
-      (derived-slots derived-index-slot-names)
-      (association-end-slots association-end-slot-names)
-      (stored-slots stored-slot-names))
-     ;; Slot initialization
-     (let* ((stored-initializable-slots 
-              (union (union stored-slots indexed-slots) association-end-slots))
-            (set-slots (get-init-slotnames class #'set-valued-slot-names slot-names)))
-       ;;      NOTE: backing store for cached slots is only initialized on checkout or txn
-       (cond (from-oid ;; If re-starting, make sure we read the cached values
-                       nil)
-             (t ;; If new instance, initialize all slots
-                (setq transient-slots (union transient-slots cached-slots))
-                (initialize-stored-slots class instance stored-initializable-slots initargs from-oid)))
-       ;; Always initialize transients
-       (apply #'call-next-method instance transient-slots initargs)
-       ;; Initialize set slots after transient initialization
-       (unless from-oid
-         (initialize-set-slots class instance set-slots))
-       (loop for dslotname in derived-slots do
-                (derived-index-updater class instance (find-slot-def-by-name class dslotname)))))))
+        class slot-names
+        ((transient-slots transient-slot-names)
+         (cached-slots cached-slot-names)
+         (indexed-slots indexed-slot-names)
+         (derived-slots derived-index-slot-names)
+         (association-end-slots association-end-slot-names)
+         (stored-slots stored-slot-names))
+      ;; Slot initialization
+      (let* ((stored-initializable-slots 
+               (union (union stored-slots indexed-slots) association-end-slots))
+             (set-slots (get-init-slotnames class #'set-valued-slot-names slot-names)))
+        ;;      NOTE: backing store for cached slots is only initialized on checkout or txn
+        (cond (from-oid ;; If re-starting, make sure we read the cached values
+                        nil)
+              (t ;; If new instance, initialize all slots
+                 (setq transient-slots (union transient-slots cached-slots))
+                 (initialize-stored-slots class instance stored-initializable-slots initargs from-oid)))
+        ;; Always initialize transients
+        (apply #'call-next-method instance transient-slots initargs)
+        ;; Initialize set slots after transient initialization
+        (unless from-oid
+          (initialize-set-slots class instance set-slots))
+        (loop for dslotname in derived-slots do
+                 (derived-index-updater class instance (find-slot-def-by-name class dslotname)))))))
 
 (defun initialize-stored-slots (class instance stored-slot-inits initargs object-exists)
   (dolist (slotname stored-slot-inits)
     (let ((slot-def (find-slot-def-by-name class slotname)))
       (unless (or (initialize-from-initarg class instance slot-def 
-                       (slot-definition-initargs slot-def) initargs)
-          object-exists
-          (slot-boundp-using-class class instance slot-def))
-    (awhen (slot-definition-initfunction slot-def)
-      (setf (slot-value-using-class class instance slot-def)
-        (funcall it)))))))
+                                           (slot-definition-initargs slot-def) initargs)
+                  object-exists
+                  (slot-boundp-using-class class instance slot-def))
+        (awhen (slot-definition-initfunction slot-def)
+          (setf (slot-value-using-class class instance slot-def)
+                (funcall it)))))))
 
 (defun initialize-set-slots (class instance set-slots)
   (declare (ignore class instance))
   (dolist (slotname set-slots)
     (declare (ignorable slotname))
-;;    (setf (slot-value-using-class class instance
-;;				  (find-slot-def-by-name class slotname))
-;;	  nil)
+    ;;    (setf (slot-value-using-class class instance
+    ;;				  (find-slot-def-by-name class slotname))
+    ;;	  nil)
     ))
 
 (defun initialize-from-initarg (class instance slot-def slot-initargs initargs)
   (loop for slot-initarg in slot-initargs
-     when (member slot-initarg initargs :test #'eq)
-     do
-       (setf (slot-value-using-class class instance slot-def)
-         (getf initargs slot-initarg))
-       (return t)
-     finally (return nil)))
+        when (member slot-initarg initargs :test #'eq)
+        do
+           (setf (slot-value-using-class class instance slot-def)
+                 (getf initargs slot-initarg))
+           (return t)
+        finally (return nil)))
 
 (defun get-init-slotnames (class accessor slot-names)
   (let ((slotnames (funcall accessor class)))
     (if (not (eq slot-names t))
-    (intersection slotnames slot-names :test #'equal)
-    slotnames)))
+        (intersection slotnames slot-names :test #'equal)
+        slotnames)))
 
 
 (defun warn-about-dropped-slots (op class names)
@@ -1472,6 +1481,74 @@ slots."
         (warn-about-dropped-slots :rem class
                                   (mapcar #'slot-field-name (cdr diff)))))))
 
+(defvar *always-convert* nil)
+(defparameter *legacy-symbol-conversions* nil)
+(defparameter *no-deserialization-package-found-action* :warn
+  "When eql :WARN Issue a warning when deserializing a symbol from a package that
+is not created. Other possible values include :ERROR and :CREATE.")
+
+(defun add-symbol-conversion (old-name old-package new-name new-package old-version)
+  "Users can specify specific symbol conversions on upgrade prior to 
+   migrating old databases"
+  (declare (ignore old-version))
+  (push (cons (cons old-name old-package) (cons new-name new-package)) *legacy-symbol-conversions*))
+
+(defun map-legacy-symbols (symbol-string package-string old-version)
+  (declare (ignore old-version))
+  (let ((entry (assoc (cons (string-upcase symbol-string) (string-upcase package-string))
+              *legacy-symbol-conversions* :test #'equal)))
+    (if entry
+    (values t (cadr entry) (cddr entry))
+    nil)))
+
+(defparameter *legacy-package-conversions* nil)
+
+(defun add-package-conversion (old-package-string new-package-string old-version)
+  "Users can specify wholesale package name conversions on upgrade 
+   prior to migrating old databases"
+  (declare (ignore old-version))
+  (push (cons old-package-string new-package-string) *legacy-package-conversions*))
+
+(defun map-legacy-package-names (package-string old-version)
+  (declare (ignore old-version))
+  (let ((entry (assoc (string-upcase package-string) *legacy-package-conversions* :test #'equal)))
+    (if entry
+    (cdr entry)
+    package-string)))
+
+(defun map-legacy-names (symbol-name package-name old-version)
+  (multiple-value-bind (mapped? new-name new-package)
+      (map-legacy-symbols symbol-name package-name old-version)
+    (if mapped?
+    (values new-name new-package)
+    (values symbol-name (map-legacy-package-names package-name old-version)))))
+
+(defun translate-and-intern-symbol (sc symbol-name package-name)
+  "Service for the serializer to translate any renamed packages or symbols
+   and then intern the decoded symbol."
+  (if package-name
+      (multiple-value-bind (sname pname)
+      (if (or *always-convert* (not (= (version sc)
+                                       *store-code-version-int*)))
+          (map-legacy-names symbol-name package-name (database-version sc))
+          (values symbol-name package-name))
+    (let ((package (find-package pname)))
+      (if package
+          (intern sname package)
+          (progn
+        (case *no-deserialization-package-found-action*
+          (:warn 
+           (warn "Couldn't deserialize package ~A based on symbol ~A's home package ~A.
+                         Creating an uninterned symbol" pname sname package-name))
+          (:error
+           (error "Couldn't deserialize package ~A based on symbol ~A's home package ~A."
+              pname sname package-name))
+          (:create
+           (intern sname 
+               (make-package pname :use '(cl))))
+          (t nil))
+        (make-symbol sname)))))
+      (make-symbol symbol-name)))
 
 ;;; Controller Protocol
 (defgeneric open-store (st &key recover recover-fatal &allow-other-keys)
@@ -1630,16 +1707,16 @@ reachable and thus live"
 (defmethod slot-makunbound-using-class ((class stored-class) (instance stored-object) (slot-def indexed-slot-definition))
   "Removes the slot value from the database."
   (let ((sc (get-store instance))
-    (oid (oid instance)))
+        (oid (oid instance)))
     (ensure-transaction (:store sc)
       (let* ((idx (get-slot-def-index slot-def sc))
              (old-value-bound-p (slot-boundp-using-class class instance slot-def))
              (old-value (when old-value-bound-p
                           (slot-value-using-class class instance slot-def))))
-    (unless idx
-      (setf idx (ensure-slot-def-index slot-def sc)))
-    (when old-value-bound-p
-      (remove-kv old-value oid idx)))
+        (unless idx
+          (setf idx (ensure-slot-def-index slot-def sc)))
+        (when old-value-bound-p
+          (remove-kv old-value oid idx)))
       (call-next-method))))
 
 ;;;; Derived slot index access
@@ -1654,7 +1731,7 @@ reachable and thus live"
   "Unbinding cannot be performed explicitly.  It is effectively 
    inhibited when the derived fn says 'no'"
   (warn "Cannot unbind derived slot values for ~A in class ~A" 
-    (slot-definition-name slot-def) (class-name class)))
+        (slot-definition-name slot-def) (class-name class)))
 
 ;;; Cached slot access
 (defsclass stored-cache-object (stored-object)
@@ -1666,15 +1743,15 @@ reachable and thus live"
   ;; User asked us to start in cached mode?  Otherwise default to not.
   (when make-cached-instance-p
     (setf (slot-value instance 'pchecked-out) make-cached-instance
-      (slot-value instance 'checked-out) make-cached-instance))
+          (slot-value instance 'checked-out) make-cached-instance))
   (when (and from-oid (eq (get-cache-style (class-of instance)) :checkout))
     (unless make-cached-instance-p
       (setf (slot-value instance 'checked-out) 
-        (slot-value instance 'pchecked-out)))
+            (slot-value instance 'pchecked-out)))
     (when (checked-out-p instance)
       (bind-slot-defs (class-of instance) slot-names
-      ((cached-slots cached-slot-names))
-    (refresh-cached-slots instance cached-slots))))
+          ((cached-slots cached-slot-names))
+        (refresh-cached-slots instance cached-slots))))
   (call-next-method))
 
 (defmethod slot-value-using-class
@@ -1682,8 +1759,8 @@ reachable and thus live"
   (case (%cache-style class)
     (:checkout
      (if (checked-out-p instance)
-     (call-next-method)
-     (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def))))
+         (call-next-method)
+         (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def))))
     (:txn
      (stored-slot-reader (get-store instance) instance (slot-definition-name slot-def)))
     (t 
@@ -1695,13 +1772,13 @@ reachable and thus live"
   (case (%cache-style class)
     (:checkout
      (if (ignore-errors (checked-out-p instance))
-     (call-next-method)
-     (stored-slot-writer (get-store instance) new-value instance 
-                 (slot-definition-name slot-def))))
-;;	 (error "Cannot write to checkout-style cached objects when not checked out")))
+         (call-next-method)
+         (stored-slot-writer (get-store instance) new-value instance 
+                             (slot-definition-name slot-def))))
+    ;;	 (error "Cannot write to checkout-style cached objects when not checked out")))
     (t
      (stored-slot-writer (get-store instance) new-value instance 
-                 (slot-definition-name slot-def)))))
+                         (slot-definition-name slot-def)))))
 
 (defmethod slot-boundp-using-class 
     ((class stored-class) (instance stored-object) (slot-def cached-slot-definition))
@@ -1709,8 +1786,8 @@ reachable and thus live"
   (case (%cache-style class)
     (:checkout
      (if (checked-out-p instance)
-     (call-next-method)
-     (stored-slot-boundp (get-store instance) instance (slot-definition-name slot-def))))
+         (call-next-method)
+         (stored-slot-boundp (get-store instance) instance (slot-definition-name slot-def))))
     (t (stored-slot-boundp (get-store instance) instance (slot-definition-name slot-def)))))
 
 (defmethod slot-makunbound-using-class 
@@ -1719,8 +1796,8 @@ reachable and thus live"
   (case (%cache-style class)
     (:checkout
      (if (checked-out-p instance)
-     (call-next-method)
-     (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def))))
+         (call-next-method)
+         (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def))))
     (t (stored-slot-makunbound (get-store instance) instance (slot-definition-name slot-def)))))
 
 ;;;; Cache mode and class-level ops
@@ -1749,7 +1826,7 @@ reachable and thus live"
   (ensure-transaction ()
     (unless (eq (%cache-style (class-of object)) :checkout)
       (error "Class ~A for object ~A is not enabled for checkout.  (mode=~A)"
-         (class-of object) object (%cache-style (class-of object))))
+             (class-of object) object (%cache-style (class-of object))))
     (when (pchecked-out-p object)
       ;; This should be a condition that can fail silently?
       (error "Object ~A is already checked out" object))
@@ -1774,7 +1851,7 @@ reachable and thus live"
   "Synchronize the slots to the database without a checkin"
   (ensure-transaction ()
     (when (and (eq (get-cache-style (class-of instance)) :checkout)
-           (checked-out-p instance))
+               (checked-out-p instance))
       (stored-sync instance))))
 
 (defmethod stored-checkout-cancel ((object stored-cache-object))
@@ -1796,10 +1873,10 @@ reachable and thus live"
         (error "Cannot checkin if class caching style is ~A. Canceling checkout." 
                (obj/meta/stored::%cache-style (class-of object))))
       (when (pchecked-out-p object)
-    (setf (pchecked-out-p object) t) ;; establish a write lock
-    (flush-cached-slots object (cached-slot-names (class-of object)))
-    (setf (pchecked-out-p object) nil)
-    (setf checked-out nil)))
+        (setf (pchecked-out-p object) t) ;; establish a write lock
+        (flush-cached-slots object (cached-slot-names (class-of object)))
+        (setf (pchecked-out-p object) nil)
+        (setf checked-out nil)))
     (setf (checked-out-p object) checked-out)
     object))
 
@@ -1810,12 +1887,12 @@ reachable and thus live"
   (with-gensyms (object objs)
     `(let ((,objs (list ,@objects)))
        (unwind-protect 
-        (progn
-          (dolist (,object ,objs)
-        (stored-checkout ,object))
-          ,@body)
-     (dolist (,object ,objs)
-       (stored-checkin ,object))))))
+            (progn
+              (dolist (,object ,objs)
+                (stored-checkout ,object))
+              ,@body)
+         (dolist (,object ,objs)
+           (stored-checkin ,object))))))
 
 ;;;; Cached slot value manipulation utils
 (defun refresh-cached-slots (instance slots)
@@ -1826,9 +1903,9 @@ reachable and thus live"
   (let ((sc (get-store instance)))
     (dolist (slot slots)
       (if (stored-slot-boundp sc instance slot)
-      (setf (slot-value instance slot)
-        (stored-slot-reader sc instance slot))
-      (slot-makunbound instance slot)))))
+          (setf (slot-value instance slot)
+                (stored-slot-reader sc instance slot))
+          (slot-makunbound instance slot)))))
 
 (defun flush-cached-slots (instance slots)
   "Assumes object is checked out"
@@ -1836,8 +1913,8 @@ reachable and thus live"
   (let ((sc (get-store instance)))
     (dolist (slot slots)
       (if (slot-boundp instance slot)
-      (stored-slot-writer sc (slot-value instance slot) instance slot)
-      (stored-slot-makunbound sc instance slot)))))
+          (stored-slot-writer sc (slot-value instance slot) instance slot)
+          (stored-slot-makunbound sc instance slot)))))
 
 ;;; Set API
 (defgeneric get-instances-by-class (stored-class)
@@ -1879,20 +1956,772 @@ highest value in the index"))
 (defmethod get-instance-by-value ((class stored-class) slot-name value)
   (awhen (find-inverted-index class slot-name)
     (multiple-value-bind (oid found?)
-    (get-value value it)
+        (get-value value it)
       (when found?
-    (store-recreate-instance (get-store it) oid)))))
+        (store-recreate-instance (get-store it) oid)))))
 
 (defmethod get-instance-by-value ((class symbol) slot-name value)
- (get-instance-by-value (find-class class) slot-name value))
+  (get-instance-by-value (find-class class) slot-name value))
 
 (defmethod get-instances-by-range ((class symbol) slot-name start end)
   (get-instances-by-range (find-class class) slot-name start end))
 
 (defmethod get-instances-by-range ((class stored-class) idx-name start end)
   (declare (type (or number symbol string null) start end)
-       (type symbol idx-name))
+           (type symbol idx-name))
   (map-inverted-index #'identity2 class idx-name :start start :end end :collect t))
+
+;;; Serde
+(declaim  (optimize (speed 3) (safety 0) (space 0) (debug 0)))
+(defconstant +fixnum32+              1)
+(defconstant +fixnum64+              2)
+(defconstant +char+                  3)
+(defconstant +single-float+          4)
+(defconstant +double-float+          5)
+(defconstant +negative-bignum+       6)
+(defconstant +positive-bignum+       7)
+(defconstant +rational+              8)
+;; split strings and encoding
+(defconstant +utf8-string+           9)
+(defconstant +utf16-string+         10)
+(defconstant +utf32-string+         11)
+;; String-based aggregates
+(defconstant +pathname+             12)
+(defconstant +symbol+               13)
+;; Stored by ID (requires instance table)
+(defconstant +stored-ref+       14)
+;; Stored by id+classname
+(defconstant +stored+           15)
+;; Composite objects
+(defconstant +cons+                 16)
+(defconstant +hash-table+           17)
+(defconstant +object+               18)
+(defconstant +array+                19)
+(defconstant +struct+               20)
+(defconstant +class+                21)
+(defconstant +complex+              22)
+;;(defconstant +oid-pair+             23)
+
+(defconstant +short-float+          30)
+
+(defconstant +nil+                  #x3F) ;63
+(defconstant +reserved-dbinfo+      #xF0) ;240
+
+;; Arrays
+(defconstant +fill-pointer-p+     #x20)
+(defconstant +adjustable-p+       #x40)
+
+(defconstant +2^31+ (expt 2 31))
+(defconstant +2^32+ (expt 2 32))
+(defconstant +2^63+ (expt 2 63))
+(defconstant +2^64+ (expt 2 64))
+
+;; Circularity Hash for Serializer
+(defvar *circularity-initial-hash-size* 50
+  "This is the default size of the circularity cache used in the serializer.")
+
+(defparameter *circularity-hash-queue* (make-array 20 :fill-pointer 0 :adjustable t)
+  "Circularity ids for the serializer.")
+
+(defparameter *serializer-lock* (sb-thread:make-mutex :name "serializer"))
+
+(defun get-circularity-hash ()
+  "Get a clean hash for object serialization"
+  (declare (type fixnum *circularity-initial-hash-size*))
+  (or
+   (sb-thread:with-mutex (*serializer-lock*)
+     (and (plusp (length *circularity-hash-queue*))
+          (vector-pop *circularity-hash-queue*)))
+   (make-hash-table :test 'eq :size *circularity-initial-hash-size*)))
+
+(defun release-circularity-hash (hash)
+  "Return the hash to the queue for reuse"
+  (unless (= (hash-table-count hash) 0)
+    (clrhash hash))
+  (sb-thread:with-mutex (*serializer-lock*)
+    (vector-push-extend hash *circularity-hash-queue*)))
+
+;; Circularity Hash for Deserializer
+
+;; NOTE: this strategy may create GC problems as it maintains references to
+;; potentially large objects
+(defparameter *circularity-vector-queue* (make-array 20 :fill-pointer 0 :adjustable t)
+  "A list of vectors used for linear deserialization.
+This works nicely because all ID's are written in integer order to the stream,
+so we can just write the next one into the array already knowing what the ID
+is.")
+
+(defun get-circularity-vector ()
+  "Get a fresh vector"
+  (or (sb-thread:with-mutex (*serializer-lock*)
+        (and (plusp (length *circularity-vector-queue*))
+             (vector-pop *circularity-vector-queue*)))
+      (make-array 50 :element-type t :initial-element nil 
+                     :fill-pointer 0 :adjustable t)))
+
+(defun release-circularity-vector (vector)
+  "Don't need to erase, just reset fill-pointer as it 
+   determines extent of valid data"
+  (setf (fill-pointer vector) 0)
+  (sb-thread:with-mutex (*serializer-lock*)
+    (vector-push-extend vector *circularity-vector-queue* 20)))
+
+;; Unicode
+(defun serialize-string (string bstream)
+  "Try to write each format type and bail if code is too big"
+  (declare (type buffer-stream bstream)
+           (type string string))
+  (cond ((and (not (equal "" string)) (> (char-code (char string 0)) #xFFFF))
+         (serialize-to-utf32le string bstream))
+        ;; Accelerate the common case where a character set is not Latin-1
+        ((and (not (equal "" string)) (> (char-code (char string 0)) #xFF))
+         (or (serialize-to-utf16le string bstream)
+             (serialize-to-utf32le string bstream)))
+        ;; Actually code pages > 0 are rare; so we can pay an extra cost
+        (t (or (serialize-to-utf8 string bstream)
+               (serialize-to-utf16le string bstream)
+               (serialize-to-utf32le string bstream)))))
+
+(defun serialize-to-utf8 (string bstream)
+  "Standard serialization"
+  (declare (type buffer-stream bstream)
+           (type string string))
+  (with-slots (buffer size (allocated length)) bstream
+    (declare ;; (type array-or-pointer-char buffer)
+             (type fixnum size allocated))
+    (let* ((saved-size (the fixnum (size bstream)))
+           (saved-pos (the fixnum (offset bstream)))
+           (characters (the fixnum (length string))))
+      (labels ((fail () 
+                 (setf (size bstream) saved-size)
+                 (setf (offset bstream) saved-pos)
+                 (return-from serialize-to-utf8 nil))
+               (succeed ()
+                 (return-from serialize-to-utf8 t)))
+        (buffer-write-byte +utf8-string+ bstream)
+        (buffer-write-int32 characters bstream)
+        (let ((needed (the fixnum (+ size characters))))
+          (declare (type fixnum needed))
+          (when (the boolean (> needed allocated))
+            (resize-buffer-stream bstream needed))
+          (etypecase string
+            (simple-string
+             (loop for i fixnum from 0 below characters do
+                      (let ((code (the fixnum 
+                                       (char-code 
+                                        (the character (schar string i))))))
+                        (declare (type fixnum code))
+                        (when (the boolean (> code #xFF)) (fail))
+                        (setf (deref buffer
+                                     (the fixnum (+ i size))) 
+                              code))))
+            (string
+             (loop for i fixnum from 0 below characters do 
+                      (let ((code (the fixnum
+                                       (char-code 
+                                        (the character (char string i))))))
+                        (declare (type fixnum code))
+                        (when (> code #xFF) (fail))
+                        (setf (deref buffer
+                                     (the fixnum (+ i size)))
+                              code)))))
+          (setf (size bstream) needed)
+          (succeed))))))
+
+(defun serialize-to-utf16le (string bstream)
+  "Serialize to utf16le compliant format unless contains code pages > 0"
+  (declare (type buffer-stream bstream)
+           (type string string))
+  (with-slots (buffer size (allocated length)) bstream
+    (let* ((saved-size (size bstream))
+           (saved-pos (offset bstream))
+           (characters (length string)))
+      (labels ((fail () 
+                 (setf (size bstream) saved-size)
+                 (setf (offset bstream) saved-pos)
+                 (return-from serialize-to-utf16le nil))
+               (succeed ()
+                 (return-from serialize-to-utf16le t)))
+        (buffer-write-byte +utf16-string+ bstream)
+        (buffer-write-int32 characters bstream)
+        (let ((needed (+ size (* characters 2)))
+              (char (etypecase string
+                      (simple-string #'schar)
+                      (string #'char))))
+          (when (> needed allocated)
+            (resize-buffer-stream bstream needed))
+          (loop for i fixnum from 0 below characters do
+                   (let ((code (char-code (funcall char string i))))
+                     (when (> code #xFFFF) (fail))
+                     (setf (deref buffer (+ (* i 2) size))
+                           ;;			  (coerce (ldb (byte 8 8) code) '(signed 8)))
+                           (ldb (byte 8 8) code))
+                     (setf (deref buffer (+ (* i 2) size 1))
+                           ;;			  (coerce (ldb (byte 8 0) code) '(signed 8))))))
+                           (ldb (byte 8 0) code))))
+          (incf size (* characters 2))
+          (succeed))))))
+
+(defun serialize-to-utf32le (string bstream)
+  "Serialize to utf32 compliant format unless contains code pages > 0"
+  (declare (type buffer-stream bstream)
+           (type string string))
+  (with-slots ((buffer buffer-stream-buffer)
+               (size buffer-stream-size)
+               (allocated buffer-stream-length))
+      bstream
+    (let ((characters (length string)))
+      (buffer-write-byte +utf32-string+ bstream)
+      (buffer-write-int32 characters bstream)
+      (let ((needed (+ size (* 4 characters)))
+            (char (etypecase string
+                    (simple-string #'schar)
+                    (string #'char))))
+        (when (> needed allocated)
+          (resize-buffer-stream bstream needed))
+        (loop for i fixnum from 0 below characters do
+                 (let ((code (char-code (funcall char string i))))
+                   (when (> code #x10FFFF) (error "Invalid unicode code type"))
+                   (setf (deref buffer (+ (* i 4) size 0))
+                         (ldb (byte 8 24) code))
+                   (setf (deref buffer (+ (* i 4) size 1))
+                         (ldb (byte 8 16) code))
+                   (setf (deref buffer (+ (* i 4) size 2))
+                         (ldb (byte 8 8) code))
+                   (setf (deref buffer (+ (* i 4) size 3))
+                         (ldb (byte 8 0) code)))))
+      (incf size (* characters 4))
+      t)))
+
+(defparameter *native-string-type*
+  #+(and sbcl sb-unicode) :utf-32le
+  #+(and sbcl (not sb-unicode)) :utf-8)
+
+(defun compatible-unicode-support-p (encoding-type)
+  "This is a crude hack and can be improved later, but
+we assume if you have code pages > 0 you need or use a 32-bit encoding. We
+assume that 16-bit unicode supporting lisps only support code page 0 and do
+not use conjugate pair coding and variable length unicode string
+representations (formal utf-16)."
+  (or (eq encoding-type :utf-8) 
+      (eq encoding-type *native-string-type*)
+      (and (eq encoding-type :utf-16le) (eq *native-string-type* :utf-32le))))
+
+(defun deserialize-string (bstream &key temp-string (type :utf-8))
+  (declare (type buffer-stream bstream)
+           (type (or null string) temp-string)
+           (type symbol type))
+  (let ((length (the fixnum (buffer-read-fixnum bstream)))
+        (pos (the fixnum (offset bstream))))
+    (case type
+      (:utf-8 
+       (incf (offset bstream) length)
+       (utf8-decode-from-sap (buffer bstream)))
+      (:utf-16le
+       (let ((string (or temp-string (make-string length :element-type 'character)))
+             (code 0))
+         (macrolet ((next-byte (offset)
+                      `(deref (buffer bstream) (+ (* i 2) pos ,offset))))
+           (declare (type simple-string string)
+                    (type fixnum length pos code))
+           (assert (subtypep (type-of string) 'simple-string))
+           (assert (compatible-unicode-support-p :utf-16le))
+           (loop for i fixnum from 0 below length 
+                 do (setf code (dpb (next-byte 0) (byte 8 8) 0))
+                    (setf code (dpb (next-byte 1) (byte 8 0) code))
+                    (setf (schar string i) (code-char code)))
+           (incf (offset bstream)
+             (* length 2)))
+         (the simple-string string)))
+      (:utf-32le
+       (macrolet ((next-byte (offset)
+                    `(deref (buffer bstream) (+ (* i 4) pos ,offset))))
+         (let ((string (or temp-string (make-string length :element-type 'character)))
+                (code 0))
+      (declare (type string string)
+               (type fixnum length pos code))
+      (assert (subtypep (type-of string) 'simple-string))
+      (assert (compatible-unicode-support-p :utf-32le))
+      (loop for i fixnum from 0 below length do
+               (setf code (dpb (next-byte 0) (byte 8 24) 0))
+               (setf code (dpb (next-byte 1) (byte 8 16) code))
+               (setf code (dpb (next-byte 2) (byte 8 8) code))
+               (setf code (dpb (next-byte 3) (byte 8 0) code))
+               (setf (char string i) (code-char code)))
+      (incf (offset bstream)
+        (* length 4))
+      (the simple-string string)))))))
+
+;; Serializer
+;; store-object?
+(defun serialize-object (frob bs sc)
+  "Serialize a lisp value into a buffer-stream."
+  (declare (type buffer-stream bs)
+           (ignorable sc))
+  (let ((lisp-obj-id -1)
+        (circularity-hash 
+          (unless (or (stringp frob) (symbolp frob) (numberp frob))
+            (get-circularity-hash))))
+    (declare (type fixnum lisp-obj-id))
+    (labels 
+        ((%next-object-id ()
+           (incf lisp-obj-id))
+         (%serialize (frob)
+           ;;	   (format t "Serializing ~A of type ~A~%" frob (type-of frob))
+           (typecase frob
+             (fixnum 
+              #+32-bit
+              (progn
+                (buffer-write-byte +fixnum32+ bs)
+                (buffer-write-fixnum32 frob bs))
+              #+64-bit
+              (progn
+                ;; (assert (eq (< #.most-positive-fixnum +2^63+) t))
+                (if (< (abs frob) +2^31+)
+                    (progn
+                      (buffer-write-byte +fixnum32+ bs)
+                      (buffer-write-fixnum32 frob bs))
+                    (progn
+                      (buffer-write-byte +fixnum64+ bs)
+                      (buffer-write-fixnum64 frob bs)))))
+             (null (buffer-write-byte +nil+ bs))
+             (symbol
+              (let ((sym-name (symbol-name frob)))
+                (declare (type string sym-name)
+                         (dynamic-extent sym-name))
+                (buffer-write-byte +symbol+ bs)
+                (serialize-string sym-name bs)
+                (let ((package (symbol-package frob)))
+                  (declare (dynamic-extent package)
+                           (type (or null package) package))
+                  (if package
+                      (serialize-string (package-name package) bs)
+                      (buffer-write-byte +nil+ bs)))))
+             ;;		(let ((package-name (gethash frob symbol-package-hash)))
+             ;;		  (unless package-name
+             ;;		    (setq package-name 
+             ;;			  (setf (gethash frob symbol-package-hash)
+             ;;				(package-name (symbol-package frob)))))
+             ;;		  (if package-name
+             ;;		      (serialize-string package-name bs)
+             ;;		      (buffer-write-byte +nil+ bs)))))
+             (string
+              (serialize-string frob bs))
+             (stored
+              (unless (valid-stored-reference-p frob sc)
+                (signal-cross-store-error frob sc))
+              #+todo
+              (when (store-marking-p sc)
+                (gc-mark-new-write frob))
+              (buffer-write-byte +stored-ref+ bs)
+              (buffer-write-oid (oid frob) bs))
+             #+lispworks ; TODO: how does this affect performance?
+             (short-float
+              (buffer-write-byte +short-float+ bs)
+              (buffer-write-float (coerce frob 'single-float) bs))
+             (single-float
+              (buffer-write-byte +single-float+ bs)
+              (buffer-write-float frob bs))
+             (double-float
+              (buffer-write-byte +double-float+ bs)
+              (buffer-write-double frob bs))
+             (standard-object
+              ;; NOTE: Add support for schema validation
+              (buffer-write-byte +object+ bs)
+              (let ((idp (gethash frob circularity-hash)))
+                (if idp (buffer-write-int32 idp bs)
+                    (progn
+                      (let ((id (%next-object-id)))
+                        (buffer-write-int32 id bs)
+                        (setf (gethash frob circularity-hash) id))
+                      (%serialize (type-of frob))
+                      (let ((svs (slots-and-values frob)))
+                        (%serialize (/ (length svs) 2))
+                        (loop for item in svs
+                              do (%serialize item)))))))
+             (integer
+              (serialize-bignum frob bs))
+             (rational
+              (buffer-write-byte +rational+ bs)
+              (%serialize (numerator frob))
+              (%serialize (denominator frob)))
+             (character
+              (buffer-write-byte +char+ bs)
+              ;; might be wide!
+              (buffer-write-uint32 (char-code frob) bs))
+             ;;	     (oid-pair
+             ;;	      (buffer-write-byte +oid-pair+ bs)
+             ;;	      (buffer-write-int32 (oid-pair-left frob) bs)
+             ;;	      (buffer-write-int32 (oid-pair-right frob) bs))
+             (cons
+              (buffer-write-byte +cons+ bs)
+              (let ((idp (gethash frob circularity-hash)))
+                (if idp (buffer-write-int32 idp bs)
+                    (progn
+                      (let ((id (%next-object-id)))
+                        (buffer-write-int32 id bs)
+                        (setf (gethash frob circularity-hash) id))
+                      (%serialize (car frob))
+                      (%serialize (cdr frob))))))
+             (pathname
+              (let ((pstring (namestring frob)))
+                (buffer-write-byte +pathname+ bs)
+                (serialize-string pstring bs)))
+             (complex 
+              (buffer-write-byte +complex+ bs)
+              (%serialize (realpart frob))
+              (%serialize (imagpart frob)))
+             (hash-table
+              (buffer-write-byte +hash-table+ bs)
+              (let ((idp (gethash frob circularity-hash)))
+                (if idp (buffer-write-int32 idp bs)
+                    (progn
+                      (let ((id (%next-object-id)))
+                        (buffer-write-int32 id bs)
+                        (setf (gethash frob circularity-hash) id))
+                      (%serialize (hash-table-test frob))
+                      (%serialize (hash-table-rehash-size frob))
+                      (%serialize (hash-table-rehash-threshold frob))
+                      (%serialize (hash-table-count frob))
+                      (loop for key being the hash-key of frob
+                            using (hash-value value)
+                            do 
+                               (%serialize key)
+                               (%serialize value))))))
+             (array
+              (buffer-write-byte +array+ bs)
+              (let ((idp (gethash frob circularity-hash)))
+                (if idp (buffer-write-int32 idp bs)
+                    (progn
+                      (let ((id (%next-object-id)))
+                        (buffer-write-int32 id bs)
+                        (setf (gethash frob circularity-hash) id))
+                      (buffer-write-byte 
+                       (logior (octet-from-element-type (array-element-type frob))
+                               (if (array-has-fill-pointer-p frob) 
+                                   +fill-pointer-p+ 0)
+                               (if (adjustable-array-p frob) 
+                                   +adjustable-p+ 0))
+                       bs)
+                      (let ((rank (array-rank frob)))
+                        (buffer-write-int32 rank bs)
+                        (loop for i fixnum from 0 below rank
+                              do (%serialize (array-dimension frob i))))
+                      (when (array-has-fill-pointer-p frob)
+                        (%serialize (fill-pointer frob)))
+                      (loop for i fixnum from 0 below (array-total-size frob)
+                            do
+                               (%serialize (row-major-aref frob i)))))))
+             (structure-object 
+              (buffer-write-byte +struct+ bs)
+              (let ((idp (gethash frob circularity-hash)))
+                (if idp (buffer-write-int32 idp bs)
+                    (progn
+                      (buffer-write-int32 (incf lisp-obj-id) bs)
+                      (setf (gethash frob circularity-hash) lisp-obj-id)
+                      (%serialize (type-of frob))
+                      (let ((svs (struct-slots-and-values frob)))
+                        (%serialize (/ (length svs) 2))
+                        (loop for item in svs
+                              do (%serialize item)))))))
+             (t (format t "Can't serialize a object: ~A of type ~A~%" frob (type-of frob))))))
+      (%serialize frob)
+      (when circularity-hash
+        (release-circularity-hash circularity-hash))
+      bs)))
+
+(defun serialize-bignum (frob bs)
+  "Serialize bignum to buffer stream"
+  (declare (type integer frob)
+           (type buffer-stream bs))
+  (let* ((num (abs frob))
+         (word-size (ceiling (/ (integer-length num) 32)))
+         (needed (* word-size 4))
+         (byte-spec (byte 32 0)))
+    (declare (type fixnum word-size needed)
+             (type cons byte-spec)
+             (ignorable byte-spec))
+    (if (< frob 0) 
+        (buffer-write-byte +negative-bignum+ bs)
+        (buffer-write-byte +positive-bignum+ bs))
+    (buffer-write-uint32 needed bs)
+    (loop for i fixnum from 0 below word-size 
+          ;; this ldb is consing on CMUCL/OpenMCL!
+          ;; there is an OpenMCL function which should work 
+          ;; and non-cons
+          do
+             #+cmu
+             (buffer-write-uint32 (%bignum-ref num i) bs) ;; should fail under 64-bit CMU
+             #-cmu
+             (buffer-write-uint32 (ldb (byte 32 (* 32 i)) num) bs)
+          )))
+
+;; Deserializer
+(defparameter *trace-deserializer* t)
+
+(defparameter *tag-table*
+  `((,+fixnum32+ . "fixnum32")
+    (,+fixnum64+ . "fixnum64")
+    (,+char+ . "char")
+    (,+short-float+ . "short-float")
+    (,+single-float+ . "single-float")
+    (,+double-float+ . "double float")
+    (,+negative-bignum+ . "neg bignum")
+    (,+positive-bignum+ . "pos bignum")
+    (,+rational+ . "rational number")
+    (,+nil+ . "null")
+    (,+utf8-string+ . "UTF8 string")
+    (,+utf16-string+ . "UTF16le string")
+    (,+utf32-string+ . "UTF32le string")
+    (,+symbol+ . "symbol")
+    (,+pathname+ . "pathname")
+    (,+stored+ . "persistent object (old)")
+    (,+stored-ref+ . "persistent object reference (new)")
+;;    (,+oid-pair+ . "oid pair for associations")
+    (,+cons+ . "cons cell")
+    (,+hash-table+ . "hash table")
+    (,+object+ . "standard object")
+    (,+array+ . "array")
+    (,+struct+ . "struct")
+    (,+class+ . "class")
+    (,+complex+ . "complex")))
+
+(defun enable-deserializer-tracing ()
+  (setf *trace-deserializer* t))
+
+(defun disable-deserializer-tracing ()
+  (setf *trace-deserializer* nil))
+
+(defun print-pre-deserialize-tag (tag)
+  (when *trace-deserializer*
+    (let ((tag-name (assoc tag *tag-table*)))
+      (if tag-name
+      (format t "Deserializing type: ~A~%" tag-name)
+      (progn
+        (format t "Unrecognized tag: ~A~%" tag)
+        (break))))))
+
+(defun print-post-deserialize-value (value)
+  (when *trace-deserializer*
+    (format t "Returned: ~A~%" value)))
+
+(define-condition store-deserialization-error (deserializer-error wrapped-error)
+  ()
+  (:documentation "A generalized deserialization error; something went wrong in deserialization
+that an application can test for explicitely. The enclosed condition is the
+actual error.")
+  (:report store-deserialization-error-report))
+
+(defun store-deserialization-error-report (condition stream)
+  (format stream "Elephant deserialization error:~%~A"
+          (wrapped-condition-value condition)))
+
+(define-condition store-type-deserialization-error (store-deserialization-error)
+  ((tag :initarg :type-tag :initform nil :accessor type-deserialization-error-tag))
+  (:documentation "This error is signaled when a tag is not
+                   recognized in the deserializer.  This error is
+                   more specific than the generalized error
+                   condition and aids in diagnosis.  This may be
+                   due to a mistake in counts in the serializer
+                   or a corruption of the source data"))
+
+(defun deserialize (buf-str sc &optional oid-only)
+  "Deserialize a lisp value from a buffer-stream."
+  (declare (type (or null buffer-stream) buf-str))
+  (let ((circularity-vector (get-circularity-vector)))
+    (labels 
+      ((lookup-id (id)
+     (if (>= id (fill-pointer circularity-vector)) nil
+         (aref circularity-vector id)))
+       (add-object (object)
+     (vector-push-extend object circularity-vector 50)
+     (1- (fill-pointer circularity-vector)))
+       (%deserialize (bs)
+     (declare (type buffer-stream bs))
+     (let ((tag (buffer-read-byte bs)))
+       (declare (type (alien char) tag)
+            (dynamic-extent tag))
+;;	   (print-pre-deserialize-tag tag)
+       (let ((value  
+       (cond
+         ((= tag +fixnum32+)
+          (buffer-read-fixnum32 bs))
+         ((= tag +fixnum64+)
+          (buffer-read-fixnum64 bs))
+         ((= tag +nil+) nil)
+         ((= tag +utf8-string+)
+          (deserialize-string bs :type :utf-8))
+         ((= tag +utf16-string+)
+          (deserialize-string bs :type :utf-16le))
+         ((= tag +utf32-string+)
+          (deserialize-string bs :type :utf-32le))
+         ((= tag +symbol+)
+          (let ((name (%deserialize bs))
+            (package (%deserialize bs)))
+        (translate-and-intern-symbol sc name package)))
+         ((= tag +stored+)
+          (let ((oid (buffer-read-oid bs))
+            (cname (%deserialize bs)))
+        (if oid-only oid
+            (store-recreate-instance sc oid cname))))
+         ((= tag +stored-ref+)
+          (let ((oid (buffer-read-oid bs)))
+        (if oid-only oid
+            (store-recreate-instance sc oid))))
+         #+lispworks
+         ((= tag +short-float+)
+          (coerce (buffer-read-float bs) 'short-float))
+         ((= tag +single-float+)
+          (buffer-read-float bs))
+         ((= tag +double-float+)
+          (buffer-read-double bs))
+         ((= tag +char+)
+          (code-char (buffer-read-uint32 bs)))
+         ((= tag +pathname+)
+          (parse-namestring (or (%deserialize bs) "")))
+         ((= tag +positive-bignum+) 
+          (deserialize-bignum bs (buffer-read-uint32 bs) t))
+         ((= tag +negative-bignum+) 
+          (deserialize-bignum bs (buffer-read-uint32 bs) nil))
+         ((= tag +rational+) 
+          (/ (the integer (%deserialize bs)) 
+         (the integer (%deserialize bs))))
+;;	     ((= tag +oid-pair+)
+;;	      (let ((pair (make-oid-pair)))
+;;		(setf (oid-pair-left pair) (buffer-read-fixnum32 bs))
+;;		(setf (oid-pair-right pair) (buffer-read-fixnum32 bs))))
+         ((= tag +cons+)
+          (let* ((id (buffer-read-int32 bs))
+             (maybe-cons (lookup-id id)))
+        (declare (type fixnum id))
+        (if maybe-cons maybe-cons
+            (let ((c (cons nil nil)))
+              (add-object c)
+              (setf (car c) (%deserialize bs))
+              (setf (cdr c) (%deserialize bs))
+              c))))
+         ((= tag +complex+)
+          (let ((rpart (%deserialize bs))
+            (ipart (%deserialize bs)))
+        (complex rpart ipart)))
+         ((= tag +hash-table+)
+          (let* ((id (buffer-read-int32 bs))
+             (maybe-hash (lookup-id id)))
+        (declare (type fixnum id))
+;;		(format t "~A ~A~%" maybe-hash id)
+        (if maybe-hash maybe-hash
+            (let* ((test (%deserialize bs))
+               (rehash-size (%deserialize bs))
+               (rehash-threshold (%deserialize bs))
+               (size (%deserialize bs))
+               (h (make-hash-table :test test
+                           :rehash-size rehash-size
+                           :rehash-threshold rehash-threshold
+                           :size (ceiling (* (ceiling (/ (+ size 10) rehash-threshold)) rehash-size)))))
+              (add-object h)
+              (loop for i fixnum from 0 below size
+                do
+                (setf (gethash (%deserialize bs) h)
+                  (%deserialize bs)))
+              h))))
+         ((= tag +object+)
+          (let* ((id (buffer-read-int32 bs))
+             (maybe-o (lookup-id id)))
+        (if maybe-o maybe-o
+            (let ((typedesig (%deserialize bs)))
+              ;; now, depending on what typedesig is, we might 
+              ;; or might not need to specify the store controller here..
+              (let ((o 
+                 (or (handler-case
+                   (if (subtypep typedesig 'stored)
+                       (recreate-instance-using-class (find-class typedesig) :sc sc)
+                       ;; if the this type doesn't exist in our object
+                       ;; space, we can't reconstitute it, but we don't want 
+                       ;; to abort completely, we will return a special object...
+                       ;; This behavior could be configurable; the user might 
+                       ;; prefer an abort here, but I prefer surviving...
+                       (make-instance typedesig))
+                   (error (v) (format t "got typedesig error: ~A ~A ~%" v typedesig)
+                      (list 'caught-error v typedesig)))
+                 (list 'uninstantiable-object-of-type typedesig))))
+            (if (listp o)
+                o
+                (progn
+                  (add-object o)
+                  (loop for i fixnum from 0 below (%deserialize bs)
+                    do
+                    (setf (slot-value o (%deserialize bs))
+                      (%deserialize bs)))
+                  o)))))))
+         ((= tag +array+)
+          (let* ((id (buffer-read-int32 bs))
+             (maybe-array (lookup-id id)))
+        (if maybe-array maybe-array
+            (let* ((flags (buffer-read-byte bs))
+               (a (make-array 
+                   (loop for i fixnum from 0 below 
+                     (buffer-read-int32 bs)
+                     collect (%deserialize bs))
+                   :element-type (element-type-from-octet
+                          (logand #x1f flags))
+                   :fill-pointer (/= 0 (logand +fill-pointer-p+ 
+                               flags))
+                   :adjustable (/= 0 (logand +adjustable-p+ 
+                             flags)))))
+              (when (array-has-fill-pointer-p a)
+            (setf (fill-pointer a) (%deserialize bs)))
+              (add-object a)
+              (loop for i fixnum from 0 below (array-total-size a)
+                do
+                (setf (row-major-aref a i) (%deserialize bs)))
+              a))))
+         ((= tag +struct+)
+          (let* ((id (buffer-read-int32 bs))
+             (maybe-o (lookup-id id)))
+        (if maybe-o maybe-o
+            (let ((typedesig (%deserialize bs)))
+              (let ((o (or (handler-case
+                       (funcall (struct-constructor typedesig))
+                     (error (v) (format t "got typedesig error for struct: ~A ~A ~%" v typedesig)
+                        (list 'caught-error v typedesig)))
+                   (list 'uninstantiable-object-of-type typedesig))))
+            (if (listp o) o
+                (progn
+                  (add-object o)
+                  (loop for i fixnum from 0 below (%deserialize bs) do
+                   (let ((name (%deserialize bs))
+                     (value (%deserialize bs)))
+                     (setf (slot-value o name) value)))
+                  o)))))))
+         (t (error 'stored-type-deserialization-error :type-tag tag)))))
+;;	     (print-post-deserialize-value value)
+         value))))
+      (etypecase buf-str 
+    (null (return-from deserialize nil))
+    (buffer-stream
+     (let ((result (%deserialize buf-str)))
+       (release-circularity-vector circularity-vector)
+       result))))))
+
+(defun int-byte-spec (position)
+  "Shared byte-spec peformance hack; not thread safe.."
+  (declare (type (unsigned-byte 24) position))
+  (byte 32 (* 32 position)))
+
+(defun deserialize-bignum (bs length positive)
+  (declare (type buffer-stream bs)
+           (type fixnum length)
+           (type boolean positive))
+  (let ((int-byte-spec (byte 32 0)))
+    (declare (dynamic-extent int-byte-spec)
+         (ignorable int-byte-spec))
+    (loop for i from 0 below (/ length 4)
+       for byte-spec = (byte 32 (* 32 i))
+          with num of-type integer = 0 
+          do
+             (setq num (dpb (buffer-read-uint32 bs) byte-spec num))
+          finally 
+             (return (if positive num (- num))))))
 
 ;;; Macros
 #+nil

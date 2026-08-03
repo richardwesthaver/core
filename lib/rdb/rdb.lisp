@@ -6,6 +6,8 @@
 (in-package :rdb)
 
 ;;; rdb-opts
+;; TODO 2026-08-02: this whole rdb-opts thing needs work - eliminate struct
+;; wrappers and use our 'options' api.
 (flet ((%mktbl (accessor opts)
          (let ((table (make-hash-table :test #'equal)))
            (mapc (lambda (x) (setf (gethash (car x) table) (cdr x)))
@@ -620,11 +622,16 @@ internal sap slots are initialized."
 
 ;;; Transaction DB
 (defstruct rdb-transaction-db 
+  (name "" :type string)
+  (db-opts (default-rdb-opts) :type rdb-opts)
   (sap nil :type (or null (alien (* rocksdb-transactiondb))))
+  ;; struct wrapper?
   (opts (rocksdb-transactiondb-options-create)))
 
 (defaccessor sap ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
-(defaccessor db-opts ((self rdb-transaction-db)) (rdb-transaction-db-opts self))
+(defaccessor db-opts ((self rdb-transaction-db)) (rdb-transaction-db-db-opts self))
+(defaccessor name ((self rdb-transaction-db)) (rdb-transaction-db-name self))
+(defaccessor db ((self rdb-transaction-db)) (sap self))
 
 (defmethod iter ((self rdb-transaction-db) &key cf (opts (rocksdb-readoptions-create)))
   (let ((col (etypecase cf
@@ -638,20 +645,55 @@ internal sap slots are initialized."
                 (transactiondb-create-iter-cf-raw sap col opts)
                 (transactiondb-create-iter-raw sap opts))))))
 
-(defstruct rdb-optimistic-transaction-db 
+(defstruct rdb-optimistic-transaction-db
+  (name "" :type string)
+  (db-opts (default-rdb-opts) :type rdb-opts)
   (sap nil :type (or null (alien (* rocksdb-optimistictransactiondb)))))
 
 (defaccessor sap ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
+(defaccessor db-opts ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-db-opts self))
+(defaccessor name ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-name self))
+(defaccessor db ((self rdb-optimistic-transaction-db)) (sap self))
 
-(defmethod make-db ((engine (eql :rocksdb-transaction)) &key path db-opts opts optimistic)
-  (let ((db-opts (or db-opts (default-rocksdb-options))))
-    (if optimistic
-        (make-rdb-optimistic-transaction-db 
-         :sap (open-optimistictransactiondb-raw db-opts path))
-        (let ((opts (or opts (rocksdb-transactiondb-options-create))))
-          (make-rdb-transaction-db
-           :sap (open-transactiondb-raw db-opts opts path)
-           :opts opts)))))
+(defaccessor* db-opt
+    ((self rdb-transaction-db) key) (db-opt (db-opts self) (string-downcase key))
+    (new (self rdb-transaction-db) key &key push)
+  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
+    (when push (push-sap (db-opts self) (string-downcase key)))))
+
+(defmethod push-opts ((self rdb-transaction-db))
+  (with-slots (db-opts) self
+    (push-sap* db-opts)))
+
+(defaccessor* db-opt
+    ((self rdb-optimistic-transaction-db) key) (db-opt (db-opts self) (string-downcase key))
+    (new (self rdb-optimistic-transaction-db) key &key push)
+  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
+    (when push (push-sap (db-opts self) (string-downcase key)))))
+
+(defmethod push-opts ((self rdb-optimistic-transaction-db))
+  (with-slots (db-opts) self
+    (push-sap* db-opts)))
+
+(defmethod open-db ((self rdb-transaction-db))
+  (with-slots (name sap opts db-opts) self
+    (if sap
+        (progn
+          (cerror "Ignore and continue" 'open-db-error 
+                  :db sap
+                  :message "Database is already open")
+          sap)
+        (setf sap (open-transactiondb-raw (or (sap db-opts) (push-opts self)) opts name)))))
+
+(defmethod open-db ((self rdb-optimistic-transaction-db))
+  (with-slots (name sap db-opts) self
+    (if sap
+        (progn
+          (cerror "Ignore and continue" 'open-db-error 
+                  :db sap
+                  :message "Database is already open")
+          sap)
+        (setf sap (open-optimistictransactiondb-raw (or (sap db-opts) (push-opts self)) name)))))
 
 (defmethod close-db ((self rdb-transaction-db) &key)
   (when-let ((sap (sap self)))

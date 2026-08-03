@@ -349,13 +349,13 @@ we can't determine endianness at compile-time.")
 
 (defun 64-bit-p () 
   "Return T on a 64-bit platform else NIL."
-  #+x86-64 t
-  #+x86 nil)
+  #+(or x86-64 64-bit) t
+  #+(or x86 32-bit) nil)
 
 (defun 32-bit-p () 
   "Return T on a 64-bit platform else NIL."
-  #+x86 t
-  #+x86-64 nil)
+  #+(or x86 32-bit) t
+  #+(or x86-64 64-bit) nil)
 
 ;;; Time
 (definline get-real-time-seconds ()

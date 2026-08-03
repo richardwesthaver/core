@@ -306,27 +306,26 @@
    :*register-arg-tns* :immediate-constant-sc :boxed-immediate-sc-p :*backend-sc-numbers* 
    :*primitive-objects* :*compilation-unit* :define-vop :define-source-transform :inline-vop :vop*
    :*backend-sbs* :*backend-sc-names* :emit :assemble
-   :without-scheduling :inst :inst*
-           :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
-           :*compile-progress* :*emit-cfasl* :*compile-component-hook*
+   :without-scheduling :inst :inst* :*compile-component-hook*
+   :primitive-object-name :primitive-object-lowtag :primitive-object-widetag :machine-ea
+   :*compile-progress* :*emit-cfasl* 
    :describe-component :describe-ir2-component :make-file-source-info :make-lisp-source-info
    :vop :primitive-type-name-of :ctype-of :type-specifier
    :primitive-object-size :find-saetp :find-saetp-by-ctype :deep-size 
    :get-simple-fun-instruction-model :asm :print-form-and-optimize :print-signaled-conditions
    :print-arguments :ea
    :with-ds-lambda-list-parts :fun-info
-   :without-compiler-notes
-           :checked-compile :runtime :asm-search :inspect-ir
-           :compile-condition :compile-condition-context-format
-           :compile-condition-context-arguments :compile-condition-description
-           :compile-file-error :compile-warned-warning
-           :compile-warned-error :compile-failed-warning
-           :compile-failed-error :*compile-file-failure-action*
-           :*compile-file-warning-action* :check-lisp-compile-warnings
-           :check-lisp-compile-results :reset-deferred-warnings
-           :save-deferred-warnings :check-deferred-warnings
-           :call-with-saved-deferred-warnings :with-saved-deferred-warnings
-           :checked-compile-file)
+   :without-compiler-notes :checked-compile-file
+   :checked-compile :runtime :asm-search :inspect-ir
+   :compile-condition :compile-condition-context-format
+   :compile-condition-context-arguments :compile-condition-description
+   :compile-file-error :compile-warned-warning
+   :compile-warned-error :compile-failed-warning
+   :compile-failed-error :*compile-file-failure-action*
+   :*compile-file-warning-action* :check-lisp-compile-warnings
+   :check-lisp-compile-results :reset-deferred-warnings
+   :save-deferred-warnings :check-deferred-warnings
+   :call-with-saved-deferred-warnings :with-saved-deferred-warnings)
   (:recycle :sb-c))
 
 (defpkg :std/type
@@ -335,7 +334,7 @@
   (:import-from :std/sym :format-symbol :with-gensyms)
   (:import-from :std/list :ensure-car)
   (:import-from :std/prim :definline)
-  (:import-from :sb-impl :sfunction)
+  (:import-from :sb-impl :sfunction :uniquely-identified-by-print-p)
   (:import-from :sb-c :parse-optional-arg-spec :parse-key-arg-spec :ds-lambda-list-matcher :parse-ds-lambda-list
    :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p)
   (:import-from :std/comp :*primitive-objects* :primitive-object-size 
@@ -354,99 +353,100 @@
    :type-hash-value :type-class-name-of :type-class-name :*type-cache-nonce*
    :*type-classes* :type-class
    :array-index :array-length
-   :index
-           :parse-optional-arg-spec :parse-key-arg-spec 
-           :ds-lambda-list-matcher :parse-ds-lambda-list
-           :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
-           :parse-meta-ds-lambda-list
-           #:negative-double-float :*ctype-hashsets*
-           #:abstract-ds-lambda-list
-           #:negative-fixnum-p
-           #:negative-float
-           #:negative-float-p
-           #:negative-long-float
-           #:negative-long-float-p
-           #:negative-rational
-           #:negative-rational-p
-           #:negative-real
-           #:negative-single-float-p
-           #:non-negative-double-float
-           #:non-negative-double-float-p
-           #:non-negative-fixnum
-           #:non-negative-fixnum-p
-           #:non-negative-float
-           #:non-negative-float-p
-           #:non-negative-integer-p
-           #:non-negative-long-float
-           #:non-negative-rational
-           #:non-negative-real-p
-           #:non-negative-short-float-p
-           #:non-negative-single-float
-           #:non-negative-single-float-p
-           #:non-positive-double-float
-           #:non-positive-double-float-p
-           #:non-positive-fixnum
-           #:non-positive-fixnum-p
-           #:non-positive-float
-           #:non-positive-float-p
-           #:non-positive-integer
-           #:non-positive-rational
-           #:non-positive-real
-           #:non-positive-real-p
-           #:non-positive-short-float
-           #:non-positive-short-float-p
-           #:non-positive-single-float-p
-           #:positive-double-float
-           #:positive-double-float-p
-           #:positive-fixnum
-           #:positive-fixnum-p
-           #:positive-float
-           #:positive-float-p
-           #:positive-integer
-           #:positive-rational
-           #:positive-real
-           #:positive-real-p
-           #:positive-short-float
-           #:positive-short-float-p
-           #:positive-single-float
-           #:positive-single-float-p
-           #:negative-integer
-           #:negative-double-float-p
-           #:negative-fixnum
-           #:negative-integer
-           #:negative-integer-p
-           #:negative-real-p
-           #:negative-short-float
-           #:negative-short-float-p
-           #:negative-single-float
-           #:non-negative-integer
-           #:non-negative-long-float-p
-           #:non-negative-rational-p
-           #:non-negative-real
-           #:non-negative-short-float
-           #:non-positive-integer-p
-           #:non-positive-long-float
-           #:non-positive-long-float-p
-           #:non-positive-rational-p
-           #:non-positive-single-float
-           #:integer-type-length
-           #:coercef
-           #:octet
-           #:octet-vector
-           #:simple-octet-vector
-           #:octet-vector-p
-           #:positive-integer-p
-           #:positive-long-float
-           #:positive-long-float-p
-           #:positive-rational-p
-           #:of-type
-           #:type=
-           #:word :u1 :u2 :u3 :u4 :u5 :u6 :u7 :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
-           :*simple-types* :*primitive-object-table* 
-           :*simple-type-table* :*core-types*
-           :*core-type-table* :register-type-id
-           :reset-core-types :prim-type 
-           :type-id :simple-type-id))
+   :index :uniquely-identified-by-print-p
+   :parse-optional-arg-spec :parse-key-arg-spec 
+   :ds-lambda-list-matcher :parse-ds-lambda-list
+   :meta-abstractify-ds-lambda-list :ds-lambda-list-match-p
+   :parse-meta-ds-lambda-list
+   #:negative-double-float :*ctype-hashsets*
+   #:abstract-ds-lambda-list
+   #:negative-fixnum-p
+   #:negative-float
+   #:negative-float-p
+   #:negative-long-float
+   #:negative-long-float-p
+   #:negative-rational
+   #:negative-rational-p
+   #:negative-real
+   #:negative-single-float-p
+   #:non-negative-double-float
+   #:non-negative-double-float-p
+   #:non-negative-fixnum
+   #:non-negative-fixnum-p
+   #:non-negative-float
+   #:non-negative-float-p
+   #:non-negative-integer-p
+   #:non-negative-long-float
+   #:non-negative-rational
+   #:non-negative-real-p
+   #:non-negative-short-float-p
+   #:non-negative-single-float
+   #:non-negative-single-float-p
+   #:non-positive-double-float
+   #:non-positive-double-float-p
+   #:non-positive-fixnum
+   #:non-positive-fixnum-p
+   #:non-positive-float
+   #:non-positive-float-p
+   #:non-positive-integer
+   #:non-positive-rational
+   #:non-positive-real
+   #:non-positive-real-p
+   #:non-positive-short-float
+   #:non-positive-short-float-p
+   #:non-positive-single-float-p
+   #:positive-double-float
+   #:positive-double-float-p
+   #:positive-fixnum
+   #:positive-fixnum-p
+   #:positive-float
+   #:positive-float-p
+   #:positive-integer
+   #:positive-rational
+   #:positive-real
+   #:positive-real-p
+   #:positive-short-float
+   #:positive-short-float-p
+   #:positive-single-float
+   #:positive-single-float-p
+   #:negative-integer
+   #:negative-double-float-p
+   #:negative-fixnum
+   #:negative-integer
+   #:negative-integer-p
+   #:negative-real-p
+   #:negative-short-float
+   #:negative-short-float-p
+   #:negative-single-float
+   #:non-negative-integer
+   #:non-negative-long-float-p
+   #:non-negative-rational-p
+   #:non-negative-real
+   #:non-negative-short-float
+   #:non-positive-integer-p
+   #:non-positive-long-float
+   #:non-positive-long-float-p
+   #:non-positive-rational-p
+   #:non-positive-single-float
+   #:integer-type-length
+   #:element-type-from-octet #:octet-from-element-type
+   #:coercef
+   #:octet
+   #:octet-vector
+   #:simple-octet-vector
+   #:octet-vector-p
+   #:positive-integer-p
+   #:positive-long-float
+   #:positive-long-float-p
+   #:positive-rational-p
+   #:of-type
+   #:type=
+   #:word :u1 :u2 :u3 :u4 :u5 :u6 :u7 :s1 :s2 :s3 :s4 :s5 :s6 :s7 :s8 :s16 :s24 :s32 :s64
+   :*simple-types* :*primitive-object-table* 
+   :*simple-type-table* :*core-types*
+   :*core-type-table* :register-type-id
+   :reset-core-types :prim-type 
+   :type-id :simple-type-id))
 
 (defpkg :std/string
   (:documentation "Standard string utilities.")
@@ -488,7 +488,8 @@
    :word-delimiter-p
    :at-delimiter-p
    :*word-delimiters*
-   :split-whitespace))
+   :split-whitespace
+   :string-byte-length))
 
 (defpkg :std/num
   (:use :cl)
@@ -710,6 +711,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :data :name :tags :shallow-copy-object
    :exec :copy-object :safe-superclasses :run-object
    :make :description
+   :struct-constructor
    :slot-boundp* :slot-values
    :slot-boundp! :define-class-map
    :explore :with-fslots

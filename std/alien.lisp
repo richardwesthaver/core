@@ -75,7 +75,7 @@
            (simple-array 
             (let ((aty (element-type-to-alien (car elt)))) ;; CDR should be '((*))
               (values `(:* ,aty)
-                      (if (and (listp aty) (eql (car aty) 'complex)) 
+                      (if (and (listp aty) (eql (car aty) 'complex))
                           aty
                           `(* ,aty)))))))))))
 

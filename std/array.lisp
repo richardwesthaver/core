@@ -383,10 +383,9 @@ element-type TYPE and default value INIT."
                      :finally (return (values seq perm)))))))
     (setf (symbol-function 'sort-index) (compile nil code)
           (documentation 'sort-index 'function)
-          "
-  Sorts a lisp-vector in-place, by using the function @arg{predicate} as the
-  order. Also computes the permutation action which would sort the original
-  sequence @arg{seq} when applied.")
+          "Sort a lisp-vector in-place, by using the function PREDICATE as the
+order. Also compute the permutation action which would sort the original SEQ
+when applied.")
     (define-compiler-macro sort-index (&whole form seq predicate &key key)
       (declare (ignorable form))
       (let ((t-code (maptree-eki #'(lambda (x)

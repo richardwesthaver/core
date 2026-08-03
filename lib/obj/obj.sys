@@ -3,7 +3,7 @@
   "Lisp OBJect library.
 This system provides a wide range of CLOS/MOP extensions used throughout the
 core."
-  :require (:std)
+  :require (:std :io)
   :components 
   ((:pkg "pkg" :feature :obj :internal-package :obj-int)
    (:mod "meta"

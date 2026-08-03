@@ -499,7 +499,6 @@ push."
 		  (t
 		   (condition-wait %pop lock)))))))
 
-
 (defun push-vector-queue (obj queue)
   "Push OBJ to QUEUE with locking."
   (declare (vector-queue queue))

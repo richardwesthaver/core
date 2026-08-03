@@ -143,13 +143,12 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db :db (make-db :rdb :name (format nil "/tmp/~A" (random-chars 4)))
+  (with-db (db :db (make-db :rdb-transaction :path (format nil "/tmp/~A" (random-chars 4)))
                :columns nil
                :open t
                :close t
                :destroy t)
-    (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4)))
-    (istype 'rdb-transaction-db (transaction-db db))
+    ;; (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4)))
     (let ((txn1 (make-transaction db)))
       (isnt (abort-transaction txn1)))
     (let ((txn2 (make-transaction db :name "foofn" :optimistic t)))
@@ -157,7 +156,7 @@
       (rocksdb-transaction-set-savepoint (sap txn2))
       (isequal (name txn2) "foofn")
       (abort-transaction txn2))
-    (with-transaction (:db db :txn (make-transaction (transaction-db db)))
+    (with-transaction (:db db :txn (make-transaction db))
       (print (istype 'rdb-transaction *transaction*)))))
 
 (deftest merge-op ()
