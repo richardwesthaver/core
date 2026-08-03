@@ -783,6 +783,12 @@ functions and via PEEKED."))
    (offset :initform 0 :initarg :offset :accessor offset))
   (:metaclass io-vector-class))
 
+(defun reset-buffer-stream (bs)
+  "'Empty' the buffer-stream."
+  (declare #-ccl (type buffer-stream bs))
+  (setf (size bs) 0)
+  (setf (offset bs) 0))
+
 (defun grab-buffer-stream ()
   "Grab a buffer-stream from the *buffer-streams* resource pool."
   (or (with-mutex (*buffer-streams-lock*)
@@ -806,3 +812,30 @@ stream to the pool on exit."
        (progn
      ,@(loop for name in names 
           collect (list 'return-buffer-stream name))))))
+
+;; HACK 2026-08-03: 
+(definline copy-bufs (dst dst-offset src src-offset len)
+  (memcpy (sb-sys:sap+ dst dst-offset) (sb-sys:sap+ src src-offset) len))
+
+(defun resize-buffer-stream (bs length)
+  "Resize the underlying buffer of a buffer-stream, copying the old data."
+  (declare #-ccl (type buffer-stream bs)
+           (type fixnum length))
+  (with-slots ((buf buffer) size (len buffer-stream-length)) bs
+    (declare (fixnum size len)
+             ;; ((alien (* sb-alien:unsigned-char)) buf)
+             )
+    (when (> length len)
+      (let ((newlen (max length (* len 2))))
+    (declare (type fixnum newlen))
+        ;; FIXME: async unwinds between alloc of newbuf and free of buf
+        ;; will leave us with a memory leak of size NEWLEN.
+        (let ((newbuf (foreign-alloc :unsigned-char :count newlen)))
+          ;; technically we just need to copy from position to size.....
+          (when (null-pointer-p newbuf)
+            (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
+          (copy-bufs newbuf 0 buf 0 size)
+          (free buf)
+          (setf buf newbuf)
+          (setf len newlen)
+          nil)))))
