@@ -2532,7 +2532,7 @@ actual error.")
                    due to a mistake in counts in the serializer
                    or a corruption of the source data"))
 
-(defun deserialize (buf-str sc &optional oid-only)
+(defun deserialize-object (buf-str sc &optional oid-only)
   "Deserialize a lisp value from a buffer-stream."
   (declare (type (or null buffer-stream) buf-str))
   (let ((circularity-vector (get-circularity-vector)))

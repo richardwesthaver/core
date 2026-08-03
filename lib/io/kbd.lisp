@@ -822,43 +822,6 @@ can't be opened, else returns nil."
       (multiple-value-bind (s ms type code val) (device-read-event dev)
         (push (list type code val (cons s ms)) ret)))))
 
-(defconfig kbd-config ()
-  ((device)
-   (prefix-key :initform (kbd "s-x") :accessor prefix-key)
-   (escape-key :initform (kbd "C-g") :accessor escape-key)
-   (keymaps :initform nil :accessor keymaps)))
-
-(defmethod make-config ((self (eql :kbd)) &rest args) (apply 'make-instance 'kbd-config args))
-
-(defmethod load-ast ((self kbd-config))
-  (with-slots (ast) self
-    (sb-int:doplist (k v) ast
-      (when-let ((s (find-symbol (format nil "~A" k) :io/kbd)))
-        (unless (null v)
-          (setf v
-                (case k
-                  ((or :escape-key :prefix-key) (parse-key v))
-                  (t v)))
-          (setf (slot-value self s) v))))
-      (unless *keep-ast* (setf (ast self) nil))))
-
-(defmethod load-config ((self (eql :kbd)) (from pathname) &key)
-  (let ((c (make-config :kbd)))
-    (with-safe-io-syntax (:io/kbd)
-      (read-ast c from)
-      (load-ast c))
-    (setf (ast c) nil)
-    c))
-
-(defmethod load-config ((self (eql :kbd)) (from list) &key)
-  (let ((c (make-config :kbd)))
-    (sb-int:doplist (k v) from
-      (when-let ((s (find-symbol (format nil "~A" k) :io/kbd)))
-        (unless (null v)
-          (case k
-            ((or :escape-key :prefix-key) (setf (slot-value c s) (parse-key v)))))))
-    c))
-
 (defmethod init ((self (eql :kbd)) &key (input "/dev/input/") keysyms)
   (load-kbd-libs)
   (when keysyms (load-xkb-keysyms-file keysyms))

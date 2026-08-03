@@ -244,7 +244,7 @@
 
 (defpkg :io/kbd
   (:nicknames :kbd)
-  (:use :cl :std :io/proto :xkb :evdev :sb-alien :config :ast)
+  (:use :cl :std :io/proto :xkb :evdev :sb-alien)
   (:export :kbd-error
    :load-kbd-libs :keyboard
    :keysym :define-keysym
@@ -294,7 +294,8 @@
    :key-numlock :numlock-key
    :key-altgr :key=
    :find-key :key-eq
-   :kbd-config :prefix-key
+   :kbd-config ; late bound in OBJ/CONFIG.LISP
+   :prefix-key
    :escape-key :keymaps
    :+unbound-keysym+))
 

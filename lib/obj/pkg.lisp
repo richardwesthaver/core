@@ -381,8 +381,7 @@ protocol.")
   (:nicknames :config)
   (:use :cl :std :ast)
   (:export :config :make-config :find-config
-   :config-find :config-get :defconfig
-           :load-config))
+   :config-find :config-get :defconfig :load-config))
 
 (defpkg :obj/color
   (:nicknames :color)
@@ -984,6 +983,8 @@ protocol.")
    #:cross-store-error
    #:signal-cross-store-error
    #:with-store
-   #:defstore))
+   #:defstore
+   #:serialize-object
+   #:deserialize-object))
 
 (eval-always (defvar *obj-packages* *component-packages*))
