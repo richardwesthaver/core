@@ -60,9 +60,9 @@ $ sbcl --script bootstrap.lisp
         :sys
         :keyutils
         :tree-sitter
-        :obj
         :uring
         :io
+        :obj
         :log
         :arrow
         :glib

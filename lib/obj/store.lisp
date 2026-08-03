@@ -2457,8 +2457,11 @@ representations (formal utf-16)."
           )))
 
 ;; Deserializer
+
+#+nil
 (defparameter *trace-deserializer* t)
 
+#+nil
 (defparameter *tag-table*
   `((,+fixnum32+ . "fixnum32")
     (,+fixnum64+ . "fixnum64")
@@ -2486,12 +2489,15 @@ representations (formal utf-16)."
     (,+class+ . "class")
     (,+complex+ . "complex")))
 
+#+nil
 (defun enable-deserializer-tracing ()
   (setf *trace-deserializer* t))
 
+#+nil
 (defun disable-deserializer-tracing ()
   (setf *trace-deserializer* nil))
 
+#+nil
 (defun print-pre-deserialize-tag (tag)
   (when *trace-deserializer*
     (let ((tag-name (assoc tag *tag-table*)))
@@ -2501,6 +2507,7 @@ representations (formal utf-16)."
         (format t "Unrecognized tag: ~A~%" tag)
         (break))))))
 
+#+nil
 (defun print-post-deserialize-value (value)
   (when *trace-deserializer*
     (format t "Returned: ~A~%" value)))
