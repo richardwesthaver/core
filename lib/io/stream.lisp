@@ -810,6 +810,7 @@ functions and via PEEKED."))
 
 (defparameter *bsref-range-check* t)
 
+;; HACK 2026-08-03: consider passing in the element-type to BSREF - would simplify pointer arithmetic in the IO.
 (defun bsref (x i)
   (declare (type buffer-stream x))
   (let ((n (slot-value (the buffer-stream x) 'length)))
@@ -903,13 +904,13 @@ stream to the pool on exit."
              (alien-octets buf))
     (when (> length len)
       (let ((newlen (max length (* len 2))))
-    (declare (type fixnum newlen))
-        ;; FIXME: async unwinds between alloc of newbuf and free of buf
-        ;; will leave us with a memory leak of size NEWLEN.
-        ;; technically we just need to copy from position to size.....
+        (declare (type fixnum newlen))
+        ;; FIXME: async unwinds between alloc of newbuf and free of buf will
+        ;; leave us with a memory leak of size NEWLEN.  
         (let ((new (make-instance (buffer-stream newlen))))
           (when (null-pointer-p (alloc new))
             (error "Failed to allocate buffer stream of length ~A.  allocate-foreign-object returned a null pointer" newlen))
+        ;; technically we just need to copy from position to size.....
           (copy-bufs (buffer new) 0 buf 0 size)
           (free bs)
           (setf bs new)
