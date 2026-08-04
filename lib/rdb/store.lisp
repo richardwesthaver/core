@@ -32,6 +32,7 @@
 ;;; Code:
 (in-package :rdb)
 
+;;; Store Spec
 ;; (:rdb "/tmp/rdb-store-test")
 (defun rdb-store-spec-p (spec)
   (and (eq (first spec) :rdb)
@@ -40,13 +41,13 @@
          (string t)
          (t nil))))
 
-;; BTrees are Column Families
+;;; BTrees
 (defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
 (defmethod iter ((self rdb-btree) &key)
   (iter (sap self)))
-
+;;; Store
 (defclass rdb-store (store rdb-database)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
@@ -76,6 +77,10 @@ serialized object schemas."))
 
 ;; (build-btree (make-instance 'rdb-store))
 
+;;; Interface
+;; the following methods up to the open/close section use BUFFER-STREAMs,
+;; Transactions, and the default store serde - SERIALIZE-OBJECT and
+;; DESERIALIZE-OBJECT.
 (defmethod get-value (key (bt rdb-btree))
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
 *STORE*)."
@@ -889,6 +894,7 @@ underlying DBIter C struct."))
              (setf (cursor-initialized-p cursor) nil))
       (error "Can't delete with uninitialized cursor!")))
 
+;;; Open/Close
 (defmethod open-store ((store rdb-store) &key (recover t)
                                               register
                                               log)
@@ -908,6 +914,7 @@ underlying DBIter C struct."))
   "Close the underlying RocksDB instance."
   (close-db store))
 
+;;; IDs
 ;; 0-15 reserved cuz why not
 (defvar *rdb-oid* 15)
 (defvar *rdb-cid* 15)

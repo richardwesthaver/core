@@ -2254,7 +2254,7 @@ representations (formal utf-16)."
         (* length 4))
       (the simple-string string)))))))
 
-;; Serializer
+;;; Serializer
 ;; store-object?
 (defun serialize-object (frob bs sc)
   "Serialize a lisp value into a buffer-stream."
@@ -2458,8 +2458,7 @@ representations (formal utf-16)."
              (write-buffer-uint32 (ldb (byte 32 (* 32 i)) num) bs)
           )))
 
-;; Deserializer
-
+;;; Deserializer
 #+nil
 (defparameter *trace-deserializer* t)
 

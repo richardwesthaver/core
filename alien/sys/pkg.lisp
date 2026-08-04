@@ -25,4 +25,5 @@
    :at-fdcwd :block-uring-cmd-discard
    :open-how :msghdr :cmsghdr :linger
    :io-vector :io-vec
+   :io-octet-vector
    :io-vector-class :io-vector-length))

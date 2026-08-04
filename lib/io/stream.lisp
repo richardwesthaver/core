@@ -798,6 +798,9 @@ functions and via PEEKED."))
                  (setf (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
+(defun make-buffer-stream (length)
+  (make-instance (buffer-stream length)))
+
 (defmethod element-type ((self buffer-stream)) 'octet)
 
 (defmethod alloc ((self buffer-stream))
@@ -807,6 +810,9 @@ functions and via PEEKED."))
   (unless (or (not (sap self)) (null-pointer-p (sap self)))
     (foreign-free (sap self)))
   (setf (sap self) (null-pointer)))
+
+(defmethod reset ((self buffer-stream) &key)
+  (reset-buffer-stream self))
 
 (defparameter *bsref-range-check* t)
 
@@ -870,7 +876,7 @@ functions and via PEEKED."))
   (or (with-mutex (*buffer-streams-lock*)
         (and (plusp (length *buffer-streams*))
              (vector-pop *buffer-streams*)))
-      (buffer-stream 10)))
+      (make-instance (buffer-stream 10))))
 
 (defun return-buffer-stream (bs)
   "Return a buffer-stream to the *buffer-streams* resource pool."
@@ -1139,9 +1145,6 @@ stream to the pool on exit."
                (write-alien-double-float buf d size)
                (setf size needed)
                nil))))
-  (string
-   (:read ())
-   (:write ()))
   (octet-vector
    (:read (bs)
           "Read the whole buffer into a fresh octet vector."

@@ -55,6 +55,13 @@ rocksdb_pinnableslice_t for RDB-SLICE)."))
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
+(defun make-io-vec (type length)
+  (make-instance (io-vec type length)))
+
+(defun make-io-octet-vec (length)
+  "Create a new IO-VECTOR of type OCTET with the provided LENGTH. The result is memoized."
+  (make-instance (io-vec 'octet length) :sap (alien-sap (make-alien unsigned-char length))))
+
 (defclass io-vector ()
   ((sap :initarg :sap :initform nil :accessor sap))
   (:metaclass io-vector-class)
@@ -79,9 +86,9 @@ rocksdb_pinnableslice_t for RDB-SLICE)."))
                        (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
-(defun io-octet-vector (length)
+(defun make-io-vector (type length)
   "Create a new IO-VECTOR of type OCTET with the provided LENGTH. The result is memoized."
-  (make-instance (io-vector 'octet length) :sap (alien-sap (make-alien unsigned-char length))))
+  (make-instance (io-vector type length)))
 
 ;; alloc free
 ;; (defun ioref (x i))
