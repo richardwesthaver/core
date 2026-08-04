@@ -2211,7 +2211,9 @@ representations (formal utf-16)."
   (declare (type buffer-stream bstream)
            (type (or null string) temp-string)
            (type symbol type))
-  (let ((length (the fixnum (read-buffer-fixnum bstream)))
+  ;; NOTE: this used to be specified as ~read-buffer-fixnum~ - we force 64-bit
+  ;; even though 32-bit platforms may not support it..
+  (let ((length (the fixnum (read-buffer-fixnum64 bstream)))
         (pos (the fixnum (offset bstream))))
     (case type
       (:utf-8 

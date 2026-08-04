@@ -1175,7 +1175,10 @@ define the core ALIEN systems.")
    :read-alien-signed-byte-64 :read-alien-unsigned-byte-32
    :read-alien-unsigned-byte-64 :read-alien-single-float
    :read-alien-double-float :write-alien-signed-byte-32
+   :read-alien-fixnum32 :read-alien-fixnum64
+   :write-alien-fixnum32 :write-alien-fixnum64
    :write-alien-fixnum :write-alien-unsigned-byte-32
+   :write-alien-octet-vector :read-alien-octet-vector
    :write-alien-unsigned-byte-64 :write-alien-single-float
    :write-alien-double-float :offset-char-pointer
    :write-alien-signed-byte-64 :*cpus*
