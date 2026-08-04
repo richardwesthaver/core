@@ -26,4 +26,6 @@
    :open-how :msghdr :cmsghdr :linger
    :io-vector :io-vec
    :io-octet-vector
-   :io-vector-class :io-vector-length))
+   :io-vector-class :io-vector-length
+   :make-io-vector :make-io-vec
+   :make-io-octet-vec))
