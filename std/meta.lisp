@@ -619,3 +619,12 @@ given the name and specializer."
   "Control the behavior of the DEFSHAM macro.")
 
 ;; (defmacro defsham ((name &rest opts) &body slots))
+
+;;; Early IDs
+;; early types for the STORE serialization
+(deftype oid () '(unsigned-byte 64))
+(deftype cid () '(unsigned-byte 32))
+(defgeneric oid (self))
+(defgeneric (setf oid) (new self))
+(defgeneric cid (self))
+(defgeneric (setf cid) (new self))

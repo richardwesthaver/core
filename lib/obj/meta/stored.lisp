@@ -22,9 +22,6 @@
 ;; support for swapping out multiple stores? compatibility matrix?
 (defvar *store-table* (make-hash-table))
 
-(deftype oid () '(unsigned-byte 64))
-(deftype cid () '(unsigned-byte 32))
-
 ;;; MOP
 (defclass stored ()
   ((oid :initarg :oid :accessor oid)
