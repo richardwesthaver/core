@@ -39,6 +39,7 @@
  ((:tests
    :require (:rt :io :uring)
    :components ((:file "tests")))
+  (:io :buffer)
   (:proto :chunky
    :description "Chunked streams."
    :constants ()

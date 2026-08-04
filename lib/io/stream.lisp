@@ -987,4 +987,53 @@ stream to the pool on exit."
    (:write ()))
   (string
    (:read ())
-   (:write ())))
+   (:write ()))
+  (octet-vector
+   (:read (bs)
+          "Read the whole buffer into a fresh octet vector."
+          (declare (buffer-stream bs))
+          (let* ((position (offset bs))
+                 (size (size bs))
+                 (vlen (- size position)))
+            (declare (type fixnum size vlen position))
+            (when (>= vlen 0)
+              (let ((v (make-array vlen :element-type '(unsigned-byte 8))))
+                  (with-vector-sap (dst-ptr v)
+                    (memcpy dst-ptr (sb-sys:sap+ (buffer bs) position) vlen)
+                    v)))))
+   (:write (bv bs)
+           "Write an octet-vector into a buffer-stream, replacing the underlying buffer."
+           (declare (buffer-stream bs))
+           (let* ((position (offset bs))
+                  (size (size bs))
+                  (vlen (length bv))
+                  (writable (max vlen (- size position))))
+             (declare (fixnum position size vlen writable))
+             (unless (zerop writable)
+               (with-vector-sap (src-ptr bv)
+                 (memcpy (buffer bs) src-ptr writable)
+                 bs)))))
+  (oid
+   (:write (i bs) (write-buffer-fixnum32 i bs))
+   (:read (bs) (read-buffer-fixnum32 bs))))
+
+(defun read-buffer-to-offset (arry offset bs)
+  "Read contents of buffer-stream and write them into array at offset.
+Buffer relative."
+  (declare (buffer-stream bs)
+           (fixnum offset))
+  (let* ((position (offset bs))
+         (size (size bs))
+         (vlen (- size position)))
+    (assert (< (+ offset size) (length arry)))
+    (if (>= vlen 0)
+    (dotimes (i vlen arry)
+      (setf (aref arry (+ i offset))
+            (read-buffer-byte bs))))))
+
+(defun write-buffer-from-offset (arry offset length bs)
+  "Write array contents into buffer stream. Buffer relative."
+  (declare (fixnum offset)
+           (buffer-stream bs))
+  (dotimes (i length arry)
+    (write-buffer-byte (aref arry (+ i offset)) bs)))

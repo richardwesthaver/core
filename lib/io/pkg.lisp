@@ -67,7 +67,13 @@
    :decoding-stream :+buffer-size+
    :alien-stream
    :buffered-stream :buffer-stream
-   :dec-fill-buffer :needs-to-fill-buffer-p))
+   :dec-fill-buffer :needs-to-fill-buffer-p
+   :read-buffer :write-buffer :read-buffer-byte :write-buffer-byte
+   :read-buffer-uint32 :read-buffer-int32 :read-buffer-fixnum32 :read-buffer-fixnum64
+   :write-buffer-uint32 :write-buffer-int32 :write-buffer-fixnum32 :write-buffer-fixnum64
+   :read-buffer-oid :write-buffer-oid :read-buffer-float :write-buffer-float
+   :read-buffer-double :write-buffer-double :read-buffer-octet-vector :write-buffer-octet-vector
+   :read-buffer-to-offset :write-buffer-from-offset :reset-buffer-stream :with-buffer-streams))
 
 (defpkg :io/static
   (:use :cl :std :sb-alien :io/stream :io/proto)
