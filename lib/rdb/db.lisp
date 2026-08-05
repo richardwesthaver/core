@@ -4,9 +4,6 @@
 
 ;;; Commentary:
 
-;; The DB protocol is also partially implemented by the low-level structures
-;; in rdb/obj.lisp.
-
 ;; It is safe to call most functions on the same underlying Alien RocksDB
 ;; object from multiple threads. Other objects such as WriteBatch and Iterator
 ;; /may/ require a Lisp-side synchronization.
@@ -15,57 +12,51 @@
 
 ;; RocksDB has several variations on the concept of 'transaction':
 
-#| TransactionDB
+;; TransactionDB
 
-When using a TransactionDB, all keys that are written are locked internally by
-RocksDB to perform conflict detection. If a key cannot be locked, the
-operation will return an error. When the transaction is committed, it is
-guaranteed to succeed as long as the database is able to be written to.
+;; When using a TransactionDB, all keys that are written are locked internally by
+;; RocksDB to perform conflict detection. If a key cannot be locked, the
+;; operation will return an error. When the transaction is committed, it is
+;; guaranteed to succeed as long as the database is able to be written to.
 
-A TransactionDB can be better for workloads with heavy concurrency compared to
-an OptimisticTransactionDB. However, there is a small locking overhead when
-TransactionDB is used. A TransactionDB will do conflict checking for all write
-operations (Put, Delete and Merge), including writes performed outside a
-Transaction.
+;; A TransactionDB can be better for workloads with heavy concurrency compared to
+;; an OptimisticTransactionDB. However, there is a small locking overhead when
+;; TransactionDB is used. A TransactionDB will do conflict checking for all write
+;; operations (Put, Delete and Merge), including writes performed outside a
+;; Transaction.
 
-|#
+;; WriteBatch
 
-#| WriteBatch
+;; The WriteBatch holds a sequence of edits to be made to the database - these
+;; edits within the batch are applied in order when written.
 
-The WriteBatch holds a sequence of edits to be made to the database - these
-edits within the batch are applied in order when written.
+;; Apart from its atomicity benefits, WriteBatch may also be used to speed up
+;; bulk updates by placing lots of individual mutations into the same batch.
 
-Apart from its atomicity benefits, WriteBatch may also be used to speed up
-bulk updates by placing lots of individual mutations into the same batch.
+;; WBWI
 
-|#
+;; The WBWI (Write Batch With Index) encapsulates a WriteBatch and an Index into
+;; that WriteBatch. The index in use is a Skip List. The purpose of the WBWI is
+;; to sit above the DB, and offer the same basic operations as the DB,
+;; i.e. Writes - Put, Delete, and Merge, and Reads - Get, and newIterator.
 
-#| WBWI
+;; Write operations on the WBWI are serialized into the WriteBatch (of the WBWI)
+;; rather than acting directly on the DB. The WriteBatch can later be written
+;; atomically to the DB by calling db.write(wbwi).
 
-The WBWI (Write Batch With Index) encapsulates a WriteBatch and an Index into
-that WriteBatch. The index in use is a Skip List. The purpose of the WBWI is
-to sit above the DB, and offer the same basic operations as the DB,
-i.e. Writes - Put, Delete, and Merge, and Reads - Get, and newIterator.
+;; Read operations can either be solely against the
+;; WriteBatch (e.g. GetFromBatch), or they can be read-through operations. A
+;; read-through operation, (e.g. GetFromBatchAndDB), first tries to read from the
+;; WriteBatch, if there is no updated entry in the WriteBatch then it
+;; subsequently reads from the DB.
 
-Write operations on the WBWI are serialized into the WriteBatch (of the WBWI)
-rather than acting directly on the DB. The WriteBatch can later be written
-atomically to the DB by calling db.write(wbwi).
+;; The WBWI can be used as a component if one wishes to build Transaction
+;; Semantics atop RocksDB. The WBWI by itself isolates the Write Path to a local
+;; in-memory store and allows you to RYOW (Read-Your-Own-Writes) before data is
+;; atomically written to the database.
 
-Read operations can either be solely against the
-WriteBatch (e.g. GetFromBatch), or they can be read-through operations. A
-read-through operation, (e.g. GetFromBatchAndDB), first tries to read from the
-WriteBatch, if there is no updated entry in the WriteBatch then it
-subsequently reads from the DB.
-
-The WBWI can be used as a component if one wishes to build Transaction
-Semantics atop RocksDB. The WBWI by itself isolates the Write Path to a local
-in-memory store and allows you to RYOW (Read-Your-Own-Writes) before data is
-atomically written to the database.
-
-It is a key component in RocksDB's Pessimistic and Optimistic Transaction
-utility classes.  
-
-|#
+;; It is a key component in RocksDB's Pessimistic and Optimistic Transaction
+;; utility classes.  
 
 ;; WBWIs are ideal as a transaction building block and should be used to build
 ;; higher-level transaction objects.
@@ -108,9 +99,10 @@ utility classes.
 (in-package :rdb)
 
 ;;; Backend
-(defvar *rocksdb-backend-options* '(columns temp path (open . t) 
-                                    destroy (close . t) 
-                                    sap merge-op comparator prefix-op logger event-listener))
+(defvar *rocksdb-backend-options* 
+  '(columns temp path (open . t) 
+    destroy (close . t) 
+    sap merge-op comparator prefix-op logger event-listener))
 
 ;; TODO 2024-12-31: may want to have a :STORE backend-option to allow a fresh
 ;; db to be backlined to a parent store instance.
@@ -345,7 +337,7 @@ extractor."
                                   :cf (make-rdb-cf n)) 
                                 db))))
            'vector)))
-    (multiple-value-bind (db-sap cfs) (open-cfs-raw (db-opts db) (name db)
+    (multiple-value-bind (db-sap cfs) (%open-cfs (db-opts db) (name db)
                                                     (loop for c across cols
                                                           collect (name c))
                                                     (loop for c across cols
@@ -367,7 +359,7 @@ extractor."
       (push *rdb-default-column-name* names)
       (push (sap (db-opts self)) opts))
     (multiple-value-bind (db cfs)
-        (open-cfs-raw (sap (db-opts self)) (name self) names opts)
+        (%open-cfs (sap (db-opts self)) (name self) names opts)
       (setf (sap self) db)
       (let ((len (length names)))
         (loop for n in names
@@ -386,7 +378,7 @@ extractor."
   (((self rdb-database) key val &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
-       (put-cf-raw
+       (%put-cf
         (sap self)
         sap
         key
@@ -397,7 +389,7 @@ extractor."
   (((self rdb-database) (key string) (val string) &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
-       (put-cf-raw
+       (%put-cf
         (sap self)
         sap
         (string-to-octets key)
@@ -408,7 +400,7 @@ extractor."
   (((self rdb-database) (key string) val &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
-       (put-cf-raw
+       (%put-cf
         (sap self)
         sap
         (string-to-octets key)
@@ -419,7 +411,7 @@ extractor."
   (((self rdb-database) key (val string) &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
-       (put-cf-raw
+       (%put-cf
         (sap self)
         sap
         key
@@ -441,7 +433,7 @@ extractor."
                   (t (find column (columns self)
                            :key 'name
                            :test 'equal)))))
-        (put-cf-raw (sap self)
+        (%put-cf (sap self)
                     (sap column)
                     (kv-key kv)
                     (kv-val kv)
@@ -461,13 +453,13 @@ extractor."
   (((self rdb-database) (key string) &key (opts (rocksdb-readoptions-create)) column)
    (let ((sap (sap self)))
      (if column
-         (get-cf-str-raw sap (sap (find-column column self)) key opts)
-         (get-kv-str-raw sap key opts))))
+         (%get-cf-str sap (sap (find-column column self)) key opts)
+         (%get-kv-str sap key opts))))
   (((self rdb-database) key &key (opts (rocksdb-readoptions-create)) column)
    (let ((sap (sap self)))
      (if column
-         (get-cf-raw sap (sap (find-column column self)) key opts)
-         (get-kv-raw sap key opts)))))
+         (%get-cf sap (sap (find-column column self)) key opts)
+         (%get-kv sap key opts)))))
 
 (defmethod multi-get ((self rdb-database) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) columns)
   (multi-get (db self) keys :data-type data-type :opts opts :cf (mapcar 'cf columns)))
@@ -475,7 +467,7 @@ extractor."
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
   (if (equal (name col) *rdb-default-column-name*)
       (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)
-      (setf (sap col) (create-cf-raw (sap db) (name col) (sap (column-opts col)))))
+      (setf (sap col) (%create-cf (sap db) (name col) (sap (column-opts col)))))
   ;; (open-column db col)
   col)
 
@@ -612,7 +604,7 @@ extractor."
   (merge-key (db self) key val :opts opts))
 
 (defmethod merge-kv ((self rdb-database) kv &key (opts (rocksdb-writeoptions-create)))
-  (merge-kv-raw (sap self) (kv-key kv) (kv-val kv) opts))
+  (%merge-kv (sap self) (kv-key kv) (kv-val kv) opts))
 
 (defmethod add-column (col (self rdb-database))
   (vector-push-extend col (coerce (columns self) 'vector)))

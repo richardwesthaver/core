@@ -94,9 +94,6 @@
    :rdb-transaction
    :rdb-secondary-db
    :rdb-backup-engine
-   :open-db-secondary-raw
-   :create-checkpoint-raw
-   :open-cfs-secondary-raw
    :with-kv-raw
    :get-kv-error
    :put-kv-error
@@ -106,9 +103,6 @@
    :metadata-missing
    :put-kv-cf-error
    :get-kv-cf-error
-   :transactiondb-get-kv-raw
-   :transactiondb-put-kv-raw
-   :open-transactiondb-raw
    :txn-error
    :with-txn-raw
    :index-merge-op

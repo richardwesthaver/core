@@ -11,7 +11,7 @@ ERR with initargs PARAMS for the duration of BODY."
   `(with-errptr ,e
      (handler-bind ((sb-sys:memory-fault-error
                       (lambda (c)
-                        (declare (ignore c))
+                        (format *trace-output* "~&Memory fault detected: ~A~%" c)
                         (rocksdb-c-error ,e)))
                     (error (lambda (c)
                              (declare (ignore c))
@@ -39,7 +39,7 @@ ERR with initargs PARAMS for the duration of BODY."
 ;;; rdb
 ;; these functions only apply to the low-level API in RDB/OBJ (structs only)
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
-  `(let ((,db-var (open-db-raw ,db-path ,opt)))
+  `(let ((,db-var (%open-db ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
        (with-errptr* (err 'rocksdb-alien-error)
@@ -92,7 +92,7 @@ ERR with initargs PARAMS for the duration of BODY."
 ;;; backup
 (defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
                                        &body body)
-  `(let ((,be-var (open-backup-engine-raw ,be-path ,opt)))
+  `(let ((,be-var (%open-backup-engine ,be-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-backup-engine-close ,be-var))))
 

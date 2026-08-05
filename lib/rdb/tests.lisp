@@ -5,9 +5,9 @@
 ;;; Code:
 (defpkg :rdb/tests
   (:use :cl :std :rt :rocksdb :rdb :sb-ext :sb-alien :log :obj :q :db :schema :store)
-  (:import-from :rdb :open-db-raw :get-kv-str-raw :iter-key-str-raw
-   :destroy-db-raw :close-db-raw :create-cf-raw :get-cf-str-raw
-   :iter-val-str-raw :put-kv-str-raw :put-cf-str-raw))
+  (:import-from :rdb :%open-db :%get-kv-str
+   :%destroy-db :%close-db :%create-cf :%get-cf-str
+   :%iter-val-str :%put-kv-str :%put-cf-str :%iter-key-str))
 
 (in-package :rdb/tests)
 
@@ -30,11 +30,11 @@
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
-    (with-rdb (db (open-db-raw db-path))
-      (put-kv-str-raw db "foo" "bar")
-      (is (string= (get-kv-str-raw db "foo") "bar"))
-      (close-db-raw db)
-      (destroy-db-raw db-path))))
+    (with-rdb (db (%open-db db-path))
+      (%put-kv-str db "foo" "bar")
+      (is (string= (%get-kv-str db "foo") "bar"))
+      (%close-db db)
+      (%destroy-db db-path))))
 
 (deftest opts ()
   "Ensure RDB-OPTS can be created, destructured, etc."
@@ -56,12 +56,12 @@
       (dotimes (i 1000)
         (let ((k (format nil "key~d" i))
               (v (format nil "val~d" i)))
-          (put-kv-str-raw db k v)
-          (is (string= (get-kv-str-raw db k) v))))
-      (let ((cf (create-cf-raw db "cf1")))
-        (put-cf-str-raw db cf "bow" "wow")
-        (is (string= (get-cf-str-raw db cf "bow") "wow"))))
-    (destroy-db-raw path)))
+          (%put-kv-str db k v)
+          (is (string= (%get-kv-str db k) v))))
+      (let ((cf (%create-cf db "cf1")))
+        (%put-cf-str db cf "bow" "wow")
+        (is (string= (%get-cf-str db cf "bow") "wow"))))
+    (%destroy-db path)))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."

@@ -187,7 +187,8 @@ saved."
 (defclass database ()
   ((db :initform nil :initarg :db :accessor db))
   (:documentation "Base class for Database objects.
-Every database has at least one slot named DB."))
+Every database has at least one slot named DB which points to the raw database
+handle."))
 
 (defclass database-collection () ()
   (:documentation "A collection of DATABASE objects."))
