@@ -74,7 +74,8 @@
    :read-buffer-oid :write-buffer-oid :read-buffer-float :write-buffer-float
    :read-buffer-double :write-buffer-double :read-buffer-octet-vector :write-buffer-octet-vector
    :read-buffer-to-offset :write-buffer-from-offset :reset-buffer-stream :with-buffer-streams
-   :resize-buffer-stream :make-buffer-stream))
+   :resize-buffer-stream :make-buffer-stream
+   :buffer-stream-length :resize-buffer-stream-no-copy))
 
 (defpkg :io/static
   (:use :cl :std :sb-alien :io/stream :io/proto)

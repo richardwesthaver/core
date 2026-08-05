@@ -11,7 +11,7 @@
 (defpkg :rdb
   (:use :cl :std :rocksdb 
    :sb-alien :db :schema :btree 
-   :store :stored :log :io/static 
+   :store :stored :log :io
    :time :config :ast 
    :id :std/seq :srv :net/srv :val :q/proto)
   (:import-from :db :backend :options)

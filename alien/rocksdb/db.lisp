@@ -98,11 +98,11 @@
   (db (* rocksdb))
   (options (* rocksdb-readoptions))
   (key (* unsigned-char))
-  (keylen size-t) 
+  (keylen size-t)
   (buffer (* unsigned-char))
   (buffer-size size-t)
-  (vallen (* size-t))
-  (found (* boolean)))
+  (vallen size-t :out)
+  (found boolean :out))
 
 (def-with-errptr rocksdb-get-into-buffer-cf boolean
   (db (* rocksdb))
@@ -112,8 +112,8 @@
   (keylen size-t)
   (buffer (* unsigned-char))
   (buffer-size size-t)
-  (vallen (* size-t))
-  (found (* boolean)))
+  (vallen size-t :out)
+  (found boolean :out))
 
 (def-with-errptr rocksdb-get-with-ts c-string
   (db (* rocksdb))
@@ -772,7 +772,7 @@
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t))
+  (vlen size-t :in-out)
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-get-pinned-for-update (* rocksdb-pinnableslice)
@@ -788,7 +788,7 @@
   (cf-handle (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t))
+  (vlen size-t :in-out)
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-get-pinned-for-update-cf (* rocksdb-pinnableslice)
