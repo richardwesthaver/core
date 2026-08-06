@@ -728,6 +728,9 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :verb-p :init
    :reset :state
    :stat :check
+   :prop :props 
+   :opt :opts
+   :properties :options
    :init* :pause
    :install :uninstall
    :send :receive

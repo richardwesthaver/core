@@ -14,7 +14,6 @@
 (defvar *database-backend* nil)
 (defvar *database-collection-type* 'list)
 (defvar *default-database-version* '(0 1 0))
-(defvar *default-kv-size* 8)
 (defparameter *save-database-backend-on-load* nil)
 ;;; Backends
 (defvar *database-backend-table* (make-hash-table)
@@ -163,6 +162,8 @@ saved."
 ;;; Database
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF."))
+(defgeneric (setf db) (new self)
+  (:documentation "Set the Database associated with SELF."))
 
 (defgeneric database-version (self)
   (:documentation "Return the version associated with a given database SELF."))
@@ -227,8 +228,6 @@ in-memory objects."))
   (:method ((self database)) (unless (db self) t)))
 
 ;;; Common
-(defgeneric put-kv (self kv)
-  (:documentation "Insert a KeyVal object."))
 (defgeneric put-key (self key val)
   (:documentation "Insert a KEY and VAL."))
 (defgeneric put-key-ts (self key val ts)
@@ -237,22 +236,17 @@ in-memory objects."))
   (:documentation "Get value of KEY."))
 (defgeneric multi-get (self keys &key)
   (:documentation "Retrieve multiple KEYS from SELF."))
-
 (defgeneric insert-key (self key val &key)
   (:documentation "Insert KEY:VAL into SELF."))
-(defgeneric insert-kv (self kv &key)
-  (:documentation "Insert KV object into SELF."))
 (defgeneric delete-key (self key &key)
   (:documentation "Delete value associated with KEY from SELF."))
-(defmethod remove-kv (key value self))
+(defgeneric remove-kv (key value self))
 (defgeneric delete-key-ts (self key ts)
   (:documentation "Delete value associated with KEY and TS from SELF."))
 (defgeneric delete-key-range (self start end &key)
   (:documentation "Delete values associates with keys between START and END from SELF."))
 (defgeneric flush-db (self &key)
   (:documentation "Flush the database SELF."))
-(defgeneric sync-db (self other &key) ;;nyi
-  (:documentation "Perform a synchronization on SELF using OTHER."))
 (defgeneric load-db (self)
   (:documentation "Load an existing database."))
 (defgeneric db-stats (self &optional type)
@@ -296,8 +290,12 @@ in-memory objects."))
 
 ;;; Config
 (defconfig db-config ()
-  ((backend :initform nil :initarg :backend)
+  ((backend :initform nil :initarg :backend :allocation :class)
    (options :initarg :options :accessor db-opts)))
+
+(defconfig simple-db-config (ast id db-config)
+  ((path :initarg :path :initform nil :accessor path)
+   (schema :initarg :schema :accessor schema)))
 
 ;; Merge Ops
 (defgeneric merge-key (self key val &key)
@@ -321,12 +319,7 @@ SELF. This function may error when (DB-OPEN-P SELF) is non-nil."))
   (:documentation "Close the column SELF. When ERROR is non-nil signal an error if the
 column is already closed."))
 (defgeneric close-columns (self)
-  (:documentation "Close the columns belonging to SELF."))
-(defgeneric destroy-column (self &optional error)
-  (:documentation "Close the column SELF. When ERROR is non-nil signal an error if the
-column is already closed."))
-(defgeneric destroy-columns (self)
-  (:documentation "Close the columns belonging to SELF."))
+  (:documentation "Close all the columns belonging to SELF."))
 (defgeneric create-column (self cf)
   (:documentation "Create the column belonging to SELF."))
 (defgeneric create-columns (self)
@@ -335,17 +328,8 @@ column is already closed."))
   (:documentation "Find the column COL in SELF."))
 (defgeneric (setf find-column) (new col self &key)
   (:documentation "Find the column COL in SELF."))
-(defgeneric flush-column (self col &key)
-  (:documentation "Flush the column COL in SELF."))
 (defgeneric add-column (col self)
   (:documentation "Add a column to SELF."))
-(defgeneric column-opts (col))
-(defgeneric (setf column-opts) (new col))
-
-;;; KV
-(defstruct (kv (:constructor make-kv (&optional key val))) 
-  (key (make-octets *default-kv-size*) :type octet-vector) 
-  (val (make-octets *default-kv-size*) :type octet-vector))
 
 ;;; Transactions
 
@@ -383,8 +367,6 @@ not be rebound otherwise within the body of a transaction.")
   (:documentation "Kernel object for transactions.
 The funcallable-instance may be used to respect a simple commit-based protocol
 which mirrors the backend."))
-
-(defgeneric (setf transaction-opts) (new txn))
 
 (defgeneric make-transaction (self &key &allow-other-keys)
   (:documentation "Make a new transaction object.")
@@ -443,6 +425,9 @@ return the same value as DB depending on backend.")
 
 (define-condition transaction-retry-count-exceeded (error)
   ((count :initarg :count :accessor retry-count :initform 0)))
+
+(define-condition transaction-error (db-error)
+  ((transaction :initform *transaction* :initarg :transaction :reader error-transaction)))
 
 (defvar *default-transaction-wait* 0.1)
 (defvar *default-transaction-retry* 0)

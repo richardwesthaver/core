@@ -8,7 +8,7 @@
 (define-condition rdb-condition (db-condition) ())
 
 (eval-always
-  (deferror simple-rdb-error (rdb-condition simple-error)
+  (deferror simple-rdb-error (simple-error rdb-condition)
     ()
     (:reporter t)
     (:documentation "Simple RDB Error."))
@@ -34,10 +34,6 @@
 (define-condition open-db-error (rdb-alien-error)
   ()
   (:documentation "Error signaled while opening a database."))
-
-(define-condition open-backup-db-error (rdb-alien-error)
-  ()
-  (:documentation "Error signaled while opening a backup engine."))
 
 (define-condition destroy-db-error (rdb-alien-error)
   ()
@@ -91,10 +87,10 @@
 (define-condition merge-kv-cf-error (kv-error) ()
   (:documentation "Error signaled while processing a MERGE-KV-CF request"))
 
-(define-condition opt-handler-missing (warning rdb-error)
+(define-condition opt-handler-missing (warning rdb-condition)
   ())
 
-(define-condition db-missing (warning rdb-error)
+(define-condition db-missing (warning rdb-condition)
   ())
 
 (define-condition metadata-missing (warning rdb-condition)
@@ -104,6 +100,6 @@
   ()
   (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))
 
-(define-condition txn-error (rdb-alien-error)
+(define-condition rdb-transaction-error (rdb-alien-error transaction-error)
   ((txn :initarg :txn :reader error-txn))
   (:documentation "Error signaled in the context of a Transaction."))

@@ -76,18 +76,6 @@ ERR with initargs PARAMS for the duration of BODY."
     `(loop for ,%cf across ,cfs
            do (with-column (,cf ,%cf) ,@body))))
 
-;;; kv
-(defmacro with-kv ((k v kv) &body body)
-  `(let ((,k (kv-key ,kv))
-         (,v (kv-val ,kv)))
-     ,@body))
-
-(defmacro do-kvs ((k v kvs) &body body)
-  "Do BODY for each K and V in the array KVS."
-  (with-gensyms (%kv)
-    `(loop for ,%kv across ,kvs
-           do (with-kv (,k ,v ,%kv) ,@body))))
-
 ;; TODO: sb-ext:with-current-source-form ?
 ;;; backup
 (defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
@@ -117,7 +105,7 @@ ERR with initargs PARAMS for the duration of BODY."
        ,@(when val `((setfa %val ,val)))
        ,@body)))
 
-(defmacro with-txn-raw ((txn eptr &key (error 'txn-error) key val cf db) &body body)
+(defmacro with-txn-raw ((txn eptr &key (error 'transaction-error) key val cf db) &body body)
   "Provide several bindings around BODY. TXN must be a raw transaction instance
 and EPTR a symbol which is bound to an error pointer (via WITH-ERRPTR*).
 
@@ -163,7 +151,7 @@ file by a RDB instance."
 
 ;;; wbwi
 (defmacro with-wbwi ((var &key reserved (overwrite t) (destroy t)) &body body)
-  `(let ((,var (make-rdb-wbwi :sap (create-wbwi
+  `(let ((,var (make-rdb-wbwi :sap (%create-wbwi
                                     ,(ifret reserved 0)
                                     ,(ifret (and overwrite 1) 0)))))
      ,@(if destroy

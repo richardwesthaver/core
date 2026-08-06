@@ -2,99 +2,6 @@
 
 ;; RocksDB Implementation of OBJ/DB protocol.
 
-;;; Commentary:
-
-;; It is safe to call most functions on the same underlying Alien RocksDB
-;; object from multiple threads. Other objects such as WriteBatch and Iterator
-;; /may/ require a Lisp-side synchronization.
-
-;;;; Transactions:
-
-;; RocksDB has several variations on the concept of 'transaction':
-
-;; TransactionDB
-
-;; When using a TransactionDB, all keys that are written are locked internally by
-;; RocksDB to perform conflict detection. If a key cannot be locked, the
-;; operation will return an error. When the transaction is committed, it is
-;; guaranteed to succeed as long as the database is able to be written to.
-
-;; A TransactionDB can be better for workloads with heavy concurrency compared to
-;; an OptimisticTransactionDB. However, there is a small locking overhead when
-;; TransactionDB is used. A TransactionDB will do conflict checking for all write
-;; operations (Put, Delete and Merge), including writes performed outside a
-;; Transaction.
-
-;; WriteBatch
-
-;; The WriteBatch holds a sequence of edits to be made to the database - these
-;; edits within the batch are applied in order when written.
-
-;; Apart from its atomicity benefits, WriteBatch may also be used to speed up
-;; bulk updates by placing lots of individual mutations into the same batch.
-
-;; WBWI
-
-;; The WBWI (Write Batch With Index) encapsulates a WriteBatch and an Index into
-;; that WriteBatch. The index in use is a Skip List. The purpose of the WBWI is
-;; to sit above the DB, and offer the same basic operations as the DB,
-;; i.e. Writes - Put, Delete, and Merge, and Reads - Get, and newIterator.
-
-;; Write operations on the WBWI are serialized into the WriteBatch (of the WBWI)
-;; rather than acting directly on the DB. The WriteBatch can later be written
-;; atomically to the DB by calling db.write(wbwi).
-
-;; Read operations can either be solely against the
-;; WriteBatch (e.g. GetFromBatch), or they can be read-through operations. A
-;; read-through operation, (e.g. GetFromBatchAndDB), first tries to read from the
-;; WriteBatch, if there is no updated entry in the WriteBatch then it
-;; subsequently reads from the DB.
-
-;; The WBWI can be used as a component if one wishes to build Transaction
-;; Semantics atop RocksDB. The WBWI by itself isolates the Write Path to a local
-;; in-memory store and allows you to RYOW (Read-Your-Own-Writes) before data is
-;; atomically written to the database.
-
-;; It is a key component in RocksDB's Pessimistic and Optimistic Transaction
-;; utility classes.  
-
-;; WBWIs are ideal as a transaction building block and should be used to build
-;; higher-level transaction objects.
-
-;;;; Snapshots:
-
-;; Snapshots capture a point-in-time view of a RocksDB instance at the time of
-;; creation. Snapshots do not persist across DB sessions and are internally
-;; stored in a linked-list.
-
-;;;; Checkpoints:
-
-;; Checkpoints allow us to take a snapshot of a running RocksDB instance like
-;; Snapshots, but in a separate directory. Checkpoints persist across DB
-;; sessions. Checkpoints can be opened read-only or as read-write and be used
-;; for both full and incremental backups (as long as backups are on the same
-;; device).
-
-;;;; Backups:
-
-;; Backups are built on top of Checkpoints.
-
-;; Backup Engines control a single directory that can store any number of
-;; backups. It uses a custom on-disk format as shown below.
-
-#| directory structure
-/tmp/rocksdb_backup/
-├── meta
-│   └── 1
-├── private
-│   └── 1
-│       ├── CURRENT
-│       ├── MANIFEST-000008
-|       └── OPTIONS-000009
-└── shared_checksum
-    └── 000007_1498774076_590.sst
-|#
-
 ;;; Code:
 (in-package :rdb)
 
@@ -183,6 +90,7 @@ extractor."
   (get-val db key :column column))
 
 ;;; Column Families
+;; rename this to CF (or maybe column-family), remove dependency on RDB-COLUMN
 (defclass rdb-column-family (rdb-column) 
   ((cf :initarg :cf :type rdb-cf :accessor cf))
   (:default-initargs :cf (make-rdb-cf (symbol-name (gensym "#"))))
@@ -192,7 +100,7 @@ object. (SAP CF) is the raw pointer."))
 
 (defaccessor name ((self rdb-column-family)) (name (cf self)))
 (defaccessor sap ((self rdb-column-family)) (sap (cf self)))
-(defaccessor column-opts ((self rdb-column-family)) (rdb-cf-opts (cf self)))
+(defaccessor options ((self rdb-column-family)) (rdb-cf-opts (cf self)))
 
 (defun schema-from-rdb-column-families (columns)
   "Convert a sequence of RDB-COLUMN-FAMILYs to a SCHEMA."
@@ -202,11 +110,11 @@ object. (SAP CF) is the raw pointer."))
 		(make-field :name (keywordicate (name x)) :type (column-type x)))
 		columns)))
 
-(defmethod destroy-column ((self rdb-column-family) &optional error)
-  (destroy-column (cf self) error))
+(defmethod free ((self rdb-column-family))
+  (with-slots (sap) self (unless (null sap) (setf sap (%destroy-cf sap)))))
 
 (defmethod close-column ((self rdb-column-family) &optional error)
-  (close-column (cf self) error))
+  (close-column (sap self) error))
 
 (defmethod load-field ((self rdb-column-family) (field field))
   (let ((type (field-type field))
@@ -237,16 +145,16 @@ object. (SAP CF) is the raw pointer."))
 
 ;;; Database
 (defclass rdb-database (database)
-  ((backup :initform nil :type (or null rdb-backup-engine) :initarg :backup :accessor db-backup)
+  ((backup :initform nil :type (or null rocksdb-backup-engine) :initarg :backup :accessor db-backup)
    (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
-              :type (vector rdb-snapshot)
+              :type (vector (alien rocksdb-snapshot))
               :initarg :snapshots 
               :accessor db-snapshots)
-   (checkpoints :initform (make-array 0 :element-type 'rdb-checkpoint :adjustable t)
-                :type (vector rdb-checkpoint)
+   (checkpoints :initform (make-array 0 :adjustable t)
+                :type (vector (alien rocksdb-checkpoint))
                 :initarg :checkpoints
                 :accessor db-checkpoints)
-   (secondary :initform nil :type (or null rdb-secondary-db) :initarg :secondary :accessor secondary-db)
+   (secondary :initform nil :type (or null rocksdb) :initarg :secondary :accessor secondary-db)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
    :db (make-db :rocksdb :opts (default-rdb-opts))
@@ -341,7 +249,7 @@ extractor."
                                                     (loop for c across cols
                                                           collect (name c))
                                                     (loop for c across cols
-                                                          collect (sap (column-opts c))))
+                                                          collect (sap (options c))))
       (setf (sap db) db-sap)
       (loop for c across cfs
             do (when-let ((col (find-column (name c) db)))
@@ -352,7 +260,7 @@ extractor."
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
-          do (push (sap (column-opts c)) opts))
+          do (push (sap (options c)) opts))
     (nreversef names)
     (nreversef opts)
     (unless (member *rdb-default-column-name* names :test 'string=)
@@ -426,20 +334,6 @@ extractor."
   (((self rdb) key (val string) &key column)
    (insert-key self key (string-to-octets val) :column column)))
 
-(defmethod insert-kv ((self rdb) (kv kv) &key column (opts (rocksdb-writeoptions-create)))
-  (if column
-      (let ((column (etypecase column
-                  (rdb-cf column)
-                  (t (find column (columns self)
-                           :key 'name
-                           :test 'equal)))))
-        (%put-cf (sap self)
-                    (sap column)
-                    (kv-key kv)
-                    (kv-val kv)
-                    opts))
-      (put-kv self kv)))
-
 (defmethod iter ((self rdb-database) &key column (opts (rocksdb-readoptions-create)))
   (typecase column
     (rdb-column-family (iter (db self) :cf (cf column) :opts opts))
@@ -467,7 +361,7 @@ extractor."
 (defmethod create-column ((db rdb-database) (col rdb-column-family))
   (if (equal (name col) *rdb-default-column-name*)
       (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)
-      (setf (sap col) (%create-cf (sap db) (name col) (sap (column-opts col)))))
+      (setf (sap col) (%create-cf (sap db) (name col) (sap (options col)))))
   ;; (open-column db col)
   col)
 
@@ -550,7 +444,7 @@ extractor."
 (defmethod derive-schema ((self rdb-database))
   (apply 'make-schema
          (loop for c across (columns self)
-               collect (cf-to-field (cf c)))))
+               collect (field-from-cf (cf c)))))
 
 (defmethod open-db ((self rdb-database)) (open-db (db self)) self)
 
@@ -594,25 +488,19 @@ extractor."
 (defmethod put-key ((self rdb-database) key val)
   (put-key (db self) key val))
 
-(defmethod put-kv ((self rdb-database) (kv kv))
-  (put-kv (db self) kv))
-
 (defmethod delete-key ((self rdb-database) key &key)
   (delete-key (db self) key))
 
 (defmethod merge-key ((self rdb-database) key val &key (opts (rocksdb-writeoptions-create)))
   (merge-key (db self) key val :opts opts))
 
-(defmethod merge-kv ((self rdb-database) kv &key (opts (rocksdb-writeoptions-create)))
-  (%merge-kv (sap self) (kv-key kv) (kv-val kv) opts))
-
 (defmethod add-column (col (self rdb-database))
   (vector-push-extend col (coerce (columns self) 'vector)))
 
-(defmethod destroy-columns ((self rdb-database))
+(defmethod close-columns ((self rdb-database))
   (with-slots (columns) self
     (loop for cf across columns
-          do (setf cf (destroy-column cf)))))
+          do (setf cf (close-column cf)))))
 
 (defmethod load-schema ((self rdb-database) (schema schema))
   "Load SCHEMA into rdb database object SELF. This will add any missing rdb-cfs

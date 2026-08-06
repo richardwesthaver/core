@@ -213,7 +213,7 @@ SCHEMA."
 		columns))))
 
 ;;; Data Source
-(defclass data-source ()
+(defclass data-source (source)
   ((schema :type schema :accessor schema))
   (:documentation "Base class for DATA-SOURCE objects which contain a schema and can be scanned via SCAN-DATA."))
 

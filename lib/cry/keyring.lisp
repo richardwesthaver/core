@@ -54,8 +54,6 @@
      (clone-octets-from-alien buf (make-octets size)))))
 
 (defmethods put-key 
-  (((self keyring) (key number) (val kv))
-   (add-key "user" (octets-to-alien (kv-key val)) (octets-to-alien (kv-val val)) (length (kv-val val)) (id self)))
   (((self keyring) (key t) (val string))
    (add-key "user" (id key) (make-alien-string val) (length val) (id self)))
   (((self keyring) (key t) (val vector))

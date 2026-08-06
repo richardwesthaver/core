@@ -357,9 +357,9 @@
 (defar rocksdb-column-family-handle-get-id unsigned-int
   (cf (* rocksdb-column-family-handle)))
 
-(defar rocksdb-column-family-handle-get-name c-string
+(defar rocksdb-column-family-handle-get-name (* char)
   (handle (* rocksdb-column-family-handle))
-  (name-len (* size-t)))
+  (name-len size-t :out))
 
 (def-with-errptr rocksdb-drop-column-family 
   void
@@ -676,7 +676,7 @@
   (name (* unsigned-char))
   (name-len size-t))
 
-(defar rocksdb-transaction-get-name (* unsigned-char)
+(defar rocksdb-transaction-get-name (* char)
   (txn (* rocksdb-transaction))
   (name-len size-t :out))
 

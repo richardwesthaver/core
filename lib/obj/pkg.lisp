@@ -692,8 +692,6 @@ protocol.")
    :db-open-p
    :*db*
    :insert-key
-   :insert-kv
-   :make-kv
    :delete-key
    :delete-key-ts
    :delete-key-range
@@ -702,27 +700,23 @@ protocol.")
    :rollback-transaction
    :commit-transaction
    :flush-db
-   :sync-db
    :repair-db
    :backup-db
    :restore-db
    :snapshot-db
    :shutdown-db
    :ingest-db
-   :put-kv
    :put-key
    :put-key-ts
    :get-key
    :multi-get
    :execute-transaction
    :abort-transaction
-   :kv
    :open-db
-   :kv-key
-   :kv-val
    :database-collection
    :remove-kv
    :with-transaction
+   :transaction-error
    :with-batch-transaction
    :*transaction*
    :transaction-object
@@ -735,11 +729,9 @@ protocol.")
    :close-column
    :close-columns
    :find-column
-   :flush-column
    :transaction-prior
    :add-column
    :open-columns
-   :merge-kv
    :merge-key
    :db-stats
    :db-metadata
@@ -763,8 +755,6 @@ protocol.")
    :do-database-backend-close-options
    :set-database-backend
    :set-database-backend-option
-   :column-opts
-   :transaction-opts
    :simple-transaction
    :secondary-db
    :db-backup
@@ -773,10 +763,11 @@ protocol.")
    :open-with-columns
    :open-columns*
    :open-column
-   :destroy-column
-   :destroy-columns
+   :close-column
+   :close-columns
    :create-column
    :db-config
+   :simple-db-config
    :*database-collection-type*))
 
 (defpkg :obj/graph

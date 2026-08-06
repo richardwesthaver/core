@@ -4,26 +4,6 @@
 (in-package :rdb)
 
 ;;; Options
-(macrolet ((%defopt (name fn)
-             `(defun ,(symbolicate 'make- name) (&optional init-fn)
-                ,(format nil "Make and return a ~A alien object.
-INIT-FN is an optional argument which must be a lambda which takes a single
-parameter (the object itself). It is used to initialize the instance with
-custom configuration." name)
-                (let ((opts (,fn)))
-                  (when init-fn (funcall init-fn opts))
-                  opts))))
-  (%defopt rocksdb-options rocksdb-options-create)
-  (%defopt rocksdb-readoptions rocksdb-readoptions-create)
-  (%defopt rocksdb-writeoptions rocksdb-writeoptions-create)
-  (%defopt rocksdb-transaction-options rocksdb-transaction-options-create)
-  (%defopt rocksdb-transactiondb-options rocksdb-transactiondb-options-create)
-  (%defopt rocksdb-backup-engine-options rocksdb-backup-engine-options-create))
-
-(defun default-rocksdb-options ()
-  (make-rocksdb-options
-   (lambda (o) (rocksdb-options-set-create-if-missing o t))))
-
 (defun %load-opts (dir)
   (rocksdb::with-latest-options dir (db-opts names cf-opts)
     (values db-opts names cf-opts)))
@@ -224,7 +204,7 @@ custom configuration." name)
     (%put-cf db cf key-octets val-octets opt)))
 
 (defun %merge-cf (db cf key val &optional (opt (rocksdb-writeoptions-create)))
-  (with-kv-raw (db key e :cf cf :error merge-kv-error :val val)
+  (with-kv-raw (db key e :cf cf :error merge-kv-cf-error :val val)
     (rocksdb-merge-cf db opt cf %key %klen %val %vlen e)))
 
 (defun %merge-cf-str (db cf key val &optional (opt (rocksdb-writeoptions-create)))
@@ -233,7 +213,8 @@ custom configuration." name)
     (%merge-cf db cf k v opt)))
 
 (defun %cf-name (cf-handle)
-  (rocksdb-column-family-handle-get-name cf-handle (make-alien unsigned-long)))
+  (multiple-value-bind (name len) (rocksdb-column-family-handle-get-name cf-handle)
+    (copy-c-string name (make-string len))))
 
 (defun %cf-id (cf-handle)
   (rocksdb-column-family-handle-get-id cf-handle))
@@ -286,7 +267,7 @@ custom configuration." name)
 
 ;;; Backup DB
 (defun %open-backup-engine (be-path &optional (opts (rocksdb-backup-engine-options-create)))
-  (with-errptr* (err 'open-backup-db-error :db be-path)
+  (with-errptr* (err 'open-db-error :db be-path)
     (let ((be-path (if (pathnamep be-path)
                        (namestring be-path)
                        be-path)))
@@ -454,17 +435,15 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
         (rocksdb-transaction-rollback txn e))))
 
 (defun %prepare-transaction (txn)
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'rdb-transaction-error :txn txn)
     (rocksdb-transaction-prepare txn e)))
 
 (defun %transaction-name (txn)
-  (with-errptr* (e 'rdb-alien-error)
-    (multiple-value-bind (name len) (rocksdb-transaction-get-name txn)
-      (let ((ret (make-octets len)))
-        (octets-to-string (clone-octets-from-alien name ret len))))))
+  (multiple-value-bind (name len) (rocksdb-transaction-get-name txn)
+    (copy-c-string name (make-string len))))
 
 (defun %set-transaction-name (txn name)
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'rdb-transaction-error :txn txn)
     (let ((nlen (length name)))
       (with-alien ((%name (* unsigned-char) (octets-to-alien (string-to-octets name))))
         (rocksdb-transaction-set-name txn %name nlen e)))))
@@ -510,13 +489,13 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 (defun %get-prepared-transactions (txn-db)
   "Return an array of prepared ROCKSDB-TRANSACTION pointers from this
 transaction-db."
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'rdb-alien-error :db txn-db)
     (with-alien ((cnt size-t))
       (rocksdb-transactiondb-get-prepared-transactions txn-db (addr cnt)))))
 
 ;;; Checkpoints
 (defun %make-checkpoint (db)
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'rdb-alien-error :db db)
     (rocksdb-checkpoint-object-create db e)))
 
 (defun %create-checkpoint (chk dir &optional log-size-for-flush)
@@ -525,7 +504,7 @@ transaction-db."
 
 ;;; Secondary
 (defun %open-db-secondary (opts name sname)
-  (with-errptr* (e 'rdb-alien-error)
+  (with-errptr* (e 'open-db-error)
     (rocksdb-open-as-secondary opts name sname e)))
 
 (defun %open-cfs-secondary (opts name sname cf-names cf-opts)
@@ -575,11 +554,13 @@ transaction-db."
 ;;; Logger
 (defun create-default-logger-callback (&optional (level 0))
   (rocksdb-logger-create-callback-logger 
-   level 
-   (alien-sap (alien-callable-function 'rocksdb-log-default)) nil))
+   level
+   ;; static address to alien-callable
+   (alien-sap (alien-callable-function 'rocksdb-log-default)) 
+   nil))
 
 ;;; Writebatch/WBWI
-(defun create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))
+(defun %create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))
   (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))
 
 (defun %wbwi-put-cf (wbwi cf key val)

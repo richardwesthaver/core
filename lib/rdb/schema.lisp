@@ -7,20 +7,20 @@
 
 (defschema rdb-schema (schema)
   ((:default (octet-vector . octet-vector)))
-  (:documentation "A schema which may be read from a simple s-expression and ingested by a
-RDB-DATABASE instance via LOAD-SCHEMA."))
+  (:documentation "A schema which may be read from a simple s-expression and ingested by an
+RDB instance via LOAD-SCHEMA."))
 
 (defschema rdb-object-schema (object-schema) ()
   (:documentation "An object schema which may be ingested by a RDB-STORE."))
 
 ;; Note that we don't use SIMPLE-CONS-COLUMN here because the NAME slot of
-;; columns is stored in the underlying RDB-CF structure object.
+;; columns is stored in the underlying CF handle.
 (defclass rdb-column (cons-column) ()
   (:default-initargs 
    :type (cons 'octet-vector 'octet-vector)))
 
-(defun cf-to-field (cf)
-  (make-field :name (name cf)
+(defun field-from-cf (cf)
+  (make-field :name (%cf-name cf)
               :type (cons 'octet-vector 'octet-vector)))
 
 (defclass rdb-data-source (data-source)

@@ -307,7 +307,8 @@ is TY with a -T prepended as is customary in many C codebases."
               (setf (fill-pointer dest) index))
             (return))
           (setf (char dest index) (code-char b))
-          (incf index))))
+          (incf index)))
+  dest)
 
 (defun clone-strings (list &optional null-terminate)
   "Copy the list of strings in LIST to a foreign array of C strings. When

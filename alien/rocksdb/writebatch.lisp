@@ -89,9 +89,9 @@
   (deleted-cf (* rocksdb-delete-cf-function))
   (merge-cf (* rocksdb-merge-cf-function)))
 
-(defar rocksdb-writebatch-data (array unsigned-char)
+(defar rocksdb-writebatch-data (* unsigned-char)
   (batch (* rocksdb-writebatch))
-  (size (* size-t)))
+  (size size-t :out))
 
 (defar rocksdb-writebatch-set-savepoint void
   (batch (* rocksdb-writebatch)))
@@ -309,9 +309,9 @@
   (put (* rocksdb-put-function))
   (deleted (* rocksdb-delete-function)))
 
-(defar rocksdb-writebatch-wi-data (array unsigned-char)
+(defar rocksdb-writebatch-wi-data (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
-  (size (* size-t)))
+  (size size-t :out))
 
 (defar rocksdb-writebatch-wi-set-save-point void
   (batch (* rocksdb-writebatch-wi)))
@@ -324,7 +324,7 @@
   (opts (* rocksdb-options))
   (key (array unsigned-char))
   (keylen size-t)
-  (vallen (* size-t)))
+  (vallen size-t :out))
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch-cf (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
@@ -332,7 +332,7 @@
   (opts (* rocksdb-options))
   (key (array unsigned-char))
   (keylen size-t)
-  (vallen (* size-t)))
+  (vallen size-t :out))
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
@@ -340,7 +340,7 @@
   (readopts (* rocksdb-readoptions))
   (key (array unsigned-char))
   (keylen size-t)
-  (vallen (* size-t)))
+  (vallen size-t :out))
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch-and-db-cf (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
@@ -349,7 +349,7 @@
   (cf (* rocksdb-column-family-handle))
   (key (array unsigned-char))
   (keylen size-t)
-  (vallen (* size-t)))
+  (vallen size-t :out))
 
 (def-with-errptr rocksdb-write-writebatch-wi void
   (db (* rocksdb))

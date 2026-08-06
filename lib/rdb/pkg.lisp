@@ -58,7 +58,6 @@
    :rdb-sst-file-metadata :make-rdb-sst-file-metadata
    :rdb-sst-file-metadata-p :rdb-cf-metadata-p
    :rdb-level-metadata-p
-   :rdb-bytes :rdb-bytes-buffer :rdb-opts-sap
    :rdb-opts :make-rdb-opts
    :default-rdb-opts
    :rdb-cf :make-rdb-cf :create-cf
@@ -103,14 +102,12 @@
    :metadata-missing
    :put-kv-cf-error
    :get-kv-cf-error
-   :txn-error
+   :rdb-transaction-error
    :with-txn-raw
    :index-merge-op
    :concat-merge-op
    :rdb-log-default
    :do-columns
-   :with-kv
-   :do-kvs
    :with-column
    :rdb-column-family
    :rdb-column
@@ -121,7 +118,6 @@
    :cf
    :create-default-logger-callback
    :rdb-database
-   :create-wbwi
    :with-wbwi
    :rdb-wbwi
    :rdb-wbwi-count
@@ -144,7 +140,6 @@
    :simple-rdb-warning
    :schema-from-rdb-column-families
    :rdb-write
-   :wbwi-put-kv-cf
    :init-rdbrc
    :rdb-service))
 
