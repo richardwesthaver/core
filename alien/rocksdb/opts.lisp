@@ -621,12 +621,6 @@ will be set to NULL.
   (list-column-family-options (* (* rocksdb-options)))
   (len size-t))
 
-(def-with-errptr rocksdb-set-db-options void
-  (db (* rocksdb))
-  (count int)
-  (keys (array c-string))
-  (values (array c-string)))
-
 (def-with-errptr rocksdb-set-options void
   (db (* rocksdb))
   (count int)

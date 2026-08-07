@@ -5,18 +5,16 @@
 ;;; Code:
 (in-package :rdb)
 
-(define-condition rdb-condition (db-condition) ())
-
 (eval-always
-  (deferror simple-rdb-error (simple-error rdb-condition)
+  (deferror simple-rdb-error (simple-error db-condition)
     ()
     (:reporter t)
     (:documentation "Simple RDB Error."))
-  (deferror rdb-error (rdb-condition std-error)
+  (deferror rdb-error (db-error)
     ()
     (:reporter t)
     (:documentation "Error signaled by the RDB system."))
-  (defwarning simple-rdb-warning (rdb-condition simple-warning)
+  (defwarning simple-rdb-warning (simple-warning db-condition)
     () 
     (:default-initargs 
      :format-control "RDB warning: ~A")
@@ -87,13 +85,13 @@
 (define-condition merge-kv-cf-error (kv-error) ()
   (:documentation "Error signaled while processing a MERGE-KV-CF request"))
 
-(define-condition opt-handler-missing (warning rdb-condition)
+(define-condition opt-handler-missing (warning)
   ())
 
-(define-condition db-missing (warning rdb-condition)
+(define-condition db-missing (warning)
   ())
 
-(define-condition metadata-missing (warning rdb-condition)
+(define-condition metadata-missing (warning)
   ())
 
 (define-condition invalid-propname (rdb-error)

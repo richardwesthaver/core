@@ -150,7 +150,8 @@ function NAME and be skipped for (setf NAME)."
 (defverb opt (self key)
   (:accessor t)
   (:documentation "Access the option KEY of object SELF."))
-
+(defverb load-opts (self &key)
+  (:documentation "Load options for object SELF."))
 (defverb bind (self)
   (:accessor t)
   (:documentation "Return the binding associated with object SELF."))

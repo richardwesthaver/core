@@ -744,7 +744,8 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :define-template-generic :*template-table*
    :template-function-p :*sham-classes*
    :defsham :save
-   :oid :cid))
+   :oid :cid
+   :load-opts))
 
 (defpkg :std/stream
   (:use :cl :std/type :std/meta)

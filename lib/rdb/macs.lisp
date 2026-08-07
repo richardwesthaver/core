@@ -18,24 +18,6 @@ ERR with initargs PARAMS for the duration of BODY."
                              (apply 'error ,err :message (deref (sap-alien ,e (* c-string))) ',params))))
        (progn ,@body))))
 
-;;; opts
-;; These expand into lookup macros for the pre-defined option GET and SET
-;; functions - for example RDB-OPT-SETTER and RDB-OPT-GETTER.
-(macrolet ((%def-opt-finders (name opt)
-             `(progn 
-                (defmacro ,(symbolicate name '-setter) (key)
-                  `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',opt ,key) :rocksdb)
-                       (when (string= (string-downcase ,key) "event-listener")
-                         'rocksdb:rocksdb-options-add-eventlistener)))
-                (defmacro ,(symbolicate name '-getter) (key)
-                  `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',opt ,key) :rocksdb)))))
-  (%def-opt-finders rdb-opt rocksdb-options)
-  (%def-opt-finders rdb-writeopt rocksdb-writeoptions)
-  (%def-opt-finders rdb-readopt rocksdb-readoptions)
-  (%def-opt-finders rdb-compactopt rocksdb-compactoptions)
-  (%def-opt-finders rdb-ingestopt rocksdb-ingestexternalfileoptions)
-  (%def-opt-finders rdb-backupopt rocksdb-backup-engine-options))
-
 ;;; rdb
 ;; these functions only apply to the low-level API in RDB/OBJ (structs only)
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
@@ -51,6 +33,11 @@ ERR with initargs PARAMS for the duration of BODY."
      ,@(when open `(open-db ,db-var))
      ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
            body)))
+
+(defmacro unless-null-db (slots self &body body)
+  `(with-slots (db ,@slots) ,self
+     (unless (null db)
+       ,@body)))
 
 ;; temp-rdb
 (defvar *temp-db-path-generator*

@@ -318,39 +318,6 @@ internal sap slots are initialized."
 (defmethod create-column ((db rdb) (cf rdb-cf))
   (%create-cf (sap db) (name cf) (sap (column-opts cf))))
 
-(defmacro unless-null-db (slots self &body body)
-  `(with-slots (sap ,@slots) ,self
-     (unless (null sap)
-       ,@body)))
-
-(defmethod free ((cf rdb-cf))
-  (with-slots (sap) cf
-    (unless (null sap)
-      (setf sap (%destroy-cf sap)))))
-
-(defaccessor* db-opt
-    ((self rdb) key) (db-opt (db-opts self) (string-downcase key))
-    (new (self rdb) key &key push)
-  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
-    (when push (push-sap (db-opts self) (string-downcase key)))))
-
-(defmethod push-opts ((self rdb))
-  (with-slots (opts) self
-    (push-sap* opts)))
-
-(defmethod open-db ((self rdb))
-  (with-slots (name sap opts) self
-    (if sap
-        (progn
-          (cerror "Ignore and continue" 'open-db-error 
-                  :db sap
-                  :message "Database is already open")
-          sap)
-        (setf sap (%open-db name (or (sap opts) (push-opts self)))))))
-
-(defmethod db-prop ((self rdb) (propname string))
-  (unless-null-db () self
-    (rocksdb-property-value sap propname)))
 
 (defmethod repair-db ((self rdb) &key)
   (%repair-db (rdb-name self)))
@@ -676,23 +643,10 @@ internal sap slots are initialized."
   (sap (%create-wbwi) :type (or null (alien (* rocksdb-writebatch-wi)))))
 
 (defaccessor sap ((self rdb-wbwi)) (rdb-wbwi-sap self))
-(defun %wbwi-count (self) (rocksdb-writebatch-wi-count self))
-(defun %wbwi-data (wbwi)
-  (multiple-value-bind (data size) (rocksdb-writebatch-wi-data wbwi)
-    (clone-octets-from-alien data (make-array size :element-type 'octet))))
-(defmethod iter ((self rdb-wbwi) &key)
-  (rocksdb-writebatch-wi-iterate (sap self) nil nil (sb-alien:alien-callable-function 'rocksdb-delete-value)))
-(defun %wbwi-clear (wbwi)
-  (rocksdb-writebatch-wi-clear wbwi))
-(defun %wbwi-save (self)
-  (rocksdb-writebatch-wi-set-save-point self))
-(defun %wbwi-ts (self ts)
-  (with-errptr e
-    (rocksdb-writebatch-wi-update-timestamps 
-     self (octets-to-alien ts) (length ts) nil nil e)))
-(defun %destroy-wbwi (self)
-  (rocksdb-writebatch-wi-destroy self))
-
+(defun %wbwi-iter (wbwi &key state
+                             put 'rocksdb-put-function
+                             (deleted (sb-alien:alien-callable-function 'rocksdb-delete-value))
+  (rocksdb-writebatch-wi-iterate wbwi state put deleted))
 (defmethod put-key ((self rdb-wbwi) (key vector) (val vector))
   (rocksdb-writebatch-wi-put 
    (sap self) 
@@ -716,6 +670,3 @@ internal sap slots are initialized."
       (std:clone-octets-from-alien 
        data
        (make-array i :element-type 'octet)))))
-
-(defun %wbwi-write (db batch &optional opts)
-  (with-errptr e (rocksdb-write-writebatch-wi (sap db) (sap (or opts (make-rdb-writeopts))) (sap batch) e)))

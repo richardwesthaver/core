@@ -4,12 +4,6 @@
 
 ;;; Code:
 (in-package :rdb)
-(defgeneric load-opts (self &key)
-  (:documentation "Load database options from disk."))
-(defgeneric push-opts (self)
-  (:documentation "Push all options to internal sap."))
-(defgeneric backfill-opts (self &key)
-  (:documentation "Backfill opts from an alien."))
 (defgeneric print-stats (self &optional stream)
   (:documentation "Print statistics data from SELF."))
 (defgeneric open-backup-engine (self &key path))

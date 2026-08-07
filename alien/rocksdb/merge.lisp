@@ -173,7 +173,7 @@ accessed using a different MergeOperator)
        (value (* unsigned-char))
        (value-length size-t))
     (unless (null-alien value)
-      (setf value nil))
+      (setf value (null-pointer)))
     (values))
 (define-alien-callable rocksdb-index-full-merge (* unsigned-char) #.*rocksdb-full-merge-lambda-list*
   (log:trace! "Applying CC:INDEX full merge with ~A operands" num-ops)

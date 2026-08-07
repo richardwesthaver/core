@@ -562,7 +562,20 @@ transaction-db."
 ;;; Writebatch/WBWI
 (defun %create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))
   (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))
-
+(defun %wbwi-count (self) (rocksdb-writebatch-wi-count self))
+(defun %wbwi-data (wbwi)
+  (multiple-value-bind (data size) (rocksdb-writebatch-wi-data wbwi)
+    (clone-octets-from-alien data (make-array size :element-type 'octet))))
+(defun %wbwi-clear (wbwi)
+  (rocksdb-writebatch-wi-clear wbwi))
+(defun %wbwi-save (self)
+  (rocksdb-writebatch-wi-set-save-point self))
+(defun %wbwi-ts (self ts)
+  (with-errptr e
+    (rocksdb-writebatch-wi-update-timestamps 
+     self (octets-to-alien ts) (length ts) nil nil e)))
+(defun %destroy-wbwi (self)
+  (rocksdb-writebatch-wi-destroy self))
 (defun %wbwi-put-cf (wbwi cf key val)
   (with-kv-raw* key val
     (rocksdb-writebatch-wi-put-cf 
@@ -570,6 +583,8 @@ transaction-db."
      cf
      %key %klen
      %val %vlen)))
+(defun %wbwi-write (db batch &optional (opts (rocksdb-readoptions-create)))
+  (with-errptr e (rocksdb-write-writebatch-wi db opts batch e)))
 
 ;;; zero-copy
 (defun %get-kv-pinned (db key &optional (opt (rocksdb-readoptions-create)))

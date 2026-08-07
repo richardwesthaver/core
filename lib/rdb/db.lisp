@@ -7,7 +7,7 @@
 
 ;;; Backend
 (defvar *rocksdb-backend-options* 
-  '(columns temp path (open . t) 
+  '(columns temp path (open . t)
     destroy (close . t) 
     sap merge-op comparator prefix-op logger event-listener))
 
@@ -23,19 +23,19 @@
    (sb-ext:finalize db (lambda () (shutdown-db db))))
   (((db rdb) (key (eql :merge-op)) val)
    "Assign a MERGE-OP to this database."
-   (setf (db-opt db :merge-operator :push t) val))
+   (setf (opt db :merge-operator) val))
   (((db rdb) (key (eql :comparator)) val)
    "Assign a custom COMPARATOR to this database."
-   (setf (db-opt db :comparator :push t) val))
+   (setf (opt db :comparator) val))
   (((db rdb) (key (eql :prefix-op)) val)
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
-   (setf (db-opt db :prefix-extractor :push t) val))
+   (setf (opt db :prefix-extractor) val))
   (((db rdb) (key (eql :event-listener)) val)
    "Assign an EVENT-LISTENER to this database."
-   (setf (db-opt db :event-listener :push t) val))
+   (setf (opt db :event-listener) val))
   (((db rdb) (key (eql :logger)) val)
-   (setf (db-opt db :info-log :push t) val)))
+   (setf (opt db :info-log) val)))
 
 (set-database-backend :rocksdb *rocksdb-backend-options*
                       (lambda () (load-rocksdb *save-database-backend-on-load*)))
@@ -43,47 +43,33 @@ extractor."
 (set-database-backend :rdb *rdb-backend-options*
                       (lambda () (db::%load-database-backend :rocksdb)))
 
-(defmethod load-opts ((db rdb) &key backfill)
+(defmethod load-opts ((db rdb) &key)
   (with-latest-options (name db) (db-opts cf-names cf-opts)
        (let ((cfs (coerce 
                    (loop for name across cf-names
                          for opt across cf-opts
-                         collect 
-                            (let ((cf-opts (make-rdb-opts)))
-                              (setf (sap cf-opts) opt)
-                              (when (eq backfill :full) (backfill-opts cf-opts :full t))
-                              (make-rdb-cf name :opts cf-opts)))
+                         collect (make-rdb-cf name :opts opt))
                    'vector)))
-         (setf (db-opts db) (make-rdb-opts* db-opts))
-         (when backfill (backfill-opts (db-opts db) :full (eq backfill :full)))
+         (setf (options db) (make-rdb-opts* db-opts))
          cfs)))
 
-(defmethod make-db ((engine (eql :rocksdb)) &rest initargs &key
-                                                           type
-                                                           name
-                                                           merge-op
-                                                           prefix-op
-                                                           logger
-                                                           event-listener
-                                                           (opts (default-rdb-opts))
-                                                           path)
-  (declare (ignore engine initargs))
-  (when merge-op
-    (set-db-opt opts :merge-operator merge-op :push t))
-  (when prefix-op
-    (set-db-opt opts :prefix-extractor prefix-op :push t))
-  (when logger
-    (set-db-opt opts :info-log logger :push t))
-  (when event-listener
-    (set-db-opt opts :event-listener event-listener :push t))
-  (let ((db (funcall (case type 
-                       (:optimistic-transaction #'make-rdb-optimistic-transaction-db)
-                       (:transaction #'make-rdb-transaction-db)
-                       (t #'make-rdb))
-                     :name (or name (namestring path) (string-downcase (gensym "rocksdb"))) 
-                     :opts opts)))
-    (push-opts db)
-    db))
+(defmethod make-db ((engine (eql :rocksdb)) 
+                    &key
+                    merge-op
+                    prefix-op
+                    logger
+                    event-listener
+                    (opts (default-rocksdb-options))
+                    open
+                    path)
+  (declare (ignore engine))
+  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
+  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
+  (when logger (rocksdb-options-set-info-log opts logger))
+  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
+  (if open
+      (%open-db path opts) ; open the db, OR
+      (cons path opts))) ; return a cons
 
 (defmethod query ((db rdb) (query (eql :get)) &key key column &allow-other-keys)
   (declare (ignore query))
@@ -145,6 +131,9 @@ object. (SAP CF) is the raw pointer."))
 
 ;;; Database
 (defclass rdb-database (database)
+  ((options :initform (default-rocksdb-options) :accessor options)))
+
+(defclass simple-rdb (rdb-database)
   ((backup :initform nil :type (or null rocksdb-backup-engine) :initarg :backup :accessor db-backup)
    (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
               :type (vector (alien rocksdb-snapshot))
@@ -157,7 +146,6 @@ object. (SAP CF) is the raw pointer."))
    (secondary :initform nil :type (or null rocksdb) :initarg :secondary :accessor secondary-db)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
-   :db (make-db :rocksdb :opts (default-rdb-opts))
    ;; Note that we don't pre-populate this slot with the 'default' column
    ;; which is present on creation of a RocksDB database. Usually there isn't
    ;; much need to access this column directly as you can just access the
@@ -172,17 +160,17 @@ object. (SAP CF) is the raw pointer."))
    (sb-ext:finalize db (lambda () (close-db db))))
   (((db rdb-database) (key (eql :merge-op)) val)
    "Assign a MERGE-OP to this database."
-   (setf (db-opt db :merge-operator :push t) val))
+   (setf (opt db :merge-operator) val))
   (((db rdb-database) (key (eql :comparator)) val)
    "Assign a custom COMPARATOR to this database."
-   (setf (db-opt (db db) :comparator) val))
+   (setf (opt db :comparator) val))
   (((db rdb-database) (key (eql :prefix-op)) val)
    "Assign a custom SLICETRANSFORM to this database to be used as a prefix
 extractor."
-   (setf (db-opt (db db) :prefix-extractor :push t) val))
+   (setf (opt db :prefix-extractor) val))
   (((db rdb-database) (key (eql :event-listener)) val)
    "Assign an EVENT-LISTENER to this database."
-   (setf (db-opt (db db) :event-listener :push t) val)))
+   (setf (opt db :event-listener) val)))
 
 (defmethod load-opts ((self rdb-database) &key (backfill t))
   ;; order is determined by RocksDB
@@ -200,18 +188,15 @@ extractor."
              (setf (aref (columns self) (position found (columns self))) c)
              (vector-push-extend c (columns self)))))
 
-(defmethod backfill-opts ((self rdb-database) &key (full t))
-  (backfill-opts (db-opts self) :full full))
-
-(defmethod reset ((self rdb-database) &key (columns t) (opts t))
+(defmethod reset ((self rdb-database) &key (columns t) (opts (default-rocksdb-options)))
   (when columns 
     (close-columns self) 
     (setf (columns self)
           (make-array 0 :element-type 'rdb-column-family
                         :adjustable t
                         :fill-pointer t)))
-  (when opts
-    (setf (db-opts self) (if (eql t opts) (default-rdb-opts) opts))))
+  (setf (options self) opts)
+  self)
 
 (defmethod open-column ((self rdb-database) (col string) &key)
   (open-column (db self) (cf (find-column col self))))
@@ -245,7 +230,7 @@ extractor."
                                   :cf (make-rdb-cf n)) 
                                 db))))
            'vector)))
-    (multiple-value-bind (db-sap cfs) (%open-cfs (db-opts db) (name db)
+    (multiple-value-bind (db-sap cfs) (%open-cfs (opts db) (name db)
                                                     (loop for c across cols
                                                           collect (name c))
                                                     (loop for c across cols
@@ -265,9 +250,9 @@ extractor."
     (nreversef opts)
     (unless (member *rdb-default-column-name* names :test 'string=)
       (push *rdb-default-column-name* names)
-      (push (sap (db-opts self)) opts))
+      (push (opts self) opts))
     (multiple-value-bind (db cfs)
-        (%open-cfs (sap (db-opts self)) (name self) names opts)
+        (%open-cfs (opts self) (name self) names opts)
       (setf (sap self) db)
       (let ((len (length names)))
         (loop for n in names
@@ -387,27 +372,18 @@ extractor."
 
 (defmethod database-version ((self rdb-database))
   "Return the version tag or nil if unmarked"
-  (when-let ((db (and #1=(db self) (sap #1#))))
-    (rocksdb-property-value db "rocksdb.current-super-version-number")))
+  (prop self "rocksdb.current-super-version-number"))
 
-(defaccessor name ((self rdb-database)) (name (db self)))
-(defaccessor sap ((self rdb-database)) (sap (db self)))
-(defaccessor db-opts ((self rdb-database)) (db-opts (db self)))
-(defaccessor* db-opt 
-    ((self rdb-database) key) (db-opt (db-opts self) key)
-    (new (self rdb-database) key &key push)
-  (prog1 (setf (db-opt (db-opts self) key) new)
-    (when push (push-sap (db-opts self) key))))
-
-(defmethods db-prop 
+(defaccessor name ((self rdb-database)) (path self))
+(defaccessor sap ((self rdb-database)) (db self))
+(defaccessor opts ((self rdb-database)) (options self))
+(defaccessor opt ((self rdb-database) key) (opt (opts self) key))
+(defmethods prop 
   (((self rdb-database) (name string))
-   (db-prop (db self) name))
+   (unless-null-db () self
+     (rocksdb-property-value db name)))
   (((self rdb-database) (name symbol))
-   (db-prop (db self) (string-downcase (concatenate 'string "rocksdb." (symbol-name name))))))
-
-(defmethod push-opts ((self rdb-database))
-  (with-slots (opts) (db self)
-    (push-sap* opts)))
+   (prop self (string-downcase (concatenate 'string "rocksdb." (symbol-name name))))))
 
 (defmethod print-stats ((self rdb-database) &optional stream)
   (print-stats (db self) stream))
@@ -446,7 +422,15 @@ extractor."
          (loop for c across (columns self)
                collect (field-from-cf (cf c)))))
 
-(defmethod open-db ((self rdb-database)) (open-db (db self)) self)
+(defmethod open-db ((self rdb-database))
+  (with-slots (path db options) self
+    (if db
+        (progn
+          (cerror "Ignore and continue" 'open-db-error 
+                  :db db
+                  :message "Database is already open")
+          db)
+        (setf db (%open-db path options)))))
 
 (defmethod open-backup-engine ((self rdb-database) &key path) 
   (setf (db-backup self) (open-backup-engine (db self) :path path)))
