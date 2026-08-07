@@ -5,27 +5,30 @@
 ;;; Code:
 (in-package :rdb)
 ;;; Iterator
+(defclass rdb-iter (iterator)
+  ((sap :initarg :sap :accessor sap)))
+
 (defmethod seek-to-first ((self rdb-iter))
-  (rocksdb-iter-seek-to-first (rdb-iter-sap self)))
+  (rocksdb-iter-seek-to-first (sap self)))
 
 (defmethod seek-to-last ((self rdb-iter))
-  (rocksdb-iter-seek-to-last (rdb-iter-sap self)))
+  (rocksdb-iter-seek-to-last (sap self)))
 
 (defmethod seek-for-prev ((self rdb-iter) (key vector) &key)
-  (rocksdb-iter-seek-for-prev (rdb-iter-sap self) (octets-to-alien key) (length key)))
+  (rocksdb-iter-seek-for-prev (sap self) (octets-to-alien key) (length key)))
 
 (defmethod seek ((self rdb-iter) (key simple-vector) &key)
-  (rocksdb-iter-seek (rdb-iter-sap self) (octets-to-alien key) (length key)))
+  (rocksdb-iter-seek (sap self) (octets-to-alien key) (length key)))
 
 (defmethod next ((self rdb-iter))
-  (rocksdb-iter-next (rdb-iter-sap self)))
+  (rocksdb-iter-next (sap self)))
 
 (defmethod prev ((self rdb-iter))
-  (rocksdb-iter-prev (rdb-iter-sap self)))
+  (rocksdb-iter-prev (sap self)))
 
 (defmethod key ((self rdb-iter))
   (with-alien ((klen size-t))
-    (let ((key (rocksdb-iter-key (rdb-iter-sap self) (addr klen))))
+    (let ((key (rocksdb-iter-key (sap self) (addr klen))))
       (let ((k (make-octets klen)))
         (clone-octets-from-alien key k)
         (values
