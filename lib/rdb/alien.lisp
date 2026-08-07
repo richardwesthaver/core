@@ -1,4 +1,4 @@
-;;; rdb/rocksdb.lisp --- Intermediate API to ROCKSDB aliens
+;;; rdb/alien.lisp --- Intermediate API to ROCKSDB aliens
 
 ;;; Code:
 (in-package :rdb)
@@ -22,7 +22,11 @@
       (rocksdb-open opts db-path err))))
 
 (defun %close-db (db)
-  (rocksdb-close db))
+  (when db
+    (typecase db
+      ((alien (* rocksdb)) (rocksdb-close db))
+      ((alien (* rocksdb-transactiondb)) (rocksdb-transactiondb-close db))
+      ((alien (* rocksdb-optimistictransactiondb)) (rocksdb-optimistictransactiondb-close db)))))
 
 (defun %destroy-db (path &optional (opt (rocksdb-options-create)))
   (with-errptr* (err 'destroy-db-error :db path)
@@ -226,6 +230,9 @@
 (defun %create-cf-iter (db cf &optional (opt (rocksdb-readoptions-create)))
   (rocksdb-create-iterator-cf db opt cf))
 
+(defun %transaction-wbwi (self)
+  (rocksdb-transaction-get-writebach-wi self))
+
 (defun %transaction-create-iter (txn &optional (opts (rocksdb-readoptions-create)))
   (rocksdb-transaction-create-iterator txn opts))
 
@@ -237,6 +244,17 @@
 
 (defun %transactiondb-create-iter-cf (txndb cf &optional (opts (rocksdb-readoptions-create)))
   (rocksdb-transactiondb-create-iterator-cf txndb opts cf))
+
+(defun %create-iterators (db opts columns)
+  (with-alien ((iters (* (* rocksdb-iterator))
+                      (make-alien (* rocksdb-iterator) (length columns)))
+               (cfs (* (* rocksdb-column-family-handle)) 
+                    (make-alien (* rocksdb-column-family-handle) (length columns))))
+    (with-errptr e
+      (rocksdb-create-iterators db opts cfs iters e))))
+
+(defun %reset-iter (iter)
+  (with-errptr e (rocksdb-iter-refresh iter e)))
 
 (defun %destroy-iter (iter)
   (rocksdb-iter-destroy iter))
@@ -260,6 +278,8 @@
            (v (make-array vlen :element-type '(unsigned-byte 8))))
       (clone-octets-from-alien val-ptr v vlen)
       v)))
+(defun %iter-valid-p (iter)
+  (rocksdb-iter-valid iter))
 
 (defun %iter-val-str (iter)
   (when-let ((v (%iter-val iter)))
@@ -289,6 +309,9 @@
   (with-errptr* (err 'open-db-error)
     (rocksdb-backup-engine-restore-db-from-backup be db-path backup-path opt backup-id err)))
 
+(defun %backup-info (be)
+  (rocksdb-backup-engine-get-backup-info be))
+
 ;;; Snapshot
 (defun %create-snapshot (db)
   (rocksdb-create-snapshot db))
@@ -305,6 +328,13 @@
                                                 (env-opts (rocksdb-envoptions-create))
                                                 (io-opts (rocksdb-options-create)))
   (rocksdb-sstfilewriter-create-with-comparator env-opts io-opts comparator))
+
+(defun %sst-filewriter (&optional comparator
+                                  (env (rocksdb-envoptions-create))
+                                  (opts (rocksdb-options-create)))
+  (if comparator
+      (%create-sst-writer-with-comparator comparator env opts)
+      (%create-sst-writer env opts)))
 
 (defun %finish-sst-writer (writer)
   (with-errptr* (err 'rdb-alien-error)
@@ -357,7 +387,7 @@
 (defun %sst-file-size (writer)
   (with-errptr* (err 'rdb-alien-error)
     (with-alien ((ret unsigned-long))
-      (rocksdb-sstfilewriter-file-size writer (addr ret) err)
+      (rocksdb::rocksdb-sstfilewriter-file-size writer (addr ret) err)
       ret)))
 
 ;;; Transactions
@@ -450,6 +480,15 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
 
 (defsetf %transaction-name %set-transaction-name)
 
+(defun %transaction-iterator (self &key column (opts (rocksdb-readoptions-create)))
+  (if column
+      (%transaction-create-iter-cf self column opts)
+      (%transaction-create-iter self opts)))
+
+(defun %abort-transaction (self &optional savepoint)
+  (%rollback-transaction self savepoint)
+  (rocksdb-transaction-destroy self))
+
 (defun %transaction-get (txn key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-txn-raw (txn e :key key)
     (if pinned
@@ -490,8 +529,7 @@ savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
   "Return an array of prepared ROCKSDB-TRANSACTION pointers from this
 transaction-db."
   (with-errptr* (e 'rdb-alien-error :db txn-db)
-    (with-alien ((cnt size-t))
-      (rocksdb-transactiondb-get-prepared-transactions txn-db (addr cnt)))))
+    (rocksdb-transactiondb-get-prepared-transactions txn-db)))
 
 ;;; Checkpoints
 (defun %make-checkpoint (db)
@@ -566,6 +604,9 @@ transaction-db."
 (defun %wbwi-data (wbwi)
   (multiple-value-bind (data size) (rocksdb-writebatch-wi-data wbwi)
     (clone-octets-from-alien data (make-array size :element-type 'octet))))
+(defun %writebatch-data (wb)
+  (multiple-value-bind (data size) (rocksdb-writebatch-data wb)
+    (clone-octets-from-alien data (make-array size :element-type 'octet))))
 (defun %wbwi-clear (wbwi)
   (rocksdb-writebatch-wi-clear wbwi))
 (defun %wbwi-save (self)
@@ -574,6 +615,13 @@ transaction-db."
   (with-errptr e
     (rocksdb-writebatch-wi-update-timestamps 
      self (octets-to-alien ts) (length ts) nil nil e)))
+(defun %writebatch-iter (self)
+  (rocksdb-writebatch-iterate self nil nil (alien-callable-function 'rocksdb-delete-value)))
+(defun %wbwi-iter (wbwi &key state
+                             put
+                             (deleted (sb-alien:alien-callable-function 'rocksdb-delete-value)))
+  (rocksdb-writebatch-wi-iterate wbwi state put deleted))
+
 (defun %destroy-wbwi (self)
   (rocksdb-writebatch-wi-destroy self))
 (defun %wbwi-put-cf (wbwi cf key val)
@@ -585,6 +633,35 @@ transaction-db."
      %val %vlen)))
 (defun %wbwi-write (db batch &optional (opts (rocksdb-readoptions-create)))
   (with-errptr e (rocksdb-write-writebatch-wi db opts batch e)))
+(defun %wbwi-put-kv (self key val)
+  (declare (octet-vector key val))
+  (rocksdb-writebatch-wi-put 
+   self
+   (cast (octets-to-alien key) (array unsigned-char))
+   (length key) 
+   (cast (octets-to-alien val) (array unsigned-char))
+   (length val)))
+
+(defun %wbwi-put-kv-str (self key val)
+  (%wbwi-put-kv self (string-to-octets key) (string-to-octets val)))
+
+(defun %wbwi-kv (self key &optional (opt (rocksdb-readoptions-create)))
+  (with-errptr e
+    (multiple-value-bind (data i)
+        (rocksdb-writebatch-wi-get-from-batch
+         self
+         opt
+         (cast (octets-to-alien key) (array unsigned-char))
+         (length key)
+         e)
+      (std:clone-octets-from-alien 
+       data
+       (make-array i :element-type 'octet)))))
+
+(defun %wbwi-kv-str (self key &optional (opt (rocksdb-readoptions-create)))
+  (let ((k (string-to-octets key)))
+    (let ((v (%wbwi-kv self k opt)))
+      (when v (octets-to-string v)))))
 
 ;;; zero-copy
 (defun %get-kv-pinned (db key &optional (opt (rocksdb-readoptions-create)))
@@ -606,52 +683,3 @@ transaction-db."
   "DB get CF using the 'into_buffer' API."
   (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
     (rocksdb-get-into-buffer-cf db opt cf %key %klen buffer (length buffer) e)))
-
-;;; Buffered API
-;; The functions in this section use the BUFFER-STREAM protocol from the IO
-;; system and are used to implement the RocksDB backend for the STORE
-;; protocol.
-
-;; The BUFFER slot of every BUFFER-STREAM is a SAP which is filled with a key
-;; value before being sent to RocksDB, and set to the corresponding value of a
-;; PinnableSlice C struct when retrieving a value for decoding.
-
-(defmacro txn-default (dvar)
-  `(progn
-     (assert (null ,dvar))
-     nil))
-
-#+nil
-(defun db-get-key-buffered (db kbuf vbuf &key (transaction (txn-default *transaction*)))
-  "Get a KV from a DB. The key is encoded in a buffer-stream and on success a
-  buffer-stream for decoding the value is returned or NIL if nothing was
-  found."
-  (declare (buffer-stream kbuf vbuf))
-  (loop 
-    for key-length fixnum = (buffer-stream-length key-buffer-stream)
-    for value-length fixnum = (buffer-stream-length value-buffer-stream)
-   do (multiple-value-bind (val result-size)
-          (%transaction-get transaction (buffer kbuf) opts
-                            (buffer key-buffer-stream)
-                            (size key-buffer-stream)
-                            e)
-
-     (declare (type fixnum result-size errno))
-     (cond 
-       ((= errno 0)
-    ;(setf (buffer-stream-size key-buffer-stream) ret-key-size)
-    (setf (size value-buffer-stream) result-size)
-    (return-from db-get-key-buffered 
-      (the buffer-stream value-buffer-stream)))
-       ((or (= errno DB_NOTFOUND) (= errno DB_KEYEMPTY))
-    (return-from db-get-key-buffered nil))
-       ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
-    (throw 'transaction transaction))
-       ((or (> result-size value-length) (> ret-key-size key-length))
-    (resize-buffer-stream-no-copy value-buffer-stream result-size)
-    (resize-buffer-stream-no-copy key-buffer-stream ret-key-size))
-       (t (error 'bdb-db-error :errno errno))))))
-
-
-
-

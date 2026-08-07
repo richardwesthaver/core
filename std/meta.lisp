@@ -113,6 +113,8 @@ function NAME and be skipped for (setf NAME)."
   (:documentation "Return the tags associated with object SELF."))
 (defverb exec (self)
   (:documentation "Execute object SELF."))
+(defverb execute (self obj &key)
+  (:documentation "Execute OBJ in the context of SELF."))
 (defverb make (self &rest args)
   (:documentation "Make object SELF given ARGS."))
 (defverb explore (self &key &allow-other-keys)

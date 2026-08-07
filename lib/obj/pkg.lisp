@@ -15,7 +15,7 @@
 (defpkg :obj/val
   (:nicknames :val)
   (:use :cl :std)
-  (:export :get-val :rem-val :get-value :val))
+  (:export :get-val :rem-val :get-value))
 
 ;;; Meta Packages
 (defpkg :obj/meta/stealth
@@ -675,7 +675,7 @@ protocol.")
 (defpkg :obj/db
   (:nicknames :db)
   (:import-from :obj/meta/stored :*store*)
-  (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :config)
+  (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :config :ast)
   (:export
    :ensure-transaction
    :dbs
@@ -695,10 +695,9 @@ protocol.")
    :delete-key
    :delete-key-ts
    :delete-key-range
-   :make-transaction
-   :prepare-transaction
-   :rollback-transaction
-   :commit-transaction
+   :prepare
+   :rollback
+   :commit
    :flush-db
    :repair-db
    :backup-db
@@ -710,7 +709,6 @@ protocol.")
    :put-key-ts
    :get-key
    :multi-get
-   :execute-transaction
    :abort-transaction
    :open-db
    :database-collection
@@ -720,13 +718,13 @@ protocol.")
    :with-batch-transaction
    :*transaction*
    :transaction-object
+   :transaction
    :current-transaction
    :transaction-store
    :database-version
    :transaction-db
    :transaction-object-p
    :known-transaction
-   :close-column
    :close-columns
    :find-column
    :transaction-prior
@@ -755,12 +753,10 @@ protocol.")
    :simple-transaction
    :secondary-db
    :db-backup
-   :db-opts
    :*save-database-backend-on-load*
    :open-with-columns
    :open-columns*
    :open-column
-   :close-column
    :close-columns
    :create-column
    :db-config

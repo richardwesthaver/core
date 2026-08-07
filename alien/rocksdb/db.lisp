@@ -669,7 +669,7 @@
 
 (defar rocksdb-transactiondb-get-prepared-transactions (* (* rocksdb-transaction))
   (txn-db (* rocksdb-transactiondb))
-  (cnt (* size-t)))
+  (count size-t :out))
 
 (def-with-errptr rocksdb-transaction-set-name void
   (txn (* rocksdb-transaction))

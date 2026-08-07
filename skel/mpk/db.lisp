@@ -239,8 +239,8 @@
       (with-iter (it (iter *db* :column :id))
         (seek-to-first it)
         (loop while (iter-valid-p it)
-              do (let ((k (skey it))
-                       (v (sval it)))
+              do (let ((k (key it))
+                       (v (val it)))
                    (fmt-row (list
                              (uuid::octet-vector-to-uuid k)
                              (unless (null v)

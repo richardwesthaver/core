@@ -180,7 +180,6 @@ set *errptr to a malloc()ed error message.
    :rocksdb-optimistictransactiondb-get-base-db
    :rocksdb-optimistictransaction-begin
    :rocksdb-transactiondb-flush-wal
-   :rocksdb-transaction-close
    :rocksdb-transactiondb-property-value
    :rocksdb-transactiondb-get-base-db
    :rocksdb-transaction-get

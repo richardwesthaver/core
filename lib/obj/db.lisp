@@ -299,9 +299,6 @@ in-memory objects."))
 (defgeneric open-with-columns (self &rest names)
   (:documentation "Open a database with columns indicated by NAMES or all columns belonging to
 SELF. This function may error when (DB-OPEN-P SELF) is non-nil."))
-(defgeneric close-column (self &optional error)
-  (:documentation "Close the column SELF. When ERROR is non-nil signal an error if the
-column is already closed."))
 (defgeneric close-columns (self)
   (:documentation "Close all the columns belonging to SELF."))
 (defgeneric create-column (self cf)
@@ -317,11 +314,8 @@ column is already closed."))
 
 ;;; Transactions
 
-;; In our system, transactions must at least implement a TRANSACTION-DB method
-;; which returns an instance of DATABASE
-
-;; Simple transactions are non-nil lists which are handled according to the
-;; current database backend.
+;; In our system, transactions must at least implement a DB method which
+;; returns an instance of DATABASE.
 
 #| notes
 
@@ -338,7 +332,6 @@ column is already closed."))
 |#
 (deftype simple-transaction () `(and (not null) list))
 
-(defvar *default-transaction* '(nil nil nil))
 (defvar *transaction* nil
   "The current transaction or nil. 
 This variable is reserved for use from within EXECUTE-TRANSACTION and should
@@ -352,20 +345,20 @@ not be rebound otherwise within the body of a transaction.")
 The funcallable-instance may be used to respect a simple commit-based protocol
 which mirrors the backend."))
 
-(defgeneric make-transaction (self &key &allow-other-keys)
+(defgeneric transaction (self &key &allow-other-keys)
   (:documentation "Make a new transaction object.")
   (:method ((self null) &key) *default-transaction*))
 
-(defgeneric prepare-transaction (self &key)
+(defgeneric prepare (self &key)
   (:documentation "Prepare a transaction."))
 
-(defgeneric rollback-transaction (self &key)
+(defgeneric rollback (self &key)
   (:documentation "Rollback a transaction."))
 
-(defgeneric commit-transaction (self &key)
+(defgeneric commit (self &key)
   (:documentation "Commit a transaction."))
 
-(defgeneric execute-transaction (self kernel &rest args &key &allow-other-keys)
+(defgeneric execute (self kernel &rest args &key &allow-other-keys)
   (:documentation
    "Interface to the backend transaction kernel (a function). The body of the
 kernel function should be executed in an environment that protects against

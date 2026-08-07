@@ -1,4 +1,4 @@
-;;; srv.lisp --- RDB Service
+;;; srv.lisp --- Services
 
 ;; Service Objects backed by a RocksDB instance.
 
@@ -8,3 +8,5 @@
 (defservice rdb-service (service rdb-database)
   ()
   (:default-initargs :db :rdb))
+
+;;; Remote Compaction

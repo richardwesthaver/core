@@ -453,7 +453,6 @@
    #:secure-service-p
    #:service-log-message
    #:service-log-access
-   #:execute-service
    #:service-status-message
    #:start-listening
    #:*default-session-timeout*

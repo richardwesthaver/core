@@ -745,7 +745,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :template-function-p :*sham-classes*
    :defsham :save
    :oid :cid
-   :load-opts))
+   :load-opts :execute))
 
 (defpkg :std/stream
   (:use :cl :std/type :std/meta)
@@ -1260,7 +1260,7 @@ define the core ALIEN systems.")
    :inc-counter :dec-counter
    ;; iterator protocol
    :iter :iterator :next :prev
-   :skey :sval
+   :key :val
    :seek :seek-to-first
    :seek-to-last :seek-for-prev
    :iter-valid-p :*iter*

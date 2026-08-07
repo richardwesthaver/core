@@ -77,11 +77,11 @@
   (with-iter (it (iter *org-graph-db* :column (find-column column *org-graph-db*)))
     seek-to-first
     (loop while iter-valid-p
-          collect (cons (handler-case (octet-vector-to-uuid skey)
-                          (simple-type-error () (sb-ext:octets-to-string skey)))
-                        (when (zerop (mod (length sval) 16))
-                          (loop for i from 0 below (length sval) by 16
-                                collect (octet-vector-to-uuid (subseq sval i (+ i 16))))))
+          collect (cons (handler-case (octet-vector-to-uuid key)
+                          (simple-type-error () (sb-ext:octets-to-string key)))
+                        (when (zerop (mod (length val) 16))
+                          (loop for i from 0 below (length val) by 16
+                                collect (octet-vector-to-uuid (subseq val i (+ i 16))))))
           do (progn next))))
 
 (defun insert-org-files ()

@@ -38,9 +38,6 @@
    :multi-get :delete-key
    :delete-key-ts :put-key-ts
    :delete-key-range
-   :make-transaction :commit-transaction
-   :begin-transaction :prepare-transaction
-   :rollback-transaction :delete-transaction
    :flush-cf
    :get-stats
    :print-stats
@@ -77,16 +74,9 @@
    :rdb-cf-opts
    :with-latest-opts
    :make-rocksdb-options
-   
    :load-opts
    :with-open-rdb-raw
    :rdb-logger
-   :close-backup-db
-   :open-backup-db
-   :open-transaction-db
-   :close-transaction-db
-   :read-opts
-   :write-opts
    :close-secondary-db
    :open-secondary-db
    :rdb-transaction-db
@@ -126,12 +116,12 @@
    :rdb-wbwi-save
    :rdb-wbwi-ts
    :rdb-backup-engine-info
-   :open-backup-engine
-   :close-backup-engine
+   :open-backup
+   :close-backup
    :rdb-config
    :rdb-checkpoint
-   :open-checkpoint-db
-   :close-checkpoint-db
+   :open-checkpoint
+   :close-checkpoint
    :rdb-object-schema
    :rdb-data-source
    :rdb-sink

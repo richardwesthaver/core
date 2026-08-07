@@ -147,7 +147,7 @@
          no-slowdown low-pri memtable-insert-hint-per-batch))
 
 (defvar *rocksdb-flushoptions* (%svec wait))
-(defvar *rocksdb-lru-cache-options* '(capacity num-shard-bits memory-allocator))
+(defvar *rocksdb-lru-cache-options* (%svec capacity num-shard-bits memory-allocator))
 (defvar *rocksdb-compactoptions* 
   (%svec exclusive-manual-compaction 
          bottommost-level-compaction 
