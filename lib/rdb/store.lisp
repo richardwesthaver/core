@@ -60,7 +60,7 @@
    (rindex :accessor rindex))
   (:default-initargs
    :spec '(:rdb)
-   :db (make-db :rocksdb :opts (default-rdb-opts) :name (string (gensym "STORE")))
+   :db (make-db :rocksdb :opts (default-rocksdb-options) :name (string (gensym "STORE")))
    :columns (make-array 0 :element-type 'rdb-column-family
                           :adjustable t
                           :fill-pointer t)

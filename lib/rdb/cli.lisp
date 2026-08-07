@@ -7,7 +7,7 @@
 (init :commands :name :rdb :copy :cli :clean t)
 
 (defcommand (:rdb new) ()
-  (set-db-opt *db* :error-if-exists t)
+  (setf (opt *db* :error-if-exists) t)
   (open-db *db*)
   (println (name *db*)))
 
@@ -15,7 +15,7 @@
   (let ((*db* (create-rdb db-path :open nil)))
     (if (null db-path)
 	(mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
-	      (hash-table-alist (backfill-opts (default-rdb-opts) :full t)))
+	      (hash-table-alist (backfill-opts (default-rocksdb-options) :full t)))
 	(with-rdb (db (create-rdb db-path :open t))
 	  (println (hash-table-alist (backfill-opts db)))
 	  (with-iter (it (iter db))

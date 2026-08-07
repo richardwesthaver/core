@@ -88,7 +88,7 @@
   (flet ((music.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/music"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :music.meta db)
              (if (probe-file (mpk-db-path "meta/music"))
@@ -102,7 +102,7 @@
          (movies.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/movies"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :movies.meta db)
              (if (probe-file (mpk-db-path "meta/movies"))
@@ -116,7 +116,7 @@
          (tv.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/tv"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :tv.meta db)
              (if (probe-file (mpk-db-path "meta/tv"))
@@ -130,7 +130,7 @@
          (img.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/img"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :img.meta db)
              (if (probe-file (mpk-db-path "meta/img"))
@@ -144,7 +144,7 @@
          (aud.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/aud"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :aud.meta db)
              (if (probe-file (mpk-db-path "meta/aud"))
@@ -158,7 +158,7 @@
          (vid.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/vid"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :vid.meta db)
              (if (probe-file (mpk-db-path "meta/vid"))
@@ -172,7 +172,7 @@
          (screenshot.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/screenshot"))
-                       :opts (make-rdb-opts :allow-ingest-behind t :create-if-missing t)
+                       :opts (make-rocksdb-options :allow-ingest-behind t :create-if-missing t)
                        :logger (create-default-logger-callback))))
              (register-mpk-db :screenshot.meta db)
              (if (probe-file (mpk-db-path "meta/screenshot"))

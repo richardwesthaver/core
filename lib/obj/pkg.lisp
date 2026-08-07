@@ -735,10 +735,7 @@ protocol.")
    :merge-key
    :db-stats
    :db-metadata
-   :db-prop
-   :db-opt
    :create-columns
-   :set-db-opt
    :with-temp-db
    :with-db
    :database-backend-designator

@@ -12,7 +12,7 @@
 
 (defclass skel-db-sink (rdb-sink) ()
   (:default-initargs
-   :db (make-db :rocksdb :path (skel-db-path "log/") :opts (default-rdb-opts))))
+   :db (make-db :rocksdb :path (skel-db-path "log/") :opts (default-rocksdb-options))))
 
 (defmethod initialize-instance :after ((self skel-db-sink) &key (schema *skel-log-schema*))
   (load-schema self schema))

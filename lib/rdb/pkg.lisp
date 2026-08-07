@@ -50,16 +50,15 @@
    :open-sst :finish-sst
    :destroy-sst :sst-file-size
    ;; obj
-   :rdb :make-rdb :create-rdb
-   :rdb-sap :rdb-name :rdb-cfs :rdb-opts
+   :rdb :make-rdb
+   :rdb-sap :rdb-name :rdb-cfs
    :rdb-cf-metadata :make-rdb-cf-metadata
    :rdb-cf-metadata-name :rdb-cf-metadata-size
    :rdb-level-metadata :make-rdb-level-metadata
    :rdb-sst-file-metadata :make-rdb-sst-file-metadata
    :rdb-sst-file-metadata-p :rdb-cf-metadata-p
    :rdb-level-metadata-p
-   :rdb-opts :make-rdb-opts
-   :default-rdb-opts
+   :default-rocksdb-options
    :rdb-cf :make-rdb-cf :create-cf
    :rdb-cf-sap :rdb-cf-name
    :rdb-iter :make-rdb-iter :rdb-iter-p
@@ -77,7 +76,8 @@
    :close-cfs
    :rdb-cf-opts
    :with-latest-opts
-   :make-rdb-opts*
+   :make-rocksdb-options
+   
    :load-opts
    :with-open-rdb-raw
    :rdb-logger

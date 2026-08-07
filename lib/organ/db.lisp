@@ -32,7 +32,7 @@
 (defun make-org-graph-db ()
   (load-schema
    (make-db :rdb :name (namestring *org-graph-db-directory*)
-                 :opts (default-rdb-opts))
+                 :opts (default-rocksdb-options))
    *org-graph-schema*))
 
 (defvar *org-graph-db* (make-org-graph-db))

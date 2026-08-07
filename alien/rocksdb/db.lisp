@@ -978,6 +978,9 @@
 (def-with-errptr rocksdb-transactiondb-checkpoint-object-create (* rocksdb-checkpoint)
   (txn-db (* rocksdb-transactiondb)))
 
+(defar rocksdb-transactiondb-close-base-db void
+  (base-db (* rocksdb)))
+
 (def-with-errptr rocksdb-optimistictransactiondb-open (* rocksdb-optimistictransactiondb)
   (opts (* rocksdb-options))
   (name c-string))

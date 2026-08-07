@@ -26,7 +26,7 @@
   (:default-initargs 
    :db (make-db :rocksdb 
                 :name (namestring (merge-pathnames "db/" *packy-home*))
-                :opts (default-rdb-opts)
+                :opts (default-rocksdb-options)
                 :logger (rdb-log-default 10))))
 
 (defmethod make-db ((engine (eql :packy)) &rest initargs &key &allow-other-keys)

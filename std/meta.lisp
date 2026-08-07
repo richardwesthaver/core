@@ -144,7 +144,7 @@ function NAME and be skipped for (setf NAME)."
 (defverb options (self)
   (:accessor t)
   (:documentation "Access the options of object SELF."))
-(defverb opts (self)
+(defverb opts (self &key)
   (:accessor t)
   (:documentation "Access the opts of object SELF. May be used as a short-hand for OPTIONS"))
 (defverb opt (self key)

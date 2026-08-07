@@ -38,7 +38,7 @@
 (defclass skel-db (rdb-database) 
   ()
   (:default-initargs
-   :db (make-db :rocksdb :name "skel-db" :opts (default-rdb-opts))))
+   :db (make-db :rocksdb :name "skel-db" :opts (default-rocksdb-options))))
 
 (defmethod make-db ((engine (eql :skel)) &rest initargs &key name path &allow-other-keys)
   (let ((name (or name (when path (namestring path)))))

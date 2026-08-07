@@ -37,8 +37,8 @@
       (%destroy-db db-path))))
 
 (deftest opts ()
-  "Ensure RDB-OPTS can be created, destructured, etc."
-  (let ((default (default-rdb-opts)))
+  "Ensure ROCKSDB-OPTIONS can be created, destructured, etc."
+  (let ((default (default-rocksdb-options)))
     ;; check defaults
     (is (< 50 (hash-table-count (backfill-opts default :full t))))
     (is (typep (sap default) '(alien (* rocksdb-options))))

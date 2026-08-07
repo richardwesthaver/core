@@ -69,7 +69,7 @@
   "RDB Column Family structure. Contains a name, db-opts,
 and a system-area-pointer to the underlying rocksdb_cf_t handle."
   (name "" :type string)
-  (opts (default-rdb-opts) :type rdb-opts)
+  (opts (default-rocksdb-options))
   (sap nil :type (or null (alien (* rocksdb-column-family-handle)))))
 
 (defaccessor column-opts ((self rdb-cf)) (rdb-cf-opts self))
@@ -255,97 +255,8 @@ and a system-area-pointer to the underlying rocksdb_cf_t handle."
 ;;; rdb
 (defstruct rdb
   (name "" :type string)
-  (opts (default-rdb-opts) :type rdb-opts)
+  (opts (default-rocksdb-options))
   (sap nil :type (or null (alien (* rocksdb)))))
-
-(defaccessor sap ((self rdb)) (rdb-sap self))
-(defaccessor name ((self rdb)) (rdb-name self))
-(defaccessor db ((self rdb)) (sap self))
-(defaccessor db-opts ((self rdb)) (rdb-opts self))
-
-(defmethod print-object ((self rdb) stream)
-  (print-unreadable-object (self stream :type t :identity t)
-    (format stream ":open ~A" (db-open-p self))))
-
-(defmethod db-open-p ((self rdb))
-  (when (sap self) t))
-
-(defmethod db-closed-p ((self rdb))
-  (unless (sap self) t))
-
-(defun create-rdb (name &key opts schema open)
-  "Construct a new RDB instance from NAME.
-
-OPTS = rdb-opts
-CFS = (sequence rdb-cf)
-SCHEMA = rdb-schema
-OPEN = boolean
-
-CFS are always added before the SCHEMA which is loaded with LOAD-SCHEMA.
-
-When OPEN is non-nil, the database and all column families are opened and
-internal sap slots are initialized."
-  (when (probe-file name) (log:trace! "attempting to create existing db: ~A" name))
-  (let* ((opts (or opts (default-rdb-opts)))
-         (obj
-           (make-rdb
-            :name 
-            (string-right-trim '(#\/)
-                               (typecase name
-                                 (pathname (namestring name))
-                                 (string name)
-                                 (t (error "invalid NAME: ~S" name))))
-            :opts opts)))
-    (when schema
-      (load-schema obj schema))
-    (when open
-      (open-db obj))
-    obj))
-
-(defmethod backfill-opts ((self rdb) &key full)
-  (with-slots (opts) self
-    (if full
-        (loop for k across *rocksdb-options*
-              unless (%rdb-opt-no-getter-p k)
-              do (pull-sap opts k))
-        (pull-sap* opts))
-    (db-opts opts)))
-
-(defmethod open-column ((self rdb) (col rdb-cf) &key)
-  (ifret (sap col)
-         (setf (sap col) (create-column self col))))
-
-(defmethod create-column ((db rdb) (cf rdb-cf))
-  (%create-cf (sap db) (name cf) (sap (column-opts cf))))
-
-
-(defmethod repair-db ((self rdb) &key)
-  (%repair-db (rdb-name self)))
-
-(defmethod open-backup-engine ((self rdb) &key path)
-  (with-slots (opts) self
-    (%open-backup-engine path (sap opts))))
-
-(defmethod backup-db ((self rdb) &key path)
-  (unless-null-db (opts) self
-    (if (null path)
-        (error 'open-backup-engine-error :db sap 
-                                         :message "PATH must not be nil when no backups exist")
-        (%create-new-backup (open-backup-engine self :path path) sap))))
-
-(defmethod restore-db ((self rdb) (from string) &key id opts)
-  (unless-null-db (name) self
-    (%restore-from-backup (open-backup-engine self :path from) name from id opts)))
-
-(defmethod snapshot-db ((self rdb))
-  (unless-null-db () self
-    (make-rdb-snapshot :sap (%create-snapshot sap))))
-
-(defmethod db-metadata ((self rdb) &optional cf)
-  (make-rdb-cf-metadata :sap (%get-metadata (rdb-sap self) cf)))
-
-(defmethod db-stats ((self rdb) &optional (htype (rocksdb-statistics-level "all")))
-  (make-rdb-stats (%get-stats (sap (rdb-opts self)) htype)))
 
 (defmethod iter ((self rdb) &key cf (opts (rocksdb-readoptions-create)))
   (let ((col (etypecase cf
@@ -358,38 +269,6 @@ internal sap slots are initialized."
        :sap (if col
                 (%create-cf-iter sap col opts)
                 (%create-iter sap opts))))))
-
-(defmethod print-stats ((self rdb) &optional stream)
-  (if stream
-      (println (rocksdb-options-statistics-get-string (sap (rdb-opts self))) stream)
-      (with-output-to-string (s)
-        (print-stats self s))))
-
-(defmethod flush-db ((self rdb) &key wait)
-  (%flush-db (rdb-sap self) wait))
-
-(defmethod shutdown-db ((self rdb) &key wait)
-  (log:trace! "shutting down database" (rdb-name self))
-  (when-let ((db (rdb-sap self)))
-    (rocksdb-cancel-all-background-work db wait)
-    (close-db self)))
-
-(defmethod ingest-db ((self rdb) (files list) &key column (opts (rocksdb-ingestexternalfileoptions-create)))
-  (if column
-      (%ingest-db-cf (sap self) (sap column) files opts)
-      (%ingest-db (sap self) files opts)))
-
-(defmethod close-db ((self rdb) &key &allow-other-keys)
-  (with-slots (sap opts) self
-    (unless (null sap)
-      (%close-db sap)
-      (setf (sap self) nil)
-      (setf (sap (db-opts self)) (rocksdb-options-destroy (sap (db-opts self)))))))
-
-(defmethod destroy-db ((self rdb))
-  ;; close all handles before destruction ensues
-  (close-db self)
-  (%destroy-db (rdb-name self)))
 
 (defmethods put-key 
   (((self rdb) (key t) (val t))
@@ -424,15 +303,10 @@ internal sap slots are initialized."
 ;;; Transaction DB
 (defstruct rdb-transaction-db 
   (name "" :type string)
-  (db-opts (default-rdb-opts) :type rdb-opts)
+  (db-opts (default-rocksdb-options))
   (sap nil :type (or null (alien (* rocksdb-transactiondb))))
   ;; struct wrapper?
   (opts (rocksdb-transactiondb-options-create)))
-
-(defaccessor sap ((self rdb-transaction-db)) (rdb-transaction-db-sap self))
-(defaccessor db-opts ((self rdb-transaction-db)) (rdb-transaction-db-db-opts self))
-(defaccessor name ((self rdb-transaction-db)) (rdb-transaction-db-name self))
-(defaccessor db ((self rdb-transaction-db)) (sap self))
 
 (defmethod iter ((self rdb-transaction-db) &key cf (opts (rocksdb-readoptions-create)))
   (let ((col (etypecase cf
@@ -446,45 +320,15 @@ internal sap slots are initialized."
                 (%transactiondb-create-iter-cf sap col opts)
                 (%transactiondb-create-iter sap opts))))))
 
-(defstruct rdb-optimistic-transaction-db
-  (name "" :type string)
-  (db-opts (default-rdb-opts) :type rdb-opts)
-  (sap nil :type (or null (alien (* rocksdb-optimistictransactiondb)))))
-
-(defaccessor sap ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-sap self))
-(defaccessor db-opts ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-db-opts self))
-(defaccessor name ((self rdb-optimistic-transaction-db)) (rdb-optimistic-transaction-db-name self))
-(defaccessor db ((self rdb-optimistic-transaction-db)) (sap self))
-
-(defaccessor* db-opt
-    ((self rdb-transaction-db) key) (db-opt (db-opts self) (string-downcase key))
-    (new (self rdb-transaction-db) key &key push)
-  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
-    (when push (push-sap (db-opts self) (string-downcase key)))))
-
-(defmethod push-opts ((self rdb-transaction-db))
-  (with-slots (db-opts) self
-    (push-sap* db-opts)))
-
-(defaccessor* db-opt
-    ((self rdb-optimistic-transaction-db) key) (db-opt (db-opts self) (string-downcase key))
-    (new (self rdb-optimistic-transaction-db) key &key push)
-  (prog1 (setf (db-opt (db-opts self) (string-downcase key)) new)
-    (when push (push-sap (db-opts self) (string-downcase key)))))
-
-(defmethod push-opts ((self rdb-optimistic-transaction-db))
-  (with-slots (db-opts) self
-    (push-sap* db-opts)))
-
 (defmethod open-db ((self rdb-transaction-db))
-  (with-slots (name sap opts db-opts) self
-    (if sap
+  (with-slots (path db options transaction-options) self
+    (if db
         (progn
           (cerror "Ignore and continue" 'open-db-error 
-                  :db sap
+                  :db db
                   :message "Database is already open")
-          sap)
-        (setf sap (%open-transactiondb (or (sap db-opts) (push-opts self)) opts name)))))
+          db)
+        (setf db (%open-transactiondb options transaction-options path)))))
 
 (defmethod open-db ((self rdb-optimistic-transaction-db))
   (with-slots (name sap db-opts) self
