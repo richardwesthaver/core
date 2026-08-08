@@ -36,9 +36,9 @@
    (:file prim)
    (:file kernel)
    (:file named-readtables)
+   (:file string)
    (:dir "num" :exclude ".*[.]fasl")
    (:file type)
-   (:file string)
    (:file curry)
    (:file hash)
    (:mod "ppcre"

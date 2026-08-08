@@ -68,7 +68,7 @@
 (defmethod make-id ((self (eql :mpk))) (make-instance 'mpk-db-id))
 
 ;;; DB
-(defclass mpk-db (rdb-database) ())
+(defclass mpk-db (rdb) ())
 
 (defmethod make-db ((engine (eql :mpk)) &rest initargs)
   (declare (ignore engine))

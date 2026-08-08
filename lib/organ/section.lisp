@@ -29,7 +29,7 @@
 
 (defmethod org-title ((self org-meta-section))
   (when-let ((kw (find "TITLE" (org-keywords self) :test 'string-equal :key (lambda (x) (string-upcase (name x))))))
-    (val:val kw)))
+    (val kw)))
 
 (defmethod org-create ((type (eql :meta)) &rest initargs)
   (apply #'make-instance 'org-meta-section initargs))

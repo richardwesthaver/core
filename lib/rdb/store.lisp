@@ -48,7 +48,7 @@
 (defmethod iter ((self rdb-btree) &key)
   (iter (sap self)))
 ;;; Store
-(defclass rdb-store (store rdb-database)
+(defclass rdb-store (store rdb)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
    ;; FIX 2026-07-28: we should use something like 'mix' when we need a logger
@@ -964,6 +964,6 @@ underlying DBIter C struct."))
   (ensure-transaction (:store self)))
 
 ;;; Transactions
-(defmethod execute-transaction ((self rdb-store) txn
-                                &key
-                                transaction parent))
+(defmethod execute ((self rdb-store) txn
+                    &key
+                    transaction parent))

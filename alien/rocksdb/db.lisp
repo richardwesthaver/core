@@ -658,9 +658,6 @@
 (defar rocksdb-transactiondb-get-base-db (* rocksdb)
   (txn-db (* rocksdb-transactiondb)))
 
-(defar rocksdb-transactiondb-close-base-db void
-  (base-db (* rocksdb)))
-
 (defar rocksdb-transaction-begin (* rocksdb-transaction)
   (txn-db (* rocksdb-transactiondb))
   (wopts (* rocksdb-writeoptions))

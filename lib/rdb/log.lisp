@@ -145,11 +145,11 @@
     :warn '(octet-vector . string)
     :error '(octet-vector . string))))
 
-(defclass rdb-sink (db-sink rdb-database) ()
+(defclass rdb-sink (db-sink rdb) ()
   (:default-initargs
    :db (make-db :rdb)))
 
 ;; TODO 2025-05-30: 
 (defclass rdb-logger (database-logger) ()
-  (:documentation "A LOGGER with a SINK that writes LOG-MESSAGEs to a RDB-DATABASE."))
+  (:documentation "A LOGGER with a SINK that writes LOG-MESSAGEs to an RDB."))
 

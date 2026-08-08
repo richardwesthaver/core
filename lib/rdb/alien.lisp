@@ -148,6 +148,14 @@
         (v (string-to-octets val)))
     (%merge-kv db k v opt)))
 
+(defun %delete-kv (db key &optional (opt (rocksdb-writeoptions-create)))
+  (with-kv-raw (db key e)
+    (rocksdb-delete db opt %key %klen e)))
+
+(defun %delete-kv-str (db key &optional (opt (rocksdb-writeoptions-create)))
+  (let ((k (string-to-octets key)))
+    (%delete-kv db k opt)))
+
 ;;; Column Family
 (defun %open-cfs (db-opt name names opts)
   (let ((n (length names)))

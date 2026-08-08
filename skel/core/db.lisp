@@ -31,11 +31,11 @@
 
 (defun skel-db-spec (path &optional (backend :rdb))
   "Return a list which can be safely stored in the SPEC slot of a STORE."
-  (list backend (directory-path (skel-db-path path))))
+  (list backend (directory-path (skel-db-path path)) (default-rocksdb-options)))
 
 (defvar *default-skel-db-spec* (skel-db-spec "default"))
 
-(defclass skel-db (rdb-database) 
+(defclass skel-db (rdb) 
   ()
   (:default-initargs
    :db (make-db :rocksdb :name "skel-db" :opts (default-rocksdb-options))))
@@ -47,9 +47,6 @@
     (let ((db (apply 'make-instance 'skel-db initargs)))
       (when name (setf (name db) name))
       db)))
-
-(defaccessor name ((self skel-db)) (rdb-name (db self)))
-(defaccessor path ((self skel-db)) (rdb-name (db self)))
 
 (defmethod initialize-instance :before ((self skel-db) &rest initargs &key name path &allow-other-keys)
   (declare (ignore initargs))
@@ -73,7 +70,8 @@
 
 (defclass skel-record (id) ()
   (:metaclass stored-class))
-
-(defvar *skel-registry-db* (make-db :skel :path (skel-db-path "registry") :schema *skel-registry-schema*))
-(defvar *skel-cache-db* (make-db :skel :path (skel-db-path "cache") :schema *skel-cache-schema*))
+;; (make-db :skel :path (skel-db-path "registry") :schema *skel-registry-schema*)
+(defvar *skel-registry-db*)
+;; (make-db :skel :path (skel-db-path "cache") :schema *skel-cache-schema*)
+(defvar *skel-cache-db*)
 ;; (with-db (db :db *skel-cache-db* :open t :close t))

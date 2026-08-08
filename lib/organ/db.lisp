@@ -24,18 +24,18 @@
                         :node-pos '(org-id . octet-vector)
                         :node-state '(org-id . string))))
 
-(defparameter *org-graph-schema* (make-instance 'org-graph-schema))
+(defvar *org-graph-schema* (make-instance 'org-graph-schema))
 
 ;;; Org Graph DB
 (defvar *org-graph-db-directory* (merge-pathnames ".store/db/graph/" (user-homedir-pathname)))
 
 (defun make-org-graph-db ()
   (load-schema
-   (make-db :rdb :name (namestring *org-graph-db-directory*)
-                 :opts (default-rocksdb-options))
+   (make-db :rdb :path (namestring *org-graph-db-directory*)
+            :opts (default-rocksdb-options))
    *org-graph-schema*))
 
-(defvar *org-graph-db* (make-org-graph-db))
+(defvar *org-graph-db* nil)
 
 (defun close-org-graph-db ()
   (when (db-open-p *org-graph-db*)
@@ -87,16 +87,17 @@
 (defun insert-org-files ()
   (log:info! "inserting org files")
   (mapc
-   (lambda (n) (insert-key *org-graph-db* 
-                           (namestring (path n))
-                           (apply 'concatenate 'vector
-                                  (mapcar 'uuid-to-octet-vector
-                                          (flatten
-                                           (map 'list (lambda (x) 
-                                                        (when-let ((i (id x)))
-                                                          (make-uuid-from-string i)))
-                                                (ast n)))))
-                           :column "file"))
+   (lambda (n) 
+     (insert-key *org-graph-db* 
+                 (namestring (path n))
+                 (apply 'concatenate 'vector
+                        (mapcar 'uuid-to-octet-vector
+                                (flatten
+                                 (map 'list (lambda (x) 
+                                              (when-let ((i (id x)))
+                                                (make-uuid-from-string i)))
+                                      (ast n)))))
+                 :column "file"))
    *org-graph-files*))
 
 (defun insert-org-nodes ()

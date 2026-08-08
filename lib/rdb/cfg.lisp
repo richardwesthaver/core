@@ -5,7 +5,7 @@
 ;;; Commentary:
 
 ;; The RDB-CONFIG object may be used to specify initialization values for
-;; RDB-DATABASE/RDB/RDB-STORE. You may call MAKE-DB on RDB-CONFIG to return a
+;; RDB/RDB-STORE. You may call MAKE-DB on RDB-CONFIG to return a
 ;; RocksDB handle or object instance.
 
 ;; Support for the various RocksDB option types is exposed via the OPTIONS

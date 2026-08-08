@@ -17,6 +17,46 @@
 
 (defvar *rdb-default-column-name* "default")
 
+(set-database-backend :rocksdb *rocksdb-backend-options*
+                      (lambda () (load-rocksdb *save-database-backend-on-load*)))
+
+(set-database-backend :rdb *rdb-backend-options*
+                      (lambda () (db::%load-database-backend :rocksdb)))
+
+(defmethod make-db ((engine (eql :rocksdb)) 
+                    &key
+                    merge-op
+                    prefix-op
+                    logger
+                    event-listener
+                    (opts (default-rocksdb-options))
+                    open
+                    path)
+  (declare (ignore engine))
+  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
+  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
+  (when logger (rocksdb-options-set-info-log opts logger))
+  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
+  (if open
+      (%open-db path opts) ; open the db, OR
+      (cons path opts))) ; return a cons
+
+
+;;; Database
+(defclass rdb (database)
+  ((options :initform (default-rocksdb-options) :accessor options))
+  (:documentation "Standard RocksDB database wrapper.
+OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
+
+(defmethod load-opts ((db rdb) &key)
+  (with-latest-options (name db) (db-opts cf-names cf-opts)
+       (let ((cfs (loop for name across cf-names
+                        for opt across cf-opts
+                        collect (make-instance 'column-family :name name :options opt))))
+         (setf (options db) db-opts)
+         (setf (columns db) cfs)
+         db)))
+
 (defmethods set-database-backend-option
   (((db rdb) (key (eql :close)) (val (eql :auto)))
    "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
@@ -37,48 +77,6 @@ extractor."
   (((db rdb) (key (eql :logger)) val)
    (setf (opt db :info-log) val)))
 
-(set-database-backend :rocksdb *rocksdb-backend-options*
-                      (lambda () (load-rocksdb *save-database-backend-on-load*)))
-
-(set-database-backend :rdb *rdb-backend-options*
-                      (lambda () (db::%load-database-backend :rocksdb)))
-
-(defmethod load-opts ((db rdb) &key)
-  (with-latest-options (name db) (db-opts cf-names cf-opts)
-       (let ((cfs (loop for name across cf-names
-                        for opt across cf-opts
-                        collect (make-instance 'column-family :name name :options opt))))
-         (setf (options db) db-opts)
-         (setf (columns db) cfs)
-         db)))
-
-(defmethod make-db ((engine (eql :rocksdb)) 
-                    &key
-                    merge-op
-                    prefix-op
-                    logger
-                    event-listener
-                    (opts (default-rocksdb-options))
-                    open
-                    path)
-  (declare (ignore engine))
-  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
-  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
-  (when logger (rocksdb-options-set-info-log opts logger))
-  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
-  (if open
-      (%open-db path opts) ; open the db, OR
-      (cons path opts))) ; return a cons
-
-(defmethod query ((db rdb) (query (eql :get)) &key key column &allow-other-keys)
-  (declare (ignore query))
-  (get-val db key :column column))
-
-;;; Database
-(defclass rdb (database)
-  ((options :initform (default-rocksdb-options) :accessor options))
-  (:documentation "RocksDB database class.
-OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
 (defclass column-family (rdb)
   ((name :initform "default" :initarg :name :accessor name))
   (:documentation "RocksDB Column Family.
@@ -91,25 +89,21 @@ TRANSACTION-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass otrdb (rdb) ()
   (:documentation "Optimistic Transaction DB."))
 (defclass simple-rdb (rdb)
-  ((backup :initform nil :type (or null rocksdb-backup-engine) :initarg :backup :accessor db-backup)
-   (snapshots :initform (make-array 0 :element-type 'rdb-snapshot :adjustable t)
-              :type (vector (alien rocksdb-snapshot))
+  ((backup :initform nil :type (or null (alien (* rocksdb-backup-engine))) :initarg :backup :accessor db-backup)
+   (snapshots :initform nil
               :initarg :snapshots 
               :accessor db-snapshots)
-   (checkpoints :initform (make-array 0 :adjustable t)
-                :type (vector (alien rocksdb-checkpoint))
+   (checkpoints :initform nil
                 :initarg :checkpoints
                 :accessor db-checkpoints)
-   (secondary :initform nil :type (or null rocksdb) :initarg :secondary :accessor secondary-db)
+   (secondary :initform nil :type (or null (alien (* rocksdb))) :initarg :secondary :accessor secondary-db)
    (columns :initarg :columns :accessor columns))
   (:default-initargs 
    ;; Note that we don't pre-populate this slot with the 'default' column
    ;; which is present on creation of a RocksDB database. Usually there isn't
    ;; much need to access this column directly as you can just access the
    ;; database directly, which will access the default column internally.
-   :columns (make-array 0 :element-type 'column-family
-              :adjustable t
-              :fill-pointer t)))
+   :columns nil))
 
 (defclass simple-column-family (column-family rdb-column) ()
   (:default-initargs :name (symbol-name (gensym "#")))
@@ -141,15 +135,16 @@ extractor."
 (defmethod load-opts ((self rdb) &key (backfill t))
   ;; order is determined by RocksDB
   (setf (columns self)
-        (map 'vector (lambda (x) (make-instance 'column-family :cf x))
-             (load-opts (db self) :backfill backfill)))
+        (lambda (x) (make-instance 'column-family :cf x)
+          (load-opts (db self) :backfill backfill)))
   self)
 
-(defmethod merge-columns ((self rdb) (columns vector))
-  (loop for c across columns
+(defmethod merge-columns ((self rdb) (columns list))
+  ;; TODO 2026-08-07: using lists now, use list MERGE
+  (loop for c in columns
         do (if-let ((found (find-column c self)))
-             (setf (aref (columns self) (position found (columns self))) c)
-             (vector-push-extend c (columns self)))))
+             (setf (nth (columns self) (position found (columns self))) c)
+             (push c (columns self)))))
 
 (defmethod reset ((self rdb) &key (columns t) (opts (default-rocksdb-options)))
   (when columns 
@@ -176,21 +171,18 @@ extractor."
   (find cf (columns self) :key 'name :test 'equal))
 
 (defmethod add-column ((cf t) (db rdb))
-  (vector-push-extend (make-instance 'column-family :db cf) (columns db)))
+  (push (make-instance 'column-family :db cf) (columns db)))
 
 (defmethod open-with-columns ((db rdb) &rest names)
-  (let ((cols 
-          (coerce
-           (if (null names)
-               (columns db)
-               (loop for n in names
-                     collect (if-let ((col (find-column n db)))
-                               col
-                               (add-column 
-                                (make-instance 'column-family 
-                                  :db (%create-cf (db db) n))
-                                db))))
-           'vector)))
+  (let ((cols (if (null names)
+                  (columns db)
+                  (loop for n in names
+                        collect (if-let ((col (find-column n db)))
+                                  col
+                                  (add-column 
+                                   (make-instance 'column-family 
+                                     :db (%create-cf (db db) n))
+                                   db))))))
     (multiple-value-bind (db-sap cfs) (%open-cfs (opts db) (name db)
                                                     (loop for c across cols
                                                           collect (name c))
@@ -385,7 +377,7 @@ extractor."
    (declare (ignore engine))
    ;; HACK 2026-08-07: 
    (remf initargs :columns)
-   (make-instance 'simple-rdb :db (apply 'make-db :rocksdb initargs) :columns columns))
+   (make-instance 'simple-rdb :db (cdr (apply 'make-db :rocksdb initargs)) :columns columns))
   (((engine (eql :rdb-backup)) &key path (db *db*))
    (setf (db-backup db) (backup-db db :path path)))
   (((engine (eql :rdb-transaction)) &rest initargs &key columns &allow-other-keys)
@@ -476,30 +468,24 @@ extractor."
   (%flush-db (db self) wait))
 (defmethod close-db :before ((self rdb) &key)
   (close-columns self))
+(defmethod close-db ((self rdb) &key) 
+  (rocksdb-close (db self)))
+(defmethod close-db ((self trdb) &key)
+  (rocksdb-transactiondb-close (db self))
+  (when-let ((topt (transaction-options self)))
+    (rocksdb-transactiondb-options-destroy topt)))
+(defmethod close-db ((self otrdb) &key)
+  (rocksdb-optimistictransactiondb-close (db self)))
 (defmethod close-db :after ((self rdb) &key)
   (when-let ((opt (options self)))
     (rocksdb-options-destroy opt)))
-
-(defmethod close-db ((self rdb) &key) 
-  (%close-db (db self)))
-
-(defmethod close-db :after ((self trdb) &key)
-  (when-let ((opt (options self)))
-    (rocksdb-options-destroy opt))
-  (when-let ((topt (transaction-options self)))
-    (rocksdb-transactiondb-options-destroy topt)))
-
-(defmethod close-db ((self otrdb) &key)
-  (unless-null-db () self
-    (rocksdb-optimistictransactiondb-close db)))
-
 (defmethod print-object ((self rdb) stream)
   (print-unreadable-object (self stream :type t :identity t)
     (format stream ":open ~A" (db-open-p self))))
 
 (defmethod db-open-p ((self rdb))
   (with-slots (db) self
-    (and db (typep db 'alien) (not (null-pointer-p db)))))
+    (and db (typep db 'alien) (not (null db)))))
 
 (defmethod db-closed-p ((self rdb))
   (consp (db self)))
@@ -540,8 +526,8 @@ extractor."
     (sb-ext:string-to-octets key)
     (sb-ext:string-to-octets val))))
 
-(defmethod delete-key ((self rdb-database) key &key)
-  (delete-key (db self) key))
+(defmethod delete-key ((self rdb) key &key (opts (default-rocksdb-writeoptions)))
+  (%delete-kv (db self) key opts))
 
 (defmethod merge-key ((self rdb) key val &key (opts (rocksdb-writeoptions-create)) column)
   (if column
@@ -570,7 +556,10 @@ only get their type slots updated on non-nil values."
              (load-field col field)
              (add-column
               (load-field
-               (make-instance 'rdb-column-family :db (%create-cf (db self) (name field)) :type (field-type field))
+               (make-instance 'simple-column-family 
+                 :db (unless-null-db () self
+                       (%create-cf db (name field)))
+                 :type (field-type field))
                field)
               self))
         finally (return self)))
@@ -580,8 +569,8 @@ only get their type slots updated on non-nil values."
 (defaccessor sap ((self column-family)) (db self))
 (defmethod id ((self column-family)) (%cf-id (db self)))
 
-(defun schema-from-rdb-column-families (columns)
-  "Convert a sequence of RDB-COLUMN-FAMILYs to a SCHEMA."
+(defun schema-from-simple-column-families (columns)
+  "Convert a sequence of SIMPLE-COLUMN-FAMILYs to a SCHEMA."
   (apply 'make-schema 
      (map 'list 
           (lambda (x)
@@ -595,7 +584,7 @@ only get their type slots updated on non-nil values."
   (unless (null (db self))
     (free self)))
 
-(defmethod load-field ((self rdb-column-family) (field field))
+(defmethod load-field ((self simple-column-family) (field field))
   (let ((type (field-type field))
         (ctype (column-type self)))
   (typecase type
@@ -611,13 +600,14 @@ only get their type slots updated on non-nil values."
                     (cdr type)))))
     self))
 
-(defmethod change-class ((self field) (new-class (eql 'rdb-column-family)) &key)
-  (make-instance new-class :cf (make-rdb-cf (name self)) :type (field-type self)))
+(defmethod change-class ((self field) (new-class (eql 'simple-column-family)) &key)
+  (make-instance new-class :name (name self) :type (field-type self)))
 
-(defmethod change-class ((self rdb-cf) (new-class (eql 'rdb-column-family)) &key)
-  (make-instance new-class :cf self))
+(defmethod change-class ((self system-area-pointer) (new-class (eql 'simple-column-family)) &key)
+  (let ((cf (sap-alien self (* rocksdb-column-family-handle))))
+    (make-instance new-class :db cf :name (%cf-name cf))))
 
-(defmethod change-class ((self column) (new-class (eql 'rdb-column-family)) &key name)
+(defmethod change-class ((self column) (new-class (eql 'simple-column-family)) &key name)
   (let ((ret (make-instance new-class :type (column-type self))))
     (when name (setf (name ret) name))
     ret))

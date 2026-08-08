@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :rdb)
 
-(defservice rdb-service (service rdb-database)
+(defservice rdb-service (service rdb)
   ()
   (:default-initargs :db :rdb))
 

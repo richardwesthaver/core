@@ -346,8 +346,7 @@ The funcallable-instance may be used to respect a simple commit-based protocol
 which mirrors the backend."))
 
 (defgeneric transaction (self &key &allow-other-keys)
-  (:documentation "Make a new transaction object.")
-  (:method ((self null) &key) *default-transaction*))
+  (:documentation "Make a new transaction object."))
 
 (defgeneric prepare (self &key)
   (:documentation "Prepare a transaction."))

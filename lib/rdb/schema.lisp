@@ -24,7 +24,7 @@ RDB instance via LOAD-SCHEMA."))
               :type (cons 'octet-vector 'octet-vector)))
 
 (defclass rdb-data-source (data-source)
-  ((db :type rdb-database :initarg :db :accessor db)
+  ((db :type rdb :initarg :db :accessor db)
    (schema :type rdb-schema :initarg :schema :accessor schema)))
 
 (defmethod initialize-instance :after ((self rdb-data-source) &key)

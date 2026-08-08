@@ -754,11 +754,10 @@ EXECUTE a DATA-FRAME."))
 (defgeneric register-file (self name path &key type &allow-other-keys)
   (:documentation "Register a DATA-SOURCE contained in a file of type TYPE at PATH."))
 
-(defgeneric execute (self df)
-  (:documentation "Execute the DATA-FRAME DF given context SELF.")
-  (:method ((self t) (df data-frame))
-    (declare (ignorable self))
-    (exec df)))
+(defmethod execute ((self t) (df data-frame) &key)
+  "Execute the DATA-FRAME DF given context SELF."
+  (declare (ignorable self))
+  (exec df))
 
 (defmethod exec ((self logical-query-plan))
   (exec

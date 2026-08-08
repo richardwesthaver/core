@@ -22,7 +22,7 @@
                         :tags '(fixnum . (array string))
                         :uri '(fixnum . string))))
 
-(defclass packy-db (rdb-database) ()
+(defclass packy-db (rdb) ()
   (:default-initargs 
    :db (make-db :rocksdb 
                 :name (namestring (merge-pathnames "db/" *packy-home*))
