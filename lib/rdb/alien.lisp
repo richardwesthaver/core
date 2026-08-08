@@ -14,7 +14,7 @@
     hist))
 
 ;;; DB
-(defun %open-db (db-path &optional (opts (default-rocksdb-options)))
+(defun %open-db (db-path &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'open-db-error :db db-path)
     (let* ((db-path (if (pathnamep db-path)
                         (namestring db-path)

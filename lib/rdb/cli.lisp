@@ -13,11 +13,7 @@
 
 (defcommand (:rdb show) (db-path)
   (let ((*db* (rdb db-path :open nil)))
-    (if (null db-path)
-	(mapc (lambda (x) (println (format nil "~a ~a" (car x) (cdr x))))
-	      (hash-table-alist (backfill-opts (default-rocksdb-options) :full t)))
 	(with-rdb (db (rdb db-path :open t))
-	  (println (hash-table-alist (backfill-opts db)))
 	  (with-iter (it (iter db))
 	    seek-to-first
 	    (loop while iter-valid-p
@@ -25,7 +21,7 @@
                    (format t "~A : ~A~%"
 			               (sb-ext:octets-to-string key :external-format '(:ascii :replacement #\_))
 			               val)
-		           next)))))))
+		           next))))))
 
 (defcommand (:rdb set) (k v)
   (with-rdb (db *db*)

@@ -40,14 +40,12 @@
   "Ensure ROCKSDB-OPTIONS can be created, destructured, etc."
   (let ((default (default-rocksdb-options)))
     ;; check defaults
-    (is (< 50 (hash-table-count (backfill-opts default :full t))))
-    (is (typep (sap default) '(alien (* rocksdb-options))))
-    (is (eql t (db-opt default "create-if-missing")))
-    (is (eql t (set-db-opt default "enable-blob-files" t :push t)))
-    (is (eql t (db-opt default "enable-blob-files")))
-    ;; REVIEW 2025-10-14: 
-    (isnt (rocksdb-options-get-enable-blob-files (sap default)))
-    (is (null (rocksdb-options-get-error-if-exists (sap default))))))
+    (is (typep default '(alien (* rocksdb-options))))
+    (is (funcall (rdb::rocksdb-options-getter "create-if-missing") default))
+    (is (funcall (rdb::rocksdb-options-setter "enable-blob-files") default t))
+    (is (rdb::rocksdb-option "enable-blob-files" default))
+    (is (rocksdb-options-get-enable-blob-files default))
+    (isnt (rocksdb-options-get-error-if-exists default))))
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."

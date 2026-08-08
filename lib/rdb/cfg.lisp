@@ -15,82 +15,21 @@
 (in-package :rdb)
 
 ;;; Options
-;; TODO 2026-08-02: this whole rdb-opts thing needs work - eliminate struct
-;; wrappers and use our 'options' api.
-;;; Options
 ;; These expand into lookup macros for the pre-defined option GET and SET
-;; functions - for example RDB-OPT-SETTER and RDB-OPT-GETTER.
-(eval-always
-  (macrolet ((%def-opt-finders (name)
-               `(progn 
-                  (defmacro ,(symbolicate name '-setter) (key)
-                    `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',name ,key) :rocksdb)
-                         (when (string= (string-downcase ,key) "event-listener")
-                           'rocksdb:rocksdb-options-add-eventlistener)))
-                  (defmacro ,(symbolicate name '-getter) (key)
-                    `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',name ,key) :rocksdb)))))
-    (%def-opt-finders rocksdb-options)
-    (%def-opt-finders rocksdb-writeoptions)
-    (%def-opt-finders rocksdb-flushoptions)
-    (%def-opt-finders rocksdb-transactiondb-options)
-    (%def-opt-finders rocksdb-readoptions)
-    (%def-opt-finders rocksdb-compactoptions)
-    (%def-opt-finders rocksdb-ingestexternalfileoptions)
-    (%def-opt-finders rocksdb-backup-engine-options)
-    (%def-opt-finders rocksdb-transaction-options)
-    (%def-opt-finders rocksdb-optimistictransaction-options)
-    (%def-opt-finders rocksdb-lru-cache-options))
-  (macrolet ((%defopt (name)
-               (let ((%create (symbolicate name '-create)))
-                 `(defun ,(symbolicate 'make- name) (&optional init-fn)
+;; functions.
+(macrolet ((%defopt (name &optional set-only default)
+             (let ((%creator (symbolicate name '-create))
+                   (%default (symbolicate 'default- name))
+                   (%opt (symbolicate (string-right-trim "S" (string name)))))
+               `(progn
+                  (defun ,(symbolicate 'make- name) (&optional init-fn)
                     ,(format nil "Make and return a ~A alien object.
 INIT-FN is an optional argument which must be a lambda which takes a single
 parameter (the object itself). It is used to initialize the instance with
 custom configuration." name)
-                    (let ((opts (,%create)))
+                    (let ((opts (,%creator)))
                       (when init-fn (funcall init-fn opts))
-                      opts)))))
-    (%defopt rocksdb-options)
-    (%defopt rocksdb-readoptions)
-    (%defopt rocksdb-writeoptions)
-    (%defopt rocksdb-transaction-options)
-    (%defopt rocksdb-transactiondb-options)
-    (%defopt rocksdb-lru-cache-options)
-    (%defopt rocksdb-backup-engine-options))
-  (flet ((%mktbl (accessor opts)
-           (let ((table (make-hash-table :test #'equal)))
-             (mapc (lambda (x) (setf (gethash (car x) table) (cdr x)))
-                   (loop for y across opts
-                         collect (cons y (intern (format nil "~:@(~A-set-~x~)" accessor y) :rocksdb))))
-             table)))
-    (defparameter *rdb-opts-table*
-      (let ((tbl (%mktbl 'rocksdb-options *rocksdb-options*)))
-        (setf (gethash "event-listener" tbl) 'rocksdb:rocksdb-options-add-eventlistener)
-        tbl))
-    (defparameter *rdb-readopts-table*
-      (%mktbl 'rocksdb-readoptions *rocksdb-readoptions*))
-    (defparameter *rdb-writeopts-table*
-      (%mktbl 'rocksdb-writeoptions *rocksdb-writeoptions*))
-    (defparameter *rdb-backupopts-table*
-      (%mktbl 'rocksdb-backup-engine-options *rocksdb-backup-engine-options*))
-    (defparameter *rdb-ingestopts-table*
-      (%mktbl 'rocksdb-ingestexternalfileoptions *rocksdb-ingestexternalfileoptions*))
-    (defparameter *rdb-compactopts-table*
-      (%mktbl 'rocksdb-compactoptions *rocksdb-compactoptions*))
-    (defparameter *rdb-flushopts-table*
-      (%mktbl 'rocksdb-flushoptions *rocksdb-flushoptions*))
-    (defparameter *rdb-lru-cache-opts-table*
-      (%mktbl 'rocksdb-lru-cache-options *rocksdb-lru-cache-options*)))
-    ;; (defparameter *trdb-opts-table*
-    ;;   (%mktbl 'rocksdb-transactiondb-options *rocksdb-transactiondb-options*))
-  (macrolet ((%def-opt (name &rest set-only)
-               `(progn
-                  (defun ,(symbolicate '%set- name) (opt key val)
-                    (funcall (,(symbolicate name '-setter) key) opt val))
-                  (defun ,(symbolicate '%get- name) (opt key)
-                    (if-let ((g (,(symbolicate name '-getter) key)))
-                      (funcall g opt)
-                      (warn 'opt-handler-missing :message key)))
+                      opts))
                   (defun ,(symbolicate '% name '-no-getter-p) (key)
                     (let ((k (typecase key
                                (string (string-downcase key))
@@ -98,50 +37,44 @@ custom configuration." name)
                                (t (string-downcase (format nil "~s" key))))))
                       (memq t (mapcar
                                (lambda (x) (equal k x))
-                               ',set-only)))))))
-    (%def-opt rocksdb-options "parallelism" "enable-statistics" "event-listener")
-    (%def-opt rocksdb-readoptions)
-    (%def-opt rocksdb-writeoptions)
-    (%def-opt rocksdb-flushoptions)
-    (%def-opt rocksdb-backup-engine-options)
-    (%def-opt rocksdb-compactoptions)
-    (%def-opt rocksdb-transaction-options)
-    (%def-opt rocksdb-transactiondb-options)
-    (%def-opt rocksdb-optimistictransaction-options)
-    (%def-opt rocksdb-lru-cache-options)
-    (%def-opt rocksdb-ingestexternalfileoptions))
-  (macrolet ((define-rdb-opt-struct (name &rest defaults)
-               (let ((%creator (symbolicate name '-create))
-                     (%default (symbolicate 'default- name)))
-               `(prog1
-                    (eval-always
-                      (defun ,name (&rest opts)
-                        (let ((obj (,%creator)))
-                          (loop for (k v) on opts by #'cddr while v
-                                do (let ((k (typecase k
-                                              (string (string-downcase k))
-                                              (symbol (string-downcase (symbol-name k)))
-                                              (t (string-downcase (format nil "~s" k))))))
-                                     (,(symbolicate '%set- name) obj k v)))
-                          obj)))
+                               ',set-only))))
+                  (defun ,name (&rest opts)
+                    (let ((obj (,%creator)))
+                      (loop for (k v) on opts by #'cddr while v
+                            do (let ((k (typecase k
+                                          (string (string-downcase k))
+                                          (symbol (string-downcase (symbol-name k)))
+                                          (t (string-downcase (format nil "~s" k))))))
+                                 (setf (,%opt k obj) v)))
+                      obj))
                   (defun ,%default ()
-                    (,name ,@defaults))
+                    (,name ,@default))
+                  (defmacro ,(symbolicate name '-setter) (key)
+                    `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',name ,key) :rocksdb)
+                         (when (string= (string-downcase ,key) "event-listener")
+                           'rocksdb:rocksdb-options-add-eventlistener)))
+                  (defmacro ,(symbolicate name '-getter) (key)
+                    `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',name ,key) :rocksdb))
+                  (defun ,%opt (key &optional (opt (,%default)))
+                    (if-let ((g (,(symbolicate name '-getter) key)))
+                      (funcall g opt)
+                      (warn 'opt-handler-missing :message key)))
+                  (defun (setf ,%opt) (val key opt)
+                    (funcall (,(symbolicate name '-setter) key) opt val))
                   (defvar ,(symbolicate '*default- name '*) (,%default))))))
-    (define-rdb-opt-struct rocksdb-options
-      :create-if-missing t 
-      :create-missing-column-families t 
-      :parallelism (num-cpus)
-      :compression (rocksdb-compression-type :zstd))
-    (define-rdb-opt-struct rocksdb-readoptions)
-    (define-rdb-opt-struct rocksdb-writeoptions)
-    (define-rdb-opt-struct rocksdb-compactoptions)
-    (define-rdb-opt-struct rocksdb-backup-engine-options)
-    (define-rdb-opt-struct rocksdb-flushoptions)
-    (define-rdb-opt-struct rocksdb-lru-cache-options)
-    (define-rdb-opt-struct rocksdb-transaction-options)
-    (define-rdb-opt-struct rocksdb-transactiondb-options)
-    (define-rdb-opt-struct rocksdb-optimistictransaction-options)
-    (define-rdb-opt-struct rocksdb-ingestexternalfileoptions)))
+  (%defopt rocksdb-options 
+           ("parallelism" "enable-statistics" "event-listener")
+           (:create-if-missing t 
+            :create-missing-column-families t 
+            :parallelism (num-cpus)
+            :compression (rocksdb-compression-type :zstd)
+            :enable-pipelined-write t))
+  (%defopt rocksdb-readoptions)
+  (%defopt rocksdb-writeoptions)
+  (%defopt rocksdb-transaction-options)
+  (%defopt rocksdb-transactiondb-options)
+  (%defopt rocksdb-lru-cache-options)
+  (%defopt rocksdb-backup-engine-options))
 
 (defconfig rdb-config (simple-db-config)
   ((logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config)))
@@ -189,9 +122,9 @@ custom configuration." name)
 
 (defun build-rdb-config (self)
   (make-db (slot-value self 'backend)
-           :opts (slot-value self 'options)
-           :logger (when-let ((l (slot-value self 'logger))) (build l))
-           :name (slot-value self 'path)))
+    :opts (slot-value self 'options)
+    :logger (when-let ((l (slot-value self 'logger))) (build l))
+    :name (slot-value self 'path)))
 
 (defmethod make-config ((self (eql :rdb)) &rest args)
   (apply 'make-instance 'rdb-config args))
