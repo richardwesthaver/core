@@ -41,10 +41,28 @@
       (%open-db path opts) ; open the db, OR
       (cons path opts))) ; return a cons
 
+(defmethod make-db ((engine (eql :rocksdb-transaction))
+                    &key
+                    merge-op
+                    prefix-op
+                    logger
+                    event-listener
+                    (opts (default-rocksdb-options))
+                    (topts (default-rocksdb-transactiondb-options))
+                    open
+                    path)
+  (declare (ignore engine))
+  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
+  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
+  (when logger (rocksdb-options-set-info-log opts logger))
+  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
+  (if open
+      (%open-transactiondb opts topts path) ; open the db, OR
+      (cons path opts))) ; return a cons
 
 ;;; Database
 (defclass rdb (database)
-  ((options :initform (default-rocksdb-options) :accessor options))
+  ((options :initform (default-rocksdb-options) :accessor options :initarg :options))
   (:documentation "Standard RocksDB database wrapper.
 OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
 
@@ -83,7 +101,7 @@ extractor."
 Inherits directly from the RDB class. The DB slot is a
 ROCKSDB-COLUMN-FAMILY-HANDLE."))
 (defclass trdb (rdb)
-  ((transaction-options :initform (rocksdb-transaction-options-create) :accessor transaction-options))
+  ((transactiondb-options :initform (default-rocksdb-transactiondb-options) :accessor transactiondb-options :initarg :transactiondb-options))
   (:documentation "Transaction DB.
 TRANSACTION-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass otrdb (rdb) ()
@@ -373,20 +391,17 @@ extractor."
       (%ingest-db (db self) files opts)))
 
 (defmethods make-db 
-  (((engine (eql :rdb)) &rest initargs &key columns &allow-other-keys)
+  (((engine (eql :rdb)) &rest initargs)
    (declare (ignore engine))
-   ;; HACK 2026-08-07: 
-   (remf initargs :columns)
-   (make-instance 'simple-rdb :db (cdr (apply 'make-db :rocksdb initargs)) :columns columns))
-  (((engine (eql :rdb-backup)) &key path (db *db*))
-   (setf (db-backup db) (backup-db db :path path)))
-  (((engine (eql :rdb-transaction)) &rest initargs &key columns &allow-other-keys)
-   (remf initargs :columns)
-   (let ((db (make-instance 'trdb :db (apply 'make-db :rocksdb-transaction initargs))))
-     (when columns (setf (columns db) (mapcar 'db columns)))
-     db))
+   (apply 'make-instance 'simple-rdb initargs))
+  (((engine (eql :trdb)) &rest initargs)
+   (apply 'make-instance 'trdb initargs))
+  (((engine (eql :otrdb)) &rest initargs)
+   (apply 'make-instance 'otrdb initargs))
   (((engine (eql :rdb-secondary)) &key path opts (db *db*))
-   (setf (secondary-db db) (open-secondary-db db :opts opts :path path))))
+   (setf (secondary-db db) (open-secondary-db db :opts opts :path path)))
+  (((engine (eql :rdb-backup)) &key path (db *db*))
+   (setf (db-backup db) (backup-db db :path path))))
 
 (defmethod derive-schema ((self rdb))
   (apply 'make-schema
@@ -404,14 +419,14 @@ extractor."
         (setf db (%open-db path options)))))
 
 (defmethod open-db ((self trdb))
-  (with-slots (path db options transaction-options) self
+  (with-slots (path db options transactiondb-options) self
     (if db
         (progn
           (cerror "Ignore and continue" 'open-db-error
                   :db db
                   :message "Database is already open")
           db)
-        (setf db (%open-transactiondb options transaction-options path)))))
+        (setf db (%open-transactiondb options transactiondb-options path)))))
 
 (defmethod open-db ((self otrdb))
   (with-slots (path db options) self
@@ -461,7 +476,7 @@ extractor."
     (if (null path)
         (error 'open-backup-engine-error :db db
                                          :message "PATH must not be nil when no backups exist")
-        (%create-new-backup (open-backup-engine self :path path) db))))
+        (%create-new-backup (backup-db self :path path) db))))
 (defmethod backup :around ((self simple-rdb) &rest args)
   (setf (db-backup self) (apply 'call-next-method args)))
 (defmethod flush-db ((self rdb) &key wait)
@@ -472,7 +487,7 @@ extractor."
   (rocksdb-close (db self)))
 (defmethod close-db ((self trdb) &key)
   (rocksdb-transactiondb-close (db self))
-  (when-let ((topt (transaction-options self)))
+  (when-let ((topt (transactiondb-options self)))
     (rocksdb-transactiondb-options-destroy topt)))
 (defmethod close-db ((self otrdb) &key)
   (rocksdb-optimistictransactiondb-close (db self)))

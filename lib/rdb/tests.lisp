@@ -13,7 +13,6 @@
 
 (defsuite :rdb)
 (in-suite :rdb)
-(setq rt:*compile-tests* nil)
 (load-alien :rocksdb)
 (load-database-backend :rdb)
 (setq *temp-db-destroy* t)
@@ -42,7 +41,7 @@
     ;; check defaults
     (is (typep default '(alien (* rocksdb-options))))
     (is (funcall (rdb::rocksdb-options-getter "create-if-missing") default))
-    (is (funcall (rdb::rocksdb-options-setter "enable-blob-files") default t))
+    (funcall (rdb::rocksdb-options-setter "enable-blob-files") default t)
     (is (rdb::rocksdb-option "enable-blob-files" default))
     (is (rocksdb-options-get-enable-blob-files default))
     (isnt (rocksdb-options-get-error-if-exists default))))

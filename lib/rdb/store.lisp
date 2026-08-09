@@ -42,30 +42,25 @@
          (t nil))))
 
 ;;; BTrees
-(defclass rdb-btree (btree) ()
+(defclass rdb-btree (btree column-family) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
-(defmethod iter ((self rdb-btree) &key)
-  (iter (sap self)))
 ;;; Store
-(defclass rdb-store (store rdb)
+(defclass rdb-store (store trdb)
   ((oid-seq :accessor oid-seq)
    (cid-seq :accessor cid-seq)
    ;; FIX 2026-07-28: we should use something like 'mix' when we need a logger
    ;; (logger :initform (default-logger) :initarg :logger :accessor logger)
    (metadata :accessor store-metadata)
-   (btrees :accessor store-btrees)
-   (dup-btrees :accessor store-dup-btrees)
-   (index :accessor idx)
+   (btrees :accessor btrees)
+   (dup-btrees :accessor dup-btrees)
+   (index :accessor index)
    (rindex :accessor rindex))
   (:default-initargs
-   :spec '(:rdb)
+   :spec '(:rdb nil nil)
    :db (make-db :rocksdb :opts (default-rocksdb-options) :name (string (gensym "STORE")))
-   :columns (make-array 0 :element-type 'rdb-column-family
-                          :adjustable t
-                          :fill-pointer t)
-   :instance-index (make-instance 'rdb-column-family :type '(oid . cid))
-   :class-index (make-instance 'rdb-column-family :type '(cid . oid))
+   ;; (make-instance 'simple-column-family :type '(oid . cid) :name "instance-index")
+   ;; (make-instance 'simple-column-family :type '(cid . oid) :name "class-index")
    ;; :root
    :schema-table (make-hash-table :size 100 :weakness :value)
    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value))
@@ -76,6 +71,8 @@ serialized object schemas."))
   (make-instance 'rdb-btree :store st))
 
 ;; (build-btree (make-instance 'rdb-store))
+
+(defmethod path ((self rdb-store)) (cadr (spec self)))
 
 ;;; Interface
 ;; the following methods up to the open/close section use BUFFER-STREAMs,
@@ -904,7 +901,7 @@ underlying DBIter C struct."))
         (log:warn! "Database is already open: ~A" store)
         store)
       (with-db (db :db store :open t :close :auto)
-        (if (probe-file (name store))
+        (if (probe-file (path store))
             (progn
               (load-opts db)
               (open-columns* db)

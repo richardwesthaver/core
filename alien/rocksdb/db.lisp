@@ -1025,6 +1025,15 @@
 (def-with-errptr rocksdb-optimistictransactiondb-checkpoint-object-create (* rocksdb-checkpoint)
   (otxn-db (* rocksdb-optimistictransactiondb)))
 
+(defar rocksdb-optimistictransactiondb-property-value c-string
+  (db (* rocksdb-optimistictransactiondb))
+  (propname c-string))
+
+(defar rocksdb-optimistictransactiondb-property-int int
+  (db (* rocksdb-optimistictransactiondb))
+  (propname c-string)
+  (out-val unsigned-long :out))
+
 ;;; Perfcontext
 (defar rocksdb-set-perf-level void (val int))
 

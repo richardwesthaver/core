@@ -321,20 +321,20 @@ SELF. This function may error when (DB-OPEN-P SELF) is non-nil."))
 
 - *TRANSACTION* is bound to the current transaction being executed. A value of NIL
    represents no transaction. The current *DATABASE-BACKEND* may modify this
-   variable within the EXECUTE-TRANSACTION method.
+   variable within the EXECUTE method.
    - should never be bound within the body of a transaction
 
 - The macros WITH-TRANSACTION and ENSURE-TRANSACTION will always abort the
   transaction in response to any non-local exit.
 
-- WITH-TRANSACTION passes *TRANSACTION* to EXECUTE-TRANSACTION
+- WITH-TRANSACTION passes *TRANSACTION* to EXECUTE
 
 |#
 (deftype simple-transaction () `(and (not null) list))
 
 (defvar *transaction* nil
   "The current transaction or nil. 
-This variable is reserved for use from within EXECUTE-TRANSACTION and should
+This variable is reserved for use from within EXECUTE and should
 not be rebound otherwise within the body of a transaction.")
 
 (defclass transaction-object () ()
@@ -426,7 +426,7 @@ committed. Otherwise, the transaction is aborted."
            (*store* ,store)
            (*transaction* ,transaction))
        (let ((,%txn-fn (lambda () ,@body)))
-         (funcall #'execute-transaction *db* ,%txn-fn 
+         (funcall #'execute *db* ,%txn-fn 
                   :transaction (aif (known-transaction *db* *transaction*) (transaction-object it) it)
                   ,@initargs)))))
 
@@ -458,7 +458,7 @@ atomically regardless of whether there is an existing transaction or not."
            (,%txn-fn (lambda () ,@body)))
        (if (known-transaction ,%db ,transaction)
            (funcall ,%txn-fn)
-           (funcall #'execute-transaction ,%db
+           (funcall #'execute ,%db
                     ,%txn-fn
                     :transaction nil
                     ,@(when retries `(:retries ,retries))

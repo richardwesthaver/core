@@ -77,6 +77,15 @@
 (defar rocksdb-transactiondb-options-set-write-policy void
   (opt (* rocksdb-transactiondb-options))
   (write-policy rocksdb-txndb-write-policy))
+(defar rocksdb-transactiondb-options-set-max-num-locks void
+  (opt (* rocksdb-transactiondb-options))
+  (max-num-locks long))
+(defar rocksdb-transactiondb-options-set-num-stripes void
+  (opt (* rocksdb-transactiondb-options))
+  (num-stripes size-t))
+(defar rocksdb-transactiondb-options-set-transaction-lock-timeout void
+  (opt (* rocksdb-transactiondb-options))
+  (default-lock-timeout long))
 
 (define-opt rocksdb-transaction-options)
 (defar rocksdb-transaction-options-set-set-snapshot void

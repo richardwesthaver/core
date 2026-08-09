@@ -17,7 +17,7 @@
 ;;; Options
 ;; These expand into lookup macros for the pre-defined option GET and SET
 ;; functions.
-(macrolet ((%defopt (name &optional set-only default)
+(macrolet ((%defopt (name &optional set-only &rest default)
              (let ((%creator (symbolicate name '-create))
                    (%default (symbolicate 'default- name))
                    (%opt (symbolicate (string-right-trim "S" (string name)))))
@@ -64,17 +64,32 @@ custom configuration." name)
                   (defvar ,(symbolicate '*default- name '*) (,%default))))))
   (%defopt rocksdb-options 
            ("parallelism" "enable-statistics" "event-listener")
-           (:create-if-missing t 
-            :create-missing-column-families t 
-            :parallelism (num-cpus)
-            :compression (rocksdb-compression-type :zstd)
-            :enable-pipelined-write t))
+           :create-if-missing t 
+           :create-missing-column-families t 
+           :parallelism (num-cpus)
+           :compression (rocksdb-compression-type :zstd)
+           :enable-pipelined-write t)
   (%defopt rocksdb-readoptions)
   (%defopt rocksdb-writeoptions)
-  (%defopt rocksdb-transaction-options)
-  (%defopt rocksdb-transactiondb-options)
-  (%defopt rocksdb-lru-cache-options)
-  (%defopt rocksdb-backup-engine-options))
+  (%defopt rocksdb-transaction-options
+           ("set-snapshot" "deadlock-detect" "lock-timeout" "expiration" 
+                           "deadlock-detect-depth" "max-write-batch-size" "skip-prepare")
+           :lock-timeout 100000
+           :expiration 100000)
+  (%defopt rocksdb-optimistictransaction-options
+           ("set-snapshot"))
+  (%defopt rocksdb-transactiondb-options
+           ("write-policy" "max-num-locks" "num-stripes" "default-lock-timeout" "transaction-lock-timeout")
+           :max-num-locks 2000)
+  (%defopt rocksdb-lru-cache-options
+           ("capacity" "num-shard-bits" "memory-allocator")
+           :capacity 10485760)
+  (%defopt rocksdb-hyper-clock-cache-options
+           ("capacity" "num-shard-bits" "memory-allocator" "estimated-entry-charge")
+           :capacity 10485760)
+  (%defopt rocksdb-universal-compaction-options)
+  (%defopt rocksdb-backup-engine-options)
+  (%defopt rocksdb-block-based-options))
 
 (defconfig rdb-config (simple-db-config)
   ((logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config)))
