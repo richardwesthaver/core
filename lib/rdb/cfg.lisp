@@ -61,13 +61,18 @@ custom configuration." name)
                     (funcall (,(symbolicate name '-setter) key) opt val))
                   (defvar ,(symbolicate '*default- name '*) (,%default))))))
   (%defopt rocksdb-options 
-           ("parallelism" "enable-statistics" "event-listener")
+           ("parallelism" "enable-statistics" "event-listener" "block-based-table-factory" "compression-options"
+            "merge-operator" "db-log-dir" "wal-dir" "wal-ttl-seconds" "wal-size-limit-mb" "memtable-vector-rep"
+            "prepare-for-bulk-load" "universal-compaction-options" "hash-skip-list-rep" "plain-table-factory"
+            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service")
            :create-if-missing t 
            :create-missing-column-families t 
            :parallelism (num-cpus)
            :compression (rocksdb-compression-type :zstd)
            :enable-pipelined-write t)
-  (%defopt rocksdb-readoptions)
+  (%defopt rocksdb-readoptions
+           ("snapshot" "iterate-upper-bound" "iterate-lower-bound" "readahead-size" "prefix-same-as-start"
+            "ignore-range-deletions" "timestamp" "iter-start-ts" "auto-readahead-size"))
   (%defopt rocksdb-writeoptions)
   (%defopt rocksdb-transaction-options
            ("set-snapshot" "deadlock-detect" "lock-timeout" "expiration" 
@@ -89,7 +94,9 @@ custom configuration." name)
            :estimated-entry-charge 0)
   (%defopt rocksdb-universal-compaction-options)
   (%defopt rocksdb-envoptions)
-  (%defopt rocksdb-backup-engine-options)
+  (%defopt rocksdb-backup-engine-options
+           ("backup-dir" "env"))
+  (%defopt rocksdb-ingestexternalfileoptions)
   (%defopt rocksdb-block-based-options))
 
 ;;; Env
