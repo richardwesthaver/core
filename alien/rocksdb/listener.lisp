@@ -12,7 +12,6 @@
 (defar rocksdb-flushjobinfo-triggered-writes-stop unsigned-char (info (* rocksdb-flushjobinfo)))
 (defar rocksdb-flushjobinfo-largest-seqno unsigned-long (info (* rocksdb-flushjobinfo)))
 (defar rocksdb-flushjobinfo-smallest-seqno unsigned-long (info (* rocksdb-flushjobinfo)))
-(defar rocksdb-reset-status void (status-ptr (* rocksdb-status-ptr)))
 
 ;; compactionjobinfo
 (def-with-errptr rocksdb-compactionjobinfo-status (* rocksdb-status-ptr) (info (* rocksdb-compactionjobinfo)))

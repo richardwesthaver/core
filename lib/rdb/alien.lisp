@@ -327,6 +327,25 @@
 (defun %release-snapshot (db snapshot)
   (rocksdb-release-snapshot db snapshot))
 
+;;; Env
+(defun %destroy-env (env) (rocksdb-env-destroy env))
+(defun %rocksdb-env (&optional mem)
+  (if mem (rocksdb-create-mem-env) (rocksdb-create-default-env)))
+
+(defun %rocksdb-env-get (key &optional (env (%rocksdb-env)))
+  (ecase (keywordicate key)
+    (:high-priority-background-threads (rocksdb::rocksdb-env-get-high-priority-background-threads env))
+    (:low-priority-background-threads (rocksdb::rocksdb-env-get-low-priority-background-threads env))
+    (:bottom-priority-background-threads (rocksdb::rocksdb-env-get-bottom-priority-background-threads env))
+    (:background-threads (rocksdb-env-get-background-threads env))))
+
+(defun %rocksdb-env-set (key val &optional (env (%rocksdb-env)))
+  (ecase (keywordicate key)
+    (:high-priority-background-threads (rocksdb::rocksdb-env-set-high-priority-background-threads env val))
+    (:low-priority-background-threads (rocksdb::rocksdb-env-set-low-priority-background-threads env val))
+    (:bottom-priority-background-threads (rocksdb::rocksdb-env-set-bottom-priority-background-threads env val))
+    (:background-threads (rocksdb-env-set-background-threads env val))))
+
 ;;; SST
 (defun %create-sst-writer (&optional (env-opts (rocksdb-envoptions-create)) (io-opts (rocksdb-options-create)))
   (rocksdb-sstfilewriter-create env-opts io-opts))

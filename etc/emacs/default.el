@@ -505,10 +505,6 @@ TABLE."
 (use-package css-mode
   :init (setq css-indent-offset 2))
 
-;;; Shell
-(use-package shell
-  :init (setq sh-basic-offset 2))
-
 ;;; Keyboard Macros
 (use-package kmacro
   :config
@@ -610,6 +606,7 @@ save window/frame configurations."
     (let ((proc (get-buffer-process (current-buffer))))
       (when (processp proc)
         (set-process-query-on-exit-flag proc nil))))
+  (setq sh-basic-offset 2)
   :hook
   (shell-mode . set-no-process-query-on-exit)
   (term-exec . set-no-process-query-on-exit))
@@ -627,6 +624,7 @@ save window/frame configurations."
   ("C-c RET" . eshell)
   ("C-c C-RET" . eshell-new)
   (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
+  (:map eshell-cmpl-mode-map ("C-c SPC" . toggle-map))
   :config
   (require 'em-alias)
   (eshell/alias "d" "dired $1")

@@ -15,8 +15,6 @@
 (in-package :rdb)
 
 ;;; Options
-;; These expand into lookup macros for the pre-defined option GET and SET
-;; functions.
 (macrolet ((%defopt (name &optional set-only &rest default)
              (let ((%creator (symbolicate name '-create))
                    (%default (symbolicate 'default- name))
@@ -86,11 +84,28 @@ custom configuration." name)
            :capacity 10485760)
   (%defopt rocksdb-hyper-clock-cache-options
            ("capacity" "num-shard-bits" "memory-allocator" "estimated-entry-charge")
-           :capacity 10485760)
+           :capacity 10485760
+           ;; experimental: determine dynamically
+           :estimated-entry-charge 0)
   (%defopt rocksdb-universal-compaction-options)
+  (%defopt rocksdb-envoptions)
   (%defopt rocksdb-backup-engine-options)
   (%defopt rocksdb-block-based-options))
 
+;;; Env
+(defun rocksdb-env (&rest args)
+  (remf args :mem)
+  (let ((env (%rocksdb-env (getf args :mem))))
+    (doplist (k v) args
+      (%rocksdb-env-set k v env))
+    env))
+
+(defun ensure-rocksdb-directory (path &optional (env (rocksdb-env)))
+  (with-errptr e
+    (rocksdb-create-dir-if-missing env (namestring path) e)
+    (pathname path)))
+
+;;; Config
 (defconfig rdb-config (simple-db-config)
   ((logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config)))
   (:default-initargs
