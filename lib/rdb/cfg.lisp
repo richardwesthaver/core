@@ -64,7 +64,7 @@ custom configuration." name)
            ("parallelism" "enable-statistics" "event-listener" "block-based-table-factory" "compression-options"
             "merge-operator" "db-log-dir" "wal-dir" "wal-ttl-seconds" "wal-size-limit-mb" "memtable-vector-rep"
             "prepare-for-bulk-load" "universal-compaction-options" "hash-skip-list-rep" "plain-table-factory"
-            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service")
+            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service" "env")
            :create-if-missing t 
            :create-missing-column-families t 
            :parallelism (num-cpus)
@@ -93,11 +93,21 @@ custom configuration." name)
            ;; experimental: determine dynamically
            :estimated-entry-charge 0)
   (%defopt rocksdb-universal-compaction-options)
+  (%defopt rocksdb-compactoptions)
+  (%defopt rocksdb-fifo-compaction-options)
   (%defopt rocksdb-envoptions)
+  (%defopt rocksdb-flushoptions)
   (%defopt rocksdb-backup-engine-options
            ("backup-dir" "env"))
-  (%defopt rocksdb-ingestexternalfileoptions)
-  (%defopt rocksdb-block-based-options))
+  (%defopt rocksdb-ingestexternalfileoptions
+           ("move-files" "snapshot-consistency" "allow-global-seqno" "allow-blocking-flush" "ingest-behind"
+            "fail-if-not-bottommost-level"))
+  (%defopt rocksdb-block-based-options
+           ("separate-key-value-in-data-block" "index-type" "data-block-index-type" "data-block-hash-ratio"
+            "cache-index-and-filter-blocks" "cache-index-and-filter-blocks-with-high-priority"
+            "pin-l0-filter-and-index-blocks-in-cache" "pin-top-level-index-and-filter" 
+            "top-level-index-pinning-tier" "partition-pinning-tier" "unpartition-pinning-tier"
+            "uniform-cv-threshold" "fif-compaction-options")))
 
 ;;; Env
 (defun rocksdb-env (&rest args)
@@ -142,22 +152,22 @@ custom configuration." name)
         ;; invalid ast, signal error
         (error 'syntax-error :ast ast))))
 
-(defmethod build ((self rdb-config) &key (nullp nil) (exclude '(ast id schema logger options)))
-  (setf (ast self)
-        (unwrap-object self
-                       :slots t
-                       :methods nil
-                       :nullp nullp
-                       :exclude exclude))
-  (when (slot-boundp self 'schema) 
-    (appendf (ast self) (list :schema (ast (slot-value self 'schema)))))
-  (when (slot-boundp self 'logger) 
-    (appendf (ast self) (list :logger (ast (slot-value self 'logger)))))
-  (when (slot-boundp self 'options)
-    (appendf (ast self) (list :options (ast (slot-value self 'options)))))
-  self)
+;; (defmethod build ((self rdb-config) &key (nullp nil) (exclude '(ast id schema logger options)))
+;;   (setf (ast self)
+;;         (unwrap-object self
+;;                        :slots t
+;;                        :methods nil
+;;                        :nullp nullp
+;;                        :exclude exclude))
+;;   (when (slot-boundp self 'schema) 
+;;     (appendf (ast self) (list :schema (ast (slot-value self 'schema)))))
+;;   (when (slot-boundp self 'logger) 
+;;     (appendf (ast self) (list :logger (ast (slot-value self 'logger)))))
+;;   (when (slot-boundp self 'options)
+;;     (appendf (ast self) (list :options (ast (slot-value self 'options)))))
+;;   self)
 
-(defun build-rdb-config (self)
+(defmethod build ((self rdb-config) &key)
   (make-db (slot-value self 'backend)
     :opts (slot-value self 'options)
     :logger (when-let ((l (slot-value self 'logger))) (build l))

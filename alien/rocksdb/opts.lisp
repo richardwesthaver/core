@@ -217,7 +217,7 @@
 
 (defar rocksdb-block-based-options-set-uniform-cv-threshold void
   (opt (* rocksdb-block-based-table-options)) (val double))
-
+(
 (export-opt-accessors rocksdb-block-based-options
                       checksum
                       block-size
@@ -288,7 +288,7 @@
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
 (define-opt-accessor rocksdb-options memtable-op-scan-flush-trigger (unsigned 32))
 ;; NOTE 2026-04-04: this option is incompatible with fifo-compaction
-(define-opt-accessor rocksdb-options open-files-async unsigned-char)
+(define-opt-accessor rocksdb-options open-files-async)
 (define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)
 (define-opt-accessor rocksdb-options max-compaction-trigger-wakeup-seconds unsigned-long)
 (define-opt-accessor rocksdb-options min-tombstones-for-range-conversion unsigned-int)
@@ -321,7 +321,6 @@
 (define-opt-accessor rocksdb-options min-blob-size unsigned-long)
 (define-opt-accessor rocksdb-options blob-file-size unsigned-long)
 (define-opt-accessor rocksdb-options blob-compression-type int)
-
 (define-opt-accessor rocksdb-options blob-gc-age-cutoff double)
 (define-opt-accessor rocksdb-options blob-gc-force-threshold double)
 (define-opt-accessor rocksdb-options blob-compaction-readahead-size unsigned-long)

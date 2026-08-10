@@ -801,9 +801,7 @@ protocol.")
    #:make-indexed-btree
    #:make-btree
    #:dup-btree
-   #:build-indexed-btree
    #:indexed-btree
-   #:build-btree
    #:map-btree
    #:dump-index
    #:btree-keys
@@ -842,7 +840,7 @@ protocol.")
    #:cursor-pnext-nodup
    #:cursor-prev-dup
    #:btree-index
-   #:build-btree-index
+   #:make-btree-index
    #:get-primary-key
    #:cursor-initialized-p
    #:cursor-oid

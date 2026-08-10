@@ -67,10 +67,10 @@
   (:documentation "A RocksDB-based STORE. Note that the default column family is used to store
 serialized object schemas."))
 
-(defmethod build-btree ((st rdb-store))
+(defmethod make-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
 
-;; (build-btree (make-instance 'rdb-store))
+;; (make-btree (make-instance 'rdb-store))
 
 (defmethod path ((self rdb-store)) (cadr (spec self)))
 
@@ -158,10 +158,10 @@ serialized object schemas."))
   (declare (ignore slot-names rest))
   (setf (index-cache instance) nil))
 
-(defmethod build-indexed-btree ((sc rdb-store))
+(defmethod make-indexed-btree ((sc rdb-store))
   (make-instance 'rdb-indexed-btree :store sc))
 
-(defmethod build-btree-index ((sc rdb-store) &key primary key-form &allow-other-keys)
+(defmethod make-btree-index ((sc rdb-store) &key primary key-form &allow-other-keys)
   (make-instance 'rdb-btree-index :primary primary :key-form key-form :store sc))
 
 (defmethod add-index ((bt rdb-indexed-btree) &key index-name key-form (populate t))
@@ -177,9 +177,9 @@ serialized object schemas."))
         (let ((index
                 (ensure-transaction (:store sc)
                   (let ((ht (idx bt))
-                        (index (build-btree-index sc 
-                                                  :primary bt 
-                                                  :key-form key-form)))
+                        (index (make-btree-index sc 
+                                                 :primary bt 
+                                                 :key-form key-form)))
                     (setf (gethash index-name (index-cache bt)) index)
                     (setf (gethash index-name ht) index)
                     (setf (idx bt) ht)
@@ -813,7 +813,7 @@ underlying DBIter C struct."))
   ;;  (:metaclass persistent-metaclass)
   (:documentation "A RocksDB implementation of the duplicate btree"))
 
-(defmethod build-dup-btree ((sc rdb-store))
+(defmethod make-dup-btree ((sc rdb-store))
   (make-instance 'rdb-dup-btree :store sc))
 
 (defmethod get-value (key (bt rdb-dup-btree))

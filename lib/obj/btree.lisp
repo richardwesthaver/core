@@ -22,7 +22,7 @@
 (defgeneric existsp (key tree)
   (:documentation "Test existence of a key in a tree."))
 
-(defgeneric build-btree (self)
+(defgeneric make-btree (self)
   (:documentation 
    "Construct a btree of the appropriate type corresponding to the current *STORE*."))
 
@@ -31,7 +31,7 @@
   "A map-like interface to a BTree object, which stores things in a semi-ordered
 fashion."))
 
-(defmethod build-btree (self)
+(defmethod make-btree (self)
   (make-instance 'btree :store self))
 
 (defmethod drop-instance ((self btree))
@@ -43,7 +43,7 @@ fashion."))
   (:documentation "Delete all key-value pairs from the btree and
    render it an invalid object in the data store"))
 
-(defgeneric build-indexed-btree (store)
+(defgeneric make-indexed-btree (store)
   (:documentation 
    "Construct a btree of the appropriate type corresponding to this store-controller."))
 
@@ -78,7 +78,7 @@ in secondary keys for existing primary entries (may be expensive!)"))
          (add-index self :index-name idxname :key-form key-form :populate populate)))
 
 ;;; Secondary Index
-(defgeneric build-btree-index (st &key name primary key-form)
+(defgeneric make-btree-index (st &key name primary key-form)
   (:documentation 
    "Construct a btree of the appropriate type corresponding to this store-controller."))
 
@@ -125,28 +125,12 @@ the primary."
 lookup, updating ALL other secondary indices."
   (delete-key (get-primary-key key bt) (primary bt)))
 
-(defun make-btree (&optional (st *store*))
-  "Constructs a new BTree instance for use by the user. Each backend
-   returns its own internal type as appropriate and ensures that the 
-   btree is associated with the store that created it."
-  (build-btree st))
-
-(defun make-indexed-btree (&optional (sc *store*))
-  "Constructs a new indexed BTree instance for use by the user.
-   Each backend returns its own internal type as appropriate and
-   ensures that the btree is associated with the store
-   that created it."
-  (build-indexed-btree sc))
-
 ;;; Dup Btrees
 (defclass dup-btree (btree) ())
 
-(defgeneric build-dup-btree (store)
+(defgeneric make-dup-btree (store)
   (:documentation 
    "Construct a btree of the appropriate type corresponding to this store."))
-
-(defun make-dup-btree (&optional (store *store*))
-  (build-dup-btree store))
 
 ;;; Cursor
 (defclass cursor ()
