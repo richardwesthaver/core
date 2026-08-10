@@ -41,6 +41,9 @@
          (string t)
          (t nil))))
 
+(defun rdb-temp-spec (name)
+  `(:rdb ,(ensure-directories-exist (tmp-path name))))
+
 ;;; BTrees
 (defclass rdb-btree (btree column-family) ()
   (:documentation "A RocksDB implementation of a BTree."))
@@ -57,22 +60,22 @@
    (index :accessor index)
    (rindex :accessor rindex))
   (:default-initargs
-   :spec '(:rdb nil nil)
-   :db (make-db :rocksdb :opts (default-rocksdb-options) :name (string (gensym "STORE")))
+   :spec '(:rdb) ;; default spec is invalid
+   :de #'deserialize-object
+   :ser #'serialize-object
    ;; (make-instance 'simple-column-family :type '(oid . cid) :name "instance-index")
    ;; (make-instance 'simple-column-family :type '(cid . oid) :name "class-index")
    ;; :root
    :schema-table (make-hash-table :size 100 :weakness :value)
    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value))
-  (:documentation "A RocksDB-based STORE. Note that the default column family is used to store
-serialized object schemas."))
+  (:documentation "A RocksDB-based STORE."))
 
 (defmethod make-btree ((st rdb-store))
   (make-instance 'rdb-btree :store st))
 
 ;; (make-btree (make-instance 'rdb-store))
 
-(defmethod path ((self rdb-store)) (cadr (spec self)))
+(defaccessor path ((self rdb-store)) (cadr (spec self)))
 
 ;;; Interface
 ;; the following methods up to the open/close section use BUFFER-STREAMs,
@@ -893,20 +896,17 @@ underlying DBIter C struct."))
       (error "Can't delete with uninitialized cursor!")))
 
 ;;; Open/Close
-(defmethod open-store ((store rdb-store) &key (recover t)
-                                              register
-                                              log)
-  (if (db-open-p store)
-      (progn
-        (log:warn! "Database is already open: ~A" store)
-        store)
-      (with-db (db :db store :open t :close :auto)
-        (if (probe-file (path store))
-            (progn
-              (load-opts db)
-              (open-columns* db)
-              store)
-            store))))
+
+(defmethod open-store ((store rdb-store) &key)
+  (with-slots (db) store
+    (setf db (make-db :rocksdb-transaction :path (path store) :open t))
+    (let ((metadata (open-column db "metadata"))
+          (btrees (open-column db "btree"))
+          (dup-btrees (open-column db "dup"))
+          (oids (open-column db "oid"))
+          (index (open-column db "index"))
+          (rindex (open-column db "rindex"))))))
+
 
 (defmethod close-store ((store rdb-store))
   "Close the underlying RocksDB instance."

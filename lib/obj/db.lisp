@@ -430,7 +430,7 @@ committed. Otherwise, the transaction is aborted."
                                (db '*db*)
                                (store '*store*)
                                (transaction '*transaction*)
-                               retries wait
+                               wait
                                &allow-other-keys)
                               &body body)
   "Execute BODY with an existing transaction or a new transaction if one does not
@@ -440,7 +440,6 @@ atomically regardless of whether there is an existing transaction or not."
     (remf initargs :db)
     (remf initargs :store)
     (remf initargs :transaction)
-    (remf initargs :retries)
     (remf initargs :wait)
     `(let ((,%db (or ,db ,store))
            (,%txn-fn (lambda () ,@body)))
@@ -449,7 +448,6 @@ atomically regardless of whether there is an existing transaction or not."
            (funcall #'execute ,%db
                     ,%txn-fn
                     :transaction nil
-                    ,@(when retries `(:retries ,retries))
                     ,@(when wait `(:wait ,wait)))))))
 
 (defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)

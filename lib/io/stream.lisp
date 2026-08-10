@@ -870,7 +870,7 @@ functions and via PEEKED."))
 
 (defun reset-buffer-stream (bs)
   "'Empty' the buffer-stream."
-  (declare #-ccl (type buffer-stream bs))
+  (declare (buffer-stream bs))
   (setf (size bs) 0)
   (setf (offset bs) 0))
 
@@ -904,8 +904,8 @@ stream to the pool on exit."
 
 (defun resize-buffer-stream (bs length)
   "Resize the underlying buffer of a buffer-stream, copying the old data."
-  (declare #-ccl (type buffer-stream bs)
-           (type fixnum length))
+  (declare (buffer-stream bs)
+           (fixnum length))
   (let ((len (buffer-stream-length bs))
         (size (size bs))
         (buf (buffer bs)))
@@ -953,8 +953,8 @@ stream to the pool on exit."
             (bsref bs position)))
    (:write (b bs)
            "Write a byte to a buffer-stream."
-           (declare #-ccl (type buffer-stream bs)
-                    (type (unsigned-byte 8) b))
+           (declare (buffer-stream bs)
+                    ((unsigned-byte 8) b))
            (with-slots (size) bs
              (declare (fixnum size))
              (let ((needed (the fixnum (+ size 1))))

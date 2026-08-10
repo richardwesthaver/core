@@ -212,7 +212,7 @@
   (opt (* rocksdb-readoptions))
   (cfs (* rocksdb-column-family-handle))
   (num-keys size-t)
-  (keys-list (* c-string))
+  (keys-list (* (* unsigned-char)))
   (keys-list-sizes (* size-t))
   (values-list (* c-string))
   (values-list-sizes (* size-t))
@@ -225,32 +225,46 @@
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
   (nkeys size-t)
-  (keys (* c-string))
+  (keys (* (* unsigned-char)))
   (key-sizes (* size-t))
   (values (* (* rocksdb-pinnableslice)))
   (errs (* (* rocksdb-errptr)))
   (sorted-input boolean))
 
-(defar rocksdb-key-may-exist unsigned-char
-  (db (* rocksdb))
-  (opts (* rocksdb-readoptions))
-  (key c-string)
-  (key-len size-t)
-  (value (* c-string))
-  (val-len (* size-t))
-  (timestamp c-string)
-  (timestamp-len size-t)
-  (value-found (* boolean)))
-
-(defar rocksdb-key-may-exist-cf unsigned-char
+;; Batched MultiGet with slice array: Takes rocksdb_slice_t array directly,
+;; avoiding key conversion. faster than rocksdb_batched_multi_get_cf for
+;; operations with many keys. Eliminates overhead of converting keys from
+;; separate pointer+size arrays to Slice objects.
+(defar rocksdb-batched-multi-get-cf-slice void
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
-  (key c-string)
+  (nkeys size-t)
+  (keys (* (* rocksdb-pinnableslice)))
+  (values (* (* rocksdb-pinnableslice)))
+  (errs (* (* rocksdb-errptr)))
+  (sorted-input boolean))
+
+(defar rocksdb-key-may-exist boolean
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (key (* unsigned-char))
   (key-len size-t)
-  (value (* c-string))
+  (value (* (* unsigned-char)))
   (val-len (* size-t))
-  (timestamp c-string)
+  (timestamp (* unsigned-char))
+  (timestamp-len size-t)
+  (value-found (* boolean)))
+
+(defar rocksdb-key-may-exist-cf boolean
+  (db (* rocksdb))
+  (opts (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (key (* unsigned-char))
+  (key-len size-t)
+  (value (* (* unsigned-char)))
+  (val-len (* size-t))
+  (timestamp (* unsigned-char))
   (timestamp-len size-t)
   (value-found (* boolean)))
 

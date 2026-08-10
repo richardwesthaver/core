@@ -133,6 +133,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-options-set-prepare-for-bulk-load
    :rocksdb-options-set-enable-statistics
    :rocksdb-close
+   :rocksdb-free
    :rocksdb-enable-manual-compaction
    :rocksdb-cancel-all-background-work
    :rocksdb-disable-manual-compaction

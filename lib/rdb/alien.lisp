@@ -67,6 +67,30 @@
         (rocksdb-ingest-external-file-cf db cf flist flen opts err)))))
   
 ;;; KVs
+(defun %key-exists-p (db key length &optional (opts (rocksdb-readoptions-create)) timestamp)
+  (with-alien ((found boolean)
+               (v (* unsigned-char))
+               (vlen size-t))
+    (and
+     (rocksdb-key-may-exist db opts key length (addr v) (addr vlen) 
+                            timestamp (if timestamp (length timestamp) 0)
+                            (addr found))
+     found
+     (not (zerop vlen))
+     (values v vlen))))
+
+(defun %cf-key-exists-p (db cf key length &optional (opts (rocksdb-readoptions-create)) timestamp)
+  (with-alien ((found boolean)
+               (v (* unsigned-char))
+               (vlen size-t))
+    (and
+     (rocksdb-key-may-exist-cf db opts cf key length (addr v) (addr vlen) 
+                               timestamp (if timestamp (length timestamp) 0)
+                               (addr found))
+     found
+     (not (zerop vlen))
+     (values v vlen))))
+
 (defun %put-kv (db key val &optional (opts (rocksdb-writeoptions-create)))
     (with-kv-raw (db key e :error put-kv-error :val val)
       (rocksdb-put db opts
@@ -480,6 +504,9 @@
 (defun %commit-transaction (txn)
   (with-errptr* (e 'rdb-alien-error)
     (rocksdb-transaction-commit txn e)))
+
+(defun %set-savepoint (txn)
+  (rocksdb-transaction-set-savepoint txn))
 
 (defun %rollback-transaction (txn &optional savepoint)
   "Rollback a raw transaction TXN when SAVEPOINT is non-nil only rollback to last

@@ -15,6 +15,7 @@
    :time :config :ast 
    :id :std/seq :srv :net/srv :val :q/proto)
   (:import-from :db :backend :options)
+  (:import-from :sys :io-vector-class)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
    :rdb-error

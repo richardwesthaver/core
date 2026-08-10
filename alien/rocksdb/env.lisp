@@ -52,3 +52,5 @@
 (def-with-errptr rocksdb-status-ptr-get-error void (status (* rocksdb-status-ptr)))
 
 (defar rocksdb-reset-status void (status-ptr (* rocksdb-status-ptr)))
+
+(defar rocksdb-free void (ptr (* t)))

@@ -167,28 +167,30 @@ extractor."
 (defmethod reset ((self rdb) &key (columns t) (opts (default-rocksdb-options)))
   (when columns 
     (close-columns self) 
-    (setf (columns self)
-          (make-array 0 :element-type 'column-family
-                        :adjustable t
-                        :fill-pointer t)))
+    (setf (columns self) nil))
   (setf (options self) opts)
   self)
 
-(defmethod open-column ((self rdb) col &key)
+(defmethod open-column ((self simple-rdb) col &key)
   (open-column self (db (find-column col self))))
 
 (defmethod open-column ((self rdb) (col column-family) &key)
   (ifret (db col)
     (setf (db col) (create-column self col))))
 
+(defmethod open-column ((self rdb) col &key (options (default-rocksdb-options)))
+  (typecase col
+    (column-family (%create-cf (db self) (name col) (or (options col) options)))
+    (t (%create-cf (db self) col options))))
+
 (defmethod open-columns ((self rdb) &rest columns)
   (dolist (c columns)
     (open-column self c)))
 
-(defmethod find-column ((cf string) (self rdb) &key)
+(defmethod find-column ((cf string) (self simple-rdb) &key)
   (find cf (columns self) :key 'name :test 'equal))
 
-(defmethod add-column ((cf t) (db rdb))
+(defmethod add-column ((cf t) (db simple-rdb))
   (push (make-instance 'column-family :db cf) (columns db)))
 
 (defmethod open-with-columns ((db rdb) &rest names)
@@ -212,7 +214,7 @@ extractor."
                  (setf (db col) c)))
       db)))
 
-(defmethod open-columns* ((self rdb))
+(defmethod open-columns* ((self simple-rdb))
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
@@ -233,10 +235,26 @@ extractor."
                    (setf (db c) cf)))
         self))))
 
-(defmethod close-columns ((self rdb))
+(defmethod close-columns ((self simple-rdb))
   (loop for cf across (columns self)
         ;; unless (string= (name cf) *rdb-default-column-name*)
         do (close-db cf)))
+
+(defmacro unless-key-exists-p ((key length db &key cf (opts (default-rocksdb-readoptions)) timestamp) &body body)
+  "If KEY of given LENGTH exists in DB (or CF) do nothing, else eval forms in BODY.
+
+This macro is used by the [[id:OBJ/DB:INSERT-KEY][insert-key]] method on RDB instances to ensure a key
+does not exist before using [[id:OBJ/DB:PUT-KEY][put-key]]. An alternative approach would be to use a
+custom merge-operator which does nothing when merging with an existing key."
+  (with-gensyms (v vlen)
+    `(multiple-value-bind (,v ,vlen) ,(if cf 
+                                          `(%cf-key-exists-p ,db ,cf ,key ,length ,opts ,timestamp)
+                                          `(%key-exists-p ,db ,key ,length ,opts ,timestamp))
+       (declare (ignorable ,vlen))
+       (if ,v
+           (rocksdb-free ,v)
+           (progn
+             ,@body)))))
 
 (defmethods insert-key 
   (((self simple-rdb) key val &key column)
@@ -343,29 +361,25 @@ extractor."
         (string (%multi-get-kv-str (sap self) keys opts)))))
 
 (defmethod create-column ((db rdb) (col column-family))
-  (if (equal (name col) *rdb-default-column-name*)
-      (rdb-default-column-warning "ignoring attempt to create 'default' column-family: ~A" col)
-      (setf (db col) (%create-cf (db db) (name col) (options col))))
+  (setf (db col) (if (equal (name col) *rdb-default-column-name*)
+                     (rocksdb-get-default-column-family-handle (db db))
+                     (%create-cf (db db) (name col) (options col))))
   ;; (open-column db col)
   col)
 
-(defmethod create-columns ((self rdb))
+(defmethod create-columns ((self simple-rdb))
   (if (null (db self))
       (warn 'db-missing :message "ignoring attempt to create column-families before opening")
       (loop for cf across (columns self)
             do (create-column self cf))))
 
-(defmethod find-column ((cf string) (self rdb) &key)
-  "Find a column by name."
-  (find cf (columns self) :key 'name :test 'equal))
+(defmethod find-column (cf (self simple-rdb) &key)
+  (find cf (columns self) :key 'name :test 'string=))
 
-(defmethod find-column ((cf symbol) (self rdb) &key)
-  (find (string-downcase cf) (columns self) :key 'name :test 'string=))
-
-(defmethod find-column ((col column-family) (self rdb) &key)
+(defmethod find-column ((col column-family) (self simple-rdb) &key)
   (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
 
-(defmethod (setf find-column) ((new column-family) (cf string) (self rdb) &key)
+(defmethod (setf find-column) ((new column-family) (cf string) (self simple-rdb) &key)
   "Find and replace a column by name."
   (nsubstitute new (find-column cf self) (columns self)))
 

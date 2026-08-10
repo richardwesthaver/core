@@ -603,7 +603,7 @@ sure to send the last chunk."
     :stream stream))
 
 ;;; Block Stream
-(defclass block-stream (chunked-stream fundamental-binary-stream)
+(defclass block-stream (chunked-stream fundamental-binary-stream buffered-stream)
   ((block-size
     :initarg :block-size
     :initform 512
