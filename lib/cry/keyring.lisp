@@ -65,5 +65,5 @@
   (((self keyring) (key t) &key)
    (keyctl-invalidate (id key))))
 
-(defun clear-keys (kr)
-  (keyutils::keyctl-clear (id kr)))
+(defmethod clean ((self keyring) &key)
+  (keyutils::keyctl-clear (id self)))

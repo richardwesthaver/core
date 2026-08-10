@@ -221,7 +221,7 @@ in-memory objects."))
   (:method ((self database)) (unless (db self) t)))
 
 ;;; Common
-(defgeneric put-key (self key val &key timestamp)
+(defgeneric put-key (self key val &key)
   (:documentation "Insert a KEY and VAL."))
 (defgeneric get-key (self key &key)
   (:documentation "Get value of KEY."))
