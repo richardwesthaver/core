@@ -217,7 +217,7 @@
 
 (defar rocksdb-block-based-options-set-uniform-cv-threshold void
   (opt (* rocksdb-block-based-table-options)) (val double))
-(
+
 (export-opt-accessors rocksdb-block-based-options
                       checksum
                       block-size
