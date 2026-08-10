@@ -756,7 +756,7 @@ protocol.")
    :close-columns
    :create-column
    :db-config
-   :simple-db-config)
+   :simple-db-config))
 
 (defpkg :obj/graph
   (:nicknames :graph)
