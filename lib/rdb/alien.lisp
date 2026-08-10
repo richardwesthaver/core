@@ -88,7 +88,7 @@
                                      opt
                                      %key
                                      %klen
-                                     (addr vlen)
+                                     vlen
                                      e))))
 	  ;; helps if we know the vlen beforehand, would need a custom
 	  ;; C-side function probably.
@@ -268,9 +268,8 @@
   (rocksdb-iter-destroy iter))
 
 (defun %iter-key (iter)
-  (with-alien ((klen-ptr (* size-t) (make-alien size-t 0)))
-    (let* ((key-ptr (rocksdb-iter-key iter klen-ptr))
-           (klen (deref klen-ptr))
+  (with-alien ((klen size-t))
+    (let* ((key-ptr (rocksdb-iter-key iter klen))
            (k (make-array klen :element-type '(unsigned-byte 8))))
       (clone-octets-from-alien key-ptr k klen)
       k)))
@@ -280,11 +279,10 @@
     (octets-to-string k)))
 
 (defun %iter-val (iter)
-  (with-alien ((vlen-ptr (* size-t) (make-alien size-t 0)))
-    (let* ((val-ptr (rocksdb-iter-value iter vlen-ptr))
-           (vlen (deref vlen-ptr))
-           (v (make-array vlen :element-type '(unsigned-byte 8))))
-      (clone-octets-from-alien val-ptr v vlen)
+  (with-alien ((vlen size-t))
+    (let ((val (rocksdb-iter-value iter vlen))
+          (v (make-array vlen :element-type '(unsigned-byte 8))))
+      (clone-octets-from-alien val v vlen)
       v)))
 (defun %iter-valid-p (iter)
   (rocksdb-iter-valid iter))
@@ -428,12 +426,12 @@
 
 (defun %transactiondb-get-kv (db key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-kv-raw (db key e :error get-kv-error)
-    (with-alien ((vlen (* size-t)))
+    (with-alien ((vlen size-t))
       (let* ((val (if pinned
                       (rocksdb-transactiondb-get-pinned db opts %key %klen e)
                       (rocksdb-transactiondb-get db opts %key %klen vlen e)))
-             (v (make-array (deref vlen) :element-type 'octet)))
-        (clone-octets-from-alien val v (deref vlen))
+             (v (make-array vlen :element-type 'octet)))
+        (clone-octets-from-alien val v vlen)
         v))))
 
 (defun %transactiondb-get-kv-str (db key &optional (opts (rocksdb-readoptions-create)) pinned)
@@ -443,12 +441,12 @@
 
 (defun %transactiondb-get-cf (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
-    (with-alien ((vlen (* size-t)))
+    (with-alien ((vlen size-t))
       (let* ((val (if pinned
                       (rocksdb-transactiondb-get-pinned-cf db opts cf %key %klen e)
                       (rocksdb-transactiondb-get-cf db opts cf %key %klen vlen e)))
-             (v (make-array (deref vlen) :element-type 'octet)))
-        (clone-octets-from-alien val v (deref vlen))
+             (v (make-array vlen :element-type 'octet)))
+        (clone-octets-from-alien val v vlen)
         v))))
 
 (defun %transactiondb-get-cf-str (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)

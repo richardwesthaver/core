@@ -92,7 +92,7 @@
   (options (* rocksdb-readoptions))
   (key (* unsigned-char))
   (keylen size-t) 
-  (vallen (* size-t)))
+  (vallen size-t :in-out))
 
 (def-with-errptr rocksdb-get-into-buffer boolean
   (db (* rocksdb))
@@ -373,7 +373,7 @@
     (* c-string)
   (opt (* rocksdb-options))
   (name c-string)
-  (lencf (* size-t)))
+  (lencf size-t :out))
 
 (defar rocksdb-list-column-families-destroy void
   (list (* c-string))
@@ -544,15 +544,15 @@
   (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-key (* unsigned-char)
   (iter (* rocksdb-iterator))
-  (klen-ptr (* size-t)))
+  (klen-ptr size-t :in-out))
 (defar rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
-  (vlen-ptr (* size-t)))
+  (vlen-ptr size-t :in-out))
 (def-with-errptr rocksdb-iter-refresh void
   (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-timestamp (* unsigned-char) 
   (iter (* rocksdb-iterator))
-  (tslen (* size-t)))
+  (tslen size-t :in-out))
 (def-with-errptr rocksdb-iter-get-error void (iter (* rocksdb-iterator)))
 (defar rocksdb-wal-iter-next void (iter (* rocksdb-wal-iterator)))
 (defar rocksdb-wal-iter-valid unsigned-char (iter (* rocksdb-wal-iterator)))
@@ -839,7 +839,7 @@
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t)))
+  (vlen size-t))
 
 (def-with-errptr rocksdb-transactiondb-get-pinned (* rocksdb-pinnableslice)
   (txn-db (* rocksdb-transactiondb))
@@ -853,7 +853,7 @@
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen (* size-t)))
+  (vlen size-t :in-out))
 
 (def-with-errptr rocksdb-transactiondb-get-pinned-cf (* rocksdb-pinnableslice)
   (txn-db (* rocksdb-transactiondb))
@@ -1108,13 +1108,13 @@
 
 (defar rocksdb-pinnableslice-value (* unsigned-char) 
   (ty (* rocksdb-pinnableslice))
-  (vlen (* size-t)))
+  (vlen size-t :out))
 
 (defar rocksdb-pinnable-handle-destroy void (v (* rocksdb-pinnable-handle)))
 
 (defar rocksdb-pinnable-handle-get-value (* unsigned-char)
   (ty (* rocksdb-pinnable-handle))
-  (vlen (* size-t)))
+  (vlen size-t :out))
 
 ;;; Memory Consumers
 (defar rocksdb-memory-consumers-create (* rocksdb-memory-consumers))

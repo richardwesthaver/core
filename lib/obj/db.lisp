@@ -12,7 +12,6 @@
 ;;; Vars
 (defvar *db* nil)
 (defvar *database-backend* nil)
-(defvar *database-collection-type* 'list)
 (defvar *default-database-version* '(0 1 0))
 (defparameter *save-database-backend-on-load* nil)
 ;;; Backends
@@ -191,9 +190,6 @@ saved."
 Every database has at least one slot named DB which points to the raw database
 handle."))
 
-(defclass database-collection () ()
-  (:documentation "A collection of DATABASE objects."))
-
 (defgeneric make-db (engine &rest initargs &key &allow-other-keys)
   (:documentation "Dispatch initializer for databases. An ENGINE must be supplied, which is
 usually a key such as :ROCKSDB or :SQLITE."))
@@ -214,9 +210,6 @@ in-memory objects."))
 (defgeneric find-db (name dbs &key &allow-other-keys)
   (:documentation "Return the db by NAME, from a collection of databases DBS."))
 
-(defgeneric insert-db (name dbs &key &allow-other-keys)
-  (:documentation "Inserts a database by NAME into the database-collection DBS."))
-
 (defgeneric db-open-p (self)
   (:documentation "Return T when database SELF is open.")
   (:method ((self t)) (invalid-database self))
@@ -228,10 +221,8 @@ in-memory objects."))
   (:method ((self database)) (unless (db self) t)))
 
 ;;; Common
-(defgeneric put-key (self key val)
+(defgeneric put-key (self key val &key timestamp)
   (:documentation "Insert a KEY and VAL."))
-(defgeneric put-key-ts (self key val ts)
-  (:documentation "Insert a KEY and VAL with associated timestamp TS."))
 (defgeneric get-key (self key &key)
   (:documentation "Get value of KEY."))
 (defgeneric multi-get (self keys &key)
@@ -241,10 +232,6 @@ in-memory objects."))
 (defgeneric delete-key (self key &key)
   (:documentation "Delete value associated with KEY from SELF."))
 (defgeneric remove-kv (key value self))
-(defgeneric delete-key-ts (self key ts)
-  (:documentation "Delete value associated with KEY and TS from SELF."))
-(defgeneric delete-key-range (self start end &key)
-  (:documentation "Delete values associates with keys between START and END from SELF."))
 (defgeneric flush-db (self &key)
   (:documentation "Flush the database SELF."))
 (defgeneric load-db (self)
@@ -287,6 +274,7 @@ in-memory objects."))
 (defgeneric merge-kv (self kv &key)
   (:documentation "Perform a merge operation on SELF using object KV."))
 
+;; TODO 2026-08-09: 
 (defmacro with-merge-op ())
 
 ;; Columns

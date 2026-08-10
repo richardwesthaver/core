@@ -677,7 +677,7 @@ will be set to NULL.
 (defar rocksdb-compaction-service-options-override-set-compaction-filter void
   (opts (* rocksdb-compaction-service-options-override))
   (compaction-filter (* rocksdb-compactionfilter)))
-(defar rocksdb-compaction-service-options-override-set-compaction-filter-factor void
+(defar rocksdb-compaction-service-options-override-set-compaction-filter-factory void
   (opts (* rocksdb-compaction-service-options-override))
   (compaction-filter-factory (* rocksdb-compactionfilterfactory)))
 (defar rocksdb-compaction-service-options-override-set-prefix-extractor void

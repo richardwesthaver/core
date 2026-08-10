@@ -27,8 +27,6 @@
    :find-cf
    :put-cf-key :get-cf-key
    :multi-get :delete-key
-   :delete-key-ts :put-key-ts
-   :delete-key-range
    :flush-cf
    :get-stats
    :print-stats

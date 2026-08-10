@@ -102,8 +102,8 @@ Inherits directly from the RDB class. The DB slot is a
 ROCKSDB-COLUMN-FAMILY-HANDLE."))
 (defclass trdb (rdb)
   ((transactiondb-options :initform (default-rocksdb-transactiondb-options) :accessor transactiondb-options :initarg :transactiondb-options))
-  (:documentation "Transaction DB.
-TRANSACTION-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
+  (:documentation "Standard (pessimistic) Transaction DB.
+TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass otrdb (rdb) ()
   (:documentation "Optimistic Transaction DB."))
 (defclass simple-rdb (rdb)
@@ -124,7 +124,7 @@ TRANSACTION-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
    :columns nil))
 
 (defclass simple-column-family (column-family rdb-column) ()
-  (:default-initargs :name (symbol-name (gensym "#")))
+  (:default-initargs :name (symbol-name (gensym "CF#")))
   (:documentation "COLUMN support for RocksDB Column Families."))
 
 ;; HACK 2026-08-06: 
@@ -481,7 +481,7 @@ extractor."
   (setf (db-backup self) (apply 'call-next-method args)))
 (defmethod flush-db ((self rdb) &key wait)
   (%flush-db (db self) wait))
-(defmethod close-db :before ((self rdb) &key)
+(defmethod close-db :before ((self simple-rdb) &key)
   (close-columns self))
 (defmethod close-db ((self rdb) &key) 
   (rocksdb-close (db self)))
@@ -503,7 +503,7 @@ extractor."
     (and db (typep db 'alien) (not (null db)))))
 
 (defmethod db-closed-p ((self rdb))
-  (consp (db self)))
+  (null (db self)))
 
 (defmethod destroy-db ((self rdb))
   ;; close all handles before destruction ensues
@@ -515,13 +515,25 @@ extractor."
     (unless (null backup)
       (setf backup (%close-backup-engine backup)))))
 
+(defmethod shutdown-db :before ((self database) &key)
+  (log:trace! "shutting down database" (path self)))
+
 (defmethod shutdown-db ((self rdb) &key wait)
-  (log:trace! "shutting down database" (path self))
+  (unless-null-db (options) self
+    (rocksdb-cancel-all-background-work db wait)
+    (close-db self)
+    (rocksdb-options-destroy options)))
+
+(defmethod shutdown-db :around ((self simple-rdb) &key wait)
   (close-backup self)
   (close-columns self)
-  (when-let ((db (db self)))
-    (rocksdb-cancel-all-background-work db wait)
-    (close-db self)))
+  (call-next-method self :wait wait))
+
+(defmethod shutdown-db :around ((self trdb) &key wait)
+  (call-next-method self :wait wait)
+  (with-slots (transactiondb-options) self
+    (when transactiondb-options 
+      (setf (transactiondb-options self) (rocksdb-transactiondb-options-destroy transactiondb-options)))))
 
 (defmethod get-value (elt (self rdb))
   (%get-kv (db self) elt *default-rocksdb-readoptions*))
@@ -530,12 +542,12 @@ extractor."
   (%transactiondb-get-kv (db self) elt *default-rocksdb-readoptions*))
 
 (defmethods put-key 
-  (((self rdb) (key t) (val t))
+  (((self rdb) (key t) (val t) &key)
    (%put-kv
     (db self)
     key
     val))
-  (((self rdb) (key string) (val string))
+  (((self rdb) (key string) (val string) &key)
    (%put-kv
     (db self)
     (sb-ext:string-to-octets key)
@@ -557,7 +569,7 @@ extractor."
 (defmethod add-column (col (self simple-rdb))
   (push col (columns self)))
 
-(defmethod close-columns ((self rdb))
+(defmethod close-columns ((self simple-rdb))
   (with-slots (columns) self
     (loop for cf across columns
           do (setf cf (close-db cf)))))
@@ -653,7 +665,7 @@ only get their type slots updated on non-nil values."
 
 ;;; SST File Writer
 (defstruct sst-file-writer
-  (path nil :type (or null pathname))
+  (path nil :type (or null pathname string))
   (sap (%sst-filewriter) :type (alien (* rocksdb-sstfilewriter))))
 
 (defaccessor sap ((self sst-file-writer)) (sst-file-writer-sap self))
@@ -677,24 +689,22 @@ only get their type slots updated on non-nil values."
     (format stream ":path ~A ~@{:size ~A~}" (sst-file-writer-path self)
             (when (sst-file-writer-sap self) (size self)))))
 
-(defmethod put-key ((self sst-file-writer) key val)
-  (%sst-put (sst-file-writer-sap self) key val))
+(defmethod put-key ((self sst-file-writer) key val &key timestamp)
+  (if timestamp
+      (%sst-put-ts (sst-file-writer-sap self) key val timestamp)
+      (%sst-put (sst-file-writer-sap self) key val)))
 
-(defmethod put-key ((self sst-file-writer) (key simple-string) (val simple-string))
-  (%sst-put-str (sst-file-writer-sap self) key val))
+(defmethod put-key ((self sst-file-writer) (key simple-string) (val simple-string) &key timestamp)
+  (if timestamp
+      (%sst-put-ts (sst-file-writer-sap self) key val timestamp)
+      (%sst-put-str (sst-file-writer-sap self) key val)))
 
-(defmethod delete-key ((self sst-file-writer) key &key)
-  (%sst-delete (sst-file-writer-sap self) key))
-
-(defmethod delete-key-ts ((self sst-file-writer) key ts)
-  (%sst-delete-ts (sst-file-writer-sap self) key ts))
-
-(defmethod delete-key-range ((self sst-file-writer) start end &key)
-  (%sst-delete-range (sst-file-writer-sap self) start end))
-
-(defmethod put-key-ts ((self sst-file-writer) key val ts)
-  (%sst-put-ts (sst-file-writer-sap self) key val ts))
-
-;;; Collections
-(defclass rdb-collection (database-collection)
-  ((collection :initform (coerce nil db::*database-collection-type*))))
+(defmethod delete-key ((self sst-file-writer) key &key timestamp start end)
+  (cond 
+    (timestamp (%sst-delete-ts (sst-file-writer-sap self) key timestamp))
+    ((or start end) (%sst-delete-range (sst-file-writer-sap self) start end))
+    (t (%sst-delete (sst-file-writer-sap self) key))))
+      
+;;; Catalog
+;; TODO 2026-08-09: 
+(defclass catalog () ())

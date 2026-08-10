@@ -693,8 +693,6 @@ protocol.")
    :*db*
    :insert-key
    :delete-key
-   :delete-key-ts
-   :delete-key-range
    :prepare
    :rollback
    :commit
@@ -706,12 +704,10 @@ protocol.")
    :shutdown-db
    :ingest-db
    :put-key
-   :put-key-ts
    :get-key
    :multi-get
    :abort-transaction
    :open-db
-   :database-collection
    :remove-kv
    :with-transaction
    :transaction-error
@@ -760,8 +756,7 @@ protocol.")
    :close-columns
    :create-column
    :db-config
-   :simple-db-config
-   :*database-collection-type*))
+   :simple-db-config)
 
 (defpkg :obj/graph
   (:nicknames :graph)
