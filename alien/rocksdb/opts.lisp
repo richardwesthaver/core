@@ -713,6 +713,10 @@ will be set to NULL.
   (opts (* rocksdb-compaction-service-options-override))
   (factory (* rocksdb-table-properties-collector-factory)))
 
+(define-opt rocksdb-import-column-family-options)
+(defar rocksdb-import-column-family-options-set-move-files void
+  (opts (* rocksdb-import-column-family-options)) (val boolean))
+
 ;;; Aliases
 ;; some of the RocksDB options don't follow the standard naming
 ;; convention of 'rocksdb-*-set-*' and 'rocksdb-*-get-*'. In order to

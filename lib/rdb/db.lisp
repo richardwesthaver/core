@@ -259,10 +259,10 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethods insert-key 
   (((self simple-rdb) key val &key column)
    (if-let ((column (and column (find-column column self))))
-     (if-let ((sap (sap column)))
+     (if-let ((cf (sap column)))
        (%put-cf
         (sap self)
-        sap
+        cf
         key
         val
         (rocksdb-writeoptions-create))

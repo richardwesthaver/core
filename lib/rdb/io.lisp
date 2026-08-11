@@ -20,32 +20,59 @@
      (assert (null ,dvar))
      nil))
 
-#+nil
-(defun db-get-key-buffered (db kbuf vbuf &key (transaction (txn-default *transaction*)))
+(defmacro with-slice ((data size) slice &body body)
+  "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and SIZE values."
+  `(multiple-value-bind (,data ,size) (rocksdb::rocksdb-pinnableslice-value ,slice)
+     ,@body
+     (rocksdb::rocksdb-pinnableslice-destroy ,slice)))
+
+(defun get-key-buffered (kbuf vbuf &key (transaction (txn-default *transaction*)) 
+                                        (opts (default-rocksdb-readoptions))
+                                        cf)
   "Get a KV from a DB. The key is encoded in a buffer-stream and on success a
-  buffer-stream for decoding the value is returned or NIL if nothing was
-  found."
+buffer-stream for decoding the value is returned or NIL if nothing was found."
   (declare (buffer-stream kbuf vbuf))
-  (loop 
-    for key-length fixnum = (buffer-stream-length key-buffer-stream)
-    for value-length fixnum = (buffer-stream-length value-buffer-stream)
-   do (multiple-value-bind (val result-size)
-          (%transaction-get transaction (buffer kbuf) opts
-                            (buffer key-buffer-stream)
-                            (size key-buffer-stream)
-                            e)
-     (declare (type fixnum result-size errno))
-     (cond 
-       ((= errno 0)
-    ;(setf (buffer-stream-size key-buffer-stream) ret-key-size)
-    (setf (size value-buffer-stream) result-size)
-    (return-from db-get-key-buffered 
-      (the buffer-stream value-buffer-stream)))
-       ((or (= errno DB_NOTFOUND) (= errno DB_KEYEMPTY))
-    (return-from db-get-key-buffered nil))
-       ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
-    (throw 'transaction transaction))
-       ((or (> result-size value-length) (> ret-key-size key-length))
-    (resize-buffer-stream-no-copy value-buffer-stream result-size)
-    (resize-buffer-stream-no-copy key-buffer-stream ret-key-size))
-       (t (error 'bdb-db-error :errno errno))))))
+  (with-errptr* (e 'rdb-transaction-error :txn transaction)
+    (with-slice (val result-size)
+                (if cf
+                    (rocksdb-transaction-get-pinned-cf
+                     transaction opts cf
+                     (buffer kbuf)
+                     (size kbuf)
+                     e)
+                    (rocksdb-transaction-get-pinned
+                     transaction opts
+                     (buffer kbuf)
+                     (size kbuf)
+                     e))
+      (declare (fixnum result-size))
+      (when (> result-size (buffer-stream-length vbuf))
+        (resize-buffer-stream-no-copy vbuf result-size))
+      (setf (size vbuf) result-size
+            (buffer vbuf) val))
+    vbuf))
+
+#+todo
+(defun put-buffered (kbuf vbuf
+                     &key (transaction (txn-default *current-transaction*))
+                          exists-error-p no-dup)
+  "Put a key / value pair into a DB.  The pair are encoded
+in buffer-streams.  T on success, or nil if the key already
+exists and EXISTS-ERROR-P is NIL."
+  (declare (type pointer-void db transaction)
+       (type buffer-stream key-buffer-stream value-buffer-stream)
+       (type boolean exists-error-p))
+  (let ((errno 
+     (%db-put-buffered db transaction 
+               (buffer-stream-buffer key-buffer-stream)
+               (buffer-stream-size key-buffer-stream)
+               (buffer-stream-buffer value-buffer-stream)
+               (buffer-stream-size value-buffer-stream)
+               (if no-dup DB_NODUPDATA 0))))
+    (declare (type fixnum errno))
+    (cond ((= errno 0) t)
+      ((and (= errno DB_KEYEXIST) (not exists-error-p))
+       nil)
+      ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
+       (throw 'transaction transaction))
+      (t (error 'bdb-db-error :errno errno)))))

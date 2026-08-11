@@ -60,3 +60,8 @@
 (defar rocksdb-sst-file-metadata-get-largestkey (array unsigned-char)
   (fmeta (* rocksdb-sst-file-metadata))
   (len (* size-t)))
+
+(defar rocksdb-export-import-files-metadata-create (* rocksdb-export-import-files-metadata))
+(defar rocksdb-export-import-files-metadata-destroy void (obj (* rocksdb-export-import-files-metadata)))
+(defar rocksdb-export-import-files-metadata-get-db-comparator-name c-string
+  (opt (* rocksdb-export-import-files-metadata)))
