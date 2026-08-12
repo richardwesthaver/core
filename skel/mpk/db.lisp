@@ -56,7 +56,7 @@
 
 ;;; Config
 (defconfig mpk-db-config (db-config) ()
-  (:default-initargs :backend :mpk))
+  (:default-initargs :engine :mpk))
 
 (defmethod make-config ((self (eql :mpk-db)) &rest args &key &allow-other-keys)
   (apply 'make-instance 'mpk-db-config args))

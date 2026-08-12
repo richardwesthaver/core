@@ -85,6 +85,9 @@
   (num-stripes size-t))
 (defar rocksdb-transactiondb-options-set-transaction-lock-timeout void
   (opt (* rocksdb-transactiondb-options))
+  (txn-lock-timeout long))
+(defar rocksdb-transactiondb-options-set-default-lock-timeout void
+  (opt (* rocksdb-transactiondb-options))
   (default-lock-timeout long))
 
 (define-opt rocksdb-transaction-options)
@@ -239,6 +242,10 @@
                       pin-l0-filter-and-index-blocks-in-cache
                       pin-top-level-index-and-filter)
 
+(defar rocksdb-block-based-options-set-filter-policy void
+  (options (* rocksdb-block-based-table-options))
+  (filter-policy (* rocksdb-filterpolicy)))
+
 ;;; Cuckoo Table Options
 (define-opaque rocksdb-cuckoo-table-options)
 
@@ -292,7 +299,6 @@
 (define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)
 (define-opt-accessor rocksdb-options max-compaction-trigger-wakeup-seconds unsigned-long)
 (define-opt-accessor rocksdb-options min-tombstones-for-range-conversion unsigned-int)
-(define-opt-accessor rocksdb-options memtable-batch-lookup-optimization)
 (define-alien-enum (rocksdb-compression-type)
   :none 0
   :snappy 1
@@ -306,7 +312,7 @@
   (opt (* rocksdb-options))
   (a int) (b int) (c int) (d int))
 
-(defar rocksdb-option-set-block-based-table-factory void
+(defar rocksdb-options-set-block-based-table-factory void
   (opt (* rocksdb-options)) (table-opts (* rocksdb-block-based-table-options)))
 
 (defar rocksdb-options-set-compaction-service void

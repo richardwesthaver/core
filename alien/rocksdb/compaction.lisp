@@ -113,10 +113,29 @@ including data loss, unreported corruption, deadlocks, and more.
 
 ;; see https://github.com/facebook/rocksdb/wiki/Remote-Compaction
 
-;; rocksdb-compaction-service-schedule-cb
-;; rocksdb-compaction-service-wait-cb
-;; rocksdb-compaction-service-cancel-awaiting-jobs-cb
-;; rocksdb-compaction-service-on-installation-cb
+(define-alien-type rocksdb-compaction-service-schedule-cb
+    (function (* rocksdb-compactionservice-scheduleresponse)
+        (* t) ; state
+        (* rocksdb-compactionservice-jobinfo) ; info
+        (* unsigned-char) ; input
+        size-t)) ; input-length
+
+(define-alien-type rocksdb-compaction-service-wait-cb
+    (function int
+        (* t) ; state
+        (* unsigned-char) ; scheduled-job-id
+        (* (* unsigned-char)) ; result
+        (* size-t))) ; result-len 
+
+(define-alien-type rocksdb-compaction-service-cancel-awaiting-jobs-cb
+    (function void
+        (* t))) ; state
+
+(define-alien-type rocksdb-compaction-service-on-installation-cb
+    (function void
+        (* t) ; state
+        (* unsigned-char) ; scheduled-job-id
+        int)) ; status
 
 (def-with-errptr rocksdb-open-and-compact c-string
   (db-path c-string)
@@ -135,10 +154,11 @@ including data loss, unreported corruption, deadlocks, and more.
   (output-len (* size-t))
   (override-options (* rocksdb-compaction-service-options-override)))
 
-(def-with-errptr rocksdb-compactionservice-scheduleresponse-create (* rocksdb-compactionservice-jobstatus)
+(def-with-errptr rocksdb-compactionservice-scheduleresponse-create (* rocksdb-compactionservice-scheduleresponse)
   (scheduled-job-id c-string)
   (status int))
-(def-with-errptr rocksdb-compactionservice-scheduleresponse-create-with-status (* rocksdb-compactionservice-jobstatus)
+
+(def-with-errptr rocksdb-compactionservice-scheduleresponse-create-with-status (* rocksdb-compactionservice-scheduleresponse)
   (status int))
 
 (defar rocksdb-compactionservice-scheduleresponse-getstatus int
@@ -183,12 +203,11 @@ including data loss, unreported corruption, deadlocks, and more.
 (defar rocksdb-compactionservice-jobinfo-t-is-bottommost-level boolean
   (info (* rocksdb-compactionservice-jobinfo)))
 
-#+nil
 (defar rocksdb-compactionservice-create (* rocksdb-compactionservice)
   (state (* t))
-  (destructor (* function))
-  ;; todo
-  (schedule (* function))
-  (wait (* function))
-  (cancel-awaiting-jobs (* function))
-  (on-installation (* function)))
+  (destructor (* rocksdb-destructor-function))
+  (schedule (* rocksdb-compaction-service-schedule-cb))
+  (name c-string)
+  (wait (* rocksdb-compaction-service-wait-cb))
+  (cancel-awaiting-jobs (* rocksdb-compaction-service-cancel-awaiting-jobs-cb))
+  (on-installation (* rocksdb-compaction-service-on-installation-cb)))

@@ -74,3 +74,8 @@
   :failure 1
   :aborted 2
   :use-local 3)
+
+(define-alien-type rocksdb-slice
+  (struct rocksdb-slice
+    (data (* unsigned-char))
+    (size size-t)))

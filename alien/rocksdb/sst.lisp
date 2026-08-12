@@ -7,6 +7,9 @@
 ;;; Code:
 (in-package :rocksdb)
 
+(defar rocksdb-sst-partitioner-fixed-prefix-factory-create (* rocksdb-sst-partitioner-factory)
+  (prefix-len size-t))
+
 (defar rocksdb-sstfilewriter-create (* rocksdb-sstfilewriter)
   (env-opts (* rocksdb-envoptions))
   (io-options (* rocksdb-options)))

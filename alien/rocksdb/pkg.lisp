@@ -575,7 +575,12 @@ set *errptr to a malloc()ed error message.
    :default-on-compaction-begin-cb
    :default-on-flush-completed-cb
    :default-on-flush-begin-cb
-   :make-rocksdb-event-listener))
+   :make-rocksdb-event-listener
+   :default-rocksdb-prefix-extractor
+   :rocksdb-options-set-block-based-table-factory
+   :rocksdb-transactiondb-options-set-transaction-lock-timeout
+   :rocksdb-transactiondb-options-set-default-lock-timeout
+   :rocksdb-sst-partitioner-fixed-prefix-factory-create))
 
 (in-package :rocksdb)
 

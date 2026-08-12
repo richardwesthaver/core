@@ -19,57 +19,57 @@
              (let ((%creator (symbolicate name '-create))
                    (%default (symbolicate 'default- name))
                    (%opt (symbolicate (string-right-trim "S" (string name)))))
-               `(progn
-                  (defun ,(symbolicate 'make- name) (&optional init-fn)
-                    ,(format nil "Make and return a ~A alien object.
+               (with-gensyms (%obj)
+                 `(progn
+                    (defun ,(symbolicate 'make- name) (&optional init-fn)
+                      ,(format nil "Make and return a ~A alien object.
 INIT-FN is an optional argument which must be a lambda which takes a single
 parameter (the object itself). It is used to initialize the instance with
 custom configuration." name)
-                    (let ((opts (,%creator)))
-                      (when init-fn (funcall init-fn opts))
-                      opts))
-                  (defun ,(symbolicate '% name '-no-getter-p) (key)
-                    (let ((k (typecase key
-                               (string (string-downcase key))
-                               (symbol (string-downcase (symbol-name key)))
-                               (t (string-downcase (format nil "~s" key))))))
-                      (memq t (mapcar
-                               (lambda (x) (equal k x))
-                               ',set-only))))
-                  (defun ,name (&rest opts)
-                    (let ((obj (,%creator)))
-                      (loop for (k v) on opts by #'cddr while v
-                            do (let ((k (typecase k
-                                          (string (string-downcase k))
-                                          (symbol (string-downcase (symbol-name k)))
-                                          (t (string-downcase (format nil "~s" k))))))
-                                 (setf (,%opt k obj) v)))
-                      obj))
-                  (defun ,%default ()
-                    (,name ,@default))
-                  (defmacro ,(symbolicate name '-setter) (key)
-                    `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',name ,key) :rocksdb)
-                         (when (string= (string-downcase ,key) "event-listener")
-                           'rocksdb:rocksdb-options-add-eventlistener)))
-                  (defmacro ,(symbolicate name '-getter) (key)
-                    `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',name ,key) :rocksdb))
-                  (defun ,%opt (key &optional (opt (,%default)))
-                    (if-let ((g (,(symbolicate name '-getter) key)))
-                      (funcall g opt)
-                      (warn 'opt-handler-missing :message key)))
-                  (defun (setf ,%opt) (val key opt)
-                    (funcall (,(symbolicate name '-setter) key) opt val))
-                  (defvar ,(symbolicate '*default- name '*) (,%default))))))
-  (%defopt rocksdb-options 
-           ("parallelism" "enable-statistics" "event-listener" "block-based-table-factory" "compression-options"
-            "merge-operator" "db-log-dir" "wal-dir" "wal-ttl-seconds" "wal-size-limit-mb" "memtable-vector-rep"
-            "prepare-for-bulk-load" "universal-compaction-options" "hash-skip-list-rep" "plain-table-factory"
-            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service" "env")
-           :create-if-missing t 
-           :create-missing-column-families t 
-           :parallelism (num-cpus)
-           :compression (rocksdb-compression-type :zstd)
-           :enable-pipelined-write t)
+                      (let ((opts (,%creator)))
+                        (when init-fn (funcall init-fn opts))
+                        opts))
+                    (defun ,(symbolicate '% name '-no-getter-p) (key)
+                      (let ((k (typecase key
+                                 (string (string-downcase key))
+                                 (symbol (string-downcase (symbol-name key)))
+                                 (t (string-downcase (format nil "~s" key))))))
+                        (memq t (mapcar
+                                 (lambda (x) (equal k x))
+                                 ',set-only))))
+                    (defun ,name (&rest opts)
+                      (let ((,%obj (,%creator)))
+                        (loop for (k v) on opts by #'cddr while v
+                              do (let ((k (typecase k
+                                            (string (string-downcase k))
+                                            (symbol (string-downcase (symbol-name k)))
+                                            (t (string-downcase (format nil "~s" k))))))
+                                   (setf (,%opt k ,%obj) v)))
+                        ,%obj))
+                    (defun ,%default ()
+                      (,name ,@default))
+                    (defun ,(symbolicate %default '*) (&rest opts)
+                      (let ((,%obj (,%default)))
+                        (loop for (k v) on opts by #'cddr while v
+                              do (let ((k (typecase k
+                                            (string (string-downcase k))
+                                            (symbol (string-downcase (symbol-name k)))
+                                            (t (string-downcase (format nil "~s" k))))))
+                                   (setf (,%opt k ,%obj) v)))
+                        ,%obj))
+                    (defmacro ,(symbolicate name '-setter) (key)
+                      `(or (find-symbol (format nil "~:@(~A-SET-~A~)" ',',name ,key) :rocksdb)
+                           (when (string= (string-downcase ,key) "event-listener")
+                             'rocksdb:rocksdb-options-add-eventlistener)))
+                    (defmacro ,(symbolicate name '-getter) (key)
+                      `(find-symbol (format nil "~:@(~A-GET-~A~)" ',',name ,key) :rocksdb))
+                    (defun ,%opt (key &optional (opt (,%default)))
+                      (if-let ((g (,(symbolicate name '-getter) key)))
+                        (funcall g opt)
+                        (warn 'opt-handler-missing :message key)))
+                    (defun (setf ,%opt) (val key opt)
+                      (funcall (,(symbolicate name '-setter) key) opt val))
+                    (defparameter ,(symbolicate '*default- name '*) (,%default)))))))
   (%defopt rocksdb-readoptions
            ("snapshot" "iterate-upper-bound" "iterate-lower-bound" "readahead-size" "prefix-same-as-start"
             "ignore-range-deletions" "timestamp" "iter-start-ts" "auto-readahead-size"))
@@ -77,13 +77,14 @@ custom configuration." name)
   (%defopt rocksdb-transaction-options
            ("set-snapshot" "deadlock-detect" "lock-timeout" "expiration" 
                            "deadlock-detect-depth" "max-write-batch-size" "skip-prepare")
-           :lock-timeout 100000
-           :expiration 100000)
+           ;; :expiration 100000
+           )
   (%defopt rocksdb-optimistictransaction-options
            ("set-snapshot"))
   (%defopt rocksdb-transactiondb-options
-           ("write-policy" "max-num-locks" "num-stripes" "default-lock-timeout" "transaction-lock-timeout")
-           :max-num-locks 2000)
+           ("write-policy" "max-num-locks" "num-stripes" "transaction-lock-timeout")
+           :max-num-locks 2000
+           :transaction-lock-timeout 100000)
   (%defopt rocksdb-lru-cache-options
            ("capacity" "num-shard-bits" "memory-allocator")
            :capacity 10485760)
@@ -107,7 +108,22 @@ custom configuration." name)
             "cache-index-and-filter-blocks" "cache-index-and-filter-blocks-with-high-priority"
             "pin-l0-filter-and-index-blocks-in-cache" "pin-top-level-index-and-filter" 
             "top-level-index-pinning-tier" "partition-pinning-tier" "unpartition-pinning-tier"
-            "uniform-cv-threshold" "fif-compaction-options")))
+            "uniform-cv-threshold" "fifo-compaction-options")
+           :filter-policy (rocksdb-filterpolicy-create-ribbon 10.d0))
+  (%defopt rocksdb-options 
+           ("parallelism" "enable-statistics" "event-listener" "block-based-table-factory" "compression-options"
+            "merge-operator" "db-log-dir" "wal-dir" "wal-ttl-seconds" "wal-size-limit-mb" "memtable-vector-rep"
+            "prepare-for-bulk-load" "universal-compaction-options" "hash-skip-list-rep" "plain-table-factory"
+            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service" "env")
+           :create-if-missing t
+           :create-missing-column-families t
+           :parallelism (num-cpus)
+           :compression (rocksdb-compression-type :zstd)
+           :enable-pipelined-write t
+           :block-based-table-factory (default-rocksdb-block-based-options)
+           ;; :sst-partitioner-factory (rocksdb-sst-partitioner-fixed-prefix-factory-create 8)
+           ;; :prefix-extractor (create-fixed-prefix-op 8)
+           :memtable-prefix-bloom-size-ratio 0.1d0))
 
 ;;; Env
 (defun rocksdb-env (&rest args)
@@ -126,7 +142,7 @@ custom configuration." name)
 (defconfig rdb-config (simple-db-config)
   ((logger :initform (default-logger-config) :initarg :logger :type (or null log::logger-config)))
   (:default-initargs
-   :backend :rdb
+   :engine :rdb
    :schema (make-instance 'rdb-schema)
    :options *default-rocksdb-options*))
 
@@ -168,7 +184,7 @@ custom configuration." name)
 ;;   self)
 
 (defmethod build ((self rdb-config) &key)
-  (make-db (slot-value self 'backend)
+  (make-db (slot-value self 'engine)
     :opts (slot-value self 'options)
     :logger (when-let ((l (slot-value self 'logger))) (build l))
     :name (slot-value self 'path)))

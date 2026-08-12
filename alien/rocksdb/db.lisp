@@ -169,7 +169,7 @@
   (ts (* c-string))
   (tslen (* size-t)))
 
-(defar rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen (* size-t)))
+(defar rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen size-t :out))
 
 ;; NOTE 2023-12-19: only the VOID-returning functions in the multi-* family
 ;; perform parallel IO:
@@ -240,9 +240,9 @@
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))
   (nkeys size-t)
-  (keys (* (* rocksdb-pinnableslice)))
+  (keys (* rocksdb-slice))
   (values (* (* rocksdb-pinnableslice)))
-  (errs (* (* rocksdb-errptr)))
+  (errs (* rocksdb-errptr))
   (sorted-input boolean))
 
 (defar rocksdb-key-may-exist boolean
@@ -364,6 +364,13 @@
   (cf-opts (* rocksdb-options))
   (cf-name c-string)
   (ttl int))
+
+(def-with-errptr rocksdb-create-column-family-with-import (* rocksdb-column-family-handle)
+  (db (* rocksdb))
+  (cf-opts (* rocksdb-options))
+  (cf-name c-string)
+  (import-opts (* rocksdb-import-column-family-options))
+  (metadata (* rocksdb-export-import-files-metadata)))
 
 (defar rocksdb-column-family-handle-destroy void
   (cf (* rocksdb-column-family-handle)))
@@ -558,15 +565,24 @@
   (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-key (* unsigned-char)
   (iter (* rocksdb-iterator))
-  (klen-ptr size-t :in-out))
+  (klen-ptr size-t :out))
 (defar rocksdb-iter-value (* unsigned-char) 
   (iter (* rocksdb-iterator)) 
-  (vlen-ptr size-t :in-out))
-(def-with-errptr rocksdb-iter-refresh void
-  (iter (* rocksdb-iterator)))
+  (vlen-ptr size-t :out))
 (defar rocksdb-iter-timestamp (* unsigned-char) 
   (iter (* rocksdb-iterator))
-  (tslen size-t :in-out))
+  (tslen size-t :out))
+(defar rocksdb-iter-key-slice rocksdb-slice
+  (iter (* rocksdb-iterator))
+  (klen-ptr size-t :out))
+(defar rocksdb-iter-value-slice rocksdb-slice
+  (iter (* rocksdb-iterator)) 
+  (vlen-ptr size-t :out))
+(defar rocksdb-iter-timestamp-slice rocksdb-slice
+  (iter (* rocksdb-iterator))
+  (tslen size-t :out))
+(def-with-errptr rocksdb-iter-refresh void
+  (iter (* rocksdb-iterator)))
 (def-with-errptr rocksdb-iter-get-error void (iter (* rocksdb-iterator)))
 (defar rocksdb-wal-iter-next void (iter (* rocksdb-wal-iterator)))
 (defar rocksdb-wal-iter-valid unsigned-char (iter (* rocksdb-wal-iterator)))
@@ -719,26 +735,26 @@
 
 (def-with-errptr rocksdb-transaction-delete void
   (txn (* rocksdb-transaction))
-  (key c-string)
+  (key (* unsigned-char))
   (klen size-t))
 
 (def-with-errptr rocksdb-transaction-delete-cf void
   (txn (* rocksdb-transaction))
   (cf (* rocksdb-column-family-handle))
-  (key c-string)
+  (key (* unsigned-char))
   (klen size-t))
 
 (def-with-errptr rocksdb-transactiondb-delete void
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-writeoptions))
-  (key c-string)
+  (key (* unsigned-char))
   (klen size-t))
 
 (def-with-errptr rocksdb-transactiondb-delete-cf void
   (txndb (* rocksdb-transactiondb))
   (opts (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key c-string)
+  (key (* unsigned-char))
   (klen size-t))
 
 (defar rocksdb-transaction-create-iterator (* rocksdb-iterator)

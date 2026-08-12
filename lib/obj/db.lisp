@@ -261,7 +261,7 @@ in-memory objects."))
 
 ;;; Config
 (defconfig db-config ()
-  ((backend :initform nil :initarg :backend :allocation :class)
+  ((engine :initform nil :initarg :engine :allocation :class)
    (options :initarg :options :accessor options)))
 
 (defconfig simple-db-config (ast id db-config)

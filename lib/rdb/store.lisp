@@ -35,14 +35,18 @@
 ;;; Store Spec
 ;; (:rdb "/tmp/rdb-store-test")
 (defun rdb-store-spec-p (spec)
-  (and (eq (first spec) :rdb)
+  (and (consp spec)
+       (eq (first spec) :rdb)
        (typecase (second spec)
          (pathname t)
          (string t)
          (t nil))))
 
 (defun rdb-temp-spec (name)
-  `(:rdb ,(ensure-directories-exist (tmp-path name))))
+  `(:rdb ,(tmp-path name) 
+         ,(default-rocksdb-options*
+           :error-if-exists t)
+         ,(default-rocksdb-transactiondb-options)))
 
 ;;; BTrees
 (defclass rdb-btree (btree column-family) ()
@@ -60,7 +64,6 @@
    (index :accessor index)
    (rindex :accessor rindex))
   (:default-initargs
-   :spec '(:rdb) ;; default spec is invalid
    :de #'deserialize-object
    :ser #'serialize-object
    ;; (make-instance 'simple-column-family :type '(oid . cid) :name "instance-index")
@@ -906,7 +909,6 @@ underlying DBIter C struct."))
           (oids (open-column db "oid"))
           (index (open-column db "index"))
           (rindex (open-column db "rindex"))))))
-
 
 (defmethod close-store ((store rdb-store))
   "Close the underlying RocksDB instance."

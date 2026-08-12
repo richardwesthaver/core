@@ -64,23 +64,3 @@ by setting prefix_extractor in ColumnFamilyOptions.
   (n size-t))
 
 (defar rocksdb-slicetransform-destroy void (st (* rocksdb-slicetransform)))
-
-(locally
-    (declare (sb-ext:muffle-conditions style-warning))
-  (define-alien-callable rocksdb-transform-default (* unsigned-char)
-      ((key (* unsigned-char))
-       (isize size-t)
-       (osize (* size-t)))
-    key)
-
-  (define-alien-callable rocksdb-in-domain-default boolean
-      ((state (* t))
-       (key (array unsigned-char))
-       (len size-t))
-    1)
-
-  (define-alien-callable rocksdb-in-range-default boolean
-      ((state (* unsigned))
-       (key (* unsigned-char))
-       (len size-t))
-    1))
