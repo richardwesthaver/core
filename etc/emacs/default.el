@@ -620,13 +620,15 @@ save window/frame configurations."
 	    eshell-save-history-on-exit t
 	    eshell-prefer-lisp-functions nil
 	    eshell-destroy-buffer-when-process-dies t)
+
   :bind 
   ("C-c RET" . eshell)
   ("C-c C-RET" . eshell-new)
   (:map eshell-mode-map ("C-d" . eshell-quit-or-delete-char))
-  (:map eshell-cmpl-mode-map ("C-c SPC" . toggle-map))
   :config
   (require 'em-alias)
+  (require 'em-cmpl)
+  (keymap-set eshell-cmpl-mode-map "C-c SPC" 'toggle-map)
   (eshell/alias "d" "dired $1")
   (eshell/alias "ff" "find-file $1")
 
@@ -867,9 +869,9 @@ With prefix ARG non-nil, insert the result at the end of region."
   ("C-x M-r" . remember)
   ("C-x C-M-r" . remember-notes)
   :init
-  (setopt remember-data-file (join-paths org-directory "notes")
-          remember-mailbox (join-paths user-mail-directory "remember")
-          remember-initial-major-mode 'org-mode))
+  (setq remember-data-file (join-paths org-directory "notes")
+        remember-mailbox (join-paths user-mail-directory "remember")
+        remember-initial-major-mode 'org-mode))
 
 ;;; Org
 (use-package org

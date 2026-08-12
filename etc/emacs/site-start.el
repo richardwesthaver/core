@@ -128,7 +128,7 @@
         confirm-kill-emacs nil
         confirm-kill-processes nil
         use-short-answers t
-        display-time-format "%Y-%m-%d %H:%M"
+        display-time-24hr-format t
         ring-bell-function 'ignore
         kill-region-dwim nil
         ;; NOTE 2023-11-04: you need to add the following lines to ~/.gnupg/gpg-agent.conf:
@@ -150,9 +150,10 @@
         tool-bar-mode nil
         menu-bar-mode nil
         use-dialog-box t
-        native-comp-async-report-warnings-errors nil
+        ;; native-comp-async-report-warnings-errors nil
         comp-deferred-compilation t
-        package-native-compile t)
+        ;; package-native-compile t
+        )
 
 ;;; Package Setup
 (setq package-archives
