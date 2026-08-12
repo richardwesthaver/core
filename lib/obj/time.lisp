@@ -422,14 +422,7 @@ found."
      :subzones (make-array 1 :initial-contents (list subzone))
      :path nil
      :name name
-     :loaded t)))
-
-  ;; to be used as #+#.(obj/time::package-with-symbol? "SB-EXT" "GET-TIME-OF-DAY")
-  (defun package-with-symbol? (package name)
-    (if (and (find-package package)
-             (find-symbol name package))
-        '(:and)
-        '(:or))))
+     :loaded t))))
 
 (defparameter +utc-zone+ (%make-simple-timezone "Coordinated Universal Time" "UTC" 0))
 
@@ -1063,7 +1056,7 @@ the unix epoch, 1970-01-01T00:00:00Z."
 (defun timestamp-to-octets (timestamp)
 "Return an octet-vector consisting of 2-byte day, 2-byte sec, and 4-byte nsec."
   (concatenate 'octet-vector
-               (integer-to-octets (day-of timestamp) 16) 
+               (integer-to-octets (day-of timestamp) 16)
                (integer-to-octets (sec-of timestamp) 16)
                (integer-to-octets (nsec-of timestamp) 32)))
 
@@ -1074,16 +1067,19 @@ the unix epoch, 1970-01-01T00:00:00Z."
    :sec (octets-to-integer (subseq buf 2 4))
    :nsec (octets-to-integer (subseq buf 4 8))))
 
+(defun timestamp-to-alien (ts)
+  ;; risky..
+  (with-vector-sap (v (timestamp-to-octets ts))
+    (sap-alien v (array sb-alien:unsigned-char 8))))
+
+#+nil
+(let ((aarr (make-octets 8)))
+  (octets-to-timestamp (clone-octets-from-alien (timestamp-to-alien (now)) aarr)))
+
 (defun %get-current-time ()
   "Cross-implementation abstraction to get the current time measured from the unix epoch (1/1/1970). Should return (values sec nano-sec)."
-  (progn
-    #+#.(obj/time::package-with-symbol? "SB-EXT" "GET-TIME-OF-DAY") ; available from sbcl 1.0.28.66
-    (multiple-value-bind (sec nsec) (sb-ext:get-time-of-day)
-      (values sec (* 1000 nsec)))
-    #-#.(obj/time::package-with-symbol? "SB-EXT" "GET-TIME-OF-DAY") ; obsolete, scheduled to be deleted at the end of 2009
-    (multiple-value-bind (success? sec nsec) (sb-unix:unix-gettimeofday)
-      (assert success? () "sb-unix:unix-gettimeofday reported failure?!")
-      (values sec (* 1000 nsec)))))
+  (multiple-value-bind (sec nsec) (sb-ext:get-time-of-day)
+    (values sec (* 1000 nsec))))
 
 (defvar *clock* t
   "Use the `*clock*' special variable if you need to define your own idea of the current time.
