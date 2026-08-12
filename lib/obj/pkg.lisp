@@ -515,6 +515,10 @@ protocol.")
    :decode-universal-time-with-tz
    :octets-to-timestamp
    :timestamp-to-octets
+   :timestamp-to-alien
+   :timestamp-from-alien
+   :timestamp-to-integer
+   :timestamp-from-integer
    :duration
    :timetag
    :timetag+

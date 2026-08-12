@@ -1072,9 +1072,14 @@ the unix epoch, 1970-01-01T00:00:00Z."
   (with-vector-sap (v (timestamp-to-octets ts))
     (sap-alien v (array sb-alien:unsigned-char 8))))
 
-#+nil
-(let ((aarr (make-octets 8)))
-  (octets-to-timestamp (clone-octets-from-alien (timestamp-to-alien (now)) aarr)))
+(defun timestamp-from-alien (alien)
+  (octets-to-timestamp (read-alien-octet-vector alien 8)))
+
+(defun timestamp-from-integer (int)
+  (octets-to-timestamp (integer-to-octets int 64)))
+
+(defun timestamp-to-integer (ts)
+  (octets-to-integer (timestamp-to-octets ts) 8))
 
 (defun %get-current-time ()
   "Cross-implementation abstraction to get the current time measured from the unix epoch (1/1/1970). Should return (values sec nano-sec)."

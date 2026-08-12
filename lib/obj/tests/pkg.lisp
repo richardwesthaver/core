@@ -3,7 +3,7 @@
 ;;; Code:
 (defpkg :obj/tests
   (:use :cl :std :rt :obj :uuid :url :std/macs :id :ast
-    :dynamic :fast :sealed :stealth :stored :store :uri :color 
+    :dynamic :fast :sealed :stealth :stored :uri :color 
     :db :store :schema :cmd))
 
 (in-package :obj/tests)
@@ -236,3 +236,7 @@
       ;; TODO
       ;; (call-interactively 'foo "1 2")
 
+(deftest time ()
+  (let ((time (now)))
+    (is (timestamp= (timestamp-from-alien (timestamp-to-alien time)) time
+                    (timestamp-from-integer (timestamp-to-integer time))))))
