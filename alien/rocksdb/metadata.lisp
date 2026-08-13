@@ -8,6 +8,10 @@
 (defar rocksdb-get-column-family-metadata (* rocksdb-column-family-metadata)
   (db (* rocksdb)))
 
+(defar rocksdb-get-column-family-metadata-with-options (* rocksdb-column-family-metadata)
+  (db (* rocksdb))
+  (opts (* rocksdb-column-family-metadata-options)))
+
 (defar rocksdb-get-column-family-metadata-cf (* rocksdb-column-family-metadata)
   (db (* rocksdb)) (cf (* rocksdb-column-family-handle)))
 
@@ -65,3 +69,11 @@
 (defar rocksdb-export-import-files-metadata-destroy void (obj (* rocksdb-export-import-files-metadata)))
 (defar rocksdb-export-import-files-metadata-get-db-comparator-name c-string
   (opt (* rocksdb-export-import-files-metadata)))
+(defar rocksdb-export-import-files-metadata-set-db-comparator-name void
+  (opt (* rocksdb-export-import-files-metadata))
+  (name c-string))
+(defar rocksdb-export-import-files-metadata-get-files (* rocksdb-livefiles)
+  (opt (* rocksdb-export-import-files-metadata)))
+(defar rocksdb-export-import-files-metadata-set-files void
+  (opt (* rocksdb-export-import-files-metadata))
+  (files (* rocksdb-livefiles)))

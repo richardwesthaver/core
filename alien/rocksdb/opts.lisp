@@ -716,6 +716,22 @@ will be set to NULL.
 (defar rocksdb-import-column-family-options-set-move-files void
   (opts (* rocksdb-import-column-family-options)) (val boolean))
 
+(define-opt rocksdb-column-family-metadata-options)
+(defar rocksdb-column-family-metadata-options-get-start-key (* unsigned-char)
+  (opt (* rocksdb-column-family-metadata-options))
+  (klen size-t :out))
+(defar rocksdb-column-family-metadata-options-set-start-key void
+  (opt (* rocksdb-column-family-metadata-options))
+  (key (* unsigned-char))
+  (klen size-t))
+(defar rocksdb-column-family-metadata-options-get-end-key (* unsigned-char)
+  (opt (* rocksdb-column-family-metadata-options))
+  (klen size-t :out))
+(defar rocksdb-column-family-metadata-options-set-end-key void
+  (opt (* rocksdb-column-family-metadata-options))
+  (key (* unsigned-char))
+  (klen size-t))
+
 ;;; Aliases
 ;; some of the RocksDB options don't follow the standard naming
 ;; convention of 'rocksdb-*-set-*' and 'rocksdb-*-get-*'. In order to

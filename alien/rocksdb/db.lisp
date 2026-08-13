@@ -1024,6 +1024,11 @@
 (defar rocksdb-checkpoint-object-destroy void
   (checkpoint (* rocksdb-checkpoint)))
 
+(def-with-errptr rocksdb-checkpoint-export-column-family (* rocksdb-export-import-files-metadata)
+  (checkpoint (* rocksdb-checkpoint))
+  (cf (* rocksdb-column-family-handle))
+  (export-dir c-string))
+
 (def-with-errptr rocksdb-optimistictransactiondb-open-column-families (* rocksdb-optimistictransactiondb)
   (opts (* rocksdb-options))
   (name c-string)
