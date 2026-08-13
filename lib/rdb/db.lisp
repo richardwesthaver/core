@@ -129,8 +129,7 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
               :accessor snapshots)
    (checkpoints :initform nil
                 :initarg :checkpoints
-                :accessor checkpoints)
-   (secondary-db :initform nil :type (or null (alien (* rocksdb))) :initarg :secondary-db :accessor secondary-db))
+                :accessor checkpoints))
   (:default-initargs 
    ;; Note that we don't pre-populate this slot with the 'default' column
    ;; which is present on creation of a RocksDB database. Usually there isn't
@@ -162,10 +161,10 @@ extractor."
    "Assign an EVENT-LISTENER to this database."
    (setf (opt db :event-listener) val)))
 
-(defmethod repair-db ((self rdb) &key)
-  (%repair-db (path self)))
+(defun repair-db (self &optional (opts (default-rocksdb-readoptions)))
+  (%repair-db (path self) opts))
 
-(defmethod merge-columns ((self rdb) (columns list))
+(defun merge-columns (self columns)
   ;; TODO 2026-08-07: using lists now, use list MERGE
   (loop for c in columns
         do (if-let ((found (find-column c self)))
@@ -174,7 +173,7 @@ extractor."
 
 (defmethod reset ((self rdb) &key (columns t) (opts (default-rocksdb-options)))
   (when columns 
-    (close-columns self) 
+    (close-columns self)
     (setf (columns self) nil))
   (setf (options self) opts)
   self)
@@ -441,16 +440,11 @@ custom merge-operator which does nothing when merging with an existing key."
           db)
         (setf db (%open-optimistictransactiondb options path)))))
 
-(defmethod backup-db ((self rdb) &key path (opts (default-rocksdb-backup-engine-options)))
-  (%open-backup-engine path opts))
+(defun open-backup-db (self &key (opts (default-rocksdb-backup-engine-options)))
+  (%open-backup-engine (path self) opts))
 
-(defun open-secondary-db (self &key path opts) 
-  (setf (secondary-db self) (%open-db-secondary opts (path self) path)))
-
-(defun close-secondary-db (self)
-  (with-slots (secondary-db) self
-    (unless (null secondary-db)
-      (setf (secondary-db self) (%close-db secondary-db)))))
+(defun open-secondary-db (self &key path (opts (default-rocksdb-options)))
+  (%open-db-secondary opts (path self) path))
 
 (defmethod checkpoint ((self rdb) &key path log-size-for-flush)
   (unless-null-db () self
@@ -634,30 +628,6 @@ only get their type slots updated on non-nil values."
     (when name (setf (name ret) name))
     ret))
 
-;;; Transactions
-(defmethods transaction 
-  (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
-                name
-                (txn *transaction*)
-                (opts (default-rocksdb-transaction-options)))
-   (unless-null-db () self
-     (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts txn)))
-       (when name (%set-transaction-name obj name))
-       obj)))
-  (((self otrdb)
-    &key
-    (txn *transaction*)
-    (opts (default-rocksdb-optimistictransaction-options))
-    (write-opts (default-rocksdb-writeoptions)))
-   (unless-null-db () self
-     (rocksdb-optimistictransaction-begin (db self) write-opts opts txn))))
-
-(defmethod execute ((self rdb) (fn function) &key (txn *transaction*))
-  (funcall fn)
-  (when txn
-    (commit txn)
-    (rocksdb-transaction-destroy txn)))
-
 ;;; SST File Writer
 (defstruct sst-file-writer
   (path nil :type (or null pathname string))
@@ -702,7 +672,3 @@ only get their type slots updated on non-nil values."
     (timestamp (%sst-delete-ts (sst-file-writer-sap self) key timestamp))
     ((or start end) (%sst-delete-range (sst-file-writer-sap self) start end))
     (t (%sst-delete (sst-file-writer-sap self) key))))
-      
-;;; Catalog
-;; TODO 2026-08-09: 
-(defclass catalog () ())

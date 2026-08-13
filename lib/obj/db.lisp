@@ -232,10 +232,6 @@ in-memory objects."))
 (defgeneric delete-key (self key &key)
   (:documentation "Delete value associated with KEY from SELF."))
 (defgeneric remove-kv (key value self))
-(defgeneric db-stats (self &optional type)
-  (:documentation "Return TYPE stats of given database."))
-(defgeneric db-metadata (self &optional type)
-  (:documentation "Return TYPE metdata of given database."))
 (defgeneric repair-db (self &key)
   (:documentation "Attempt to repair the database SELF."))
 (defgeneric backup-db (self &key)
@@ -256,8 +252,8 @@ in-memory objects."))
   (:documentation "Shutdown database SELF."))
 (defgeneric ingest-db (self file &key)
   (:documentation "Ingest external files into a database."))
-(defgeneric backup (self &key path))
-(defgeneric backup-db (self &key path))
+(defgeneric backup (self &key))
+(defgeneric backup-db (self &key))
 
 ;;; Config
 (defconfig db-config ()
@@ -441,8 +437,9 @@ immediately following LIST."
          do (with-transaction ,txn-options
               ,@body)))
 
-;;; Iteration
-;; database iteration is a complex topic - for Lisp we follow the idioms built
-;; into the Elephant object database system which includes a CURSOR api.
 (defgeneric db-cursor (db &key &allow-other-keys)
-  (:documentation "Return a database cursor."))
+  (:documentation "Return a database cursor, default to calling [[STD/SEQ:ITER][iter]]."))
+
+;;; Catalog
+;; TODO 2026-08-09: 
+;; (defclass catalog () ())

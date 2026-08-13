@@ -729,8 +729,6 @@ protocol.")
    :find-column
    :transaction-prior
    :merge-key
-   :db-stats
-   :db-metadata
    :with-temp-db
    :with-db
    :database-backend-designator

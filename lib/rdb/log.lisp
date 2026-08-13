@@ -40,17 +40,17 @@
 (defaccessor sap ((self rdb-metadata)) (rdb-metadata-sap self))
 (defaccessor name ((self rdb-metadata)) (rdb-metadata-name self))
 
-(defun print-stats (db &optional stream)
+(defun print-db-stats (db &optional stream)
   (if stream
       (println (rocksdb-options-statistics-get-string (options db)) stream)
       (with-output-to-string (s)
-        (print-stats db s))))
+        (print-db-stats db s))))
 
 (defmethod metadata ((self rdb) &optional column)
   (make-rdb-metadata :sap (%get-metadata (db self) (when column (db column)))))
 
-(defmethod db-stats ((self rdb) &optional (htype (rocksdb-statistics-level "all")))
-  (%get-stats (options self) htype))
+(defmethod stat ((self rdb) &key (level (rocksdb-statistics-level "all")))
+  (%get-stats (options self) level))
 
 (defmethod metadata ((self rdb-metadata) &optional (level 0))
   (with-slots (sap) self

@@ -30,7 +30,7 @@
    :multi-get :delete-key
    :flush-cf
    :get-stats
-   :print-stats
+   :print-db-stats
    :ingest-db
    :sst-file-writer :make-sst-file-writer
    :rdb
@@ -96,7 +96,6 @@
    :rdb-data-source
    :rdb-sink
    :rdb-log-schema
-   :cursor-handle
    :simple-rdb-warning
    :schema-from-simple-column-families
    :rdb-write

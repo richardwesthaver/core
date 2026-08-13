@@ -92,7 +92,7 @@
     (flush tmp)
     ;; TODO: auto handle return type (get-prop-int)
     (is (= 10000 (parse-integer (db-prop tmp "rocksdb.estimate-num-keys"))))
-    (istype 'string (print-stats tmp nil))
+    (istype 'string (print-db-stats tmp nil))
     (istype 'string (db-prop tmp :levelstats))))
 
 (deftest metadata ()
