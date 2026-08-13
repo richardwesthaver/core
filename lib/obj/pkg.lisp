@@ -700,12 +700,13 @@ protocol.")
    :prepare
    :rollback
    :commit
-   :flush-db
    :repair-db
    :backup-db
    :restore-db
-   :snapshot-db
+   :snapshot
    :shutdown-db
+   :checkpoint
+   :backup
    :ingest-db
    :put-key
    :get-key
@@ -725,15 +726,11 @@ protocol.")
    :transaction-db
    :transaction-object-p
    :known-transaction
-   :close-columns
    :find-column
    :transaction-prior
-   :add-column
-   :open-columns
    :merge-key
    :db-stats
    :db-metadata
-   :create-columns
    :with-temp-db
    :with-db
    :database-backend-designator
@@ -754,11 +751,7 @@ protocol.")
    :secondary-db
    :db-backup
    :*save-database-backend-on-load*
-   :open-with-columns
-   :open-columns*
-   :open-column
-   :close-columns
-   :create-column
+   :make-column
    :db-config
    :simple-db-config))
 

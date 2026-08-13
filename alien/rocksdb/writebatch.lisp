@@ -321,7 +321,7 @@
 
 (def-with-errptr rocksdb-writebatch-wi-get-from-batch (* unsigned-char)
   (batch (* rocksdb-writebatch-wi))
-  (opts (* rocksdb-options))
+  (opts (* rocksdb-readoptions))
   (key (array unsigned-char))
   (keylen size-t)
   (vallen size-t :out))

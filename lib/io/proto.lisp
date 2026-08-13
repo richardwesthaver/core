@@ -28,7 +28,6 @@
 (defgeneric header-type (self))
 (defgeneric header-length (self))
 (defgeneric offset (self))
-(defgeneric snapshot (self &rest args &key &allow-other-keys))
 (defgeneric buffer (self))
 (defgeneric (setf buffer) (new self))
 (defgeneric size (self))

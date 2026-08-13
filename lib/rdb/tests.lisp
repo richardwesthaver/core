@@ -70,7 +70,7 @@
     (set-db-opt tmp :statistics-level (rocksdb-statistics-level "all"))
     (push-opts tmp)
     (open-db tmp)
-    (create-columns tmp)
+    (make-columns tmp)
     (with-iter (it (iter tmp))
       (is (sap it))
       seek-to-first
@@ -89,7 +89,7 @@
     (loop for i below 100
           with n = (* i i)
           do (is (string= (get-val tmp (format nil "foo~A" n)) (format nil "bar~A" n))))
-    (flush-db tmp)
+    (flush tmp)
     ;; TODO: auto handle return type (get-prop-int)
     (is (= 10000 (parse-integer (db-prop tmp "rocksdb.estimate-num-keys"))))
     (istype 'string (print-stats tmp nil))
@@ -99,7 +99,7 @@
   "Test metadata types: CF -> LEVEL -> SST-FILE."
   (with-temp-db (tmp :open t :close t)
     (insert-key tmp "foo" "bar")
-    (flush-db tmp)
+    (flush tmp)
     (let ((cf-meta (db-metadata tmp)))
       (is (rdb-cf-metadata-p (pull-sap* cf-meta)))
       (let ((level-meta (db-metadata cf-meta)))
@@ -111,13 +111,12 @@
   "Test SST-FILE-WRITER and INGEST-DB."
   (with-temp-db (tmp :open t :close t)
     ;; without macro
-    (let ((writer (make-sst-file-writer))
-          (path (format nil "/tmp/~A" (gensym "sst"))))
-      (open-sst writer path)
+    (let ((writer (make-sst-file-writer :path (tmp-path "sst"))))
+      (open-db writer)
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
-      (finish-sst writer) ;; will fail on empty writer
-      (destroy-sst writer)
+      (close-db writer) ;; will fail on empty writer
+      (shutdown-db writer)
       (ingest-db tmp (list path))
       (delete-file path)
       (with-sst (s :file path)
@@ -195,8 +194,8 @@
 (deftest wbwi ()
   (with-wbwi (wbwi)
     (is wbwi)
-    (iszero (rdb-wbwi-count wbwi))
-    (put-key wbwi "foo" "bar")
-    (isequal "bar" (sb-ext:octets-to-string (get-key wbwi "foo")))
-    (is= 1 (rdb-wbwi-count wbwi))
-    (rdb-wbwi-clear wbwi)))
+    (iszero (rdb::%wbwi-count wbwi))
+    (rdb::%wbwi-put-kv-str wbwi "foo" "bar")
+    (isequal "bar" (sb-ext:octets-to-string (rdb::%wbwi-kv-str wbwi "foo")))
+    (is= 1 (rdb::%wbwi-count wbwi))
+    (rdb::%wbwi-clear wbwi)))

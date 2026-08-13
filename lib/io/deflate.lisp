@@ -2808,7 +2808,7 @@ check if reached."
     (loop for i from start below end
           do (write-octet (aref vector i) bitstream))))
 
-(defmethod flush ((bitstream bitstream))
+(defmethod flush-buffer ((bitstream bitstream))
   (let ((end (ceiling (bits bitstream) 8)))
     (funcall (callback bitstream) (buffer bitstream) end)
     (setf (bits bitstream) 0)))
@@ -3058,7 +3058,7 @@ with OUTPUT, a starting offset, and the count of pending data."
 (defmethod finish-compression ((compressor deflate-compressor))
   (final-compress compressor)
   (finish-data-format compressor)
-  (flush (bitstream compressor)))
+  (flush-buffer (bitstream compressor)))
 
 (defmethod final-compress ((compressor deflate-compressor))
   (let ((input (input compressor))

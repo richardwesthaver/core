@@ -292,10 +292,9 @@
   (rocksdb-iter-destroy iter))
 
 (defun %iter-key (iter)
-  (with-alien ((klen size-t))
-    (let* ((key-ptr (rocksdb-iter-key iter klen))
-           (k (make-array klen :element-type '(unsigned-byte 8))))
-      (clone-octets-from-alien key-ptr k klen)
+  (multiple-value-bind (key klen) (rocksdb-iter-key iter)
+    (let ((k (make-array klen :element-type '(unsigned-byte 8))))
+      (clone-octets-from-alien key k klen)
       k)))
 
 (defun %iter-key-str (iter)
@@ -303,11 +302,11 @@
     (octets-to-string k)))
 
 (defun %iter-val (iter)
-  (with-alien ((vlen size-t))
-    (let ((val (rocksdb-iter-value iter vlen))
-          (v (make-array vlen :element-type '(unsigned-byte 8))))
+  (multiple-value-bind (val vlen) (rocksdb-iter-value iter)
+    (let ((v (make-array vlen :element-type '(unsigned-byte 8))))
       (clone-octets-from-alien val v vlen)
       v)))
+
 (defun %iter-valid-p (iter)
   (rocksdb-iter-valid iter))
 

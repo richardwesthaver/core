@@ -135,11 +135,11 @@
   "Provides early list of options for macros to populate.")
 
 (defvar *rocksdb-set-only-readoptions*
-  (%svec snapshot iterate-upper-bound iterate-lower-bound readahead-size
-         prefix-same-as-start ignore-range-deletions timestamp iter-start-ts auto-readahead-size))
+  (%svec snapshot iterate-upper-bound iterate-lower-bound
+         timestamp iter-start-ts auto-readahead-size))
 
 (defvar *rocksdb-readoptions*
-  (%svec verify-checksums fill-cache read-tier tailing total-order-seek skippable-internal-keys
+  (%svec verify-checksums fill-cache read-tier tailing total-order-seek max-skippable-internal-keys
          purge-on-iterator-cleanup deadline io-timeout async-io))
 
 (defvar *rocksdb-writeoptions*

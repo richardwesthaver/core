@@ -61,8 +61,7 @@
       *org-graph-db*
       (progn
         (setq *org-graph-db* (make-org-graph-db))
-        (push-opts *org-graph-db*)
-        (open-columns* *org-graph-db*))))
+        (open-all-columns *org-graph-db*))))
 
 (defun destroy-org-graph-db ()
   (unless (db-closed-p *org-graph-db*)

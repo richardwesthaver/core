@@ -31,15 +31,20 @@
                     event-listener
                     (opts (default-rocksdb-options))
                     open
+                    secondary
                     path)
   (declare (ignore engine))
+  (unless path (missing-argument :path))
   (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
   (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
   (when logger (rocksdb-options-set-info-log opts logger))
   (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
-  (if open
-      (%open-db path opts) ; open the db, OR
-      (cons path opts))) ; return a cons
+  (cond
+    ((and open path)
+     (if secondary
+         (%open-db-secondary opts path secondary)
+         (%open-db path opts))) ; open the db
+    (t (cons path opts)))) ; return a cons
 
 (defmethod make-db ((engine (eql :rocksdb-transaction))
                     &key
@@ -61,19 +66,27 @@
       (cons path opts))) ; return a cons
 
 ;;; Database
-(defclass rdb (database)
-  ((options :initform (default-rocksdb-options) :accessor options :initarg :options))
+(defclass rdb-object ()
+  ((options :initform (default-rocksdb-options) :accessor options :initarg :options)))
+
+(defclass rdb (database rdb-object)
+  ((columns :initarg :columns :accessor columns)
+   (path :initarg :path :accessor path))
   (:documentation "Standard RocksDB database wrapper.
 OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
 
+(defun load-db-opts (db)
+  ;; order is determined by RocksDB
+  (multiple-value-bind (opts names cf-opts) (%load-opts (path db))
+    (setf (columns db)
+          (loop for cf-name across names
+                for cf-opt across cf-opts
+                collect (make-instance 'column-family :options cf-opt :name cf-name))
+          (options db) opts)
+    db))
+
 (defmethod load-opts ((db rdb) &key)
-  (with-latest-options (name db) (db-opts cf-names cf-opts)
-       (let ((cfs (loop for name across cf-names
-                        for opt across cf-opts
-                        collect (make-instance 'column-family :name name :options opt))))
-         (setf (options db) db-opts)
-         (setf (columns db) cfs)
-         db)))
+  (load-db-opts db))
 
 (defmethods set-database-backend-option
   (((db rdb) (key (eql :close)) (val (eql :auto)))
@@ -95,27 +108,29 @@ extractor."
   (((db rdb) (key (eql :logger)) val)
    (setf (opt db :info-log) val)))
 
-(defclass column-family (rdb)
+(defclass column-family (rdb-object database)
   ((name :initform "default" :initarg :name :accessor name))
   (:documentation "RocksDB Column Family.
 Inherits directly from the RDB class. The DB slot is a
 ROCKSDB-COLUMN-FAMILY-HANDLE."))
+
 (defclass trdb (rdb)
   ((transactiondb-options :initform (default-rocksdb-transactiondb-options) :accessor transactiondb-options :initarg :transactiondb-options))
   (:documentation "Standard (pessimistic) Transaction DB.
 TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
+
 (defclass otrdb (rdb) ()
   (:documentation "Optimistic Transaction DB."))
+
 (defclass simple-rdb (rdb)
   ((backup :initform nil :type (or null (alien (* rocksdb-backup-engine))) :initarg :backup :accessor db-backup)
    (snapshots :initform nil
               :initarg :snapshots 
-              :accessor db-snapshots)
+              :accessor snapshots)
    (checkpoints :initform nil
                 :initarg :checkpoints
-                :accessor db-checkpoints)
-   (secondary :initform nil :type (or null (alien (* rocksdb))) :initarg :secondary :accessor secondary-db)
-   (columns :initarg :columns :accessor columns))
+                :accessor checkpoints)
+   (secondary-db :initform nil :type (or null (alien (* rocksdb))) :initarg :secondary-db :accessor secondary-db))
   (:default-initargs 
    ;; Note that we don't pre-populate this slot with the 'default' column
    ;; which is present on creation of a RocksDB database. Usually there isn't
@@ -150,13 +165,6 @@ extractor."
 (defmethod repair-db ((self rdb) &key)
   (%repair-db (path self)))
 
-(defmethod load-opts ((self rdb) &key (backfill t))
-  ;; order is determined by RocksDB
-  (setf (columns self)
-        (lambda (x) (make-instance 'column-family :cf x)
-          (load-opts (db self) :backfill backfill)))
-  self)
-
 (defmethod merge-columns ((self rdb) (columns list))
   ;; TODO 2026-08-07: using lists now, use list MERGE
   (loop for c in columns
@@ -171,50 +179,7 @@ extractor."
   (setf (options self) opts)
   self)
 
-(defmethod open-column ((self simple-rdb) col &key)
-  (open-column self (db (find-column col self))))
-
-(defmethod open-column ((self rdb) (col column-family) &key)
-  (ifret (db col)
-    (setf (db col) (create-column self col))))
-
-(defmethod open-column ((self rdb) col &key (options (default-rocksdb-options)))
-  (typecase col
-    (column-family (%create-cf (db self) (name col) (or (options col) options)))
-    (t (%create-cf (db self) col options))))
-
-(defmethod open-columns ((self rdb) &rest columns)
-  (dolist (c columns)
-    (open-column self c)))
-
-(defmethod find-column ((cf string) (self simple-rdb) &key)
-  (find cf (columns self) :key 'name :test 'equal))
-
-(defmethod add-column ((cf t) (db simple-rdb))
-  (push (make-instance 'column-family :db cf) (columns db)))
-
-(defmethod open-with-columns ((db rdb) &rest names)
-  (let ((cols (if (null names)
-                  (columns db)
-                  (loop for n in names
-                        collect (if-let ((col (find-column n db)))
-                                  col
-                                  (add-column 
-                                   (make-instance 'column-family 
-                                     :db (%create-cf (db db) n))
-                                   db))))))
-    (multiple-value-bind (db-sap cfs) (%open-cfs (opts db) (name db)
-                                                    (loop for c across cols
-                                                          collect (name c))
-                                                    (loop for c across cols
-                                                          collect (options c)))
-      (setf (sap db) db-sap)
-      (loop for c across cfs
-            do (when-let ((col (find-column (name c) db)))
-                 (setf (db col) c)))
-      db)))
-
-(defmethod open-columns* ((self simple-rdb))
+(defun open-all-columns (self)
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
@@ -235,8 +200,36 @@ extractor."
                    (setf (db c) cf)))
         self))))
 
-(defmethod close-columns ((self simple-rdb))
-  (loop for cf across (columns self)
+(defmethod find-column ((cf string) (self rdb) &key)
+  (find cf (columns self) :key 'name :test 'string-equal))
+
+(defun open-with-columns (db &rest names)
+  (if db
+      (cerror "Ignore and continue" 'open-db-error 
+              :db db
+              :message "Database is already open")
+      (let ((cols (if (null names)
+                      (columns db)
+                      (loop for n in names
+                            collect (if-let ((col (find-column n db)))
+                                      col
+                                      (push
+                                       (make-instance 'column-family 
+                                         :db (%create-cf (db db) n))
+                                       (columns db)))))))
+        (multiple-value-bind (db-sap cfs) (%open-cfs (opts db) (name db)
+                                                     (loop for c across cols
+                                                           collect (name c))
+                                                     (loop for c across cols
+                                                           collect (options c)))
+          (setf (sap db) db-sap)
+          (loop for c across cfs
+                do (when-let ((col (find-column (name c) db)))
+                     (setf (db col) c)))
+          db))))
+
+(defun close-columns (db)
+  (loop for cf across (columns db)
         ;; unless (string= (name cf) *rdb-default-column-name*)
         do (close-db cf)))
 
@@ -360,18 +353,13 @@ custom merge-operator which does nothing when merging with an existing key."
         (octet-vector (%multi-get-kv (sap self) keys opts))
         (string (%multi-get-kv-str (sap self) keys opts)))))
 
-(defmethod create-column ((db rdb) (col column-family))
-  (setf (db col) (if (equal (name col) *rdb-default-column-name*)
-                     (rocksdb-get-default-column-family-handle (db db))
-                     (%create-cf (db db) (name col) (options col))))
-  ;; (open-column db col)
-  col)
-
-(defmethod create-columns ((self simple-rdb))
-  (if (null (db self))
-      (warn 'db-missing :message "ignoring attempt to create column-families before opening")
-      (loop for cf across (columns self)
-            do (create-column self cf))))
+(defmethod make-column ((db rdb) &rest args)
+  (let ((col (apply 'make-instance 'column-family args)))
+    (setf (db col) (if (equal (name col) *rdb-default-column-name*)
+                       (rocksdb-get-default-column-family-handle (db db))
+                       (%create-cf (db db) (name col) (options col))))
+    (push col (columns db))
+    col))
 
 (defmethod find-column (cf (self simple-rdb) &key)
   (find cf (columns self) :key 'name :test 'string=))
@@ -407,13 +395,14 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethods make-db 
   (((engine (eql :rdb)) &rest initargs)
    (declare (ignore engine))
+   (apply 'make-instance 'rdb initargs))
+  (((engine (eql :simple-rdb)) &rest initargs)
+   (declare (ignore engine))
    (apply 'make-instance 'simple-rdb initargs))
   (((engine (eql :trdb)) &rest initargs)
    (apply 'make-instance 'trdb initargs))
   (((engine (eql :otrdb)) &rest initargs)
    (apply 'make-instance 'otrdb initargs))
-  (((engine (eql :rdb-secondary)) &key path opts (db *db*))
-   (setf (secondary-db db) (open-secondary-db db :opts opts :path path)))
   (((engine (eql :rdb-backup)) &key path (db *db*))
    (setf (db-backup db) (backup-db db :path path))))
 
@@ -455,10 +444,10 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethod backup-db ((self rdb) &key path (opts (default-rocksdb-backup-engine-options)))
   (%open-backup-engine path opts))
 
-(defmethod open-secondary-db ((self rdb) &key path opts) 
+(defun open-secondary-db (self &key path opts) 
   (setf (secondary-db self) (%open-db-secondary opts (path self) path)))
 
-(defmethod close-secondary-db ((self rdb))
+(defun close-secondary-db (self)
   (with-slots (secondary-db) self
     (unless (null secondary-db)
       (setf (secondary-db self) (%close-db secondary-db)))))
@@ -470,16 +459,16 @@ custom merge-operator which does nothing when merging with an existing key."
 
 (defmethod checkpoint :around ((self simple-rdb) &rest args)
   (when-let ((chk (apply 'call-next-method args)))
-    (push chk (db-checkpoints self))))
+    (push chk (checkpoints self))))
 
-(defmethod snapshot-db ((self rdb))
+(defmethod snapshot ((self rdb) &key)
   (unless-null-db () self
     (%create-snapshot db)))
 
-(defmethod snapshot-db :around ((self simple-rdb))
-   (push
-    (call-next-method self)
-    (db-snapshots self)))
+(defmethod snapshot :around ((self simple-rdb) &key)
+  (push
+   (call-next-method self)
+   (snapshots self)))
 
 (defmethod restore-db ((self rdb) (from string) &key id opts)
   (unless-null-db (path) self
@@ -493,7 +482,7 @@ custom merge-operator which does nothing when merging with an existing key."
         (%create-new-backup (backup-db self :path path) db))))
 (defmethod backup :around ((self simple-rdb) &rest args)
   (setf (db-backup self) (apply 'call-next-method args)))
-(defmethod flush-db ((self rdb) &key wait)
+(defmethod flush ((self rdb) &key wait)
   (%flush-db (db self) wait))
 (defmethod close-db :before ((self simple-rdb) &key)
   (close-columns self))
@@ -580,14 +569,6 @@ custom merge-operator which does nothing when merging with an existing key."
       (%merge-cf-str (db self) (find-column column self) key val opts)
       (%merge-kv-str (db self) key val opts)))
 
-(defmethod add-column (col (self simple-rdb))
-  (push col (columns self)))
-
-(defmethod close-columns ((self simple-rdb))
-  (with-slots (columns) self
-    (loop for cf across columns
-          do (setf cf (close-db cf)))))
-
 (defmethod load-schema ((self rdb) (schema schema))
   "Load SCHEMA into rdb database object SELF. This will add any missing CFs
 and update existing key/value types for cfs with the same name. Existing CFs
@@ -595,14 +576,14 @@ only get their type slots updated on non-nil values."
   (loop for field across (fields schema)
         do (if-let ((col (find-column (name field) self)))
              (load-field col field)
-             (add-column
+             (push
               (load-field
                (make-instance 'simple-column-family 
                  :db (unless-null-db () self
                        (%create-cf db (name field)))
                  :type (field-type field))
                field)
-              self))
+              (columns self)))
         finally (return self)))
 
 ;;; Column Families
@@ -697,6 +678,9 @@ only get their type slots updated on non-nil values."
   (with-slots (sap) self
     (unless (null sap)
       (setf (sap self) (%destroy-sst-writer sap)))))
+
+(defmethod shutdown-db ((self sst-file-writer) &key)
+  (free self))
 
 (defmethod print-object ((self sst-file-writer) stream)
   (print-unreadable-object (self stream :type t :identity t)

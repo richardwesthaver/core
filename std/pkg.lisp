@@ -699,7 +699,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
   (:import-from :std/sym :symb :make-keyword :with-gensyms)
   (:import-from :std/named-readtables :readtable :readtable-name)
   (:import-from :std/list :toposort)
-  (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash)
+  (:import-from :std/hash :make-hashset :hashset-find :hashset-insert :psxhash :hash-table-keys)
   (:import-from :sb-ext :without-package-locks)
   (:import-from :std/macs :eval-always :if-let :when-let)
   (:import-from :std/prim :definline)
@@ -710,6 +710,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :stop :stopped-p :shutdown :reset
    :defaccessor :defaccessor* :defmethods :defclass!
    :data :name :tags :shallow-copy-object
+   :names :flush
    :exec :copy-object :safe-superclasses :run-object
    :make :description
    :struct-constructor

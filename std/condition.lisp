@@ -369,6 +369,9 @@ a default value for required keyword arguments."
    (:documentation "A condition which is signalled when an option expects an argument, but none
 was provided."))
 
+(defun missing-argument (item)
+  (error 'missing-argument :item item))
+
 (defun missing-argument-p (value)
   "Return T if VALUE is a condition of type MISSING-ARGUMENT."
   (typep value 'missing-argument))

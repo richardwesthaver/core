@@ -73,11 +73,14 @@
    :column-family
    :simple-column-family
    :rdb-column
+   :close-columns
    :rdb-schema
    :create-concat-merge-op
    :create-index-merge-op
    :create-fixed-prefix-op
    :create-default-logger-callback
+   :open-all-columns
+   :open-with-columns
    :with-wbwi
    :rdb-wbwi
    :rdb-wbwi-count
@@ -86,8 +89,6 @@
    :rdb-wbwi-save
    :rdb-wbwi-ts
    :rdb-backup-engine-info
-   :backup :backup-db
-   :close-backup
    :rdb-config
    :checkpoint
    :close-checkpoint

@@ -40,8 +40,7 @@
    :output-available-p :input-available-p
    :fill-buffer :header
    :header-type :header-length
-   :offset :snapshot
-   :buffer :size))
+   :offset :buffer :size))
 
 (defpkg :io/swap-bytes
   (:use :cl :sb-c :sb-assem)
@@ -206,7 +205,7 @@
    :compression-level :*compressor*
    :*decompressor* :*preferred-compression-type*
    :*compression-types* :compress-octet-vector
-   :decompress-octet-vector :flush :compress-octet :with-compressor
+   :decompress-octet-vector :compress-octet :with-compressor
    :with-compressing-stream :with-decompressing-stream
    :compress-stream :compress-file :compress-buffer :decompress-stream
    :decompress-file :decompress-buffer))

@@ -37,9 +37,9 @@
       (if (probe-file (name db))
           (progn
             (load-opts db)
-            (open-columns* db))
+            (open-all-columns db))
           (progn
-            (open-columns* db)))
+            (open-all-columns db)))
       (setq *skel-logger* lgr))))
 
 ;; (funcall 'init-skel-logger)
@@ -57,7 +57,7 @@
       (repair-db (sink *skel-logger*))
       (with-db (db :db (make-instance 'skel-db-sink) :open nil :close t)
         (repair-db db)
-        (open-columns* db))))
+        (open-all-columns db))))
 
 (defun sk-log-shutdown ()
   (when (and (boundp '*skel-logger*) *skel-logger*)

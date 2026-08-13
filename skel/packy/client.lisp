@@ -23,11 +23,11 @@
   (unless *packy-db* (init-packy-db))
   (unless (db:db-open-p *packy-db*)
     (when (probe-file (name *packy-db*))
-      (rdb:load-opts *packy-db* :backfill :full))
+      (load-opts *packy-db*))
     (progn
-      (db:open-db *packy-db*)
+      (open-db *packy-db*)
       (when columns
-        (apply 'db:open-columns *packy-db* columns))))
+        (open-with-columns *packy-db* columns))))
   (when tree-sitter (load-aliens :tree-sitter :tree-sitter-bash)))
 
 (defmethod init ((self (eql :packy)) &rest args)

@@ -570,7 +570,8 @@ stream within BODY."
   (with-slots (buffer-position external-format) stream
     (< (- +buffer-size+ (the fixnum buffer-position))
        ;; REVIEW 2025-06-15: used to be babel explicit test for max char width
-       (the fixnum (if (sb-impl::variable-width-external-format-p external-format) 4 2)))))
+       (sb-ext:without-package-locks
+         (the fixnum (if (symbol-call :sb-impl "VARIABLE-WIDTH-EXTERNAL-FORMAT-P" external-format) 4 2))))))
 
 (defmethod stream-read-char ((stream decoding-stream))
   (declare (optimize speed))

@@ -86,7 +86,7 @@
                       :end2 (output-buffer-fill buffer)))
     array))
 
-(defun flush (output-buffer)
+(defun %flush (output-buffer)
   (when (> (output-buffer-fill output-buffer) 0)
     (write-sequence (output-buffer-vector output-buffer)
                     (output-buffer-output output-buffer)
@@ -113,7 +113,7 @@
   (when (= (output-buffer-fill output-buffer)
            (array-dimension (output-buffer-vector output-buffer) 0))
     (if (streamp (output-buffer-output output-buffer))
-        (flush output-buffer)
+        (%flush output-buffer)
         (extend output-buffer)))
   (prog1
       (setf (aref (output-buffer-vector output-buffer)
@@ -155,7 +155,7 @@
 (defun fast-write-sequence (sequence output-buffer &optional (start 0) end)
   (if (streamp (output-buffer-output output-buffer))
       (progn
-        (flush output-buffer)
+        (%flush output-buffer)
         (write-sequence sequence (output-buffer-output output-buffer) :start start :end end))
       (progn
         (let* ((start2 start)
@@ -216,7 +216,7 @@
 it returns the final octet vector. If it is backed by a stream it ensures that
 all data has been flushed to the stream."
   (if (streamp (output-buffer-output output-buffer))
-      (flush output-buffer)
+      (%flush output-buffer)
       (concat-buffer output-buffer)))
 
 (eval-always
@@ -225,7 +225,7 @@ all data has been flushed to the stream."
     `(let ((,buffer (make-output-buffer :output ,output)))
        ,@body
        (if (streamp (output-buffer-output ,buffer))
-           (flush ,buffer)
+           (%flush ,buffer)
            (finish-output-buffer ,buffer))))
 
   (defmacro with-fast-input ((buffer vector &optional stream (offset 0)) &body body)
@@ -403,7 +403,7 @@ all data has been flushed to the stream."
 (defun finish-output-stream (stream)
   (with-slots (buffer) stream
     (if (streamp (output-buffer-output buffer))
-        (flush buffer)
+        (%flush buffer)
         (finish-output-buffer buffer))))
 
 (defmethod close ((stream fast-output-stream) &key abort)

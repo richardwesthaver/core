@@ -103,7 +103,6 @@
    (:file "condition") 
    (:file "macs")
    (:file "alien")
-   (:file "proto")
    (:file "iter")
    (:file "cfg")
    (:file "schema")

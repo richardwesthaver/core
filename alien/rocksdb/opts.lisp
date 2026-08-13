@@ -506,14 +506,19 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-readoptions verify-checksums)
 (define-opt-accessor rocksdb-readoptions fill-cache)
 (define-opt-accessor rocksdb-readoptions read-tier int)
+(define-opt-accessor rocksdb-readoptions background-purge-on-iterator-cleanup)
 (define-opt-accessor rocksdb-readoptions tailing)
 (define-opt-accessor rocksdb-readoptions total-order-seek)
-(define-opt-accessor rocksdb-readoptions skippable-internal-keys unsigned-long)
+(define-opt-accessor rocksdb-readoptions max-skippable-internal-keys unsigned-long)
 (define-opt-accessor rocksdb-readoptions purge-on-iterator-cleanup)
 (define-opt-accessor rocksdb-readoptions deadline unsigned-long)
 (define-opt-accessor rocksdb-readoptions io-timeout unsigned-long)
 (define-opt-accessor rocksdb-readoptions async-io)
 (define-opt-accessor rocksdb-readoptions optimize-multiget-for-io)
+(define-opt-accessor rocksdb-readoptions prefix-same-as-start)
+(define-opt-accessor rocksdb-readoptions pin-data)
+(define-opt-accessor rocksdb-readoptions ignore-range-deletions)
+(define-opt-accessor rocksdb-readoptions readahead-size size-t)
 (defar rocksdb-readoptions-set-snapshot void
   (self (* rocksdb-readoptions))
   (val (* rocksdb-snapshot)))
@@ -525,18 +530,6 @@ rocksdb_k_round_robin_compaction_pri = 4
   (self (* rocksdb-readoptions))
   (key (* char))
   (keylen size-t))
-
-(defar rocksdb-readoptions-set-readahead-size void
-  (self (* rocksdb-readoptions))
-  (val size-t))
-
-(defar rocksdb-readoptions-set-prefix-same-as-start void
-  (self (* rocksdb-readoptions))
-  (val unsigned-char))
-
-(defar rocksdb-readoptions-set-ignore-range-deletions void
-  (self (* rocksdb-readoptions))
-  (val unsigned-char))
 
 (defar rocksdb-readoptions-set-timestamp void
   (self (* rocksdb-readoptions))

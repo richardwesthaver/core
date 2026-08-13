@@ -93,12 +93,12 @@
              (register-mpk-db :music.meta db)
              (if (probe-file (mpk-db-path "meta/music"))
                (progn
-                 (load-opts db :backfill t)
-                 (open-columns* db))
+                 (load-opts db)
+                 (open-all-columns db))
                (progn
                  (open-db db)
                  (load-schema db (make-instance 'mpk-music-meta-schema))
-                 (create-columns db)))))
+                 (make-columns db)))))
          (movies.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/movies"))
@@ -107,12 +107,12 @@
              (register-mpk-db :movies.meta db)
              (if (probe-file (mpk-db-path "meta/movies"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-movies-meta-schema))
-                   (create-columns db)))))
+                   (make-columns db)))))
          (tv.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/tv"))
@@ -121,12 +121,12 @@
              (register-mpk-db :tv.meta db)
              (if (probe-file (mpk-db-path "meta/tv"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-tv-meta-schema))
-                   (create-columns db)))))
+                   (make-columns db)))))
          (img.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/img"))
@@ -135,12 +135,12 @@
              (register-mpk-db :img.meta db)
              (if (probe-file (mpk-db-path "meta/img"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-img-meta-schema))
-                   (create-columns db)))))
+                   (make-columns db)))))
          (aud.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/aud"))
@@ -149,12 +149,12 @@
              (register-mpk-db :aud.meta db)
              (if (probe-file (mpk-db-path "meta/aud"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-aud-meta-schema))
-                   (create-columns db)))))
+                   (make-columns db)))))
          (vid.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/vid"))
@@ -163,12 +163,12 @@
              (register-mpk-db :vid.meta db)
              (if (probe-file (mpk-db-path "meta/vid"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-vid-meta-schema))
-                   (create-columns db)))))
+                   (make-columns db)))))
          (screenshot.meta ()
            (let ((db (make-db :mpk
                        :path (namestring (mpk-db-path "meta/screenshot"))
@@ -177,12 +177,12 @@
              (register-mpk-db :screenshot.meta db)
              (if (probe-file (mpk-db-path "meta/screenshot"))
                  (progn
-                   (load-opts db :backfill t)
-                   (open-columns* db))
+                   (load-opts db)
+                   (open-all-columns db))
                  (progn
                    (open-db db)
                    (load-schema db (make-instance 'mpk-screenshot-meta-schema))
-                   (create-columns db))))))
+                   (make-columns db))))))
     (when *db* 
       (shutdown-db *db*))
     (ensure-directories-exist (mpk-db-path "meta/"))

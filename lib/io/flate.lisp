@@ -61,9 +61,6 @@ ZSTD-DECOMPRESSOR in the case of zstd."))
   (:documentation "Compress INPUT using initial STATE, which may be a COMPRESSION-STATE object
 for deflate-based compression or a ZSTD-COMPRESSOR in the case of zstd."))
 
-(defgeneric flush (self)
-  (:documentation "Flush an object's buffer."))
-
 (defgeneric finish-compression (self)
   (:documentation "Finish the data format and flush all pending
   data in the bitstream."))
