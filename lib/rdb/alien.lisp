@@ -315,12 +315,11 @@
     (octets-to-string v)))
 
 ;;; Backup DB
-(defun %open-backup-engine (be-path &optional (opts (rocksdb-backup-engine-options-create)))
-  (with-errptr* (err 'open-db-error :db be-path)
-    (let ((be-path (if (pathnamep be-path)
-                       (namestring be-path)
-                       be-path)))
-      (rocksdb-backup-engine-options-set-backup-dir opts be-path)
+(defun %open-backup-engine (opts path)
+  (with-errptr* (err 'open-db-error :db path)
+    (let ((be-path (if (pathnamep path)
+                       (namestring path)
+                       path)))
       (rocksdb-backup-engine-open opts be-path err))))
 
 (defun %close-backup-engine (be)

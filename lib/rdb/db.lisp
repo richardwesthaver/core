@@ -15,7 +15,7 @@
 ;; db to be backlined to a parent store instance.
 (defvar *rdb-backend-options* (append *rocksdb-backend-options* '(backup secondary snapshots checkpoints)))
 
-(defvar *rdb-default-column-name* "default")
+(defvar *default-column-family-name* "default")
 
 (set-database-backend :rocksdb *rocksdb-backend-options*
                       (lambda () (load-rocksdb *save-database-backend-on-load*)))
@@ -185,8 +185,8 @@ extractor."
           do (push (options c) opts))
     (nreversef names)
     (nreversef opts)
-    (unless (member *rdb-default-column-name* names :test 'string=)
-      (push *rdb-default-column-name* names)
+    (unless (member *default-column-family-name* names :test 'string=)
+      (push *default-column-family-name* names)
       (push (opts self) opts))
     (multiple-value-bind (db cfs)
         (%open-cfs (opts self) (name self) names opts)
@@ -199,8 +199,10 @@ extractor."
                    (setf (db c) cf)))
         self))))
 
-(defmethod find-column ((cf string) (self rdb) &key)
-  (find cf (columns self) :key 'name :test 'string-equal))
+(defmethod find-column ((cf string) (self rdb) &key (opts (default-rocksdb-options)))
+  (if *default-column-family-name*
+      (find cf (columns self) :key 'name :test 'string-equal)
+      (make-column self :name cf :options opts)))
 
 (defun open-with-columns (db &rest names)
   (if db
@@ -229,10 +231,10 @@ extractor."
 
 (defun close-columns (db)
   (loop for cf across (columns db)
-        ;; unless (string= (name cf) *rdb-default-column-name*)
+        ;; unless (string= (name cf) *default-column-family-name*)
         do (close-db cf)))
 
-(defmacro unless-key-exists-p ((key length db &key cf (opts (default-rocksdb-readoptions)) timestamp) &body body)
+(defmacro unless-key-may-exist-p ((key length db &key cf (opts (default-rocksdb-readoptions)) timestamp) &body body)
   "If KEY of given LENGTH exists in DB (or CF) do nothing, else eval forms in BODY.
 
 This macro is used by the [[id:OBJ/DB:INSERT-KEY][insert-key]] method on RDB instances to ensure a key
@@ -354,7 +356,7 @@ custom merge-operator which does nothing when merging with an existing key."
 
 (defmethod make-column ((db rdb) &rest args)
   (let ((col (apply 'make-instance 'column-family args)))
-    (setf (db col) (if (equal (name col) *rdb-default-column-name*)
+    (setf (db col) (if (equal (name col) *default-column-family-name*)
                        (rocksdb-get-default-column-family-handle (db db))
                        (%create-cf (db db) (name col) (options col))))
     (push col (columns db))
@@ -403,7 +405,7 @@ custom merge-operator which does nothing when merging with an existing key."
   (((engine (eql :otrdb)) &rest initargs)
    (apply 'make-instance 'otrdb initargs))
   (((engine (eql :rdb-backup)) &key path (db *db*))
-   (setf (db-backup db) (backup-db db :path path))))
+   (setf (db-backup db) (backup db :path path))))
 
 (defmethod derive-schema ((self rdb))
   (apply 'make-schema
@@ -440,8 +442,8 @@ custom merge-operator which does nothing when merging with an existing key."
           db)
         (setf db (%open-optimistictransactiondb options path)))))
 
-(defun open-backup-db (self &key (opts (default-rocksdb-backup-engine-options)))
-  (%open-backup-engine (path self) opts))
+(defun open-backup-db (self &key path) ;; opts env
+  (%open-backup-engine (options self) path))
 
 (defun open-secondary-db (self &key path (opts (default-rocksdb-options)))
   (%open-db-secondary opts (path self) path))
@@ -464,18 +466,20 @@ custom merge-operator which does nothing when merging with an existing key."
    (call-next-method self)
    (snapshots self)))
 
-(defmethod restore-db ((self rdb) (from string) &key id opts)
+(defmethod restore ((self rdb) (from string) &key id opts)
   (unless-null-db (path) self
-    (%restore-from-backup (backup-db self :path from) path from id opts)))
+    (%restore-from-backup (backup self :path from) path from id opts)))
 
 (defmethod backup ((self rdb) &key path)
   (unless-null-db (options) self
     (if (null path)
         (error 'open-backup-engine-error :db db
                                          :message "PATH must not be nil when no backups exist")
-        (%create-new-backup (backup-db self :path path) db))))
+        (%create-new-backup (open-backup-db self :path path) db))))
+
 (defmethod backup :around ((self simple-rdb) &rest args)
   (setf (db-backup self) (apply 'call-next-method args)))
+
 (defmethod flush ((self rdb) &key wait)
   (%flush-db (db self) wait))
 (defmethod close-db :before ((self simple-rdb) &key)

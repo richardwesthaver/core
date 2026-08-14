@@ -134,6 +134,8 @@ function NAME and be skipped for (setf NAME)."
     (std/print:print-table (std/list:group (apply 'ppcre:regex-apropos-list self args) 2)))
   (:method (self &rest args)
     (std/print:print-table (std/list:group (apply 'apropos-list self args) 2))))
+(defverb restore (self obj &key)
+  (:documentation "Restore SELF from OBJ."))
 (defverb version (self)
   (:accessor t)
   (:documentation "Return the version of object SELF."))

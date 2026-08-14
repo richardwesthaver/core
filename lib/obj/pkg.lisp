@@ -700,9 +700,6 @@ protocol.")
    :prepare
    :rollback
    :commit
-   :repair-db
-   :backup-db
-   :restore-db
    :snapshot
    :shutdown-db
    :checkpoint

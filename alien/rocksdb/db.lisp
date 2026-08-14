@@ -245,6 +245,34 @@
   (errs (* rocksdb-errptr))
   (sorted-input boolean))
 
+(define-alien-enum (rocksdb-pinnable-multi-get-status)
+  :not-found 0
+  :found 1
+  :error 2
+  :out-of-bounds 3)
+
+(defar rocksdb-batched-multi-get-pinned-cf (* rocksdb-pinnable-multi-get)
+  (db (* rocksdb))
+  (options (* rocksdb-readoptions))
+  (cf (* rocksdb-column-family-handle))
+  (nkeys size-t)
+  (keys (* rocksdb-slice))
+  (sorted-input boolean))
+
+(defar rocksdb-pinnable-multi-get-count size-t
+  (multi-get (* rocksdb-pinnable-multi-get)))
+
+(defar rocksdb-pinnable-multi-get-destroy void
+  (multi-get (* rocksdb-pinnable-multi-get)))
+
+(defar rocksdb-pinnable-multi-get-result rocksdb-pinnable-multi-get-status
+  (multi-get (* rocksdb-pinnable-multi-get))
+  (index size-t)
+  (value (* (* unsigned-char)))
+  (value-size size-t :out)
+  (error (* (* unsigned-char)))
+  (error-size size-t :out))
+
 (defar rocksdb-key-may-exist boolean
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
@@ -604,20 +632,22 @@
   (opts (* rocksdb-options))
   (path c-string))
 
-(def-with-errptr rocksdb-backup-engine-create-new-backup
-  void
+(def-with-errptr rocksdb-backup-engine-open-opts
+    (* rocksdb-backup-engine)
+  (opts (* rocksdb-backup-engine-options))
+  (env (* rocksdb-env)))
+
+(def-with-errptr rocksdb-backup-engine-create-new-backup void
   (be (* rocksdb-backup-engine))
   (db (* rocksdb)))
 
-(def-with-errptr rocksdb-backup-engine-restore-db-from-latest-backup
-  void
+(def-with-errptr rocksdb-backup-engine-restore-db-from-latest-backup void
   (be (* rocksdb-backup-engine))
   (db-dir c-string)
   (wal-dir c-string)
   (res-opts (* rocksdb-restore-options)))
 
-(def-with-errptr rocksdb-backup-engine-restore-db-from-backup
-  void
+(def-with-errptr rocksdb-backup-engine-restore-db-from-backup void
   (be (* rocksdb-backup-engine))
   (db-dir c-string)
   (wal-dir c-string)

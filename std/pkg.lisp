@@ -746,7 +746,8 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :template-function-p :*sham-classes*
    :defsham :save
    :oid :cid
-   :load-opts :execute))
+   :load-opts :execute
+   :restore))
 
 (defpkg :std/stream
   (:use :cl :std/type :std/meta)
