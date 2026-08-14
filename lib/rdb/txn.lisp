@@ -1,7 +1,20 @@
 ;;; rdb/txn.lisp --- RocksDB Transactions
 
+;;; Commentary:
+
+;; The functions in this section use the BUFFER-STREAM protocol from the IO
+;; system and are used to implement the RocksDB backend for the STORE
+;; protocol.
+
+;; The BUFFER slot of every BUFFER-STREAM is a SAP which is filled with a key
+;; value before being sent to RocksDB, and set to the corresponding buffer
+;; when retrieving a value for decoding.
+
+;; AO <2026-08-11 Tue> we are targeting TransactionDB only.
+
 ;;; Code:
 (in-package :rdb)
+
 (defmacro txn-default (dvar)
   `(progn
      (assert (null ,dvar))
@@ -108,23 +121,21 @@ found."
           (rocksdb-transactiondb-delete-cf db opts cf key klen e)
           (rocksdb-transactiondb-delete db opts key klen e)))))
 
-(defun txn-cursor-move-buffered (cursor kbuf vbuf &key current first last next prev)
+(defun txn-cursor-move-buffered (cursor kbuf vbuf &key current first last next next-prefix prev prev-prefix)
   "Move a cursor, returning the key / value pair found.
-Supports current, first, last, next, next-dup, next-nodup,
-prev, prev-nodup."
-  (declare (type pointer-void cursor)
-       (type buffer-stream key-buffer-stream value-buffer-stream)
-       (type boolean current first last next next-dup next-nodup prev 
-         prev-nodup dirty-read read-uncommitted))
+Supports current, first, last, next, next-prefix, prev, and prev-prefix."
+  (declare ((alien (* rocksdb-iterator)) cursor)
+           (buffer-stream kbuf vbuf)
+           (boolean current first last next prev prev-prefix next-prefix))
   (loop 
-   for key-length fixnum = (buffer-stream-length key-buffer-stream)
-   for value-length fixnum = (buffer-stream-length value-buffer-stream)
+   for key-length fixnum = (buffer-stream-length kbuf)
+   for value-length fixnum = (buffer-stream-length vbuf)
    do
    (multiple-value-bind (errno ret-key-size result-size)
        (%db-cursor-get-key-buffered cursor 
-                    (buffer-stream-buffer key-buffer-stream)
+                    (buffer kbuf)
                     0 key-length
-                    (buffer-stream-buffer value-buffer-stream)
+                    (buffer vbuf)
                     0 value-length
                     (flags :current current
                        :first first
@@ -135,99 +146,99 @@ prev, prev-nodup."
                        :prev prev
                        :prev-nodup prev-nodup
                        :dirty-read (or dirty-read read-uncommitted)))
-     (declare (type fixnum errno ret-key-size result-size))
+     (declare (fixnum errno ret-key-size result-size))
      (cond 
        ((= errno 0)
-    (setf (buffer-stream-size key-buffer-stream) ret-key-size)
-    (setf (buffer-stream-size value-buffer-stream) result-size)
-    (return-from db-cursor-move-buffered 
+    (setf (size kbuf) ret-key-size)
+    (setf (size vbuf) result-size)
+    (return-from txn-cursor-move-buffered 
       (the (values buffer-stream buffer-stream)
-        (values key-buffer-stream value-buffer-stream))))
+        (values kbuf vbuf))))
        ((or (= errno DB_NOTFOUND) (= errno DB_KEYEMPTY))
-    (return-from db-cursor-move-buffered (values nil nil)))
+    (return-from txn-cursor-move-buffered (values nil nil)))
        ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
     (throw 'transaction *transaction*))
        ((or (> result-size value-length) (> ret-key-size key-length))
-    (resize-buffer-stream-no-copy value-buffer-stream result-size)
-    (resize-buffer-stream-no-copy key-buffer-stream ret-key-size))
+    (resize-buffer-stream-no-copy vbuf result-size)
+    (resize-buffer-stream-no-copy kbuf ret-key-size))
        (t (error 'bdb-db-error :errno errno))))))
 
 ;; set, set-range: sets key
-(defun txn-cursor-set-buffered (cursor key-buffer-stream value-buffer-stream
+(defun txn-cursor-set-buffered (cursor kbuf vbuf
                    &key set set-range dirty-read read-uncommitted)
   "Move a cursor to a key, returning the key / value pair
 found.  Supports set and set-range."
-  (declare (type pointer-void cursor)
-       (type buffer-stream key-buffer-stream value-buffer-stream)
-       (type boolean set set-range dirty-read read-uncommitted))
+  (declare ((alien (* rocksdb-iterator)) cursor)
+           (buffer-stream kbuf vbuf)
+           (boolean set set-range dirty-read read-uncommitted))
   (loop 
-   for key-length fixnum = (buffer-stream-length key-buffer-stream)
-   for value-length fixnum = (buffer-stream-length value-buffer-stream)
+   for key-length fixnum = (buffer-stream-length kbuf)
+   for value-length fixnum = (buffer-stream-length vbuf)
    do
    (multiple-value-bind (errno ret-key-size result-size)
        (%db-cursor-get-key-buffered cursor 
-                    (buffer-stream-buffer key-buffer-stream)
-                    (buffer-stream-size key-buffer-stream)
+                    (buffer kbuf)
+                    (size kbuf)
                     key-length
-                    (buffer-stream-buffer value-buffer-stream)
+                    (buffer vbuf)
                     0 value-length
                     (flags :set set
                        :set-range set-range
                        :dirty-read (or dirty-read read-uncommitted)))
-     (declare (type fixnum errno ret-key-size result-size))
+     (declare (fixnum errno ret-key-size result-size))
      (cond 
        ((= errno 0)
-    (setf (buffer-stream-size key-buffer-stream) ret-key-size)
-    (setf (buffer-stream-size value-buffer-stream) result-size)
+    (setf (size kbuf) ret-key-size)
+    (setf (size vbuf) result-size)
     (return-from db-cursor-set-buffered 
       (the (values buffer-stream buffer-stream)
-        (values key-buffer-stream value-buffer-stream))))
+        (values kbuf vbuf))))
        ((or (= errno DB_NOTFOUND) (= errno DB_KEYEMPTY))
     (return-from db-cursor-set-buffered (values nil nil)))
        ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
     (throw 'transaction *transaction*))
        ((or (> result-size value-length) (> ret-key-size key-length))
-    (resize-buffer-stream-no-copy value-buffer-stream result-size)
-    (resize-buffer-stream key-buffer-stream ret-key-size))
+    (resize-buffer-stream-no-copy vbuf result-size)
+    (resize-buffer-stream kbuf ret-key-size))
        (t (error 'bdb-db-error :errno errno))))))
 
 ;; get-both, get-both-range : sets both
-(defun txn-cursor-get-both-buffered (cursor key-buffer-stream 
-                    value-buffer-stream
+(defun txn-cursor-get-both-buffered (cursor kbuf 
+                    vbuf
                     &key get-both get-both-range dirty-read read-uncommitted)
   "Move a cursor to a key / value pair, returning the key /
 value pair found.  Supports get-both and get-both-range."
-  (declare (type pointer-void cursor)
-       (type buffer-stream key-buffer-stream value-buffer-stream)
-       (type boolean get-both get-both-range dirty-read read-uncommitted))
+  (declare ((alien (* rocksdb-iterator)) cursor)
+           (buffer-stream kbuf vbuf)
+           (boolean get-both get-both-range dirty-read read-uncommitted))
   (loop 
-   for key-length fixnum = (buffer-stream-length key-buffer-stream)
-   for value-length fixnum = (buffer-stream-length value-buffer-stream)
+   for key-length fixnum = (buffer-stream-length kbuf)
+   for value-length fixnum = (buffer-stream-length vbuf)
    do
    (multiple-value-bind (errno ret-key-size result-size)
        (%db-cursor-get-key-buffered cursor 
-                    (buffer-stream-buffer key-buffer-stream)
-                    (buffer-stream-size	key-buffer-stream)
+                    (buffer kbuf)
+                    (size	kbuf)
                     key-length
-                    (buffer-stream-buffer value-buffer-stream)
-                    (buffer-stream-size	value-buffer-stream)
+                    (buffer vbuf)
+                    (size	vbuf)
                     value-length
                     (flags :get-both get-both
                        :get-both-range get-both-range
                        :dirty-read (or dirty-read read-uncommitted)))
-     (declare (type fixnum errno ret-key-size result-size))
+     (declare (fixnum errno ret-key-size result-size))
      (cond 
        ((= errno 0)
-    (setf (buffer-stream-size key-buffer-stream) ret-key-size)
-    (setf (buffer-stream-size value-buffer-stream) result-size)
+    (setf (size kbuf) ret-key-size)
+    (setf (size vbuf) result-size)
     (return-from db-cursor-get-both-buffered 
       (the (values buffer-stream buffer-stream)
-        (values key-buffer-stream value-buffer-stream))))
+        (values kbuf vbuf))))
        ((or (= errno DB_NOTFOUND) (= errno DB_KEYEMPTY))
     (return-from db-cursor-get-both-buffered (values nil nil)))
        ((or (= errno DB_LOCK_DEADLOCK) (= errno DB_LOCK_NOTGRANTED))
     (throw 'transaction *transaction*))
        ((or (> result-size value-length) (> ret-key-size key-length))
-    (resize-buffer-stream key-buffer-stream ret-key-size)
-    (resize-buffer-stream value-buffer-stream result-size))
+    (resize-buffer-stream kbuf ret-key-size)
+    (resize-buffer-stream vbuf result-size))
        (t (error 'bdb-db-error :errno errno))))))

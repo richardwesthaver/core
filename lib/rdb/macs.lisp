@@ -145,3 +145,10 @@ file by a RDB instance."
            `((unwind-protect (progn ,@body)
                (%destroy-wbwi ,var)))
            body)))
+
+;;; slices
+(defmacro with-slice ((data size) slice &body body)
+  "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and SIZE values."
+  `(multiple-value-bind (,data ,size) (rocksdb::rocksdb-pinnableslice-value ,slice)
+     ,@body
+     (rocksdb::rocksdb-pinnableslice-destroy ,slice)))
