@@ -288,6 +288,9 @@ in-memory objects."))
 |#
 (deftype simple-transaction () `(and (not null) list))
 
+(defun simple-transaction (store txn &optional prior)
+  (list store txn prior))
+
 (defvar *transaction* nil
   "The current transaction or nil. 
 This variable is reserved for use from within EXECUTE and should
@@ -321,7 +324,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 
 (defgeneric abort-transaction (self &key &allow-other-keys))
 
-(defgeneric transaction-object-p (self)
+(defgeneric transactionp (self)
   (:documentation "Return Non-nil if SELF is a transaction object.")
   (:method ((self t))
     (or (typep 'simple-transaction self)
@@ -338,7 +341,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
 return the same value as DB depending on backend.")
-  (:method ((self t)) (db self)))
+  (:method ((self t)) (db (transaction-store self))))
 (defgeneric transaction-prior (self)
   (:documentation "Return the previous transaction of SELF if any.")
   (:method ((self list)) (third self))
@@ -346,14 +349,13 @@ return the same value as DB depending on backend.")
 
 (defun known-transaction (db txn)
   "Search for a prior TXN known by this DB."
-  (when txn
-    (or (and txn
-             (transaction-object-p txn)
-             (or (eq db (transaction-db txn))
-                 (eq (transaction-db db) (transaction-db txn))
-                 (eq db (transaction-store txn))
-                 (eq (transaction-store db) (transaction-store txn)))
-             (known-transaction db (transaction-prior txn))))))
+  (and txn
+       (transactionp txn)
+       (or (eq db (transaction-db txn))
+           (eq (transaction-db db) (transaction-db txn))
+           (eq db (transaction-store txn))
+           (eq (transaction-store db) (transaction-store txn)))
+       (known-transaction db (transaction-prior txn))))
 
 (define-condition transaction-retry-count-exceeded (error)
   ((count :initarg :count :accessor retry-count :initform 0)))

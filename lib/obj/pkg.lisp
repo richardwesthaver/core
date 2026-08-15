@@ -721,7 +721,7 @@ protocol.")
    :transaction-store
    :database-version
    :transaction-db
-   :transaction-object-p
+   :transactionp
    :known-transaction
    :find-column
    :transaction-prior
@@ -744,7 +744,6 @@ protocol.")
    :set-database-backend-option
    :simple-transaction
    :secondary-db
-   :db-backup
    :*save-database-backend-on-load*
    :make-column
    :db-config

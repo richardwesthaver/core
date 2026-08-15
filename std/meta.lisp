@@ -657,7 +657,7 @@ given the name and specializer."
 
 ;;; Early IDs
 ;; early types for the STORE serialization
-(deftype oid () '(unsigned-byte 64))
+(deftype oid () '(unsigned-byte 32))
 (deftype cid () '(unsigned-byte 32))
 (defgeneric oid (self))
 (defgeneric (setf oid) (new self))
