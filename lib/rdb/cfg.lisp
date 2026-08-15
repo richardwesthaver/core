@@ -86,9 +86,11 @@ custom configuration." name)
   (%defopt rocksdb-optimistictransaction-options
            ("set-snapshot"))
   (%defopt rocksdb-transactiondb-options
-           ("write-policy" "max-num-locks" "num-stripes" "transaction-lock-timeout")
+           ("max-num-locks" "num-stripes" "transaction-lock-timeout")
            :max-num-locks 2000
-           :transaction-lock-timeout 100000)
+           :transaction-lock-timeout 100000
+           ;; :write-policy :write-unprepared
+           )
   (%defopt rocksdb-lru-cache-options
            ("capacity" "num-shard-bits" "memory-allocator")
            :capacity 10485760)

@@ -31,8 +31,9 @@
 
 ;; Our implementation is simpler in that every index-like table (with multiple
 ;; non-unique prefixes) is supported by an additional lookup-table storing a
-;; mapping of KEY:IDX. To seek to a different prefix we first query the
-;; lookup-table, and use the IDX to query the index table.
+;; mapping of KEY:IDX. To seek to a different prefix in an index-iterator we
+;; first move the lookup-iterator which is opened with ~(:total-order-seek t)~
+;; and use the IDX to query the index table.
 
 ;;; Code:
 (in-package :rdb)

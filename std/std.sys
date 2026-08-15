@@ -130,6 +130,17 @@
     :methods (add-hook remove-hook)
     :macros (defhook compile-key-hook)
     :classes (hook value-hook key-hook dynamic-hook))
+   (:proto :opt
+    :package :std/meta
+    :description "Options API."
+    :accessor (options opts opt)
+    :method (load-opts))
+   (:proto :prop
+    :package :std/meta
+    :description "Properties API.
+Useful for CLOS or ALIEN properties as opposed to plists where the List API is
+more appropriate."
+    :accessor (properties props prop))
    (:proto :verb
     :package :std/meta
     :description "Verbs are special generic-functions which we want to be able to perform

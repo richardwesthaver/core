@@ -1,6 +1,6 @@
 ;;; alien/rocksdb/rocksdb.sys --- Rocksdb Sytem Definitions
 (defsys :rocksdb
- :require (:std :log)
+ :require (:std :log :io)
  :components 
  ((:pkg "pkg")
   (:file "prim")

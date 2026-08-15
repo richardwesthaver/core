@@ -60,7 +60,7 @@ set *errptr to a malloc()ed error message.
 
 ;;; Code:
 (defpkg :rocksdb
-  (:use :std-lisp :sb-alien)
+  (:use :std-lisp :sb-alien :io/proto)
   (:export
    :load-rocksdb
    ;; vars

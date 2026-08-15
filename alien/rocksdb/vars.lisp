@@ -167,9 +167,6 @@
          restore-rate-limit callback-trigger-interval-size max-valid-backups-to-open
          shared-files-with-checksum-naming))
 
-(defvar *rocksdb-set-only-transactiondb-options*
-  (%svec write-policy))
-
 (defvar *rocksdb-set-only-transaction-options*
   (%svec set-snapshot deadlock-detect skip-prepare
     lock-timeout expiration deadlock-detect-depth max-write-batch-size))

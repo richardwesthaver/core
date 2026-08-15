@@ -74,9 +74,7 @@
   :write-unprepared 2)
 
 (define-opt rocksdb-transactiondb-options)
-(defar rocksdb-transactiondb-options-set-write-policy void
-  (opt (* rocksdb-transactiondb-options))
-  (write-policy rocksdb-txndb-write-policy))
+(define-opt-accessor rocksdb-transactiondb-options write-policy rocksdb-txndb-write-policy)
 (defar rocksdb-transactiondb-options-set-max-num-locks void
   (opt (* rocksdb-transactiondb-options))
   (max-num-locks long))
