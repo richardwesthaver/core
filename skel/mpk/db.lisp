@@ -76,9 +76,6 @@
    (apply 'make-db :rdb initargs)
    'mpk-db))
 
-(defmethod find-db (name (dbs hash-table) &key)
-  (gethash name dbs))
-
 (defun ensure-mpk-db ()
   (etypecase *db*
     (mpk-db *db*)
@@ -199,10 +196,10 @@
 
 (defun mpk-db-info (db &key (schema t)) ;; stats log metadata)
   (when schema
-    (schema-from-rdb-column-families (columns (find-db db *mpk-db-table*)))))
+    (schema-from-simple-column-families (columns (gethash db *mpk-db-table*)))))
 
 (defun update-music-metadata ()
-  (with-db (*db* :db (find-db :music.meta *mpk-db-table*) :open nil :close nil)
+  (with-db (*db* :db (gethash :music.meta *mpk-db-table*) :open nil :close nil)
     (with-wbwi (b)
       (let ((file-cf (find-column :file *db*)) (name-cf (find-column :title *db*)) (id-cf (find-column :id *db*)))
         (maphash-keys
@@ -227,14 +224,14 @@
 
 ;; CORRUPTED - MAGIC TABLE #
 (defun ingest-metadata-sst (&key (file #l"mpk:cache;file.sst") (name #l"mpk:cache;name.sst"))
-  (let ((opts (rocksdb:rocksdb-ingestexternalfileoptions-create)))
+  (let ((opts (rocksdb::rocksdb-ingestexternalfileoptions-create)))
     (rocksdb:rocksdb-ingestexternalfileoptions-set-allow-global-seqno opts nil)
     (rocksdb:rocksdb-ingestexternalfileoptions-set-move-files opts t)
     (ingest-db *db* (list (namestring file)) :column :file :opts opts)
     (ingest-db *db* (list (namestring name)) :column :title :opts opts)))
 
 (defun get-metadata* ()
-  (with-db (*db* :db (find-db :music.meta *mpk-db-table*) :open nil :close nil)
+  (with-db (*db* :db (gethash :music.meta *mpk-db-table*) :open nil :close nil)
     (with-column (name (find-column :title *db*))
       (with-iter (it (iter *db* :column :id))
         (seek-to-first it)

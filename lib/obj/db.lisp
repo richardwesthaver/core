@@ -194,9 +194,6 @@ handle."))
   (:documentation "Dispatch initializer for databases. An ENGINE must be supplied, which is
 usually a key such as :ROCKSDB or :SQLITE."))
 
-(defgeneric connect-db (db &key &allow-other-keys)
-  (:documentation "Connect the database DB."))
-
 (defgeneric close-db (db &key &allow-other-keys)
   (:documentation "Close a database."))
 
@@ -206,9 +203,6 @@ usually a key such as :ROCKSDB or :SQLITE."))
 (defgeneric destroy-db (self)
   (:documentation "Destroy all traces of a database, deleting any on-disk data and shutting down
 in-memory objects."))
-
-(defgeneric find-db (name dbs &key &allow-other-keys)
-  (:documentation "Return the db by NAME, from a collection of databases DBS."))
 
 (defgeneric db-open-p (self)
   (:documentation "Return T when database SELF is open.")

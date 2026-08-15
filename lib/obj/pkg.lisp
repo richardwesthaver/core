@@ -683,13 +683,9 @@ protocol.")
   (:export
    :ensure-transaction
    :dbs
-   :get-db
-   :add-db
    :make-db
    :close-db
    :destroy-db
-   :connect-db
-   :find-db
    :db
    :database
    :db-closed-p
