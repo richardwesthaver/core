@@ -38,6 +38,7 @@
 ;;; Code:
 (in-package :rdb)
 
+;;; IO
 (definline %make-slice (data size)
   (with-alien ((slice rocksdb-slice))
     (setf (slot slice 'data) data
@@ -61,29 +62,59 @@ and size are pre-computed."
   (with-slice slice
     (%make-slice-stream data size)))
 
+(defun slice-stream (slice stream)
+  (with-slice slice
+    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
+    (setf (size stream) size
+          (buffer stream) data)))
+
+(defmacro slice-streams (&body pairs)
+  `(values ,@(loop for (k v) on pairs by #'cddr collect `(slice-stream ,k ,v))))
+    
+(defun pslice-stream (pslice stream)
+  (with-pslice pslice
+    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
+    (setf (size stream) size
+          (buffer stream) data)))
+
+;;; Generators
 (defmethods transaction 
   (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
                 name
-                (txn *transaction*)
+                (transaction *transaction*)
                 (opts (default-rocksdb-transaction-options)))
    (unless-null-db () self
-     (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts txn)))
+     (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts transaction)))
        (when name (%set-transaction-name obj name))
        obj)))
   (((self otrdb)
     &key
-    (txn *transaction*)
+    (transaction *transaction*)
     (opts (default-rocksdb-optimistictransaction-options))
     (write-opts (default-rocksdb-writeoptions)))
    (unless-null-db () self
-     (rocksdb-optimistictransaction-begin (db self) write-opts opts txn))))
+     (rocksdb-optimistictransaction-begin (db self) write-opts opts transaction))))
 
-(defmethod execute ((self rdb) (fn function) &key (txn *transaction*))
+;;; Transaction API
+(defmethod execute ((self rdb) (fn function) &key (transaction *transaction*))
   (funcall fn)
-  (when txn
-    (commit txn)
-    (rocksdb-transaction-destroy txn)))
+  (when transaction
+    (commit transaction)
+    (rocksdb-transaction-destroy (transaction-object transaction))))
 
+(defmethod commit ((self t) &key)
+  (%commit-transaction (transaction-object self)))
+
+(defmethod rollback ((self t) &key savepoint)
+  (%rollback-transaction (transaction-object self) savepoint))
+
+(defmethod prepare ((self t) &key)
+  (%prepare-transaction (transaction-object self)))
+
+(defmethod abort-transaction ((self t) &key savepoint)
+  (%abort-transaction (transaction-object self) savepoint))
+
+;;; TXN ops
 (defun txn-get (kbuf vbuf 
                 &key (transaction *transaction*)
                      (opts (default-rocksdb-readoptions))
@@ -148,7 +179,7 @@ found."
         (rocksdb-transaction-delete-cf transaction cf (buffer kbuf) (size kbuf) e)
         (rocksdb-transaction-delete transaction (buffer kbuf) (size kbuf) e))))
 
-;;; Iterators
+;;; Transaction Iterator
 (defun txn-iter (&key (transaction *transaction*) cf (opts (default-rocksdb-readoptions)))
   (if cf 
       (rocksdb-transaction-create-iterator-cf transaction opts cf)
@@ -164,7 +195,6 @@ found."
 
 (deftype rocksdb-iterator-opcode () '(member :prev :first :next :last :for :for-prev))
 
-;; TODO 2026-08-14: txn-iter-seek
 (defun txn-iter-seek (op iter &optional kbuf)
   "Set the position of an existing iterator.
 
@@ -179,66 +209,39 @@ Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
     (:for (rocksdb-iter-seek iter (buffer kbuf) (size kbuf)))
     (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf)))))
 
-    ;; (when (> result-size value-length) (resize-buffer-stream-no-copy vbuf result-size))
-    ;; (when (> ret-key-size key-length) (resize-buffer-stream kbuf ret-key-size))
-    ;; ;; TODO 2026-08-14: slices
-    ;; (setf (size kbuf) ret-key-size)
-    ;; (setf (size vbuf) result-size)
-    ;; (values kbuf vbuf)))
-
-;; set, set-range: sets key
-;; TODO 2026-08-14: does this require creating a separate iterator? from an index?
-(defun txn-iter-set (cursor kbuf vbuf
-                   &key set set-range dirty-read read-uncommitted)
-  "Move a cursor to a key, returning the key / value pair
-found. Supports set and set-range."
-  (declare ((alien (* rocksdb-iterator)) cursor)
+(defun txn-iter-set (iter kbuf vbuf &key (transaction *transaction*) cf)
+  "Set a key and move an iterator to its position within a
+transaction. Return (values key value &optional timestamp."
+  (declare ((alien (* rocksdb-iterator)) iter)
            (buffer-stream kbuf vbuf)
-           (boolean set set-range dirty-read read-uncommitted))
-  (lety ((key-length (buffer-stream-length kbuf) :type fixnum)
-         (value-length (buffer-stream-length vbuf) :type fixnum))
-    (multiple-value-bind (errno ret-key-size result-size)
-        (%db-cursor-get-key-buffered cursor 
-                                     (buffer kbuf)
-                                     (size kbuf)
-                                     key-length
-                                     (buffer vbuf)
-                                     0 value-length
-                                     (flags :set set
-                                            :set-range set-range
-                                            :dirty-read (or dirty-read read-uncommitted)))
-      (declare (fixnum errno ret-key-size result-size))
-      (when (> result-size value-length) (resize-buffer-stream-no-copy vbuf result-size))
-      (when (> ret-key-size key-length) (resize-buffer-stream kbuf ret-key-size))
-      (setf (size kbuf) ret-key-size)
-      (setf (size vbuf) result-size)
-      (values kbuf vbuf))))
+           ((or null (alien (* rocksdb-column-family-handle))) cf))
+  (with-errptr* (e 'rdb-transaction-error :txn transaction)
+    (if cf
+        (rocksdb-transaction-put-cf (transaction-object transaction) cf
+                                    (buffer kbuf) (size kbuf)
+                                    (buffer vbuf) (size vbuf)
+                                    e)
+        (rocksdb-transaction-put (transaction-object transaction)
+                                 (buffer kbuf) (size kbuf)
+                                 (buffer vbuf) (size vbuf)
+                                 e))
+    (rocksdb-iter-seek iter (buffer kbuf) (size kbuf))
+    (values kbuf vbuf)))
 
-;; get-both, get-both-range : sets both
-(defun txn-iter-get (cursor kbuf 
-                     vbuf
-                     &key get-both get-both-range dirty-read read-uncommitted)
+;; get pinned from iterator, optional timestamp third value.
+(defun txn-iter-get (iter kbuf vbuf
+                     &key timestamp)
   "Move a cursor to a key / value pair, returning the key /
 value pair found.  Supports get-both and get-both-range."
-  (declare ((alien (* rocksdb-iterator)) cursor)
+  (declare ((alien (* rocksdb-iterator)) iter)
            (buffer-stream kbuf vbuf)
-           (boolean get-both get-both-range dirty-read read-uncommitted))
-  (lety ((key-length (buffer-stream-length kbuf) :type fixnum)
-         (value-length (buffer-stream-length vbuf) :type fixnum))
-    (multiple-value-bind (errno ret-key-size result-size)
-        (%db-cursor-get-key-buffered cursor 
-                    (buffer kbuf)
-                    (size	kbuf)
-                    key-length
-                    (buffer vbuf)
-                    (size	vbuf)
-                    value-length
-                    (flags :get-both get-both
-                       :get-both-range get-both-range
-                       :dirty-read (or dirty-read read-uncommitted)))
-     (declare (fixnum errno ret-key-size result-size))
-      (when (> result-size value-length) (resize-buffer-stream-no-copy vbuf result-size))
-      (when (> ret-key-size key-length) (resize-buffer-stream kbuf ret-key-size))
-      (setf (size kbuf) ret-key-size)
-      (setf (size vbuf) result-size)
-      (values kbuf vbuf))))
+           ((or null buffer-stream) timestamp))
+  (slice-streams 
+    (rocksdb-iter-key-slice iter) kbuf
+    (rocksdb-iter-value-slice iter) vbuf)
+  (when timestamp (slice-stream (rocksdb-iter-timestamp-slice iter) timestamp))
+  (values kbuf vbuf timestamp))
+
+(defun txn-iter-move (op iter kbuf vbuf &key timestamp)
+  (txn-iter-seek op iter kbuf)
+  (txn-iter-get iter kbuf vbuf :timestamp timestamp))

@@ -272,6 +272,9 @@ set *errptr to a malloc()ed error message.
    :rocksdb-backup-engine-info-num-files
    :rocksdb-backup-engine-info-destroy
    :rocksdb-iter-key
+   :rocksdb-iter-key-slice
+   :rocksdb-iter-value-slice
+   :rocksdb-iter-timestamp-slice
    :rocksdb-get-updates-since
    :rocksdb-create-iterators
    :rocksdb-create-compaction-filter-never

@@ -604,14 +604,11 @@
   (iter (* rocksdb-iterator))
   (tslen size-t :out))
 (defar rocksdb-iter-key-slice rocksdb-slice
-  (iter (* rocksdb-iterator))
-  (klen-ptr size-t :out))
+  (iter (* rocksdb-iterator)))
 (defar rocksdb-iter-value-slice rocksdb-slice
-  (iter (* rocksdb-iterator)) 
-  (vlen-ptr size-t :out))
+  (iter (* rocksdb-iterator)) )
 (defar rocksdb-iter-timestamp-slice rocksdb-slice
-  (iter (* rocksdb-iterator))
-  (tslen size-t :out))
+  (iter (* rocksdb-iterator)))
 (def-with-errptr rocksdb-iter-refresh void
   (iter (* rocksdb-iterator)))
 (def-with-errptr rocksdb-iter-get-error void (iter (* rocksdb-iterator)))
