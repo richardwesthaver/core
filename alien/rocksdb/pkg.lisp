@@ -60,7 +60,7 @@ set *errptr to a malloc()ed error message.
 
 ;;; Code:
 (defpkg :rocksdb
-  (:use :cl :std/alien :std/sym :std/macs :sb-alien)
+  (:use :std-lisp :sb-alien)
   (:export
    :load-rocksdb
    ;; vars
@@ -346,6 +346,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-mergeoperator
    :rocksdb-randomfile
    :rocksdb-seqfile
+   :rocksdb-slice
    :rocksdb-slicetransform
    :rocksdb-snapshot
    :rocksdb-writeablefile
@@ -480,6 +481,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-writebatch-wi-delete-rangev-cf
    :rocksdb-writebatch-wi-set-save-point
    :rocksdb-writebatch-wi-rollback-to-save-point
+   :rocksdb-transaction-put-log-data
    :rocksdb-transaction-get-writebach-wi
    :rocksdb-transaction-rollback-to-savepoint
    :rocksdb-transaction-rollback

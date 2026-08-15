@@ -430,7 +430,7 @@ custom merge-operator which does nothing when merging with an existing key."
                   :db db
                   :message "Database is already open")
           db)
-        (setf db (%open-transactiondb options transactiondb-options path)))))
+        (setf db (%open-transactiondb options transactiondb-options (namestring path))))))
 
 (defmethod open-db ((self otrdb))
   (with-slots (path db options) self
@@ -440,7 +440,7 @@ custom merge-operator which does nothing when merging with an existing key."
                   :db db
                   :message "Database is already open")
           db)
-        (setf db (%open-optimistictransactiondb options path)))))
+        (setf db (%open-optimistictransactiondb options (namestring path))))))
 
 (defun open-backup-db (self &key path) ;; opts env
   (%open-backup-engine (options self) path))
@@ -487,11 +487,14 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethod close-db ((self rdb) &key) 
   (rocksdb-close (db self)))
 (defmethod close-db ((self trdb) &key)
-  (rocksdb-transactiondb-close (db self))
-  (when-let ((topt (transactiondb-options self)))
-    (rocksdb-transactiondb-options-destroy topt)))
+  (unless-null-db (transactiondb-options) self
+    (setf (db self) (rocksdb-transactiondb-close db))
+    (when transactiondb-options
+      (setf (transactiondb-options self)
+            (rocksdb-transactiondb-options-destroy transactiondb-options)))))
 (defmethod close-db ((self otrdb) &key)
-  (rocksdb-optimistictransactiondb-close (db self)))
+  (unless-null-db () self
+    (setf (db self) (rocksdb-optimistictransactiondb-close db))))
 (defmethod close-db :after ((self rdb) &key)
   (when-let ((opt (options self)))
     (rocksdb-options-destroy opt)))

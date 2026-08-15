@@ -65,6 +65,7 @@
 (define-opaque rocksdb-eventlistener)
 (define-opaque rocksdb-pinnable-multi-get)
 (define-opaque rocksdb-export-import-files-metadata)
+(define-opaque rocksdb-table-properties)
 (define-alien-enum (rocksdb-size-approximation-flags)
   :none 0
   :include-memtable (ash 1 0)
@@ -80,3 +81,8 @@
   (struct rocksdb-slice
     (data (* unsigned-char))
     (size size-t)))
+
+(define-alien-type rocksdb-readoptions-table-filter-cb
+    (function unsigned-char
+        (* t)
+        (* rocksdb-table-properties)))

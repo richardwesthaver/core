@@ -136,11 +136,12 @@
 
 (defvar *rocksdb-set-only-readoptions*
   (%svec snapshot iterate-upper-bound iterate-lower-bound
-         timestamp iter-start-ts auto-readahead-size))
+         timestamp iter-start-ts))
 
 (defvar *rocksdb-readoptions*
   (%svec verify-checksums fill-cache read-tier tailing total-order-seek max-skippable-internal-keys
-         purge-on-iterator-cleanup deadline io-timeout async-io))
+         purge-on-iterator-cleanup deadline io-timeout async-io auto-prefix-mode ignore-range-deletions
+    io-activity auto-refresh-iterator-with-snapshot readahead-size auto-readahead-size))
 
 (defvar *rocksdb-writeoptions*
   (%svec sync disable-wal ignore-missing-column-families

@@ -72,6 +72,9 @@
 (defar rocksdb-enable-manual-compaction void
   (db (* rocksdb)))
 
+(defar rocksdb-get-latest-sequence-number (unsigned 64)
+  (db (* rocksdb)))
+
 (def-with-errptr rocksdb-put 
   void 
   (db (* rocksdb))

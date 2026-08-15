@@ -147,8 +147,15 @@ file by a RDB instance."
            body)))
 
 ;;; slices
-(defmacro with-slice ((data size) slice &body body)
-  "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and SIZE values."
-  `(multiple-value-bind (,data ,size) (rocksdb::rocksdb-pinnableslice-value ,slice)
-     ,@body
-     (rocksdb::rocksdb-pinnableslice-destroy ,slice)))
+(defmacro with-slice (slice &body body)
+  "Eval BODY with the rocksdb-slice pointer SLICE destructured into DATA and SIZE
+values."
+  `(with-alien-slots (data size) ,slice
+     ,@body))
+
+(defmacro with-pslice (slice &body body)
+  "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and
+SIZE values."
+  `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnableslice-value ,slice)
+     ,@body))
+

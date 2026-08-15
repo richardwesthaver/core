@@ -71,11 +71,12 @@ custom configuration." name)
                       (funcall (,(symbolicate name '-setter) key) opt val))
                     (defparameter ,(symbolicate '*default- name '*) (,%default)))))))
   (%defopt rocksdb-readoptions
-           ("snapshot" "iterate-upper-bound" "iterate-lower-bound" "readahead-size" "prefix-same-as-start"
-            "ignore-range-deletions" "timestamp" "iter-start-ts" "auto-readahead-size")
+           ("snapshot" "iterate-upper-bound" "iterate-lower-bound" "prefix-same-as-start"
+            "ignore-range-deletions" "timestamp" "iter-start-ts")
            :async-io t
            :prefix-same-as-start t
-           :pin-data t)
+           :pin-data t
+           :auto-readahead-size t)
   (%defopt rocksdb-writeoptions)
   (%defopt rocksdb-transaction-options
            ("set-snapshot" "deadlock-detect" "lock-timeout" "expiration" 

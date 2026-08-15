@@ -54,3 +54,7 @@
 (defar rocksdb-reset-status void (status-ptr (* rocksdb-status-ptr)))
 
 (defar rocksdb-free void (ptr (* t)))
+
+;; requires RocksDB to be compiled with jemalloc (may not be possible with SBCL)
+#+todo
+(def-with-errptr rocksdb-jemalloc-nodump-allocator-create (* rocksdb-memory-allocator))

@@ -363,6 +363,7 @@
 (define-opt-accessor rocksdb-options stats-persist-period-sec unsigned-int)
 
 (define-opt-accessor rocksdb-options use-adaptive-mutex)
+(define-opt-accessor rocksdb-options adaptive-readahead)
 (define-opt-accessor rocksdb-options bytes-per-sync unsigned-long)
 (define-opt-accessor rocksdb-options wal-bytes-per-sync unsigned-long)
 (define-opt-accessor rocksdb-options file-max-buffer-size unsigned-long)
@@ -517,6 +518,10 @@ rocksdb_k_round_robin_compaction_pri = 4
 (define-opt-accessor rocksdb-readoptions optimize-multiget-for-io)
 (define-opt-accessor rocksdb-readoptions prefix-same-as-start)
 (define-opt-accessor rocksdb-readoptions pin-data)
+(define-opt-accessor rocksdb-readoptions io-activity int)
+(define-opt-accessor rocksdb-readoptions auto-readahead-size)
+(define-opt-accessor rocksdb-readoptions auto-refresh-iterator-with-snapshot)
+(define-opt-accessor rocksdb-readoptions auto-prefix-mode)
 (define-opt-accessor rocksdb-readoptions ignore-range-deletions)
 (define-opt-accessor rocksdb-readoptions readahead-size size-t)
 (defar rocksdb-readoptions-set-snapshot void
@@ -541,9 +546,47 @@ rocksdb_k_round_robin_compaction_pri = 4
   (ts (* char))
   (tslen size-t))
 
-(defar rocksdb-readoptions-set-auto-readahead-size void
+(define-opt-accessor rocksdb-readoptions merge-operand-count-threshold size-t)
+
+(defar rocksdb-readoptions-clear-merge-operand-count-threshold void
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-has-merge-operand-count-threshold boolean
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-set-request-id void
   (self (* rocksdb-readoptions))
-  (val unsigned-char))
+  (request-id (* unsigned-char)))
+
+(defar rocksdb-readoptions-get-request-id (* unsigned-char)
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-clear-request-id void
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-set-table-filter void
+  (self (* rocksdb-readoptions))
+  (state (* t))
+  (destructor (* rocksdb-destructor-function))
+  (table-filter rocksdb-readoptions-table-filter-cb))
+
+(defar rocksdb-readoptions-has-table-filter boolean
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-clear-table-filter void
+  (self (* rocksdb-readoptions)))
+
+(def-with-errptr rocksdb-readoptions-set-table-index-factory-from-string void
+  (self (* rocksdb-readoptions))
+  (value (* unsigned-char))
+  (value-len size-t))
+
+(defar rocksdb-readoptions-clear-table-index-factory void
+  (self (* rocksdb-readoptions)))
+
+(defar rocksdb-readoptions-get-table-index-factory-name (* unsigned-char)
+  (self (* rocksdb-readoptions))
+  (name-len size-t :out))
 
 ;;; RocksDB Flush Options
 (define-opt rocksdb-flushoptions)
