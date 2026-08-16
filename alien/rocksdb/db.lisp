@@ -443,7 +443,7 @@
   (opt (* rocksdb-writeoptions))
   (key (* unsigned-char))
   (keylen size-t)
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t)
   (val (* unsigned-char))
   (vallen size-t))
@@ -454,7 +454,7 @@
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (keylen size-t)
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t)
   (val (* unsigned-char))
   (vallen size-t))
@@ -472,7 +472,7 @@
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
   (key (* unsigned-char))
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t)
   (keylen size-t))
 
@@ -482,50 +482,50 @@
   (options (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t)
   (keylen size-t))
 
 (def-with-errptr rocksdb-singledelete void
   (db (* rocksdb))
   (opts (* rocksdb-writeoptions))
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t))
 
 (def-with-errptr rocksdb-singledelete-with-ts void
   (db (* rocksdb))
   (opts (* rocksdb-writeoptions))
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t)
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t))
 
 (def-with-errptr rocksdb-singledelete-cf-with-ts void
   (db (* rocksdb))
   (opts (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t)
-  (ts c-string)
+  (ts (* unsigned-char))
   (tslen size-t))
 
 (def-with-errptr rocksdb-singledelete-cf void
   (db (* rocksdb))
   (opts (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t))
 
 (def-with-errptr rocksdb-increase-full-history-ts-low void
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
-  (ts-low c-string)
+  (ts-low (* unsigned-char))
   (ts-lowlen size-t))
 
-(def-with-errptr rocksdb-get-full-history-ts-low c-string
+(def-with-errptr rocksdb-get-full-history-ts-low (* unsigned-char)
   (db (* rocksdb))
   (cf (* rocksdb-column-family-handle))
-  (ts-lowlen (* size-t)))
+  (ts-lowlen size-t :out))
 
 (def-with-errptr rocksdb-delete-range-cf 
   void

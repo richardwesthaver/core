@@ -119,7 +119,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
 ;; TODO 2026-08-15: 
 (defmacro with-ts-buf (tbuf &body body)
   "Bind a timestamp buffer to %TSLEN and %TS."
-  `(let ((%tslen ,(buffer-stream-length tbuf)))
+  `(let ((%tslen (buffer-stream-length ,tbuf)))
      (with-alien ((%ts (* unsigned-char) (buffer ,tbuf)))
        ,@body)))
 
@@ -138,9 +138,9 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
          ,@body))))
 
 (defmacro with-kv-buf ((db kbuf vbuf eptr &key (error 'kv-error) cf) &body body)
-  "binds %KSIZE %VLEN %KEY %VAL"
+  "binds %KSIZE %VSIZE %KEY %VAL"
   `(let ((%ksize (size ,kbuf))
-         (%vlen (buffer-stream-length ,vbuf)))
+         (%vsize (size ,vbuf)))
      (with-errptr* (,eptr ',error :db ,db :kv ,(cons kbuf vbuf) ,@(when cf `(:cf ,cf)))
        (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
                     (%val (* unsigned-char) (buffer ,vbuf)))
@@ -200,4 +200,10 @@ values."
   "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnableslice-value ,slice)
+     ,@body))
+
+(defmacro with-phandle (handle &body body)
+  "Eval BODY with the pinnable-handle pointer HANDLE destructured into DATA and
+SIZE values."
+  `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnable-handle-get-value ,handle)
      ,@body))

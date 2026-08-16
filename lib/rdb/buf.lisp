@@ -73,21 +73,50 @@ and size are pre-computed."
      (%make-slice-stream v vlen))))
 
 (defun db-get-buf (db kbuf vbuf &key (opts *default-rocksdb-readoptions*) cf)
-  "Get a key from DB using the buffered RocksDB functions. Does not support timestamps."
-  (declare (buffer-stream kbuf vbuf)))
+  "Get a key from DB using the buffered RocksDB functions.
+Does not support direct timestamps."
+  (declare (buffer-stream kbuf vbuf))
+  (with-kv-buf (db kbuf vbuf e :cf cf)
+    (repeat 2
+      (and
+       (if cf
+           (rocksdb-get-into-buffer-cf db opts cf %key %ksize %val %vlen e)
+           (rocksdb-get-into-buffer db opts %key %ksize %val %vlen e))
+       (return-from db-get-buf vbuf)) ;; check that this value is updated..
+      (resize-buffer-stream vbuf %vlen))))
 
-(defun db-get (db kbuf &key (opts *default-rocksdb-readoptions*) cf timestamp)
+(defun db-get (db kbuf &key (opts *default-rocksdb-readoptions*) cf)
   "Get a key from DB using the v2 zero-copy RocksDB functions if possible."
-  (declare (buffer-stream kbuf)))
+  (declare (buffer-stream kbuf))
+  (with-key-buf (db kbuf e :cf cf)
+    (with-phandle
+        (if cf
+            (rocksdb-get-pinned-cf-v2 db opts cf %key %ksize e)
+            (rocksdb-get-pinned-v2 db opts %key %ksize e))
+      ;; not optimal..
+      (%make-slice-stream data size))))
 
 (defun db-put (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf timestamp)
-  (declare (buffer-stream kbuf vbuf)))
+  (declare (buffer-stream kbuf vbuf))
+  (with-kv-buf (db kbuf vbuf e :cf cf)
+  (if timestamp
+      (with-ts-buf timestamp
+        (if cf
+            (rocksdb-put-cf-with-ts db opts cf %key %ksize %ts %tslen %val %vsize e)
+            (rocksdb-put-with-ts db opts %key %ksize %ts %tslen %val %vsize e)))
+      (if cf
+          (rocksdb-put-cf db opts cf %key %ksize %val %vsize e)
+          (rocksdb-put db opts %key %ksize %val %vsize e)))))
 
 (defun db-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cf sorted)
   "Get a list of keys from DB using the batched/pinned RocksDB functions.")
 
 (defun db-merge (db kbuf vbuf &key (opts *default-rocksdb-readoptions*) cf)
-  (declare (buffer-stream kbuf vbuf)))
+  (declare (buffer-stream kbuf vbuf))
+  (with-kv-buf (db kbuf vbuf e :cf cf)
+    (if cf
+        (rocksdb-merge-cf db opts cf %key %ksize %val %vsize e)
+        (rocksdb-merge db opts %key %ksize %val %vsize e))))
 
 (defun db-delete (db kbuf &key (opts *default-rocksdb-readoptions*) cf timestamp)
   "Delete a key from DB."
