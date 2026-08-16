@@ -140,9 +140,22 @@ Does not support direct timestamps."
   "Get a list of keys from DB using the slice RocksDB function.")
 
 ;; generic multi-get functions
-(defun rdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs timestamp))
+(defun rdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs timestamps)
+  (with-key-bufs (kbufs e)
+    (if timestamps
+        (with-ts-bufs timestamps
+          (if cfs
+              (rocksdb-multi-get-cf-with-ts 
+               db opts cfs 
+               %klen %keys %ksizes %vals %vsizes %ts %tsizes e)
+              (rocksdb-multi-get-with-ts db opts %klen %keys %ksizes %vals %vsizes %ts %tsizes e)))
+        (if cfs
+            (rocksdb-multi-get-cf db opts cfs %klen  %keys %ksizes %vals %vsizes e)
+            (rocksdb-multi-get db opts %klen %keys %ksizes %vals %vsizes e)))))
 
-(defun trdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs))
+(defun trdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs)
+  (with-key-bufs (kbufs e)
+    (rocksdb-transactiondb-multi-get-cf db opts cfs %klen %keys %ksizes %vals %vsizes e)))
 
 (defun rdb-merge (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf)
   (declare (buffer-stream kbuf vbuf))
@@ -172,7 +185,6 @@ Does not support direct timestamps."
       (if cf
           (rocksdb-delete-cf db opts cf %key %ksize e)
           (rocksdb-delete db opts %key %ksize e)))))
-
 
 (defun trdb-delete (db kbuf &key (opts *default-rocksdb-writeoptions*) cf)
   (declare (buffer-stream kbuf))

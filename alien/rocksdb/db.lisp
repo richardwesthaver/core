@@ -115,13 +115,13 @@
   (vallen size-t :out)
   (found boolean :out))
 
-(def-with-errptr rocksdb-get-with-ts c-string
+(def-with-errptr rocksdb-get-with-ts (* unsigned-char)
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t)
   (vallen (* size-t))
-  (ts (* c-string))
+  (ts (* (* unsigned-char)))
   (tslen (* size-t)))
 
 (def-with-errptr rocksdb-delete 
@@ -163,10 +163,10 @@
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))  
-  (key c-string)
+  (key (* unsigned-char))
   (keylen size-t)
   (vallen (* size-t))
-  (ts (* c-string))
+  (ts (* (* unsigned-char)))
   (tslen (* size-t)))
 
 (defar rocksdb-get-db-identity (* unsigned-char) (db (* rocksdb)) (idlen size-t :out))
@@ -178,23 +178,23 @@
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (num-keys size-t)
-  (keys-list (* c-string))
+  (keys-list (* (* unsigned-char)))
   (keys-list-sizes (* size-t))
-  (values-list (* c-string))
+  (values-list (* (* unsigned-char)))
   (values-list-sizes (* size-t))
-  (errs (* rocksdb-errptr)))
+  (errs (* c-string)))
 
 (defar rocksdb-multi-get-with-ts void
   (db (* rocksdb))
   (opt (* rocksdb-readoptions))
   (num-keys size-t)
-  (keys-list (* c-string))
+  (keys-list (* (* unsigned-char)))
   (keys-list-sizes (* size-t))
-  (values-list (* c-string))
+  (values-list (* (* unsigned-char)))
   (values-list-sizes (* size-t))
-  (ts-list (* c-string))
+  (ts-list (* (* unsigned-char)))
   (ts-list-sizes (* size-t))
-  (errs (* rocksdb-errptr)))
+  (errs (* c-string)))
 
 (defar rocksdb-multi-get-cf void
   (db (* rocksdb))
@@ -205,7 +205,7 @@
   (keys-list-sizes (* size-t))
   (values-list (* (* (unsigned 8))))
   (values-list-sizes (* size-t))
-  (errs (* rocksdb-errptr)))
+  (errs (* c-string)))
 
 (defar rocksdb-multi-get-cf-with-ts void
   (db (* rocksdb))
@@ -214,11 +214,11 @@
   (num-keys size-t)
   (keys-list (* (* unsigned-char)))
   (keys-list-sizes (* size-t))
-  (values-list (* c-string))
+  (values-list (* (* unsigned-char)))
   (values-list-sizes (* size-t))
-  (ts-list (* c-string))
+  (ts-list (* (* unsigned-char)))
   (ts-list-sizes (* size-t))
-  (errs (* rocksdb-errptr)))
+  (errs (* c-string)))
 
 (defar rocksdb-batched-multi-get-cf void
   (db (* rocksdb))
@@ -228,7 +228,7 @@
   (keys (* (* unsigned-char)))
   (key-sizes (* size-t))
   (values (* (* rocksdb-pinnableslice)))
-  (errs (* (* rocksdb-errptr)))
+  (errs (* c-string))
   (sorted-input boolean))
 
 ;; Batched MultiGet with slice array: Takes rocksdb_slice_t array directly,
@@ -242,7 +242,7 @@
   (nkeys size-t)
   (keys (* rocksdb-slice))
   (values (* (* rocksdb-pinnableslice)))
-  (errs (* rocksdb-errptr))
+  (errs (* c-string))
   (sorted-input boolean))
 
 (define-alien-enum (rocksdb-pinnable-multi-get-status)

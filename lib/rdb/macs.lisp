@@ -131,6 +131,16 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
      (with-alien ((%ts (* unsigned-char) (buffer ,tbuf)))
        ,@body)))
 
+(defmacro with-ts-bufs (tbufs &body body)
+  "Bind a list of timestamp buffers to %TS and %TSIZES."
+  `(with-alien ((%ts (* (* unsigned-char)) (make-alien (* unsigned-char) (length ,tbufs)))
+                (%tsizes (* size-t) (make-alien size-t (length ,tbufs))))
+     (loop for ts in ,tbufs
+           for i from 0 below (length ,tbufs)
+           do (setf (deref %ts i) (buffer ts)
+                    (deref %tsizes i) (buffer-stream-length ts)))
+       ,@body))
+
 (defmacro with-txn-buf ((txn eptr &key (error 'rdb-transaction-error) cf db key val) &body body)
   `(let (,@(when key `((%klen (buffer-stream-length ,key))
                        (%ksize (size ,key))))
@@ -178,6 +188,20 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
        (with-alien ((%skey (* unsigned-char) (buffer ,sbuf))
                     (%ekey (* unsigned-char) (buffer ,ebuf)))
          ,@body))))
+
+(defmacro with-key-bufs ((kbufs eptrs) &body body)
+  "binds %KLEN %KEYS %KSIZES %VALS %VSIZES. Note that errors are left unhandled."
+  `(with-alien ((%keys (* (* unsigned-char)) (make-alien (* unsigned-char) (length ,kbufs)))
+                (%ksizes (* size-t))
+                (%klen size-t (length ,kbufs))
+                (%vals (* (* unsigned-char)) (make-alien (* unsigned-char) (length ,kbufs)))
+                (%vsizes (* size-t))
+                (,eptrs (* c-string) (make-alien c-string (length ,kbufs))))
+     (loop for k in ,kbufs
+           for i from 0 below (length ,kbufs)
+           do (setf (deref %keys i) (buffer k)
+                    (deref %ksizes i) (size k)))
+     ,@body))
 
 ;; (defmacro with-iter-buf ((iter eptr &key (error 'kv-error) cf db) &body body))
 
