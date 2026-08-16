@@ -9,5 +9,8 @@
 ;;; Code:
 (defsys :emacs
   :require (:std)
-  :components ((:pkg "pkg"))
+  :components ((:pkg "pkg")
+               (:grovel "constants"
+                :package :emacs)
+               (:file "alien"))
   :provide ((:tests)))
