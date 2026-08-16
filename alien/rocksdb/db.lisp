@@ -472,9 +472,9 @@
   (db (* rocksdb))
   (options (* rocksdb-writeoptions))
   (key (* unsigned-char))
+  (keylen size-t)
   (ts (* unsigned-char))
-  (tslen size-t)
-  (keylen size-t))
+  (tslen size-t))
 
 (def-with-errptr rocksdb-delete-cf-with-ts
   void
@@ -482,9 +482,9 @@
   (options (* rocksdb-writeoptions))
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
+  (keylen size-t)
   (ts (* unsigned-char))
-  (tslen size-t)
-  (keylen size-t))
+  (tslen size-t))
 
 (def-with-errptr rocksdb-singledelete void
   (db (* rocksdb))

@@ -585,7 +585,12 @@ set *errptr to a malloc()ed error message.
    :rocksdb-options-set-block-based-table-factory
    :rocksdb-transactiondb-options-set-transaction-lock-timeout
    :rocksdb-transactiondb-options-set-default-lock-timeout
-   :rocksdb-sst-partitioner-fixed-prefix-factory-create))
+   :rocksdb-sst-partitioner-fixed-prefix-factory-create
+   :rocksdb-batched-multi-get-pinned-cf
+   :rocksdb-pinnable-multi-get-count
+   :rocksdb-pinnable-multi-get-result
+   :rocksdb-pinnable-multi-get-destroy
+   :rocksdb-batched-multi-get-cf-slice))
 
 (in-package :rocksdb)
 

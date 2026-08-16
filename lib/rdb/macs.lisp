@@ -2,16 +2,15 @@
 
 ;;; Code:
 (in-package :rdb)
-
 ;;; DB Dispatch
-;; TODO 2026-08-15: 
-(defmacro define-db-variants (name rdb trdb otrdb &body body)
-  "Define variations of NAME given the associated database operations:
+(defmacro define-db-surrogate (name rdb trdb)
+  "Define a db-NAME surrogate function given args which dispatches to RDB or TRDB
+based on the type of the car of ARGS."
+  `(definline ,name (db &rest args)
+     (etypecase db
+       ((alien (* rocksdb)) (apply #',rdb db args))
+       ((alien (* rocksdb-transactiondb)) (apply #',trdb args)))))
 
-RDB: (* ROCKSDB)
-TRDB: (* ROCKSDB-TRANSACTIONDB)
-OTRDB: (* ROCKSDB-OPTIMISTICTRANSACTIONDB)")
-  
 ;;; error handling
 (defmacro with-errptr* ((e err &rest params) &body body)
   "Bind E to a C pointer which can be used by alien functions, and if an error is
@@ -155,11 +154,29 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
                     (%val (* unsigned-char) (buffer ,vbuf)))
          ,@body))))
 
+(defmacro with-kv-buf* ((db kbuf vbuf eptr &key (error 'kv-error) cf) &body body)
+  "binds %KSIZE %VLEN %KEY %VAL"
+  `(let ((%ksize (size ,kbuf))
+         (%vlen (buffer-stream-length ,vbuf)))
+     (with-errptr* (,eptr ',error :db ,db :kv ,(cons kbuf vbuf) ,@(when cf `(:cf ,cf)))
+       (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
+                    (%val (* unsigned-char) (buffer ,vbuf)))
+         ,@body))))
+
 (defmacro with-key-buf ((db kbuf eptr &key (error 'kv-error) cf) &body body)
   "binds %KSIZE %KEY"
   `(let ((%ksize (size ,kbuf)))
      (with-errptr* (,eptr ',error :db ,db :kv ,kbuf ,@(when cf `(:cf ,cf)))
        (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
+         ,@body))))
+
+(defmacro with-key-range ((db sbuf ebuf eptr &key (error 'kv-error) cf) &body body)
+  "binds %SSIZE %ESIZE %SKEY %EKEY"
+  `(let ((%ssize (size ,sbuf))
+         (%esize (size ,ebuf)))
+     (with-errptr* (,eptr ',error :db ,db :kv ,(cons sbuf ebuf) ,@(when cf `(:cf ,cf)))
+       (with-alien ((%skey (* unsigned-char) (buffer ,sbuf))
+                    (%ekey (* unsigned-char) (buffer ,ebuf)))
          ,@body))))
 
 ;; (defmacro with-iter-buf ((iter eptr &key (error 'kv-error) cf db) &body body))
