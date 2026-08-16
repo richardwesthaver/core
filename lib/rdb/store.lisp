@@ -899,10 +899,15 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 
 (defmethod open-store ((store rdb-store) &key)
   (with-slots (db) store
-    (setf db (make-db :rocksdb-transaction :path (path store) :open t))
+    (setf db (make-db :rocksdb-transaction 
+               :path (path store) 
+               :open t 
+               :opts (options store) 
+               :topts (transactiondb-options store)))
     (let ((metadata (open-column db "metadata"))
           (btrees (open-column db "btree"))
-          (dup-btrees (open-column db "dup"))
+          ;; TODO 2026-08-16: dup-btree -> itree?
+          (dup-btrees (open-column db "itree"))
           (oids (open-column db "oid"))
           (index (open-column db "index"))
           (rindex (open-column db "rindex"))))))

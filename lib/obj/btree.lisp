@@ -315,13 +315,13 @@ Return has-pair key value."))
 ;; Default implementation.
 (defmethod cursor-prev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
-    (multiple-value-bind (existp skey-cur)
+    (multiple-value-bind (existp key-cur)
         (cursor-current cur)
       (declare (ignore existp))
-      (multiple-value-bind (existp skey value)
+      (multiple-value-bind (existp key value)
           (cursor-prev cur)
-        (if (compare-equal skey-cur skey)
-            (values existp skey value)
+        (if (compare-equal key-cur key)
+            (values existp key value)
             (setf (cursor-initialized-p cur) nil))))))
 
 (defgeneric cursor-prev-nodup (cursor)
@@ -337,13 +337,13 @@ Return has-tuple / secondary key / value / primary key."))
 ;; Default implementation.
 (defmethod cursor-pprev-dup ((cur cursor))
   (when (cursor-initialized-p cur)
-    (multiple-value-bind (existp skey-cur)
+    (multiple-value-bind (existp key-cur)
         (cursor-current cur)
       (declare (ignore existp))
-      (multiple-value-bind (existp skey value pkey)
+      (multiple-value-bind (existp key value pkey)
           (cursor-pprev cur)
-        (if (compare-equal skey-cur skey)
-            (values existp skey value pkey)
+        (if (compare-equal key-cur key)
+            (values existp key value pkey)
             (setf (cursor-initialized-p cur) nil))))))
 
 (defgeneric cursor-pprev-nodup (cursor)
@@ -503,11 +503,11 @@ cursor"
          ,@body))))
 
 (defmacro with-cursor-values (expr &body body)
-  "Binds existp, skey, val and pkey from expression assuming expression returns
+  "Binds existp, key, val and pkey from expression assuming expression returns
 a set of cursor operation values or nil"
-  `(multiple-value-bind (existp skey val pkey)
+  `(multiple-value-bind (existp key val pkey)
        (the (values boolean t t t) ,expr)
-     (declare (ignorable existp skey val pkey))
+     (declare (ignorable existp key val pkey))
      ,@body))
 
 (defmacro iterate-map-btree (&key start continue step)
@@ -523,13 +523,13 @@ a set of cursor operation values or nil"
      (declare (dynamic-extent (function continue-p)))
      (handler-case 
          (with-cursor-values ,start
-           (when (and existp (continue-p skey))
-             (funcall fn skey val)
+           (when (and existp (continue-p key))
+             (funcall fn key val)
              (loop  
                 (handler-case
                     (with-cursor-values ,step
-                      (if (and existp (continue-p skey))
-                          (funcall fn skey val)
+                      (if (and existp (continue-p key))
+                          (funcall fn key val)
                           (return (nreverse results))))
                   (error ()
                     (warn "Deserialization error in map: returning nil for element~%")
@@ -570,7 +570,7 @@ a set of cursor operation values or nil"
     (iterate-map-btree
      :start (if end
                 (with-cursor-values (cursor-set-range cur end)
-                  (cond ((and existp (compare-equal skey end))
+                  (cond ((and existp (compare-equal key end))
                          (cursor-next-nodup cur)
                          (cursor-prev cur))
                         (t (cursor-prev cur))))
@@ -613,12 +613,12 @@ cursor values."
               ,continue))
      (declare (dynamic-extent (function continue-p)))
      (with-cursor-values ,start
-       (when (and existp (continue-p skey))
-         (funcall fn skey val pkey)
+       (when (and existp (continue-p key))
+         (funcall fn key val pkey)
          (loop  
             (with-cursor-values ,step
-              (if (and existp (continue-p skey))
-                  (funcall fn skey val pkey)
+              (if (and existp (continue-p key))
+                  (funcall fn key val pkey)
                   (return (nreverse results)))))))))
 
 (defmacro with-map-index-wrapper ((fn btree collect cur) &body body)

@@ -14,7 +14,7 @@ OTRDB: (* ROCKSDB-OPTIMISTICTRANSACTIONDB)")
   
 ;;; error handling
 (defmacro with-errptr* ((e err &rest params) &body body)
-  "Bind e to a C pointer which can be used by alien functions, and if an error is
+  "Bind E to a C pointer which can be used by alien functions, and if an error is
 signaled we coerce this pointer to a string and feed it to a condition of name
 ERR with initargs PARAMS for the duration of BODY."
   `(with-errptr ,e
