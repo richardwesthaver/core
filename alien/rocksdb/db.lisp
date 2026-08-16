@@ -159,7 +159,7 @@
   (keylen size-t)
   (vallen (* size-t)))
 
-(def-with-errptr rocksdb-get-cf-with-ts c-string
+(def-with-errptr rocksdb-get-cf-with-ts (* unsigned-char)
   (db (* rocksdb))
   (opts (* rocksdb-readoptions))
   (cf (* rocksdb-column-family-handle))  
@@ -169,7 +169,7 @@
   (ts (* c-string))
   (tslen (* size-t)))
 
-(defar rocksdb-get-db-identity c-string (db (* rocksdb)) (idlen size-t :out))
+(defar rocksdb-get-db-identity (* unsigned-char) (db (* rocksdb)) (idlen size-t :out))
 
 ;; NOTE 2023-12-19: only the VOID-returning functions in the multi-* family
 ;; perform parallel IO:

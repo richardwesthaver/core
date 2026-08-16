@@ -48,6 +48,16 @@
     hist))
 
 ;;; DB
+(deftype db-identity () 
+  "A RocksDB 'db-identity' is a 36-byte sequence which uniquely identifies a DB instance."
+`(octet-vector 36))
+
+(defun get-base-db (db)
+  (etypecase db
+    ((alien (* rocksdb)) db)
+    ((alien (* rocksdb-transactiondb)) (rocksdb-transactiondb-get-base-db db))
+    ((alien (* rocksdb-optimistictransactiondb)) (rocksdb-optimistictransactiondb-get-base-db db))))
+
 (defun %open-db (db-path &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'open-db-error :db db-path)
     (let* ((db-path (if (pathnamep db-path)
