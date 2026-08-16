@@ -3,6 +3,15 @@
 ;;; Code:
 (in-package :rdb)
 
+;;; DB Dispatch
+;; TODO 2026-08-15: 
+(defmacro define-db-variants (name rdb trdb otrdb &body body)
+  "Define variations of NAME given the associated database operations:
+
+RDB: (* ROCKSDB)
+TRDB: (* ROCKSDB-TRANSACTIONDB)
+OTRDB: (* ROCKSDB-OPTIMISTICTRANSACTIONDB)")
+  
 ;;; error handling
 (defmacro with-errptr* ((e err &rest params) &body body)
   "Bind e to a C pointer which can be used by alien functions, and if an error is

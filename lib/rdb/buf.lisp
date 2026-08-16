@@ -13,6 +13,9 @@
 
 ;; Timestamps are optional, always buffer-streams.
 
+;; AO <2026-08-15 Sat> Only supports plain ROCKSDB. It is unknown what the
+;; impact of grabbing the base-db is.
+
 ;;; Code:
 (in-package :rdb)
 ;;; IO
