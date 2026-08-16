@@ -1,4 +1,4 @@
-;;; rdb/txn.lisp --- RocksDB Transactions
+;;; rdb/txn.lisp --- TXN API
 
 ;;; Commentary:
 
@@ -38,85 +38,51 @@
 ;;; Code:
 (in-package :rdb)
 
-;;; IO
-(definline %make-slice (data size)
-  (with-alien ((slice rocksdb-slice))
-    (setf (slot slice 'data) data
-          (slot slice 'size) size)
-    slice))
+(defvar *txn* nil
+  "Dynamic pointer to a ROCKSDB-TRANSACTION object.")
 
-(defun make-slice (stream)
-  (%make-slice (buffer stream) (size stream)))
-
-(definline %make-slice-stream (ptr len)
-  "Function used to destructure a (pinable) slice into a BUFFER-STREAM. The length
-and size are pre-computed."
-  (declare (fixnum len) ((alien (* unsigned-char)) ptr))
-  (make-instance (buffer-stream len) :buffer ptr :size len))
-
-(defun make-pslice-stream (pslice)
-  (with-pslice pslice
-    (%make-slice-stream data size)))
-
-(defun make-slice-stream (slice)
-  (with-slice slice
-    (%make-slice-stream data size)))
-
-(defun slice-stream (slice stream)
-  (with-slice slice
-    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
-    (setf (size stream) size
-          (buffer stream) data)))
-
-(defmacro slice-streams (&body pairs)
-  `(values ,@(loop for (k v) on pairs by #'cddr collect `(slice-stream ,k ,v))))
-    
-(defun pslice-stream (pslice stream)
-  (with-pslice pslice
-    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
-    (setf (size stream) size
-          (buffer stream) data)))
-
-;;; Generators
 (defmethods transaction 
-  (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
+  (((self trdb) &key (write-opts *default-rocksdb-writeoptions*)
                 name
-                (transaction *transaction*)
-                (opts (default-rocksdb-transaction-options)))
+                (transaction *txn*)
+                (opts *default-rocksdb-transaction-options*))
    (unless-null-db () self
      (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts transaction)))
        (when name (%set-transaction-name obj name))
        obj)))
   (((self otrdb)
     &key
-    (transaction *transaction*)
-    (opts (default-rocksdb-optimistictransaction-options))
-    (write-opts (default-rocksdb-writeoptions)))
+    name
+    (transaction *txn*)
+    (opts *default-rocksdb-optimistictransaction-options*)
+    (write-opts *default-rocksdb-writeoptions*))
    (unless-null-db () self
-     (rocksdb-optimistictransaction-begin (db self) write-opts opts transaction))))
+     (let ((obj (rocksdb-optimistictransaction-begin (db self) write-opts opts transaction)))
+       (when name (%set-transaction-name obj name))
+       obj))))
 
-;;; Transaction API
-(defmethod execute ((self rdb) (fn function) &key (transaction *transaction*))
+;;; Default Transaction API
+(defmethod execute ((self rdb) (fn function) &key (transaction *txn*))
   (funcall fn)
   (when transaction
     (commit transaction)
-    (rocksdb-transaction-destroy (transaction-object transaction))))
+    (rocksdb-transaction-destroy transaction)))
 
 (defmethod commit ((self t) &key)
-  (%commit-transaction (transaction-object self)))
+  (%commit-transaction self))
 
 (defmethod rollback ((self t) &key savepoint)
-  (%rollback-transaction (transaction-object self) savepoint))
+  (%rollback-transaction self savepoint))
 
 (defmethod prepare ((self t) &key)
-  (%prepare-transaction (transaction-object self)))
+  (%prepare-transaction self))
 
 (defmethod abort-transaction ((self t) &key savepoint)
-  (%abort-transaction (transaction-object self) savepoint))
+  (%abort-transaction self savepoint))
 
 ;;; TXN ops
 (defun txn-get (kbuf vbuf 
-                &key (transaction *transaction*)
+                &key (transaction *txn*)
                      (opts (default-rocksdb-readoptions))
                      cf)
   "Get a key from a transaction. 
@@ -144,7 +110,7 @@ decoding the value is returned or NIL if nothing was found."
     vbuf))
 
 (defun txn-put (kbuf vbuf
-                &key (transaction *transaction*)
+                &key (transaction *txn*)
                      cf)
   "Put a key / value pair into a DB.
 The pair are encoded in buffer-streams."
@@ -168,7 +134,7 @@ The pair are encoded in buffer-streams."
          (size vbuf)
          e))))
 
-(defun txn-delete (kbuf &key (transaction *transaction*) cf)
+(defun txn-delete (kbuf &key (transaction *txn*) cf)
   "Delete a key / value pair from a DB.
 The key is encoded in a buffer-stream. T on success, NIL if the key wasn't
 found."
@@ -180,22 +146,14 @@ found."
         (rocksdb-transaction-delete transaction (buffer kbuf) (size kbuf) e))))
 
 ;;; Transaction Iterator
-(defun txn-iter (&key (transaction *transaction*) cf (opts (default-rocksdb-readoptions)))
+(defun txn-iter (&key (transaction *txn*) cf (opts (default-rocksdb-readoptions)))
   (if cf 
       (rocksdb-transaction-create-iterator-cf transaction opts cf)
       (rocksdb-transaction-create-iterator transaction opts)))
 
-(defun txn-iter-delete (iter &optional cf (opts (default-rocksdb-writeoptions)) (db (db *db*)))
-  (declare ((alien (* rocksdb-iterator)) iter))
-  (with-errptr e
-    (multiple-value-bind (key klen) (rocksdb-iter-key iter)
-      (if cf
-          (rocksdb-transactiondb-delete-cf db opts cf key klen e)
-          (rocksdb-transactiondb-delete db opts key klen e)))))
-
 (deftype rocksdb-iterator-opcode () '(member :prev :first :next :last :for :for-prev))
 
-(defun txn-iter-seek (op iter &optional kbuf)
+(defun iter-seek (op iter &optional kbuf)
   "Set the position of an existing iterator.
 
 Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
@@ -209,7 +167,33 @@ Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
     (:for (rocksdb-iter-seek iter (buffer kbuf) (size kbuf)))
     (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf)))))
 
-(defun txn-iter-set (iter kbuf vbuf &key (transaction *transaction*) cf)
+;; get pinned from iterator, optional timestamp third value.
+(defun iter-get (iter kbuf vbuf
+                     &key timestamp)
+  "Move a cursor to a key / value pair, returning the key /
+value pair found.  Supports get-both and get-both-range."
+  (declare ((alien (* rocksdb-iterator)) iter)
+           (buffer-stream kbuf vbuf)
+           ((or null buffer-stream) timestamp))
+  (set-slice-streams 
+   kbuf (rocksdb-iter-key-slice iter)
+   vbuf (rocksdb-iter-value-slice iter))
+  (when timestamp (slice-stream (rocksdb-iter-timestamp-slice iter) timestamp))
+  (values kbuf vbuf timestamp))
+
+(defun iter-move (op iter kbuf vbuf &key timestamp)
+  (txn-iter-seek op iter kbuf)
+  (txn-iter-get iter kbuf vbuf :timestamp timestamp))
+
+(defun txn-iter-delete (iter &optional cf (opts (default-rocksdb-writeoptions)) (db (db *db*)))
+  (declare ((alien (* rocksdb-iterator)) iter))
+  (with-errptr e
+    (multiple-value-bind (key klen) (rocksdb-iter-key iter)
+      (if cf
+          (rocksdb-transactiondb-delete-cf db opts cf key klen e)
+          (rocksdb-transactiondb-delete db opts key klen e)))))
+
+(defun txn-iter-set (iter kbuf vbuf &key (transaction *txn*) cf)
   "Set a key and move an iterator to its position within a
 transaction. Return (values key value &optional timestamp."
   (declare ((alien (* rocksdb-iterator)) iter)
@@ -217,31 +201,13 @@ transaction. Return (values key value &optional timestamp."
            ((or null (alien (* rocksdb-column-family-handle))) cf))
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (if cf
-        (rocksdb-transaction-put-cf (transaction-object transaction) cf
+        (rocksdb-transaction-put-cf transaction cf
                                     (buffer kbuf) (size kbuf)
                                     (buffer vbuf) (size vbuf)
                                     e)
-        (rocksdb-transaction-put (transaction-object transaction)
+        (rocksdb-transaction-put transaction
                                  (buffer kbuf) (size kbuf)
                                  (buffer vbuf) (size vbuf)
                                  e))
     (rocksdb-iter-seek iter (buffer kbuf) (size kbuf))
     (values kbuf vbuf)))
-
-;; get pinned from iterator, optional timestamp third value.
-(defun txn-iter-get (iter kbuf vbuf
-                     &key timestamp)
-  "Move a cursor to a key / value pair, returning the key /
-value pair found.  Supports get-both and get-both-range."
-  (declare ((alien (* rocksdb-iterator)) iter)
-           (buffer-stream kbuf vbuf)
-           ((or null buffer-stream) timestamp))
-  (slice-streams 
-    (rocksdb-iter-key-slice iter) kbuf
-    (rocksdb-iter-value-slice iter) vbuf)
-  (when timestamp (slice-stream (rocksdb-iter-timestamp-slice iter) timestamp))
-  (values kbuf vbuf timestamp))
-
-(defun txn-iter-move (op iter kbuf vbuf &key timestamp)
-  (txn-iter-seek op iter kbuf)
-  (txn-iter-get iter kbuf vbuf :timestamp timestamp))

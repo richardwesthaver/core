@@ -242,8 +242,8 @@ does not exist before using [[id:OBJ/DB:PUT-KEY][put-key]]. An alternative appro
 custom merge-operator which does nothing when merging with an existing key."
   (with-gensyms (v vlen)
     `(multiple-value-bind (,v ,vlen) ,(if cf 
-                                          `(%cf-key-exists-p ,db ,cf ,key ,length ,opts ,timestamp)
-                                          `(%key-exists-p ,db ,key ,length ,opts ,timestamp))
+                                          `(%cf-key-may-exist-p ,db ,cf ,key ,length ,opts ,timestamp)
+                                          `(%key-may-exist-p ,db ,key ,length ,opts ,timestamp))
        (declare (ignorable ,vlen))
        (if ,v
            (rocksdb-free ,v)
@@ -372,10 +372,6 @@ custom merge-operator which does nothing when merging with an existing key."
   "Find and replace a column by name."
   (nsubstitute new (find-column cf self) (columns self)))
 
-(defmethod database-version ((self rdb))
-  "Return the version tag or nil if unmarked"
-  (prop self "rocksdb.current-super-version-number"))
-
 (defaccessor name ((self rdb)) (path self))
 (defaccessor sap ((self rdb)) (db self))
 (defaccessor opts ((self rdb) &key) (options self))
@@ -386,7 +382,13 @@ custom merge-operator which does nothing when merging with an existing key."
    (unless-null-db () self
      (rocksdb-property-value db name)))
   (((self rdb) (name symbol))
-   (prop self (string-downcase (concatenate 'string "rocksdb." (symbol-name name))))))
+   (prop self (string-downcase (concatenate 'string "rocksdb." (symbol-name name)))))
+  (((self trdb) (name string))
+   (unless-null-db () self
+     (rocksdb-property-value (rocksdb-transactiondb-get-base-db db) name)))
+  (((self otrdb) (name string))
+   (unless-null-db () self
+     (rocksdb-property-value (rocksdb-optimistictransactiondb-get-base-db db) name))))
 
 (defmethod ingest-db ((self rdb) (files list) &key column (opts (rocksdb-ingestexternalfileoptions-create)))
   (if column

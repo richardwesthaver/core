@@ -72,9 +72,6 @@
 (defar rocksdb-enable-manual-compaction void
   (db (* rocksdb)))
 
-(defar rocksdb-get-latest-sequence-number (unsigned 64)
-  (db (* rocksdb)))
-
 (def-with-errptr rocksdb-put 
   void 
   (db (* rocksdb))
@@ -345,8 +342,8 @@
 (defar rocksdb-livefiles-name c-string (lf (* rocksdb-livefiles)) (index int))
 (defar rocksdb-livefiles-level int (lf (* rocksdb-livefiles)) (index int))
 (defar rocksdb-livefiles-size size-t (lf (* rocksdb-livefiles)) (index int))
-(defar rocksdb-livefiles-smallest-key c-string (lf (* rocksdb-livefiles)) (index int) (size (* size-t)))
-(defar rocksdb-livefiles-largest-key c-string (lf (* rocksdb-livefiles)) (index int) (size (* size-t)))
+(defar rocksdb-livefiles-smallest-key (* unsigned-char) (lf (* rocksdb-livefiles)) (index int) (size size-t :out))
+(defar rocksdb-livefiles-largest-key (* unsigned-char) (lf (* rocksdb-livefiles)) (index int) (size size-t :out))
 (defar rocksdb-livefiles-entries unsigned-long (lf (* rocksdb-livefiles)) (index int))
 (defar rocksdb-livefiles-deletions unsigned-long (lf (* rocksdb-livefiles)) (index int))
 (defar rocksdb-livefiles-smallest-seqno unsigned-long (lf (* rocksdb-livefiles)) (index int))

@@ -71,8 +71,10 @@ ERR with initargs PARAMS for the duration of BODY."
      (unwind-protect (progn ,@body)
        (rocksdb-backup-engine-close ,be-var))))
 
-;;; raw
-;; Following macros introduce four anaphors - %KEY and %KLEN and if VAL is present, %VAL and %VLEN.
+;;; raw macros
+;; Following macros introduce four anaphors - %KEY and %KLEN and if VAL is
+;; present, %VAL and %VLEN. Only use these with OCTET-VECTOR and strings.
+
 (defmacro with-kv-raw ((db key eptr &key (error 'kv-error) val cf) &body body)
   `(let ((%klen (length ,key))
          ,@(when val `((%vlen (length ,val)))))
@@ -92,7 +94,7 @@ ERR with initargs PARAMS for the duration of BODY."
        ,@(when val `((setfa %val ,val)))
        ,@body)))
 
-(defmacro with-txn-raw ((txn eptr &key (error 'transaction-error) key val cf db) &body body)
+(defmacro with-txn-raw ((txn eptr &key (error 'rdb-transaction-error) key val cf db) &body body)
   "Provide several bindings around BODY. TXN must be a raw transaction instance
 and EPTR a symbol which is bound to an error pointer (via WITH-ERRPTR*).
 
@@ -111,6 +113,47 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
          ,@(when key `((setfa %key ,key)))
          ,@(when val `((setfa %val ,val)))
          ,@body))))
+
+;;; buffered macros
+;; macros for the preferred API based on BUFFER-STREAMs.
+;; TODO 2026-08-15: 
+(defmacro with-ts-buf (tbuf &body body)
+  "Bind a timestamp buffer to %TSLEN and %TS."
+  `(let ((%tslen ,(buffer-stream-length tbuf)))
+     (with-alien ((%ts (* unsigned-char) (buffer ,tbuf)))
+       ,@body)))
+
+(defmacro with-txn-buf ((txn eptr &key (error 'rdb-transaction-error) cf db key val) &body body)
+  `(let (,@(when key `((%klen (buffer-stream-length ,key))
+                       (%ksize (size ,key))))
+         ,@(when val `((%vlen (buffer-stream-length ,val)))))
+     (with-errptr* (,eptr ',error 
+                          :txn ,txn
+                          ,@(when cf `(:cf ,cf))
+                          ,@(when db `(:db ,db))
+                          ,@(when (or key val)
+                              `(:kv ,(if val `(cons ,key ,val) key))))
+       (with-alien (,@(when key `((%key (* unsigned-char) (buffer ,key))))
+                    ,@(when val `((%val (* unsigned-char) (buffer ,val)))))
+         ,@body))))
+
+(defmacro with-kv-buf ((db kbuf vbuf eptr &key (error 'kv-error) cf) &body body)
+  "binds %KSIZE %VLEN %KEY %VAL"
+  `(let ((%ksize (size ,kbuf))
+         (%vlen (buffer-stream-length ,vbuf)))
+     (with-errptr* (,eptr ',error :db ,db :kv ,(cons kbuf vbuf) ,@(when cf `(:cf ,cf)))
+       (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
+                    (%val (* unsigned-char) (buffer ,vbuf)))
+         ,@body))))
+
+(defmacro with-key-buf ((db kbuf eptr &key (error 'kv-error) cf) &body body)
+  "binds %KSIZE %KEY"
+  `(let ((%ksize (size ,kbuf)))
+     (with-errptr* (,eptr ',error :db ,db :kv ,kbuf ,@(when cf `(:cf ,cf)))
+       (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
+         ,@body))))
+
+;; (defmacro with-iter-buf ((iter eptr &key (error 'kv-error) cf db) &body body))
 
 ;;; sst
 (defmacro with-sst ((sst &key file comparator destroy) &body body)
@@ -158,4 +201,3 @@ values."
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnableslice-value ,slice)
      ,@body))
-

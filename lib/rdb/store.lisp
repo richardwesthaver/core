@@ -22,7 +22,7 @@
 
 ;; The sequence number, which is an arbitrarily increasing integer is used as
 ;; a state indicator on opening a store and is pulled from the RocksDB
-;; livefiles object. See `rocksdb::rocksdb-livefiles-largest-seqno'. 
+;; `rocksdb::rocksdb-livefiles-largest-seqno'. 
 
 ;; Naturally to support Elephant's transaction abstraction we leverage a
 ;; TransactionDB and generate transactions via ffi as needed. The transaction
@@ -95,7 +95,7 @@
         (let ((buf (get-key
                     (btree sc)
                     key-buf
-                    :buffer value-buf
+                    value-buf
                     :transaction (current-transaction sc))))
           (if buf 
               (values (deserialize-object buf sc) t)

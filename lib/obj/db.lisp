@@ -12,7 +12,6 @@
 ;;; Vars
 (defvar *db* nil)
 (defvar *database-backend* nil)
-(defvar *default-database-version* '(0 1 0))
 (defparameter *save-database-backend-on-load* nil)
 ;;; Backends
 (defvar *database-backend-table* (make-hash-table)
@@ -163,15 +162,6 @@ saved."
   (:documentation "Return the Database associated with SELF."))
 (defgeneric (setf db) (new self)
   (:documentation "Set the Database associated with SELF."))
-
-(defgeneric database-version (self)
-  (:documentation "Return the version associated with a given database SELF."))
-
-(defmethod database-version :around (self)
-  (declare (ignorable self))
-  (let ((version (call-next-method)))
-    (std/macs:ifret version
-      *default-database-version*)))
 
 (defun prior-version-p (v1 v2)
   "Is v1 an equal or earlier version than v2"

@@ -1530,7 +1530,7 @@ is not created. Other possible values include :ERROR and :CREATE.")
       (multiple-value-bind (sname pname)
       (if (or *always-convert* (not (= (version sc)
                                        *store-code-version-int*)))
-          (map-legacy-names symbol-name package-name (database-version sc))
+          (map-legacy-names symbol-name package-name (version sc))
           (values symbol-name package-name))
     (let ((package (find-package pname)))
       (if package

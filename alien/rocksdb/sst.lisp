@@ -79,7 +79,7 @@
 
 (def-with-errptr rocksdb-sstfilewriter-file-size void
   (writer (* rocksdb-sstfilewriter))
-  (file-size (* unsigned-long)))
+  (file-size unsigned-long :out))
 
 (def-with-errptr rocksdb-ingest-external-file void
   (db (* rocksdb))
