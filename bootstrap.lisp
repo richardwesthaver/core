@@ -58,6 +58,7 @@ $ sbcl --script bootstrap.lisp
         :btrfs
         :zstd
         :sys
+        :emacs
         :keyutils
         :tree-sitter
         :uring

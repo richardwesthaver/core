@@ -1,0 +1,13 @@
+;;; sys.sys --- Emacs Module FFI
+
+;;
+
+;;; Commentary:
+
+;; 
+
+;;; Code:
+(defsys :emacs
+  :require (:std)
+  :components ((:pkg "pkg"))
+  :provide ((:tests)))

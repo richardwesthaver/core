@@ -7,7 +7,7 @@
   :uring :xkb :zstd :jpeg
   :chromaprint :blas :openssl :ffmpeg
   :sys :jack :keyutils :rocksdb
-  :security)
+  :security :emacs)
  :provide
  ((:tests
    :components nil
@@ -18,4 +18,4 @@
     :ssh2/tests :tree-sitter/tests :sys/tests
     :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
     :jack/tests :blas/tests :jpeg/tests :openssl/tests 
-    :ffmpeg/tests :security/tests))))
+    :ffmpeg/tests :security/tests :emacs/tests))))
