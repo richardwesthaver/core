@@ -41,8 +41,8 @@
 (define-alien-type emacs-env-private
     (struct emacs-env-private
       (pending-non-local-exit emacs-funcall-exit)
-      (non-local-exit-symbol lisp-object)
-      (non-local-exit-data lisp-object)
+      (non-local-exit-symbol (* t))
+      (non-local-exit-data (* t))
       (storage (struct emacs-value-storage))))
 
 ;; ptrdiff-t?
