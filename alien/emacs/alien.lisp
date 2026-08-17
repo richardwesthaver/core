@@ -17,7 +17,7 @@
 (define-alien-type emacs-value-tag
     (struct emacs-value-tag (v (* t))))
 
-(define-alien-type emacs-value (* emacs-value-tag))
+(define-alien-type emacs-value (* (struct emacs-value-tag)))
 
 (define-alien-type canvas
     (struct canvas
@@ -106,7 +106,7 @@
 ;;   (function int (* (struct emacs-runtime))))
 
 (define-alien-type emacs-function
-  (function (* emacs-value) (* emacs-env) size-t
+  (function (* emacs-value) (* (struct emacs-env)) size-t
     (* emacs-value) (* t)))
 
 (define-alien-type emacs-finalizer
