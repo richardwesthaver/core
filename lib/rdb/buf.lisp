@@ -13,8 +13,32 @@
 
 ;; Timestamps are optional, always buffer-streams.
 
-;; AO <2026-08-15 Sat> Only supports plain ROCKSDB. It is unknown what the
-;; impact of grabbing the base-db is.
+;; SLICES are for write ops and PINNABLESLICES are for read ops.
+
+;; RocksDB Slices are returned by value by the ROCKSDB-ITER-*-SLICE and
+;; ROCKSDB-BATCHED-*-SLICE functions.
+
+;; There are also 2 primary versions of PinnableSlices for various
+;; operations. V1 is ROCKSDB-PINNABLESLICE and V2 is ROCKSDB-PINNABLE-HANDLE
+;; which is specialized to zero-copy Get variants.
+
+;; The former is the most common and supports a third batched structure
+;; ROCKSDB-PINNABLE-MULTI-GET which is a single owner for all pinned values
+;; and error messages returned by a multi-get operation.
+
+;; The functions in this section use the BUFFER-STREAM protocol from the IO
+;; system and are used to implement the RocksDB backend for the STORE
+;; protocol.
+
+;; The BUFFER slot of every BUFFER-STREAM is a SAP which is filled with a key
+;; value before being sent to RocksDB, and set to the corresponding buffer
+;; when retrieving a value for decoding.
+
+;; AO <2026-08-11 Tue> we are targeting TransactionDB with a fixed-prefix.
+
+;; We currently don't support passing intermediate buffers (for value
+;; encoding), but will likely need to add those. Trivial to implement with the
+;; macros.
 
 ;;; Code:
 (in-package :rdb)
@@ -85,7 +109,7 @@ Does not support direct timestamps."
        (if cf
            (rocksdb-get-into-buffer-cf db opts cf %key %ksize %val %vlen e)
            (rocksdb-get-into-buffer db opts %key %ksize %val %vlen e))
-       (return-from db-get-buf vbuf)) ;; check that this value is updated..
+       (return-from rdb-get-buf vbuf)) ; check that this value is updated..
       (resize-buffer-stream vbuf %vlen))))
 
 (defun rdb-get (db kbuf &key (opts *default-rocksdb-readoptions*) cf)
@@ -133,11 +157,18 @@ Does not support direct timestamps."
 (define-db-surrogate db-put rdb-put trdb-put)
 
 ;; the following two functions are restricted to a SINGLE column family
-(defun rdb-multi-get-batch (db kbufs &key (opts *default-rocksdb-readoptions*) cf sorted)
-  "Get a list of keys from DB using the batched/pinned RocksDB functions.")
+(defun rdb-multi-get-batch (db keys klen &key (opts *default-rocksdb-readoptions*) cf sorted)
+  "Get a list of keys from DB using the batched/pinned RocksDB functions. Unlike
+most other functions KEYS is assumed to be an alien (* ROCKSDB-SLICE)."
+  (rocksdb-batched-multi-get-pinned-cf db opts cf klen keys sorted)
+  keys)
 
-(defun rdb-multi-get-slice (db kbufs &key (opts *default-rocksdb-readoptions*) cf sorted)
-  "Get a list of keys from DB using the slice RocksDB function.")
+(defun rdb-multi-get-slice (db keys klen &key (opts *default-rocksdb-readoptions*) cf sorted)
+  "Get a list of keys from DB using the slice RocksDB function. KEYS is assumed
+to be an alien (* ROCKSDB-SLICE)."
+  (with-val-bufs (klen e)
+    (rocksdb-batched-multi-get-cf-slice db opts cf klen keys %vals e sorted)
+    (values %vals e)))
 
 ;; generic multi-get functions
 (defun rdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs timestamps)
@@ -156,6 +187,8 @@ Does not support direct timestamps."
 (defun trdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs)
   (with-key-bufs (kbufs e)
     (rocksdb-transactiondb-multi-get-cf db opts cfs %klen %keys %ksizes %vals %vsizes e)))
+
+(define-db-surrogate db-multi-get rdb-multi-get trdb-multi-get)
 
 (defun rdb-merge (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf)
   (declare (buffer-stream kbuf vbuf))

@@ -54,10 +54,14 @@
 
 (defun get-base-db (db)
   (etypecase db
-    ((alien (* rocksdb)) db)
     ((alien (* rocksdb-transactiondb)) (rocksdb-transactiondb-get-base-db db))
     ((alien (* rocksdb-optimistictransactiondb)) (rocksdb-optimistictransactiondb-get-base-db db))))
 
+(defun list-column-families (path &optional (opts *default-rocksdb-options*))
+  (with-errptr* (e 'open-db-error :db path)
+    (multiple-value-bind (cfs cflen) (rocksdb-list-column-families opts (namestring path) e)
+      (loop for i below cflen collect (deref cfs i)))))
+        
 (defun %open-db (db-path &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'open-db-error :db db-path)
     (let* ((db-path (if (pathnamep db-path)

@@ -203,6 +203,12 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
                     (deref %ksizes i) (size k)))
      ,@body))
 
+(defmacro with-val-bufs ((length eptrs) &body body)
+  "binds %KLEN %KEYS %KSIZES %VALS %VSIZES. No errors."
+  `(with-alien ((%vals (* (* rocksdb-pinnableslice)) (make-alien (* rocksdb-pinnableslice) ,length))
+                (,eptrs (* c-string) (make-alien c-string ,length)))
+     ,@body))
+
 ;; (defmacro with-iter-buf ((iter eptr &key (error 'kv-error) cf db) &body body))
 
 ;;; sst

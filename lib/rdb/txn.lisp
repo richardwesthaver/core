@@ -2,29 +2,6 @@
 
 ;;; Commentary:
 
-;; SLICES are for write ops and PINNABLESLICES are for read ops.
-
-;; RocksDB Slices are returned by value by the ROCKSDB-ITER-*-SLICE and
-;; ROCKSDB-BATCHED-*-SLICE functions.
-
-;; There are also 2 primary versions of PinnableSlices for various
-;; operations. V1 is ROCKSDB-PINNABLESLICE and V2 is ROCKSDB-PINNABLE-HANDLE
-;; which is specialized to zero-copy Get variants.
-
-;; The former is the most common and supports a third batched structure
-;; ROCKSDB-PINNABLE-MULTI-GET which is a single owner for all pinned values
-;; and error messages returned by a multi-get operation.
-
-;; The functions in this section use the BUFFER-STREAM protocol from the IO
-;; system and are used to implement the RocksDB backend for the STORE
-;; protocol.
-
-;; The BUFFER slot of every BUFFER-STREAM is a SAP which is filled with a key
-;; value before being sent to RocksDB, and set to the corresponding buffer
-;; when retrieving a value for decoding.
-
-;; AO <2026-08-11 Tue> we are targeting TransactionDB with a fixed-prefix.
-
 ;; Indices are an important part of DB design and we implement them in a
 ;; similar way to MyRocks which leverages a prefix_extractor and a flat
 ;; single-table structure.
