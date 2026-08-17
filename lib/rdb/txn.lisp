@@ -19,10 +19,10 @@
   "Dynamic pointer to a ROCKSDB-TRANSACTION object.")
 
 (defmethods transaction 
-  (((self trdb) &key (write-opts *default-rocksdb-writeoptions*)
+  (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
                 name
                 (transaction *txn*)
-                (opts *default-rocksdb-transaction-options*))
+                (opts (default-rocksdb-transaction-options)))
    (unless-null-db () self
      (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts transaction)))
        (when name (%set-transaction-name obj name))
@@ -31,8 +31,8 @@
     &key
     name
     (transaction *txn*)
-    (opts *default-rocksdb-optimistictransaction-options*)
-    (write-opts *default-rocksdb-writeoptions*))
+    (opts (default-rocksdb-optimistictransaction-options))
+    (write-opts (default-rocksdb-writeoptions)))
    (unless-null-db () self
      (let ((obj (rocksdb-optimistictransaction-begin (db self) write-opts opts transaction)))
        (when name (%set-transaction-name obj name))

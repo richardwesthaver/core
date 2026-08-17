@@ -81,7 +81,7 @@ and size are pre-computed."
     (setf (size stream) size
           (buffer stream) data)))
 
-(defun rdb-key-may-exist (db kbuf &key (opts *default-rocksdb-readoptions*) timestamp cf)
+(defun rdb-key-may-exist (db kbuf &key (opts (default-rocksdb-readoptions)) timestamp cf)
   (declare (buffer-stream kbuf))
   (with-alien ((found boolean)
                (v (* unsigned-char))
@@ -99,7 +99,7 @@ and size are pre-computed."
      (not (zerop vlen))
      (%make-slice-stream v vlen))))
 
-(defun rdb-get-buf (db kbuf vbuf &key (opts *default-rocksdb-readoptions*) cf)
+(defun rdb-get-buf (db kbuf vbuf &key (opts (default-rocksdb-readoptions)) cf)
   "Get a key from DB using the buffered RocksDB functions.
 Does not support direct timestamps."
   (declare (buffer-stream kbuf vbuf))
@@ -112,7 +112,7 @@ Does not support direct timestamps."
        (return-from rdb-get-buf vbuf)) ; check that this value is updated..
       (resize-buffer-stream vbuf %vlen))))
 
-(defun rdb-get (db kbuf &key (opts *default-rocksdb-readoptions*) cf)
+(defun rdb-get (db kbuf &key (opts (default-rocksdb-readoptions)) cf)
   "Get a key from DB using the v2 zero-copy RocksDB functions if possible."
   (declare (buffer-stream kbuf))
   (with-key-buf (db kbuf e :cf cf)
@@ -123,7 +123,7 @@ Does not support direct timestamps."
       ;; not optimal..
       (%make-slice-stream data size))))
 
-(defun trdb-get (db kbuf &key (opts *default-rocksdb-readoptions*) cf)
+(defun trdb-get (db kbuf &key (opts (default-rocksdb-readoptions)) cf)
   (declare (buffer-stream kbuf))
   (with-key-buf (db kbuf e :cf cf)
     (with-pslice
@@ -135,7 +135,7 @@ Does not support direct timestamps."
 
 (define-db-surrogate db-get rdb-get trdb-get)
 
-(defun rdb-put (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf timestamp)
+(defun rdb-put (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf timestamp)
   (declare (buffer-stream kbuf vbuf))
   (with-kv-buf (db kbuf vbuf e :cf cf)
   (if timestamp
@@ -147,7 +147,7 @@ Does not support direct timestamps."
           (rocksdb-put-cf db opts cf %key %ksize %val %vsize e)
           (rocksdb-put db opts %key %ksize %val %vsize e)))))
 
-(defun trdb-put (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf)
+(defun trdb-put (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf)
   (declare (buffer-stream kbuf vbuf))
   (with-kv-buf (db kbuf vbuf e :cf cf)
     (if cf
@@ -157,13 +157,13 @@ Does not support direct timestamps."
 (define-db-surrogate db-put rdb-put trdb-put)
 
 ;; the following two functions are restricted to a SINGLE column family
-(defun rdb-multi-get-batch (db keys klen &key (opts *default-rocksdb-readoptions*) cf sorted)
+(defun rdb-multi-get-batch (db keys klen &key (opts (default-rocksdb-readoptions)) cf sorted)
   "Get a list of keys from DB using the batched/pinned RocksDB functions. Unlike
 most other functions KEYS is assumed to be an alien (* ROCKSDB-SLICE)."
   (rocksdb-batched-multi-get-pinned-cf db opts cf klen keys sorted)
   keys)
 
-(defun rdb-multi-get-slice (db keys klen &key (opts *default-rocksdb-readoptions*) cf sorted)
+(defun rdb-multi-get-slice (db keys klen &key (opts (default-rocksdb-readoptions)) cf sorted)
   "Get a list of keys from DB using the slice RocksDB function. KEYS is assumed
 to be an alien (* ROCKSDB-SLICE)."
   (with-val-bufs (klen e)
@@ -171,7 +171,7 @@ to be an alien (* ROCKSDB-SLICE)."
     (values %vals e)))
 
 ;; generic multi-get functions
-(defun rdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs timestamps)
+(defun rdb-multi-get (db kbufs &key (opts (default-rocksdb-readoptions)) cfs timestamps)
   (with-key-bufs (kbufs e)
     (if timestamps
         (with-ts-bufs timestamps
@@ -184,20 +184,20 @@ to be an alien (* ROCKSDB-SLICE)."
             (rocksdb-multi-get-cf db opts cfs %klen  %keys %ksizes %vals %vsizes e)
             (rocksdb-multi-get db opts %klen %keys %ksizes %vals %vsizes e)))))
 
-(defun trdb-multi-get (db kbufs &key (opts *default-rocksdb-readoptions*) cfs)
+(defun trdb-multi-get (db kbufs &key (opts (default-rocksdb-readoptions)) cfs)
   (with-key-bufs (kbufs e)
     (rocksdb-transactiondb-multi-get-cf db opts cfs %klen %keys %ksizes %vals %vsizes e)))
 
 (define-db-surrogate db-multi-get rdb-multi-get trdb-multi-get)
 
-(defun rdb-merge (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf)
+(defun rdb-merge (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf)
   (declare (buffer-stream kbuf vbuf))
   (with-kv-buf (db kbuf vbuf e :cf cf)
     (if cf
         (rocksdb-merge-cf db opts cf %key %ksize %val %vsize e)
         (rocksdb-merge db opts %key %ksize %val %vsize e))))
 
-(defun trdb-merge (db kbuf vbuf &key (opts *default-rocksdb-writeoptions*) cf)
+(defun trdb-merge (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf)
   (declare (buffer-stream kbuf vbuf))
   (with-kv-buf (db kbuf vbuf e :cf cf)
     (if cf
@@ -206,7 +206,7 @@ to be an alien (* ROCKSDB-SLICE)."
 
 (define-db-surrogate db-merge rdb-merge trdb-merge)
 
-(defun rdb-delete (db kbuf &key (opts *default-rocksdb-writeoptions*) cf timestamp)
+(defun rdb-delete (db kbuf &key (opts (default-rocksdb-writeoptions)) cf timestamp)
   "Delete a key from DB."
   (declare (buffer-stream kbuf))
   (with-key-buf (db kbuf e :cf cf)
@@ -219,7 +219,7 @@ to be an alien (* ROCKSDB-SLICE)."
           (rocksdb-delete-cf db opts cf %key %ksize e)
           (rocksdb-delete db opts %key %ksize e)))))
 
-(defun trdb-delete (db kbuf &key (opts *default-rocksdb-writeoptions*) cf)
+(defun trdb-delete (db kbuf &key (opts (default-rocksdb-writeoptions)) cf)
   (declare (buffer-stream kbuf))
   (with-key-buf (db kbuf e :cf cf)
     (if cf
@@ -228,7 +228,7 @@ to be an alien (* ROCKSDB-SLICE)."
 
 (define-db-surrogate db-delete rdb-delete trdb-delete)
 
-(defun rdb-single-delete (db kbuf &key (opts *default-rocksdb-writeoptions*) cf timestamp)
+(defun rdb-single-delete (db kbuf &key (opts (default-rocksdb-writeoptions)) cf timestamp)
   "Single Delete a key from DB."
   (declare (buffer-stream kbuf))
   (with-key-buf (db kbuf e :cf cf)
@@ -241,7 +241,7 @@ to be an alien (* ROCKSDB-SLICE)."
           (rocksdb-singledelete-cf db opts cf %key %ksize e)
           (rocksdb-singledelete db opts %key %ksize e)))))
 
-(defun rdb-delete-range (db sbuf ebuf &key (opts *default-rocksdb-writeoptions*) cf)
+(defun rdb-delete-range (db sbuf ebuf &key (opts (default-rocksdb-writeoptions)) cf)
   "Delete a range of keys from DB starting at SBUF and ending at EBUF."
   (declare (buffer-stream sbuf ebuf))
   (with-key-range (db sbuf ebuf e :cf cf)

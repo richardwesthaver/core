@@ -542,10 +542,10 @@ custom merge-operator which does nothing when merging with an existing key."
       (setf (transactiondb-options self) (rocksdb-transactiondb-options-destroy transactiondb-options)))))
 
 (defmethod get-value (elt (self rdb))
-  (%get-kv (db self) elt *default-rocksdb-readoptions*))
+  (%get-kv (db self) elt (default-rocksdb-readoptions)))
 
 (defmethod get-value (elt (self trdb))
-  (%transactiondb-get-kv (db self) elt *default-rocksdb-readoptions*))
+  (%transactiondb-get-kv (db self) elt (default-rocksdb-readoptions)))
 
 (defmethods put-key 
   (((self rdb) (key t) (val t) &key)

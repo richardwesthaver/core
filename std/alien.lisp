@@ -257,7 +257,7 @@ SB-ALIEN:LOAD-SHARED-OBJECT."
     (when (symbolp name)
       (setf name (symbol-name name)))
     `(progn
-       (defun ,fname (&optional save)
+       (defun ,fname (&optional (save t))
          (prog1 (sb-alien:load-shared-object (shared-object-name ,(or path (string-downcase name)) ,root) :dont-save (not save))
            (pushnew ,%name *features*)))
        (setf (gethash ,%name *alien-load-table*) (function ,fname)))))

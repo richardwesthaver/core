@@ -292,6 +292,7 @@
 (define-opt-accessor rocksdb-options max-bytes-for-level-base unsigned-long)
 (define-opt-accessor rocksdb-options max-bytes-for-level-multiplier double)
 (define-opt-accessor rocksdb-options memtable-op-scan-flush-trigger (unsigned 32))
+(define-opt-accessor rocksdb-options blob-file-writable-file-max-buffer-size (unsigned 64))
 ;; NOTE 2026-04-04: this option is incompatible with fifo-compaction
 (define-opt-accessor rocksdb-options open-files-async)
 (define-opt-accessor rocksdb-options read-triggered-compaction-threshold double)

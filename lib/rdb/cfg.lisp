@@ -15,6 +15,8 @@
 (in-package :rdb)
 
 ;;; Options
+#+nil (defvar *default-opt-table* (make-hash-table))
+
 (macrolet ((%defopt (name &optional set-only &rest default)
              (let ((%creator (symbolicate name '-create))
                    (%default (symbolicate 'default- name))
@@ -69,7 +71,7 @@ custom configuration." name)
                         (warn 'opt-handler-missing :message key)))
                     (defun (setf ,%opt) (val key opt)
                       (funcall (,(symbolicate name '-setter) key) opt val))
-                    (defparameter ,(symbolicate '*default- name '*) (,%default)))))))
+                    #+nil (setf (gethash ,(keywordicate name) *default-opt-table*) #',%default))))))
   (%defopt rocksdb-readoptions
            ("snapshot" "iterate-upper-bound" "iterate-lower-bound" "prefix-same-as-start"
             "ignore-range-deletions" "timestamp" "iter-start-ts")
@@ -81,6 +83,7 @@ custom configuration." name)
   (%defopt rocksdb-transaction-options
            ("set-snapshot" "deadlock-detect" "lock-timeout" "expiration" 
                            "deadlock-detect-depth" "max-write-batch-size" "skip-prepare")
+           ;; :skip-prepare t
            ;; :expiration 100000
            )
   (%defopt rocksdb-optimistictransaction-options
@@ -150,7 +153,7 @@ custom configuration." name)
   (:default-initargs
    :engine :rdb
    :schema (make-instance 'rdb-schema)
-   :options *default-rocksdb-options*))
+   :options (default-rocksdb-options)))
 
 (defmethod print-object ((self rdb-config) stream)
   (print-unreadable-object (self stream :type t)

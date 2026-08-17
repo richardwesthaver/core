@@ -217,7 +217,7 @@ debug or die."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) t)) objects))
 
 (defun save-shared-objects (objects)
-  "Set the DONT-SAVE slot of OBJECTS to T."
+  "Set the DONT-SAVE slot of OBJECTS to NIL."
   (mapcar (lambda (obj) (setf (sb-alien::shared-object-dont-save obj) nil)) objects))
 
 (defun save-lisp (name &key (package pkg:*default-package*) compression callable-exports executable (toplevel #'sb-impl::toplevel-init) forget (save-runtime-options :accept-runtime-options) root-structures (purify t))

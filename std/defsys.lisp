@@ -1534,9 +1534,9 @@ an image. The PROVIDE slot of SELF is scanned for relevant modules given supplie
       (if-let ((bin (and bin (find-module (name self) :bin))))
         (funcall (the function bin))
         (apply 'save-system self args))))
-  (:method ((self symbol) &key)
+  (:method ((self symbol) &rest args)
     (let ((sys (find-system self :default :error)))
-      (make-system sys))))
+      (apply 'make-system sys args))))
 
 (defgeneric fetch-system (self &key &allow-other-keys)
   (:documentation "Fetch a system from a remote location."))

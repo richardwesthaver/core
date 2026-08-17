@@ -12,7 +12,7 @@
 ;;; Vars
 (defvar *db* nil)
 (defvar *database-backend* nil)
-(defparameter *save-database-backend-on-load* nil)
+(defparameter *save-database-backend-on-load* t)
 ;;; Backends
 (defvar *database-backend-table* (make-hash-table)
   "Hash Table where keys are a database backend designator and values

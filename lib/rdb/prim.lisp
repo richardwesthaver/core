@@ -4,7 +4,7 @@
 
 ;;; Code:
 (in-package :rdb)
-
+(load-rocksdb)
 ;;; Callbacks
 ;;;; Merge Ops
 (defun create-index-merge-op ()
@@ -62,10 +62,11 @@
     ((alien (* rocksdb-transactiondb)) (rocksdb-transactiondb-get-base-db db))
     ((alien (* rocksdb-optimistictransactiondb)) (rocksdb-optimistictransactiondb-get-base-db db))))
 
-(defun list-column-families (path &optional (opts *default-rocksdb-options*))
+(defun list-column-families (path &optional (opts (default-rocksdb-options)))
   (with-errptr* (e 'open-db-error :db path)
     (multiple-value-bind (cfs cflen) (rocksdb-list-column-families opts (namestring path) e)
-      (loop for i below cflen collect (deref cfs i)))))
+      (prog1 (loop for i below cflen collect (deref cfs i))
+        (rocksdb-list-column-families-destroy cfs cflen)))))
         
 (defun %open-db (db-path &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'open-db-error :db db-path)
