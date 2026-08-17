@@ -28,6 +28,11 @@
 ;;;; Prefix Ops
 (defun create-fixed-prefix-op (n)
   (rocksdb-slicetransform-create-fixed-prefix n))
+;;;; Comparators
+(defun lisp-comparator ()
+  "Return a ROCKSDB-COMPARATOR pointer which can be set as the default for a DB or CF."
+  ;; TODO 2026-08-16: 
+)
 
 ;;;; Logger
 (defun create-default-logger-callback (&optional (level 0))
@@ -78,8 +83,7 @@
 
 (defun %destroy-db (path &optional (opt (rocksdb-options-create)))
   (with-errptr* (err 'destroy-db-error :db path)
-    (rocksdb-destroy-db opt (namestring (probe-directory path)) err)
-    (rocksdb-options-destroy opt)))
+    (rocksdb-destroy-db opt (namestring (probe-directory path)) err)))
 
 (defun %get-metadata (db &optional cf)
   (if cf
