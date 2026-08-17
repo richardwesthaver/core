@@ -4,6 +4,8 @@
 
 ;;; Code:
 (in-package :emacs)
+(defconstant +emacs-value-frame-size+ 512)
+(define-alien-variable ("plugin_is_GPL_compatible" %plugin-is-gpl-compatible) int)
 
 (define-alien-enum (emacs-funcall-exit)
   :return 0

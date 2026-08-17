@@ -8,6 +8,4 @@
   (:export :emacs-function :emacs-value :emacs-env 
    :emacs-runtime :emacs-finalizer
    :emacs-env-32 :+emacs-value-frame-size+
-   :canvas))
-(in-package :emacs)
-(defconstant +emacs-value-frame-size+ 512)
+   :canvas :emacs-major-version))
