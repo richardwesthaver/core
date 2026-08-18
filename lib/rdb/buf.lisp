@@ -42,44 +42,6 @@
 
 ;;; Code:
 (in-package :rdb)
-;;; IO
-(definline %make-slice (data size)
-  (with-alien ((slice rocksdb-slice))
-    (setf (slot slice 'data) data
-          (slot slice 'size) size)
-    slice))
-
-(defun make-slice (stream)
-  (%make-slice (buffer stream) (size stream)))
-
-(definline %make-slice-stream (ptr len)
-  "Function used to destructure a (pinable) slice into a BUFFER-STREAM. The length
-and size are pre-computed."
-  (declare (fixnum len) ((alien (* unsigned-char)) ptr))
-  (make-instance (buffer-stream len) :buffer ptr :size len))
-
-(defun make-pslice-stream (pslice)
-  (with-pslice pslice
-    (%make-slice-stream data size)))
-
-(defun make-slice-stream (slice)
-  (with-slice slice
-    (%make-slice-stream data size)))
-
-(defun slice-stream (slice stream)
-  (with-slice slice
-    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
-    (setf (size stream) size
-          (buffer stream) data)))
-
-(defmacro set-slice-streams (&body pairs)
-  `(values ,@(loop for (k v) on pairs by #'cddr collect `(slice-stream ,v ,k))))
-
-(defun pslice-stream (pslice stream)
-  (with-pslice pslice
-    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
-    (setf (size stream) size
-          (buffer stream) data)))
 
 (defun rdb-key-may-exist (db kbuf &key (opts (default-rocksdb-readoptions)) timestamp cf)
   (declare (buffer-stream kbuf))

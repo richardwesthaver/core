@@ -5,6 +5,8 @@
 ;;; Code:
 (in-package :rdb)
 
+(defvar *txn* nil "Dynamic pointer to a ROCKSDB-TRANSACTION object.")
+
 (eval-always
   (deferror simple-rdb-error (simple-error db-condition)
     ()
@@ -99,5 +101,5 @@
   (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))
 
 (define-condition rdb-transaction-error (rdb-alien-error transaction-error)
-  ((txn :initarg :txn :reader error-txn))
+  ((txn :initarg :txn :initform *txn* :reader error-txn))
   (:documentation "Error signaled in the context of a Transaction."))

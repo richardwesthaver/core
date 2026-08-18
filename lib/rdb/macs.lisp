@@ -11,6 +11,16 @@ based on the type of the car of ARGS."
        ((alien (* rocksdb)) (apply #',rdb db args))
        ((alien (* rocksdb-transactiondb)) (apply #',trdb args)))))
 
+;;; Base DB
+(defmacro with-base-db (base-db src-db &body body)
+  "Assign a symbol designated by BASE-DB to the associate base-db type of SRC-DB,
+which should be a pointer to ROCKSDB-TRANSACTIONDB or
+ROCKSDB-OPTIMISTICTRANSACTIONDB."
+  (with-gensyms (destroy)
+  `(multiple-value-bind (,base-db ,destroy) (get-base-db ,src-db)
+     (unwind-protect (progn ,@body)
+       (funcall ,destroy ,base-db)))))
+
 ;;; error handling
 (defmacro with-errptr* ((e err &rest params) &body body)
   "Bind E to a C pointer which can be used by alien functions, and if an error is
@@ -32,7 +42,7 @@ ERR with initargs PARAMS for the duration of BODY."
   `(let ((,db-var (%open-db ,db-path ,opt)))
      (unwind-protect (progn ,@body)
        (rocksdb-close ,db-var)
-       (with-errptr* (err 'rocksdb-alien-error)
+       (with-errptr* (err 'open-db-error)
          (rocksdb-options-destroy ,opt)))))
 
 (defmacro with-rdb ((db-var db &key open close) &body body)
@@ -63,7 +73,6 @@ ERR with initargs PARAMS for the duration of BODY."
     `(loop for ,%cf across ,cfs
            do (with-column (,cf ,%cf) ,@body))))
 
-;; TODO: sb-ext:with-current-source-form ?
 ;;; backup
 (defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
                                        &body body)
@@ -249,13 +258,13 @@ values."
   "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnableslice-value ,slice)
-     (prog1 (progn ,@body)
+     (unwind-protect (progn ,@body)
        (rocksdb::rocksdb-pinnableslice-destroy ,slice))))
 
 (defmacro with-phandle (handle &body body)
   "Eval BODY with the pinnable-handle pointer HANDLE destructured into DATA and
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnable-handle-get-value ,handle)
-     (prog1 (progn ,@body)
+     (unwind-protect (progn ,@body)
        (rocksdb::rocksdb-pinnable-handle-destroy ,handle))))
 

@@ -108,6 +108,7 @@
    (:file "buf")
    (:file "schema")
    (:file "db")
+   (:file "iter")
    (:file "txn")
    (:file "log")
    (:file "query")

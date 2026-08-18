@@ -15,9 +15,39 @@
 ;;; Code:
 (in-package :rdb)
 
-(defvar *txn* nil
-  "Dynamic pointer to a ROCKSDB-TRANSACTION object.")
+;;; Primitives
+(defun %transaction-wbwi (self) (rocksdb-transaction-get-writebach-wi self))
 
+(defun %commit-transaction (txn)
+  (with-errptr* (e 'rdb-alien-error)
+    (rocksdb-transaction-commit txn e)))
+
+(defun %set-savepoint (txn)
+  (rocksdb-transaction-set-savepoint txn))
+
+(defun %rollback-transaction (txn &optional savepoint)
+  "Rollback a raw transaction TXN when SAVEPOINT is non-nil only rollback to last
+savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
+  (with-errptr* (e 'rdb-alien-error)
+    (if savepoint
+        (rocksdb-transaction-rollback-to-savepoint txn e)
+        (rocksdb-transaction-rollback txn e))))
+
+(defun %prepare-transaction (txn)
+  (with-errptr* (e 'rdb-transaction-error :txn txn)
+    (rocksdb-transaction-prepare txn e)))
+
+(defun %abort-transaction (self &optional savepoint)
+  (%rollback-transaction self savepoint)
+  (rocksdb-transaction-destroy self))
+
+(defun %get-prepared-transactions (txn-db)
+  "Return an array of prepared ROCKSDB-TRANSACTION pointers from this
+transaction-db."
+  (with-errptr* (e 'rdb-alien-error :db txn-db)
+    (rocksdb-transactiondb-get-prepared-transactions txn-db)))
+
+;;; Generators
 (defmethods transaction 
   (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
                 name
@@ -79,7 +109,6 @@ decoding the value is returned or NIL if nothing was found."
            (buffer kbuf)
            (size kbuf)
            e))
-      (declare (fixnum size))
       (when (> size (buffer-stream-length vbuf))
         (resize-buffer-stream-no-copy vbuf size))
       (setf (size vbuf) size
@@ -128,51 +157,9 @@ found."
       (rocksdb-transaction-create-iterator-cf transaction opts cf)
       (rocksdb-transaction-create-iterator transaction opts)))
 
-(deftype rocksdb-iterator-opcode () '(member :prev :first :next :last :for :for-prev))
-
-(defun iter-seek (op iter &optional kbuf)
-  "Set the position of an existing iterator.
-
-Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
-  (declare ((alien (* rocksdb-iterator)) iter)
-           (rocksdb-iterator-opcode op))
-  (case op
-    (:next (rocksdb-iter-next iter))
-    (:prev (rocksdb-iter-prev iter))
-    (:last (rocksdb-iter-seek-to-last iter))
-    (:first (rocksdb-iter-seek-to-first iter))
-    (:for (rocksdb-iter-seek iter (buffer kbuf) (size kbuf)))
-    (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf)))))
-
-;; get pinned from iterator, optional timestamp third value.
-(defun iter-get (iter kbuf vbuf
-                     &key timestamp)
-  "Move a cursor to a key / value pair, returning the key /
-value pair found.  Supports get-both and get-both-range."
-  (declare ((alien (* rocksdb-iterator)) iter)
-           (buffer-stream kbuf vbuf)
-           ((or null buffer-stream) timestamp))
-  (set-slice-streams 
-   kbuf (rocksdb-iter-key-slice iter)
-   vbuf (rocksdb-iter-value-slice iter))
-  (when timestamp (slice-stream (rocksdb-iter-timestamp-slice iter) timestamp))
-  (values kbuf vbuf timestamp))
-
-(defun iter-move (op iter kbuf vbuf &key timestamp)
-  (txn-iter-seek op iter kbuf)
-  (txn-iter-get iter kbuf vbuf :timestamp timestamp))
-
-(defun txn-iter-delete (iter &optional cf (opts (default-rocksdb-writeoptions)) (db (db *db*)))
-  (declare ((alien (* rocksdb-iterator)) iter))
-  (with-errptr e
-    (multiple-value-bind (key klen) (rocksdb-iter-key iter)
-      (if cf
-          (rocksdb-transactiondb-delete-cf db opts cf key klen e)
-          (rocksdb-transactiondb-delete db opts key klen e)))))
-
 (defun txn-iter-set (iter kbuf vbuf &key (transaction *txn*) cf)
   "Set a key and move an iterator to its position within a
-transaction. Return (values key value &optional timestamp."
+transaction. Return (values key value)."
   (declare ((alien (* rocksdb-iterator)) iter)
            (buffer-stream kbuf vbuf)
            ((or null (alien (* rocksdb-column-family-handle))) cf))

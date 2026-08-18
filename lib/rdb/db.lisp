@@ -175,10 +175,15 @@ extractor."
   (when columns 
     (close-columns self)
     (setf (columns self) nil))
+  (rocksdb-options-destroy (options self))
   (setf (options self) opts)
   self)
 
 (defun open-all-columns (self)
+  "Open all columns defined in an RDB database.
+This function should be used at most once for any given slot value of COLUMNS
+to create them. It is an error to call this function with pre-existing
+columns."
   (let ((names) (opts))
     (loop for c across (columns self)
           do (push (name c) names)
@@ -200,9 +205,9 @@ extractor."
         self))))
 
 (defmethod find-column ((cf string) (self rdb) &key (opts (default-rocksdb-options)))
-  (if *default-column-family-name*
-      (find cf (columns self) :key 'name :test 'string-equal)
-      (make-column self :name cf :options opts)))
+  (or
+   (find cf (columns self) :key 'name :test 'string-equal)
+   (make-column self :name cf :options opts)))
 
 (defun open-with-columns (db &rest names)
   (if db
@@ -235,11 +240,12 @@ extractor."
         do (close-db cf)))
 
 (defmacro unless-key-may-exist-p ((key length db &key cf (opts (default-rocksdb-readoptions)) timestamp) &body body)
-  "If KEY of given LENGTH exists in DB (or CF) do nothing, else eval forms in BODY.
+  "If KEY of given LENGTH _might_ exist (probabilistic) in DB (or CF) do nothing,
+else eval forms in BODY.
 
-This macro is used by the [[id:OBJ/DB:INSERT-KEY][insert-key]] method on RDB instances to ensure a key
-does not exist before using [[id:OBJ/DB:PUT-KEY][put-key]]. An alternative approach would be to use a
-custom merge-operator which does nothing when merging with an existing key."
+This does not necessarily guarantee KEY does not exist before using
+[[id:OBJ/DB:PUT-KEY][put-key]]. An alternative approach would be to use a custom merge-operator which
+does nothing when merging with an existing key."
   (with-gensyms (v vlen)
     `(multiple-value-bind (,v ,vlen) ,(if cf 
                                           `(%cf-key-may-exist-p ,db ,cf ,key ,length ,opts ,timestamp)
@@ -302,22 +308,6 @@ custom merge-operator which does nothing when merging with an existing key."
   (((self rdb) key (val string) &key column)
    (insert-key self key (string-to-octets val) :column column)))
 
-(defmethod iter ((self rdb) &key column columns (opts (rocksdb-readoptions-create)))
-  (typecase column
-    (column-family (rocksdb-create-iterator-cf (db self) opts (db column)))
-    (null (if columns
-              (%create-iterators (db self) (options self) (mapcar 'db columns))
-              (rocksdb-create-iterator (db self) opts)))
-    (symbol (rocksdb-create-iterator-cf (db self) opts (db (find-column column self))))
-    (simple-string (rocksdb-create-iterator-cf (db self) opts (db (find-column column self))))))
-
-(defmethod iter ((self trdb) &key column (opts (rocksdb-readoptions-create)))
-  (typecase column
-    (column-family (rocksdb-transactiondb-create-iterator-cf (db self) opts (db column)))
-    (null (rocksdb-transactiondb-create-iterator (db self) opts))
-    (symbol (rocksdb-transactiondb-create-iterator-cf (db self) opts (db (find-column column self))))
-    (simple-string (rocksdb-transactiondb-create-iterator-cf (db self) opts (db (find-column column self))))))
-
 (defmethods get-val 
   (((self rdb) (key string) &key (opts (rocksdb-readoptions-create)) column pin)
    (unless-null-db () self
@@ -368,9 +358,9 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethod find-column ((col column-family) (self simple-rdb) &key)
   (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
 
-(defmethod (setf find-column) ((new column-family) (cf string) (self simple-rdb) &key)
-  "Find and replace a column by name."
-  (nsubstitute new (find-column cf self) (columns self)))
+;; (defmethod (setf find-column) ((new column-family) (cf string) (self simple-rdb) &key)
+;;   "Find and replace a column by name."
+;;   (nsubstitute new (find-column cf self) (columns self)))
 
 (defaccessor name ((self rdb)) (path self))
 (defaccessor sap ((self rdb)) (db self))
@@ -398,16 +388,32 @@ custom merge-operator which does nothing when merging with an existing key."
 (defmethods make-db 
   (((engine (eql :rdb)) &rest initargs)
    (declare (ignore engine))
-   (apply 'make-instance 'rdb initargs))
+   (let ((open (getf initargs :open)))
+     (remf initargs :open)
+     (let ((db (apply 'make-instance 'rdb initargs)))
+       (when open (open-db db))
+       db)))
   (((engine (eql :simple-rdb)) &rest initargs)
    (declare (ignore engine))
-   (apply 'make-instance 'simple-rdb initargs))
+   (let ((open (getf initargs :open)))
+     (remf initargs :open)
+     (let ((db (apply 'make-instance 'simple-rdb initargs)))
+       (when open (open-db db))
+       db)))
   (((engine (eql :trdb)) &rest initargs)
-   (apply 'make-instance 'trdb initargs))
+   (declare (ignore engine))
+   (let ((open (getf initargs :open)))
+     (remf initargs :open)
+     (let ((db (apply 'make-instance 'trdb initargs)))
+       (when open (open-db db))
+       db)))
   (((engine (eql :otrdb)) &rest initargs)
-   (apply 'make-instance 'otrdb initargs))
-  (((engine (eql :rdb-backup)) &key path (db *db*))
-   (setf (db-backup db) (backup db :path path))))
+   (declare (ignore engine))
+   (let ((open (getf initargs :open)))
+     (remf initargs :open)
+     (let ((db (apply 'make-instance 'otrdb initargs)))
+       (when open (open-db db))
+       db))))
 
 (defmethod derive-schema ((self rdb))
   (apply 'make-schema

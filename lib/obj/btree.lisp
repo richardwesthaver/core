@@ -24,12 +24,13 @@
 
 (defgeneric make-btree (self)
   (:documentation 
-   "Construct a btree of the appropriate type corresponding to the current *STORE*."))
+   "Construct a btree of the appropriate type corresponding to the current
+*STORE*."))
 
 (defclass btree (stored-collection) ()
   (:documentation
-  "A map-like interface to a BTree object, which stores things in a semi-ordered
-fashion."))
+  "A map-like interface to a BTree object, which stores items in a semi-ordered
+manner."))
 
 (defmethod make-btree (self)
   (make-instance 'btree :store self))
@@ -41,7 +42,7 @@ fashion."))
 
 (defgeneric drop-btree (bt)
   (:documentation "Delete all key-value pairs from the btree and
-   render it an invalid object in the data store"))
+render it an invalid object in the data store"))
 
 (defgeneric make-indexed-btree (store)
   (:documentation 
@@ -54,8 +55,8 @@ fashion."))
   (:documentation 
    "Add a secondary index.
 The indices are stored in an eq hash-table, so the index-name should be a
-symbol. key-form should be a symbol naming a function, a function call form e.g.
-'(create-index 3) or a lambda expression -- actual functions aren't
+symbol. key-form should be a symbol naming a function, a function call form
+e.g.  '(create-index 3) or a lambda expression -- actual functions aren't
 supported. Lambda expresssions are converted to functions through compile and
 function call forms are transformed applying the first element of the list to
 the rest of the list. The function should take 3 arguments: the secondary DB,

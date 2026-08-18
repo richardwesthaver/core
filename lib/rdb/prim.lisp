@@ -7,7 +7,7 @@
 (load-rocksdb)
 ;;; Callbacks
 ;;;; Merge Ops
-(defun create-index-merge-op ()
+(defun index-merge-op ()
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
                (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-index-full-merge)))
@@ -16,7 +16,7 @@
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-index-merge-name))))
     (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
 
-(defun create-concat-merge-op ()
+(defun concat-merge-op ()
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
                (full-merge (* rocksdb-full-merge-function) (alien-sap (alien-callable-function 'rocksdb-concat-full-merge)))
@@ -25,14 +25,21 @@
                (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'rocksdb-concat-merge-name))))
     (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
 
-;;;; Prefix Ops
-(defun create-fixed-prefix-op (n)
-  (rocksdb-slicetransform-create-fixed-prefix n))
+(defun fixed-prefix-op (n) (rocksdb-slicetransform-create-fixed-prefix n))
+  
 ;;;; Comparators
+(define-alien-callable lisp-comparator-name c-string () "lisp-comparator")
+
 (defun lisp-comparator ()
-  "Return a ROCKSDB-COMPARATOR pointer which can be set as the default for a DB or CF."
+  "Return a ROCKSDB-COMPARATOR pointer which can be set as the default for a DB or CF.
+This comparator is used when tagged Lisp values are used as keys
+themselves. Does not support timestamps."
   ;; TODO 2026-08-16: 
-)
+  (with-alien ((state (* t))
+               (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
+               (name (* rocksdb-name-function) (alien-sap (alien-callable-function 'lisp-comparator-name)))
+               (compare (* rocksdb-compare-function)))
+    (rocksdb-comparator-create state destructor compare name)))
 
 ;;;; Logger
 (defun create-default-logger-callback (&optional (level 0))
@@ -52,15 +59,55 @@
     (rocksdb-options-statistics-get-histogram-data opt htype hist)
     hist))
 
+;;; IO
+(definline %make-slice (data size)
+  (with-alien ((slice rocksdb-slice))
+    (setf (slot slice 'data) data
+          (slot slice 'size) size)
+    slice))
+
+(defun make-slice (stream)
+  (%make-slice (buffer stream) (size stream)))
+
+(definline %make-slice-stream (ptr len)
+  "Function used to destructure a (pinable) slice into a BUFFER-STREAM. The length
+and size are pre-computed."
+  (declare (fixnum len) ((alien (* unsigned-char)) ptr))
+  (make-instance (buffer-stream len) :buffer ptr :size len))
+
+(defun make-pslice-stream (pslice)
+  (with-pslice pslice
+    (%make-slice-stream data size)))
+
+(defun make-slice-stream (slice)
+  (with-slice slice
+    (%make-slice-stream data size)))
+
+(defun slice-stream (slice stream)
+  (with-slice slice
+    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
+    (setf (size stream) size
+          (buffer stream) data)))
+
+(defmacro set-slice-streams (&body pairs)
+  `(values ,@(loop for (k v) on pairs by #'cddr collect `(slice-stream ,v ,k))))
+
+(defun pslice-stream (pslice stream)
+  (with-pslice pslice
+    (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
+    (setf (size stream) size
+          (buffer stream) data)))
+
 ;;; DB
 (deftype db-identity () 
   "A RocksDB 'db-identity' is a 36-byte sequence which uniquely identifies a DB instance."
 `(octet-vector 36))
 
 (defun get-base-db (db)
+  "Return (values base-db close-function)."
   (etypecase db
-    ((alien (* rocksdb-transactiondb)) (rocksdb-transactiondb-get-base-db db))
-    ((alien (* rocksdb-optimistictransactiondb)) (rocksdb-optimistictransactiondb-get-base-db db))))
+    ((alien (* rocksdb-transactiondb)) (values (rocksdb-transactiondb-get-base-db db) #'rocksdb-transactiondb-close-base-db))
+    ((alien (* rocksdb-optimistictransactiondb)) (values (rocksdb-optimistictransactiondb-get-base-db db) #'rocksdb-optimistictransactiondb-close-base-db))))
 
 (defun list-column-families (path &optional (opts (default-rocksdb-options)))
   (with-errptr* (e 'open-db-error :db path)
@@ -146,42 +193,6 @@
 (defun %cf-id (cf-handle)
   (rocksdb-column-family-handle-get-id cf-handle))
 
-;;; Iterators
-(defun %create-iter (db &optional (opt (rocksdb-readoptions-create)))
-  (rocksdb-create-iterator db opt))
-
-(defun %create-cf-iter (db cf &optional (opt (rocksdb-readoptions-create)))
-  (rocksdb-create-iterator-cf db opt cf))
-
-(defun %transaction-wbwi (self)
-  (rocksdb-transaction-get-writebach-wi self))
-
-(defun %transaction-create-iter (txn &optional (opts (rocksdb-readoptions-create)))
-  (rocksdb-transaction-create-iterator txn opts))
-
-(defun %transaction-create-iter-cf (txn cf &optional (opts (rocksdb-readoptions-create)))
-  (rocksdb-transaction-create-iterator-cf txn opts cf))
-
-(defun %transactiondb-create-iter (txndb &optional (opts (rocksdb-readoptions-create)))
-  (rocksdb-transactiondb-create-iterator txndb opts))
-
-(defun %transactiondb-create-iter-cf (txndb cf &optional (opts (rocksdb-readoptions-create)))
-  (rocksdb-transactiondb-create-iterator-cf txndb opts cf))
-
-(defun %create-iterators (db opts columns)
-  (with-alien ((iters (* (* rocksdb-iterator))
-                      (make-alien (* rocksdb-iterator) (length columns)))
-               (cfs (* (* rocksdb-column-family-handle)) 
-                    (make-alien (* rocksdb-column-family-handle) (length columns))))
-    (with-errptr e
-      (rocksdb-create-iterators db opts cfs iters e))))
-
-(defun %reset-iter (iter)
-  (with-errptr e (rocksdb-iter-refresh iter e)))
-
-(defun %destroy-iter (iter)
-  (rocksdb-iter-destroy iter))
-
 ;;; Backup DB
 (defun %open-backup-engine (opts path)
   (with-errptr* (err 'open-db-error :db path)
@@ -266,7 +277,7 @@
   (with-errptr* (err 'rdb-alien-error)
     (rocksdb::rocksdb-sstfilewriter-file-size writer err)))
 
-;;; Transactions
+;;; TransactionDBs
 (defun %open-transactiondb (opts topts name)
   (with-errptr* (e 'open-db-error :db name)
     (rocksdb-transactiondb-open opts topts name e)))
@@ -274,40 +285,6 @@
 (defun %open-optimistictransactiondb (opts name)
   (with-errptr* (e 'open-db-error :db name)
     (rocksdb-optimistictransactiondb-open opts name e)))
-
-(defun %commit-transaction (txn)
-  (with-errptr* (e 'rdb-alien-error)
-    (rocksdb-transaction-commit txn e)))
-
-(defun %set-savepoint (txn)
-  (rocksdb-transaction-set-savepoint txn))
-
-(defun %rollback-transaction (txn &optional savepoint)
-  "Rollback a raw transaction TXN when SAVEPOINT is non-nil only rollback to last
-savepoint created with ROCKSDB-TRANSACTION-SET-SAVEPOINT."
-  (with-errptr* (e 'rdb-alien-error)
-    (if savepoint
-        (rocksdb-transaction-rollback-to-savepoint txn e)
-        (rocksdb-transaction-rollback txn e))))
-
-(defun %prepare-transaction (txn)
-  (with-errptr* (e 'rdb-transaction-error :txn txn)
-    (rocksdb-transaction-prepare txn e)))
-
-(defun %transaction-iterator (self &key column (opts (rocksdb-readoptions-create)))
-  (if column
-      (%transaction-create-iter-cf self column opts)
-      (%transaction-create-iter self opts)))
-
-(defun %abort-transaction (self &optional savepoint)
-  (%rollback-transaction self savepoint)
-  (rocksdb-transaction-destroy self))
-
-(defun %get-prepared-transactions (txn-db)
-  "Return an array of prepared ROCKSDB-TRANSACTION pointers from this
-transaction-db."
-  (with-errptr* (e 'rdb-alien-error :db txn-db)
-    (rocksdb-transactiondb-get-prepared-transactions txn-db)))
 
 ;;; Checkpoints
 (defun %make-checkpoint (db)
@@ -347,17 +324,8 @@ transaction-db."
 (defun %create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))
   (rocksdb-writebatch-wi-create reserved-bytes overwrite-keys))
 (defun %wbwi-count (self) (rocksdb-writebatch-wi-count self))
-(defun %wbwi-clear (wbwi)
-  (rocksdb-writebatch-wi-clear wbwi))
-(defun %wbwi-save (self)
-  (rocksdb-writebatch-wi-set-save-point self))
-(defun %writebatch-iter (self)
-  (rocksdb-writebatch-iterate self nil nil (alien-callable-function 'rocksdb-delete-value)))
-(defun %wbwi-iter (wbwi &key state
-                             put
-                             (deleted (sb-alien:alien-callable-function 'rocksdb-delete-value)))
-  (rocksdb-writebatch-wi-iterate wbwi state put deleted))
-(defun %destroy-wbwi (self)
-  (rocksdb-writebatch-wi-destroy self))
+(defun %wbwi-clear (wbwi) (rocksdb-writebatch-wi-clear wbwi))
+(defun %wbwi-save (self) (rocksdb-writebatch-wi-set-save-point self))
+(defun %destroy-wbwi (self) (rocksdb-writebatch-wi-destroy self))
 (defun %wbwi-write (db batch &optional (opts (rocksdb-readoptions-create)))
   (with-errptr e (rocksdb-write-writebatch-wi db opts batch e)))
