@@ -5,24 +5,6 @@
 ;;; Code:
 (in-package :rdb)
 
-;;; Backend
-(defvar *rocksdb-backend-options* 
-  '(columns temp path (open . t)
-    destroy (close . t) 
-    sap merge-op comparator prefix-op logger event-listener))
-
-;; TODO 2024-12-31: may want to have a :STORE backend-option to allow a fresh
-;; db to be backlined to a parent store instance.
-(defvar *rdb-backend-options* (append *rocksdb-backend-options* '(backup secondary snapshots checkpoints)))
-
-(defvar *default-column-family-name* "default")
-
-(set-database-backend :rocksdb *rocksdb-backend-options*
-                      (lambda () (load-rocksdb *save-database-backend-on-load*)))
-
-(set-database-backend :rdb *rdb-backend-options*
-                      (lambda () (db::%load-database-backend :rocksdb)))
-
 (defmethod make-db ((engine (eql :rocksdb)) 
                     &key
                     merge-op
@@ -88,26 +70,6 @@ OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
 (defmethod load-opts ((db rdb) &key)
   (load-db-opts db))
 
-(defmethods set-database-backend-option
-  (((db rdb) (key (eql :close)) (val (eql :auto)))
-   "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
-   (sb-ext:finalize db (lambda () (shutdown-db db))))
-  (((db rdb) (key (eql :merge-op)) val)
-   "Assign a MERGE-OP to this database."
-   (setf (opt db :merge-operator) val))
-  (((db rdb) (key (eql :comparator)) val)
-   "Assign a custom COMPARATOR to this database."
-   (setf (opt db :comparator) val))
-  (((db rdb) (key (eql :prefix-op)) val)
-   "Assign a custom SLICETRANSFORM to this database to be used as a prefix
-extractor."
-   (setf (opt db :prefix-extractor) val))
-  (((db rdb) (key (eql :event-listener)) val)
-   "Assign an EVENT-LISTENER to this database."
-   (setf (opt db :event-listener) val))
-  (((db rdb) (key (eql :logger)) val)
-   (setf (opt db :info-log) val)))
-
 (defclass column-family (rdb-object database)
   ((name :initform "default" :initarg :name :accessor name))
   (:documentation "RocksDB Column Family.
@@ -140,26 +102,6 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass simple-column-family (column-family rdb-column) ()
   (:default-initargs :name (symbol-name (gensym "CF#")))
   (:documentation "COLUMN support for RocksDB Column Families."))
-
-;; HACK 2026-08-06: 
-;; (defun rdb (path &key))
-(defmethods set-database-backend-option
-  (((db rdb) (key (eql :close)) (val (eql :auto)))
-   "Arrange for SHUTDOWN-DB to be called when there are no more references to DB."
-   (sb-ext:finalize db (lambda () (close-db db))))
-  (((db rdb) (key (eql :merge-op)) val)
-   "Assign a MERGE-OP to this database."
-   (setf (opt db :merge-operator) val))
-  (((db rdb) (key (eql :comparator)) val)
-   "Assign a custom COMPARATOR to this database."
-   (setf (opt db :comparator) val))
-  (((db rdb) (key (eql :prefix-op)) val)
-   "Assign a custom SLICETRANSFORM to this database to be used as a prefix
-extractor."
-   (setf (opt db :prefix-extractor) val))
-  (((db rdb) (key (eql :event-listener)) val)
-   "Assign an EVENT-LISTENER to this database."
-   (setf (opt db :event-listener) val)))
 
 (defun repair-db (self &optional (opts (default-rocksdb-readoptions)))
   (%repair-db (path self) opts))

@@ -5,8 +5,8 @@
 ;;; Code:
 (in-package :rdb)
 (load-rocksdb)
+(defvar *default-column-family-name* "default")
 ;;; Callbacks
-;;;; Merge Ops
 (defun index-merge-op ()
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
@@ -27,7 +27,6 @@
 
 (defun fixed-prefix-op (n) (rocksdb-slicetransform-create-fixed-prefix n))
   
-;;;; Comparators
 (define-alien-callable lisp-comparator-name c-string () "lisp-comparator")
 
 (defun lisp-comparator ()
@@ -41,7 +40,6 @@ themselves. Does not support timestamps."
                (compare (* rocksdb-compare-function)))
     (rocksdb-comparator-create state destructor compare name)))
 
-;;;; Logger
 (defun create-default-logger-callback (&optional (level 0))
   (rocksdb-logger-create-callback-logger 
    level

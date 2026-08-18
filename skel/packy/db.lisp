@@ -5,11 +5,6 @@
 ;;; Code:
 (in-package :skel/packy)
 
-(defvar *packy-backend-options* rdb::*rdb-backend-options*)
-
-(set-database-backend :packy *packy-backend-options*
-                      (lambda () (db::%load-database-backend :rdb)))
-
 (defclass packy-schema (rdb-schema) ()
   (:default-initargs
    :fields (make-fields :id '(fixnum . string)

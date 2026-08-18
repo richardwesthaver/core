@@ -62,10 +62,6 @@ make-shebang-comment, and make-shebang-file-header."
                         :description "nothing to see here"
                         :opts '("Definitely-Not_Emacs: T;"))))))
 
-;; TODO 2025-08-18: 
-(deftest doc-db (:skip :todo)
-  (db:load-database-backend :rdb))
-
 ;;; NLP
 (defvar *test-docs* (make-instance 'document-collection))
 

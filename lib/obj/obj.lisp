@@ -20,8 +20,5 @@
 ;; (defprovider :palette (name))
 ;; (defprovider :config (name &rest args))
 
-(defprovider :db (name)
-  `(gethash ,name db:*database-backend-table*))
-
 (defprovider :srv (name)
   `(gethash ,name srv:*service-table*))

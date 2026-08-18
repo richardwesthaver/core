@@ -5,7 +5,7 @@
 ;;; Code:
 (in-package :organ/graph)
 
-(load-database-backend :rdb)
+(load-alien :rocksdb)
 
 (defvar *org-graph-file* (merge-pathnames ".config/emacs/graph.sxp" (user-homedir-pathname)))
 

@@ -15,6 +15,12 @@
 ;;; Code:
 (in-package :rdb)
 
+(defvar *txn* nil "Dynamic pointer to a ROCKSDB-TRANSACTION object.")
+
+(define-condition rdb-transaction-error (rdb-alien-error transaction-error)
+  ((txn :initarg :txn :initform *txn* :reader error-txn))
+  (:documentation "Error signaled in the context of a Transaction."))
+
 ;;; Primitives
 (defun %transaction-wbwi (self) (rocksdb-transaction-get-writebach-wi self))
 

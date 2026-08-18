@@ -723,23 +723,8 @@ protocol.")
    :merge-key
    :with-temp-db
    :with-db
-   :database-backend-designator
-   :add-database-loader
-   :*database-backend-table*
-   :load-database-backend
-   :*database-backend-options*
-   :*database-backend*
-   :add-database-options
-   :set-database-loaders
-   :add-database-backend-option
-   :set-database-backend-options
-   :do-database-backend-init-options
-   :do-database-backend-close-options
-   :set-database-backend
-   :set-database-backend-option
    :simple-transaction
    :secondary-db
-   :*save-database-backend-on-load*
    :make-column
    :db-config
    :simple-db-config))

@@ -4,8 +4,7 @@
 
 ;;; Code:
 (in-package :skel/core)
-
-(load-database-backend :rdb)
+(load-alien :rocksdb)
 
 (defvar *skel-registry-schema*
   (make-instance 'simple-schema

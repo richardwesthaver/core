@@ -14,7 +14,6 @@
 (defsuite :rdb)
 (in-suite :rdb)
 (load-alien :rocksdb)
-(load-database-backend :rdb)
 (setq *temp-db-destroy* t)
 
 (defmacro with-temp-db ((sym &rest opts) &body body)

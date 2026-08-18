@@ -13,16 +13,10 @@
 (in-package :mpk/db)
 (in-readtable :std)
 
-(defvar *mpk-db-backend-options* rdb::*rdb-backend-options*)
-
 (defvar *mpk-db-table* (make-hash-table))
 
 (defun register-mpk-db (name db)
   (setf (gethash name *mpk-db-table*) db))
-
-(set-database-backend 
- :mpk *mpk-db-backend-options*
- (lambda () (db::%load-database-backend :rdb)))
 
 (defschema mpk-db-schema (rdb-schema)
   ((:id (uuid . string))))
@@ -51,8 +45,6 @@
   ((:title (uuid . string))))
 
 (defschema mpk-screenshot-meta-schema (mpk-img-meta-schema) ())
-
-(load-database-backend :mpk)
 
 ;;; Config
 (defconfig mpk-db-config (db-config) ()

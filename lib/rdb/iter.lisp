@@ -80,7 +80,7 @@ Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
 (defun iter-get (iter kbuf vbuf
                      &key timestamp)
   "Move a cursor to a key / value pair, returning the key /
-value pair found.  Supports get-both and get-both-range."
+value pair found. Supports get-both and get-both-range."
   (declare ((alien (* rocksdb-iterator)) iter)
            (buffer-stream kbuf vbuf)
            ((or null buffer-stream) timestamp))

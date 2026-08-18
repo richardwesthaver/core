@@ -9,7 +9,7 @@
 
 (defsuite :skel)
 (in-suite :skel)
-
+(load-alien :rocksdb)
 (defun %tmp-path (ext) (make-pathname :name (namestring (tmpize-pathname (string (gensym "g")))) :type ext))
 
 (deftest skelfile ()
@@ -61,8 +61,6 @@ endif")
   (let ((sk (make-instance 'skel-project :components '((:lisp "test")
                                                        (:lisp-system "test")))))
     (is sk)))
-
-(load-database-backend :packy)
 
 (deftest packy-db ()
   (let ((*packy-home* "/tmp/packy-test/"))

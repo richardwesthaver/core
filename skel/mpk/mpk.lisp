@@ -8,7 +8,7 @@
 (defun init-mpk (&key (db t))
   (load-mpkrc)
   (load-av)
-  (when db (db:load-database-backend :mpk))
+  (when db (load-alien :rocksdb))
   (setf *thread-pool* (make-thread-pool (num-cpus) :name :mpk)))
 
 (defmethod init ((self (eql :mpk)) &key db)
