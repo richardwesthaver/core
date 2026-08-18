@@ -72,7 +72,7 @@ in secondary keys for existing primary entries (may be expensive!)"))
 
 (defgeneric map-indices (fn self)
   (:documentation "Calls a two input function with the name and 
-   btree-index object of all secondary indices in the btree"))
+btree-index object of all secondary indices in the btree."))
 
 (defmethod ensure-index ((self indexed-btree) idxname &key key-form populate)
   (ifret (get-index self idxname)
@@ -168,7 +168,7 @@ enclosing transaction is closed!"))
 
 (defgeneric cursor-current (cursor)
   (:documentation 
-   "Get the key / value at the cursor position.  Returns values
+   "Get the key / value at the cursor position. Return values
 (has-pair key value), where has-pair is a boolean indicating
 there was a pair."))
 
@@ -259,24 +259,24 @@ value / primary key."))
 
 (defgeneric cursor-pprev (cursor)
   (:documentation 
-   "Moves the cursor back. Returns has-tuple / secondary key
+   "Moves the cursor back. Return has-tuple / secondary key
 / value / primary key."))
 
 (defgeneric cursor-pset (cursor key)
   (:documentation 
-  "Moves the cursor to a particular key. Returns has-tuple
+  "Moves the cursor to a particular key. Return has-tuple
 / secondary key / value / primary key."))
 
 (defgeneric cursor-pset-range (cursor key)
   (:documentation 
    "Move the cursor to the first key-value pair with key
 greater or equal to the key argument, according to the lisp
-sorter. Returns has-pair secondary key value primary key."))
+sorter. Return has-pair secondary key value primary key."))
 
 (defgeneric cursor-pget-both (cursor key value)
   (:documentation 
    "Moves the cursor to a particular secondary key / primary
-key pair. Returns has-tuple / secondary key / value /
+key pair. Return has-tuple / secondary key / value /
 primary key."))
 
 (defgeneric cursor-pget-both-range (cursor key value)
@@ -350,7 +350,7 @@ Return has-tuple / secondary key / value / primary key."))
 (defgeneric cursor-pprev-nodup (cursor)
   (:documentation 
    "Move to the previous non-duplicate element (with
-different key.) Returns has-tuple / secondary key / value /
+different key.) Return has-tuple / secondary key / value /
 primary key."))
 
 (defmacro with-btree-cursor ((var bt) &body body)
@@ -504,7 +504,7 @@ cursor"
          ,@body))))
 
 (defmacro with-cursor-values (expr &body body)
-  "Binds existp, key, val and pkey from expression assuming expression returns
+  "Bind existp, key, val and pkey from expression assuming expression return
 a set of cursor operation values or nil"
   `(multiple-value-bind (existp key val pkey)
        (the (values boolean t t t) ,expr)
@@ -623,9 +623,9 @@ cursor values."
                   (return (nreverse results)))))))))
 
 (defmacro with-map-index-wrapper ((fn btree collect cur) &body body)
-  "Binds variable store to the store controller, overrieds fn with a collector
-if dynamic value of collect is true and binds variable named cur to the
-current cursor"
+  "Binds variable store to the current store, overrides FN with a collector
+if dynamic value of COLLECT is true and binds variable named CUR to the
+current cursor."
   `(with-map-index-collector (,fn ,collect)
      (with-btree-cursor (,cur ,btree)
        (with-cursor (,cur)
@@ -676,7 +676,7 @@ current cursor"
 
 ;; Some generic utility functions
 (defun print-btree-entry (k v) 
-  (format t "key: ~A / value: ~A~%" k v))
+  (format t "key: ~A | value: ~A~%" k v))
 
 (defun dump-btree (bt &key (print-fn #'print-btree-entry) (count nil))
   "Print the contents of a btree for easy inspection & debugging"
@@ -690,14 +690,14 @@ current cursor"
    bt)))
 
 (defun print-btree-key-and-type (k v)
-  (format t "key ~A / value type ~A~%" k (type-of v)))
+  (format t "key ~A .. value type ~A~%" k (type-of v)))
 
 (defun btree-keys (bt &key (print-fn #'print-btree-key-and-type) (count nil))
   (format t "BTREE keys and types for ~A~%" bt)
   (dump-btree bt :print-fn print-fn :count count))
 
 (defun print-index-entry (k v pk)
-  (format t "key: ~A / value: ~A / primary-key: ~A~%" k v pk))
+  (format t "key: ~A | value: ~A | primary-key: ~A~%" k v pk))
 
 (defun dump-index (idx &key (print-fn #'print-index-entry) (count nil))
   (format t "DMP INDEX ~A~%" idx)
