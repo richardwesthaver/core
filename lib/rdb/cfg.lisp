@@ -14,6 +14,14 @@
 ;;; Code:
 (in-package :rdb)
 
+;; temp-rdb
+(defvar *temp-db-path-generator*
+  (lambda (&optional (name "temp-db"))
+    (make-pathname :directory "tmp" :name (symbol-name (gensym name))))
+  "A single arg function returning the absolute path to a temp-db path.")
+
+(defvar *temp-db-destroy* nil)
+
 ;;; Options
 #+nil (defvar *default-opt-table* (make-hash-table))
 

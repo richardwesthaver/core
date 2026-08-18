@@ -26,8 +26,8 @@ ERR with initargs PARAMS for the duration of BODY."
                              (apply 'error ,err :message (deref (sap-alien ,e (* c-string))) ',params))))
        (progn ,@body))))
 
-;;; rdb
-;; these functions only apply to the low-level API in RDB/OBJ (structs only)
+;;; raw
+;; these functions only apply to the raw API
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (%open-db ,db-path ,opt)))
      (unwind-protect (progn ,@body)
@@ -46,14 +46,6 @@ ERR with initargs PARAMS for the duration of BODY."
   `(with-slots (db ,@slots) ,self
      (unless (null db)
        ,@body)))
-
-;; temp-rdb
-(defvar *temp-db-path-generator*
-  (lambda (&optional (name "temp-db"))
-    (make-pathname :directory "tmp" :name (symbol-name (gensym name))))
-  "A single arg function returning the absolute path to a temp-db path.")
-
-(defvar *temp-db-destroy* nil)
 
 ;;; cf
 (defmacro with-column ((cf-var cf) &body body)
@@ -77,7 +69,8 @@ ERR with initargs PARAMS for the duration of BODY."
                                        &body body)
   `(let ((,be-var (%open-backup-engine ,be-path ,opt)))
      (unwind-protect (progn ,@body)
-       (rocksdb-backup-engine-close ,be-var))))
+       (rocksdb-backup-engine-close ,be-var)
+       (rocksdb-options-destroy ,opt))))
 
 ;;; raw macros
 ;; Following macros introduce four anaphors - %KEY and %KLEN and if VAL is
@@ -212,7 +205,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
 ;; (defmacro with-iter-buf ((iter eptr &key (error 'kv-error) cf db) &body body))
 
 ;;; sst
-(defmacro with-sst ((sst &key file comparator destroy) &body body)
+(defmacro with-sst ((sst &key file comparator (destroy t)) &body body)
   "Do BODY with SST bound to a SST-FILE-WRITER. When FILE is supplied
 the writer will automatically open that file.
 
@@ -256,10 +249,13 @@ values."
   "Eval BODY with the pinnable-slice pointer SLICE destructured into DATA and
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnableslice-value ,slice)
-     ,@body))
+     (prog1 (progn ,@body)
+       (rocksdb::rocksdb-pinnableslice-destroy ,slice))))
 
 (defmacro with-phandle (handle &body body)
   "Eval BODY with the pinnable-handle pointer HANDLE destructured into DATA and
 SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnable-handle-get-value ,handle)
-     ,@body))
+     (prog1 (progn ,@body)
+       (rocksdb::rocksdb-pinnable-handle-destroy ,handle))))
+
