@@ -46,13 +46,13 @@
       (with-output-to-string (s)
         (print-db-stats db s))))
 
-(defmethod metadata ((self rdb) &optional column)
+(defmethod metadata ((self rdb) &key column)
   (make-rdb-metadata :sap (%get-metadata (db self) (when column (db column)))))
 
 (defmethod stat ((self rdb) &key (level (rocksdb-statistics-level "all")))
   (%get-stats (options self) level))
 
-(defmethod metadata ((self rdb-metadata) &optional (level 0))
+(defmethod metadata ((self rdb-metadata) &key (level 0))
   (with-slots (sap) self
     (if (null sap)
         (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
@@ -81,7 +81,7 @@
 
 (defaccessor sap ((self level-metadata)) (level-metadata-sap self))
 
-(defmethod metadata ((self level-metadata) &optional (file 0))
+(defmethod metadata ((self level-metadata) &key (file 0))
   (if (null (sap self))
       (warn 'metadata-missing :message "ignoring attempt to pull fields from null sap.")
       (make-sst-file-metadata :sap (rocksdb-level-metadata-get-sst-file-metadata (sap self) file))))

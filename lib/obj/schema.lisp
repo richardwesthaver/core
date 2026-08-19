@@ -212,6 +212,7 @@ SCHEMA."
 		    (column (make-field :name i :type (column-type x)))))
 		columns))))
 
+(definline column-names (self) (mapcar 'name (columns self)))
 ;;; Data Source
 (defclass data-source (source)
   ((schema :type schema :accessor schema))

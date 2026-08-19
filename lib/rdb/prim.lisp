@@ -26,7 +26,7 @@
     (rocksdb-mergeoperator-create state destructor full-merge partial-merge delete-value name)))
 
 (defun fixed-prefix-op (n) (rocksdb-slicetransform-create-fixed-prefix n))
-  
+
 (define-alien-callable lisp-comparator-name c-string () "lisp-comparator")
 
 (defun lisp-comparator ()
@@ -99,7 +99,7 @@ and size are pre-computed."
 ;;; DB
 (deftype db-identity () 
   "A RocksDB 'db-identity' is a 36-byte sequence which uniquely identifies a DB instance."
-`(octet-vector 36))
+  `(octet-vector 36))
 
 (defun get-base-db (db)
   "Return (values base-db close-function)."
@@ -112,7 +112,7 @@ and size are pre-computed."
     (multiple-value-bind (cfs cflen) (rocksdb-list-column-families opts (namestring path) e)
       (prog1 (loop for i below cflen collect (deref cfs i))
         (rocksdb-list-column-families-destroy cfs cflen)))))
-        
+
 (defun %open-db (db-path &optional (opts (rocksdb-options-create)))
   (with-errptr* (err 'open-db-error :db db-path)
     (let* ((db-path (if (pathnamep db-path)
@@ -177,8 +177,6 @@ and size are pre-computed."
                 for i below n
                 do (setf (deref cf-opts i) opt))
           (with-errptr* (err 'cf-error :cf name)
-            ;; FIX 2026-08-18: 
-            ;; getting an error here
             (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
               (values db cf-handles)))))))
 
@@ -253,9 +251,9 @@ and size are pre-computed."
   (rocksdb-sstfilewriter-create env-opts io-opts))
 
 (defun %create-sst-writer-with-comparator (comparator
-                                              &optional
-                                                (env-opts (rocksdb-envoptions-create))
-                                                (io-opts (rocksdb-options-create)))
+                                           &optional
+                                           (env-opts (rocksdb-envoptions-create))
+                                           (io-opts (rocksdb-options-create)))
   (rocksdb-sstfilewriter-create-with-comparator env-opts io-opts comparator))
 
 (defun %sst-filewriter (&optional comparator
@@ -318,10 +316,10 @@ and size are pre-computed."
 
 ;;; TTL
 (defun %open-cfs-with-ttl (opts name cf-names cf-opts ttls)
-    (with-errptr* (e 'rdb-alien-error)
-      (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
-        (rocksdb-open-column-families-with-ttl 
-         opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))
+  (with-errptr* (e 'rdb-alien-error)
+    (with-alien ((cf-handles (* (* rocksdb-column-family-handle))))
+      (rocksdb-open-column-families-with-ttl 
+       opts name (length cf-names) cf-names cf-opts cf-handles ttls e))))
 
 ;;; Writebatch/WBWI
 (defun %create-wbwi (&optional (reserved-bytes 0) (overwrite-keys 1))

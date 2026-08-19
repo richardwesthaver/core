@@ -139,11 +139,11 @@ in-memory objects."))
 #| notes
 
 - *TRANSACTION* is bound to the current transaction being executed. A value of NIL
-   represents no transaction.
-   - should never be bound within the body of a transaction
+represents no transaction.
+- should never be bound within the body of a transaction
 
 - The macros WITH-TRANSACTION and ENSURE-TRANSACTION will always abort the
-  transaction in response to any non-local exit.
+transaction in response to any non-local exit.
 
 - WITH-TRANSACTION passes *TRANSACTION* to EXECUTE
 
@@ -183,14 +183,12 @@ kernel function should be executed in an environment that protects against
 non-local exits, provides ACIDic properties and binds any relevant parameters."))
 
 (defgeneric abort-transaction (self &key &allow-other-keys))
-
 (defgeneric transactionp (self)
   (:documentation "Return Non-nil if SELF is a transaction object.")
   (:method ((self t))
     (or (typep self 'simple-transaction)
         (subtypep (type-of (transaction-db self)) 'database)))
   (:method ((self transaction)) t))
-
 (defgeneric transaction-object (self)
   (:documentation "Return the underlying object of a transaction.")
   (:method ((self list)) (second self))

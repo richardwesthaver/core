@@ -11,22 +11,22 @@
                     prefix-op
                     logger
                     event-listener
-                    (opts (default-rocksdb-options))
+                    (options (default-rocksdb-options))
                     open
                     secondary
                     path)
   (declare (ignore engine))
   (unless path (missing-argument :path))
-  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
-  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
-  (when logger (rocksdb-options-set-info-log opts logger))
-  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
+  (when merge-op (rocksdb-options-set-merge-operator options merge-op))
+  (when prefix-op (rocksdb-options-set-prefix-extractor options prefix-op))
+  (when logger (rocksdb-options-set-info-log options logger))
+  (when event-listener (rocksdb-options-add-eventlistener options event-listener))
   (cond
     ((and open path)
      (if secondary
-         (%open-db-secondary opts path secondary)
-         (%open-db path opts))) ; open the db
-    (t (cons path opts)))) ; return a cons
+         (%open-db-secondary options path secondary)
+         (%open-db path options))) ; open the db
+    (t (cons path options)))) ; return a cons
 
 (defmethod make-db ((engine (eql :rocksdb-transaction))
                     &key
@@ -34,18 +34,18 @@
                     prefix-op
                     logger
                     event-listener
-                    (opts (default-rocksdb-options))
-                    (topts (default-rocksdb-transactiondb-options))
+                    (options (default-rocksdb-options))
+                    (transactiondb-options (default-rocksdb-transactiondb-options))
                     open
                     path)
   (declare (ignore engine))
-  (when merge-op (rocksdb-options-set-merge-operator opts merge-op))
-  (when prefix-op (rocksdb-options-set-prefix-extractor opts prefix-op))
-  (when logger (rocksdb-options-set-info-log opts logger))
-  (when event-listener (rocksdb-options-add-eventlistener opts event-listener))
+  (when merge-op (rocksdb-options-set-merge-operator options merge-op))
+  (when prefix-op (rocksdb-options-set-prefix-extractor options prefix-op))
+  (when logger (rocksdb-options-set-info-log options logger))
+  (when event-listener (rocksdb-options-add-eventlistener options event-listener))
   (if open
-      (%open-transactiondb opts topts path) ; open the db, OR
-      (cons path opts))) ; return a cons
+      (%open-transactiondb options transactiondb-options path) ; open the db, OR
+      (cons path options))) ; return a cons
 
 ;;; Database
 (defclass rdb-object ()
@@ -114,12 +114,12 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
              (setf (nth (columns self) (position found (columns self))) c)
              (push c (columns self)))))
 
-(defmethod reset ((self rdb) &key (columns t) (opts (default-rocksdb-options)))
+(defmethod reset ((self rdb) &key (columns t) (options (default-rocksdb-options)))
   (when columns 
     (close-columns self)
     (setf (columns self) nil))
   (rocksdb-options-destroy (options self))
-  (setf (options self) opts)
+  (setf (options self) options)
   self)
 
 (defun open-all-columns (self)
@@ -131,14 +131,12 @@ columns."
     (loop for c in (columns self)
           do (push (name c) names)
           do (push (options c) opts))
-    (print names)
-    (print opts)
     (nreversef names)
     (nreversef opts)
-    ;; make sure the default column-family is opened
-    (unless (member *default-column-family-name* names :test 'string=)
-      (push *default-column-family-name* names)
-      (push (opts self) opts))
+    ;; ;; make sure the default column-family is opened
+    ;; (unless (member *default-column-family-name* names :test 'string=)
+    ;;   (push *default-column-family-name* names)
+    ;;   (push (opts self) opts))
     (multiple-value-bind (db cfs)
         (%open-cfs (opts self) (name self) names opts)
       (setf (db self) db)
@@ -175,7 +173,7 @@ columns."
         ;; unless (string= (name cf) *default-column-family-name*)
         do (close-db cf)))
 
-(defmacro unless-key-may-exist-p ((key length db &key cf (opts (default-rocksdb-readoptions)) timestamp) &body body)
+(defmacro unless-key-may-exist-p ((key length db &key cf (options (default-rocksdb-readoptions)) timestamp) &body body)
   "If KEY of given LENGTH _might_ exist (probabilistic) in DB (or CF) do nothing,
 else eval forms in BODY.
 
@@ -184,8 +182,8 @@ This does not necessarily guarantee KEY does not exist before using
 does nothing when merging with an existing key."
   (with-gensyms (v vlen)
     `(multiple-value-bind (,v ,vlen) ,(if cf 
-                                          `(%cf-key-may-exist-p ,db ,cf ,key ,length ,opts ,timestamp)
-                                          `(%key-may-exist-p ,db ,key ,length ,opts ,timestamp))
+                                          `(%cf-key-may-exist-p ,db ,cf ,key ,length ,options ,timestamp)
+                                          `(%key-may-exist-p ,db ,key ,length ,options ,timestamp))
        (declare (ignorable ,vlen))
        (if ,v
            (rocksdb-free ,v)
@@ -316,10 +314,10 @@ does nothing when merging with an existing key."
    (unless-null-db () self
      (rocksdb-property-value (rocksdb-optimistictransactiondb-get-base-db db) name))))
 
-(defmethod ingest-db ((self rdb) (files list) &key column (opts (rocksdb-ingestexternalfileoptions-create)))
+(defmethod ingest-db ((self rdb) (files list) &key column (options (rocksdb-ingestexternalfileoptions-create)))
   (if column
-      (%ingest-db-cf (db self) (db column) files opts)
-      (%ingest-db (db self) files opts)))
+      (%ingest-db-cf (db self) (db column) files options)
+      (%ingest-db (db self) files options)))
 
 (defmethods make-db 
   (((engine (eql :rdb)) &rest initargs &key (load t) open)
@@ -395,8 +393,8 @@ does nothing when merging with an existing key."
 (defun open-backup-db (self &key path) ;; opts env
   (%open-backup-engine (options self) path))
 
-(defun open-secondary-db (self &key path (opts (default-rocksdb-options)))
-  (%open-db-secondary opts (path self) path))
+(defun open-secondary-db (self &key path (options (default-rocksdb-options)))
+  (%open-db-secondary options (path self) path))
 
 (defmethod checkpoint ((self rdb) &key path log-size-for-flush)
   (unless-null-db () self
@@ -416,9 +414,9 @@ does nothing when merging with an existing key."
    (call-next-method self)
    (snapshots self)))
 
-(defmethod restore ((self rdb) (from string) &key id opts)
+(defmethod restore ((self rdb) (from string) &key id options)
   (unless-null-db (path) self
-    (%restore-from-backup (backup self :path from) path from id opts)))
+    (%restore-from-backup (backup self :path from) path from id options)))
 
 (defmethod backup ((self rdb) &key path)
   (unless-null-db (options) self
@@ -554,10 +552,10 @@ only get their type slots updated on non-nil values."
 (defun schema-from-simple-column-families (columns)
   "Convert a sequence of SIMPLE-COLUMN-FAMILYs to a SCHEMA."
   (apply 'make-schema 
-     (map 'list 
-          (lambda (x)
-        (make-field :name (keywordicate (name x)) :type (column-type x)))
-        columns)))
+         (map 'list 
+              (lambda (x)
+                (make-field :name (keywordicate (name x)) :type (column-type x)))
+              columns)))
 
 (defmethod free ((self column-family))
   (setf (db self) (%destroy-cf (db self))))
@@ -570,17 +568,17 @@ only get their type slots updated on non-nil values."
 (defmethod load-field ((self simple-column-family) (field field))
   (let ((type (field-type field))
         (ctype (column-type self)))
-  (typecase type
-    (null nil)
-    (atom (if (atom ctype) 
-              (setf ctype (cons ctype type))
-              (setf (cdr ctype) type)))
-    (list (setf (car ctype) (car type)
-                (cdr ctype)
-                (if (and (listp (cdr type))
-                         (= 1 (length (cdr type))))
-                    (cadr type)
-                    (cdr type)))))
+    (typecase type
+      (null nil)
+      (atom (if (atom ctype) 
+                (setf ctype (cons ctype type))
+                (setf (cdr ctype) type)))
+      (list (setf (car ctype) (car type)
+                  (cdr ctype)
+                  (if (and (listp (cdr type))
+                           (= 1 (length (cdr type))))
+                      (cadr type)
+                      (cdr type)))))
     self))
 
 (defmethod change-class ((self field) (new-class (eql 'simple-column-family)) &key)

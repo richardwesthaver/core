@@ -747,7 +747,7 @@ dispatch protocols including template functions, class maps, and sham classes.")
    :defsham :save
    :oid :cid
    :load-opts :execute
-   :restore))
+   :restore :metadata))
 
 (defpkg :std/stream
   (:use :cl :std/type :std/meta)

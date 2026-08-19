@@ -592,6 +592,7 @@ protocol.")
    ;; #:dynamic-schema
    #:literal-value-vector
    #:column-vector
+   #:column-names
    #:literal-value-type
    #:*literal-value-types*
    #:column-literal-value
