@@ -111,8 +111,8 @@
    (:file "iter")
    (:file "txn")
    (:file "log")
-   (:file "query")
    (:file "store")
+   (:file "query")
    (:file "srv")
    (:file "cli"))
   :provide 
