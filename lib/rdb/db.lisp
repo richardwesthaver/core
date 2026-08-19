@@ -85,7 +85,7 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass otrdb (rdb) ()
   (:documentation "Optimistic Transaction DB."))
 
-(defclass simple-rdb (rdb)
+(defclass srdb (rdb)
   ((backup :initform nil :type (or null (alien (* rocksdb-backup-engine))) :initarg :backup :accessor db-backup)
    (snapshots :initform nil
               :initarg :snapshots 
@@ -99,10 +99,6 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
    ;; much need to access this column directly as you can just access the
    ;; database directly, which will access the default column internally.
    :columns nil))
-
-(defclass simple-column-family (column-family rdb-column) ()
-  (:default-initargs :name (symbol-name (gensym "CF#")))
-  (:documentation "COLUMN support for RocksDB Column Families."))
 
 (defun repair-db (self &optional (opts (default-rocksdb-readoptions)))
   (%repair-db (path self) opts))
@@ -191,7 +187,7 @@ does nothing when merging with an existing key."
              ,@body)))))
 
 (defmethods insert-key 
-  (((self simple-rdb) key val &key column)
+  (((self srdb) key val &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((cf (sap column)))
        (%put-cf
@@ -202,7 +198,7 @@ does nothing when merging with an existing key."
         (rocksdb-writeoptions-create))
        (simple-rdb-error "column-family is not open"))
      (put-key self key val)))
-  (((self simple-rdb) (key string) (val string) &key column)
+  (((self srdb) (key string) (val string) &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
        (%put-cf
@@ -213,7 +209,7 @@ does nothing when merging with an existing key."
         (rocksdb-writeoptions-create))
        (simple-rdb-error "column-family is not open"))
      (put-key self key val)))
-  (((self simple-rdb) (key string) val &key column)
+  (((self srdb) (key string) val &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
        (%put-cf
@@ -224,7 +220,7 @@ does nothing when merging with an existing key."
         (rocksdb-writeoptions-create))
        (simple-rdb-error "column-family is not open"))
      (put-key self key val)))
-  (((self simple-rdb) key (val string) &key column)
+  (((self srdb) key (val string) &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
        (%put-cf
@@ -269,7 +265,7 @@ does nothing when merging with an existing key."
       (%multi-get-cf-kv (db self) (mapcar 'db columns) keys opts)
       (%multi-get-kv (db self) keys opts)))
 
-(defmethod multi-get ((self simple-rdb) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) cf)
+(defmethod multi-get ((self srdb) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) cf)
   (if cf
       (ecase data-type
         (octet-vector (%multi-get-cf-kv (sap self) keys opts (sap cf)))
@@ -286,10 +282,10 @@ does nothing when merging with an existing key."
     (push col (columns db))
     col))
 
-(defmethod find-column (cf (self simple-rdb) &key)
+(defmethod find-column (cf (self srdb) &key)
   (find cf (columns self) :key 'name :test 'string=))
 
-(defmethod find-column ((col column-family) (self simple-rdb) &key)
+(defmethod find-column ((col column-family) (self srdb) &key)
   (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
 
 (defmethod (setf find-column) ((new column-family) (cf string) (self rdb) &key)
@@ -328,10 +324,10 @@ does nothing when merging with an existing key."
      (when (and load (probe-file (path db))) (load-opts db))
      (when open (open-db db))
      db))
-  (((engine (eql :simple-rdb)) &rest initargs &key (load t) open)
+  (((engine (eql :srdb)) &rest initargs &key (load t) open)
    (declare (ignore engine))
    (remove-from-plist initargs :open :load)
-   (let ((db (apply 'make-instance 'simple-rdb initargs)))
+   (let ((db (apply 'make-instance 'srdb initargs)))
      (when (and load (path db)) (load-opts db))
      (when open (open-db db))
      db))
@@ -401,7 +397,7 @@ does nothing when merging with an existing key."
     (let ((chk (%make-checkpoint db)))
       (%create-checkpoint chk path log-size-for-flush))))
 
-(defmethod checkpoint :around ((self simple-rdb) &rest args)
+(defmethod checkpoint :around ((self srdb) &rest args)
   (when-let ((chk (apply 'call-next-method args)))
     (push chk (checkpoints self))))
 
@@ -409,7 +405,7 @@ does nothing when merging with an existing key."
   (unless-null-db () self
     (%create-snapshot db)))
 
-(defmethod snapshot :around ((self simple-rdb) &key)
+(defmethod snapshot :around ((self srdb) &key)
   (push
    (call-next-method self)
    (snapshots self)))
@@ -425,12 +421,12 @@ does nothing when merging with an existing key."
                                          :message "PATH must not be nil when no backups exist")
         (%create-new-backup (open-backup-db self :path path) db))))
 
-(defmethod backup :around ((self simple-rdb) &rest args)
+(defmethod backup :around ((self srdb) &rest args)
   (setf (db-backup self) (apply 'call-next-method args)))
 
 (defmethod flush ((self rdb) &key wait)
   (%flush-db (db self) wait))
-;; (defmethod close-db :before ((self simple-rdb) &key)
+;; (defmethod close-db :before ((self srdb) &key)
 ;;   (close-columns self))
 (defmethod close-db ((self rdb) &key reset) 
   (when (and reset (options self)) (setf (options self) (rocksdb-options-destroy (options self))))
@@ -486,7 +482,7 @@ does nothing when merging with an existing key."
               (columns self)))
     (setf options nil)))
 
-(defmethod shutdown-db :around ((self simple-rdb) &key wait)
+(defmethod shutdown-db :around ((self srdb) &key wait)
   (close-backup self)
   (call-next-method self :wait wait))
 
@@ -527,35 +523,8 @@ does nothing when merging with an existing key."
       (%merge-cf-str (db self) (find-column column self) key val opts)
       (%merge-kv-str (db self) key val opts)))
 
-(defmethod load-schema ((self rdb) (schema schema))
-  "Load SCHEMA into rdb database object SELF. This will add any missing CFs
-and update existing key/value types for cfs with the same name. Existing CFs
-only get their type slots updated on non-nil values."
-  (loop for field across (fields schema)
-        do (if-let ((col (find-column (name field) self)))
-             (load-field col field)
-             (push
-              (load-field
-               (make-instance 'simple-column-family 
-                 :db (unless-null-db () self
-                       (%create-cf db (name field)))
-                 :type (field-type field))
-               field)
-              (columns self)))
-        finally (return self)))
-
-;;; Column Families
-;; (defmethod name ((self column-family)) (%cf-name (db self)))
+;;; Columns
 (defaccessor sap ((self column-family)) (db self))
-;; (defmethod id ((self column-family)) (%cf-id (db self)))
-
-(defun schema-from-simple-column-families (columns)
-  "Convert a sequence of SIMPLE-COLUMN-FAMILYs to a SCHEMA."
-  (apply 'make-schema 
-         (map 'list 
-              (lambda (x)
-                (make-field :name (keywordicate (name x)) :type (column-type x)))
-              columns)))
 
 (defmethod free ((self column-family))
   (setf (db self) (%destroy-cf (db self))))
@@ -564,34 +533,6 @@ only get their type slots updated on non-nil values."
   (unless-null-db (options) self
     (setf options (rocksdb-options-destroy options))
     (free self)))
-
-(defmethod load-field ((self simple-column-family) (field field))
-  (let ((type (field-type field))
-        (ctype (column-type self)))
-    (typecase type
-      (null nil)
-      (atom (if (atom ctype) 
-                (setf ctype (cons ctype type))
-                (setf (cdr ctype) type)))
-      (list (setf (car ctype) (car type)
-                  (cdr ctype)
-                  (if (and (listp (cdr type))
-                           (= 1 (length (cdr type))))
-                      (cadr type)
-                      (cdr type)))))
-    self))
-
-(defmethod change-class ((self field) (new-class (eql 'simple-column-family)) &key)
-  (make-instance new-class :name (name self) :type (field-type self)))
-
-(defmethod change-class ((self system-area-pointer) (new-class (eql 'simple-column-family)) &key)
-  (let ((cf (sap-alien self (* rocksdb-column-family-handle))))
-    (make-instance new-class :db cf :name (%cf-name cf))))
-
-(defmethod change-class ((self column) (new-class (eql 'simple-column-family)) &key name)
-  (let ((ret (make-instance new-class :type (column-type self))))
-    (when name (setf (name ret) name))
-    ret))
 
 ;;; SST File Writer
 (defstruct sst-file-writer

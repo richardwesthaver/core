@@ -216,7 +216,7 @@ SCHEMA."
 ;;; Data Source
 (defclass data-source (source)
   ((schema :type schema :accessor schema))
-  (:documentation "Base class for DATA-SOURCE objects which contain a schema and can be scanned via SCAN-DATA."))
+  (:documentation "Base class for DATA-SOURCE objects which can be scanned via SCAN-DATA."))
 
 (defclass file-data-source (data-source)
   ((path :initarg :path :accessor path))

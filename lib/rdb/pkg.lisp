@@ -33,7 +33,7 @@
    :ingest-db
    :sst-file-writer :make-sst-file-writer
    :rdb
-   :simple-rdb
+   :srdb
    :rdb-metadata
    :level-metadata
    :sst-file-metadata

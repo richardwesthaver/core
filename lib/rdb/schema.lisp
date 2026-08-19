@@ -30,3 +30,60 @@ RDB instance via LOAD-SCHEMA."))
 (defmethod initialize-instance :after ((self rdb-data-source) &key)
   (unless (or (slot-boundp self 'schema) (not (slot-boundp self 'db)))
     (setf (schema self) (schema (db self)))))
+
+(defclass simple-column-family (column-family rdb-column) ()
+  (:default-initargs :name (symbol-name (gensym "CF#")))
+  (:documentation "COLUMN support for RocksDB Column Families."))
+
+(defmethod load-schema ((self rdb) (schema schema))
+  "Load SCHEMA into rdb database object SELF. This will add any missing CFs
+and update existing key/value types for cfs with the same name. Existing CFs
+only get their type slots updated on non-nil values."
+  (loop for field across (fields schema)
+        do (if-let ((col (find-column (name field) self)))
+             (load-field col field)
+             (push
+              (load-field
+               (make-instance 'simple-column-family 
+                 :db (unless-null-db () self
+                       (%create-cf db (name field)))
+                 :type (field-type field))
+               field)
+              (columns self)))
+        finally (return self)))
+
+(defun schema-from-simple-column-families (columns)
+  "Convert a sequence of SIMPLE-COLUMN-FAMILYs to a SCHEMA."
+  (apply 'make-schema 
+         (map 'list 
+              (lambda (x)
+                (make-field :name (keywordicate (name x)) :type (column-type x)))
+              columns)))
+
+(defmethod load-field ((self simple-column-family) (field field))
+  (let ((type (field-type field))
+        (ctype (column-type self)))
+    (typecase type
+      (null nil)
+      (atom (if (atom ctype) 
+                (setf ctype (cons ctype type))
+                (setf (cdr ctype) type)))
+      (list (setf (car ctype) (car type)
+                  (cdr ctype)
+                  (if (and (listp (cdr type))
+                           (= 1 (length (cdr type))))
+                      (cadr type)
+                      (cdr type)))))
+    self))
+
+(defmethod change-class ((self field) (new-class (eql 'simple-column-family)) &key)
+  (make-instance new-class :name (name self) :type (field-type self)))
+
+(defmethod change-class ((self system-area-pointer) (new-class (eql 'simple-column-family)) &key)
+  (let ((cf (sap-alien self (* rocksdb-column-family-handle))))
+    (make-instance new-class :db cf :name (%cf-name cf))))
+
+(defmethod change-class ((self column) (new-class (eql 'simple-column-family)) &key name)
+  (let ((ret (make-instance new-class :type (column-type self))))
+    (when name (setf (name ret) name))
+    ret))
