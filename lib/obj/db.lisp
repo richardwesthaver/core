@@ -189,7 +189,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
   (:method ((self t))
     (or (typep self 'simple-transaction)
         (subtypep (type-of (transaction-db self)) 'database)))
-  (:method ((self transaction-object)) t))
+  (:method ((self transaction)) t))
 
 (defgeneric transaction-object (self)
   (:documentation "Return the underlying object of a transaction.")
