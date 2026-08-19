@@ -23,7 +23,7 @@
   (options (* rocksdb-options))
   (name c-string)
   (num-column-families int)
-  (column-family-names (* (* char)))
+  (column-family-names (* c-string))
   (column-family-options (* (* rocksdb-options)))
   (column-family-handles (* (* rocksdb-column-family-handle))))
 
@@ -61,6 +61,11 @@
 
 (defar rocksdb-close void 
   (db (* rocksdb)))
+
+;; recommended method for graceful shutdown
+(def-with-errptr rocksdb-wait-for-compact void
+  (db (* rocksdb))
+  (options (* rocksdb-wait-for-compact-options)))
 
 (defar rocksdb-cancel-all-background-work void 
   (db (* rocksdb))

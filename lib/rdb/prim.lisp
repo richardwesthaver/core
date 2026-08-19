@@ -140,9 +140,10 @@ and size are pre-computed."
   (with-errptr* (err 'flush-db-error :db db)
     (let ((opts (rocksdb-flushoptions-create)))
       (when wait (rocksdb-flushoptions-set-wait opts wait))
-      (rocksdb-flush db opts err))))
+      (unwind-protect (rocksdb-flush db opts err)
+        (rocksdb-flushoptions-destroy opts)))))
 
-(defun %repair-db (name &optional (opts (rocksdb-options-create)))
+(defun %repair-db (name &optional (opts (default-rocksdb-options)))
   (with-errptr* (err 'repair-db-error :name name)
     (rocksdb-repair-db opts name err)))
 
@@ -166,16 +167,20 @@ and size are pre-computed."
 
 ;;; Column Families
 (defun %open-cfs (db-opt name names opts)
-  (let ((n (length names)))
-    (with-alien ((cf-names (* c-string) (clone-strings names))
-                 (cf-opts (* (* rocksdb-options)) (make-alien (* rocksdb-options) n))
-                 (cf-handles (* (* rocksdb-column-family-handle)) (make-alien (* rocksdb-column-family-handle) n)))
-      (loop for opt in opts
-            for i below n
-            do (setf (deref cf-opts i) opt))
-      (with-errptr* (err 'cf-error :cf name)
-        (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
-          (values db cf-handles))))))
+  (if (null names)
+      (error 'open-db-error :db name)
+      (let ((n (length names)))
+        (with-alien ((cf-names (* c-string) (clone-strings names))
+                     (cf-opts (* (* rocksdb-options)) (make-alien (* rocksdb-options) n))
+                     (cf-handles (* (* rocksdb-column-family-handle)) (make-alien (* rocksdb-column-family-handle) n)))
+          (loop for opt in opts
+                for i below n
+                do (setf (deref cf-opts i) opt))
+          (with-errptr* (err 'cf-error :cf name)
+            ;; FIX 2026-08-18: 
+            ;; getting an error here
+            (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
+              (values db cf-handles)))))))
 
 (defun %create-cf (db name &optional (opt (rocksdb-options-create)))
   (with-errptr* (err 'cf-error :db db :cf name)

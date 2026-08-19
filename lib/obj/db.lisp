@@ -136,9 +136,6 @@ in-memory objects."))
 
 ;;; Transactions
 
-;; In our system, transactions must at least implement a DB method which
-;; returns an instance of DATABASE.
-
 #| notes
 
 - *TRANSACTION* is bound to the current transaction being executed. A value of NIL
@@ -151,17 +148,15 @@ in-memory objects."))
 - WITH-TRANSACTION passes *TRANSACTION* to EXECUTE
 
 |#
-(deftype simple-transaction () `(and (not null) list))
 
-(defun simple-transaction (store txn &optional prior)
-  (list store txn prior))
+(deftype simple-transction () `(and (not null) list))
 
 (defvar *transaction* nil
   "The current transaction or nil. 
 This variable is reserved for use from within EXECUTE and should
 not be rebound otherwise within the body of a transaction.")
 
-(defclass transaction-object () ()
+(defclass transaction () ()
   (:documentation "Base class for transaction objects."))
 
 (defkernel transaction-kernel (transaction kernel-object) ()

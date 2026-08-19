@@ -26,7 +26,7 @@
          (rocksdb-c-error ,sym)))))
 
 ;;; Options
-(defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var &optional (destroy t) (ignore-unknown t)) &body body)
+(defmacro with-latest-options (db-path (db-opts-var cf-names-var cf-opts-var &optional #+nil (destroy t) (ignore-unknown t)) &body body)
   (with-gensyms (db-opts cf-names cf-opts)
     `(with-alien ((,db-opts (* rocksdb-options))
                   (,cf-names (* c-string))
@@ -52,8 +52,10 @@
                             (loop for i below ncols
                                   collect (deref ,cf-opts i))
                             'vector)))
-         (unwind-protect (unless (null-alien ,db-opts-var) ,@body)
-           (when ,destroy (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols)))))))
+         ;; (unwind-protect 
+         (unless (null-alien ,db-opts-var) ,@body)
+         ;; (when ,destroy (rocksdb-load-latest-options-destroy ,db-opts ,cf-names ,cf-opts ncols))
+         ))))
 
 ;;; Merge Ops
 (defmacro define-full-merge-op (name &body body)

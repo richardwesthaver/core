@@ -590,6 +590,13 @@ rocksdb_k_round_robin_compaction_pri = 4
 ;;; RocksDB Flush Options
 (define-opt rocksdb-flushoptions)
 (define-opt-accessor rocksdb-flushoptions wait)
+
+;;; RocksDB Wait for Compact Options
+(define-opt rocksdb-wait-for-compact-options)
+(define-opt-accessor rocksdb-wait-for-compact-options abort-on-pause)
+(define-opt-accessor rocksdb-wait-for-compact-options flush)
+(define-opt-accessor rocksdb-wait-for-compact-options close-db)
+(define-opt-accessor rocksdb-wait-for-compact-options timeout (unsigned 64))
 ;;; RocksDB Compact Options
 (define-alien-enum (rocksdb-compaction-type)
   :level 0

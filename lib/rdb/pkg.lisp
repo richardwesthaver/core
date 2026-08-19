@@ -100,7 +100,8 @@
    :rdb-write
    :init-rdbrc
    :rdb-service
-   :get-base-db))
+   :get-base-db
+   :list-column-families))
 
 (defpkg :rdb/cli
   (:use :cl :std :cli :clap :rdb :db :std/seq))

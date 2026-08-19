@@ -96,6 +96,10 @@ custom configuration." name)
            )
   (%defopt rocksdb-optimistictransaction-options
            ("set-snapshot"))
+  (%defopt rocksdb-wait-for-compact-options
+           ()
+           :close-db t
+           :timeout 100000)
   (%defopt rocksdb-transactiondb-options
            ("max-num-locks" "num-stripes" "transaction-lock-timeout")
            :max-num-locks 2000

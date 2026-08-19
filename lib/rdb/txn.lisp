@@ -21,6 +21,9 @@
   ((txn :initarg :txn :initform *txn* :reader error-txn))
   (:documentation "Error signaled in the context of a Transaction."))
 
+;; (defun store-txn (store txn &optional prior)
+;;   (list store txn prior))
+
 ;;; Primitives
 (defun %transaction-wbwi (self) (rocksdb-transaction-get-writebach-wi self))
 
