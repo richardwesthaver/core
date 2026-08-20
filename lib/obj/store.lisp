@@ -2282,7 +2282,7 @@ representations (formal utf-16)."
 ;; store-object?
 (defun serialize-object (frob bs sc)
   "Serialize a lisp value into a buffer-stream."
-  (declare (type buffer-stream bs)
+  (declare (buffer-stream bs)
            (ignorable sc))
   (let ((lisp-obj-id -1)
         (circularity-hash 

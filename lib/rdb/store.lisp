@@ -49,9 +49,9 @@
 ;; Database Version (a list of integers = [version major minor])
 (defun serialize-database-version-key (bs)
   "Given a buffer-stream, encode a key indicating the version using
-the constant +store-version+"
+the constant +store-major-version+"
   (serialize-reserved-tag bs)
-  (serialize-system-tag +store-version+ bs))
+  (serialize-system-tag +store-major-version+ bs))
 
 (defun serialize-database-version-value (version bs)
   "Serializes a list containing three integers to the buffer stream bs"
@@ -70,7 +70,7 @@ the constant +store-version+"
 
 (defun serialize-database-serializer-version-key (bs)
   (serialize-reserved-tag bs)
-  (serialize-system-tag +codec-version+ bs))
+  (serialize-system-tag +store-minor-version+ bs))
 
 (defun serialize-database-serializer-version-value (version bs)
   (serialize-system-integer version bs))
@@ -165,11 +165,11 @@ the constant +store-version+"
       (with-buffer-streams (key-buf value-buf)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
-        (let ((buf (get-key
-                    (btree sc)
+        (let ((buf (txn-get
                     key-buf
                     value-buf
-                    :transaction (current-transaction sc))))
+                    :transaction (current-transaction sc)
+                    :cf (db (btree sc)))))
           (if buf 
               (values (deserialize-object buf sc) t)
               (values nil nil)))))))
@@ -180,13 +180,12 @@ the constant +store-version+"
       (with-buffer-streams (key-buf value-buf)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
-        (let ((buf (get-key 
-                    (btree sc)
+        (let ((buf (txn-get
                     key-buf 
-                    :buffer value-buf
+                    value-buf
+                    :cf (db (btree sc))
                     :transaction (current-transaction sc))))
-          (if buf t
-              nil))))))
+          (if buf t nil))))))
 
 (defmethod (setf get-value) (value key (bt rdb-btree))
   (let ((sc (get-store bt)))
@@ -206,8 +205,8 @@ the constant +store-version+"
       (ensure-transaction (:store sc)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
-        (delete-key (btree sc)
-                    key-buf
+        (txn-delete key-buf
+                    :cf (btree sc)
                     :transaction (current-transaction sc))))))
 
 (defmethod optimize-layout ((bt rdb-btree) &key (freelist-only t) (free-space nil) &allow-other-keys)
@@ -969,20 +968,25 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (error "Can't delete with uninitialized cursor!")))
 
 ;;; Open/Close
-(defmethod open-store ((store rdb-store) &key recover)
+(defmethod open-store ((store rdb-store) &key recover id)
   (setf (slot-value store 'path) (path store)
         (slot-value store 'options) (options store)
         (slot-value store 'transactiondb-options) (transactiondb-options store))
   ;; if pre-existing, load options and all column-families into COLUMNS slot
-  (when (open-db store) ; non-nil value indicates a new instance
-    ;; create column-families
-    (make-column store :name "metadata")
-    (make-column store :name "btree")
-    (make-column store :name "bbtree")
-    (make-column store :name "oid")
-    (make-column store :name "index")
-    (make-column store :name "rindex"))
+  (cond 
+    (recover (restore store recover :recovery-id id))
+    ((open-db store) ; non-nil value indicates a new instance
+     ;; create column-families
+     (make-column store :name "metadata")
+     (make-column store :name "btree")
+     (make-column store :name "bbtree")
+     (make-column store :name "oid")
+     (make-column store :name "index")
+     (make-column store :name "rindex")))
+
+  ;; the default column family serves as the root btree
   (setf (slot-value store 'root) (find-column "default" store))
+
   (with-slots (db) store
     (let ((metadata (find-column "metadata" store))
           (btrees (find-column "btree" store))
@@ -1027,6 +1031,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (3 'rdb-indexed-btree)
     (4 'rdb-btree-index)))
 
+;; TODO 2026-08-19: test
 (defmethod reserved-oid-p ((sc rdb-store) oid)
   (< oid 16))
 
@@ -1034,21 +1039,38 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  (with-alien ((oid (* unsigned-char) (make-alien unsigned-char 4)))
-    (std/alien::write-alien-unsigned-byte-32 oid (the oid (oid instance)))
-    (serde (cons name oid) self)
-    (let ((ret (get-val (db self) oid)))
-      (ensure-transaction (:store self)
-        ret))))
+  (ensure-transaction (:store self)
+    (with-buffer-streams (kbuf vbuf)
+      (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
+      (serialize-object name kbuf self)
+      (let ((buf (txn-get kbuf vbuf :transaction (current-transaction self))))
+        (if buf (deserialize-object buf self)
+            (slot-unbound (class-of instance) instance name))))))
 
 (defmethod stored-slot-writer ((self rdb-store) new-value instance name)
-  (ensure-transaction (:store self)))
+  (ensure-transaction (:store self)
+    (with-buffer-streams (key-buf value-buf)
+      (write-buffer-fixnum32 (oid instance) key-buf)
+      (serialize-object name key-buf self)
+      (serialize-object new-value value-buf self)
+      (txn-put key-buf value-buf :transaction (current-transaction self))
+      new-value)))
+
 
 (defmethod stored-slot-boundp ((self rdb-store) instance name)
-  (ensure-transaction (:store self)))
-
+  (ensure-transaction (:store self)
+    (with-buffer-streams (key-buf value-buf)
+      (write-buffer-fixnum32 (oid instance) key-buf)
+      (serialize-object name key-buf self)
+      (let ((buf (txn-get key-buf value-buf :transaction (current-transaction self))))
+        (if buf t nil)))))
+    
 (defmethod stored-slot-makunbound ((self rdb-store) instance name)
-  (ensure-transaction (:store self)))
+  (ensure-transaction (:store self)
+    (with-buffer-streams (key-buf)
+      (write-buffer-fixnum32 (oid instance) key-buf)
+      (serialize-object name key-buf self)
+      (txn-delete key-buf :transaction (current-transaction self)))))
 
 ;;; Transactions
 (defmethod execute ((self rdb-store) txn
