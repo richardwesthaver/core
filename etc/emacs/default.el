@@ -823,6 +823,7 @@ With prefix ARG non-nil, insert the result at the end of region."
 
 ;;; Newsticker
 (use-package newsticker
+  :ensure nil
   :bind 
   ("C-c e n" . newsticker-plainview)
   ("C-c e N" . newsticker-treeview)

@@ -434,7 +434,7 @@ equal comparison"))
    (version :type fixnum :accessor version :initform 100)
    ;; Generic support for the object, indexing and root protocols
    (root 
-    :reader store-root 
+    :reader store-root
     :documentation "This is an instance of the data store btree. It should have an OID that is
 fixed in the code and does not change between sessions. Usually this is
 something like 0, 1 or -1")
@@ -480,8 +480,8 @@ behavior.")
     "This is another root for class indexing that is also a data store specific
 stored btree instance with a unique OID that persists between sessions. No
 cache is needed because we cache in the class slots.")
-   (ser :accessor ser :initform nil)
-   (de :accessor de :initform nil))
+   (ser :accessor ser :initform nil :initarg :ser)
+   (de :accessor de :initform nil :initarg :de))
   (:documentation "Base class for all STOREs. The role of a STORE is similar to an ORM in the
 sense that it supports querying and modification of persistent CLOS objects
 via database access. A STORE maintains a collection of tables and a btree. It
@@ -1551,18 +1551,40 @@ is not created. Other possible values include :ERROR and :CREATE.")
       (make-symbol symbol-name)))
 
 ;;; Controller Protocol
-(defgeneric open-store (st &key recover recover-fatal &allow-other-keys)
+(defgeneric open-store (st &key recover &allow-other-keys)
   (:documentation "Open the store and all necessary database tables.
 Different data stores may use different keys so all methods should
 &allow-other-keys. The only standard keyword is RECOVER which means that
 recovery should be checked for or performed on startup. When the value is
-`:fatal' full rebuild from log files is requested."))
+`:fatal' full rebuild from log files is requested.")
+  (:method :after ((self store) &rest args)
+    (declare (ignore args))
+    (with-transaction (:store self)
+      (setf (slot-value self 'schema-name-index)
+            (btree::ensure-index (slot-value self 'schema-table) 'by-name
+                                 :key-form 'schema-classname-keyform
+                                 :populate t)))))
 
 (defgeneric close-store (st)
   (:documentation "Close the store and underlying database tables.
 Should be in a state where lisp could be shut down without causing an
 inconsistent state in the db. Also, the object could be used by open-store to
-reopen the database."))
+reopen the database.")
+  (:method :after ((self store))
+    (cache::map-cache
+     (lambda (schema-id schema)
+       (declare (ignore schema))
+       (handler-case (uncache-store-schema self schema-id)
+         (error () nil)))
+     (schema-cache self))
+    (mapc (lambda (classname)
+            (handler-case (remove-class-store-schema self (find-class classname))
+              (error () nil)))
+          (schema-classes self))
+    (setf (slot-value self 'schema-name-index) nil
+          (slot-value self 'instance-index) nil
+          (slot-value self 'ser) nil
+          (slot-value self 'de) nil)))
 
 (defgeneric optimize-layout (st &key &allow-other-keys)
   (:documentation "If supported, speed up the index and allocation by freeing up any available
@@ -1570,11 +1592,13 @@ storage and return it to the free list. See the methods of data stores to
 determine what options are valid. Supported both on stores (all btrees and
 stored slots) and specific btrees."))
 
-;;; Controller User API
+;;; User API
 
 ;; start stop
 
-;; (defun close-all-stores () (maphash-values #'close-store *store-table*))
+(defun close-all-stores () 
+  (maphash-values #'close-store *store-table*)
+  (when *store* (setf *store* (close-store *store*))))
 
 ;; (pushnew 'close-all-stores sb-ext:*exit-hooks*)
 

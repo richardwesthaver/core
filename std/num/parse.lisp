@@ -371,3 +371,6 @@ complex numbers and negative numbers."
     (cond
       ((typep parsed type) parsed)
       (errorp (error 'invalid-number :reason (format nil "value is not of type ~A" type) :value parsed)))))
+
+;; versions
+(std/prim:definline parse-simple-version (str) (mapcar 'parse-integer (std/string:ssplit #\. str)))

@@ -74,6 +74,7 @@
    :rdb-column
    :close-columns
    :rdb-schema
+   :rdb-store
    :create-concat-merge-op
    :create-index-merge-op
    :create-fixed-prefix-op

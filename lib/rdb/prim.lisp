@@ -184,6 +184,10 @@ and size are pre-computed."
   (with-errptr* (err 'cf-error :db db :cf name)
     (rocksdb-create-column-family db opt name err)))
 
+(defun %txn-create-cf (db name &optional (opt (rocksdb-options-create)))
+  (with-errptr* (err 'cf-error :db db :cf name)
+    (rocksdb-transactiondb-create-column-family db opt name err)))
+
 (defun %destroy-cf (cf)
   (rocksdb-column-family-handle-destroy cf))
 

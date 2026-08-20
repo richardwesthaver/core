@@ -908,6 +908,7 @@ protocol.")
    #:stored-object-schema
    #:get-from-root
    #:add-to-root
+   #:root
    #:open-store
    #:close-store
    #:optimize-layout

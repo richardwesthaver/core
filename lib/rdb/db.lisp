@@ -162,7 +162,8 @@ columns."
                 for c in (columns db)
                 for cf = (deref cfs i)
                 do (setf (db c) cf))
-          db))))
+          ;; this function should never return a value.
+          (values)))))
 
 (defun close-columns (db)
   (loop for cf in (columns db)
@@ -282,6 +283,14 @@ does nothing when merging with an existing key."
     (push col (columns db))
     col))
 
+(defmethod make-column ((db trdb) &rest args)
+  (let ((col (apply 'make-instance 'column-family args)))
+    (setf (db col) (if (equal (name col) *default-column-family-name*)
+                       (rocksdb-get-default-column-family-handle (db db))
+                       (%txn-create-cf (db db) (name col) (options col))))
+    (push col (columns db))
+    col))
+
 (defmethod find-column (cf (self srdb) &key)
   (find cf (columns self) :key 'name :test 'string=))
 
@@ -374,7 +383,9 @@ does nothing when merging with an existing key."
                   :db db
                   :message "Database is already open")
           db)
-        (setf db (%open-transactiondb options transactiondb-options (namestring path))))))
+        (if (probe-file path)
+            (open-with-columns self)
+            (setf db (%open-transactiondb options transactiondb-options (namestring path)))))))
 
 (defmethod open-db ((self otrdb))
   (with-slots (path db options) self
@@ -384,7 +395,9 @@ does nothing when merging with an existing key."
                   :db db
                   :message "Database is already open")
           db)
-        (setf db (%open-optimistictransactiondb options (namestring path))))))
+        (if (probe-file path)
+            (open-with-columns self)
+            (setf db (%open-optimistictransactiondb options (namestring path)))))))
 
 (defun open-backup-db (self &key path) ;; opts env
   (%open-backup-engine (options self) path))

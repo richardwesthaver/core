@@ -84,16 +84,16 @@ transaction-db."
     (commit transaction)
     (rocksdb-transaction-destroy transaction)))
 
-(defmethod commit ((self t) &key)
+(defmethod commit ((self alien-value) &key)
   (%commit-transaction self))
 
-(defmethod rollback ((self t) &key savepoint)
+(defmethod rollback ((self alien-value) &key savepoint)
   (%rollback-transaction self savepoint))
 
-(defmethod prepare ((self t) &key)
+(defmethod prepare ((self alien-value) &key)
   (%prepare-transaction self))
 
-(defmethod abort-transaction ((self t) &key savepoint)
+(defmethod abort-transaction ((self alien-value) &key savepoint)
   (%abort-transaction self savepoint))
 
 ;;; TXN ops

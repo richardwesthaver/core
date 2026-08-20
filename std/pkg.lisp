@@ -507,6 +507,7 @@
    :invalid-number-reason
    :ensure-integer
    :ensure-number
+   :parse-simple-version
    ;; num/float
    :make-float-converters
    :encode-float32

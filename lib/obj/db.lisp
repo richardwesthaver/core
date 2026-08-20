@@ -70,7 +70,7 @@ usually a key such as :ROCKSDB or :SQLITE."))
   (:documentation "Close a database."))
 
 (defgeneric open-db (self)
-  (:documentation "Open a database."))
+  (:documentation "Open a database and return a non-nil value if a new database was created."))
 
 (defgeneric destroy-db (self)
   (:documentation "Destroy all traces of a database, deleting any on-disk data and shutting down
