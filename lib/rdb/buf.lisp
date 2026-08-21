@@ -62,6 +62,11 @@
      (not (zerop vlen))
      (%make-slice-stream v vlen))))
 
+(defmacro unless-key-exists ((key db &key cf (options (default-rocksdb-readoptions)) timestamp)
+                             &body body)
+  `(unless (key-exists ,db ,key :opts ,options :timestamp ,timestamp :cf ,cf)
+     ,@body))
+
 (defun rdb-get-buf (db kbuf vbuf &key (opts (default-rocksdb-readoptions)) cf)
   "Get a key from DB using the buffered RocksDB functions.
 Does not support direct timestamps."

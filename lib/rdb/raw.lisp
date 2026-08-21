@@ -31,6 +31,25 @@
      (not (zerop vlen))
      (values v vlen))))
 
+;; TODO 2026-08-20: 
+#+nil
+(defmacro unless-key-exists-p ((key length db &key cf (options (default-rocksdb-readoptions)) timestamp) &body body)
+  "If KEY of given LENGTH _might_ exist (probabilistic) in DB (or CF) do nothing,
+else eval forms in BODY.
+
+This does not necessarily guarantee KEY does not exist before using
+[[id:OBJ/DB:PUT-KEY][put-key]]. An alternative approach would be to use a custom merge-operator which
+does nothing when merging with an existing key."
+  (with-gensyms (v vlen)
+    `(multiple-value-bind (,v ,vlen) ,(if cf 
+                                          `(%cf-key-may-exist-p ,db ,cf ,key ,length ,options ,timestamp)
+                                          `(%key-may-exist-p ,db ,key ,length ,options ,timestamp))
+       (declare (ignorable ,vlen))
+       (if ,v
+           (rocksdb-free ,v)
+           (progn
+             ,@body)))))
+
 (defun %put-kv (db key val &optional (opts (rocksdb-writeoptions-create)))
     (with-kv-raw (db key e :error put-kv-error :val val)
       (rocksdb-put db opts
