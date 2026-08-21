@@ -799,16 +799,14 @@ functions and via PEEKED."))
                  (setf (slot-value (find-class ',cl-name) 'length) ',length)))
              cl-name))))))
 
-(defun make-buffer-stream (length)
-  (make-instance (buffer-stream length)))
-
 (defun buffer-stream-length (bs)
   (slot-value (class-of bs) 'length))
 
 (defmethod element-type ((self buffer-stream)) 'octet)
 
 (defmethod alloc ((self buffer-stream))
-  (setf (sap self) (foreign-alloc `(array unsigned-char ,(buffer-stream-length self)))))
+  (setf (sap self) (foreign-alloc `(array unsigned-char ,(buffer-stream-length self))))
+  self)
 
 (defmethod free ((self buffer-stream))
   (unless (or (not (sap self)) (null-pointer-p (sap self)))
@@ -818,12 +816,15 @@ functions and via PEEKED."))
 (defmethod reset ((self buffer-stream) &key)
   (reset-buffer-stream self))
 
+(defun make-buffer-stream (length)
+  (alloc (make-instance (buffer-stream length))))
+
 (defparameter *bsref-range-check* t)
 
 ;; HACK 2026-08-03: consider passing in the element-type to BSREF - would simplify pointer arithmetic in the IO.
 (defun bsref (x i)
   (declare (type buffer-stream x))
-  (let ((n (slot-value (the buffer-stream x) 'size)))
+  (let ((n (slot-value (class-of (the buffer-stream x)) 'length)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
     (sap-svref (slot-value x 'buffer) 'sb-alien:unsigned-char i)))
 
@@ -835,7 +836,7 @@ functions and via PEEKED."))
              `(lety ((,obj-v ,obj :type ,fv)
                      (,i-v ,i :type fixnum))
                 ,@(when *bsref-range-check*
-                    `((let ((,n-v (slot-value ,obj-v 'length)))
+                    `((let ((,n-v (slot-value (class-of ,obj-v) 'length)))
                         (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
                 (sap-ref (slot-value (the ,fv ,obj-v) 'buffer) 'unsigned-char (the fixnum (* (the fixnum ,i-v) (the fixnum 1)))))))
         ((t) form))
@@ -843,7 +844,7 @@ functions and via PEEKED."))
 
 (defun (setf bsref) (value x i)  
   (declare (type buffer-stream x))
-  (let ((n (slot-value (the buffer-stream x) 'length)))
+  (let ((n (slot-value (class-of (the buffer-stream x)) 'length)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
     (setf (sap-svref (slot-value x 'buffer) 'sb-alien:unsigned-char i) value)))
 
@@ -862,7 +863,7 @@ functions and via PEEKED."))
             `(lety ((,obj-v ,obj :type ,fv)
                     (,i-v ,i :type fixnum))
                ,@(if *bsref-range-check*
-                     `((let ((,n-v (slot-value ,obj-v 'length)))
+                     `((let ((,n-v (slot-value (class-of ,obj-v) 'length)))
                          (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
                (setf (sap-ref (slot-value (the ,fv ,obj-v) 'buffer) 
                               ,alien-type (the fixnum ,i-v))
