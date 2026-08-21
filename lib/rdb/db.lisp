@@ -85,20 +85,30 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 (defclass otrdb (rdb) ()
   (:documentation "Optimistic Transaction DB."))
 
-(defclass srdb (rdb)
-  ((backup :initform nil :type (or null (alien (* rocksdb-backup-engine))) :initarg :backup :accessor db-backup)
-   (snapshots :initform nil
-              :initarg :snapshots 
-              :accessor snapshots)
-   (checkpoints :initform nil
-                :initarg :checkpoints
-                :accessor checkpoints))
-  (:default-initargs 
-   ;; Note that we don't pre-populate this slot with the 'default' column
-   ;; which is present on creation of a RocksDB database. Usually there isn't
-   ;; much need to access this column directly as you can just access the
-   ;; database directly, which will access the default column internally.
-   :columns nil))
+(defmethods make-db 
+  (((engine (eql :rdb)) &rest initargs &key (load t) open)
+   (declare (ignore engine))
+   (remf initargs :open)
+   (remf initargs :load)
+   (let ((db (apply 'make-instance 'rdb initargs)))
+     (when (and load (probe-file (path db))) (load-opts db))
+     (when open (open-db db))
+     db))
+  (((engine (eql :trdb)) &rest initargs &key (load t) open)
+   (declare (ignore engine))
+   (remove-from-plist initargs :open :load)
+   (let ((db (apply 'make-instance 'trdb initargs)))
+     (when (and load (path db)) (load-opts db))
+     (when open (open-db db))
+     db))
+  (((engine (eql :otrdb)) &rest initargs &key (load t) open)
+   (declare (ignore engine))
+   (remf initargs :open)
+   (remf initargs :load)
+   (let ((db (apply 'make-instance 'otrdb initargs)))
+     (when (and load (path db)) (load-opts db))
+     (when open (open-db db))
+     db)))
 
 (defun repair-db (self &optional (opts (default-rocksdb-readoptions)))
   (%repair-db (path self) opts))
@@ -187,51 +197,7 @@ does nothing when merging with an existing key."
            (progn
              ,@body)))))
 
-(defmethods insert-key 
-  (((self srdb) key val &key column)
-   (if-let ((column (and column (find-column column self))))
-     (if-let ((cf (sap column)))
-       (%put-cf
-        (sap self)
-        cf
-        key
-        val
-        (rocksdb-writeoptions-create))
-       (simple-rdb-error "column-family is not open"))
-     (put-key self key val)))
-  (((self srdb) (key string) (val string) &key column)
-   (if-let ((column (and column (find-column column self))))
-     (if-let ((sap (sap column)))
-       (%put-cf
-        (sap self)
-        sap
-        (string-to-octets key)
-        (string-to-octets val)
-        (rocksdb-writeoptions-create))
-       (simple-rdb-error "column-family is not open"))
-     (put-key self key val)))
-  (((self srdb) (key string) val &key column)
-   (if-let ((column (and column (find-column column self))))
-     (if-let ((sap (sap column)))
-       (%put-cf
-        (sap self)
-        sap
-        (string-to-octets key)
-        val
-        (rocksdb-writeoptions-create))
-       (simple-rdb-error "column-family is not open"))
-     (put-key self key val)))
-  (((self srdb) key (val string) &key column)
-   (if-let ((column (and column (find-column column self))))
-     (if-let ((sap (sap column)))
-       (%put-cf
-        (sap self)
-        sap
-        key
-        (string-to-octets val)
-        (rocksdb-writeoptions-create))
-       (simple-rdb-error "column-family is not open"))
-     (put-key self key val)))
+(defmethods insert-key
   (((self rdb) (key string) (val string) &key column)
    (insert-key self (string-to-octets key) (string-to-octets val) :column column))
   (((self rdb) (key string) val &key column)
@@ -266,15 +232,6 @@ does nothing when merging with an existing key."
       (%multi-get-cf-kv (db self) (mapcar 'db columns) keys opts)
       (%multi-get-kv (db self) keys opts)))
 
-(defmethod multi-get ((self srdb) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) cf)
-  (if cf
-      (ecase data-type
-        (octet-vector (%multi-get-cf-kv (sap self) keys opts (sap cf)))
-        (string (%multi-get-cf-kv-str (sap self) keys opts (sap cf))))
-      (ecase data-type
-        (octet-vector (%multi-get-kv (sap self) keys opts))
-        (string (%multi-get-kv-str (sap self) keys opts)))))
-
 (defmethod make-column ((db rdb) &rest args)
   (let ((col (apply 'make-instance 'column-family args)))
     (setf (db col) (if (equal (name col) *default-column-family-name*)
@@ -290,12 +247,6 @@ does nothing when merging with an existing key."
                        (%txn-create-cf (db db) (name col) (options col))))
     (push col (columns db))
     col))
-
-(defmethod find-column (cf (self srdb) &key)
-  (find cf (columns self) :key 'name :test 'string=))
-
-(defmethod find-column ((col column-family) (self srdb) &key)
-  (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
 
 (defmethod (setf find-column) ((new column-family) (cf string) (self rdb) &key)
   "Find and replace a column by name."
@@ -323,38 +274,6 @@ does nothing when merging with an existing key."
   (if column
       (%ingest-db-cf (db self) (db column) files options)
       (%ingest-db (db self) files options)))
-
-(defmethods make-db 
-  (((engine (eql :rdb)) &rest initargs &key (load t) open)
-   (declare (ignore engine))
-   (remf initargs :open)
-   (remf initargs :load)
-   (let ((db (apply 'make-instance 'rdb initargs)))
-     (when (and load (probe-file (path db))) (load-opts db))
-     (when open (open-db db))
-     db))
-  (((engine (eql :srdb)) &rest initargs &key (load t) open)
-   (declare (ignore engine))
-   (remove-from-plist initargs :open :load)
-   (let ((db (apply 'make-instance 'srdb initargs)))
-     (when (and load (path db)) (load-opts db))
-     (when open (open-db db))
-     db))
-  (((engine (eql :trdb)) &rest initargs &key (load t) open)
-   (declare (ignore engine))
-   (remove-from-plist initargs :open :load)
-   (let ((db (apply 'make-instance 'trdb initargs)))
-     (when (and load (path db)) (load-opts db))
-     (when open (open-db db))
-     db))
-  (((engine (eql :otrdb)) &rest initargs &key (load t) open)
-   (declare (ignore engine))
-   (remf initargs :open)
-   (remf initargs :load)
-   (let ((db (apply 'make-instance 'otrdb initargs)))
-     (when (and load (path db)) (load-opts db))
-     (when open (open-db db))
-     db)))
 
 (defmethod derive-schema ((self rdb))
   (apply 'make-schema
@@ -410,18 +329,9 @@ does nothing when merging with an existing key."
     (let ((chk (%make-checkpoint db)))
       (%create-checkpoint chk path log-size-for-flush))))
 
-(defmethod checkpoint :around ((self srdb) &rest args)
-  (when-let ((chk (apply 'call-next-method args)))
-    (push chk (checkpoints self))))
-
 (defmethod snapshot ((self rdb) &key)
   (unless-null-db () self
     (%create-snapshot db)))
-
-(defmethod snapshot :around ((self srdb) &key)
-  (push
-   (call-next-method self)
-   (snapshots self)))
 
 (defmethod restore ((self rdb) (from string) &key id options)
   (unless-null-db (path) self
@@ -433,9 +343,6 @@ does nothing when merging with an existing key."
         (error 'open-backup-engine-error :db db
                                          :message "PATH must not be nil when no backups exist")
         (%create-new-backup (open-backup-db self :path path) db))))
-
-(defmethod backup :around ((self srdb) &rest args)
-  (setf (db-backup self) (apply 'call-next-method args)))
 
 (defmethod flush ((self rdb) &key wait)
   (%flush-db (db self) wait))
@@ -494,10 +401,6 @@ does nothing when merging with an existing key."
                                 (options x) nil))
               (columns self)))
     (setf options nil)))
-
-(defmethod shutdown-db :around ((self srdb) &key wait)
-  (close-backup self)
-  (call-next-method self :wait wait))
 
 (defmethod shutdown-db :around ((self trdb) &key wait)
   (with-slots (transactiondb-options) self

@@ -43,9 +43,10 @@
 ;;; Code:
 (in-package :rdb)
 
-(defun rdb-key-may-exist (db kbuf &key (opts (default-rocksdb-readoptions)) timestamp cf)
+(defun key-exists (db kbuf &key (opts (default-rocksdb-readoptions)) timestamp cf)
+  "Return a BUFFER-STREAM if key KBUF exists in DB, else return nil."
   (declare (buffer-stream kbuf))
-  (with-alien ((found boolean)
+  (with-alien ((may-exist boolean)
                (v (* unsigned-char))
                (vlen size-t))
     (and
@@ -53,11 +54,11 @@
          (rocksdb-key-may-exist-cf db opts cf (buffer kbuf) (size kbuf) (addr v) (addr vlen)
                                    (when timestamp (buffer timestamp))
                                    (if timestamp (size timestamp) 0)
-                                   (addr found))
+                                   (addr may-exist))
          (rocksdb-key-may-exist db opts (buffer kbuf) (size kbuf) (addr v) (addr vlen)
                                 (when timestamp (buffer timestamp)) (if timestamp (size timestamp) 0)
-                                (addr found)))
-     found
+                                (addr may-exist)))
+     may-exist
      (not (zerop vlen))
      (%make-slice-stream v vlen))))
 

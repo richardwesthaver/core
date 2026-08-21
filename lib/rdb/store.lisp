@@ -95,7 +95,7 @@ the constant +store-major-version+"
          ,(default-rocksdb-transactiondb-options)))
 
 ;;; BTrees
-(defclass rdb-btree (btree column-family) ()
+(defclass rdb-btree (btree) ()
   (:documentation "A RocksDB implementation of a BTree."))
 
 ;;; Store
@@ -221,6 +221,7 @@ the constant +store-major-version+"
    (index-cache :accessor index-cache :transient t))
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
+;; TODO 2026-08-19: memoize
 (defmethod index-cache ((instance rdb-indexed-btree))
   ;; Lazily load the index-cache to avoid bootstrapping issues: If
   ;; we do not lazy-load the index-table cache, it we attempt to
@@ -244,10 +245,10 @@ the constant +store-major-version+"
 
 (defmethod add-index ((bt rdb-indexed-btree) &key index-name key-form (populate t))
   (let ((sc (get-store bt)))
-    ;; Setting the value of *store* is unfortunately
-    ;; absolutely required at present, I think because the copying 
-    ;; of objects is calling "make-instance" without an argument.
-    ;; I am sure I can find a way to make this cleaner, somehow.
+    ;; FIX 2026-08-20: 
+    ;; Setting the value of *store* is unfortunately absolutely required at
+    ;; present, I think because the copying of objects is calling
+    ;; "make-instance" without an argument.
     (if (and (not (null index-name))
              (symbolp index-name)
              (or (symbolp key-form) (listp key-form)))
@@ -274,8 +275,7 @@ the constant +store-major-version+"
                (serialize-object key primary-buf sc)
                (write-buffer-oid (oid index) secondary-buf)
                (serialize-object skey secondary-buf sc)
-               ;; should silently do nothing if
-               ;; the key/value already exists
+               ;; should silently do nothing if the key/value already exists
                (insert-key
                 (idx sc)
                 secondary-buf primary-buf

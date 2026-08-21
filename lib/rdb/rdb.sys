@@ -97,7 +97,7 @@
 (defsys :rdb
   "RDB is the default database implementation, based on the [[ID:ROCKSDB][ROCKSDB]] system."
   :require (:std :rocksdb :sys :io :obj :log :dat :cli :net :q)
-  :version "0.1.8" ;; 0.2 on next refact
+  :version "0.1.9" ;; 0.2 on next refact
   :components 
   ((:pkg "pkg")
    (:file "condition") 
@@ -107,6 +107,7 @@
    (:file "cfg")
    (:file "buf")
    (:file "db")
+   (:file "simple")
    (:file "schema")
    (:file "iter")
    (:file "txn")
