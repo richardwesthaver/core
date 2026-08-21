@@ -881,7 +881,7 @@ functions and via PEEKED."))
   (or (with-mutex (*buffer-streams-lock*)
         (and (plusp (length *buffer-streams*))
              (vector-pop *buffer-streams*)))
-      (make-instance (buffer-stream 10))))
+      (make-buffer-stream 10)))
 
 (defun return-buffer-stream (bs)
   "Return a buffer-stream to the *buffer-streams* resource pool."
