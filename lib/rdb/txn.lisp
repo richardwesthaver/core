@@ -127,7 +127,7 @@ decoding the value is returned or NIL if nothing was found."
 (defun txn-put (kbuf vbuf
                 &key (transaction *txn*)
                      cf)
-  "Put a key / value pair into a DB.
+  "Put a kv pair into a DB.
 The pair are encoded in buffer-streams."
   (declare ((alien (* rocksdb-transaction)) transaction)
            (buffer-stream kbuf vbuf))
@@ -148,6 +148,10 @@ The pair are encoded in buffer-streams."
          (buffer vbuf)
          (size vbuf)
          e))))
+
+(defun txn-insert (db kbuf vbuf &key (transaction *txn*) cf)
+  (unless-key-exists (kbuf db :cf cf)
+    (txn-put kbuf vbuf :transaction transaction :cf cf)))
 
 (defun txn-delete (kbuf &key (transaction *txn*) cf)
   "Delete a key / value pair from a DB.

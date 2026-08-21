@@ -62,9 +62,9 @@
      (not (zerop vlen))
      (%make-slice-stream v vlen))))
 
-(defmacro unless-key-exists ((key db &key cf (options (default-rocksdb-readoptions)) timestamp)
+(defmacro unless-key-exists ((key db &key cf timestamp)
                              &body body)
-  `(unless (key-exists ,db ,key :opts ,options :timestamp ,timestamp :cf ,cf)
+  `(unless (key-exists ,db ,key :timestamp ,timestamp :cf ,cf)
      ,@body))
 
 (defun rdb-get-buf (db kbuf vbuf &key (opts (default-rocksdb-readoptions)) cf)
@@ -123,6 +123,16 @@ Does not support direct timestamps."
         (rocksdb-transactiondb-put db opts %key %ksize %val %vsize e))))
 
 (define-db-surrogate db-put rdb-put trdb-put)
+
+(defun rdb-insert (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf timestamp)
+  (unless-key-exists (kbuf db :cf cf :timestamp timestamp)
+    (rdb-put db kbuf vbuf :opts opts :cf cf :timestamp timestamp)))
+
+(defun trdb-insert (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf)
+  (unless-key-exists (kbuf db :cf cf)
+    (trdb-put db kbuf vbuf :opts opts :cf cf)))
+
+(define-db-surrogate db-insert rdb-insert trdb-insert)
 
 ;; the following two functions are restricted to a SINGLE column family
 (defun rdb-multi-get-batch (db keys klen &key (opts (default-rocksdb-readoptions)) cf sorted)

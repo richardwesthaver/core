@@ -105,6 +105,7 @@ the constant +store-major-version+"
    ;; FIX 2026-07-28: we should use something like 'mix' when we need a logger
    ;; (logger :initform (default-logger) :initarg :logger :accessor logger)
    (metadata :accessor store-metadata)
+   (oids :accessor oids)
    (btrees :accessor btrees)
    (dup-btrees :accessor dup-btrees)
    (index :accessor index)
@@ -141,8 +142,7 @@ the constant +store-major-version+"
   (with-buffer-streams (key val)
     (serialize-database-version-key key)
     (with-base-db bdb (db self)
-      (let ((buf (rdb-get-buf bdb key val
-                              :cf (store-metadata self))))
+      (let ((buf (rdb-get-buf bdb key val :cf (store-metadata self))))
         (when buf (deserialize-database-version-value buf))))))
 
 (defun set-database-version (sc)
@@ -380,7 +380,7 @@ the constant +store-major-version+"
 ;; be the correct kind of btree...
 (defsclass rdb-btree-index (btree-index rdb-btree)
   ()
-  (:documentation "A RDB-based BTree supports secondary index-table."))
+  (:documentation "A RDB-based BTree supporting secondary index tables."))
 
 (defmethod get-value (key (bt rdb-btree-index))
   "Get the value in the primary DB from a secondary key."
@@ -973,38 +973,64 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
         (slot-value store 'options) (options store)
         (slot-value store 'transactiondb-options) (transactiondb-options store))
   ;; if pre-existing, load options and all column-families into COLUMNS slot
-  (cond 
-    (recover (restore store recover :recovery-id id))
-    ((open-db store) ; non-nil value indicates a new instance
-     ;; create column-families
-     (make-column store :name "metadata")
-     (make-column store :name "btree")
-     (make-column store :name "bbtree")
-     (make-column store :name "oid")
-     (make-column store :name "index")
-     (make-column store :name "rindex")))
-
-  ;; the default column family serves as the root btree
-  (setf (slot-value store 'root) (find-column "default" store))
-
-  (with-slots (db) store
-    (let ((metadata (find-column "metadata" store))
-          (btrees (find-column "btree" store))
+  (let ((newp))
+    (cond 
+      (recover (restore store recover :id id))
+      ((open-db store) ; non-nil value indicates a new instance
+       (setf newp t)
+       ;; create column-families
+       (make-column store :name "metadata")
+       (set-database-version store)
+       (make-column store :name "oids")
+       ;; needs lisp-comparator for following
+       (make-column store :name "btrees")
+       (make-column store :name "bbtrees")
+       (make-column store :name "index")
+       (make-column store :name "rindex")))
+    ;; set the store version number
+    (destructuring-bind (maj min inc) (version store)
+      (setf (version store)
+            (+ (* 100 maj)
+               (* 10 min)
+               inc)))
+    ;; the default column family serves as the slot-value data store
+    (setf (store-metadata store) (find-column "metadata" store)
+          (btrees store) (find-column "btrees" store)
           ;; TODO 2026-08-16: dup-btree -> itree?
-          (dup-btrees (find-column "dup-btree" store))
-          (oids (find-column "oid" store))
-          (index (find-column "index" store))
-          (rindex (find-column "rindex" store)))
-      (log:info! "metadata:" metadata)
-      (log:info! "btrees:" btrees)
-      (log:info! "dup-btrees:" dup-btrees)
-      (log:info! "oids:" oids)
-      (log:info! "index:" index)
-      (log:info! "rindex:" rindex))))
+          (dup-btrees store) (find-column "dup-btrees" store)
+          (oids store) (find-column "oids" store)
+          (index store) (find-column "index" store)
+          (rindex store) (find-column "rindex" store))
+    (with-transaction (:store store)
+      (setf 
+       (slot-value store 'root) (make-instance 'rdb-btree :from-oid -1 :store store)
+       (slot-value store 'store::index-root) (make-instance 'rdb-btree :from-oid -2 :store store)
+       (slot-value store 'store::instance-index) 
+       (if newp
+           (make-instance 'rdb-indexed-btree :from-oid -3 :store store :index (make-hash-table))
+           (make-instance 'rdb-indexed-btree :from-oid -3 :store store))
+       (slot-value store 'store::schema-table) 
+       (if newp
+           (make-instance 'rdb-indexed-btree :from-oid -4 :store store :index (make-hash-table))
+           (make-instance 'rdb-indexed-btree :from-oid -4 :store store))))
+    store))
 
 (defmethod close-store ((store rdb-store))
   "Close the underlying RocksDB instance."
-  (close-db store))
+  (when (slot-value store 'root)
+    (setf 
+     (slot-value store 'store::index-root) nil
+     (slot-value store 'store::schema-table) nil
+     (slot-value store 'store::instance-index) nil
+     (slot-value store 'root) nil)
+    (flush-instance-cache store)
+    (setf (cid-seq store) nil
+          (oid-seq store) nil
+          (oids store) nil
+          (dup-btrees store) nil
+          (btrees store) nil
+          (store-metadata store) nil))
+  (shutdown-db store :wait t))
 
 ;;; IDs
 ;; 0-15 reserved cuz why not
@@ -1033,7 +1059,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 
 ;; TODO 2026-08-19: test
 (defmethod reserved-oid-p ((sc rdb-store) oid)
-  (< oid 16))
+  (< oid 2))
 
 ;;; slot protocol
 ;; TODO 2024-11-07:

@@ -823,7 +823,7 @@ functions and via PEEKED."))
 ;; HACK 2026-08-03: consider passing in the element-type to BSREF - would simplify pointer arithmetic in the IO.
 (defun bsref (x i)
   (declare (type buffer-stream x))
-  (let ((n (slot-value (the buffer-stream x) 'length)))
+  (let ((n (slot-value (the buffer-stream x) 'size)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
     (sap-svref (slot-value x 'buffer) 'sb-alien:unsigned-char i)))
 
@@ -1167,7 +1167,7 @@ stream to the pool on exit."
            (declare (buffer-stream bs))
            (let* ((position (offset bs))
                   (size (size bs))
-                  (vlen (length bv))
+                  (vlen (buffer-stream-length bv))
                   (writable (max vlen (- size position))))
              (declare (fixnum position size vlen writable))
              (unless (zerop writable)
