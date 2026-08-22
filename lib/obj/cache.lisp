@@ -41,7 +41,7 @@ history but less often recently.
     (if val (values (sb-ext:weak-pointer-value val) t)
         (values nil nil))))
 
-(defun (setf get-cache) (key cache value)
+(defun (setf get-cache) (value key cache)
   "Set a value in a cache-table."
   (let ((w (sb-ext:make-weak-pointer value)))
     (sb-ext:finalize value (lambda () (remhash key cache)))

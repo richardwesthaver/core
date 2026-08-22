@@ -93,7 +93,7 @@ Does not support direct timestamps."
 
 (defun trdb-get (db kbuf &key (opts (default-rocksdb-readoptions)) cf)
   (declare (buffer-stream kbuf))
-  (with-key-buf (db kbuf e :cf cf)
+  (with-kbuf (e kbuf)
     (with-pslice
         (if cf
             (rocksdb-transactiondb-get-pinned-cf db opts cf %key %ksize e)

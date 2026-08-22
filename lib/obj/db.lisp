@@ -41,7 +41,8 @@ of BODY."
 
 ;;; Database
 (defgeneric db (self)
-  (:documentation "Return the Database associated with SELF."))
+  (:documentation "Return the Database associated with SELF.")
+  (:method ((self null)) nil))
 (defgeneric (setf db) (new self)
   (:documentation "Set the Database associated with SELF."))
 
@@ -201,6 +202,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 (defgeneric transaction-db (self)
   (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
 return the same value as DB depending on backend.")
+  (:method ((self null)) nil)
   (:method ((self t)) (db (transaction-store self))))
 (defgeneric transaction-prior (self)
   (:documentation "Return the previous transaction of SELF if any.")
@@ -214,8 +216,8 @@ return the same value as DB depending on backend.")
        (or (eq db (transaction-db txn))
            (eq (transaction-db db) (transaction-db txn))
            (eq db (transaction-store txn))
-           (eq (transaction-store db) (transaction-store txn)))
-       (known-transaction db (transaction-prior txn))))
+           (eq (transaction-store db) (transaction-store txn))
+           (known-transaction db (transaction-prior txn)))))
 
 (define-condition transaction-retry-count-exceeded (error)
   ((count :initarg :count :accessor retry-count :initform 0)))
@@ -240,12 +242,14 @@ committed. Otherwise, the transaction is aborted."
     (remf initargs :db)
     (remf initargs :store)
     (remf initargs :transaction)
-    `(let ((*db* ,db)
+    `(let ((*db* ,(or store db))
            (*store* ,store)
            (*transaction* ,transaction))
        (let ((,%txn-fn (lambda () ,@body)))
          (funcall #'execute *db* ,%txn-fn 
-                  :transaction (aif (known-transaction *db* *transaction*) (transaction-object it) it)
+                  :transaction (aif (known-transaction (or *store* *db*) *transaction*) 
+                                    (transaction-object it) 
+                                    it)
                   ,@initargs)))))
 
 (defmacro current-transaction (db)

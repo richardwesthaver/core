@@ -438,9 +438,9 @@ equal comparison"))
     :documentation "This is an instance of the data store btree. It should have an OID that is
 fixed in the code and does not change between sessions. Usually this is
 something like 0, 1 or -1")
-   (schema-table 
-    :reader schema-table
-    :initarg :schema-table
+   (schema-index
+    :reader schema-index
+    :initarg :schema-index
     :documentation "Schema id to schema database table")
    (schema-name-index
     :reader schema-name-index
@@ -754,7 +754,7 @@ stored slot values associated with those instances."
   ;; Lookup in store cache
   (std/macs:ifret (get-cache schema-id (schema-cache st))
     ;; Lookup in store table
-    (let* ((schema (get-value schema-id (schema-table st)))
+    (let* ((schema (get-value schema-id (schema-index st)))
            (class (or class (find-class (schema:schema-class-name schema)))))
       (assert schema)
       ;; Update store cache
@@ -859,7 +859,7 @@ stored slot values associated with those instances."
   (ensure-finalized class)
   (let ((schema (make-stored-object-schema (next-cid st) (get-class-schema class))))
     ;; Add to database
-    (setf (get-value (id schema) (schema-table st))
+    (setf (get-value (id schema) (schema-index st))
           schema)
     ;; Let get-store-schema cache it for us
     (get-store-schema st (id schema) class)))
@@ -880,12 +880,12 @@ stored slot values associated with those instances."
 
 (defmethod set-store-schema ((st store) schema-id schema)
   "Insert a new schema into the store table"
-  (setf (get-value schema-id (schema-table st))
+  (setf (get-value schema-id (schema-index st))
         schema))
 
 (defmethod remove-store-schema ((st store) schema-id)
   "Remove a schema from the store table; uncache separately"
-  (delete-key schema-id (schema-table st)))
+  (delete-key schema-id (schema-index st)))
 
 (defmethod uncache-store-schema ((st store) schema-id)
   (handler-case
@@ -1008,7 +1008,7 @@ stored slot values associated with those instances."
                         (unless class
                           (warn "Class ~S not defined, ignoring." (name schema)))
                         class))
-                    (schema-table sc)))))
+                    (schema-index sc)))))
 
 (defun slot-index-sane-p (sc class slotname &key errorp)
   (declare (optimize (safety 3))
@@ -1561,7 +1561,7 @@ recovery should be checked for or performed on startup. When the value is
     (declare (ignore args))
     (with-transaction (:store self)
       (setf (slot-value self 'schema-name-index)
-            (btree::ensure-index (slot-value self 'schema-table) 'by-name
+            (btree::ensure-index (slot-value self 'schema-index) 'by-name
                                  :key-form 'schema-classname-keyform
                                  :populate t)))))
 

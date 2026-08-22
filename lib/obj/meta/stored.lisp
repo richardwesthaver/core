@@ -152,8 +152,7 @@ STORE is reserved for a special method which operates on stored objects.")
   ;; When we declare slots and don't initialize the cache-style and don't
   ;; inherit cacheable-persistent-object...inform the user
   (when (and (not cache-style) (cached-slot-specification-p direct-slots)
-             (not (superclass-member-p 'cacheable-persistent-object 
-                                       (class-direct-superclasses class))))
+             (not (superclass-member-p 'stored-cache-object (class-direct-superclasses class))))
     (error "Must specify the class caching style if you declare cached slots and don't~%inherit from a cached class.  Class option :cache-style must be one of~% :checkout, :txn or :none"))
   (let* ((new-direct-superclasses 
            (if cache-style 
@@ -171,15 +170,15 @@ STORE is reserved for a special method which operates on stored objects.")
 
 (defun ensure-class-inherits-from (class from-classnames direct-superclasses)
   (let* ((from-classes (mapcar #'find-class from-classnames))
-     (has-persistent-objects 
-      (every #'(lambda (class) (superclass-member-p class direct-superclasses))
-         from-classes)))
+         (has-persistent-objects 
+           (every #'(lambda (class) (superclass-member-p class direct-superclasses))
+                  from-classes)))
     (if (not (or (member class from-classes) has-persistent-objects))
-    (progn
-      (dolist (class from-classes)
-        (setf direct-superclasses (remove class direct-superclasses)))
-      (append direct-superclasses from-classes))
-    direct-superclasses)))
+        (progn
+          (dolist (class from-classes)
+            (setf direct-superclasses (remove class direct-superclasses)))
+          (append direct-superclasses from-classes))
+        direct-superclasses)))
 
 (defun superclass-member-p (class superclasses)
   "Searches superclass list for class"
@@ -208,7 +207,7 @@ STORE is reserved for a special method which operates on stored objects.")
   ())
 
 (defclass stored-effective-slot-definition (stored-slot-definition standard-effective-slot-definition)
-  ())
+  ((triggers :accessor derived-slot-triggers :initarg :trigger :initform nil)))
 
 (defmethod direct-slot-definition-class ((class stored-class)
                                          &rest initargs)

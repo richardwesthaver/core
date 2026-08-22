@@ -120,7 +120,7 @@ the constant +store-major-version+"
    ;; (make-instance 'simple-column-family :type '(oid . cid) :name "instance-index")
    ;; (make-instance 'simple-column-family :type '(cid . oid) :name "class-index")
    ;; :root
-   :schema-table (make-hash-table :size 100 :weakness :value)
+   :schema-index (make-hash-table :size 100 :weakness :value)
    :schema-name-index (make-hash-table :size 100 :test 'equal :weakness :value))
   (:documentation "A RocksDB-based STORE."))
 
@@ -139,11 +139,10 @@ the constant +store-major-version+"
   (or (slot-value self 'path) (call-next-method self)))
 
 (defmethod version ((self rdb-store))
-  (with-buffer-streams (key val)
+  (with-buffer-streams (key)
     (serialize-database-version-key key)
-    (with-base-db bdb (db self)
-      (let ((buf (rdb-get-buf bdb key val :cf (store-metadata self))))
-        (when buf (deserialize-database-version-value buf))))))
+    (let ((buf (trdb-get (db self) key :cf (db (store-metadata self)))))
+      (when buf (deserialize-database-version-value buf)))))
 
 (defun set-database-version (sc cf)
   "Internal use when creating new database"
@@ -1001,14 +1000,15 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
                (* 10 min)
                inc)))
     (with-transaction (:store store)
+      ;; btree initialization
       (setf 
-       (slot-value store 'root) (make-instance 'rdb-btree :from-oid -1 :store store)
-       (slot-value store 'store::index-root) (make-instance 'rdb-btree :from-oid -2 :store store)
-       (slot-value store 'store::instance-index) 
+       (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
+       (slot-value store 'store::index-root) (make-instance 'rdb-btree :oid -2 :store store)
+       (slot-value store 'store::instance-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -3 :store store :index (make-hash-table))
            (make-instance 'rdb-indexed-btree :from-oid -3 :store store))
-       (slot-value store 'store::schema-table) 
+       (slot-value store 'store::schema-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -4 :store store :index (make-hash-table))
            (make-instance 'rdb-indexed-btree :from-oid -4 :store store))))
@@ -1019,7 +1019,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
   (when (slot-value store 'root)
     (setf 
      (slot-value store 'store::index-root) nil
-     (slot-value store 'store::schema-table) nil
+     (slot-value store 'store::schema-index) nil
      (slot-value store 'store::instance-index) nil
      (slot-value store 'root) nil)
     (flush-instance-cache store)
@@ -1098,6 +1098,30 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (txn-delete key-buf :transaction (current-transaction self)))))
 
 ;;; Transactions
-(defmethod execute ((self rdb-store) txn
-                    &key
-                    transaction parent))
+;; TODO 2026-08-21: 
+(defmethod execute ((store rdb-store) txn-fn &key transaction handler)
+  (with-retry-restart (:msg "Retry transaction execution.")
+    (let ((ret) (ok) (txn (transaction store :transaction transaction)))
+      (let ((*txn* txn)
+            (*transaction* (list store txn *transaction*))
+            (*store* store))
+        (catch 'transaction
+          (unwind-protect
+               (handler-bind
+                   ((condition 
+                      (lambda (c)
+                        (when (and handler (funcall handler c))
+                          (commit txn)
+                          (setq ok t))
+                        (signal c))))
+                 (setf ret (multiple-value-list (funcall txn-fn)))
+                 (with-errptr e (rocksdb-transaction-commit txn e))
+                 (setq ok t))
+            (unless ok (%abort-transaction txn)))))
+      (when ok (values-list ret)))))
+          
+                               
+
+
+  
+                                         

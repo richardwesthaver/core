@@ -158,7 +158,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   "binds %KSIZE %VSIZE %KEY %VAL"
   `(let ((%ksize (size ,kbuf))
          (%vsize (size ,vbuf)))
-     (with-errptr* (,eptr ',error :db ,db :kv ,(cons kbuf vbuf) ,@(when cf `(:cf ,cf)))
+     (with-errptr* (,eptr ',error :db ,db :kv (cons ,kbuf ,vbuf) ,@(when cf `(:cf ,cf)))
        (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
                     (%val (* unsigned-char) (buffer ,vbuf)))
          ,@body))))
@@ -179,11 +179,18 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
        (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
          ,@body))))
 
+(defmacro with-kbuf ((eptr kbuf) &body body)
+  "binds %KSIZE %KEY"
+  `(let ((%ksize (size ,kbuf)))
+     (with-errptr ,eptr
+       (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
+         ,@body))))
+
 (defmacro with-key-range ((db sbuf ebuf eptr &key (error 'kv-error) cf) &body body)
   "binds %SSIZE %ESIZE %SKEY %EKEY"
   `(let ((%ssize (size ,sbuf))
          (%esize (size ,ebuf)))
-     (with-errptr* (,eptr ',error :db ,db :kv ,(cons sbuf ebuf) ,@(when cf `(:cf ,cf)))
+     (with-errptr* (,eptr ',error :db ,db :kv (cons ,sbuf ,ebuf) ,@(when cf `(:cf ,cf)))
        (with-alien ((%skey (* unsigned-char) (buffer ,sbuf))
                     (%ekey (* unsigned-char) (buffer ,ebuf)))
          ,@body))))
