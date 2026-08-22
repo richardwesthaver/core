@@ -145,12 +145,12 @@ the constant +store-major-version+"
       (let ((buf (rdb-get-buf bdb key val :cf (store-metadata self))))
         (when buf (deserialize-database-version-value buf))))))
 
-(defun set-database-version (sc)
+(defun set-database-version (sc cf)
   "Internal use when creating new database"
   (with-buffer-streams (key val)
     (serialize-database-version-key key)
     (serialize-database-version-value *store-version* val)
-    (trdb-put (db sc) key val :cf (store-metadata sc))
+    (trdb-put (db sc) key val :cf cf)
     *store-version*))
 
 ;;; Interface
@@ -978,21 +978,14 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (recover (restore store recover :id id))
       ((open-db store) ; non-nil value indicates a new instance
        (setf newp t)
+       (set-database-version store (db (make-column store :name "metadata")))
        ;; create column-families
-       (make-column store :name "metadata")
-       (set-database-version store)
        (make-column store :name "oids")
        ;; needs lisp-comparator for following
        (make-column store :name "btrees")
        (make-column store :name "bbtrees")
        (make-column store :name "index")
        (make-column store :name "rindex")))
-    ;; set the store version number
-    (destructuring-bind (maj min inc) (version store)
-      (setf (version store)
-            (+ (* 100 maj)
-               (* 10 min)
-               inc)))
     ;; the default column family serves as the slot-value data store
     (setf (store-metadata store) (find-column "metadata" store)
           (btrees store) (find-column "btrees" store)
@@ -1001,6 +994,12 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
           (oids store) (find-column "oids" store)
           (index store) (find-column "index" store)
           (rindex store) (find-column "rindex" store))
+    ;; set the store version number
+    (destructuring-bind (maj min inc) (version store)
+      (setf (version store)
+            (+ (* 100 maj)
+               (* 10 min)
+               inc)))
     (with-transaction (:store store)
       (setf 
        (slot-value store 'root) (make-instance 'rdb-btree :from-oid -1 :store store)

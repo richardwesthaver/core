@@ -15,8 +15,8 @@
 ;;; Conditions
 (defcondition db-condition () ()
   (:documentation "Superclass for DB conditions.")
-  (:error-class db-error (error) ())
-  (:warning-class db-warning (warning) ()))
+  (:error-class db-error (std-error) ())
+  (:warning-class db-warning (std-warning) ()))
 
 (deferror invalid-database (db-error invalid-argument) ()
   (:documentation "Error signaled when an invalid DB is detected.")
@@ -149,7 +149,7 @@ transaction in response to any non-local exit.
 
 |#
 
-(deftype simple-transction () `(and (not null) list))
+(deftype simple-transaction () `(and (not null) list))
 
 (defvar *transaction* nil
   "The current transaction or nil. 

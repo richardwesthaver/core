@@ -928,12 +928,11 @@ stream to the pool on exit."
             (error "Failed to allocate buffer stream of length ~A.  MAKE-ALIEN returned a null pointer" newlen))
           ;; technically we just need to copy from position to size.....
           (copy-bufs (alien-sap (buffer new)) 0 (alien-sap buf) 0 size)
-          (free-alien (buffer bs))
-          (setf bs new)
-          (values))))))
+          ;;(free-alien (buffer bs))
+          new)))))
 
 (defun resize-buffer-stream-no-copy (bs length)
-  "Resize the underlying buffer of a buffer-stream."
+  "Resize the underlying buffer of a buffer-stream without bothering to copy contents."
   (declare (buffer-stream bs)
            (fixnum length))
   (let ((len (buffer-stream-length bs)))
@@ -943,8 +942,8 @@ stream to the pool on exit."
         ;; FIXME: async unwinds between alloc of newbuf and free of buf
         ;; will leave us with a memory leak of size NEWLEN.
         ;; (free buf)
-        (free bs)
-        (setf bs (make-buffer-stream newlen))))))
+        ;; (free bs)
+        (make-buffer-stream newlen)))))
       ;; (setf buf newbuf)
       ;; (setf len newlen)
 

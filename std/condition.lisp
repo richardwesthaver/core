@@ -75,8 +75,7 @@ control (or not)."
             :initform *error-message*
             :reader error-message))
   (:documentation "Standard Error")
-  (:report (lambda (condition stream)
-             (format stream "~A" (error-message condition)))))
+  (:report (lambda (condition stream) (format stream "~A" (error-message condition)))))
 
 (defun std-error (&rest args)
   "Signal an error of type STD-ERROR."

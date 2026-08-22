@@ -119,7 +119,7 @@ decoding the value is returned or NIL if nothing was found."
            (size kbuf)
            e))
       (when (> size (buffer-stream-length vbuf))
-        (resize-buffer-stream-no-copy vbuf size))
+        (setf vbuf (resize-buffer-stream-no-copy vbuf size)))
       (setf (size vbuf) size
             (buffer vbuf) data))
     vbuf))

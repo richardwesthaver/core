@@ -78,7 +78,7 @@ Does not support direct timestamps."
            (rocksdb-get-into-buffer-cf db opts cf %key %ksize %val %vlen e)
            (rocksdb-get-into-buffer db opts %key %ksize %val %vlen e))
        (return-from rdb-get-buf vbuf)) ; check that this value is updated..
-      (resize-buffer-stream vbuf %vlen))))
+      (setf vbuf (resize-buffer-stream vbuf %vlen)))))
 
 (defun rdb-get (db kbuf &key (opts (default-rocksdb-readoptions)) cf)
   "Get a key from DB using the v2 zero-copy RocksDB functions if possible."

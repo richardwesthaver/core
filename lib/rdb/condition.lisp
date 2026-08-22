@@ -12,7 +12,6 @@
     (:documentation "Simple RDB Error."))
   (deferror rdb-error (db-error)
     ()
-    (:reporter t)
     (:documentation "Error signaled by the RDB system."))
   (defwarning simple-rdb-warning (simple-warning db-condition)
     () 
@@ -22,7 +21,7 @@
 
 (defwarning rdb-default-column-warning (simple-rdb-warning simple-warning) () (:reporter t))
 
-(define-condition rdb-alien-error (rdb-error rocksdb-c-error)
+(define-condition rdb-alien-error (rocksdb-c-error rdb-error)
   ((db :initarg :db :reader error-db))
   (:documentation "Error signaled by RDB C subsystem."))
 

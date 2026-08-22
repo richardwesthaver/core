@@ -27,14 +27,11 @@ ROCKSDB-OPTIMISTICTRANSACTIONDB."
 signaled we coerce this pointer to a string and feed it to a condition of name
 ERR with initargs PARAMS for the duration of BODY."
   `(with-errptr ,e
-     (handler-bind ((sb-sys:memory-fault-error
+     (handler-bind ((error 
                       (lambda (c)
-                        (format *trace-output* "~&Memory fault detected: ~A~%" c)
-                        (rocksdb-c-error ,e)))
-                    (error (lambda (c)
-                             (declare (ignore c))
-                             (apply 'error ,err :message (deref (sap-alien ,e (* c-string))) ',params))))
-       (progn ,@body))))
+                        (declare (ignore c))
+                        (error ,err :message (deref (sap-alien ,e (* c-string))) ,@params))))
+       ,@body)))
 
 ;;; raw
 ;; these functions only apply to the raw API
@@ -170,7 +167,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   "binds %KSIZE %VLEN %KEY %VAL"
   `(let ((%ksize (size ,kbuf))
          (%vlen (buffer-stream-length ,vbuf)))
-     (with-errptr* (,eptr ',error :db ,db :kv ,(cons kbuf vbuf) ,@(when cf `(:cf ,cf)))
+     (with-errptr* (,eptr ',error :db ,db :kv (cons ,kbuf ,vbuf) ,@(when cf `(:cf ,cf)))
        (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
                     (%val (* unsigned-char) (buffer ,vbuf)))
          ,@body))))
