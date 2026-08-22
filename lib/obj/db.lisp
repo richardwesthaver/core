@@ -213,9 +213,6 @@ return the same value as DB depending on backend.")
            (eq (transaction-db db) (transaction-db txn))
            (and (transaction-prior txn) (known-transaction db (transaction-prior txn))))))
 
-(define-condition transaction-retry-count-exceeded (error)
-  ((count :initarg :count :accessor retry-count :initform 0)))
-
 (define-condition transaction-error (db-error)
   ((transaction :initform *transaction* :initarg :transaction :reader error-transaction)))
 
