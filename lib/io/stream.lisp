@@ -896,12 +896,13 @@ functions and via PEEKED."))
 (defmacro with-buffer-streams (names &body body)
   "Grab a buffer-stream, executes forms, and returns the
 stream to the pool on exit."
-  `(let ,(loop for name in names collect (list name '(make-buffer-stream 10)))
+  `(let ,(loop for name in names collect (list name '(make-buffer-stream 10))) ;; vs grab-buffer-stream
      (declare (type buffer-stream ,@names))
      (unwind-protect
           (progn ,@(mapcar (lambda (x) `(alloc ,x)) names)
                  ,@body)
-       ,@(loop for name in names collect (list 'return-buffer-stream name)))))
+       ;; ,@(loop for name in names collect (list 'return-buffer-stream name))
+       )))
 
 ;; HACK 2026-08-03: 
 (definline copy-bufs (dst dst-offset src src-offset len)
