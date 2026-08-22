@@ -875,7 +875,7 @@ functions and via PEEKED."))
       form))
 
 (defun reset-buffer-stream (bs)
-  "'Empty' the buffer-stream."
+  "Reset the buffer-stream size and offset."
   (declare (buffer-stream bs))
   (setf (size bs) 0)
   (setf (offset bs) 0))

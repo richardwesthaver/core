@@ -271,7 +271,7 @@ equal comparison"))
     (when (null slot-def)
       (error "Slot ~A not found in class ~A for instance ~A" slot class instance))
     (when (type-check-association instance slot-def associated)
-      (ensure-transaction (:store sc)
+      (ensure-transaction (:db sc)
         (case (association-type slot-def)
           (:ref (update-association-end class instance slot-def associated)
            (stored-slot-writer sc associated instance (slot-definition-name slot-def)))
@@ -288,7 +288,7 @@ equal comparison"))
     (when (null slot-def)
       (error "Slot ~A not found in class ~A for instance ~A" slotname class instance))
     (when (type-check-association instance slot-def associated)
-      (ensure-transaction (:store sc)
+      (ensure-transaction (:db sc)
         (case (association-type slot-def)
           (:ref (when (slot-boundp-using-class class instance slot-def)
                   (slot-makunbound-using-class class instance slot-def)))
@@ -656,7 +656,7 @@ instances with identical functionality"
              (sset-btree sset) :collect t))
 
 (defmethod drop-sset ((sset default-sset))
-  (ensure-transaction (:store *store*)
+  (ensure-transaction (:db *store*)
     (awhen (sset-btree sset)
       (drop-btree it))))
 
@@ -675,7 +675,7 @@ stored slot values associated with those instances."
   (awhen (ensure-list instances)
     (assert (consp it))
     (do-subsets (subset txn-size it)
-      (ensure-transaction (:store store)
+      (ensure-transaction (:db store)
         (mapc #'drop-instance subset)))))
 
 (defmethod drop-instance ((inst stored))
@@ -1360,7 +1360,7 @@ different objects with the same oid."
   "Ensure instance creation is inside a transaction, huge (5x) performance impact per object"
   (declare (ignore initargs))
   (assert sc nil "You must have an open store controller to create ~A" instance)
-  (ensure-transaction (:store sc)
+  (ensure-transaction (:db sc)
     (call-next-method)))
 
 (eval-always
@@ -1496,10 +1496,10 @@ is not created. Other possible values include :ERROR and :CREATE.")
 (defun map-legacy-symbols (symbol-string package-string old-version)
   (declare (ignore old-version))
   (let ((entry (assoc (cons (string-upcase symbol-string) (string-upcase package-string))
-              *legacy-symbol-conversions* :test #'equal)))
+                      *legacy-symbol-conversions* :test #'equal)))
     (if entry
-    (values t (cadr entry) (cddr entry))
-    nil)))
+        (values t (cadr entry) (cddr entry))
+        nil)))
 
 (defparameter *legacy-package-conversions* nil)
 
@@ -1513,41 +1513,41 @@ is not created. Other possible values include :ERROR and :CREATE.")
   (declare (ignore old-version))
   (let ((entry (assoc (string-upcase package-string) *legacy-package-conversions* :test #'equal)))
     (if entry
-    (cdr entry)
-    package-string)))
+        (cdr entry)
+        package-string)))
 
 (defun map-legacy-names (symbol-name package-name old-version)
   (multiple-value-bind (mapped? new-name new-package)
       (map-legacy-symbols symbol-name package-name old-version)
     (if mapped?
-    (values new-name new-package)
-    (values symbol-name (map-legacy-package-names package-name old-version)))))
+        (values new-name new-package)
+        (values symbol-name (map-legacy-package-names package-name old-version)))))
 
 (defun translate-and-intern-symbol (sc symbol-name package-name)
   "Service for the serializer to translate any renamed packages or symbols
    and then intern the decoded symbol."
   (if package-name
       (multiple-value-bind (sname pname)
-      (if (or *always-convert* (not (= (version sc)
-                                       *store-code-version-int*)))
-          (map-legacy-names symbol-name package-name (version sc))
-          (values symbol-name package-name))
-    (let ((package (find-package pname)))
-      (if package
-          (intern sname package)
-          (progn
-        (case *no-deserialization-package-found-action*
-          (:warn 
-           (warn "Couldn't deserialize package ~A based on symbol ~A's home package ~A.
+          (if (or *always-convert* (not (= (version sc)
+                                           *store-code-version-int*)))
+              (map-legacy-names symbol-name package-name (version sc))
+              (values symbol-name package-name))
+        (let ((package (find-package pname)))
+          (if package
+              (intern sname package)
+              (progn
+                (case *no-deserialization-package-found-action*
+                  (:warn 
+                   (warn "Couldn't deserialize package ~A based on symbol ~A's home package ~A.
                          Creating an uninterned symbol" pname sname package-name))
-          (:error
-           (error "Couldn't deserialize package ~A based on symbol ~A's home package ~A."
-              pname sname package-name))
-          (:create
-           (intern sname 
-               (make-package pname :use '(cl))))
-          (t nil))
-        (make-symbol sname)))))
+                  (:error
+                   (error "Couldn't deserialize package ~A based on symbol ~A's home package ~A."
+                          pname sname package-name))
+                  (:create
+                   (intern sname 
+                           (make-package pname :use '(cl))))
+                  (t nil))
+                (make-symbol sname)))))
       (make-symbol symbol-name)))
 
 ;;; Controller Protocol
@@ -1559,7 +1559,7 @@ recovery should be checked for or performed on startup. When the value is
 `:fatal' full rebuild from log files is requested.")
   (:method :after ((self store) &rest args)
     (declare (ignore args))
-    (with-transaction (:store self)
+    (with-transaction (:db self)
       (setf (slot-value self 'schema-name-index)
             (btree::ensure-index (slot-value self 'schema-index) 'by-name
                                  :key-form 'schema-classname-keyform
@@ -1724,7 +1724,7 @@ reachable and thus live"
   "Update indices when writing an indexed slot.  Make around method to ensure a single transaction
    for write + index update"
   (let ((store (get-store instance)))
-    (ensure-transaction (:store store)
+    (ensure-transaction (:db store)
       (update-slot-index store class instance slot-def new-value)
       (call-next-method))))
 
@@ -1732,7 +1732,7 @@ reachable and thus live"
   "Removes the slot value from the database."
   (let ((sc (get-store instance))
         (oid (oid instance)))
-    (ensure-transaction (:store sc)
+    (ensure-transaction (:db sc)
       (let* ((idx (get-slot-def-index slot-def sc))
              (old-value-bound-p (slot-boundp-using-class class instance slot-def))
              (old-value (when old-value-bound-p
@@ -2263,20 +2263,20 @@ representations (formal utf-16)."
        (macrolet ((next-byte (offset)
                     `(deref (buffer bstream) (+ (* i 4) pos ,offset))))
          (let ((string (or temp-string (make-string length :element-type 'character)))
-                (code 0))
-      (declare (type string string)
-               (type fixnum length pos code))
-      (assert (subtypep (type-of string) 'simple-string))
-      (assert (compatible-unicode-support-p :utf-32le))
-      (loop for i fixnum from 0 below length do
-               (setf code (dpb (next-byte 0) (byte 8 24) 0))
-               (setf code (dpb (next-byte 1) (byte 8 16) code))
-               (setf code (dpb (next-byte 2) (byte 8 8) code))
-               (setf code (dpb (next-byte 3) (byte 8 0) code))
-               (setf (char string i) (code-char code)))
-      (incf (offset bstream)
-        (* length 4))
-      (the simple-string string)))))))
+               (code 0))
+           (declare (type string string)
+                    (type fixnum length pos code))
+           (assert (subtypep (type-of string) 'simple-string))
+           (assert (compatible-unicode-support-p :utf-32le))
+           (loop for i fixnum from 0 below length do
+                    (setf code (dpb (next-byte 0) (byte 8 24) 0))
+                    (setf code (dpb (next-byte 1) (byte 8 16) code))
+                    (setf code (dpb (next-byte 2) (byte 8 8) code))
+                    (setf code (dpb (next-byte 3) (byte 8 0) code))
+                    (setf (char string i) (code-char code)))
+           (incf (offset bstream)
+             (* length 4))
+           (the simple-string string)))))))
 
 ;;; Serializer
 ;; store-object?
@@ -2505,7 +2505,7 @@ representations (formal utf-16)."
     (,+pathname+ . "pathname")
     (,+stored+ . "persistent object (old)")
     (,+stored-ref+ . "persistent object reference (new)")
-;;    (,+oid-pair+ . "oid pair for associations")
+    ;;    (,+oid-pair+ . "oid pair for associations")
     (,+cons+ . "cons cell")
     (,+hash-table+ . "hash table")
     (,+object+ . "standard object")
@@ -2527,10 +2527,10 @@ representations (formal utf-16)."
   (when *trace-deserializer*
     (let ((tag-name (assoc tag *tag-table*)))
       (if tag-name
-      (format t "Deserializing type: ~A~%" tag-name)
-      (progn
-        (format t "Unrecognized tag: ~A~%" tag)
-        (break))))))
+          (format t "Deserializing type: ~A~%" tag-name)
+          (progn
+            (format t "Unrecognized tag: ~A~%" tag)
+            (break))))))
 
 #+nil
 (defun print-post-deserialize-value (value)
@@ -2560,178 +2560,178 @@ corruption of the source data."))
   (declare (type (or null buffer-stream) buf-str))
   (let ((circularity-vector (get-circularity-vector)))
     (labels 
-      ((lookup-id (id)
-     (if (>= id (fill-pointer circularity-vector)) nil
-         (aref circularity-vector id)))
-       (add-object (object)
-     (vector-push-extend object circularity-vector 50)
-     (1- (fill-pointer circularity-vector)))
-       (%deserialize (bs)
-     (declare (type buffer-stream bs))
-     (let ((tag (read-buffer-byte bs)))
-       (declare (type (alien char) tag)
-            (dynamic-extent tag))
-;;	   (print-pre-deserialize-tag tag)
-       (let ((value  
-       (cond
-         ((= tag +fixnum32+)
-          (read-buffer-fixnum32 bs))
-         ((= tag +fixnum64+)
-          (read-buffer-fixnum64 bs))
-         ((= tag +nil+) nil)
-         ((= tag +utf8-string+)
-          (deserialize-string bs :type :utf-8))
-         ((= tag +utf16-string+)
-          (deserialize-string bs :type :utf-16le))
-         ((= tag +utf32-string+)
-          (deserialize-string bs :type :utf-32le))
-         ((= tag +symbol+)
-          (let ((name (%deserialize bs))
-            (package (%deserialize bs)))
-        (translate-and-intern-symbol sc name package)))
-         ((= tag +stored+)
-          (let ((oid (read-buffer-oid bs))
-            (cname (%deserialize bs)))
-        (if oid-only oid
-            (store-recreate-instance sc oid cname))))
-         ((= tag +stored-ref+)
-          (let ((oid (read-buffer-oid bs)))
-        (if oid-only oid
-            (store-recreate-instance sc oid))))
-         #+lispworks
-         ((= tag +short-float+)
-          (coerce (read-buffer-float bs) 'short-float))
-         ((= tag +single-float+)
-          (read-buffer-float bs))
-         ((= tag +double-float+)
-          (read-buffer-double bs))
-         ((= tag +char+)
-          (code-char (read-buffer-uint32 bs)))
-         ((= tag +pathname+)
-          (parse-namestring (or (%deserialize bs) "")))
-         ((= tag +positive-bignum+) 
-          (deserialize-bignum bs (read-buffer-uint32 bs) t))
-         ((= tag +negative-bignum+) 
-          (deserialize-bignum bs (read-buffer-uint32 bs) nil))
-         ((= tag +rational+) 
-          (/ (the integer (%deserialize bs)) 
-         (the integer (%deserialize bs))))
-;;	     ((= tag +oid-pair+)
-;;	      (let ((pair (make-oid-pair)))
-;;		(setf (oid-pair-left pair) (read-buffer-fixnum32 bs))
-;;		(setf (oid-pair-right pair) (read-buffer-fixnum32 bs))))
-         ((= tag +cons+)
-          (let* ((id (read-buffer-int32 bs))
-             (maybe-cons (lookup-id id)))
-        (declare (type fixnum id))
-        (if maybe-cons maybe-cons
-            (let ((c (cons nil nil)))
-              (add-object c)
-              (setf (car c) (%deserialize bs))
-              (setf (cdr c) (%deserialize bs))
-              c))))
-         ((= tag +complex+)
-          (let ((rpart (%deserialize bs))
-            (ipart (%deserialize bs)))
-        (complex rpart ipart)))
-         ((= tag +hash-table+)
-          (let* ((id (read-buffer-int32 bs))
-             (maybe-hash (lookup-id id)))
-        (declare (type fixnum id))
-;;		(format t "~A ~A~%" maybe-hash id)
-        (if maybe-hash maybe-hash
-            (let* ((test (%deserialize bs))
-               (rehash-size (%deserialize bs))
-               (rehash-threshold (%deserialize bs))
-               (size (%deserialize bs))
-               (h (make-hash-table :test test
-                           :rehash-size rehash-size
-                           :rehash-threshold rehash-threshold
-                           :size (ceiling (* (ceiling (/ (+ size 10) rehash-threshold)) rehash-size)))))
-              (add-object h)
-              (loop for i fixnum from 0 below size
-                do
-                (setf (gethash (%deserialize bs) h)
-                  (%deserialize bs)))
-              h))))
-         ((= tag +object+)
-          (let* ((id (read-buffer-int32 bs))
-             (maybe-o (lookup-id id)))
-        (if maybe-o maybe-o
-            (let ((typedesig (%deserialize bs)))
-              ;; now, depending on what typedesig is, we might 
-              ;; or might not need to specify the store controller here..
-              (let ((o 
-                 (or (handler-case
-                   (if (subtypep typedesig 'stored)
-                       (recreate-instance-using-class (find-class typedesig) :sc sc)
-                       ;; if the this type doesn't exist in our object
-                       ;; space, we can't reconstitute it, but we don't want 
-                       ;; to abort completely, we will return a special object...
-                       ;; This behavior could be configurable; the user might 
-                       ;; prefer an abort here, but I prefer surviving...
-                       (make-instance typedesig))
-                   (error (v) (format t "got typedesig error: ~A ~A ~%" v typedesig)
-                      (list 'caught-error v typedesig)))
-                 (list 'uninstantiable-object-of-type typedesig))))
-            (if (listp o)
-                o
-                (progn
-                  (add-object o)
-                  (loop for i fixnum from 0 below (%deserialize bs)
-                    do
-                    (setf (slot-value o (%deserialize bs))
-                      (%deserialize bs)))
-                  o)))))))
-         ((= tag +array+)
-          (let* ((id (read-buffer-int32 bs))
-             (maybe-array (lookup-id id)))
-        (if maybe-array maybe-array
-            (let* ((flags (read-buffer-byte bs))
-               (a (make-array 
-                   (loop for i fixnum from 0 below 
-                     (read-buffer-int32 bs)
-                     collect (%deserialize bs))
-                   :element-type (element-type-from-octet
-                          (logand #x1f flags))
-                   :fill-pointer (/= 0 (logand +fill-pointer-p+ 
-                               flags))
-                   :adjustable (/= 0 (logand +adjustable-p+ 
-                             flags)))))
-              (when (array-has-fill-pointer-p a)
-            (setf (fill-pointer a) (%deserialize bs)))
-              (add-object a)
-              (loop for i fixnum from 0 below (array-total-size a)
-                do
-                (setf (row-major-aref a i) (%deserialize bs)))
-              a))))
-         ((= tag +struct+)
-          (let* ((id (read-buffer-int32 bs))
-             (maybe-o (lookup-id id)))
-        (if maybe-o maybe-o
-            (let ((typedesig (%deserialize bs)))
-              (let ((o (or (handler-case
-                       (funcall (struct-constructor typedesig))
-                     (error (v) (format t "got typedesig error for struct: ~A ~A ~%" v typedesig)
-                        (list 'caught-error v typedesig)))
-                   (list 'uninstantiable-object-of-type typedesig))))
-            (if (listp o) o
-                (progn
-                  (add-object o)
-                  (loop for i fixnum from 0 below (%deserialize bs) do
-                   (let ((name (%deserialize bs))
-                     (value (%deserialize bs)))
-                     (setf (slot-value o name) value)))
-                  o)))))))
-         (t (error 'stored-type-deserialization-error :type-tag tag)))))
-;;	     (print-post-deserialize-value value)
-         value))))
+        ((lookup-id (id)
+           (if (>= id (fill-pointer circularity-vector)) nil
+               (aref circularity-vector id)))
+         (add-object (object)
+           (vector-push-extend object circularity-vector 50)
+           (1- (fill-pointer circularity-vector)))
+         (%deserialize (bs)
+           (declare (type buffer-stream bs))
+           (let ((tag (read-buffer-byte bs)))
+             (declare (type (alien char) tag)
+                      (dynamic-extent tag))
+             ;;	   (print-pre-deserialize-tag tag)
+             (let ((value  
+                     (cond
+                       ((= tag +fixnum32+)
+                        (read-buffer-fixnum32 bs))
+                       ((= tag +fixnum64+)
+                        (read-buffer-fixnum64 bs))
+                       ((= tag +nil+) nil)
+                       ((= tag +utf8-string+)
+                        (deserialize-string bs :type :utf-8))
+                       ((= tag +utf16-string+)
+                        (deserialize-string bs :type :utf-16le))
+                       ((= tag +utf32-string+)
+                        (deserialize-string bs :type :utf-32le))
+                       ((= tag +symbol+)
+                        (let ((name (%deserialize bs))
+                              (package (%deserialize bs)))
+                          (translate-and-intern-symbol sc name package)))
+                       ((= tag +stored+)
+                        (let ((oid (read-buffer-oid bs))
+                              (cname (%deserialize bs)))
+                          (if oid-only oid
+                              (store-recreate-instance sc oid cname))))
+                       ((= tag +stored-ref+)
+                        (let ((oid (read-buffer-oid bs)))
+                          (if oid-only oid
+                              (store-recreate-instance sc oid))))
+                       #+lispworks
+                       ((= tag +short-float+)
+                        (coerce (read-buffer-float bs) 'short-float))
+                       ((= tag +single-float+)
+                        (read-buffer-float bs))
+                       ((= tag +double-float+)
+                        (read-buffer-double bs))
+                       ((= tag +char+)
+                        (code-char (read-buffer-uint32 bs)))
+                       ((= tag +pathname+)
+                        (parse-namestring (or (%deserialize bs) "")))
+                       ((= tag +positive-bignum+) 
+                        (deserialize-bignum bs (read-buffer-uint32 bs) t))
+                       ((= tag +negative-bignum+) 
+                        (deserialize-bignum bs (read-buffer-uint32 bs) nil))
+                       ((= tag +rational+) 
+                        (/ (the integer (%deserialize bs)) 
+                           (the integer (%deserialize bs))))
+                       ;;	     ((= tag +oid-pair+)
+                       ;;	      (let ((pair (make-oid-pair)))
+                       ;;		(setf (oid-pair-left pair) (read-buffer-fixnum32 bs))
+                       ;;		(setf (oid-pair-right pair) (read-buffer-fixnum32 bs))))
+                       ((= tag +cons+)
+                        (let* ((id (read-buffer-int32 bs))
+                               (maybe-cons (lookup-id id)))
+                          (declare (type fixnum id))
+                          (if maybe-cons maybe-cons
+                              (let ((c (cons nil nil)))
+                                (add-object c)
+                                (setf (car c) (%deserialize bs))
+                                (setf (cdr c) (%deserialize bs))
+                                c))))
+                       ((= tag +complex+)
+                        (let ((rpart (%deserialize bs))
+                              (ipart (%deserialize bs)))
+                          (complex rpart ipart)))
+                       ((= tag +hash-table+)
+                        (let* ((id (read-buffer-int32 bs))
+                               (maybe-hash (lookup-id id)))
+                          (declare (type fixnum id))
+                          ;;		(format t "~A ~A~%" maybe-hash id)
+                          (if maybe-hash maybe-hash
+                              (let* ((test (%deserialize bs))
+                                     (rehash-size (%deserialize bs))
+                                     (rehash-threshold (%deserialize bs))
+                                     (size (%deserialize bs))
+                                     (h (make-hash-table :test test
+                                                         :rehash-size rehash-size
+                                                         :rehash-threshold rehash-threshold
+                                                         :size (ceiling (* (ceiling (/ (+ size 10) rehash-threshold)) rehash-size)))))
+                                (add-object h)
+                                (loop for i fixnum from 0 below size
+                                      do
+                                         (setf (gethash (%deserialize bs) h)
+                                               (%deserialize bs)))
+                                h))))
+                       ((= tag +object+)
+                        (let* ((id (read-buffer-int32 bs))
+                               (maybe-o (lookup-id id)))
+                          (if maybe-o maybe-o
+                              (let ((typedesig (%deserialize bs)))
+                                ;; now, depending on what typedesig is, we might 
+                                ;; or might not need to specify the store controller here..
+                                (let ((o 
+                                        (or (handler-case
+                                                (if (subtypep typedesig 'stored)
+                                                    (recreate-instance-using-class (find-class typedesig) :sc sc)
+                                                    ;; if the this type doesn't exist in our object
+                                                    ;; space, we can't reconstitute it, but we don't want 
+                                                    ;; to abort completely, we will return a special object...
+                                                    ;; This behavior could be configurable; the user might 
+                                                    ;; prefer an abort here, but I prefer surviving...
+                                                    (make-instance typedesig))
+                                              (error (v) (format t "got typedesig error: ~A ~A ~%" v typedesig)
+                                                (list 'caught-error v typedesig)))
+                                            (list 'uninstantiable-object-of-type typedesig))))
+                                  (if (listp o)
+                                      o
+                                      (progn
+                                        (add-object o)
+                                        (loop for i fixnum from 0 below (%deserialize bs)
+                                              do
+                                                 (setf (slot-value o (%deserialize bs))
+                                                       (%deserialize bs)))
+                                        o)))))))
+                       ((= tag +array+)
+                        (let* ((id (read-buffer-int32 bs))
+                               (maybe-array (lookup-id id)))
+                          (if maybe-array maybe-array
+                              (let* ((flags (read-buffer-byte bs))
+                                     (a (make-array 
+                                         (loop for i fixnum from 0 below 
+                                                  (read-buffer-int32 bs)
+                                               collect (%deserialize bs))
+                                         :element-type (element-type-from-octet
+                                                        (logand #x1f flags))
+                                         :fill-pointer (/= 0 (logand +fill-pointer-p+ 
+                                                                     flags))
+                                         :adjustable (/= 0 (logand +adjustable-p+ 
+                                                                   flags)))))
+                                (when (array-has-fill-pointer-p a)
+                                  (setf (fill-pointer a) (%deserialize bs)))
+                                (add-object a)
+                                (loop for i fixnum from 0 below (array-total-size a)
+                                      do
+                                         (setf (row-major-aref a i) (%deserialize bs)))
+                                a))))
+                       ((= tag +struct+)
+                        (let* ((id (read-buffer-int32 bs))
+                               (maybe-o (lookup-id id)))
+                          (if maybe-o maybe-o
+                              (let ((typedesig (%deserialize bs)))
+                                (let ((o (or (handler-case
+                                                 (funcall (struct-constructor typedesig))
+                                               (error (v) (format t "got typedesig error for struct: ~A ~A ~%" v typedesig)
+                                                 (list 'caught-error v typedesig)))
+                                             (list 'uninstantiable-object-of-type typedesig))))
+                                  (if (listp o) o
+                                      (progn
+                                        (add-object o)
+                                        (loop for i fixnum from 0 below (%deserialize bs) do
+                                                 (let ((name (%deserialize bs))
+                                                       (value (%deserialize bs)))
+                                                   (setf (slot-value o name) value)))
+                                        o)))))))
+                       (t (error 'stored-type-deserialization-error :type-tag tag)))))
+               ;;	     (print-post-deserialize-value value)
+               value))))
       (etypecase buf-str 
-    (null (return-from deserialize-object nil))
-    (buffer-stream
-     (let ((result (%deserialize buf-str)))
-       (release-circularity-vector circularity-vector)
-       result))))))
+        (null (return-from deserialize-object nil))
+        (buffer-stream
+         (let ((result (%deserialize buf-str)))
+           (release-circularity-vector circularity-vector)
+           result))))))
 
 (defun int-byte-spec (position)
   "Shared byte-spec peformance hack; not thread safe.."
@@ -2744,9 +2744,9 @@ corruption of the source data."))
            (type boolean positive))
   (let ((int-byte-spec (byte 32 0)))
     (declare (dynamic-extent int-byte-spec)
-         (ignorable int-byte-spec))
+             (ignorable int-byte-spec))
     (loop for i from 0 below (/ length 4)
-       for byte-spec = (byte 32 (* 32 i))
+          for byte-spec = (byte 32 (* 32 i))
           with num of-type integer = 0 
           do
              (setq num (dpb (read-buffer-uint32 bs) byte-spec num))

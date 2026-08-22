@@ -160,7 +160,7 @@ the constant +store-major-version+"
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
 *STORE*)."
   (let ((sc (get-store bt)))
-    (ensure-transaction (:store sc)
+    (ensure-transaction (:db sc)
       (with-buffer-streams (key-buf value-buf)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
@@ -175,7 +175,7 @@ the constant +store-major-version+"
 
 (defmethod existsp (key (bt rdb-btree))
   (let ((sc (get-store bt)))
-    (ensure-transaction (:store sc)
+    (ensure-transaction (:db sc)
       (with-buffer-streams (key-buf value-buf)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
@@ -188,7 +188,7 @@ the constant +store-major-version+"
 
 (defmethod (setf get-value) (value key (bt rdb-btree))
   (let ((sc (get-store bt)))
-    (ensure-transaction (:store sc)
+    (ensure-transaction (:db sc)
       (with-buffer-streams (key-buf value-buf)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
@@ -201,7 +201,7 @@ the constant +store-major-version+"
 (defmethod delete-key (key (bt rdb-btree) &key)
   (let ((sc (get-store bt)))
     (with-buffer-streams (key-buf)
-      (ensure-transaction (:store sc)
+      (ensure-transaction (:db sc)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
         (txn-delete key-buf
@@ -253,7 +253,7 @@ the constant +store-major-version+"
              (or (symbolp key-form) (listp key-form)))
         ;; could it be that this fails?
         (let ((index
-                (ensure-transaction (:store sc)
+                (ensure-transaction (:db sc)
                   (let ((ht (idx bt))
                         (index (make-btree-index sc 
                                                  :primary bt 
@@ -286,7 +286,7 @@ the constant +store-major-version+"
               (continue t))
           (loop while continue
                 do
-                   (ensure-transaction (:store sc)
+                   (ensure-transaction (:db sc)
                      (with-btree-cursor (cursor bt)
                        (if last-key 
                            (cursor-set cursor last-key)
@@ -325,7 +325,7 @@ the constant +store-major-version+"
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
         (serialize-object value value-buf sc)
-        (ensure-transaction (:store sc)
+        (ensure-transaction (:db sc)
           (insert-key (btree sc)
                       key-buf value-buf
                       :transaction (current-transaction sc))
@@ -351,7 +351,7 @@ the constant +store-major-version+"
     (with-buffer-streams (key-buf secondary-buf)
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
-      (ensure-transaction (:store sc)
+      (ensure-transaction (:db sc)
         (let ((value (get-value key bt)))
           (when value
             (let ((index-table (index-cache bt)))
@@ -999,7 +999,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
             (+ (* 100 maj)
                (* 10 min)
                inc)))
-    (with-transaction (:store store)
+    (with-transaction (:db store)
       ;; btree initialization
       (setf 
        (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
@@ -1056,7 +1056,6 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (3 'rdb-indexed-btree)
     (4 'rdb-btree-index)))
 
-;; TODO 2026-08-19: test
 (defmethod reserved-oid-p ((sc rdb-store) oid)
   (< oid 2))
 
@@ -1064,7 +1063,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  (ensure-transaction (:store self)
+  (ensure-transaction (:db self)
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
       (serialize-object name kbuf self)
@@ -1073,7 +1072,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
             (slot-unbound (class-of instance) instance name))))))
 
 (defmethod stored-slot-writer ((self rdb-store) new-value instance name)
-  (ensure-transaction (:store self)
+  (ensure-transaction (:db self)
     (with-buffer-streams (key-buf value-buf)
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)
@@ -1083,7 +1082,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 
 
 (defmethod stored-slot-boundp ((self rdb-store) instance name)
-  (ensure-transaction (:store self)
+  (ensure-transaction (:db self)
     (with-buffer-streams (key-buf value-buf)
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)
@@ -1091,7 +1090,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
         (if buf t nil)))))
     
 (defmethod stored-slot-makunbound ((self rdb-store) instance name)
-  (ensure-transaction (:store self)
+  (ensure-transaction (:db self)
     (with-buffer-streams (key-buf)
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)

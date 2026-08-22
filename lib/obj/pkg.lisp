@@ -715,7 +715,6 @@ protocol.")
    :transaction-object
    :transaction
    :current-transaction
-   :transaction-store
    :transaction-db
    :transactionp
    :known-transaction
