@@ -786,18 +786,19 @@ functions and via PEEKED."))
 
 (defaccessor sap ((self buffer-stream)) (buffer self))
 
-(with-memoization ()
-  (memoizing
-   (defun buffer-stream (length)
-     (or (std/macs:if-let ((class (find length (std/meta:class-direct-subclasses (find-class 'foreign-vector)) :key #'length)))
-           (class-name class)
-           (let* ((cl-name (intern (format nil "<BUFFER-STREAM:~a>"  length) (find-package "IO/STREAM"))))
-             (compile-and-eval
-              `(progn
-                 (defclass ,cl-name (buffer-stream) ()
-                   (:metaclass io-vector-class))
-                 (setf (slot-value (find-class ',cl-name) 'length) ',length)))
-             cl-name))))))
+(eval-always
+  (with-memoization ()
+    (memoizing
+     (defun buffer-stream (length)
+       (or (std/macs:if-let ((class (find length (std/meta:class-direct-subclasses (find-class 'buffer-stream)) :key #'sequence:length)))
+             (class-name class)
+             (let* ((cl-name (intern (format nil "<BUFFER-STREAM:~a>"  length) (find-package "IO/STREAM"))))
+               (compile-and-eval
+                `(progn
+                   (defclass ,cl-name (buffer-stream) ()
+                     (:metaclass io-vector-class))
+                   (setf (slot-value (find-class ',cl-name) 'length) ',length)))
+               cl-name)))))))
 
 (defun buffer-stream-length (bs)
   (slot-value (class-of bs) 'length))
@@ -818,9 +819,7 @@ functions and via PEEKED."))
   (reset-buffer-stream self))
 
 (defun make-buffer-stream (length)
-  (let ((bs (make-instance (buffer-stream length))))
-    (alloc bs)
-    bs))
+  (make-instance (buffer-stream length)))
 
 (defparameter *bsref-range-check* t)
 
@@ -875,8 +874,9 @@ functions and via PEEKED."))
       form))
 
 (defun reset-buffer-stream (bs)
-  "Reset the buffer-stream size and offset."
+  "Fully reset the buffer-stream."
   (declare (buffer-stream bs))
+  (free bs)
   (setf (size bs) 0)
   (setf (offset bs) 0))
 
@@ -899,10 +899,9 @@ stream to the pool on exit."
   `(let ,(loop for name in names collect (list name '(make-buffer-stream 10)))
      (declare (type buffer-stream ,@names))
      (unwind-protect
-      (progn ,@body)
-       (progn
-     ,@(loop for name in names 
-          collect (list 'return-buffer-stream name))))))
+          (progn ,@(mapcar (lambda (x) `(alloc ,x)) names)
+                 ,@body)
+       ,@(loop for name in names collect (list 'return-buffer-stream name)))))
 
 ;; HACK 2026-08-03: 
 (definline copy-bufs (dst dst-offset src src-offset len)
@@ -924,6 +923,7 @@ stream to the pool on exit."
         ;; FIXME: async unwinds between alloc of newbuf and free of buf will
         ;; leave us with a memory leak of size NEWLEN.  
         (let ((new (make-buffer-stream newlen)))
+          (alloc new)
           (when (or (null (buffer new)) (null-alien (buffer new)))
             (error "Failed to allocate buffer stream of length ~A.  MAKE-ALIEN returned a null pointer" newlen))
           ;; technically we just need to copy from position to size.....

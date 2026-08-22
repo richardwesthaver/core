@@ -24,8 +24,7 @@
 
 (defclass io-vector-class (foreign-vector-class)
   ((length :initarg :length :initform 0 :type array-index :reader sequence:length))
-  (:documentation "Foreign vectors which point to alien slice types (iovec for IO-VEC,
-rocksdb_pinnableslice_t for RDB-SLICE)."))
+  (:documentation "Foreign vectors which point to alien slice types (iovec for IO-VEC)."))
 
 (defclass io-vec ()
   ((sap :initarg :sap :initform nil :accessor sap))
