@@ -9,7 +9,7 @@ based on the type of the car of ARGS."
   `(definline ,name (db &rest args)
      (etypecase db
        ((alien (* rocksdb)) (apply #',rdb db args))
-       ((alien (* rocksdb-transactiondb)) (apply #',trdb args)))))
+       ((alien (* rocksdb-transactiondb)) (apply #',trdb db args)))))
 
 ;;; Base DB
 (defmacro with-base-db (base-db src-db &body body)

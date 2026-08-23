@@ -262,7 +262,7 @@ atomically regardless of whether there is an existing transaction or not."
     (remf initargs :transaction)
     (remf initargs :wait)
     `(let ((,%db ,db)
-           (,%txn-fn (lambda () ,@body)))
+           (,%txn-fn (lambda () (print ,@body))))
        (if (known-transaction ,%db ,transaction)
            (funcall ,%txn-fn)
            (funcall #'execute ,%db

@@ -839,17 +839,17 @@ functions and via PEEKED."))
              `(lety ((,obj-v ,obj :type ,fv)
                      (,i-v ,i :type fixnum))
                 ,@(when *bsref-range-check*
-                    `((let ((,n-v (slot-value (class-of ,obj-v) 'length)))
+                    `((let ((,n-v (buffer-stream-length ,obj-v)))
                         (assert (< -1 ,i-v ,n-v) nil 'out-of-bounds-error :requested ,i-v :bound ,n-v))))
-                (sap-svref (alien-sap (slot-value (the ,fv ,obj-v) 'buffer)) 'unsigned-char (the fixnum (* (the fixnum ,i-v) (the fixnum 1)))))))
+                (deref (slot-value (the ,fv ,obj-v) 'buffer) (the fixnum (* (the fixnum ,i-v) (the fixnum 1)))))))
         ((t) form))
       form))
 
 (defun (setf bsref) (value x i)  
   (declare (type buffer-stream x))
-  (let ((n (slot-value (class-of (the buffer-stream x)) 'length)))
+  (let ((n (buffer-stream-length x)))
     (assert (< -1 i n) nil 'out-of-bounds-error :requested i :bound n)
-    (setf (sap-svref (alien-sap (slot-value x 'buffer)) 'sb-alien:unsigned-char i) value)))
+    (setf (deref (slot-value x 'buffer) i) value)))
 
 (define-compiler-macro (setf bsref) (&whole form value x i)
   (if (and (listp x) (listp value) 
@@ -896,11 +896,12 @@ functions and via PEEKED."))
 (defmacro with-buffer-streams (names &body body)
   "Grab a buffer-stream, executes forms, and returns the
 stream to the pool on exit."
-  `(let ,(loop for name in names collect (list name '(make-buffer-stream 10))) ;; vs grab-buffer-stream
+  `(let ,(loop for name in names collect (list name (make-buffer-stream 10))) ;; vs grab-buffer-stream
      (declare (type buffer-stream ,@names))
      (unwind-protect
           (progn ,@(mapcar (lambda (x) `(alloc ,x)) names)
                  ,@body)
+       ,@(mapcar (lambda (x) `(free ,x)) names)
        ;; ,@(loop for name in names collect (list 'return-buffer-stream name))
        )))
 

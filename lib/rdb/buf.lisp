@@ -99,7 +99,8 @@ Does not support direct timestamps."
             (rocksdb-transactiondb-get-pinned-cf db opts cf %key %ksize e)
             (rocksdb-transactiondb-get-pinned db opts %key %ksize e))
       ;; not optimal..
-      (%make-slice-stream data size))))
+      (unless (or (zerop size) (null-alien data))
+        (%make-slice-stream data size)))))
 
 (define-db-surrogate db-get rdb-get trdb-get)
 
@@ -129,8 +130,9 @@ Does not support direct timestamps."
     (rdb-put db kbuf vbuf :opts opts :cf cf :timestamp timestamp)))
 
 (defun trdb-insert (db kbuf vbuf &key (opts (default-rocksdb-writeoptions)) cf)
-  (unless-key-exists (kbuf db :cf cf)
-    (trdb-put db kbuf vbuf :opts opts :cf cf)))
+  (with-base-db bdb db
+    (unless-key-exists (kbuf bdb :cf cf)
+      (trdb-put db kbuf vbuf :opts opts :cf cf))))
 
 (define-db-surrogate db-insert rdb-insert trdb-insert)
 
