@@ -353,7 +353,7 @@ TEST."
 
 ;;;; Basic Queue
 (defstruct (basic-queue (:conc-name nil)
-		        (:constructor %make-basic-queue (head tail)))
+		                (:constructor %make-basic-queue (head tail)))
   "A basic queue structure."
   (head (error "no head") :type list)
   (tail (error "no tail") :type list))
@@ -370,8 +370,8 @@ TEST."
   (declare (basic-queue queue))
   (let ((new (cons val nil)))
     (if (head queue)
-	(setf (cdr (tail queue)) new)
-	(setf (head queue) new))
+	    (setf (cdr (tail queue)) new)
+	    (setf (head queue) new))
     (setf (tail queue) new)))
 
 (defun pop-basic-queue (queue)
@@ -379,13 +379,13 @@ TEST."
   (declare (basic-queue queue))
   (let ((node (head queue)))
     (if node
-	(multiple-value-prog1 (values (car node) t)
-	  (when (null (setf (head queue) (cdr node)))
-	    (setf (tail queue) nil))
-	  ;; clear node for conservative gcs
-	  (setf (car node) nil
-		(cdr node) nil))
-	(values nil nil))))
+	    (multiple-value-prog1 (values (car node) t)
+	      (when (null (setf (head queue) (cdr node)))
+	        (setf (tail queue) nil))
+	      ;; clear node for conservative gcs
+	      (setf (car node) nil
+		        (cdr node) nil))
+	    (values nil nil))))
 
 (definline basic-queue-count (queue) 
   "Return the count of QUEUE."
@@ -399,7 +399,7 @@ TEST."
   "Peek at the next value of QUEUE."
   (let ((node (head queue)))
     (values (car node)
-	    (if node t nil))))
+	        (if node t nil))))
 
 ;;;; Raw Queue (vectorized)
 (deftype raw-queue-count () 
@@ -493,11 +493,11 @@ push."
   (with-slots (impl lock %push %pop) queue
     (let ((count (raw-queue-count impl)))
       (loop (cond ((< count (raw-queue-capacity impl))
-		   (push-raw-queue obj impl)
-		   (sb-thread:condition-notify %push)
-		   (return count))
-		  (t
-		   (condition-wait %pop lock)))))))
+		           (push-raw-queue obj impl)
+		           (sb-thread:condition-notify %push)
+		           (return count))
+		          (t
+		           (condition-wait %pop lock)))))))
 
 (defun push-vector-queue (obj queue)
   "Push OBJ to QUEUE with locking."
@@ -511,11 +511,11 @@ push."
   (declare (vector-queue queue))
   (with-slots (impl lock %push %pop) queue
     (loop (multiple-value-bind (value presentp) (pop-raw-queue impl)
-	    (cond (presentp
-		   (sb-thread:condition-notify %pop)
-		   (return value))
-		  (t 
-		   (condition-wait %push lock)))))))
+	        (cond (presentp
+		           (sb-thread:condition-notify %pop)
+		           (return value))
+		          (t 
+		           (condition-wait %push lock)))))))
 
 (defun pop-vector-queue (queue)
   "Pop the next element from QUEUE with locking."
@@ -528,21 +528,21 @@ push."
   (with-countdown timeout
     (with-slots (impl lock %push %pop) queue
       (loop (multiple-value-bind (value presentp) (pop-raw-queue impl)
-	      (when presentp
+	          (when presentp
                 (when %pop (condition-notify %pop))
                 (return (values value t)))
-	      (let ((time-remaining (time-remaining)))
-		(when (or (not (plusp time-remaining))
-			  (null (condition-wait
+	          (let ((time-remaining (time-remaining)))
+		        (when (or (not (plusp time-remaining))
+			              (null (condition-wait
                                  %push
-				 lock :timeout time-remaining)))
-		  (return (values nil nil)))))))))
+				                 lock :timeout time-remaining)))
+		          (return (values nil nil)))))))))
 
 (defun %try-pop-vector-queue-with-timeout (queue timeout)
   (with-slots (impl) queue
     (if (raw-queue-empty-p impl)
-	(%try-pop-vector-queue queue timeout)
-	(pop-raw-queue impl))))
+	    (%try-pop-vector-queue queue timeout)
+	    (pop-raw-queue impl))))
 
 (defun try-pop-vector-queue* (queue)
   "Attempt to pop the next element from QUEUE without locking."
@@ -560,11 +560,11 @@ push."
       (try-pop-vector-queue* queue)))
 
 (macrolet ((define-queue-fn (name type raw)
-	     `(progn
+	         `(progn
                 (defun ,name (queue) 
-		  (declare (,type queue))
-		  (with-mutex ((vector-queue-lock queue))
-		    (,raw (vector-queue-impl queue))))
+		          (declare (,type queue))
+		          (with-mutex ((vector-queue-lock queue))
+		            (,raw (vector-queue-impl queue))))
                 (defun ,(symbolicate (concatenate 'string (symbol-name name) "*")) (queue)
                   (declare (,type queue))
                   (,raw (vector-queue-impl queue))))))
@@ -583,8 +583,8 @@ push."
                  (when (vector-queue-full-p queue)
                    (return-from done))
                  (push-vector-queue elem queue)))
-	  (declare (dynamic-extent #'push-elem))
-	  (map nil #'push-elem initial-contents))))
+	      (declare (dynamic-extent #'push-elem))
+	      (map nil #'push-elem initial-contents))))
     queue))
 
 ;;;; Cons Queue
@@ -630,10 +630,10 @@ push."
   (declare (cons-queue queue))
   (with-slots (impl lock cvar) queue
     (loop (multiple-value-bind (value presentp) (pop-basic-queue impl)
-	    (if presentp
-		(return value)
-		(condition-wait (or cvar (setf cvar (make-waitqueue)))
-				lock))))))
+	        (if presentp
+		        (return value)
+		        (condition-wait (or cvar (setf cvar (make-waitqueue)))
+				                lock))))))
 
 (defun pop-cons-queue (queue) 
   "Pop the next element off QUEUE with locking."
@@ -684,12 +684,12 @@ for a lock before calling without it."
 (macrolet ((define-queue-fn (name type raw)
              `(progn
                 (defun ,name (queue) 
-		  (declare (,type queue))
+		          (declare (,type queue))
                   (with-mutex ((cons-queue-lock queue))
                     (,raw (cons-queue-impl queue))))
-		(defun ,(symbolicate (concatenate 'string (symbol-name name) "*")) (queue)
-		  (declare (,type queue))
-		  (,raw (cons-queue-impl queue))))))
+		        (defun ,(symbolicate (concatenate 'string (symbol-name name) "*")) (queue)
+		          (declare (,type queue))
+		          (,raw (cons-queue-impl queue))))))
   (define-queue-fn cons-queue-count cons-queue basic-queue-count)
   (define-queue-fn cons-queue-empty-p cons-queue basic-queue-empty-p)
   (define-queue-fn peek-cons-queue cons-queue peek-basic-queue))
@@ -1062,7 +1062,7 @@ associated priority vector."
                               (key new-item))))
           do (setf (aref heap i) (aref heap parent-i))
           finally (setf (aref heap i) new-item)
-          (return-from heap-insert i))))
+                  (return-from heap-insert i))))
 
 (defun heap-maximum (heap)
   (unless (zerop (length heap))
@@ -1285,8 +1285,8 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
                   (cons-queue (,cons-name queue timeout))
                   (vector-queue (,vector-name queue timeout))
                   (t (error 'type-error
-		            :datum queue
-		            :expected-type 'queue))))))
+		                    :datum queue
+		                    :expected-type 'queue))))))
   (define-queue-fn push-queue (obj queue)
     push-cons-queue
     push-vector-queue)

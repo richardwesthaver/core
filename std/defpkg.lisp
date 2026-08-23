@@ -579,7 +579,7 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
                               unintern package-local-nicknames lock implements)
     (without-package-warnings
       (let* ((package-name (string name))
-	     (nicknames (mapcar #'string nicknames))
+	         (nicknames (mapcar #'string nicknames))
              (names (cons package-name nicknames))
              (previous (packages-from-names names))
              (discarded (cdr previous))
@@ -591,8 +591,8 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
              (reexport (mapcar 'find-package* reexport))
              (shadow (mapcar 'string shadow))
              (export (mapcar 'string export))
-	     (intern (mapcar 'string intern))
-	     (implements (mapcar 'find-package* implements))
+	         (intern (mapcar 'string intern))
+	         (implements (mapcar 'find-package* implements))
              (unintern (mapcar 'string unintern))
              (shadowed (make-hash-table :test 'equal)) ; string to bool
              (imported (make-hash-table :test 'equal)) ; string to bool
@@ -605,7 +605,7 @@ was found. The caller (DEFPKG) will then do the re-homing of the symbol, etc."
         (loop for p in (set-difference implements (sb-ext:package-implements-list package))
               do (sb-ext:add-implementation-package p package))
         (loop for p in package-local-nicknames
-	      do (sb-ext:add-package-local-nickname (pop p) (pop p) package))
+	          do (sb-ext:add-package-local-nickname (pop p) (pop p) package))
         (loop :for p :in (set-difference (package-use-list package) (append mix use))
               :do (note-package-fishiness :over-use name (package-names p))
                   (unuse-package p package))

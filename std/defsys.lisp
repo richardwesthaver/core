@@ -503,15 +503,15 @@ objects of type COMPONENT."
   (let* ((parents)
          (providers)
          (match
-             (collecting
-               (labels ((%sub (k v kin) 
-                          (if kin
-                              (when-let ((y (find-submodule kin name v)))
-                                (collect y) 
-                                (push k parents)
-                                (push kin providers))
-                              (mapc (lambda (x) (%sub k v x)) (hash-table-keys  *provider-table*)))))
-                 (maphash (lambda (k v) (%sub k v kind)) *module-table*)))))
+           (collecting
+             (labels ((%sub (k v kin) 
+                        (if kin
+                            (when-let ((y (find-submodule kin name v)))
+                              (collect y) 
+                              (push k parents)
+                              (push kin providers))
+                            (mapc (lambda (x) (%sub k v x)) (hash-table-keys  *provider-table*)))))
+               (maphash (lambda (k v) (%sub k v kind)) *module-table*)))))
     (nreversef parents)
     (nreversef providers)
     (if (> (length match) 1)
