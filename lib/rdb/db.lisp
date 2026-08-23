@@ -52,7 +52,7 @@
   ((options :initform (default-rocksdb-options) :accessor options :initarg :options)))
 
 (defclass rdb (database rdb-object)
-  ((columns :initarg :columns :accessor columns)
+  ((columns :initarg :columns :accessor columns :initform nil)
    (path :initarg :path :accessor path))
   (:documentation "Standard RocksDB database wrapper.
 OPTIONS is an alien ROCKSDB-OPTIONS pointer."))
@@ -387,11 +387,8 @@ columns."
               (columns self)))
     (setf options nil)))
 
-(defmethod shutdown-db :around ((self trdb) &key wait)
-  (with-slots (transactiondb-options) self
-    (when transactiondb-options 
-      (setf (transactiondb-options self) (rocksdb-transactiondb-options-destroy transactiondb-options))))
-  (call-next-method self :wait wait))
+(defmethod shutdown-db ((self trdb) &key) (close-db self))
+(defmethod shutdown-db ((self otrdb) &key) (close-db self))
 
 (defmethod get-value (elt (self rdb))
   (%get-kv (db self) elt (default-rocksdb-readoptions)))
