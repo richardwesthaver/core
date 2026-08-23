@@ -599,7 +599,8 @@ set *errptr to a malloc()ed error message.
 (define-condition rocksdb-condition () ()
   (:documentation "A condition signaled from the RocksDB C FFI."))
 
-(define-condition rocksdb-c-error (rocksdb-condition std:std-error) ())
+(define-condition rocksdb-c-error (rocksdb-condition std-error) ()
+  (:report (lambda (c s) (format s (error-message c)))))
 
 (defun rocksdb-c-error (errptr)
   "Signal a rocksdb-c-error, extracting the error message from ERRPTR."

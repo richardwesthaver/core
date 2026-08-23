@@ -13,18 +13,22 @@
 (defvar *db* nil)
 
 ;;; Conditions
-(defcondition db-condition () ()
+(defcondition db-condition () 
+  ((db :initarg :db :initform *db* :accessor db))
+  (:report (lambda (c s) (format s "Error in DB: ~A" (db c))))
   (:documentation "Superclass for DB conditions.")
-  (:error-class db-error (std-error) ())
-  (:warning-class db-warning (std-warning) ()))
+  (:error-class db-error (std-error) ()
+                (:report (lambda (c s) (format s "Error in DB: ~A~%~A" (db c) (error-message c)))))
+  (:warning-class db-warning (std-warning) ()
+                  (:report (lambda (c s) (format s "Error in DB: ~A~%~A" (db c) (error-message c))))))
 
-(deferror invalid-database (db-error invalid-argument) ()
+(define-condition invalid-database (db-error) ()
   (:documentation "Error signaled when an invalid DB is detected.")
   (:default-initargs
-   :reason "Object is not a database"))
+   :message "Invalid Database."))
 
-(defun invalid-database (item)
-  (error 'invalid-database :item item))
+(defun invalid-database (db)
+  (error 'invalid-database :db db))
 
 ;; TODO 2025-08-12: call-with
 ;; (defun call-with-db (db fn &rest args))

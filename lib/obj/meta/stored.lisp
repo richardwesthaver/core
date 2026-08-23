@@ -48,7 +48,7 @@ not."
   (:documentation "Abstract superclass of all STORED collection types."))
 
 (defgeneric drop-instance (stored-object)
-  (:documentation   "drop-instance reclaims stored object storage by unbinding
+  (:documentation  "drop-instance reclaims stored object storage by unbinding
    all stored slot values. It can also helps catch errors where an object
    should be unreachable, but a reference still exists elsewhere in the DB. On
    access, the unbound slots should flag an error in the application

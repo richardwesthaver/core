@@ -17,7 +17,6 @@
   (:import-from :sys :io-vector-class)
   (:import-from :sb-ext :string-to-octets :octets-to-string)
   (:export 
-   :rdb-error
    :open-db-error
    :open-backup-engine-error
    :destroy-db-error

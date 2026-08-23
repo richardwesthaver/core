@@ -10,9 +10,6 @@
     ()
     (:reporter t)
     (:documentation "Simple RDB Error."))
-  (deferror rdb-error (db-error)
-    ()
-    (:documentation "Error signaled by the RDB system."))
   (defwarning simple-rdb-warning (simple-warning db-condition)
     () 
     (:default-initargs 
@@ -21,12 +18,10 @@
 
 (defwarning rdb-default-column-warning (simple-rdb-warning simple-warning) () (:reporter t))
 
-(define-condition rdb-alien-error (rocksdb-c-error rdb-error)
-  ((db :initarg :db :reader error-db))
+(define-condition rdb-alien-error (db-error rocksdb-c-error)
+  ((db :initarg :db :reader error-db :initform *db*))
+  (:report (lambda (c s) (format s "Error in DB ~A: ~A" (error-db c) (error-message c))))
   (:documentation "Error signaled by RDB C subsystem."))
-
-(defmethod print-object ((obj rdb-error) stream)
-  (print-unreadable-object (obj stream :type t :identity t)))
 
 (define-condition open-db-error (rdb-alien-error)
   ()
@@ -60,7 +55,7 @@
   ((cf :initarg :cf :reader error-cf))
   (:documentation "Error signaled in the context of a Column Family."))
 
-(define-condition kv-error (rdb-error)
+(define-condition kv-error (rdb-alien-error)
   ((kv :initarg :kv :reader error-kv)))
 
 (define-condition kv-cf-error (cf-error)
@@ -84,15 +79,15 @@
 (define-condition merge-kv-cf-error (kv-error) ()
   (:documentation "Error signaled while processing a MERGE-KV-CF request"))
 
-(define-condition opt-handler-missing (warning)
+(define-condition opt-handler-missing (db-warning)
   ())
 
-(define-condition db-missing (warning)
+(define-condition db-missing (db-warning)
   ())
 
-(define-condition metadata-missing (warning)
+(define-condition metadata-missing (db-warning)
   ())
 
-(define-condition invalid-propname (rdb-error)
+(define-condition invalid-propname (db-error)
   ()
   (:documentation "Error signaled when an invalid ROCKSDB-PROPERTY value is detected."))

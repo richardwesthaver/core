@@ -559,9 +559,6 @@ protocol.")
    #:defschema
    #:list-to-fields
    #:define-simple-schema
-   #:invalid-database
-   #:db-condition
-   #:db-error
    #:apply-schema-change-fn
    #:match-schemas
    #:schema-diff
@@ -682,6 +679,10 @@ protocol.")
   (:import-from :obj/meta/stored :*store*)
   (:use :cl :std :id :sb-mop :sb-pcl :schema :dynamic :config :ast)
   (:export
+   #:invalid-database
+   #:db-condition
+   #:db-error
+   #:db-warning
    :ensure-transaction
    :dbs
    :make-db
