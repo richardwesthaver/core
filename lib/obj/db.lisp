@@ -265,7 +265,7 @@ atomically regardless of whether there is an existing transaction or not."
            (,%txn-fn (lambda () ,@body)))
        (if (known-transaction ,%db ,transaction)
            (funcall ,%txn-fn)
-           (funcall #'execute ,%db
+           (execute ,%db
                     ,%txn-fn
                     :transaction nil
                     ,@(when wait `(:wait ,wait)))))))
