@@ -166,7 +166,7 @@ and size are pre-computed."
         (rocksdb-ingest-external-file-cf db cf flist flen opts err)))))
 
 ;;; Column Families
-(defun %open-cfs (db-opt name names opts)
+(defun %open-cfs (db-opt name names opts &optional (open-fn #'rocksdb-open-column-families))
   (if (null names)
       (error 'open-db-error :db name)
       (let ((n (length names)))
@@ -177,7 +177,7 @@ and size are pre-computed."
                 for i below n
                 do (setf (deref cf-opts i) opt))
           (with-errptr* (err 'cf-error :cf name)
-            (let ((db (rocksdb-open-column-families db-opt name n cf-names cf-opts cf-handles err)))
+            (let ((db (funcall open-fn db-opt name n cf-names cf-opts cf-handles err)))
               (values db cf-handles)))))))
 
 (defun %create-cf (db name &optional (opt (rocksdb-options-create)))
