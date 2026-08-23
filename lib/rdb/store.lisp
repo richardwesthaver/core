@@ -90,8 +90,7 @@ the constant +store-major-version+"
 
 (defun rdb-temp-spec (name)
   `(:rdb ,(tmp-path name) 
-         ,(default-rocksdb-options*
-           :error-if-exists t)
+         ,(default-rocksdb-options)
          ,(default-rocksdb-transactiondb-options)))
 
 ;;; BTrees

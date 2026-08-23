@@ -141,6 +141,7 @@ custom configuration." name)
            :parallelism (num-cpus)
            :compression (rocksdb-compression-type :zstd)
            :enable-pipelined-write t
+           :error-if-exists nil
            :block-based-table-factory (default-rocksdb-block-based-options)
            ;; :sst-partitioner-factory (rocksdb-sst-partitioner-fixed-prefix-factory-create 8)
            ;; :prefix-extractor (create-fixed-prefix-op 8)
