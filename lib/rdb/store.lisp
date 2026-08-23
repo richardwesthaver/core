@@ -1063,11 +1063,12 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
+    (trace! instance name)
   (ensure-transaction (:db self)
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
       (serialize-object name kbuf self)
-      (let ((buf (txn-get kbuf vbuf :transaction (current-transaction self))))
+      (let ((buf (txn-get kbuf :transaction (current-transaction self))))
         (if buf (deserialize-object buf self)
             (slot-unbound (class-of instance) instance name))))))
 
@@ -1079,7 +1080,6 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (serialize-object new-value value-buf self)
       (txn-put key-buf value-buf :transaction (current-transaction self))
       new-value)))
-
 
 (defmethod stored-slot-boundp ((self rdb-store) instance name)
   (ensure-transaction (:db self)

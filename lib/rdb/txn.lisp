@@ -97,14 +97,14 @@ transaction-db."
   (%abort-transaction self savepoint))
 
 ;;; TXN ops
-(defun txn-get (kbuf vbuf 
+(defun txn-get (kbuf
                 &key (transaction *txn*)
                      (opts (default-rocksdb-readoptions))
                      cf)
   "Get a key from a transaction. 
 The key is encoded in a buffer-stream and on success a buffer-stream for
 decoding the value is returned or NIL if nothing was found."
-  (declare (buffer-stream kbuf vbuf))
+  (declare (buffer-stream kbuf))
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (with-pslice
       (if cf
@@ -118,11 +118,7 @@ decoding the value is returned or NIL if nothing was found."
            (buffer kbuf)
            (size kbuf)
            e))
-      (when (> size (buffer-stream-length vbuf))
-        (setf vbuf (resize-buffer-stream vbuf size)))
-      (setf (size vbuf) size
-            (buffer vbuf) data))
-    vbuf))
+      (make-instance (buffer-stream size) :size size :buffer data))))
 
 (defun txn-put (kbuf vbuf
                 &key (transaction *txn*)
