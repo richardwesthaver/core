@@ -227,15 +227,12 @@ columns."
 
 (defmethod make-column ((db trdb) &rest args)
   (let ((col (apply 'make-instance 'column-family args)))
-    (setf (db col) (if (equal (name col) *default-column-family-name*)
-                       (rocksdb-get-default-column-family-handle (db db))
-                       (%txn-create-cf (db db) (name col) (options col))))
-    (push col (columns db))
-    col))
-
-(defmethod (setf find-column) ((new column-family) (cf string) (self rdb) &key)
-  "Find and replace a column by name."
-  (nsubstitute new (find-column cf self) (columns self)))
+    (with-base-db bdb (db db)
+        (setf (db col) (if (equal (name col) *default-column-family-name*)
+                           (rocksdb-get-default-column-family-handle bdb)
+                           (%txn-create-cf (db db) (name col) (options col))))
+      (push col (columns db))
+      col)))
 
 (defaccessor name ((self rdb)) (path self))
 (defaccessor sap ((self rdb)) (db self))

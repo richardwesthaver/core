@@ -67,7 +67,7 @@ type hints.")
                 (get object element))
                (t
                 (value-error object)
-             (if (listp object)
+             (if (consp object)
                  (apply 'find element object args)
                  (value-error object))))))))))
 
@@ -93,7 +93,7 @@ hints.")
                   (setf (getf object element) new-value))
                  (t
                   (value-error object)))
-           (if (listp object)
+           (if (consp object)
                (apply 'nsubstitute new-value element object args)
                (value-error object)))))))
 
