@@ -65,7 +65,9 @@
 (defun iter-seek (op iter &optional kbuf)
   "Set the position of an existing iterator.
 
-Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
+Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV
+
+Return T if the position is valid, else NIL."
   (declare ((alien (* rocksdb-iterator)) iter)
            (rocksdb-iterator-opcode op))
   (case op
@@ -74,7 +76,8 @@ Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
     (:last (rocksdb-iter-seek-to-last iter))
     (:first (rocksdb-iter-seek-to-first iter))
     (:for (rocksdb-iter-seek iter (buffer kbuf) (size kbuf)))
-    (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf)))))
+    (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf))))
+  (rocksdb-iter-valid iter))
 
 ;; get pinned from iterator, optional timestamp third value.
 (defun iter-get (iter kbuf vbuf

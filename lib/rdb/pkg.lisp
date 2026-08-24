@@ -101,6 +101,7 @@
    :init-rdbrc
    :rdb-service
    :get-base-db
+   :counter-column-family
    :list-column-families))
 
 (defpkg :rdb/cli

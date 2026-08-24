@@ -939,7 +939,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
        (set-database-version store (db (make-column store :name "metadata")))
        ;; create column-families
        (make-column store :name "oids")
-       (make-column store :name "seqs")
+       (make-column store :name "seqs" :class 'counter-column-family)
        ;; needs lisp-comparator for following
        (make-column store :name "btrees")
        (make-column store :name "bbtrees")
@@ -950,7 +950,14 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
           (btrees store) (find-column "btrees" store)
           ;; TODO 2026-08-16: dup-btree -> itree?
           (dup-btrees store) (find-column "bbtrees" store)
-          (seqs store) (find-column "seqs" store)
+          (seqs store) 
+          (let ((col (find-column "seqs" store)))
+            (if newp
+                (progn 
+                  ;; initialize two counter values
+                  (setf (data col) (make-array 2 :element-type 'word :initial-element 0 :fill-pointer t))
+                  (save col :db (db store)))
+                (init col :db (db store))))
           (oids store) (find-column "oids" store)
           (index store) (find-column "index" store)
           (rindex store) (find-column "rindex" store))
