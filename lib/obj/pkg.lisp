@@ -772,6 +772,8 @@ protocol.")
    #:map-btree
    #:dump-index
    #:btree-keys
+   #:ensure-index
+   #:add-index
    #:remove-current-kv
    #:map-index
    #:with-map-index-collector

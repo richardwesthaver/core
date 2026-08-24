@@ -94,6 +94,7 @@ hints.")
                  (t
                   (value-error object)))
            (if (consp object)
+               ;; FIX 2026-08-23: stack exhaustion here?
                (apply 'nsubstitute new-value element object args)
                (value-error object)))))))
 

@@ -1563,7 +1563,10 @@ recovery should be checked for or performed on startup. When the value is
       (setf (slot-value self 'schema-name-index)
             (btree::ensure-index (slot-value self 'schema-index) 'by-name
                                  :key-form 'schema-classname-keyform
-                                 :populate t)))))
+                                 :populate t)
+            (slot-value self 'class-index)
+            (btree::ensure-index (slot-value self 'instance-index) 'by-name
+                                 :key-form 'instance-cidx-keyform :populate t)))))
 
 (defgeneric close-store (st)
   (:documentation "Close the store and underlying database tables.

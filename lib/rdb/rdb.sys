@@ -110,6 +110,7 @@
    (:file "simple")
    (:file "schema")
    (:file "iter")
+   (:file "seq")
    (:file "txn")
    (:file "log")
    (:file "store")

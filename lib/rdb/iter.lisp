@@ -79,8 +79,7 @@ Supported OPs include: :PREV :FIRST :NEXT :LAST :FOR :FOR-PREV"
 ;; get pinned from iterator, optional timestamp third value.
 (defun iter-get (iter kbuf vbuf
                      &key timestamp)
-  "Move a cursor to a key / value pair, returning the key /
-value pair found. Supports get-both and get-both-range."
+  "Return the key/val/timestamp found at an iterator position."
   (declare ((alien (* rocksdb-iterator)) iter)
            (buffer-stream kbuf vbuf)
            ((or null buffer-stream) timestamp))
@@ -101,3 +100,18 @@ value pair found. Supports get-both and get-both-range."
 (defun iter-move (op iter kbuf vbuf &key timestamp)
   (iter-seek op iter kbuf)
   (iter-get iter kbuf vbuf :timestamp timestamp))
+
+(defun iter-pseek (iter piter &optional pkbuf))
+
+(defun iter-pget (iter piter kbuf pkbuf vbuf)
+  (iter-seek :for iter kbuf)
+  (let ((k (iter-get iter kbuf vbuf)))
+    ;; skip prefix
+    (read-buffer-oid k)
+    (iter-seek :for piter k)
+    (iter-get piter pkbuf vbuf)
+    (values kbuf pkbuf vbuf)))
+
+(defun iter-pmove (op iter piter kbuf pkbuf vbuf &key timestamp)
+  (declare (buffer-stream kbuf pkbuf vbuf))
+  (iter-pget iter kbuf vbuf :timestamp timestamp))

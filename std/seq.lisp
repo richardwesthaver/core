@@ -1378,10 +1378,10 @@ success, clear the discarded node and set the CAR of QUEUE-HEAD to +DUMMY+."
 (defstruct (counter (:constructor make-counter (&optional value)))
   (value 0 :type sb-ext:word))
 (defun inc-counter (c &optional (diff 1))
-  (declare (counter c) (fixnum diff))
+  (declare (counter c) ((signed-byte 64) diff))
   (sb-ext:atomic-incf (counter-value c) diff))
 (defun dec-counter (c &optional (diff 1))
-  (declare (counter c) (fixnum diff))
+  (declare (counter c) ((signed-byte 64) diff))
   (sb-ext:atomic-decf (counter-value c) diff))
 
 ;;; Iterator
