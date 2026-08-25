@@ -196,6 +196,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
   (:method ((self transaction)) t))
 (defgeneric transaction-object (self)
   (:documentation "Return the underlying object of a transaction.")
+  (:method ((self null)) nil)
   (:method ((self list)) (second self))
   (:method ((self alien-value)) self)
   (:method ((self system-area-pointer)) self))
@@ -238,10 +239,8 @@ committed. Otherwise, the transaction is aborted."
     `(let ((*db* ,db)
            (*transaction* ,transaction))
        (let ((,%txn-fn (lambda () ,@body)))
-         (funcall #'execute *db* ,%txn-fn 
-                  :transaction (aif (known-transaction *db* *transaction*) 
-                                    (transaction-object it) 
-                                    it)
+         (funcall #'execute *db* ,%txn-fn
+                  :transaction (transaction-object (known-transaction *db* *transaction*))
                   ,@initargs)))))
 
 (defmacro current-transaction (db)
@@ -249,7 +248,7 @@ committed. Otherwise, the transaction is aborted."
   (with-gensyms (txn)
     `(let ((,txn *transaction*))
        (when (and ,txn (eq (transaction-db ,txn) ,db))
-         (transaction-object ,txn)))))
+         (print (transaction-object ,txn))))))
 
 (defmacro ensure-transaction ((&rest initargs 
                                &key

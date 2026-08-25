@@ -955,7 +955,8 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
             (if newp
                 (progn 
                   ;; initialize two counter values
-                  (setf (data col) (make-array 2 :element-type 'word :initial-element 0 :fill-pointer t))
+                  (setf (data col) 
+                        (the (simple-array word (*)) (make-array 2 :element-type 'word :initial-element 0)))
                   (save col :db (db store)))
                 (init col :db (db store))))
           (oids store) (find-column "oids" store)
@@ -1004,9 +1005,9 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 
 ;;; IDs
 (defmethod next-cid ((self rdb-store))
-  (sb-ext:atomic-incf (aref (slot-value (seqs self) 'counts) 0)))
+  (sb-ext:atomic-incf (aref (slot-value (seqs self) 'data) 0)))
 (defmethod next-oid ((self rdb-store))
-  (sb-ext:atomic-incf (aref (slot-value (seqs self) 'counts) 1)))
+  (sb-ext:atomic-incf (aref (slot-value (seqs self) 'data) 1)))
 
 (defmethod default-class-id (type (sc rdb-store))
   (ecase type
@@ -1067,9 +1068,9 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 (defmethod execute ((store rdb-store) txn-fn &key transaction handler)
   (with-retry-restart (:msg "Retry transaction execution.")
     (let ((ret) (ok) (txn (transaction store :transaction transaction)))
-      (let ((*txn* txn)
-            (*transaction* (list store txn *transaction*))
+      (let ((*transaction* (list store txn *transaction*))
             (*store* store))
+        (declare (special *transaction* *store*))
         (catch 'transaction
           (unwind-protect
                (handler-bind
