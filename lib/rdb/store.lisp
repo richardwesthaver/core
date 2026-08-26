@@ -262,7 +262,7 @@ the constant +store-major-version+"
         (error "Invalid index initargs!"))))
 
 (defmethod populate ((bt rdb-indexed-btree) index)
-  (trace! "populating indexed-btree" bt index)
+  ;; (trace! "populating indexed-btree" bt index)
   (let ((sc (get-store bt)))
     (with-buffer-streams (primary-buf secondary-buf)
       (flet ((.index (key skey)
@@ -927,6 +927,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 
 ;;; Open/Close
 (defmethod open-store ((store rdb-store) &key recover id)
+  (setq *store* store)
   (setf (slot-value store 'path) (path store)
         (slot-value store 'options) (options store)
         (slot-value store 'transactiondb-options) (transactiondb-options store))
@@ -974,12 +975,13 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
        (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
        (slot-value store 'store::index-root) (make-instance 'rdb-btree :oid -2 :store store))
       ;; TODO 2026-08-23: 
-      (inspect store)
       (setf
        (slot-value store 'store::instance-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -3 :store store :index (make-hash-table))
-           (make-instance 'rdb-indexed-btree :from-oid -3 :store store))
+           (make-instance 'rdb-indexed-btree :from-oid -3 :store store)))
+      (inspect store)
+      (setf
        (slot-value store 'store::schema-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -4 :store store :index (make-hash-table))
@@ -1030,7 +1032,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  (trace! self instance name)
+  ;; (trace! self instance name)
   (ensure-transaction (:db self)
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
@@ -1066,11 +1068,12 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;;; Transactions
 ;; TODO 2026-08-21: 
 (defmethod execute ((store rdb-store) txn-fn &key transaction handler)
-  (with-retry-restart (:msg "Retry transaction execution.")
+  ;; (with-retry-restart (:msg "Retry transaction execution.")
     (let ((ret) (ok) (txn (transaction store :transaction transaction)))
       (let ((*transaction* (list store txn *transaction*))
-            (*store* store))
-        (declare (special *transaction* *store*))
+            (*store* store)
+            (*db* store))
+        (declare (special *transaction* *store* *db*))
         (catch 'transaction
           (unwind-protect
                (handler-bind
@@ -1084,7 +1087,8 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
                  (with-errptr e (rocksdb-transaction-commit txn e))
                  (setq ok t))
             (unless ok (%abort-transaction txn)))))
-      (when ok (values-list ret)))))
+      (when ok (values-list ret))))
+;; )
           
                                
 
