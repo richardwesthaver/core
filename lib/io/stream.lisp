@@ -808,7 +808,7 @@ functions and via PEEKED."))
 ;; should the buffer be an alien-value or a SAP?
 (defmethod alloc ((self buffer-stream))
   (setf (buffer self) 
-        (foreign-alloc `(array unsigned-char ,(buffer-stream-length self)))
+        (foreign-alloc 'unsigned-char :count (buffer-stream-length self))
         #+nil (make-alien unsigned-char (buffer-stream-length self))))
 
 (defmethod free ((self buffer-stream))
@@ -873,15 +873,17 @@ functions and via PEEKED."))
 (defun reset-buffer-stream (bs)
   "Fully reset the buffer-stream."
   (declare (buffer-stream bs))
-  (setf (size bs) 0)
-  (setf (offset bs) 0))
+  (setf (size bs) 0
+        (offset bs) 0)
+  (unless (or (null (buffer bs)) (null-pointer-p (buffer bs)))
+    (setf (buffer bs) (foreign-free (buffer bs)))))
 
 (defun grab-buffer-stream ()
   "Grab a buffer-stream from the *buffer-streams* resource pool."
   (or (with-mutex (*buffer-streams-lock*)
         (and (plusp (length *buffer-streams*))
              (vector-pop *buffer-streams*)))
-      (make-instance (buffer-stream 10))))
+      (make-instance (buffer-stream 8))))
 
 (defun return-buffer-stream (bs)
   "Return a buffer-stream to the *buffer-streams* resource pool."
@@ -892,17 +894,17 @@ functions and via PEEKED."))
 (defmacro with-buffer-streams (names &body body)
   "Grab a buffer-stream, executes forms, and returns the
 stream to the pool on exit."
-  `(let ,(loop for name in names collect (list name '(make-instance (buffer-stream 10)))) ;; vs grab-buffer-stream
+  `(let ,(loop for name in names collect (list name '(grab-buffer-stream))) ;; vs grab-buffer-stream
      (declare (type buffer-stream ,@names))
+     ,@(loop for name in names collect (list 'alloc name))
      (unwind-protect
-          (progn ,@(mapcar (lambda (x) `(alloc ,x)) names)
-                 ,@body)
+          (progn ,@body)
        ;; ,@(mapcar (lambda (x) `(free ,x)) names)
-       ;; ,@(loop for name in names collect (list 'return-buffer-stream name))
+       ,@(loop for name in names collect (list 'return-buffer-stream name))
        )))
 
 ;; HACK 2026-08-03: 
-(definline copy-bufs (dst dst-offset src src-offset len)
+(defun copy-bufs (dst dst-offset src src-offset len)
   (memcpy (sb-sys:sap+ dst dst-offset) (sb-sys:sap+ src src-offset) len))
 
 (defun resize-buffer-stream (bs length)
@@ -921,7 +923,7 @@ stream to the pool on exit."
         (declare (type fixnum newlen))
         ;; FIXME: async unwinds between alloc of newbuf and free of buf will
         ;; leave us with a memory leak of size NEWLEN.  
-        (let ((new (make-buffer-stream newlen)))
+        (let ((new (make-instance (buffer-stream newlen))))
           (alloc new)
           (when (or (null (buffer new)) (null-pointer-p (buffer new)))
             (error "Failed to allocate buffer stream of length ~A.  MAKE-ALIEN returned a null pointer" newlen))
@@ -940,11 +942,10 @@ stream to the pool on exit."
         (declare (fixnum newlen))
         ;; FIXME: async unwinds between alloc of newbuf and free of buf
         ;; will leave us with a memory leak of size NEWLEN.
-        ;; (free buf)
-        ;; (free bs)
-        (make-buffer-stream newlen)))))
-      ;; (setf buf newbuf)
-      ;; (setf len newlen)
+        (let ((new (make-instance (buffer-stream newlen))))
+          (alloc new)
+          (foreign-free (buffer bs))
+          new)))))
 
 (define-io :buffer
   ((octet :alias byte)

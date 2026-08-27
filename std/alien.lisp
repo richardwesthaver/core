@@ -22,7 +22,7 @@
 
 ;;; Code:
 (in-package :std/alien)
-;; (declaim (optimize (speed 3) (safety 0)))
+(declaim (optimize (speed 3) (safety 0)))
 ;; (shadowing-import
 ;;  '(sb-unix::syscall sb-unix::syscall* sb-unix::int-syscall
 ;;    sb-unix::with-restarted-syscall sb-unix::void-syscall) :std)

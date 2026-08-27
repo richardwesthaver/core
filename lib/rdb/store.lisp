@@ -773,6 +773,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
   (when (cursor-initialized-p cursor)
     (with-buffer-streams (key-buf value-buf)
       (multiple-value-bind (key val) (iter-move :next (sap cursor) key-buf value-buf)
+        ;; TODO 2026-08-26: just validate the iterator here?
         (if (and key (= (read-buffer-oid key) (cursor-oid cursor)))
             (values t (deserialize-object key (get-store (btree cursor))) 
                     (deserialize-object val (get-store (btree cursor))))
