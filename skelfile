@@ -56,7 +56,7 @@
     (vc-push r :set-upstream t :remote "gh" :force t :branch "default")
     (vc-push r :remote "cb" :force t :branch "default"))))
  (clean ()
-  (probe-delete-directory ".stash" :recursive t)
+  ;; (probe-delete-directory ".stash" :recursive t)
   (vc-purge (vc *project*))
   (mapc 'delete-file (directory "**/*.fasl"))
   (mapc 'delete-file (directory "**/*.elc")))

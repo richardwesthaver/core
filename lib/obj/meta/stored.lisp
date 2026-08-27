@@ -17,7 +17,6 @@
 ;;; Code:
 (in-package :obj/meta/stored)
 
-(defvar *default-store* (cons nil nil))
 (defvar *store* nil)
 ;; support for swapping out multiple stores? compatibility matrix?
 (defvar *store-table* (make-hash-table))

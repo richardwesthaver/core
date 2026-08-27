@@ -115,7 +115,6 @@ protocol.")
   (:export
    :*store*
    :*store-table*
-   :*default-store*
    :stored-class :initialize-stored-class
    :stored-slot
    :stored

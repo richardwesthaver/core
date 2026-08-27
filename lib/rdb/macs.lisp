@@ -127,7 +127,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
 (defmacro with-ts-buf (tbuf &body body)
   "Bind a timestamp buffer to %TSLEN and %TS."
   `(let ((%tslen (buffer-stream-length ,tbuf)))
-     (with-alien ((%ts (* unsigned-char) (buffer ,tbuf)))
+     (with-alien ((%ts system-area-pointer (buffer ,tbuf)))
        ,@body)))
 
 (defmacro with-ts-bufs (tbufs &body body)
@@ -136,7 +136,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
                 (%tsizes (* size-t) (make-alien size-t (length ,tbufs))))
      (loop for ts in ,tbufs
            for i from 0 below (length ,tbufs)
-           do (setf (deref %ts i) (buffer ts)
+           do (setf (deref %ts i) (sap-alien (buffer ts) (* unsigned-char))
                     (deref %tsizes i) (buffer-stream-length ts)))
        ,@body))
 
@@ -150,8 +150,8 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
                           ,@(when db `(:db ,db))
                           ,@(when (or key val)
                               `(:kv ,(if val `(cons ,key ,val) key))))
-       (with-alien (,@(when key `((%key (* unsigned-char) (buffer ,key))))
-                    ,@(when val `((%val (* unsigned-char) (buffer ,val)))))
+       (with-alien (,@(when key `((%key system-area-pointer (buffer ,key))))
+                    ,@(when val `((%val system-area-pointer (buffer ,val)))))
          ,@body))))
 
 (defmacro with-kv-buf ((db kbuf vbuf eptr &key (error 'kv-error) cf) &body body)
@@ -159,8 +159,8 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   `(let ((%ksize (size ,kbuf))
          (%vsize (size ,vbuf)))
      (with-errptr* (,eptr ',error :db ,db :kv (cons ,kbuf ,vbuf) ,@(when cf `(:cf ,cf)))
-       (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
-                    (%val (* unsigned-char) (buffer ,vbuf)))
+       (with-alien ((%key system-area-pointer (buffer ,kbuf))
+                    (%val system-area-pointer (buffer ,vbuf)))
          ,@body))))
 
 (defmacro with-kv-buf* ((db kbuf vbuf eptr &key (error 'kv-error) cf) &body body)
@@ -168,22 +168,22 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   `(let ((%ksize (size ,kbuf))
          (%vlen (buffer-stream-length ,vbuf)))
      (with-errptr* (,eptr ',error :db ,db :kv (cons ,kbuf ,vbuf) ,@(when cf `(:cf ,cf)))
-       (with-alien ((%key (* unsigned-char) (buffer ,kbuf))
-                    (%val (* unsigned-char) (buffer ,vbuf)))
+       (with-alien ((%key system-area-pointer (buffer ,kbuf))
+                    (%val system-area-pointer (buffer ,vbuf)))
          ,@body))))
 
 (defmacro with-key-buf ((db kbuf eptr &key (error 'kv-error) cf) &body body)
   "binds %KSIZE %KEY"
   `(let ((%ksize (size ,kbuf)))
      (with-errptr* (,eptr ',error :db ,db :kv ,kbuf ,@(when cf `(:cf ,cf)))
-       (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
+       (with-alien ((%key system-area-pointer (buffer ,kbuf)))
          ,@body))))
 
 (defmacro with-kbuf ((eptr kbuf) &body body)
   "binds %KSIZE %KEY"
   `(let ((%ksize (size ,kbuf)))
      (with-errptr ,eptr
-       (with-alien ((%key (* unsigned-char) (buffer ,kbuf)))
+       (with-alien ((%key system-area-pointer (buffer ,kbuf)))
          ,@body))))
 
 (defmacro with-key-range ((db sbuf ebuf eptr &key (error 'kv-error) cf) &body body)
@@ -191,8 +191,8 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
   `(let ((%ssize (size ,sbuf))
          (%esize (size ,ebuf)))
      (with-errptr* (,eptr ',error :db ,db :kv (cons ,sbuf ,ebuf) ,@(when cf `(:cf ,cf)))
-       (with-alien ((%skey (* unsigned-char) (buffer ,sbuf))
-                    (%ekey (* unsigned-char) (buffer ,ebuf)))
+       (with-alien ((%skey system-area-pointer (buffer ,sbuf))
+                    (%ekey system-area-pointer (buffer ,ebuf)))
          ,@body))))
 
 (defmacro with-key-bufs ((kbufs eptrs) &body body)
@@ -205,7 +205,7 @@ associated alien c-string. Likewise for VAL with %VLEN and %VAL."
                 (,eptrs (* c-string) (make-alien c-string (length ,kbufs))))
      (loop for k in ,kbufs
            for i from 0 below (length ,kbufs)
-           do (setf (deref %keys i) (buffer k)
+           do (setf (deref %keys i) (sap-alien (buffer k) (* unsigned-char))
                     (deref %ksizes i) (size k)))
      ,@body))
 

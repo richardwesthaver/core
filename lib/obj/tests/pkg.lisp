@@ -91,10 +91,6 @@
                (make-binary-node 2 (make-tree-node 2) (make-tree-node 3)))))
     (is (typep tree 'binary-node))))
 
-(deftest btree (:skip :todo)
-  ;; FIX 2025-02-27: 
-  (is (make-instance 'btree:btree :store *default-store*)))
-
 ;;; Graphs
 (deftest basic-graph ()
   "Test basic graph functionality."
