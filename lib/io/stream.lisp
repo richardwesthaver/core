@@ -796,7 +796,8 @@ functions and via PEEKED."))
               `(locally (declare (optimize (speed 3) (safety 0)))
                  (defclass ,cl-name (buffer-stream) ()
                    (:metaclass io-vector-class))
-                 (setf (slot-value (find-class ',cl-name) 'length) ,length)))
+                 (setf (slot-value (find-class ',cl-name) 'length) ,length
+                       (slot-value (find-class ',cl-name) 'std/alien::element-type) 'unsigned-char)))
              cl-name))))))
 
 (defun buffer-stream-length (bs)

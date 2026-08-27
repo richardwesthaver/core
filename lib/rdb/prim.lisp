@@ -60,18 +60,18 @@ themselves. Does not support timestamps."
 ;;; IO
 (definline %make-slice (data size)
   (with-alien ((slice rocksdb-slice))
-    (setf (slot slice 'data) data
+    (setf (slot slice 'data) (alien-sap data)
           (slot slice 'size) size)
     slice))
 
 (defun make-slice (stream)
-  (%make-slice (buffer stream) (size stream)))
+  (%make-slice (sap-alien (buffer stream) (* unsigned-char)) (size stream)))
 
 (definline %make-slice-stream (ptr len)
   "Function used to destructure a (pinable) slice into a BUFFER-STREAM. The length
 and size are pre-computed."
   (declare (fixnum len) ((alien (* unsigned-char)) ptr))
-  (make-instance (buffer-stream len) :buffer ptr :size len))
+  (make-instance (buffer-stream len) :buffer (alien-sap ptr) :size len))
 
 (defun make-pslice-stream (pslice)
   (with-pslice pslice
