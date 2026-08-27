@@ -75,8 +75,8 @@ Return T if the position is valid, else NIL."
     (:prev (rocksdb-iter-prev iter))
     (:last (rocksdb-iter-seek-to-last iter))
     (:first (rocksdb-iter-seek-to-first iter))
-    (:for (rocksdb-iter-seek iter (buffer kbuf) (size kbuf)))
-    (:for-prev (rocksdb-iter-seek-for-prev iter (buffer kbuf) (size kbuf))))
+    (:for (rocksdb-iter-seek iter (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf)))
+    (:for-prev (rocksdb-iter-seek-for-prev iter (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf))))
   (rocksdb-iter-valid iter))
 
 ;; get pinned from iterator, optional timestamp third value.

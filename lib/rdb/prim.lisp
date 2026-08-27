@@ -85,7 +85,7 @@ and size are pre-computed."
   (with-slice slice
     (when (> size (buffer-stream-length stream)) (resize-buffer-stream stream size))
     (setf (size stream) size
-          (buffer stream) data)))
+          (buffer stream) (alien-sap data))))
 
 (defmacro set-slice-streams (&body pairs)
   `(values ,@(loop for (k v) on pairs by #'cddr collect `(slice-stream ,v ,k))))

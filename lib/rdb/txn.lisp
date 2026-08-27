@@ -108,15 +108,15 @@ decoding the value is returned or NIL if nothing was found."
       (if cf
           (rocksdb-transaction-get-pinned-cf
            transaction opts cf
-           (buffer kbuf)
+           (sap-alien (buffer kbuf) (* unsigned-char))
            (size kbuf)
            e)
           (rocksdb-transaction-get-pinned
            transaction opts
-           (buffer kbuf)
+           (sap-alien (buffer kbuf) (* unsigned-char))
            (size kbuf)
            e))
-      (make-instance (buffer-stream size) :size size :buffer data))))
+      (make-instance (buffer-stream size) :size size :buffer (alien-sap data)))))
 
 (defun txn-put (kbuf vbuf
                 &key (transaction (current-transaction *transaction*))
@@ -130,16 +130,16 @@ The pair are encoded in buffer-streams."
         (rocksdb-transaction-put-cf
          transaction
          cf
-         (buffer kbuf)
+         (sap-alien (buffer kbuf) (* unsigned-char))
          (size kbuf)
-         (buffer vbuf)
+         (sap-alien (buffer vbuf) (* unsigned-char))
          (size vbuf)
          e)
         (rocksdb-transaction-put 
          transaction 
-         (buffer kbuf)
+         (sap-alien (buffer kbuf) (* unsigned-char))
          (size kbuf)
-         (buffer vbuf)
+         (sap-alien (buffer vbuf) (* unsigned-char))
          (size vbuf)
          e))))
 
@@ -155,8 +155,8 @@ found."
            (buffer-stream kbuf))
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (if cf
-        (rocksdb-transaction-delete-cf transaction cf (buffer kbuf) (size kbuf) e)
-        (rocksdb-transaction-delete transaction (buffer kbuf) (size kbuf) e))))
+        (rocksdb-transaction-delete-cf transaction cf (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf) e)
+        (rocksdb-transaction-delete transaction (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf) e))))
 
 ;;; Transaction Iterator
 (defun txn-iter (&key (transaction (current-transaction *transaction*)) cf (opts (default-rocksdb-readoptions)))
@@ -173,12 +173,16 @@ transaction. Return (values key value)."
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (if cf
         (rocksdb-transaction-put-cf transaction cf
-                                    (buffer kbuf) (size kbuf)
-                                    (buffer vbuf) (size vbuf)
-                                    e)
+         (sap-alien (buffer kbuf) (* unsigned-char))
+         (size kbuf)
+         (sap-alien (buffer vbuf) (* unsigned-char))
+         (size vbuf)
+         e)
         (rocksdb-transaction-put transaction
-                                 (buffer kbuf) (size kbuf)
-                                 (buffer vbuf) (size vbuf)
-                                 e))
-    (rocksdb-iter-seek iter (buffer kbuf) (size kbuf))
+         (sap-alien (buffer vbuf) (* unsigned-char))
+         (size kbuf)
+         (sap-alien (buffer vbuf) (* unsigned-char))
+         (size vbuf)
+         e))
+    (rocksdb-iter-seek iter (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf))
     (values kbuf vbuf)))

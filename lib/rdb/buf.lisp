@@ -51,12 +51,13 @@
                (vlen size-t))
     (and
      (if cf
-         (rocksdb-key-may-exist-cf db opts cf (buffer kbuf) (size kbuf) (addr v) (addr vlen)
-                                   (when timestamp (buffer timestamp))
+         (rocksdb-key-may-exist-cf db opts cf (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf) (addr v) (addr vlen)
+                                   (when timestamp (sap-alien (buffer timestamp) (* unsigned-char)))
                                    (if timestamp (size timestamp) 0)
                                    (addr may-exist))
          (rocksdb-key-may-exist db opts (buffer kbuf) (size kbuf) (addr v) (addr vlen)
-                                (when timestamp (buffer timestamp)) (if timestamp (size timestamp) 0)
+                                (when timestamp (sap-alien (buffer timestamp) (* unsigned-char)))
+                                (if timestamp (size timestamp) 0)
                                 (addr may-exist)))
      may-exist
      (not (zerop vlen))
