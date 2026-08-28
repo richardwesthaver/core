@@ -712,12 +712,9 @@ protocol.")
    :transaction-error
    :with-batch-transaction
    :*transaction*
-   :transaction-object
    :transaction
    :current-transaction
-   :transaction-db
    :transactionp
-   :known-transaction
    :find-column
    :transaction-prior
    :merge-key
