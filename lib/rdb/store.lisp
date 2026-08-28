@@ -162,7 +162,6 @@ the constant +store-major-version+"
         (serialize-object key key-buf sc)
         (let ((buf (txn-get
                     key-buf
-                    :transaction (current-transaction sc)
                     :cf (db (btree sc)))))
           (if buf 
               (values (deserialize-object buf sc) t)
@@ -176,8 +175,7 @@ the constant +store-major-version+"
         (serialize-object key key-buf sc)
         (let ((buf (txn-get
                     key-buf 
-                    :cf (db (btree sc))
-                    :transaction (current-transaction sc))))
+                    :cf (db (btree sc)))))
           (if buf t nil))))))
 
 (defmethod (setf get-value) (value key (bt rdb-btree))
@@ -189,7 +187,6 @@ the constant +store-major-version+"
         (serialize-object value value-buf sc)
         (txn-insert (get-store (btree sc))
                     key-buf value-buf
-                    :transaction (current-transaction sc)
                     :cf (db (btree sc)))))
     value))
 
@@ -199,9 +196,7 @@ the constant +store-major-version+"
       (ensure-transaction (:db sc)
         (write-buffer-oid (oid bt) key-buf)
         (serialize-object key key-buf sc)
-        (txn-delete key-buf
-                    :cf (btree sc)
-                    :transaction (current-transaction sc))))))
+        (txn-delete key-buf :cf (btree sc))))))
 
 (defmethod optimize-layout ((bt rdb-btree) &key (freelist-only t) (free-space nil) &allow-other-keys)
   (optimize-layout (get-store bt)
@@ -271,9 +266,7 @@ the constant +store-major-version+"
                (write-buffer-oid (oid index) secondary-buf)
                (serialize-object skey secondary-buf sc)
                ;; should silently do nothing if the key/value already exists
-               (txn-insert sc secondary-buf primary-buf
-                           :cf (db (index sc))
-                           :transaction (current-transaction sc))
+               (txn-insert sc secondary-buf primary-buf :cf (db (index sc)))
                (free primary-buf)
                (free secondary-buf)))
         (let ((key-fn (key-fn index))
@@ -321,9 +314,7 @@ the constant +store-major-version+"
         (serialize-object key key-buf sc)
         (serialize-object value value-buf sc)
         (ensure-transaction (:db sc)
-          (txn-insert sc key-buf value-buf
-                      :cf (db (btree sc))
-                      :transaction (current-transaction sc))
+          (txn-insert sc key-buf value-buf :cf (db (btree sc)))
           ;; Manually write value into secondary index
           (loop for idx being the hash-value of index
                 do
@@ -337,7 +328,7 @@ the constant +store-major-version+"
                                    secondary-buf key-buf
                                    :cf (db (index sc))
                                    ;;  :no-dup t
-                                   :transaction (current-transaction sc))
+                                   )
                        (reset-buffer-stream secondary-buf))))
           value)))))
 
@@ -360,12 +351,10 @@ the constant +store-major-version+"
                        (serialize-object secondary-key secondary-buf sc)
                        (txn-delete
                         secondary-buf
-                        :cf (db (index (get-store bt)))
-                        :transaction (current-transaction sc))
+                        :cf (db (index (get-store bt))))
                        (reset-buffer-stream secondary-buf))))
               (txn-delete key-buf
-                          :cf (db (btree (get-store bt)))
-                          :transaction (current-transaction sc)))))))))
+                          :cf (db (btree (get-store bt)))))))))))
 
 ;; This also needs to build the correct kind of index, and 
 ;; be the correct kind of btree...
@@ -379,7 +368,7 @@ the constant +store-major-version+"
     (with-buffer-streams (key-buf)
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
-      (let ((buf (txn-get key-buf :cf (db (rindex sc)) :transaction (current-transaction sc))))
+      (let ((buf (txn-get key-buf :cf (db (rindex sc)))))
         (if buf (values (deserialize-object buf sc) T)
             (values nil nil))))))
 
@@ -388,7 +377,7 @@ the constant +store-major-version+"
     (with-buffer-streams (key-buf)
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
-      (let ((buf (txn-get key-buf :cf (db (index sc)) :transaction (current-transaction sc))))
+      (let ((buf (txn-get key-buf :cf (db (index sc)))))
         (if buf 
             (let ((oid (read-buffer-oid buf)))
               (values (deserialize-object buf sc) oid))
@@ -405,7 +394,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (make-instance 'rdb-cursor 
       :btree bt
       ;;  HACK 2026-08-04: should this be (iter (or txn (db sc)) :column (btree sc))?
-      :sap (iter (or (current-transaction sc) (btree sc)))
+      :sap (iter (or (and *transaction* (txn-iter))  (btree sc)))
       :oid (oid bt))))
 
 (defmethod cursor-close ((cursor rdb-cursor))
@@ -595,7 +584,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
   (let ((sc (get-store bt)))
     (make-instance 'rdb-secondary-cursor 
       :btree bt
-      :sap (iter (or (current-transaction sc) (db (rindex sc))))
+      :sap (or (and *transaction* (txn-iter)) (db (rindex sc)))
       :oid (oid bt))))
 
 (defmethod cursor-pcurrent ((cursor rdb-secondary-cursor))
@@ -863,7 +852,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
       ;; used to be buffered.. test
-      (let ((buf (txn-get key-buf :cf (db (btree sc)) :transaction (current-transaction sc))))
+      (let ((buf (txn-get key-buf :cf (db (btree sc)))))
         (if buf (values (deserialize-object buf sc) T)
             (values nil nil))))))
 
@@ -872,7 +861,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-buffer-streams (key-buf value-buf)
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
-      (let ((buf (txn-get key-buf :cf (db (btree sc)) :transaction (current-transaction sc))))
+      (let ((buf (txn-get key-buf :cf (db (btree sc)))))
         (if buf t
             nil)))))
 
@@ -885,7 +874,6 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (serialize-object key key-buf sc)
       (serialize-object value value-buf sc)
       (txn-put key-buf value-buf
-               :transaction (current-transaction sc)
                :cf (db (btree sc))
                ;; :no-dup t
                )))
@@ -896,7 +884,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-buffer-streams (key-buf)
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
-      (txn-delete key-buf :cf (db (btree sc)) :transaction (current-transaction sc)))))
+      (txn-delete key-buf :cf (db (btree sc))))))
 
 (defclass rdb-dup-cursor (rdb-cursor) ()
   (:documentation "Cursor for traversing rdb secondary index-table."))
@@ -906,7 +894,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
   (let ((sc (get-store bt)))
     (make-instance 'rdb-dup-cursor
       :btree bt
-      :sap (iter (or (current-transaction sc) (btree sc)))
+      :sap (or (and *transaction* (txn-iter)) (btree sc))
       :oid (oid bt))))
 
 (defmethod cursor-next-nodup ((cursor rdb-dup-cursor))
@@ -1038,7 +1026,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
       (serialize-object name kbuf self)
-      (let ((buf (txn-get kbuf :transaction (current-transaction self))))
+      (let ((buf (txn-get kbuf)))
         (if buf (deserialize-object buf self)
             (slot-unbound (class-of instance) instance name))))))
 
@@ -1048,7 +1036,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)
       (serialize-object new-value value-buf self)
-      (txn-put key-buf value-buf :transaction (current-transaction self))
+      (txn-put key-buf value-buf)
       new-value)))
 
 (defmethod stored-slot-boundp ((self rdb-store) instance name)
@@ -1056,7 +1044,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-buffer-streams (key-buf)
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)
-      (let ((buf (txn-get key-buf :transaction (current-transaction self))))
+      (let ((buf (txn-get key-buf)))
         (if buf t nil)))))
     
 (defmethod stored-slot-makunbound ((self rdb-store) instance name)
@@ -1064,7 +1052,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-buffer-streams (key-buf)
       (write-buffer-fixnum32 (oid instance) key-buf)
       (serialize-object name key-buf self)
-      (txn-delete key-buf :transaction (current-transaction self)))))
+      (txn-delete key-buf))))
 
 ;;; Transactions
 ;; TODO 2026-08-21: 

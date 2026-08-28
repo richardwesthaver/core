@@ -58,7 +58,7 @@ transaction-db."
 (defmethods transaction 
   (((self trdb) &key (write-opts (default-rocksdb-writeoptions))
                 name
-                (transaction (current-transaction *transaction*))
+                (transaction *transaction*)
                 (opts (default-rocksdb-transaction-options)))
    (unless-null-db () self
      (let ((obj (rocksdb-transaction-begin (sap self) write-opts opts transaction)))
@@ -67,7 +67,7 @@ transaction-db."
   (((self otrdb)
     &key
     name
-    (transaction (current-transaction *transaction*))
+    (transaction *transaction*)
     (opts (default-rocksdb-optimistictransaction-options))
     (write-opts (default-rocksdb-writeoptions)))
    (unless-null-db () self
@@ -76,7 +76,7 @@ transaction-db."
        obj))))
 
 ;;; Default Transaction API
-(defmethod execute ((self rdb) (fn function) &key (transaction (current-transaction *transaction*)))
+(defmethod execute ((self rdb) (fn function) &key (transaction *transaction*))
   (funcall fn)
   (when transaction
     (commit transaction)
@@ -96,7 +96,7 @@ transaction-db."
 
 ;;; TXN ops
 (defun txn-get (kbuf
-                &key (transaction (current-transaction *transaction*))
+                &key (transaction *transaction*)
                      (opts (default-rocksdb-readoptions))
                      cf)
   "Get a key from a transaction. 
@@ -119,7 +119,7 @@ decoding the value is returned or NIL if nothing was found."
       (make-instance (buffer-stream size) :size size :buffer (alien-sap data)))))
 
 (defun txn-put (kbuf vbuf
-                &key (transaction (current-transaction *transaction*))
+                &key (transaction *transaction*)
                      cf)
   "Put a kv pair into a DB.
 The pair are encoded in buffer-streams."
@@ -143,11 +143,11 @@ The pair are encoded in buffer-streams."
          (size vbuf)
          e))))
 
-(defun txn-insert (db kbuf vbuf &key (transaction (current-transaction *transaction*)) cf)
+(defun txn-insert (db kbuf vbuf &key (transaction *transaction*) cf)
   (unless-key-exists (kbuf db :cf cf)
     (txn-put kbuf vbuf :transaction transaction :cf cf)))
 
-(defun txn-delete (kbuf &key (transaction (current-transaction *transaction*)) cf)
+(defun txn-delete (kbuf &key (transaction *transaction*) cf)
   "Delete a key / value pair from a DB.
 The key is encoded in a buffer-stream. T on success, NIL if the key wasn't
 found."
@@ -159,12 +159,12 @@ found."
         (rocksdb-transaction-delete transaction (sap-alien (buffer kbuf) (* unsigned-char)) (size kbuf) e))))
 
 ;;; Transaction Iterator
-(defun txn-iter (&key (transaction (current-transaction *transaction*)) cf (opts (default-rocksdb-readoptions)))
+(defun txn-iter (&key (transaction *transaction*) cf (opts (default-rocksdb-readoptions)))
   (if cf 
       (rocksdb-transaction-create-iterator-cf transaction opts cf)
       (rocksdb-transaction-create-iterator transaction opts)))
 
-(defun txn-iter-set (iter kbuf vbuf &key (transaction (current-transaction *transaction*)) cf)
+(defun txn-iter-set (iter kbuf vbuf &key (transaction *transaction*) cf)
   "Set a key and move an iterator to its position within a
 transaction. Return (values key value)."
   (declare ((alien (* rocksdb-iterator)) iter)
