@@ -190,33 +190,7 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 (defgeneric abort-transaction (self &key &allow-other-keys))
 (defgeneric transactionp (self)
   (:documentation "Return Non-nil if SELF is a transaction object.")
-  (:method ((self t))
-    (or (typep self 'simple-transaction)
-        (subtypep (type-of (transaction-db self)) 'database)))
   (:method ((self transaction)) t))
-(defgeneric transaction-object (self)
-  (:documentation "Return the underlying object of a transaction.")
-  (:method ((self null)) nil)
-  (:method ((self list)) (second self))
-  (:method ((self alien-value)) self)
-  (:method ((self system-area-pointer)) self))
-(defgeneric transaction-db (self)
-  (:documentation "Return the underlying TRANSACTION-DB of a transaction. This may or may not
-return the same value as DB depending on backend.")
-  (:method ((self null)) nil)
-  (:method ((self list)) (car self)))
-(defgeneric transaction-prior (self)
-  (:documentation "Return the previous transaction of SELF if any.")
-  (:method ((self list)) (third self))
-  (:method ((self t)) nil))
-
-(defun known-transaction (db txn)
-  "Search for a prior TXN known by this DB."
-  (and txn
-       (transactionp txn)
-       (or (eq db (transaction-db txn))
-           (eq (transaction-db db) (transaction-db txn))
-           (and (transaction-prior txn) (known-transaction db (transaction-prior txn))))))
 
 (define-condition transaction-error (db-error)
   ((transaction :initform *transaction* :initarg :transaction :reader error-transaction)))
@@ -237,18 +211,18 @@ committed. Otherwise, the transaction is aborted."
     (remf initargs :db)
     (remf initargs :transaction)
     `(let ((*db* ,db)
-           (*transaction* ,transaction))
+           (*transaction* ,(or transaction (transaction db))))
        (let ((,%txn-fn (lambda () ,@body)))
          (funcall #'execute *db* ,%txn-fn
-                  :transaction (transaction-object (known-transaction *db* *transaction*))
+                  :transaction *transaction*
                   ,@initargs)))))
 
-(defmacro current-transaction (db)
+(defmacro current-transaction ()
   "Return the current transaction associated with database DB."
   (with-gensyms (txn)
     `(let ((,txn *transaction*))
-       (when (and ,txn (eq (transaction-db ,txn) ,db))
-         (print (transaction-object ,txn))))))
+       (when (and ,txn (not (sb-alien:null-alien ,txn)))
+         ,txn))))
 
 (defmacro ensure-transaction ((&rest initargs 
                                &key
@@ -266,11 +240,11 @@ atomically regardless of whether there is an existing transaction or not."
     (remf initargs :wait)
     `(let ((,%db ,db)
            (,%txn-fn (lambda () ,@body)))
-       (if (known-transaction ,%db ,transaction)
+       (if (current-transaction)
            (funcall ,%txn-fn)
            (execute ,%db
                     ,%txn-fn
-                    :transaction nil
+                    :transaction ,transaction
                     ,@(when wait `(:wait ,wait)))))))
 
 (defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)
@@ -280,9 +254,6 @@ immediately following LIST."
   `(loop for ,batch in (group ,list ,size)
          do (with-transaction ,txn-options
               ,@body)))
-
-(defgeneric db-cursor (db &key &allow-other-keys)
-  (:documentation "Return a database cursor, default to calling [[STD/SEQ:ITER][iter]]."))
 
 ;;; Catalog
 ;; TODO 2026-08-09: 

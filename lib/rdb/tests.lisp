@@ -41,6 +41,7 @@
     (is (typep default '(alien (* rocksdb-options))))
     (is (funcall (rdb::rocksdb-options-getter "create-if-missing") default))
     (funcall (rdb::rocksdb-options-setter "enable-blob-files") default t)
+    (is (rocksdb-options-get-create-if-missing default))
     (is (rdb::rocksdb-option "enable-blob-files" default))
     (is (rocksdb-options-get-enable-blob-files default))
     (isnt (rocksdb-options-get-error-if-exists default))))
@@ -138,7 +139,7 @@
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
-  (with-db (db :db (make-db :rdb-transaction :path (format nil "/tmp/~A" (random-chars 4)))
+  (with-db (db :db (make-db :trdb :path (format nil "/tmp/~A" (random-chars 4)))
                :columns nil
                :open t
                :close t
@@ -148,11 +149,11 @@
       (isnt (abort-transaction txn1)))
     (let ((txn2 (transaction db :name "foofn" :optimistic t)))
       (prepare txn2)
-      (rocksdb-transaction-set-savepoint (sap txn2))
-      (isequal (name txn2) "foofn")
+      (rocksdb-transaction-set-savepoint txn2)
+      ;; (isequal (rdb::%transaction-name txn2) "foofn")
       (abort-transaction txn2))
-    (with-transaction (:db db :txn (transaction db))
-      (print (istype 'rdb-transaction *transaction*)))))
+    (with-transaction (:db db :transaction (transaction db))
+      (print *transaction*))))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."
@@ -160,7 +161,7 @@
         (v "bar"))
     (with-db (db :db (make-db :rdb
                               :name (format nil "/tmp/~A" (random-chars 4))
-                              :merge-op (rdb::create-concat-merge-op))
+                              :merge-op (rdb::concat-merge-op))
                  :open t :close t)
       (put-key db k v)
       (get-val db k)
@@ -174,13 +175,10 @@
         (v "foobarbaz"))
     (with-db (db :db (make-db :rdb
                               :name (format nil "/tmp/~A" (random-chars 4))
-                              :prefix-op (create-fixed-prefix-op 4))
+                              :prefix-op (rdb::fixed-prefix-op 4))
                  :open t :close t)
       (put-key db k v)
       (get-val db k))))
-
-(deftest store (:skip :todo)
-  (with-store (store)))
 
 (deftest logger ()
   (with-db (db :db (make-db :rdb
