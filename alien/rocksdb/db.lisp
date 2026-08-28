@@ -735,7 +735,7 @@
   (name (* unsigned-char))
   (name-len size-t))
 
-(defar rocksdb-transaction-get-name (* char)
+(defar rocksdb-transaction-get-name (* unsigned-char)
   (txn (* rocksdb-transaction))
   (name-len size-t :out))
 

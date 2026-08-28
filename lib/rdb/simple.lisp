@@ -20,7 +20,7 @@
   (declare (ignore engine))
   (remove-from-plist initargs :open :load)
   (let ((db (apply 'make-instance 'srdb initargs)))
-    (when (and load (path db)) (load-opts db))
+    (when (and load (probe-file (path db))) (load-opts db))
     (when open (open-db db))
     db))
 

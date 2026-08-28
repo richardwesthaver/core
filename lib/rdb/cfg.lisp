@@ -135,7 +135,8 @@ custom configuration." name)
            ("parallelism" "enable-statistics" "event-listener" "block-based-table-factory" "compression-options"
             "merge-operator" "db-log-dir" "wal-dir" "wal-ttl-seconds" "wal-size-limit-mb" "memtable-vector-rep"
             "prepare-for-bulk-load" "universal-compaction-options" "hash-skip-list-rep" "plain-table-factory"
-            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" "compaction-service" "env")
+            "min-level-to-compress" "ratelimiter" "row-cache" "prefix-extractor" 
+            "compaction-service" "env" "info-log")
            :create-if-missing t
            :create-missing-column-families t
            :parallelism (num-cpus)

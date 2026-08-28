@@ -302,7 +302,10 @@ does nothing when merging with an existing key."
 
 (defun %transaction-name (txn)
   (multiple-value-bind (name len) (rocksdb-transaction-get-name txn)
-    (copy-c-string name (make-string len))))
+    (lety ((buf (make-string len) :type simple-string))
+      (loop for i from 0 below len
+            do (setf (aref buf i) (code-char (deref name i))))
+      buf)))
 
 (defun %set-transaction-name (txn name)
   (with-errptr* (e 'rdb-transaction-error :txn txn)

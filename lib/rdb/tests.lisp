@@ -17,7 +17,7 @@
 (setq *temp-db-destroy* t)
 
 (defmacro with-temp-db ((sym &rest opts) &body body)
-  `(with-db (,sym :db (make-db :rdb :name (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
+  `(with-db (,sym :db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
      ,@body))
 
 (defvar *rdb-schema-file* #P"test.rdb")
@@ -28,7 +28,7 @@
 (deftest minimal ()
   "Test minimal functionality (open/close/put/get)."
   (let ((db-path (format nil "/tmp/rdb-minimal-~a" (gensym))))
-    (with-rdb (db (%open-db db-path))
+    (with-rdb (db (%open-db db-path (default-rocksdb-options)))
       (%put-kv-str db "foo" "bar")
       (is (string= (%get-kv-str db "foo") "bar"))
       (%close-db db)
@@ -125,11 +125,9 @@
 
 (deftest schema ()
   "Test loading and handling of RDB-SCHEMA objects."
-  (let ((cf (load-field (make-instance 'rdb-column-family
-                          :cf (make-rdb-cf "foo"))
+  (let ((cf (load-field (make-instance 'simple-column-family)
                         (make-field :type '(string string)))))
-    (isequal (column-type cf) (cons 'string 'string))
-    (isequal (name cf) "foo"))
+    (isequal (column-type cf) (cons 'string 'string)))
   (with-temp-db (db :destroy t :open t)
     (load-schema db (make-simple-schema :foo (make-field :type nil)))
     (is (= 1 (length (columns db)))))
@@ -144,24 +142,23 @@
                :open t
                :close t
                :destroy t)
-    ;; (open-transaction-db db :path (format nil "/tmp/~A" (random-chars 4)))
     (let ((txn1 (transaction db)))
       (isnt (abort-transaction txn1)))
-    (let ((txn2 (transaction db :name "foofn" :optimistic t)))
+    (let ((txn2 (transaction db :name "foofn")))
       (prepare txn2)
       (rocksdb-transaction-set-savepoint txn2)
-      ;; (isequal (rdb::%transaction-name txn2) "foofn")
+      (isequal (rdb::%transaction-name txn2) "foofn")
       (abort-transaction txn2))
     (with-transaction (:db db :transaction (transaction db))
-      (print *transaction*))))
+      (is *transaction*))))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."
   (let ((k "foo")
         (v "bar"))
     (with-db (db :db (make-db :rdb
-                              :name (format nil "/tmp/~A" (random-chars 4))
-                              :merge-op (rdb::concat-merge-op))
+                              :path (format nil "/tmp/~A" (random-chars 4))
+                              :options (rdb::default-rocksdb-options* :merge-operator (rdb::concat-merge-op)))
                  :open t :close t)
       (put-key db k v)
       (get-val db k)
@@ -174,18 +171,20 @@
   (let ((k "1337gamer")
         (v "foobarbaz"))
     (with-db (db :db (make-db :rdb
-                              :name (format nil "/tmp/~A" (random-chars 4))
-                              :prefix-op (rdb::fixed-prefix-op 4))
-                 :open t :close t)
+                       :path (format nil "/tmp/~A" (random-chars 4))
+                       :options (rdb::default-rocksdb-options* :prefix-extractor (rdb::fixed-prefix-op 4)))
+                 :open t :close t :destroy t)
       (put-key db k v)
       (get-val db k))))
 
-(deftest logger ()
-  (with-db (db :db (make-db :rdb
-                            :name (format nil "/tmp/~A" (random-chars 4))
-                            :logger (create-default-logger-callback))
+(deftest srdb ()
+  (with-db (db :db (make-db :srdb
+                            :path (format nil "/tmp/~A" (random-chars 4))
+                            :options (rdb::default-rocksdb-options*
+                                      :info-log (create-default-logger-callback)))
                :open nil
-               :close t)
+               :close t
+               :destroy t)
     (open-db db)))
           
 (deftest wbwi ()
