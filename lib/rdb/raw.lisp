@@ -64,17 +64,14 @@ does nothing when merging with an existing key."
 
 (defun %get-kv (db key &optional (opt (rocksdb-readoptions-create)) pinned)
   (with-kv-raw (db key e :error get-kv-error)
-      (with-alien ((vlen size-t))
-        (let* ((val (if pinned 
-                        (rocksdb-get-pinned db opt %key %klen e)
-                        (rocksdb-get db
-                                     opt
-                                     %key
-                                     %klen
-                                     vlen
-                                     e))))
-      ;; helps if we know the vlen beforehand, would need a custom
-      ;; C-side function probably.
+    (if pinned 
+        (rocksdb-get-pinned db opt %key %klen e)
+        (multiple-value-bind (val vlen)
+            (rocksdb-get db
+                         opt
+                         %key
+                         %klen
+                         e)
           (let ((v (make-octets vlen)))
             (clone-octets-from-alien val v vlen)
             (coerce v 'octet-vector))))))
@@ -264,13 +261,13 @@ does nothing when merging with an existing key."
 
 (defun %transactiondb-get-cf (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)
   (with-kv-raw (db key e :error get-kv-cf-error :cf cf)
-    (with-alien ((vlen size-t))
-      (let* ((val (if pinned
-                      (rocksdb-transactiondb-get-pinned-cf db opts cf %key %klen e)
-                      (rocksdb-transactiondb-get-cf db opts cf %key %klen vlen e)))
-             (v (make-array vlen :element-type 'octet)))
-        (clone-octets-from-alien val v vlen)
-        v))))
+    (if pinned
+        (rocksdb-transactiondb-get-pinned-cf db opts cf %key %klen e)
+        (multiple-value-bind (val vlen)
+            (rocksdb-transactiondb-get-cf db opts cf %key %klen e)
+          (let ((v (make-array vlen :element-type 'octet)))
+            (clone-octets-from-alien val v vlen)
+            v)))))
 
 (defun %transactiondb-get-cf-str (db cf key &optional (opts (rocksdb-readoptions-create)) pinned)
   (let ((k (string-to-octets key)))

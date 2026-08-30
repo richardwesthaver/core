@@ -91,11 +91,11 @@ project-like objects."))
 
 (defun find-project (name)
   "Find a registered project by NAME."
-  (gethash (string-upcase name) *project-table*))
+  (gethash (keywordicate (string-upcase name)) *project-table*))
 
 (defun (setf find-project) (project name)
   "Set a registered project by NAME."
-  (setf (gethash (string-upcase name) *project-table*) project))
+  (setf (gethash (keywordicate (string-upcase name)) *project-table*) project))
 
 (defun register-project (project)
   (setf (find-project (name project)) project))
