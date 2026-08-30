@@ -49,13 +49,13 @@
                      .v
                      size
                      e)
-        (with-alien ((rvlen (* size-t) (make-alien size-t)))
+        (let ((rvlen 0))
           (rocksdb-get db (rocksdb-readoptions-create)
                        .k
                        size
                        rvlen
                        e)
-          (is= size (deref rvlen)))))))
+          (is= size rvlen))))))
 
 (deftest errptr ()
   (signals rocksdb-c-error
@@ -177,7 +177,6 @@
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
-         (db)
          (key (genkey))
          (val (genval))
 	     (klen (length key))
@@ -186,38 +185,34 @@ DB where K and V are both Lisp strings."
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                  (v (* unsigned-char) (make-alien unsigned-char vlen))
-                 (errptr rocksdb-errptr nil))
-      (setf db (rocksdb-open opts path errptr))
-      ;; copy KEY to K
-      (setfa k key)
-      ;; copy VAL to V
-      (setfa v val)
-      ;; put K:V in DB
-      (rocksdb-put db 
-                   wopts
-                   k
-                   klen
-                   v
-                   vlen
-                   errptr)
-      (is (null-alien errptr))
-      ;; get V from DB given K
-      (rocksdb:rocksdb-cancel-all-background-work db t)
-      (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr)
-      (is (null-alien errptr))
-      ;; copy V to RVAL and validate
-      (let ((rval (make-array vlen :element-type 'unsigned-byte)))
-	    (loop for i from 0 below vlen do (let ((x (deref v i))) (setf (aref rval i) x)))
-	    (is (string= (octets-to-string val) (concatenate 'string (map 'vector #'code-char rval)))))
-      (rocksdb-delete db wopts k klen errptr)
-      (is (null-alien errptr))
-      (rocksdb-writeoptions-destroy wopts)
-      (rocksdb-readoptions-destroy ropts)
-      (rocksdb-cancel-all-background-work db nil)
-      (rocksdb-close db)
-      (rocksdb-destroy-db opts path errptr)
-      (is (null-alien errptr))
-      (rocksdb-options-destroy opts))))
+                 (errptr rocksdb-errptr))
+      (let ((db (rocksdb-open opts path errptr)))
+        ;; copy KEY to K
+        (setfa k key)
+        ;; copy VAL to V
+        (setfa v val)
+        ;; put K:V in DB
+        (rocksdb-put db 
+                     wopts
+                     k
+                     klen
+                     v
+                     vlen
+                     errptr)
+        (is (null-alien errptr))
+        ;; get V from DB given K
+        (rocksdb:rocksdb-cancel-all-background-work db t)
+        (is (rocksdb-get db ropts k klen vlen errptr))
+        (is (null-alien errptr))
+        (rocksdb-delete db wopts k klen errptr)
+        (is (null-alien errptr))
+        (rocksdb-writeoptions-destroy wopts)
+        (rocksdb-readoptions-destroy ropts)
+        (rocksdb-cancel-all-background-work db nil)
+        (rocksdb-close db)
+        (rocksdb-destroy-db opts path errptr)
+        (is (null-alien errptr))
+        (rocksdb-options-destroy opts)))))
 
 (deftest sstfiles ()
   "Test SST file write/ingest functionality."
@@ -252,7 +247,7 @@ DB where K and V are both Lisp strings."
       ;; ingest sst file
       (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
       (is (null-alien errptr))
-      (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen (make-alien size-t vlen) errptr) c-string)))
+      (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen vlen errptr) c-string)))
       
       ;; rocksdb-sstfilewriter-file-size
       (rocksdb-sstfilewriter-destroy writer)
