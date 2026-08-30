@@ -184,8 +184,7 @@ DB where K and V are both Lisp strings."
          (wopts (rocksdb-writeoptions-create))
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
-                 (v (* unsigned-char) (make-alien unsigned-char vlen))
-                 (errptr rocksdb-errptr nil))
+                 (v (* unsigned-char) (make-alien unsigned-char vlen)))
       (with-errptr errptr
         (let ((db (rocksdb-open opts path errptr)))
           ;; copy KEY to K
@@ -231,32 +230,28 @@ DB where K and V are both Lisp strings."
          (writer (rocksdb-sstfilewriter-create eopts opts)))
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                  (v (* unsigned-char) (make-alien unsigned-char vlen))
-                 (flist (array c-string 1))
-                 (errptr rocksdb-errptr nil))
+                 (flist (array c-string 1)))
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V
       (setfa v val)
       (setf (deref flist 0) file)
-      ;; create writer
-      (rocksdb-sstfilewriter-open writer file errptr)
-      ;; insert rows into sst file
-      (rocksdb-sstfilewriter-put writer k klen v vlen errptr)
-      (is (null-alien errptr))
-      (rocksdb-sstfilewriter-finish writer errptr)
-      (is (null-alien errptr))
-      ;; ingest sst file
-      (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
-      (is (null-alien errptr))
-      (is (rocksdb-get db ropts k klen errptr))
-      ;; rocksdb-sstfilewriter-file-size
-      (rocksdb-sstfilewriter-destroy writer)
-      (rocksdb-close db)
-      (rocksdb-destroy-db opts path errptr)
-      (rocksdb-options-destroy opts)
-      (rocksdb-envoptions-destroy eopts)
-      (delete-file file)
-      (is (null-alien errptr)))))
+      (with-errptr errptr
+        ;; create writer
+        (rocksdb-sstfilewriter-open writer file errptr)
+        ;; insert rows into sst file
+        (rocksdb-sstfilewriter-put writer k klen v vlen errptr)
+        (rocksdb-sstfilewriter-finish writer errptr)
+        ;; ingest sst file
+        (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
+        (is (rocksdb-get db ropts k klen errptr))
+        ;; rocksdb-sstfilewriter-file-size
+        (rocksdb-sstfilewriter-destroy writer)
+        (rocksdb-close db)
+        (rocksdb-destroy-db opts path errptr)
+        (rocksdb-options-destroy opts)
+        (rocksdb-envoptions-destroy eopts)
+        (delete-file file)))))
 
 (deftest stats ()
   "Test statistics and performance-context related functionality."
@@ -272,31 +267,31 @@ DB where K and V are both Lisp strings."
          (ctx (rocksdb::rocksdb-perfcontext-create))
          (hist (rocksdb-statistics-histogram-data-create)))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
-                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
-                 (errptr rocksdb-errptr nil))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen)))
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V
       (setfa v val)
       ;; put K:V in DB
-      (rocksdb-put db 
-                   wopts
-                   k
-                   klen
-                   v
-                   vlen
-                   errptr)
+      (with-errptr errptr
+        (rocksdb-put db 
+                     wopts
+                     k
+                     klen
+                     v
+                     vlen
+                     errptr)
       
-      (debug! "stats: ~A" (rocksdb-options-statistics-get-string opts))
-      (rocksdb-options-statistics-get-histogram-data opts 5 hist) ;; histogram data types? uint64 somewhere
-      (debug! "count: ~A" (rocksdb-statistics-histogram-data-get-count hist))
-      (rocksdb-perfcontext-reset ctx)
-      ;; ...
-      (rocksdb-set-perf-level (rocksdb-perf-level "disable"))
-      (rocksdb-statistics-histogram-data-destroy hist)
-      (rocksdb-close db)
-      (rocksdb-destroy-db opts path errptr)
-      (rocksdb-options-destroy opts))))
+        (debug! "stats: ~A" (rocksdb-options-statistics-get-string opts))
+        (rocksdb-options-statistics-get-histogram-data opts 5 hist) ;; histogram data types? uint64 somewhere
+        (debug! "count: ~A" (rocksdb-statistics-histogram-data-get-count hist))
+        (rocksdb-perfcontext-reset ctx)
+        ;; ...
+        (rocksdb-set-perf-level (rocksdb-perf-level "disable"))
+        (rocksdb-statistics-histogram-data-destroy hist)
+        (rocksdb-close db)
+        (rocksdb-destroy-db opts path errptr)
+        (rocksdb-options-destroy opts)))))
 
 ;; stats-dump-period-sec
 
@@ -318,40 +313,36 @@ DB where K and V are both Lisp strings."
     (rocksdb-options-set-blob-cache opts bcache)
     (setf db (rocksdb-open opts path nil))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
-                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
-                 (errptr rocksdb-errptr nil))
+                 (v (* (unsigned 8)) (make-alien (unsigned 8) vlen)))
       (debug! "min blob file size: ~A" (rocksdb-options-get-min-blob-size opts))
       (debug! "max blob file size: ~A" (rocksdb-options-get-blob-file-size opts))
-
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V
       (setfa v val)
-      ;; put K:V in DB - 
-      (rocksdb-put db 
-                   wopts
-                   k
-                   klen
-                   v
-                   vlen
-                   errptr)
-      (is (null-alien errptr))
-      (rocksdb::rocksdb-flush db (rocksdb-flushoptions-create) errptr)
-      (is (null-alien errptr))
-      (is (stringp
-           (cast
-            (rocksdb-get db
-                         ropts
-                         k
-                         klen
-                         errptr)
-            c-string)))
-      (rocksdb-writeoptions-destroy wopts)
-      (rocksdb-readoptions-destroy ropts)
-      (rocksdb-close db)
-      (rocksdb-destroy-db opts path errptr)
-      (is (null-alien errptr))
-      (rocksdb-options-destroy opts))))
+      (with-errptr errptr
+        ;; put K:V in DB - 
+        (rocksdb-put db 
+                     wopts
+                     k
+                     klen
+                     v
+                     vlen
+                     errptr)
+        (rocksdb::rocksdb-flush db (rocksdb-flushoptions-create) errptr)
+        (is (stringp
+             (cast
+              (rocksdb-get db
+                           ropts
+                           k
+                           klen
+                           errptr)
+              c-string)))
+        (rocksdb-writeoptions-destroy wopts)
+        (rocksdb-readoptions-destroy ropts)
+        (rocksdb-close db)
+        (rocksdb-destroy-db opts path errptr)
+        (rocksdb-options-destroy opts)))))
 
 (deftest transactiondb ()
   "Test simple transactions using TransactionDB."
@@ -359,7 +350,7 @@ DB where K and V are both Lisp strings."
          (txn-opts (rocksdb-transaction-options-create))
          (opts (test-opts))
          (path (rocksdb-test-dir))
-         (txn-db (rocksdb-transactiondb-open opts topts path nil))
+         (txn-db (with-errptr e (rocksdb-transactiondb-open opts topts path e)))
          (key (genkey))
          (val (genval))
          (klen (length key))
@@ -368,7 +359,6 @@ DB where K and V are both Lisp strings."
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
-                 (errptr rocksdb-errptr)
                  (txn-old (* rocksdb-transaction)))
       ;; copy KEY to K
       (setfa k key)
@@ -402,8 +392,7 @@ DB where K and V are both Lisp strings."
             (rocksdb-transaction-options-destroy txn-opts)
             (rocksdb-transactiondb-close txn-db)
             (rocksdb-destroy-db opts path errptr)
-            (rocksdb-options-destroy opts)
-            (is (null-alien errptr))))))))
+            (rocksdb-options-destroy opts)))))))
 
 (deftest optimistic-transactiondb ()
   "Test transactions using OptimisticTransactionDB."
@@ -416,23 +405,22 @@ DB where K and V are both Lisp strings."
          (otxn-db (rocksdb-optimistictransactiondb-open (test-opts) (rocksdb-test-dir) nil)))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
-                 (errptr rocksdb-errptr)
                  (txn-old (* rocksdb-transaction))
                  (i size-t 3))
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V
       (setfa v val)
-      (let ((db (rocksdb-optimistictransactiondb-get-base-db otxn-db)))
-        (istype '(alien (* rocksdb)) db)
-        (isnt (rocksdb-optimistictransactiondb-close-base-db db)))
-      (let ((txn (rocksdb-optimistictransaction-begin otxn-db wopts (rocksdb-optimistictransaction-options-create) txn-old)))
-        (is txn)
-        (rocksdb-transaction-destroy txn)
-        (rocksdb-writeoptions-destroy wopts)
-        (rocksdb-readoptions-destroy ropts)
-        (rocksdb-optimistictransactiondb-close otxn-db)
-        (is (null-alien errptr))))))
+      (with-errptr errptr
+        (let ((db (rocksdb-optimistictransactiondb-get-base-db otxn-db)))
+          (istype '(alien (* rocksdb)) db)
+          (isnt (rocksdb-optimistictransactiondb-close-base-db db)))
+        (let ((txn (rocksdb-optimistictransaction-begin otxn-db wopts (rocksdb-optimistictransaction-options-create) txn-old)))
+          (is txn)
+          (rocksdb-transaction-destroy txn)
+          (rocksdb-writeoptions-destroy wopts)
+          (rocksdb-readoptions-destroy ropts)
+          (rocksdb-optimistictransactiondb-close otxn-db))))))
 
 (deftest metadata ()
   "Test metadata functionality :: cf-meta -> level-meta -> sst-file-meta"
