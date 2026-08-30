@@ -177,7 +177,7 @@
 DB where K and V are both Lisp strings."
   (let* ((opts (test-opts))
          (path (rocksdb-test-dir))
-         (db (rocksdb-open opts path nil))
+         (db)
          (key (genkey))
          (val (genval))
 	     (klen (length key))
@@ -187,6 +187,7 @@ DB where K and V are both Lisp strings."
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                  (v (* unsigned-char) (make-alien unsigned-char vlen))
                  (errptr rocksdb-errptr nil))
+      (setf db (rocksdb-open opts path errptr))
       ;; copy KEY to K
       (setfa k key)
       ;; copy VAL to V

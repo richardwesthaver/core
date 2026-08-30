@@ -1370,7 +1370,7 @@ internally. On success the path is added to the *SYSDEFS* list."
                     :worker-class 'system-worker))
 
 ;;; Protocol
-(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-async-p*) (reset t)
+(defmethod init ((self (eql :sys)) &key (sysdefs (sysdefs)) (preload t) (pool *system-session-async-p*) reset
                                         fasl-cache
                                         system-data
                                         system-cache)
