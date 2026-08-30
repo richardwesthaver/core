@@ -28,8 +28,7 @@
 
 ;;; Project
 (defcomponent skel-project (simple-project)
-  ((name :initarg :name :initform (format nil "~A" (gensym "SK")) :type simple-base-string :accessor name)
-   (vc :initarg :vc
+  ((vc :initarg :vc
        :initform nil
        :accessor vc)
    (src :initarg :src :type pathname :accessor src)
@@ -267,6 +266,9 @@ directory.")
       (unless *keep-ast* (setf (ast self) nil))
       (setf (id self) (sxhash (cons (name self) (version self))))
       self)))
+
+(defmethod load-ast :after ((self skel-project))
+  (register-project self))
 
 ;; obj -> ast
 (defmethod build ((self skel-project) &key (nullp nil) (exclude '(ast id)))

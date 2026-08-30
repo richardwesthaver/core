@@ -482,11 +482,12 @@ stored btree instance with a unique OID that persists between sessions. No
 cache is needed because we cache in the class slots.")
    (ser :accessor ser :initform nil :initarg :ser)
    (de :accessor de :initform nil :initarg :de))
-  (:documentation "Base class for all STOREs. The role of a STORE is similar to an ORM in the
-sense that it supports querying and modification of persistent CLOS objects
-via database access. A STORE maintains a collection of tables and a btree. It
-supports the STORED metaprotocol implemented by STORED-OBJECT instances. See
-DEFSCLASS for the available class-specific options in the generic interface."))
+  (:documentation "Base class for all stores.
+The role of a STORE is similar to an ORM in the sense that it supports
+querying and modification of stored CLOS objects via database access. A STORE
+maintains a collection of tables and a btree. It supports the STORED
+metaprotocol implemented by STORED-OBJECT instances. See DEFSCLASS for the
+available class-specific options in the generic interface."))
 
 (defmethod print-object ((self store) stream)
   (print-unreadable-object (self stream :type t)
@@ -1399,7 +1400,7 @@ slots."
       (let* ((stored-initializable-slots 
                (union (union stored-slots indexed-slots) association-end-slots))
              (set-slots (get-init-slotnames class #'set-valued-slot-names slot-names)))
-        ;;      NOTE: backing store for cached slots is only initialized on checkout or txn
+        ;; NOTE: backing store for cached slots is only initialized on checkout or txn
         (cond (from-oid ;; If re-starting, make sure we read the cached values
                         nil)
               (t ;; If new instance, initialize all slots
@@ -2506,8 +2507,8 @@ representations (formal utf-16)."
     (,+utf32-string+ . "UTF32le string")
     (,+symbol+ . "symbol")
     (,+pathname+ . "pathname")
-    (,+stored+ . "persistent object (old)")
-    (,+stored-ref+ . "persistent object reference (new)")
+    (,+stored+ . "stored object (old)")
+    (,+stored-ref+ . "stored object reference (new)")
     ;;    (,+oid-pair+ . "oid pair for associations")
     (,+cons+ . "cons cell")
     (,+hash-table+ . "hash table")

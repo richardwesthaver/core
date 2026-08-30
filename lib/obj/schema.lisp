@@ -16,8 +16,8 @@
 ;; extend the column class to support backend-specific abstractions - such as
 ;; the RocksDB Column Family which is naturally represented by RDB-COLUMN as a
 ;; pair of FIELDs - one for the key and another for the value. This class is
-;; further extended by RDB-COLUMN-FAMILY which wraps the low-level FFI
-;; interface.
+;; further extended by SIMPLE-COLUMN-FAMILY which subclasses the plain
+;; COLUMN-FAMILY class.
 
 ;;; Code:
 (in-package :obj/schema)
@@ -31,7 +31,7 @@
 (deftype field-vector () '(vector field))
 
 ;;; Vars
-(defvar *schema* nil)
+;; (defvar *schema*)
 
 ;;; Generics
 (defgeneric field (self n)
@@ -300,7 +300,9 @@ gets updated when the class changes."))
   '((:stored stored::stored-effective-slot-definition)
     (:indexed stored::indexed-effective-slot-definition)
     (:derived stored::derived-index-effective-slot-definition)
-    (:cached stored::cached-effective-slot-definition)))
+    (:cached stored::cached-effective-slot-definition)
+    (:set-valued stored::set-valued-effective-slot-definition)
+    (:association  stored::association-effective-slot-definition)))
 
 (defun compute-slot-fields (class-obj &optional (slot-tag-map *slot-def-type-tags*))
   "For each slot, compute a serializable record of the important info 
@@ -360,7 +362,11 @@ gets updated when the class changes."))
        (equal (sorted-slots :indexed sch1)
               (sorted-slots :indexed sch2))
        (equal (sorted-slots :derived sch1)
-              (sorted-slots :derived sch2))))
+              (sorted-slots :derived sch2))
+       (equal (sorted-slots :set-valued sch1)
+              (sorted-slots :set-valued sch2))
+       (equal (sorted-slots :association sch1)
+              (sorted-slots :association sch2))))
 
 (defmethod match-schemas ((sch1 object-schema) (sch2 object-schema))
   "Are the two schemas functionally equivalent?"
@@ -376,7 +382,11 @@ gets updated when the class changes."))
        (equal (sorted-slots :indexed sch1)
               (sorted-slots :indexed sch2))
        (equal (sorted-slots :derived sch1)
-              (sorted-slots :derived sch2))))
+              (sorted-slots :derived sch2))
+       (equal (sorted-slots :set-valued sch1)
+              (sorted-slots :set-valued sch2))
+       (equal (sorted-slots :association sch1)
+              (sorted-slots :association sch2))))
 
 (defun symbol< (sym1 sym2) 
   (string< (symbol-name sym1) (symbol-name sym2)))

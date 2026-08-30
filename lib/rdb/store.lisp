@@ -958,7 +958,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
             (+ (* 100 maj)
                (* 10 min)
                inc)))
-    ;; (with-transaction (:db store)
+    (with-transaction (:db store)
       ;; btree initialization
       (setf 
        (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
@@ -974,7 +974,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
        (slot-value store 'store::schema-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -4 :store store :index (make-hash-table))
-           (make-instance 'rdb-indexed-btree :from-oid -4 :store store)))
+           (make-instance 'rdb-indexed-btree :from-oid -4 :store store))))
     store))
 
 (defmethod close-store ((store rdb-store))

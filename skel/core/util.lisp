@@ -76,8 +76,8 @@ overwritten with the AUTO flag."
   (defun init-skelfile (&optional file name config)
     "Initialize a skelfile."
     (let ((sk (make-instance 'skel-project 
-		:name (or name (pathname-name (sb-posix:getcwd)))))
-	  (path (or file *default-skelfile*)))
+		        :name (or name (pathname-name (sb-posix:getcwd)))))
+	      (path (or file *default-skelfile*)))
       (when config (setf sk (wrap sk config)))
       (write-ast sk path :pretty t))))
 

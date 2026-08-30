@@ -1,6 +1,5 @@
 #!/usr/bin/env -S core --script
-#|A dummy command script for interactive testing.
-|#
+#|A dummy command script for interactive testing.|#
 (use-package :cmd)
 (init :log :level :trace)
 (init :commands :name :cli :class 'cli-command)

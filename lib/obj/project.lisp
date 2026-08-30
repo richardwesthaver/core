@@ -73,9 +73,6 @@ project-like objects."))
 (defclass project (id ast) ()
   (:documentation "A generic project (without metadata)."))
 
-(defmethod initialize-instance :after ((self project) &key &allow-other-keys)
-  (register-project self))
-
 (defmethod print-object ((self project) stream)
   (print-unreadable-object (self stream :type t)
     (princ (name self) stream)))
