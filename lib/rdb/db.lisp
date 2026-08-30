@@ -134,26 +134,27 @@ TRANSACTIONDB-OPTIONS is an alien ROCKSDB-TRANSACTIONDB-OPTIONS pointer."))
 This function should be used at most once for any given slot value of COLUMNS
 to create them. It is an error to call this function with pre-existing
 columns."
-  (let ((names) (opts))
-    (loop for c in (columns self)
-          do (push (name c) names)
-          do (push (options c) opts))
-    (nreversef names)
-    (nreversef opts)
-    ;; ;; make sure the default column-family is opened
-    ;; (unless (member *default-column-family-name* names :test 'string=)
-    ;;   (push *default-column-family-name* names)
-    ;;   (push (opts self) opts))
-    (multiple-value-bind (db cfs)
-        (%open-cfs (opts self) (name self) names opts)
-      (setf (db self) db)
-      ;; HACK 2026-08-18: 
-      (let ((len (length names)))
-        (loop for n in names
-              for i below len
-              for cf = (deref cfs i)
-              do (setf (db (find-column (pop names) self)) cf)))
-      self)))
+  (unless (null (columns self))
+    (let ((names) (opts))
+      (loop for c in (columns self)
+            do (push (name c) names)
+            do (push (options c) opts))
+      (nreversef names)
+      (nreversef opts)
+      ;; ;; make sure the default column-family is opened
+      ;; (unless (member *default-column-family-name* names :test 'string=)
+      ;;   (push *default-column-family-name* names)
+      ;;   (push (opts self) opts))
+      (multiple-value-bind (db cfs)
+          (%open-cfs (opts self) (name self) names opts)
+        (setf (db self) db)
+        ;; HACK 2026-08-18: 
+        (let ((len (length names)))
+          (loop for n in names
+                for i below len
+                for cf = (deref cfs i)
+                do (setf (db (find-column (pop names) self)) cf)))
+        self))))
 
 (defmethod find-column ((cf string) (self rdb) &key)
   (find cf (columns self) :key 'name :test 'string=))
@@ -251,7 +252,8 @@ columns."
 (defaccessor sap ((self rdb)) (db self))
 (defaccessor opts ((self rdb) &key) (options self))
 ;; TODO
-(defaccessor opt ((self rdb) key) (opt (opts self) key))
+(defmethod opt ((self rdb) key) (funcall (rocksdb-options-getter key) (opts self)))
+(defmethod (setf opt) (new (self rdb) key) (funcall (rocksdb-options-setter key) (opts self) new))
 (defmethods prop 
   (((self rdb) (name string))
    (unless-null-db () self

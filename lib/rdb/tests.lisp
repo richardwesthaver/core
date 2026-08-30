@@ -72,11 +72,11 @@
   (with-temp-db (tmp :open nil :destroy t)
     ;; https://github.com/facebook/rocksdb/wiki/unordered_write
     (setf (opt tmp :parallelism) (num-cpus)
-          (opt tmp :unordered-write) t
+          ;; (opt tmp :unordered-write) t ; incompatible with pipeline-write
           (opt tmp :enable-statistics) t
           (opt tmp :statistics-level) (rocksdb-statistics-level "all"))
     (open-db tmp)
-    (rdb::open-all-columns tmp)
+    (isnt (rdb::open-all-columns tmp))
     (with-iter (it (iter tmp))
       (is (sap it))
       seek-to-first
