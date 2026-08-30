@@ -403,7 +403,9 @@ DB where K and V are both Lisp strings."
          (vlen (length val))
          (wopts (rocksdb-writeoptions-create))
          (ropts (rocksdb-readoptions-create))
-         (otxn-db (with-errptr e (rocksdb-optimistictransactiondb-open (test-opts) (rocksdb-test-dir) e))))
+         (opts (test-opts))
+         (path (rocksdb-test-dir))
+         (otxn-db (with-errptr e (rocksdb-optimistictransactiondb-open opts path e))))
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
                  (txn-old (* rocksdb-transaction))
@@ -421,11 +423,8 @@ DB where K and V are both Lisp strings."
           (rocksdb-transaction-destroy txn)
           (rocksdb-writeoptions-destroy wopts)
           (rocksdb-readoptions-destroy ropts)
-          (rocksdb-optimistictransactiondb-close otxn-db))))))
-
-(deftest metadata ()
-  "Test metadata functionality :: cf-meta -> level-meta -> sst-file-meta"
-  nil)
+          (rocksdb-optimistictransactiondb-close otxn-db)
+          (with-errptr e (rocksdb-destroy-db opts path e)))))))
 
 (deftest properties ()
   "Test the ROCKSDB-GET-PROPERTY-* functions."
@@ -434,7 +433,9 @@ DB where K and V are both Lisp strings."
          (path (rocksdb-test-dir))
          (db (with-errptr e (rocksdb-open opts path e))))
     (is (stringp (rocksdb-property-value db "rocksdb.stats")))
-    (is (zerop (parse-integer (rocksdb-property-value db "rocksdb.num-files-at-level3"))))))
+    (is (zerop (parse-integer (rocksdb-property-value db "rocksdb.num-files-at-level3"))))
+    (rocksdb-close db)
+    (with-errptr e (rocksdb-destroy-db opts path e))))
 
 ;; (define-merge-operator dummy nil
 ;;   :full nil
