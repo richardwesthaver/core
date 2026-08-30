@@ -183,6 +183,17 @@ columns."
 
 ;; TODO 2026-08-20: unless-key-exists-p
 (defmethods insert-key
+  (((self rdb) key val &key column)
+   (if-let ((column (and column (find-column column self))))
+     (if-let ((cf (db column)))
+       (%put-cf
+        (db self)
+        cf
+        key
+        val
+        (rocksdb-writeoptions-create))
+       (simple-rdb-error "column-family is not open"))
+     (put-key self key val)))
   (((self rdb) (key string) (val string) &key column)
    (insert-key self (string-to-octets key) (string-to-octets val) :column column))
   (((self rdb) (key string) val &key column)
@@ -434,7 +445,7 @@ columns."
 ;;; SST File Writer
 (defstruct sst-file-writer
   (path nil :type (or null pathname string))
-  (sap (%sst-filewriter) :type (alien (* rocksdb-sstfilewriter))))
+  (sap (%sst-filewriter) :type (or null (alien (* rocksdb-sstfilewriter)))))
 
 (defaccessor sap ((self sst-file-writer)) (sst-file-writer-sap self))
 (defaccessor path ((self sst-file-writer)) (sst-file-writer-path self))
@@ -457,8 +468,7 @@ columns."
 
 (defmethod print-object ((self sst-file-writer) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream ":path ~A ~@{:size ~A~}" (sst-file-writer-path self)
-            (when (sst-file-writer-sap self) (size self)))))
+    (format stream ":path ~A" (sst-file-writer-path self))))
 
 (defmethod put-key ((self sst-file-writer) key val &key timestamp)
   (if timestamp

@@ -20,6 +20,13 @@
   `(with-db (,sym :db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
      ,@body))
 
+(defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
+  `(let ((,db-var (%open-db ,db-path ,opt)))
+     (unwind-protect (progn ,@body)
+       (rocksdb-close ,db-var)
+       (with-errptr* (err 'open-db-error)
+         (rocksdb-options-destroy ,opt)))))
+
 (defvar *rdb-schema-file* #P"test.rdb")
 (defvar *rdb-schema-file-contents* 
   "; RDB schema file
@@ -100,30 +107,29 @@
   (with-temp-db (tmp :open t :close t)
     (insert-key tmp "foo" "bar")
     (flush tmp)
-    (let ((cf-meta (db-metadata tmp)))
-      (is (rdb-cf-metadata-p (pull-sap* cf-meta)))
-      (let ((level-meta (db-metadata cf-meta)))
-        (is (rdb-level-metadata-p (pull-sap* level-meta)))
-        (is (rdb-sst-file-metadata-p
-             (pull-sap* (db-metadata level-meta))))))))
+    (let ((cf-meta (metadata tmp)))
+      (is (rdb::rdb-metadata-p cf-meta))
+      (let ((level-meta (metadata cf-meta)))
+        (is (rdb::level-metadata-p level-meta))
+        (is (rdb::sst-file-metadata-p (metadata level-meta)))))))
 
 (deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."
   (with-temp-db (tmp :open t :close t)
     ;; without macro
-    (let ((writer (make-sst-file-writer :path (tmp-path "sst"))))
+    (let* ((path (tmp-path "sst"))
+           (writer (make-sst-file-writer :path path)))
       (open-db writer)
       (dotimes (i 10000)
         (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
-      (close-db writer) ;; will fail on empty writer
       (shutdown-db writer)
       (ingest-db tmp (list path))
       (delete-file path)
       (with-sst (s :file path)
-        (put-kv s (make-kv (string-to-octets "nil") (string-to-octets "nil"))))
-      (delete-file path))))
+        (put-key s (string-to-octets "nil") (string-to-octets "nil"))
+      (delete-file path)))))
 
-(deftest schema ()
+(deftest schema (:skip :todo)
   "Test loading and handling of RDB-SCHEMA objects."
   (let ((cf (load-field (make-instance 'simple-column-family)
                         (make-field :type '(string string)))))

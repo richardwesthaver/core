@@ -30,23 +30,17 @@ ERR with initargs PARAMS for the duration of BODY."
      (handler-bind ((error 
                       (lambda (c)
                         (declare (ignore c))
-                        (error ,err :message (deref (cast ,e (* c-string))) ,@params))))
+                        (error ,err #+nil :message #+nil (deref (cast ,e (* c-string))) ,@params))))
        ,@body)))
 
 ;;; raw
-;; these functions only apply to the raw API
-(defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
-  `(let ((,db-var (%open-db ,db-path ,opt)))
-     (unwind-protect (progn ,@body)
-       (rocksdb-close ,db-var)
-       (with-errptr* (err 'open-db-error)
-         (rocksdb-options-destroy ,opt)))))
 
-(defmacro with-rdb ((db-var db &key open close) &body body)
+;; currently only used in the cli
+(defmacro with-rdb ((db-var db &key open close destroy) &body body)
   "Bind DB-VAR to the database object DB for the lifetime of BODY."
   `(let ((,db-var ,db))
      ,@(when open `(open-db ,db-var))
-     ,@(if close `(unwind-protect (progn ,@body) (close-db ,db-var))
+     ,@(if (or close destroy) `((unwind-protect (progn ,@body) (close-db ,db-var) ,@(when destroy `((destroy-db ,db-var)))))
            body)))
 
 (defmacro unless-null-db (slots self &body body)
@@ -69,14 +63,6 @@ ERR with initargs PARAMS for the duration of BODY."
   (with-gensyms (%cf)
     `(loop for ,%cf across ,cfs
            do (with-column (,cf ,%cf) ,@body))))
-
-;;; backup
-(defmacro with-open-backup-engine-raw ((be-var be-path &optional (opt (rocksdb-options-create)))
-                                       &body body)
-  `(let ((,be-var (%open-backup-engine ,be-path ,opt)))
-     (unwind-protect (progn ,@body)
-       (rocksdb-backup-engine-close ,be-var)
-       (rocksdb-options-destroy ,opt))))
 
 ;;; raw macros
 ;; Following macros introduce four anaphors - %KEY and %KLEN and if VAL is
@@ -230,10 +216,10 @@ lexicographically.
 It is up to the developer to ensure that the comparator used by a
 writer is exactly the same as the comparator used when ingesting the
 file by a RDB instance."
-  `(let ((,sst (make-sst-file-writer ,comparator)))
-     ,@(when file `((open-sst ,sst ,file)))
+  `(let ((,sst (%sst-filewriter ,comparator)))
+     ,@(when file `((%open-sst-writer ,sst ,file)))
      ,@body
-     ,@(when destroy `((destroy-sst ,sst)))))
+     ,@(when destroy `((%destroy-sst-writer ,sst)))))
 
 ;;; opts
 (defmacro with-latest-opts (db &body body)

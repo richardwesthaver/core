@@ -47,7 +47,6 @@
    :with-latest-opts
    :make-rocksdb-options
    :load-opts
-   :with-open-rdb-raw
    :rdb-logger
    :close-secondary-db
    :open-secondary-db

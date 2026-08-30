@@ -153,7 +153,7 @@ and size are pre-computed."
       (with-alien ((flist (* c-string) (make-alien c-string flen)))
         (loop for f in files
               for i from 0 to flen
-              do (setf (deref flist i) (make-alien-string f :null-terminate t)))
+              do (setf (deref flist i) (make-alien-string (namestring f) :null-terminate t)))
         (rocksdb-ingest-external-file db flist flen opts err)))))
 
 (defun %ingest-db-cf (db cf files &optional (opts (rocksdb-ingestexternalfileoptions-create)))

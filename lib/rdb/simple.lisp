@@ -56,17 +56,6 @@
         (string (%multi-get-kv-str (sap self) keys opts)))))
 
 (defmethods insert-key 
-  (((self srdb) key val &key column)
-   (if-let ((column (and column (find-column column self))))
-     (if-let ((cf (sap column)))
-       (%put-cf
-        (sap self)
-        cf
-        key
-        val
-        (rocksdb-writeoptions-create))
-       (simple-rdb-error "column-family is not open"))
-     (put-key self key val)))
   (((self srdb) (key string) (val string) &key column)
    (if-let ((column (and column (find-column column self))))
      (if-let ((sap (sap column)))
