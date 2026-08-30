@@ -60,7 +60,7 @@
 (deftest errptr ()
   (signals rocksdb-c-error
     (with-errptr e
-      (let ((o (test-opts)))
+      (let ((o (rocksdb-options-create)))
         (rocksdb-options-set-create-if-missing o nil)
         (rocksdb-open o (rocksdb-test-dir) e)))))
 
@@ -77,7 +77,7 @@
   (with-opt (o (rocksdb-options-create) (rocksdb-options-destroy o))
     ;; unsigned-char
     (rocksdb-options-set-create-if-missing o t)
-    (rocksdb-options-get-create-if-missing o)
+    (is (rocksdb-options-get-create-if-missing o))
     #+todo (rocksdb::rocksdb-options-set-async-wal-precreate o t)
     #+todo (is (rocksdb-options-get-async-wal-precreate o))
     (rocksdb-options-set-create-missing-column-families o t)
@@ -186,33 +186,34 @@ DB where K and V are both Lisp strings."
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                  (v (* unsigned-char) (make-alien unsigned-char vlen))
                  (errptr rocksdb-errptr nil))
-      (let ((db (rocksdb-open opts path errptr)))
-        ;; copy KEY to K
-        (setfa k key)
-        ;; copy VAL to V
-        (setfa v val)
-        ;; put K:V in DB
-        (rocksdb-put db 
-                     wopts
-                     k
-                     klen
-                     v
-                     vlen
-                     errptr)
-        (is (null-alien errptr))
-        ;; get V from DB given K
-        (rocksdb:rocksdb-cancel-all-background-work db t)
-        (is (rocksdb-get db ropts k klen errptr))
-        (is (null-alien errptr))
-        (rocksdb-delete db wopts k klen errptr)
-        (is (null-alien errptr))
-        (rocksdb-writeoptions-destroy wopts)
-        (rocksdb-readoptions-destroy ropts)
-        (rocksdb-cancel-all-background-work db nil)
-        (rocksdb-close db)
-        (rocksdb-destroy-db opts path errptr)
-        (is (null-alien errptr))
-        (rocksdb-options-destroy opts)))))
+      (with-errptr errptr
+        (let ((db (rocksdb-open opts path errptr)))
+          ;; copy KEY to K
+          (setfa k key)
+          ;; copy VAL to V
+          (setfa v val)
+          ;; put K:V in DB
+          (with-errptr e
+            (rocksdb-put db 
+                         wopts
+                         k
+                         klen
+                         v
+                         vlen
+                         e))
+          ;; get V from DB given K
+          (rocksdb:rocksdb-cancel-all-background-work db t)
+          (with-errptr e
+            (is (rocksdb-get db ropts k klen e)))
+          (with-errptr e
+            (rocksdb-delete db wopts k klen e))
+          (rocksdb-writeoptions-destroy wopts)
+          (rocksdb-readoptions-destroy ropts)
+          (rocksdb-cancel-all-background-work db nil)
+          (rocksdb-close db)
+          (with-errptr e
+            (rocksdb-destroy-db opts path errptr))
+          (rocksdb-options-destroy opts))))))
 
 (deftest sstfiles ()
   "Test SST file write/ingest functionality."
@@ -335,7 +336,7 @@ DB where K and V are both Lisp strings."
                    vlen
                    errptr)
       (is (null-alien errptr))
-      (rocksdb:rocksdb-flush db (rocksdb-flushoptions-create) errptr)
+      (rocksdb::rocksdb-flush db (rocksdb-flushoptions-create) errptr)
       (is (null-alien errptr))
       (is (stringp
            (cast

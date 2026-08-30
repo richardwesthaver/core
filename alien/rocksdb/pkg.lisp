@@ -535,6 +535,7 @@ set *errptr to a malloc()ed error message.
    :rocksdb-subcompactionjobinfo-base-input-level
    :rocksdb-subcompactionjobinfo-output-level
    :rocksdb-flushjobinfo-cf-name
+   :rocksdb-flush
    :rocksdb-flushjobinfo-file-path
    :rocksdb-flushjobinfo-triggered-writes-slowdown
    :rocksdb-flushjobinfo-triggered-writes-stop
@@ -604,4 +605,4 @@ set *errptr to a malloc()ed error message.
 
 (defun rocksdb-c-error (errptr)
   "Signal a rocksdb-c-error, extracting the error message from ERRPTR."
-  (error 'rocksdb-c-error :message (deref (sap-alien errptr (* c-string)))))
+  (error 'rocksdb-c-error :message (deref (cast errptr (* c-string)))))

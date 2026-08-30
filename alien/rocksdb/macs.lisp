@@ -19,10 +19,10 @@
   '(function (unsigned-byte string) (values)))
 
 (defmacro with-errptr (sym &body body)
-  `(let ((,sym (alien-sap (make-alien (* (* t))))))
-     (setf (deref (sap-alien ,sym (* (* t)))) nil)
+  `(with-alien ((,sym rocksdb-errptr (make-alien (* t))))
+     (setf (deref ,sym) nil)
      (unwind-protect (progn ,@body)
-       (unless (null-alien (deref (sap-alien ,sym (* (* t)))))
+       (unless (null-alien (deref ,sym))
          (rocksdb-c-error ,sym)))))
 
 ;;; Options
