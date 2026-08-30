@@ -97,7 +97,7 @@
   (options (* rocksdb-readoptions))
   (key (* unsigned-char))
   (keylen size-t) 
-  (vallen size-t :in-out))
+  (vallen size-t :out))
 
 (def-with-errptr rocksdb-get-into-buffer boolean
   (db (* rocksdb))
@@ -831,7 +831,7 @@
   (opts (* rocksdb-readoptions))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen size-t :in-out)
+  (vlen size-t :out)
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-get-pinned-for-update (* rocksdb-pinnableslice)
@@ -847,7 +847,7 @@
   (cf-handle (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen size-t :in-out)
+  (vlen size-t :out)
   (exclusive unsigned-char))
 
 (def-with-errptr rocksdb-transaction-get-pinned-for-update-cf (* rocksdb-pinnableslice)
@@ -915,7 +915,7 @@
   (cf (* rocksdb-column-family-handle))
   (key (* unsigned-char))
   (klen size-t)
-  (vlen size-t :in-out))
+  (vlen size-t :out))
 
 (def-with-errptr rocksdb-transactiondb-get-pinned-cf (* rocksdb-pinnableslice)
   (txn-db (* rocksdb-transactiondb))

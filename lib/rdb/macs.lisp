@@ -30,7 +30,7 @@ ERR with initargs PARAMS for the duration of BODY."
      (handler-bind ((error 
                       (lambda (c)
                         (declare (ignore c))
-                        (error ,err :message (deref (sap-alien ,e (* c-string))) ,@params))))
+                        (error ,err :message (deref (cast ,e (* c-string))) ,@params))))
        ,@body)))
 
 ;;; raw

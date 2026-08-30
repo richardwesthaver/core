@@ -49,12 +49,12 @@
                      .v
                      size
                      e)
-        (let ((rvlen 0))
+        (multiple-value-bind (%v rvlen)
           (rocksdb-get db (rocksdb-readoptions-create)
                        .k
                        size
-                       rvlen
                        e)
+          (declare (ignore %v))
           (is= size rvlen))))))
 
 (deftest errptr ()
@@ -185,7 +185,7 @@ DB where K and V are both Lisp strings."
          (ropts (rocksdb-readoptions-create)))
     (with-alien ((k (* unsigned-char) (make-alien unsigned-char klen))
                  (v (* unsigned-char) (make-alien unsigned-char vlen))
-                 (errptr rocksdb-errptr))
+                 (errptr rocksdb-errptr nil))
       (let ((db (rocksdb-open opts path errptr)))
         ;; copy KEY to K
         (setfa k key)
@@ -202,7 +202,7 @@ DB where K and V are both Lisp strings."
         (is (null-alien errptr))
         ;; get V from DB given K
         (rocksdb:rocksdb-cancel-all-background-work db t)
-        (is (rocksdb-get db ropts k klen vlen errptr))
+        (is (rocksdb-get db ropts k klen errptr))
         (is (null-alien errptr))
         (rocksdb-delete db wopts k klen errptr)
         (is (null-alien errptr))
@@ -247,8 +247,7 @@ DB where K and V are both Lisp strings."
       ;; ingest sst file
       (rocksdb-ingest-external-file db (cast flist (* c-string)) 1 iopts errptr)
       (is (null-alien errptr))
-      (is (string= (octets-to-string val) (cast (rocksdb-get db ropts k klen vlen errptr) c-string)))
-      
+      (is (rocksdb-get db ropts k klen errptr))
       ;; rocksdb-sstfilewriter-file-size
       (rocksdb-sstfilewriter-destroy writer)
       (rocksdb-close db)
@@ -317,7 +316,6 @@ DB where K and V are both Lisp strings."
     (rocksdb-options-set-blob-compression-type opts (rocksdb-compression-backend "zstd"))
     (rocksdb-options-set-blob-cache opts bcache)
     (setf db (rocksdb-open opts path nil))
-
     (with-alien ((k (* (unsigned 8)) (make-alien (unsigned 8) klen))
                  (v (* (unsigned 8)) (make-alien (unsigned 8) vlen))
                  (errptr rocksdb-errptr nil))
@@ -345,7 +343,6 @@ DB where K and V are both Lisp strings."
                          ropts
                          k
                          klen
-                         (make-alien size-t vlen)
                          errptr)
             c-string)))
       (rocksdb-writeoptions-destroy wopts)
@@ -380,14 +377,14 @@ DB where K and V are both Lisp strings."
         (istype '(alien (* rocksdb)) db)
         (isnt (rocksdb-transactiondb-close-base-db db))
         (let ((txn (rocksdb-transaction-begin txn-db wopts txn-opts txn-old))
-              (cnt (make-alien size-t)))
-          (setf (deref cnt) 1)
+              (cnt 1))
           (istype '(alien (* rocksdb-transaction)) txn)
           (with-errptr e
             (rocksdb-transaction-set-name txn (octets-to-alien (sb-ext:string-to-octets "foo")) 3 e)
             (rocksdb-transaction-prepare txn e)
-            (istype '(alien (* rocksdb-transaction))
-                    (deref (rocksdb-transactiondb-get-prepared-transactions txn-db cnt)))
+            (multiple-value-bind (txns i) (rocksdb-transactiondb-get-prepared-transactions txn-db)
+              (declare (ignore txns))
+              (is= i cnt))
             (rocksdb-transaction-commit txn e)
             ;; transaction already commited
             (signals rocksdb-c-error
@@ -498,13 +495,10 @@ DB where K and V are both Lisp strings."
                            (cast (make-alien-string v :null-terminate nil) (* unsigned-char)) 
                            vlen
                            e)
-              (with-alien ((rvlen (* size-t) (make-alien size-t)))
-                (rocksdb-get db (rocksdb-readoptions-create)
-                             (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
-                             klen
-                             rvlen
-                             e)
-                (is= 7 (deref rvlen))))
+              (rocksdb-get db (rocksdb-readoptions-create)
+                           (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                           klen
+                           e))
             (with-errptr e
               (rocksdb-merge db (rocksdb-writeoptions-create)
                              (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
@@ -515,16 +509,15 @@ DB where K and V are both Lisp strings."
             (with-errptr e
               (rocksdb-flush db (rocksdb-flushoptions-create) e))
             (with-errptr e
-              (with-alien ((rvlen size-t))
-                (let ((val (rocksdb-get db (rocksdb-readoptions-create)
-                                        (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
-                                        klen
-                                        (addr rvlen)
-                                        e)))
-                  (is= 14 rvlen)
-                  (isequal (concatenate 'string v v) 
-                           (octets-to-string 
-                            (clone-octets-from-alien val (make-octets 14))))))))))))
+              (multiple-value-bind (val rvlen) 
+                  (rocksdb-get db (rocksdb-readoptions-create)
+                               (cast (make-alien-string k :null-terminate nil) (* unsigned-char))
+                               klen
+                               e)
+                (is= 14 rvlen)
+                (isequal (concatenate 'string v v) 
+                         (octets-to-string 
+                          (clone-octets-from-alien val (make-octets 14)))))))))))
   ;; index merge op
   (with-alien ((state (* t))
                (destructor (* rocksdb-destructor-function) (alien-sap (alien-callable-function 'rocksdb-destructor)))
@@ -559,16 +552,14 @@ DB where K and V are both Lisp strings."
                              vlen
                              e))
             (with-errptr e
-              (with-alien ((rvlen (* size-t) (make-alien size-t)))
-                (let ((val
-                        (rocksdb-get db (rocksdb-readoptions-create)
-                                     (octets-to-alien (integer-to-octets k))
-                                     klen
-                                     rvlen
-                                     e)))
-                  (is= 1 (deref rvlen))
-                  (is= (+ v v)
-                       (octets-to-integer (clone-octets-from-alien val (make-octets 1)))))))))))))
+              (multiple-value-bind (val rvlen)
+                  (rocksdb-get db (rocksdb-readoptions-create)
+                               (octets-to-alien (integer-to-octets k))
+                               klen
+                               e)
+                (is= 1 (print rvlen))
+                (is= (+ v v)
+                     (octets-to-integer (clone-octets-from-alien val (make-octets 1))))))))))))
 
 ;; (define-comparator dummy)
 ;; (define-comparator-with-ts dummy1)
