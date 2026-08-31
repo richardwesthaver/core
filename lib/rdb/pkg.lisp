@@ -97,6 +97,7 @@
    :simple-rdb-warning
    :schema-from-simple-column-families
    :rdb-write
+   :with-rdb-iter
    :init-rdbrc
    :rdb-service
    :get-base-db

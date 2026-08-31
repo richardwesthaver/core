@@ -54,8 +54,8 @@
 
 (defmethod iter ((self trdb) &key column (opts (default-rocksdb-readoptions)))
   (typecase column
-    (column-family (rocksdb-transactiondb-create-iterator-cf (db self) opts (db column)))
     (null (rocksdb-transactiondb-create-iterator (db self) opts))
+    (column-family (rocksdb-transactiondb-create-iterator-cf (db self) opts (db column)))
     (symbol (rocksdb-transactiondb-create-iterator-cf (db self) opts (db (find-column column self))))
     (simple-string (rocksdb-transactiondb-create-iterator-cf (db self) opts (db (find-column column self))))))
 
@@ -118,3 +118,21 @@ Return T if the position is valid, else NIL."
 (defun iter-pmove (op iter piter kbuf pkbuf vbuf &key timestamp)
   (declare (buffer-stream kbuf pkbuf vbuf))
   (iter-pget iter kbuf vbuf :timestamp timestamp))
+
+;;; Macros
+(defmacro with-rdb-iter ((sym iter) &body body)
+  (let ((std/seq::*iterator-functions*   
+          '((next (iter-seek :next *iter*))
+            (prev (iter-seek :prev *iter*))
+            (seek-to-first (iter-seek :first *iter*))
+            (seek-to-last (iter-seek :last *iter*))
+            ;; (seek-for-prev (key &optional (s *iter*)) (seek-for-prev s key))
+            (iter-valid-p (rocksdb-iter-valid *iter*))
+            ;; (seek (key &optional (s *iter*)) (seek s key))
+            (val (with-slice-streams (kbuf vbuf) (iter-get *iter* kbuf vbuf))))))
+  `(let ((,sym ,iter)
+         (std/seq::*idx* 0))
+     (setf *iter* ,sym)
+     (symbol-macrolet ,std/seq::*iterator-functions*
+       ;; (declare (ignorable ,@(mapcar (lambda (x) `(function ,(car x))) *iterator-functions*)))
+       ,@body))))

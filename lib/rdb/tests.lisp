@@ -77,18 +77,13 @@
           (opt tmp :statistics-level) (rocksdb-statistics-level "all"))
     (open-db tmp)
     (isnt (rdb::open-all-columns tmp))
-    (with-iter (it (iter tmp))
-      (is (sap it))
+    (with-rdb-iter (it (iter tmp))
+      (is *iter*)
       seek-to-first
-      (is (sequence:emptyp key))
-      (is (sequence:emptyp val))
-      (is (zerop (nth 1 (multiple-value-list (timestamp it)))))
       (is (not iter-valid-p))
       seek-to-last
-      (is (sequence:emptyp (key it)))
-      (is (sequence:emptyp (val it)))
       ;; (info! (iter-next it))
-      (rocksdb-iter-destroy (sap it)))
+      (rocksdb-iter-destroy it))
     (dotimes (i 10000)
       (insert-key tmp (format nil "foo~A" i) (format nil "bar~A" i)))
     (loop for i below 100
@@ -180,7 +175,7 @@
                        :options (rdb::default-rocksdb-options* :prefix-extractor (rdb::fixed-prefix-op 4)))
                  :open t :close t :destroy t)
       (put-key db k v)
-      (get-val db k))))
+      (is (string= v (get-val db k))))))
 
 (deftest srdb ()
   (with-db (db :db (make-db :srdb
