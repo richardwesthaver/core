@@ -17,8 +17,11 @@
 (setq *temp-db-destroy* t)
 
 (defmacro with-temp-db ((sym &rest opts) &body body)
-  `(with-db (,sym :db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb"))) ,@opts)
-     ,@body))
+  (with-gensyms (db)
+  `(let ((,db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb")))))
+     (with-db (,sym :db ,db ,@opts)
+       ,@body)
+     (destroy-db ,db))))
 
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (%open-db ,db-path ,opt)))
@@ -55,8 +58,7 @@
 
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
-  (let ((path (merge-pathnames (symbol-name (gensym "rdb-raw")) "/tmp/")))
-    (with-db (db :db (make-db :rdb :path path) :open t :destroy t)
+  (with-temp-db (db :open t :close t)
       (dotimes (i 1000)
         (let ((k (format nil "key~d" i))
               (v (format nil "val~d" i)))
@@ -65,11 +67,11 @@
       (let ((cf (%create-cf (db db) "cf1")))
         (%put-cf-str (db db) cf "bow" "wow")
         (is (string= (%get-cf-str (db db) cf "bow") "wow"))
-        (rdb::%destroy-cf cf)))))
+        (rdb::%destroy-cf cf))))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
-  (with-temp-db (tmp :open nil :destroy t)
+  (with-temp-db (tmp :open nil :close t)
     ;; https://github.com/facebook/rocksdb/wiki/unordered_write
     (setf (opt tmp :parallelism) (num-cpus)
           ;; (opt tmp :unordered-write) t ; incompatible with pipeline-write
@@ -128,20 +130,17 @@
   (let ((cf (load-field (make-instance 'simple-column-family)
                         (make-field :type '(string string)))))
     (isequal (column-type cf) (cons 'string 'string)))
-  (with-temp-db (db :destroy t :open t)
+  (with-temp-db (db :open t)
     (load-schema db (make-simple-schema :foo (make-field :type nil)))
     (is (= 1 (length (columns db)))))
-  (with-temp-db (db1 :open t :destroy t)
+  (with-temp-db (db1 :open t)
     (load-schema db1 (make-simple-schema :bar (make-field :name "BAZ" :type '(octet-vector . string))))
     (is (= 1 (length (columns db1))))))
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
   (with-db (db :db (make-db :trdb :path (format nil "/tmp/~A" (random-chars 4)))
-               :columns nil
-               :open t
-               :close t
-               :destroy t)
+               :open t)
     (let ((txn1 (transaction db)))
       (isnt (abort-transaction txn1)))
     (let ((txn2 (transaction db :name "foofn")))
@@ -150,7 +149,9 @@
       (isequal (rdb::%transaction-name txn2) "foofn")
       (abort-transaction txn2))
     (with-transaction (:db db :transaction (transaction db))
-      (is *transaction*))))
+      (is *transaction*))
+    (shutdown-db db :wait t)
+    (destroy-db db)))
 
 (deftest merge-op ()
   "Test custom RocksDB merge operator."
@@ -159,13 +160,14 @@
     (with-db (db :db (make-db :rdb
                               :path (format nil "/tmp/~A" (random-chars 4))
                               :options (rdb::default-rocksdb-options* :merge-operator (rdb::concat-merge-op)))
-                 :open t :close t)
+                 :open t)
       (put-key db k v)
       (get-val db k)
       (merge-key db k v)
-      (isequal (concatenate 'string v v) (get-val db k)))))
+      (isequal (concatenate 'string v v) (get-val db k))
+      (shutdown-db db)
+      (destroy-db db))))
 
-;; TODO 2025-04-22: 
 (deftest prefix-op ()
   "Test custom RocksDB prefix extractor."
   (let ((k "1337gamer")
@@ -173,19 +175,20 @@
     (with-db (db :db (make-db :rdb
                        :path (format nil "/tmp/~A" (random-chars 4))
                        :options (rdb::default-rocksdb-options* :prefix-extractor (rdb::fixed-prefix-op 4)))
-                 :open t :close t :destroy t)
+                 :open t)
       (put-key db k v)
-      (is (string= v (get-val db k))))))
+      (is (string= v (get-val db k)))
+      (shutdown-db db :wait t)
+      (destroy-db db))))
 
 (deftest srdb ()
   (with-db (db :db (make-db :srdb
-                            :path (format nil "/tmp/~A" (random-chars 4))
+                            :path (namestring (tmpize-pathname "/tmp/rdb"))
                             :options (rdb::default-rocksdb-options*
-                                      :info-log (create-default-logger-callback)))
-               :open nil
-               :close t
-               :destroy t)
-    (open-db db)))
+                                      :info-log (create-default-logger-callback))))
+    (open-db db)
+    (shutdown-db db :wait t)
+    (destroy-db db)))
           
 (deftest wbwi ()
   (with-wbwi (wbwi)

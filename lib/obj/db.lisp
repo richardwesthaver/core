@@ -33,15 +33,16 @@
 ;; TODO 2025-08-12: call-with
 ;; (defun call-with-db (db fn &rest args))
 
-(defmacro with-db ((var &rest initargs &key (db '*db*) open close destroy &allow-other-keys) 
+(defmacro with-db ((var &key (db '*db*) open close)
                    &body body)
   "Bind VAR to a database instance produced by parsing INITARGS for the extent
 of BODY."
   `(let ((,var ,db))
-     ,@(when open (remf initargs :open) `((open-db ,var)))
-     (unwind-protect (progn ,@body)
-       ,@(when close (remf initargs :close) `((close-db ,var)))
-       ,@(when destroy (remf initargs :destroy) `((destroy-db ,var))))))
+     ,@(when open `((open-db ,var)))
+     ,@(if close
+           `((unwind-protect (progn ,@body) 
+               (close-db ,var)))
+           body)))
 
 ;;; Database
 (defgeneric db (self)
