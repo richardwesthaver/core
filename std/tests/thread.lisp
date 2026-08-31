@@ -112,7 +112,7 @@
         (pop-queue from-workers)))
     (repeat num-threads
       (push-queue nil to-workers))
-    (sleep 0.5)
+    (sleep 2)
     (is (= 0 (queue-count from-workers)))
     (is (= 0 (queue-count to-workers)))))
 

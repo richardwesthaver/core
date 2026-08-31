@@ -79,7 +79,6 @@
     (pqueue-insert q 30)
     (pqueue-insert q 20)
     (isequalp #(10 20 30 40) (pqueue-reorder q))
-    ;; REVIEW 2026-03-13: no idea why iolib:priority-queue-extract-maximum uses '<=
     (is= 10 (pqueue-extract-maximum q))
     (isequalp #(20 40 30) (data q))
     (is= 2 (pqueue-remove q 30))
