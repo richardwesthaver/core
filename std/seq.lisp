@@ -1449,7 +1449,7 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
       (values)))
   (defgeneric seek-to-last (self)
     (:method ((self array))
-      (setf *idx* (length self))
+      (setf *idx* (1- (length self)))
       (aref self *idx*))
     (:method ((self list))
       (setf *idx* (length self))
