@@ -159,6 +159,12 @@ columns."
 (defmethod find-column ((cf string) (self rdb) &key)
   (find cf (columns self) :key 'name :test 'string=))
 
+(defmethod find-column (cf (self rdb) &key)
+  (find cf (columns self) :key 'name :test 'string=))
+
+(defmethod find-column ((col column-family) (self rdb) &key)
+  (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
+
 (defun open-with-columns (db)
   (if (db db)
       (cerror "Ignore and continue" 'open-db-error 
@@ -237,6 +243,7 @@ columns."
                        (%create-cf (db db) (name col) (options col))))
     (push col (columns db))
     col))
+
 
 (defmethod make-column ((db trdb) &rest args &key (class 'column-family))
   (remf args :class)

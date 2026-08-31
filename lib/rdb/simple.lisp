@@ -40,12 +40,6 @@
   (close-backup self)
   (call-next-method self :wait wait))
 
-(defmethod find-column (cf (self srdb) &key)
-  (find cf (columns self) :key 'name :test 'string=))
-
-(defmethod find-column ((col column-family) (self srdb) &key)
-  (find (string-downcase (name col)) (columns self) :key 'name :test 'string=))
-
 (defmethod multi-get ((self srdb) keys &key (data-type 'octet-vector) (opts (rocksdb-readoptions-create)) cf)
   (if cf
       (ecase data-type

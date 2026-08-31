@@ -40,16 +40,11 @@ RDB instance via LOAD-SCHEMA."))
 and update existing key/value types for cfs with the same name. Existing CFs
 only get their type slots updated on non-nil values."
   (loop for field across (fields schema)
-        do (if-let ((col (find-column (name field) self)))
+        do (if-let ((col (find-column (string (name field)) self)))
              (load-field col field)
-             (push
-              (load-field
-               (make-instance 'simple-column-family 
-                 :db (unless-null-db () self
-                       (%create-cf db (name field)))
-                 :type (field-type field))
-               field)
-              (columns self)))
+              (make-column self :class 'simple-column-family
+                                :type (field-type field)
+                                :name (string (name field))))
         finally (return self)))
 
 (defun schema-from-simple-column-families (columns)
@@ -75,6 +70,23 @@ only get their type slots updated on non-nil values."
                       (cadr type)
                       (cdr type)))))
     self))
+
+(defmethod load-field ((self column-family) (field field))
+  (let ((ty (field-type field))
+        (ret (change-class self 'simple-column-family)))
+    (with-slots (type) ret
+      (typecase ty
+        (null nil)
+        (atom (if (atom type)
+                  (setf type (cons type ty))
+                  (setf (cdr type) ty)))
+        (list (setf (car type) (car ty)
+                    (cdr type)
+                    (if (and (listp (cdr ty))
+                             (= 1 (length (cdr ty))))
+                        (cadr ty)
+                        (cdr ty)))))
+      ret)))
 
 (defmethod change-class ((self field) (new-class (eql 'simple-column-family)) &key)
   (make-instance new-class :name (name self) :type (field-type self)))

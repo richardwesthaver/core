@@ -18,10 +18,10 @@
 
 (defmacro with-temp-db ((sym &rest opts) &body body)
   (with-gensyms (db)
-  `(let ((,db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb")))))
-     (with-db (,sym :db ,db ,@opts)
-       ,@body)
-     (destroy-db ,db))))
+    `(let ((,db (make-db :rdb :path (namestring (tmpize-pathname "/tmp/rdb")))))
+       (with-db (,sym :db ,db ,@opts)
+         ,@body)
+       (destroy-db ,db))))
 
 (defmacro with-open-rdb-raw ((db-var db-path &optional (opt (default-rocksdb-options))) &body body)
   `(let ((,db-var (%open-db ,db-path ,opt)))
@@ -59,15 +59,15 @@
 (deftest raw ()
   "Test the raw RocksDB function wrappers."
   (with-temp-db (db :open t :close t)
-      (dotimes (i 1000)
-        (let ((k (format nil "key~d" i))
-              (v (format nil "val~d" i)))
-          (%put-kv-str (db db) k v)
-          (is (string= (%get-kv-str (db db) k) v))))
-      (let ((cf (%create-cf (db db) "cf1")))
-        (%put-cf-str (db db) cf "bow" "wow")
-        (is (string= (%get-cf-str (db db) cf "bow") "wow"))
-        (rdb::%destroy-cf cf))))
+    (dotimes (i 1000)
+      (let ((k (format nil "key~d" i))
+            (v (format nil "val~d" i)))
+        (%put-kv-str (db db) k v)
+        (is (string= (%get-kv-str (db db) k) v))))
+    (let ((cf (%create-cf (db db) "cf1")))
+      (%put-cf-str (db db) cf "bow" "wow")
+      (is (string= (%get-cf-str (db db) cf "bow") "wow"))
+      (rdb::%destroy-cf cf))))
 
 (deftest temp-db ()
   "Test WITH-TEMP-DB macro."
@@ -111,31 +111,35 @@
 ;;  FIX 2026-08-29: bad table magic number
 (deftest sst (:skip :todo)
   "Test SST-FILE-WRITER and INGEST-DB."
-  (with-temp-db (tmp :open t :close t)
-    ;; without macro
-    (let* ((path (tmp-path "sst"))
-           (writer (make-sst-file-writer :path path)))
-      (open-db writer)
-      (dotimes (i 10000)
-        (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
-      (shutdown-db writer)
-      (ingest-db tmp (list path))
-      (delete-file path)
-      (with-sst (s :file path)
-        (put-key s (string-to-octets "nil") (string-to-octets "nil"))
-      (delete-file path)))))
+  (let ((path (tmp-path "sst")))
+    (with-temp-db (tmp :open t)
+      ;; without macro
+      (let ((writer (make-sst-file-writer :path path)))
+        (open-db writer)
+        (dotimes (i 10000)
+          (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
+        (shutdown-db writer))
+        (ingest-db tmp (list path))
+        (shutdown-db tmp :wait t))
+    (with-sst (s :file path)
+      (put-key s (string-to-octets "nil") (string-to-octets "nil")))
+    (delete-file path)))
 
-(deftest schema (:skip :todo)
+(deftest schema ()
   "Test loading and handling of RDB-SCHEMA objects."
   (let ((cf (load-field (make-instance 'simple-column-family)
                         (make-field :type '(string string)))))
     (isequal (column-type cf) (cons 'string 'string)))
   (with-temp-db (db :open t)
-    (load-schema db (make-simple-schema :foo (make-field :type nil)))
-    (is (= 1 (length (columns db)))))
+    (is (load-schema db (make-simple-schema :foo (make-field :name :bar :type nil))))
+    (is (= 1 (length (columns db))))
+    (close-columns db)
+    (shutdown-db db :wait t))
   (with-temp-db (db1 :open t)
-    (load-schema db1 (make-simple-schema :bar (make-field :name "BAZ" :type '(octet-vector . string))))
-    (is (= 1 (length (columns db1))))))
+    (is (load-schema db1 (make-simple-schema :bar (make-field :name "BAZ" :type '(octet-vector . string)))))
+    (is (= 1 (length (columns db1))))
+    (close-columns db1)
+    (shutdown-db db1)))
 
 (deftest transaction ()
   "Test OBJ/DB transactions."
@@ -158,8 +162,8 @@
   (let ((k "foo")
         (v "bar"))
     (with-db (db :db (make-db :rdb
-                              :path (format nil "/tmp/~A" (random-chars 4))
-                              :options (rdb::default-rocksdb-options* :merge-operator (rdb::concat-merge-op)))
+                       :path (format nil "/tmp/~A" (random-chars 4))
+                       :options (rdb::default-rocksdb-options* :merge-operator (rdb::concat-merge-op)))
                  :open t)
       (put-key db k v)
       (get-val db k)
@@ -183,13 +187,13 @@
 
 (deftest srdb ()
   (with-db (db :db (make-db :srdb
-                            :path (namestring (tmpize-pathname "/tmp/rdb"))
-                            :options (rdb::default-rocksdb-options*
-                                      :info-log (create-default-logger-callback))))
+                     :path (namestring (tmpize-pathname "/tmp/rdb"))
+                     :options (rdb::default-rocksdb-options*
+                               :info-log (create-default-logger-callback))))
     (open-db db)
     (shutdown-db db :wait t)
     (destroy-db db)))
-          
+
 (deftest wbwi ()
   (with-wbwi (wbwi)
     (is wbwi)

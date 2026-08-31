@@ -257,4 +257,3 @@ SIZE values."
   `(multiple-value-bind (data size) (rocksdb::rocksdb-pinnable-handle-get-value ,handle)
      (unwind-protect (progn ,@body)
        (rocksdb::rocksdb-pinnable-handle-destroy ,handle))))
-
