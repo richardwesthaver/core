@@ -1350,8 +1350,8 @@ happen. Use with care."
 (defun call-with-temp-pool (fn &rest args)
   ;; ensure that we end the same pool we create
   (let ((pool (apply #'make-thread-pool args)))
-    (prog1 (let ((*thread-pool* pool))
-             (funcall fn))
+    (unwind-protect (let ((*thread-pool* pool))
+                      (funcall fn))
       (stop-thread-pool pool))))
 
 (defmacro with-temp-pool ((&rest make-pool-args) &body body)

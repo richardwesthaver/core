@@ -78,11 +78,14 @@
     (is (por nil nil nil t)))
   (sb-ext:gc :full t)
   (let ((foo (iota 100)))
+    (sleep 0.1)
     (with-temp-pool ((num-cpus))
       (isnt (pand t 1 #() 'foo nil))
+      ;; pfind seems to return before all threads do.. (false-negative)
       (is= 99 (pfind 99 foo))
       (is= 14 (pmap-reduce #'1+ #'+ #(1 2 3 4)))
       (is= 1 (aref (pmap 'vector #'1+ '(0 0)) 0))
-    ;; FIX 2025-09-02: pquantifier
-    ;; (psome #'atom '(1) '(2) '(3) '(4))
-    )))
+      ;; FIX 2025-09-02: pquantifier
+      (is (pevery #'atom (iota 4)))
+      (is (psome #'vectorp (list nil t #() 'foo)))
+      )))
