@@ -56,7 +56,7 @@
 
   (flet ((foo (regex target-string &key (start 0) (end (length target-string)))
            (let ((sum 0))
-             (do-matches (s e regex target-string nil :start start :end end)
+             (do-matches (s e regex target-string :start start :end end)
                (incf sum (- e s)))
              (/ sum (- end start)))))
     (is (and (= 1/3 (foo "a" "abcabcabc"))
@@ -65,7 +65,7 @@
   (labels ((crossfoot (target-string &key (start 0) (end (length target-string)))
              (let ((sum 0))
                (do-matches-as-strings (m :digit-class
-                                       target-string nil
+                                       target-string
                                        :start start :end end)
                  (incf sum (parse-integer m)))
                (if (< sum 10)
@@ -77,7 +77,7 @@
 
   (let (result)
     (do-register-groups (first second third fourth)
-        ("((a)|(b)|(c))" "abababc" nil :start 2 :sharedp t)
+        ("((a)|(b)|(c))" "abababc" :start 2 :sharedp t)
       (push (list first second third fourth) result))
     (isequal (nreverse result)
              '(("a" "a" nil nil) 

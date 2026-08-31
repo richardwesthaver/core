@@ -1452,7 +1452,7 @@ See also: make-sequence-iterator with-sequence-iterator with-sequence-iterator-f
       (setf *idx* (1- (length self)))
       (aref self *idx*))
     (:method ((self list))
-      (setf *idx* (length self))
+      (setf *idx* (1- (length self)))
       (elt self *idx*)))
   (defgeneric seek-for-prev (self key &key)
     (:method ((self array) key &key test)
