@@ -13,9 +13,12 @@
    :components nil
    :require
    (:arrow/tests :btrfs/tests
-    :cuda/tests :evdev/tests :glib/tests :gstreamer/tests
-    :keyutils/tests :rocksdb/tests :alsa/tests :sndfile/tests 
-    :ssh2/tests :tree-sitter/tests :sys/tests
-    :uring/tests :xkb/tests :zstd/tests :chromaprint/tests
-    :jack/tests :blas/tests :jpeg/tests :openssl/tests 
-    :ffmpeg/tests :security/tests :emacs/tests))))
+    :cuda/tests :evdev/tests 
+    :keyutils/tests :rocksdb/tests
+    :ssh2/tests :tree-sitter/tests :sys/tests :uring/tests 
+    :xkb/tests :zstd/tests  :blas/tests :jpeg/tests 
+    :openssl/tests :security/tests :emacs/tests :glib/tests
+    ;; should be included when MPK is required only
+    :jack/tests :chromaprint/tests :alsa/tests :sndfile/tests
+    :gstreamer/tests :ffmpeg/tests))))
+                 
