@@ -195,12 +195,11 @@
 
 (defmethod print-object ((self test-suite) stream)
   (print-unreadable-object (self stream :type t :identity t)
-    (format stream "~A [~d:~d:~d:~d]"
+    (format stream "~A :tests ~d (:pass ~d :fail ~d)"
             (name self)
             (length (tests self))
-            (count t (map-tests self (lambda (x) (zerop (state x)))))
-            (count t (map-tests self #'test-persist-p))
-            (length (results self)))))
+            (count-if #'test-pass-p (results self))
+            (count-if #'test-fail-p (results self)))))
 
 ;; (defmethod reinitialize-instance ((self test-suite) &rest initargs &key &allow-other-keys))
 
@@ -240,7 +239,7 @@
   (find name (tests self) :test test))
 
 (defmethod test ((self symbol) name &key (test #'test-name=))
-  (test (find-suite self) name :test test))
+  (test (test-suite self) name :test test))
 
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 
@@ -261,6 +260,7 @@
 ;; within the body of `deftest'.
 (defmethod do-suite ((self test-suite) &key stream force (error *catch-test-errors*))
   (when stream (setf (test-stream self) stream))
+  (when force (setf (results self) nil))
   (with-slots (name stream) self
     (fmt-in-suite stream name)
     (format stream "; with ~A~A tests~%"
@@ -270,8 +270,8 @@
                         (count t (tests self)
                                :key (lambda (x) (or (zerop (state x)) (test-persist-p x))))))
             (length (tests self)))
-    ;; loop over each test, calling `do-test'. if locked or persistent, test
-    ;; is performed. if FORCE is non-nil all tests are performed.
+    ;; loop over each test, calling `do-test'. if new or persistent, test is
+    ;; performed. if FORCE is non-nil all tests are performed.
     (map-tests self 
                (lambda (x)
                  (when (or force (zerop (state x)) (test-persist-p x))
