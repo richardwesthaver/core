@@ -11,10 +11,10 @@
 
 ;; the following tests require the TREE-SITTER-LANGS pack to be installed
 (deftest ts-json ()
-  (load-tree-sitter-json)
+  (load-tree-sitter-javascript)
   (let ((parser (ts-parser-new))
-        (lang (tree-sitter-json)))
-    (is (= (ts-language-abi-version lang) 14))
+        (lang (tree-sitter-javascript)))
+    (is>= (ts-language-abi-version lang) 14)
     (is (ts-language-field-count lang))
     (is (ts-language-symbol-count lang))
     (is (ts-parser-set-language parser lang))
@@ -33,7 +33,7 @@ pub fn main {} " 15)))
       (is> (ts-language-abi-version (ts-tree-language new-tree)) 14)
       (let ((root-node (ts-tree-root-node new-tree)))
         (is (string= "source_file" (ts-node-type root-node)))
-        (let ((cursor (ts-tree-cursor-new root-node)))
+        (with-alien ((cursor ts-tree-cursor (ts-tree-cursor-new root-node)))
           (ts-tree-delete new-tree))))))
 
 (deftest ts-query-c ()

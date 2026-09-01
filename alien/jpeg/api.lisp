@@ -14,8 +14,8 @@
 
 (defwarning jpeg-warning (jpeg-condition) ())
 
-(defun make-jpeg (sym)
-  (tj3init (init-type sym)))
+(definline make-jpeg (sym)
+  (tj3init sym))
 
 (defun jpeg-report (jpeg)
   (case (error-type* (tj3geterrorcode (sap jpeg)))

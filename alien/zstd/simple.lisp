@@ -5,7 +5,8 @@
 ;;; Code:
 (in-package :zstd)
 
-(std:deferror zstd-alien-simple-error (zstd-alien-error std-error) () (:reporter t))
+(define-condition zstd-alien-simple-error (std-error zstd-alien-error) ())
+(definline zstd-alien-simple-error (msg) (error 'zstd-alien-simple-error :message msg))
 
 (defar "ZSTD_compress" size-t
   (dst (* t))

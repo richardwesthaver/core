@@ -77,6 +77,7 @@ Note: when an operation returns with an error code, the @zds state may be left
 (defar "ZSTD_DStreamInSize" size-t)
 (defar "ZSTD_DStreamOutSize" size-t)
 
+#+nil
 (defmacro with-zstd-inbuffer ((iv &key src size pos) &body body)
   `(with-alien ((,iv (* zstd-inbuffer) (allocate-zstd-inbuffer)))
      (unwind-protect
@@ -87,6 +88,7 @@ Note: when an operation returns with an error code, the @zds state may be left
             ,@body)
        (free-alien ,iv))))
 
+#+nil
 (defmacro with-zstd-outbuffer ((ov &key dst size pos) &body body)
   `(with-alien ((,ov (* zstd-outbuffer) (allocate-zstd-outbuffer)))
      (unwind-protect

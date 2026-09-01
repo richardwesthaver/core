@@ -75,7 +75,7 @@ instead of a pointer."
         (slot sqe 'buf-opt) 0
         (slot sqe 'personality) 0
         (slot sqe 'splice-index-addr) 0
-        (slot sqe 'addr-or-cmd) (foreign-alloc '(struct io-uring-sqe-addr3-and-pad)))
+        (slot sqe 'addr-or-cmd) (sap-alien (foreign-alloc '(struct io-uring-sqe-addr3-and-pad)) io-uring-sqe-addr3-and-pad))
   sqe)
 
 (defun io-uring-prep-splice (sqe fd-in off-in fd-out off-out nbytes splice-flags)

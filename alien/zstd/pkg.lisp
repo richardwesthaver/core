@@ -70,8 +70,11 @@ the future. Only static linking is allowed. ; ; ; ; ; ;
    :zstd-alien-error :zstd-dstream-error :zstd-cstream-error
    :with-zstd-streams
    :with-zstd-buffers
+   #+nil
    :with-zstd-outbuffer
+   #+nil
    :with-zstd-inbuffer
+   :zstd-alien-simple-error
    :with-zstd-cdict
    :with-zstd-ddict
    :load-zstd :load-zstd-alien))

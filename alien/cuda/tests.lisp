@@ -11,6 +11,6 @@
 (load-cuda)
 (deftest init ()
   ;; error returned due to loading stub
-  (is= 0 (cuda::cu-init 0)))
+  (is= :success (cuda::cu-init 0)))
 
 

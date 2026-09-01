@@ -13,12 +13,12 @@
     (with-alien ((n int 10)
                  (alph double 0.5d0)
                  (incx int 4)
-                 (tau double))
+                 (tau double 0d0))
       (sb-sys:with-pinned-objects (x)
         (lapack::dlarfg
-         (addr n)
+         n
          (addr alph)
          (double-array-pointer x)
-         (addr incx)
+         incx
          (addr tau))
         (is> tau 1)))))
