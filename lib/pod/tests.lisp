@@ -22,7 +22,7 @@
     (is (libpod-request-json c "info"))
     ;; (is (libpod-request-json c "events")) ;; hangs
     (is (libpod-request c "version"))
-    (is (libpod-request-json c "containers/json"))))
+    (is (libpod-request-json c "images/json"))))
 
 (defvar *test-containerfile* "ARG FOO=bar
 ARG BAR=foo

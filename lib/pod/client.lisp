@@ -127,7 +127,7 @@
                                     :output t
                                     :buffering :none)))
     (let ((wrapped-stream (make-chunked-stream stream)))
-      (funcall (kernel client) 
+      (funcall 'req::req
                (format-libpod-api-local path)
                :method method
                :stream wrapped-stream

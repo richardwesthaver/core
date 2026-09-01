@@ -30,7 +30,7 @@
 
 ;;; test vector files
 (defun test-vector-filename (ident)
-  (merge-pathnames (make-pathname :directory '(:relative "data")
+  (merge-pathnames (make-pathname :directory '(:relative "tests" "data")
                                   :name (substitute #\- #\/ (format nil "~(~A~)" ident))
                                   :type "dat")
                    (system-home :ironclad/tests)))

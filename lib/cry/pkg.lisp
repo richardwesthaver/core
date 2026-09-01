@@ -45,8 +45,7 @@
   (:export
    :get-key
    :keyring
-   :make-keyring
-   :clear-keys))
+   :make-keyring))
 
 (defpkg :cry/password
   (:use :cl :std :obj/secret)

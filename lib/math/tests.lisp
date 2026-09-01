@@ -18,7 +18,6 @@
   (is= 4096 (length (hilbert-list 8)))
   (is (stringp (with-output-to-string (*standard-output*)
                  (cellular-automata)))))
-
 (deftest axpy ())
 (deftest gem ())
 (deftest ger ())

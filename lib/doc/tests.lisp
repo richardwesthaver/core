@@ -40,7 +40,7 @@
   (is-doc-typep package-documentation (package-documentation)))
 
 (deftest doc-system ()
-  (is-doc-typep system-documentation (system-documentation :std)))
+  (is-doc-typep system-documentation (system-documentation :doc/tests)))
 
 (deftest doc-file ()
   (let ((file (or *compile-file-pathname* (system-relative-pathname :doc "tests.lisp"))))
@@ -76,7 +76,7 @@ make-shebang-comment, and make-shebang-file-header."
   (is (string= (stem "hacking") "hack")))
 
 (deftest docs ()
-  (let ((doc (make-instance 'document :string-contents "test test test")))
+  (let ((doc (make-instance 'search-document :string-contents "test test test")))
     (is (= 3 (nlp:term-count
               doc "test")))
     (is (= 1.0 (nlp:term-frequency

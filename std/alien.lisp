@@ -334,7 +334,7 @@ NULL-TERMINATE is T we append a null character to each string."
       (let ((c-string (deref c-strings i)))
         (if c-string
             (push c-string reversed-result)
-            (return (nreverse reversed-result)))))))
+            (return-from c-strings-to-string-list (nreverse reversed-result)))))))
 
 (defun clone-octets-to-alien (lispa alien)
   "Copy the octet-vector LISPA to foreign array ALIEN."

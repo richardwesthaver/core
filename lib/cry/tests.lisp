@@ -30,7 +30,7 @@
   (keyutils:load-keyutils)
   (let ((kr (make-keyring :user)))
     (istype 'keyring kr)
-    (iszero (clear-keys kr))))
+    (iszero (clean kr))))
 
 (defvar *test-authinfo* "machine foo login bar port abc password hackme")
 

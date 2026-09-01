@@ -211,13 +211,14 @@
                    ,form)))
     `(quote ,(eval toeval))))
 
+(define-command-type (:test test1) (a) a)
+(define-command-type (:test test2) (b) (declare (ignore b)) "FOO")
+
 (deftest interactive ()
   (locally (declare (interactive foo))
     (isequal '(foo) (ct (declaration-information 'interactive lexenv)))
     ;; (isequal '(foo) (cmd::%with-interactive i i))
     )
-  (define-command-type (:test test1) (a) a)
-  (define-command-type (:test test2) (b) (declare (ignore b)) "FOO")
   (is (command-types :test))
   (defcommand (:test foo) (a b &optional c)
       (declare (interactive test1 test2)) ; unspecified optional C
