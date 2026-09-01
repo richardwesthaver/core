@@ -217,8 +217,9 @@ It is up to the developer to ensure that the comparator used by a
 writer is exactly the same as the comparator used when ingesting the
 file by a RDB instance."
   `(let ((,sst (%sst-filewriter ,comparator)))
-     ,@(when file `((%open-sst-writer ,sst ,file)))
+     ,@(when file `((%open-sst-writer ,sst (namestring ,file))))
      ,@body
+     (%finish-sst-writer ,sst)
      ,@(when destroy `((%destroy-sst-writer ,sst)))))
 
 ;;; opts

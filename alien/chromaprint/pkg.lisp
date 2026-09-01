@@ -129,7 +129,7 @@ two fingerprints yourself, you probably want them in this form.  |#
                                           (samplerate 44100)
                                           (channels 2))
                                 &body body)
-  `(let ((,sym (chromaprint-new ,(if (eql algo :default) *default-chromaprint-algorithm* (chromaprint-algorithm algo)))))
+  `(let ((,sym (chromaprint-new ,(if (eql algo :default) *default-chromaprint-algorithm* `(chromaprint-algorithm ,algo)))))
      (unwind-protect (progn
                        (chromaprint-start ,sym ,samplerate ,channels)
                        ,@body)

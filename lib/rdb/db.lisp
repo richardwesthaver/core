@@ -473,6 +473,7 @@ columns."
       (setf (sap self) (%destroy-sst-writer sap)))))
 
 (defmethod shutdown-db ((self sst-file-writer) &key)
+  (close-db self)
   (free self))
 
 (defmethod print-object ((self sst-file-writer) stream)

@@ -108,21 +108,19 @@
         (is (rdb::level-metadata-p level-meta))
         (is (rdb::sst-file-metadata-p (metadata level-meta)))))))
 
-;;  FIX 2026-08-29: bad table magic number
-(deftest sst (:skip :todo)
+(deftest sst ()
   "Test SST-FILE-WRITER and INGEST-DB."
   (let ((path (tmp-path "sst")))
+    (let ((writer (make-sst-file-writer :path path)))
+      (open-db writer)
+      (dotimes (i 10000)
+        (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
+      (shutdown-db writer))
+    (with-sst (s :file path)
+      (rdb::%sst-put s (integer-to-octets 10000 64) (string-to-octets (format nil "~A" (gensym)))))
     (with-temp-db (tmp :open t)
-      ;; without macro
-      (let ((writer (make-sst-file-writer :path path)))
-        (open-db writer)
-        (dotimes (i 10000)
-          (put-key writer (integer-to-octets i 64) (string-to-octets (format nil "~A" (gensym)))))
-        (shutdown-db writer))
         (ingest-db tmp (list path))
         (shutdown-db tmp :wait t))
-    (with-sst (s :file path)
-      (put-key s (string-to-octets "nil") (string-to-octets "nil")))
     (delete-file path)))
 
 (deftest schema ()
