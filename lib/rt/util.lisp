@@ -59,7 +59,7 @@
   (setq *testing* nil
         *test-suite* nil
         *fx* nil
-        *test-suite-list* nil
+        *test-suites* nil
         *test-input* nil
         *test-output* nil))
 
@@ -106,7 +106,7 @@
     (string= a b)))
 
 (defun ensure-suite (name)
-  (if-let ((ok (member name *test-suite-list* :test #'test-name=)))
+  (if-let ((ok (member name *test-suites* :test #'test-name=)))
     (car ok)
     (when (or (eq name t) (null name)) (make-suite :name *default-test-suite-name*))))
 

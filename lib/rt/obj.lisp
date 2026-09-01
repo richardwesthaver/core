@@ -15,10 +15,6 @@
   (tag nil :type result-tag :read-only t)
   (form nil :type form))
 
-(defmethod print-object ((self test-result) stream)
-  (print-unreadable-object (self stream :identity t)
-    (format stream "~A ~A" (tr-tag self) (tr-form self))))
-
 (defun make-test-result (tag &optional form)
   (%make-test-result :tag tag :form form))
 
@@ -83,20 +79,13 @@
    (declare :type list :accessor test-declare :initform nil :initarg :declare)
    (form :initarg :form :initform nil :accessor test-form)
    (documentaton :initarg :documentation :type string :accessor test-documentation)
-   (lock :initarg :lock :type boolean :accessor test-lock-p)
+   (state :initarg :state :initform 0 :accessor state)
    (persist :initarg :persist :initform nil :type boolean :accessor test-persist-p)
-   (results :initarg :results :type (array test-result) :accessor test-results))
+   (results :initarg :results :initform nil :accessor results))
   (:documentation "Test class typically made with `deftest'."))
 
-(defmethod initialize-instance ((self test) &key form name declare &allow-other-keys)
+(defmethod initialize-instance ((self test) &key form declare &allow-other-keys)
   ;; (debug! "building test" name)
-  (setf (test-lock-p self) t
-        (name self) name
-        (test-form self) form
-        (test-declare self) declare
-  ;; TODO 2023-09-21: we should count how many checks are in the :form
-  ;; slot and infer the array dimensions.
-        (test-results self) (make-array 0 :element-type 'test-result :fill-pointer t :adjustable t))
   (set-funcallable-instance-function self (compile nil `(lambda () ,@(when declare `((declare ,@declare))) ,@form)))
   (call-next-method))
 
@@ -109,10 +98,10 @@
             (name self))))
 
 (defmethod push-result ((self test-result) (place test))
-  (push self (test-results place)))
+  (push self (results place)))
 
 (defmethod pop-result ((self test))
-  (pop (test-results self)))
+  (pop (results self)))
 
 (defmethod eval-test ((self test))
   (eval `(progn ,@(test-form self))))
@@ -134,7 +123,7 @@
       ,@(test-form self))))
 
 (defmethod compile-test ((self symbol) &key declare (suite *test-suite*))
-  (compile-test (find-test suite self) :declare declare))
+  (compile-test (test suite self) :declare declare))
 
 (defun compile-suite (&optional (suite *test-suite*))
   (loop for test in (tests suite)
@@ -147,15 +136,13 @@
 
 (defmacro with-test-env (self &body body)
   `(catch '#.+test-tag+
-     (setf (test-lock-p ,self) t)
+     (incf (state ,self))
      (let* ((*testing* ,self)
             (*log-level* (level *test-suite*))
             (*fixtures* (test-fixtures *test-suite*))
-            (%test-bail nil)
             %test-result)
        (block %test-bail
-         ,@body
-         (setf (test-lock-p ,self) %test-bail))
+         ,@body)
        %test-result)))
 
 (defmethod do-test ((self test) &optional fx)
@@ -167,7 +154,6 @@
                (sb-sprof:start-profiling))
              (if *compile-tests*
                  (with-compilation-unit (:override t :policy (or (and *test-suite* (test-policy *test-suite*)) *test-policy*))
-                   ;; TODO 2023-09-21: handle failures here
                    (unwind-protect-case ()
                        (funcall (compile-test self :declare (test-declare self)))
                      (:normal (setf %test-result (make-test-result :pass (kernel self))))
@@ -180,25 +166,25 @@
       (handler-bind
           ((error 
              (lambda (c)
-               (setf %test-bail t)
+               (decf (state self))
                (setf %test-result (make-test-result :fail c))
                (when *catch-test-errors* (error c))
                (return-from do-test %test-result))))
         (%do)))))
 
 (defmethod do-test ((self simple-string) &optional fixture)
-  (when-let ((test (find-test *test-suite* self)))
+  (when-let ((test (test *test-suite* self)))
     (do-test test fixture)))
 
 (defmethod do-test ((self symbol) &optional fixture)
-  (when-let ((test (find-test *test-suite* (symbol-name self))))
+  (when-let ((test (test *test-suite* (symbol-name self))))
     (do-test test fixture)))
 
 ;;;; Suites
 (defclass test-suite (test-object)
   ((tests :initarg :set :initform nil :type list :accessor tests
           :documentation "test-suite tests")
-   (results :initarg :results :initform nil :type list :accessor test-results
+   (results :initarg :results :initform nil :type list :accessor results
             :documentation "test-suite results")
    (stream :initarg :stream :initform *standard-output* :type stream :accessor test-stream)
    (fixtures :initarg :fixtures :initform nil :type list :accessor test-fixtures)
@@ -212,9 +198,9 @@
     (format stream "~A [~d:~d:~d:~d]"
             (name self)
             (length (tests self))
-            (count t (map-tests self #'test-lock-p))
+            (count t (map-tests self (lambda (x) (zerop (state x)))))
             (count t (map-tests self #'test-persist-p))
-            (length (test-results self)))))
+            (length (results self)))))
 
 ;; (defmethod reinitialize-instance ((self test-suite) &rest initargs &key &allow-other-keys))
 
@@ -222,9 +208,9 @@
   "Either nil, a symbol, a string, or a `test-suite' object."
   '(or null symbol string test-suite keyword))
 
-(defun find-suite (name)
+(defun test-suite (name)
   (declare (test-suite-designator name))
-  (find name *test-suite-list* :test #'test-name=))
+  (find name *test-suites* :test #'test-name=))
 
 (defun find-fixture (name &optional (suite *test-suite*))
   (find name (test-fixtures suite) 
@@ -246,15 +232,15 @@
     (push self results)))
 
 (defmethod pop-result ((self test-suite))
-  (pop (test-results self)))
+  (pop (results self)))
 
-(defmethod find-test ((self test-suite) name &key (test #'test-name=))
+(defmethod test ((self test-suite) name &key (test #'test-name=))
   (declare (type (or string symbol) name)
            (type function test))
   (find name (tests self) :test test))
 
-(defmethod find-test ((self symbol) name &key (test #'test-name=))
-  (find-test (find-suite self) name :test test))
+(defmethod test ((self symbol) name &key (test #'test-name=))
+  (test (find-suite self) name :test test))
 
 (defmethod do-test ((self test-suite) &optional test)
   (push-result 
@@ -262,8 +248,8 @@
        (do-test
            (etypecase test
              (test test)
-             (string (find-test self test))
-             (symbol (find-test self (symbol-name test)))))
+             (string (test self test))
+             (symbol (test self (symbol-name test)))))
        (do-test (pop-test self)))
    self))
 
@@ -282,21 +268,21 @@
                 ""
                 (format nil "~A/"
                         (count t (tests self)
-                               :key (lambda (x) (or (test-lock-p x) (test-persist-p x))))))
+                               :key (lambda (x) (or (zerop (state x)) (test-persist-p x))))))
             (length (tests self)))
     ;; loop over each test, calling `do-test'. if locked or persistent, test
     ;; is performed. if FORCE is non-nil all tests are performed.
     (map-tests self 
                (lambda (x)
-                 (when (or force (test-lock-p x) (test-persist-p x))
+                 (when (or force (zerop (state x)) (test-persist-p x))
                    (let ((res (do-test x)))
                      (push-result res self)
                      (fmt-test-result stream res)))))
     ;; compare locked vs expected
-    (let ((locked (remove-if #'null (map-tests self (lambda (x) (when (test-lock-p x) x)))))
+    (let ((locked (remove-if #'null (map-tests self (lambda (x) (when (zerop (state x)) x)))))
           (fails
             ;; collect if locked test not expected
-            (loop for r in (test-results self)
+            (loop for r in (results self)
                   unless (test-pass-p r)
                   collect r)))
       (if (null locked)

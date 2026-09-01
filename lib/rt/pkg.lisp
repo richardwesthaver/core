@@ -35,7 +35,7 @@
    :*test-suffix*
    :*default-test-suite-name*
    :*test-suite*
-   :*test-suite-list*
+   :*test-suites*
    :*coverage-directory*
    :+test-tag+
    :time-total
@@ -81,16 +81,13 @@
    :push-test
    :pop-test
    :delete-test
-   :find-test
-   :find-suite
+   :test
+   :test-suite
    :do-suite
    :test-object
-   :test
    :test-fixture
-   :test-suite
    :tests
    :test-form
-   :test-results
    :*tmp*
    :*default-tmp-directory*
    :with-tmp-directory

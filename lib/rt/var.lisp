@@ -16,7 +16,7 @@ with default optimizations else the value is used to configure
 compiler optimizations.")
 (defvar *catch-test-errors* t "When non-nil, cause errors in a test to be caught.")
 (defvar *test-suffix* "-TEST" "A suffix to append to every `test' defined with `deftest'.")
-(defvar *test-suite-list* nil "List of available `test-suite' objects.")
+(defvar *test-suites* nil "List of available `test-suite' objects.")
 (defvar *test-suite* nil "A 'test-suite-designator' which identifies the current `test-suite'.")
 (defvar-unbound *fx* "The currently bound fixture. Should only be used inside the body of WITH-FIXTURE.")
 (defvar *fixtures* nil "The list of fixtures available in the current *TEST-SUITE*.")

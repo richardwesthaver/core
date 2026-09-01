@@ -37,7 +37,7 @@
 (defgeneric delete-test (self &key &allow-other-keys)
   (:documentation "Delete  TEST-OBJECT specified by SELF."))
 
-(defgeneric find-test (self name &key &allow-other-keys)
+(defgeneric test (self name &key &allow-other-keys)
   (:documentation "Find TEST-OBJECT specified by name."))
 
 (defgeneric do-test (self &optional context)

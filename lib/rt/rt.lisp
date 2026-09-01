@@ -137,7 +137,7 @@ enabled using the IN-SUITE macro, similiar to the DEFPACKAGE API."
                :name (format nil "~A" ',suite-name)
                ,@props)))
      (prog1 obj
-       (pushnew obj *test-suite-list* :test #'test-name=))))
+       (pushnew obj *test-suites* :test #'test-name=))))
 
 (defun in-suite (name)
   "Set *TEST-SUITE* to the TEST-SUITE object referred to by symbol
@@ -147,4 +147,4 @@ NAME. Return the object."
 
 (defun run-all-tests (&optional force)
   (with-readtable :std
-    (mapcar (lambda (x) (do-tests :suite x :force force)) (remove *test-suite* *test-suite-list*))))
+    (mapcar (lambda (x) (do-tests :suite x :force force)) (remove *test-suite* *test-suites* :test #'test-name=))))

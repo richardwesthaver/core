@@ -925,7 +925,7 @@ the first two return values.)"
         (descend  key-list xml)
         (values nil nil nil))))
 
-;;; DAT Proto
+;;; Serde
 (defmethod deserialize ((self string) (fmt (eql :xml)) &key)
   (declare (ignore fmt))
   (xml-parse self))
