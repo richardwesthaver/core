@@ -200,3 +200,6 @@
     (isequal "bar" (rdb::%wbwi-kv-str wbwi "foo"))
     (is= 1 (rdb::%wbwi-count wbwi))
     (rdb::%wbwi-clear wbwi)))
+
+(deftest store (:skip :todo)
+  (open-store db))

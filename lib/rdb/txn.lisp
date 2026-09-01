@@ -103,6 +103,7 @@ transaction-db."
 The key is encoded in a buffer-stream and on success a buffer-stream for
 decoding the value is returned or NIL if nothing was found."
   (declare (buffer-stream kbuf))
+  (trace! "txn-get" kbuf transaction)
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (with-pslice
       (if cf
@@ -125,6 +126,7 @@ decoding the value is returned or NIL if nothing was found."
 The pair are encoded in buffer-streams."
   (declare ((alien (* rocksdb-transaction)) transaction)
            (buffer-stream kbuf vbuf))
+  (trace! "txn-get" kbuf vbuf transaction)
   (with-errptr* (e 'rdb-transaction-error :txn transaction)
     (if cf
         (rocksdb-transaction-put-cf

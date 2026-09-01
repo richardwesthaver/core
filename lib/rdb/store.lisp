@@ -155,6 +155,7 @@ the constant +store-major-version+"
 (defmethod get-value (key (bt rdb-btree))
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
 *STORE*)."
+  (trace! "get-value" key bt)
   (let ((sc (get-store bt)))
     (ensure-transaction (:db sc)
       (with-buffer-streams (key-buf)
@@ -207,7 +208,7 @@ the constant +store-major-version+"
 
 (defsclass rdb-indexed-btree (indexed-btree rdb-btree)
   ((index :accessor index :initarg :index :initform (make-hash-table))
-   (index-cache :accessor index-cache :transient t))
+   (index-cache :reader index-cache :transient t))
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
 ;; TODO 2026-08-19: memoize
@@ -217,9 +218,8 @@ the constant +store-major-version+"
   ;; initialize it before the instance-table is available (thus we
   ;; cannot map oids to classes -- deserialize does not really work
   ;; for complex objects).  -- Red Daly 07/10/2010
-  (aif (slot-value instance 'index-cache)
-       it
-       (setf (index-cache instance) (index instance))))
+  (ifret (slot-boundp! instance 'index-cache)
+    (setf (index-cache instance) (index instance))))
 
 (defmethod shared-initialize :after ((instance rdb-indexed-btree) slot-names
                                      &rest rest)
@@ -257,7 +257,7 @@ the constant +store-major-version+"
         (error "Invalid index initargs!"))))
 
 (defmethod populate ((bt rdb-indexed-btree) index)
-  ;; (trace! "populating indexed-btree" bt index)
+  (trace! "populating indexed-btree" bt index)
   (let ((sc (get-store bt)))
     (with-buffer-streams (primary-buf secondary-buf)
       (flet ((.index (key skey)
@@ -307,6 +307,7 @@ the constant +store-major-version+"
 
 (defmethod (setf get-value) (value key (bt rdb-indexed-btree))
   "Set a key / value pair, and update secondary index."
+  (trace! "setf GET-VALUE" value key bt)
   (let ((sc (get-store bt)))
     (let ((index (index-cache bt)))
       (with-buffer-streams (key-buf value-buf secondary-buf)
@@ -369,7 +370,7 @@ the constant +store-major-version+"
       (write-buffer-oid (oid bt) key-buf)
       (serialize-object key key-buf sc)
       (let ((buf (txn-get key-buf :cf (db (rindex sc)))))
-        (if buf (values (deserialize-object buf sc) T)
+        (if buf (values (deserialize-object buf sc) t)
             (values nil nil))))))
 
 (defmethod get-primary-key (key (bt btree-index))
@@ -964,12 +965,13 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
        (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
        (slot-value store 'store::index-root) (make-instance 'rdb-btree :oid -2 :store store))
       ;; TODO 2026-08-23: 
+      (inspect *store*)
       (setf
        (slot-value store 'store::instance-index)
        (if newp
            (make-instance 'rdb-indexed-btree :from-oid -3 :store store :index (make-hash-table))
            (make-instance 'rdb-indexed-btree :from-oid -3 :store store)))
-    ;; (inspect store)
+      ;; (inspect store)
       (setf
        (slot-value store 'store::schema-index)
        (if newp
@@ -1021,13 +1023,15 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  ;; (trace! self instance name)
+  (trace! "stored-slot-reader" self instance name)
   (ensure-transaction (:db self)
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
       (serialize-object name kbuf self)
       (let ((buf (txn-get kbuf)))
-        (if buf (deserialize-object buf self)
+        (trace! "slot value: " buf)
+        (if buf 
+            (deserialize-object buf self)
             (slot-unbound (class-of instance) instance name))))))
 
 (defmethod stored-slot-writer ((self rdb-store) new-value instance name)
