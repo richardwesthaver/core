@@ -63,19 +63,19 @@ STORE is reserved for a special method which operates on stored objects.")
 
 (defgeneric stored-slot-reader (sc instance name &optional oids-only)
   (:documentation 
-   "Store-specific slot reader function"))
+   "Read a slot by NAME from INSTANCE in store SC."))
 
 (defgeneric stored-slot-writer (sc new-value instance name)
   (:documentation 
-   "Store-specific slot writer function"))
+   "Write a slot by NAME from INSTANCE into store SC."))
 
 (defgeneric stored-slot-boundp (sc instance name)
   (:documentation
-   "Store-specific slot bound test function"))
+   "Test if slot NAME is bound in INSTANCE using store SC."))
 
 (defgeneric stored-slot-makunbound (sc instance name)
   (:documentation
-   "Store-specific slot makunbound handler"))
+   "[[id:COMMON-LISP:MAKUNBOUND][makunbound]] for slot NAME of INSTANCE in store SC."))
 
 (defgeneric register-instance (self class instance))
 (defgeneric cache-instance (self obj))

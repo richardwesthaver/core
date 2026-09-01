@@ -1291,8 +1291,8 @@ synchronize-store-class to upgrade class-level info like indices."
 
 (defmethod change-db-instance ((current stored-object) previous
                                new-schema old-schema)
-  "Change a database instance from one schema & class to another. These are
-different objects with the same oid."
+  "Change a database instance from one schema & class to another.
+These are different objects with the same oid."
   (let ((sc (get-store current))
         (oid (oid current))
         (diff (schema-diff new-schema old-schema)))

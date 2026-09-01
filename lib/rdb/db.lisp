@@ -409,6 +409,7 @@ columns."
 (defmethod shutdown-db ((self trdb) &key) (close-db self))
 (defmethod shutdown-db ((self otrdb) &key) (close-db self))
 
+;; TODO 2026-09-01: 
 (defmethod get-value (elt (self rdb))
   (%get-kv (db self) elt (default-rocksdb-readoptions)))
 
