@@ -1426,13 +1426,12 @@ slots."
                 (funcall it)))))))
 
 (defun initialize-set-slots (class instance set-slots)
-  (declare (ignore class instance))
+  ;; (declare (ignore class instance))
   (dolist (slotname set-slots)
     (declare (ignorable slotname))
-    ;;    (setf (slot-value-using-class class instance
-    ;;				  (find-slot-def-by-name class slotname))
-    ;;	  nil)
-    ))
+    ;; REVIEW 2026-09-02: 
+    (setf (slot-value-using-class class instance (find-slot-def-by-name class slotname))
+    	  nil)))
 
 (defun initialize-from-initarg (class instance slot-def slot-initargs initargs)
   (loop for slot-initarg in slot-initargs

@@ -239,13 +239,6 @@
                                                                   buffer start encoding)))))))))))))
 
 ;;; Protocol
-(defgeneric close-tar-file (tar-file)
-  (:documentation
-   "Closes the stream associated with TAR-FILE and the tar-file itself.
-Further operations on the tar-file are undefined.
-
-Does NOT close the underlying STREAM that backed the TAR-FILE."))
-
 (defgeneric mode (entry)
   (:documentation "Return the mode of the ENTRY (an integer)."))
 
@@ -604,12 +597,14 @@ or by peeking at the stream for magic numbers (for :INPUT)."
           :direction direction
           :header-encoding header-encoding)))))
 
-(defmethod close-tar-file (tar-file)
+(defun close-tar-file (tar-file)
   (when (open-tar-file-p tar-file)
-    (close (tar-file-stream tar-file))
-    (mapc #'close (tar-file-other-streams-to-close tar-file))
-    (setf (open-tar-file-p tar-file) nil))
-  t)
+    (when (tar-file-stream tar-file)
+      (close (tar-file-stream tar-file) :abort t))
+    (dolist (s (tar-file-other-streams-to-close tar-file))
+      (and s (close s :abort t)))
+    (setf (open-tar-file-p tar-file) nil)
+    t))
 
 (defmethod read-entry :before ((tar-file tar-file))
   (unless (eq (%tar-file-direction tar-file) :input)

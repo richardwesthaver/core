@@ -670,6 +670,7 @@ An item fetched from the cache with cache-fetch will not be cleaned up before it
     `(let ((,c-var ,cache))
        (multiple-value-bind (,var ,tag)
            (cache-fetch ,c-var ,key ,@(and only-if-cached '(:only-if-cached t)))
+         (declare (ignorable ,var))
          (unwind-protect
               (progn ,@body)
            (cache-release ,c-var ,tag))))))

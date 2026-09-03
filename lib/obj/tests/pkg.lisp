@@ -183,8 +183,7 @@
 	  key))
 
 (deftest simple-cache ()
-  (let* ((acc (make-instance 'max-accumulator :value 0))
-         (cache (make-cache 100 #'test-provider :policy :lru :cleanup (lambda (k) (istype 'string k)))))
+  (let* ((cache (make-cache 100 #'test-provider :policy :lru :cleanup (lambda (k) (istype 'string k)))))
     (is= (cache:cache-max-size cache) 100)
     (with-cache c (cache 42)
       (is= 42 (cache-size cache))
@@ -194,7 +193,7 @@
     (cache-fetch cache 20)
     (cache-fetch cache 30)
     (cache-flush cache)
-    ;; (iszero (cache-count cache)) ;=3.. shouldn't this be zero?
+    (is= 3 (cache-count cache))
     (iszero (cache-size cache))))
 
 ;;; Schema

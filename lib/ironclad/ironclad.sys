@@ -255,6 +255,7 @@
     :components ((:file "digest")
                  ;; defaults
                  (:file "crc32")
+                 (:file "adler32")
                  (:file "md5")
                  (:file "blake2")
                  (:file "sha256")

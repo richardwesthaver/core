@@ -173,6 +173,7 @@
     (is (delete-file path))))
 
 (deftest tar-zst ()
+  (load-alien :zstd)
   (let ((path (format nil "/tmp/~A.tar.zst" (gensym "foo"))))
     (with-open-tar-file (foo path :direction :output :type 'v7-tar-file
                          :if-exists :supersede
