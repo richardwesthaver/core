@@ -445,10 +445,10 @@ something like 0, 1 or -1")
    (schema-name-index
     :reader schema-name-index
     :initarg :schema-name-index
-    :initform (make-cache-table :test 'eq)
+    :initform (make-hash-table :test 'eq)
     :documentation "Schema name to schema database table")
    (schema-cache 
-    :accessor schema-cache :initform (make-cache-table :test 'eq)
+    :accessor schema-cache :initform (make-hash-table :test 'eq)
     :documentation "This is a cache of class schemas stored in the database indexed by CID.")
    (schema-classes 
     :accessor schema-classes :initform nil
@@ -467,7 +467,7 @@ cleanly.")
     :reader class-index
     :documentation "CID->OID table (reverse map).")
    (instance-cache 
-    :accessor instance-cache :initform (make-cache-table :test 'eql)
+    :accessor instance-cache :initform (make-hash-table :test 'eql)
     :documentation 
     "Part of the meta-class protocol - data stores should not override the default
 behavior.")
@@ -596,7 +596,7 @@ available class-specific options in the generic interface."))
 for testing.  Does not reclaim existing objects so there will be duplicate
 instances with identical functionality"
   (with-mutex ((instance-cache-lock sc))
-    (setf (instance-cache sc) (make-cache-table :test 'eql))))
+    (setf (instance-cache sc) (make-hash-table :test 'eql))))
 
 (defun register-new-instance (instance class store)
   (setf (oid instance) (next-oid store))
