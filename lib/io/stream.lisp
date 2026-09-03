@@ -876,7 +876,9 @@ functions and via PEEKED."))
   (setf (size bs) 0
         (offset bs) 0)
   (unless (or (null (buffer bs)) (null-pointer-p (buffer bs)))
-    (setf (buffer bs) (foreign-free (buffer bs)))))
+    (setf (buffer bs) (foreign-free (buffer bs))))
+  (alloc bs)
+  bs)
 
 (defun grab-buffer-stream ()
   "Grab a buffer-stream from the *buffer-streams* resource pool."

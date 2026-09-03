@@ -1925,7 +1925,7 @@ reachable and thus live"
 ;;;; Cached slot value manipulation utils
 (defun refresh-cached-slots (instance slots)
   "Assumes checkout mode is t so side effects are only
-   in memory"
+in memory"
   (assert (pchecked-out-p instance))
   (assert (eq (%cache-style (class-of instance)) :checkout))
   (let ((sc (get-store instance)))

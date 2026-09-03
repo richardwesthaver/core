@@ -202,7 +202,9 @@
     (rdb::%wbwi-clear wbwi)))
 
 (deftest store ()
+  (trace slot-value-using-class obj/store::upgrade-instance-slot 
+         obj/store::change-instance-slot obj/store::initialize-new-slots)
   (open-store (make-instance 'rdb-store :spec (rdb::rdb-temp-spec "foo")))
   (is *store*)
-  (close-store)
+  (close-store *store*)
   (isnt *store*))
