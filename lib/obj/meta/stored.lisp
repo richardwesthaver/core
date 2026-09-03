@@ -23,7 +23,7 @@
 
 ;;; MOP
 (defclass stored ()
-  ((oid :initarg :oid :accessor oid)
+  ((oid :initarg :from-oid :accessor oid)
    (spec :accessor spec :initarg :spec
          :documentation "Stored objects use a spec pointer to identify which store
                          they are connected to"))

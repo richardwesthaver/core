@@ -565,7 +565,7 @@ available class-specific options in the generic interface."))
         (with-mutex ((instance-cache-lock st))
           (aif (get-cached-instance st oid) it
                (multiple-value-bind (class schema) (get-instance-class st oid classname)
-                 (recreate-instance-using-class class :oid oid :store st :schema schema)))))
+                 (recreate-instance-using-class class :from-oid oid :store st :schema schema)))))
     (missing-stored-instance (e)
       (unless *return-null-on-missing-instance*
         (signal e)))))
