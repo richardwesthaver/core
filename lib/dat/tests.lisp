@@ -170,7 +170,7 @@
       ;; (tar:finalize-tar-file foo)
     (with-open-tar-file (foo path :direction :input :type :auto)
       ;; (istype 'tar-file-entry (read-entry foo))
-      (istype 'v7-tar-file foo)))
+      (istype 'v7-tar-file foo))
     (is (delete-file path))))
 
 (deftest tar-zst ()
