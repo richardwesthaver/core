@@ -599,6 +599,7 @@ or by peeking at the stream for magic numbers (for :INPUT)."
 
 (defun close-tar-file (tar-file)
   (when (open-tar-file-p tar-file)
+    #+nil
     (when (tar-file-stream tar-file)
       (close (tar-file-stream tar-file) :abort t))
     (dolist (s (tar-file-other-streams-to-close tar-file))
