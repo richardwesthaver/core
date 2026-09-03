@@ -6,7 +6,7 @@
 (in-package :obj/tests)
 
 ;;;; Fast
-
+(seal-domain #'%test-+ '(number number))
 (deftest fast ()
   (is= 42 (%test-+ 2 40)))
 
@@ -65,7 +65,7 @@
 (defvar *test-store* (make-instance 'store))
 
 (deftest stored (:skip t)
-  (with-transaction (txn)
+  (with-transaction ()
     (mapcar #'(lambda (initargs) (apply #'make-instance 'school initargs))
             '((:name "West Side")
               (:name "Fitch")

@@ -925,6 +925,7 @@ protocol.")
    #:recreate-instance-using-class
    #:get-instances-by-class
    #:get-instances-by-value
+   #:get-instance-by-value
    #:valid-stored-reference-p
    #:cross-store-error
    #:signal-cross-store-error

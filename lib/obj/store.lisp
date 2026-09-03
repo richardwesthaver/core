@@ -368,24 +368,24 @@ equal comparison"))
   (:method ((instance t) &rest args)
     (declare (ignore args))
     instance)
-  (:method ((instance stored-object) &rest args &key oid schema (st *store*))
+  (:method ((instance stored-object) &rest args &key from-oid schema (st *store*))
     (declare (ignore args))
     ;; Initialize basic instance data
-    (initial-stored-setup instance :oid oid :store st)
+    (initial-stored-setup instance :from-oid from-oid :store st)
     ;; Update db instance data
     (when schema
       (let ((official-schema (lookup-schema st (class-of instance))))
         (unless (eq (name schema) (name official-schema))
           (upgrade-db-instance instance official-schema schema nil))))
     ;; Load cached slots, set, assoc values, etc.
-    (shared-initialize instance t :oid oid)
+    (shared-initialize instance t :from-oid from-oid)
     instance)
-  (:method ((instance stored-collection) &rest initargs &key oid (st *store*))
+  (:method ((instance stored-collection) &rest initargs &key from-oid (st *store*))
     (declare (ignore initargs))
     ;; Initialize basic instance data
-    (initial-stored-setup instance :oid oid :store st)
+    (initial-stored-setup instance :from-oid from-oid :store st)
     ;; Load cached slots, set, assoc values, etc.
-    (shared-initialize instance t :oid oid)
+    (shared-initialize instance t :from-oid from-oid)
     instance))
 
 (defmethod recreate-instance-using-class ((class t) &rest initargs &key &allow-other-keys)
@@ -495,15 +495,15 @@ available class-specific options in the generic interface."))
 
 (defmethod initialize-instance :before  ((instance stored)
                                          &rest initargs
-                                         &key oid
-                                              store)
+                                         &key from-oid
+                                              (store *store*))
   "Each stored instance has an oid and a home store spec"
   (declare (ignore initargs))
-  (initial-stored-setup instance :oid oid :store store))
+  (initial-stored-setup instance :from-oid from-oid :store store))
 
-(defun initial-stored-setup (instance &key oid store)
-  (if oid
-      (setf (oid instance) oid)
+(defun initial-stored-setup (instance &key from-oid store)
+  (if from-oid
+      (setf (oid instance) from-oid)
       (register-new-instance instance (class-of instance) store))
   (setf (spec instance) (spec store))
   (cache-instance store instance))
@@ -1061,22 +1061,22 @@ stored slot values associated with those instances."
                                         ;do (format t "slot ~S~%" slotname)
                               collect (cons slotname sane-p))))))
 
-(defun map-class (fn class &key collect oids (sc *store*))
+(defun map-class (fn class &key collect oids (store *store*))
   "Perform a map operation over all instances of CLASS. Takes a
    function of one argument, a class instance."
   (flet ((map-fn (cidx pcidx oid)
            (declare (ignore cidx pcidx))
-           (funcall fn (store-recreate-instance sc oid)))
+           (funcall fn (store-recreate-instance store oid)))
          (map-oid-fn (cidx pcidx oid)
            (declare (ignore cidx pcidx))
            (funcall fn oid)))
     (declare (dynamic-extent (function map-fn) (function map-oid-fn)))
     (let* ((classobj (if (symbolp class) (find-class class) class))
            (classname (if (symbolp class) class (class-name class)))
-           (db-schemas (get-db-schemas sc classname))
+           (db-schemas (get-db-schemas store classname))
            (schema-ids (if db-schemas 
                            (mapcar #'id (reverse db-schemas))
-                           (list (id (lookup-schema sc (if (symbolp class) (find-class class) class)))))))
+                           (list (id (lookup-schema store (if (symbolp class) (find-class class) class)))))))
       (unless (class-indexing-enabled-p classobj)
         (cerror "Ignore and return nil"
                 "Class ~A is not indexed" classname)
@@ -1084,7 +1084,7 @@ stored slot values associated with those instances."
       ;;      (dump-schema-status sc classname)
       (loop for schema-id in schema-ids appending
                (map-index (if oids #'map-oid-fn #'map-fn)
-                          (class-index sc)
+                          (class-index store)
                           :value schema-id
                           :collect collect)))))
 

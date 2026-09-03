@@ -10,5 +10,3 @@
 
 (defmethod %test-+ ((a number) (b number))
   (+ a b))
-
-(seal-domain #'%test-+ '(number number))
