@@ -962,8 +962,8 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
     (with-transaction (:db store)
       ;; btree initialization
       (setf 
-       (slot-value store 'root) (make-instance 'rdb-btree :oid -1 :store store)
-       (slot-value store 'store::index-root) (make-instance 'rdb-btree :oid -2 :store store))
+       (slot-value store 'root) (make-instance 'rdb-btree :from-oid -1 :store store)
+       (slot-value store 'store::index-root) (make-instance 'rdb-btree :from-oid -2 :store store))
       ;; TODO 2026-08-23: 
       (inspect *store*)
       (setf
