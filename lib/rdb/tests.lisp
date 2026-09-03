@@ -201,5 +201,8 @@
     (is= 1 (rdb::%wbwi-count wbwi))
     (rdb::%wbwi-clear wbwi)))
 
-(deftest store (:skip :todo)
-  (open-store db))
+(deftest store ()
+  (open-store (make-instance 'rdb-store :spec (rdb::rdb-temp-spec "foo")))
+  (is *store*)
+  (close-store)
+  (isnt *store*))

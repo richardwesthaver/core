@@ -25,7 +25,7 @@
    :handle-errptr
    :find-cf
    :put-cf-key :get-cf-key
-   :multi-get :delete-key
+   :multi-get
    :flush-cf
    :get-stats
    :print-db-stats

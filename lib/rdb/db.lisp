@@ -428,7 +428,7 @@ columns."
     (sb-ext:string-to-octets key)
     (sb-ext:string-to-octets val))))
 
-(defmethod delete-key ((self rdb) key &key (opts (default-rocksdb-writeoptions)))
+(defmethod delete-key (key (self rdb) &key (opts (default-rocksdb-writeoptions)))
   (%delete-kv (db self) key opts))
 
 (defmethod merge-key ((self rdb) key val &key (opts (rocksdb-writeoptions-create)) column)
@@ -491,7 +491,7 @@ columns."
       (%sst-put-ts (sst-file-writer-sap self) key val timestamp)
       (%sst-put-str (sst-file-writer-sap self) key val)))
 
-(defmethod delete-key ((self sst-file-writer) key &key timestamp start end)
+(defmethod delete-key (key (self sst-file-writer) &key timestamp start end)
   (cond 
     (timestamp (%sst-delete-ts (sst-file-writer-sap self) key timestamp))
     ((or start end) (%sst-delete-range (sst-file-writer-sap self) start end))

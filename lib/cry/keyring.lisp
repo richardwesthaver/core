@@ -60,9 +60,9 @@
    (add-key "user" (id key) (octets-to-alien val) (length val) (id self))))
 
 (defmethods delete-key
-  (((self keyring) (key number) &key)
+  (((key number) (self keyring) &key)
    (keyctl-invalidate key))
-  (((self keyring) (key t) &key)
+  (((key t) (self keyring) &key)
    (keyctl-invalidate (id key))))
 
 (defmethod clean ((self keyring) &key)

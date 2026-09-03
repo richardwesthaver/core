@@ -445,6 +445,7 @@ something like 0, 1 or -1")
    (schema-name-index
     :reader schema-name-index
     :initarg :schema-name-index
+    :initform (make-cache-table :test 'eq)
     :documentation "Schema name to schema database table")
    (schema-cache 
     :accessor schema-cache :initform (make-cache-table :test 'eq)
@@ -630,7 +631,7 @@ instances with identical functionality"
   item)
 
 (defmethod remove-item (item (sset default-sset))
-  (delete-key (sset-btree sset) item)
+  (delete-key item (sset-btree sset))
   item)
 
 (defmethod find-item (item (sset default-sset) &key key (test #'equal))

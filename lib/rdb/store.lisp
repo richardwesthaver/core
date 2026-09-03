@@ -208,7 +208,7 @@ the constant +store-major-version+"
 
 (defsclass rdb-indexed-btree (indexed-btree rdb-btree)
   ((index :accessor index :initarg :index :initform (make-hash-table))
-   (index-cache :reader index-cache :transient t))
+   (index-cache :accessor index-cache :transient t))
   (:documentation "A RDB-based BTree supports secondary index-table."))
 
 ;; TODO 2026-08-19: memoize
@@ -994,7 +994,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
           (store-metadata store) nil
           (index store) nil
           (rindex store) nil)
-  (shutdown-db store))
+  (shutdown-db store :wait t))
 
 ;;; IDs
 (defmethod next-cid ((self rdb-store))
