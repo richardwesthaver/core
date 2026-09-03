@@ -234,5 +234,6 @@
 
 (deftest time ()
   (let ((time (now)))
-    (is (timestamp= (timestamp-from-alien (timestamp-to-alien time)) time
-                    (timestamp-from-integer (timestamp-to-integer time))))))
+    (is (timestamp= 
+         (timestamp-from-alien (timestamp-to-alien time))
+         (timestamp-from-integer (timestamp-to-integer time))))))

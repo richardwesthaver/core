@@ -6,7 +6,6 @@
 (in-package :syn/tests/lang)
 
 (in-suite :syn)
-
-#+todo
-(deftest c-src (:skip t)
-  (istype 'cons (parse-file :c (system-relative-pathname :tree-sitter "alien.c"))))
+(load-tree-sitter-c)
+(deftest c-src ()
+  (istype '(alien (* ts-tree)) (parse-file :c #p"/usr/include/tree_sitter/api.h")))

@@ -15,16 +15,17 @@
 (load-alien :tree-sitter)
 
 (defun parse-file (lang path &key (start 0) end)
-  (parse-lang-string 
-   lang
-   (read-file path)
-   :start start
-   :end end))
+  (let ((str (read-file path)))
+    (parse-lang-string 
+     lang
+     str
+     :start start
+     :end (or end (length str)))))
 
 (defun ts-file-query (lang path query)
   (let ((input (with-output-to-string (s) (write-file-into-stream path s))))
     (with-ts-query lang (q query)
       (with-ts-query-cursor c
-        (let ((tree (parse-lang-string lang input :consume nil)))
+        (let ((tree (parse-lang-string lang input)))
           (tree-sitter::ts-query-cursor-exec c q (tree-sitter::ts-tree-root-node tree))
           c)))))

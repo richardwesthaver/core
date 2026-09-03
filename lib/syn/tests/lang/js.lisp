@@ -6,7 +6,7 @@
 (in-package :syn/tests/lang)
 (in-suite :syn)
 (in-readtable :std)
-
+(load-tree-sitter-javascript)
 (defparameter *js-src*
   #"(function() {
         if (typeof URL === 'undefined' || typeof URLSearchParams === 'undefined') {

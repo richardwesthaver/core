@@ -407,7 +407,8 @@ extensions) and returns the size."
                                                                   :expected-chars +hex-digits+)))))
                    ;; unread first octet which wasn't a digit
                    (unread-char* last-char)
-                   ;; (add-extensions)
+                   ;; REVIEW 2026-09-02: extensions were commented out
+                   (add-extensions)
                    ))))
       (let ((chunk-size (get-chunk-size)))
         (with-slots (input-buffer input-size input-position)
@@ -639,8 +640,8 @@ START-FILE-POSITION.")
    "Wraps a binary stream and ensures that all reads from and writes to the
 underlying stream occur in blocks of size BLOCK-SIZE. All blocks are aligned
 with the position of the wrapped stream when this BLOCK-STREAM is
-instantiated. All FILE-POSITIONs of this stream a relative to the FILE-POSITION
-of the wrapped stream when instantiated."))
+instantiated. All FILE-POSITIONs of this stream are relative to the
+FILE-POSITION of the wrapped stream when instantiated."))
 
 (defclass block-input-stream (block-stream fundamental-binary-input-stream)
   ((eof-index
@@ -669,8 +670,8 @@ of the wrapped stream when instantiated."))
                                          stream)
   ;; Create the buffer.
   (setf (buffer block-stream) (make-array (block-size block-stream)
-                                            :element-type '(unsigned-byte 8)
-                                            :initial-element 0)
+                                          :element-type '(unsigned-byte 8)
+                                          :initial-element 0)
         ;; Record the START-FILE-POSITION
         (start block-stream) (ignore-errors (file-position stream))))
 
