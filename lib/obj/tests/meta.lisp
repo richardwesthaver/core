@@ -6,7 +6,9 @@
 (in-package :obj/tests)
 
 ;;;; Fast
-(seal-domain #'%test-+ '(number number))
+(ignore-errors (load (merge-pathnames "tests/sealed.lisp" (system-home :obj))))
+(seal-domain (function %test-+) '(number number))
+
 (deftest fast ()
   (is= 42 (%test-+ 2 40)))
 

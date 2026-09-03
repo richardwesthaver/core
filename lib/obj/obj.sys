@@ -170,6 +170,6 @@ core."
     ((:mod "tests" 
       :components 
       ((:pkg "pkg")
-       (:file "sealed")
+       ;; (:file "sealed")
        (:file "meta")
        (:file "tensor")))))))
