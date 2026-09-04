@@ -391,6 +391,7 @@ columns."
 
 (defmethod shutdown-db ((self rdb) &key wait cancel)
   (unless-null-db (options) self
+    (close-columns self)
     (cond 
       ((and wait (not cancel))
        (let ((opts (if (eq t wait) (default-rocksdb-wait-for-compact-options) wait)))
@@ -406,8 +407,8 @@ columns."
               (columns self)))
     (setf options nil)))
 
-(defmethod shutdown-db ((self trdb) &key) (close-db self))
-(defmethod shutdown-db ((self otrdb) &key) (close-db self))
+(defmethod shutdown-db ((self trdb) &key) (close-columns self) (close-db self))
+(defmethod shutdown-db ((self otrdb) &key) (close-columns self) (close-db self))
 
 ;; TODO 2026-09-01: 
 (defmethod get-value (elt (self rdb))

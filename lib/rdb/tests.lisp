@@ -201,6 +201,16 @@
     (is= 1 (rdb::%wbwi-count wbwi))
     (rdb::%wbwi-clear wbwi)))
 
+(deftest rdb-seq ()
+  "Test RocksDB sequences (counter-column-family, etc)."
+  (with-temp-db (*db* :open t)
+    (make-column *db* :class 'counter-column-family :name "seq1" :data (make-array 8 :element-type 'word))
+    (let ((col (find-column "seq1" *db*)))
+      (istype 'counter-column-family (init col))
+      (is (save col))
+      (iszero (get-value 7 col)))
+    (shutdown-db *db*)))
+
 (deftest store ()
   (trace slot-value-using-class obj/store::upgrade-instance-slot 
          obj/store::change-instance-slot obj/store::initialize-new-slots)

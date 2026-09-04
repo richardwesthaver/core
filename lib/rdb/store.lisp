@@ -965,7 +965,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
        (slot-value store 'root) (make-instance 'rdb-btree :from-oid -1 :store store)
        (slot-value store 'store::index-root) (make-instance 'rdb-btree :from-oid -2 :store store))
       ;; TODO 2026-08-23: 
-      (inspect *store*)
+      ;; (inspect *store*)
       (setf
        (slot-value store 'store::instance-index)
        (if newp
@@ -994,7 +994,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
           (store-metadata store) nil
           (index store) nil
           (rindex store) nil)
-  (shutdown-db store :wait t))
+  (shutdown-db store))
 
 ;;; IDs
 (defmethod next-cid ((self rdb-store))
@@ -1061,7 +1061,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;;; Transactions
 ;; TODO 2026-08-21: 
 (defmethod execute ((store rdb-store) txn-fn &key transaction handler)
-  ;; (with-retry-restart (:msg "Retry transaction execution.")
+  (with-retry-restart (:msg "Retry transaction execution.")
     (let ((ret) (ok) (txn (transaction store :transaction transaction)))
       (let ((*transaction* txn)
             (*store* store)
@@ -1080,8 +1080,7 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
                  (with-errptr e (rocksdb-transaction-commit txn e))
                  (setq ok t))
             (unless ok (%abort-transaction txn)))))
-      (when ok (values-list ret))))
-;; )
+      (when ok (values-list ret)))))
           
                                
 
