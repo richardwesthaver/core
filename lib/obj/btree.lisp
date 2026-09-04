@@ -370,7 +370,7 @@ close the cursor."
   "Too bad there isn't a direct way to do this, but with
 ordered duplicates this should be reasonably efficient"
   (let ((sc (get-store dbt)))
-    (ensure-transaction (:store sc)
+    (ensure-transaction (:db sc)
       (with-btree-cursor (cur dbt)
         (multiple-value-bind (existp k v)
             (cursor-get-both cur key value)

@@ -368,22 +368,22 @@ equal comparison"))
   (:method ((instance t) &rest args)
     (declare (ignore args))
     instance)
-  (:method ((instance stored-object) &rest args &key from-oid schema (st *store*))
+  (:method ((instance stored-object) &rest args &key from-oid schema (store *store*))
     (declare (ignore args))
     ;; Initialize basic instance data
-    (initial-stored-setup instance :from-oid from-oid :store st)
+    (initial-stored-setup instance :from-oid from-oid :store store)
     ;; Update db instance data
     (when schema
-      (let ((official-schema (lookup-schema st (class-of instance))))
+      (let ((official-schema (lookup-schema store (class-of instance))))
         (unless (eq (name schema) (name official-schema))
           (upgrade-db-instance instance official-schema schema nil))))
     ;; Load cached slots, set, assoc values, etc.
     (shared-initialize instance t :from-oid from-oid)
     instance)
-  (:method ((instance stored-collection) &rest initargs &key from-oid (st *store*))
+  (:method ((instance stored-collection) &rest initargs &key from-oid (store *store*))
     (declare (ignore initargs))
     ;; Initialize basic instance data
-    (initial-stored-setup instance :from-oid from-oid :store st)
+    (initial-stored-setup instance :from-oid from-oid :store store)
     ;; Load cached slots, set, assoc values, etc.
     (shared-initialize instance t :from-oid from-oid)
     instance))
@@ -1358,11 +1358,11 @@ These are different objects with the same oid."
 ;; Main protocol
 
 (defmethod initialize-instance :around ((instance stored-object) &rest initargs 
-                                                                 &key (sc *store*) &allow-other-keys)
+                                                                 &key (store *store*) &allow-other-keys)
   "Ensure instance creation is inside a transaction, huge (5x) performance impact per object"
   (declare (ignore initargs))
-  (assert sc nil "You must have an open store controller to create ~A" instance)
-  (ensure-transaction (:db sc)
+  (assert store nil "You must have an open store controller to create ~A" instance)
+  (ensure-transaction (:db store)
     (call-next-method)))
 
 (eval-always
@@ -1629,38 +1629,38 @@ stored slots) and specific btrees."))
 ;; drop-instances
 
 ;;; Root indexes
-(defun add-to-root (key value &key (st *store*))
+(defun add-to-root (key value &key (store *store*))
   "Add an arbitrary stored thing to the root, so you can retrieve it in a later
 session. Anything referenced by an object added to the root is considered
 reachable and thus live"
-  (declare (type store st))
+  (declare (type store store))
   ;; (assert (not (eq key *elephant-properties-label*)))
-  (setf (get-value key (store-root st)) value))
+  (setf (get-value key (store-root store)) value))
 
-(defun get-from-root (key &key (st *store*))
+(defun get-from-root (key &key (store *store*))
   "Get the value associated with key from the root.  Returns two
    values, the value, or nil, and a boolean indicating whether a
    value was found or not (so you know if nil is a value or an
    indication of non-presence)"
-  (declare (type store st))
-  (get-value key (store-root st)))
+  (declare (type store store))
+  (get-value key (store-root store)))
 
-(defun root-existsp (key &key (st *store*))
+(defun root-existsp (key &key (store *store*))
   "Test whether a given key is instantiated in the root"
-  (declare (type store st))
-  (if (btree:existsp key (store-root st))
+  (declare (type store store))
+  (if (btree:existsp key (store-root store))
       t 
       nil))
 
-(defun remove-from-root (key &key (st *store*))
+(defun remove-from-root (key &key (store *store*))
   "Remove something from the root by the key value"
-  (declare (type store st))
-  (delete-key key (store-root st)))
+  (declare (type store store))
+  (delete-key key (store-root store)))
 
-(defun map-root (fn &key (st *store*))
+(defun map-root (fn &key (store *store*))
   "Takes a function of two arguments, key and value, to map over
    all key-value pairs in the root"
-  (map-btree fn (store-root st)))
+  (map-btree fn (store-root store)))
 
 ;;; Slot Access
 (defmethod slot-value-using-class ((class stored-class) (instance stored-object) (slot-def stored-slot-definition))

@@ -173,6 +173,13 @@ not be rebound otherwise within the body of a transaction.")
 The funcallable-instance may be used to respect a simple commit-based protocol
 which mirrors the backend."))
 
+(defmethod initialize-instance ((self transaction-kernel) &key kernel &allow-other-keys)
+  (set-funcallable-instance-function 
+   self (compile nil 
+                 (lambda ()
+                   (funcall #'execute *db* kernel :transaction *transaction*))))
+  self)
+
 (defgeneric transaction (self &key &allow-other-keys)
   (:documentation "Make a new transaction object."))
 
@@ -199,27 +206,18 @@ non-local exits, provides ACIDic properties and binds any relevant parameters.")
 (define-condition transaction-error (db-error)
   ((transaction :initform *transaction* :initarg :transaction :reader error-transaction)))
 
-(defvar *default-transaction-wait* 0.1)
-(defvar *default-transaction-retry* 0)
-
 ;; From ELEPHANT
 (defmacro with-transaction ((&rest initargs 
                              &key (db '*db*)
-                                  (transaction '*transaction*)
-                                  ;; retries wait
-                             &allow-other-keys)
+                                  (transaction '*transaction*))
                             &body body)
   "Execute a body with a transaction in place. On success, the transaction is
 committed. Otherwise, the transaction is aborted."
-  (with-gensyms (%txn-fn)
-    (remf initargs :db)
-    (remf initargs :transaction)
-    `(let ((*db* ,db)
-           (*transaction* ,(or transaction (transaction db))))
-       (let ((,%txn-fn (lambda () ,@body)))
-         (funcall #'execute *db* ,%txn-fn
-                  :transaction *transaction*
-                  ,@initargs)))))
+  (remf initargs :db)
+  (remf initargs :transaction)
+  `(let ((*db* ,db)
+         (*transaction* ,(or transaction (transaction db))))
+     (funcall (make-instance 'transaction-kernel :kernel (lambda () ,@body)))))
 
 (defmacro current-transaction ()
   "Return the current transaction associated with database DB."
@@ -232,7 +230,6 @@ committed. Otherwise, the transaction is aborted."
                                &key
                                (db '*db*)
                                (transaction '*transaction*)
-                               wait
                                &allow-other-keys)
                               &body body)
   "Execute BODY with an existing transaction or a new transaction if one does not
@@ -241,15 +238,13 @@ atomically regardless of whether there is an existing transaction or not."
   (with-gensyms (%db %txn-fn)
     (remf initargs :db)
     (remf initargs :transaction)
-    (remf initargs :wait)
     `(let ((,%db ,db)
            (,%txn-fn (lambda () ,@body)))
        (if (current-transaction)
+           ;; execute immediately if a transaction exists
            (funcall ,%txn-fn)
-           (execute ,%db
-                    ,%txn-fn
-                    :transaction ,transaction
-                    ,@(when wait `(:wait ,wait)))))))
+           ;; make a transaction and execute it otherwise
+           (funcall (make-instance 'transaction-kernel :kernel ,%txn-fn :transaction ,transaction :db ,%db))))))
 
 (defmacro with-batch-transaction ((batch size list &rest txn-options) &body body)
   "Perform a set of DB operations over a sequence of elements LIST in batches of
