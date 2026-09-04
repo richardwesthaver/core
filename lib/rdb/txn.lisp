@@ -98,7 +98,8 @@ transaction-db."
 (defun txn-get (kbuf
                 &key (transaction *transaction*)
                      (opts (default-rocksdb-readoptions))
-                     cf)
+                     cf
+                     #+todo exclusive)
   "Get a key from a transaction. 
 The key is encoded in a buffer-stream and on success a buffer-stream for
 decoding the value is returned or NIL if nothing was found."

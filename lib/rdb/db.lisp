@@ -411,23 +411,32 @@ columns."
 (defmethod shutdown-db ((self otrdb) &key) (close-columns self) (close-db self))
 
 ;; TODO 2026-09-01: 
-(defmethod get-value (elt (self rdb))
-  (%get-kv (db self) elt (default-rocksdb-readoptions)))
-
-(defmethod get-value (elt (self trdb))
-  (%transactiondb-get-kv (db self) elt (default-rocksdb-readoptions)))
+(defmethods get-value 
+  (((elt vector) (self rdb))
+   (%get-kv (db self) elt (default-rocksdb-readoptions)))
+  (((elt string) (self rdb))
+   (%get-kv-str (db self) elt (default-rocksdb-readoptions)))
+  (((elt vector) (self trdb))
+   (%transactiondb-get-kv (db self) elt (default-rocksdb-readoptions)))
+  (((elt string) (self trdb))
+   (%transactiondb-get-kv-str (db self) elt (default-rocksdb-readoptions)))
+  (((elt buffer-stream) (self rdb))
+   (db-get (db self) elt)))
 
 (defmethods put-key 
-  (((self rdb) (key t) (val t) &key)
+  (((self rdb) (key buffer-stream) (val buffer-stream) &key (options (default-rocksdb-readoptions)) column)
+   (db-put (db self)
+    key
+    val
+    :opts options
+    :cf (db column)))
+  (((self rdb) (key vector) (val vector) &key)
    (%put-kv
     (db self)
     key
     val))
   (((self rdb) (key string) (val string) &key)
-   (%put-kv
-    (db self)
-    (sb-ext:string-to-octets key)
-    (sb-ext:string-to-octets val))))
+   (%put-kv-str (db self) key val)))
 
 (defmethod delete-key (key (self rdb) &key (opts (default-rocksdb-writeoptions)))
   (%delete-kv (db self) key opts))

@@ -47,7 +47,10 @@ of BODY."
 ;;; Database
 (defgeneric db (self)
   (:documentation "Return the Database associated with SELF.")
-  (:method ((self null)) nil))
+  (:method ((self null)) nil)
+  (:method ((self alien-value)) self)
+  (:method ((self system-area-pointer)) self))
+
 (defgeneric (setf db) (new self)
   (:documentation "Set the Database associated with SELF."))
 

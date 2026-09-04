@@ -155,15 +155,13 @@ the constant +store-major-version+"
 (defmethod get-value (key (bt rdb-btree))
   "Getting a value from a plain RDB-BTREE will fetch the value directly from (DB
 *STORE*)."
-  (trace! "get-value" key bt)
+  ;; (trace! "get-value" key bt)
   (let ((sc (get-store bt)))
     (ensure-transaction (:db sc)
       (with-buffer-streams (key-buf)
         (write-buffer-oid (oid bt) key-buf)
-        (serialize-object key key-buf sc)
-        (let ((buf (txn-get
-                    key-buf
-                    :cf (db (btree sc)))))
+        (print (serialize-object key key-buf sc))
+        (let ((buf (txn-get key-buf :cf (db (btree sc)))))
           (if buf 
               (values (deserialize-object buf sc) t)
               (values nil nil)))))))
@@ -1023,8 +1021,9 @@ The SAP slot contains a pointer to the underlying ROCKSDB-ITERATOR."))
 ;; TODO 2024-11-07:
 (defmethod stored-slot-reader ((self rdb-store) instance name &optional oids-only)
   (declare (ignore oids-only))
-  (trace! "stored-slot-reader" self instance name)
+  ;; (trace! "stored-slot-reader" self instance name)
   (ensure-transaction (:db self)
+    (inspect *transaction*)
     (with-buffer-streams (kbuf vbuf)
       (write-buffer-fixnum32 (the fixnum (oid instance)) kbuf)
       (serialize-object name kbuf self)

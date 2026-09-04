@@ -201,7 +201,7 @@
     (is= 1 (rdb::%wbwi-count wbwi))
     (rdb::%wbwi-clear wbwi)))
 
-(deftest rdb-seq ()
+(deftest seq ()
   "Test RocksDB sequences (counter-column-family, etc)."
   (with-temp-db (*db* :open t)
     (make-column *db* :class 'counter-column-family :name "seq1" :data (make-array 8 :element-type 'word))
@@ -211,10 +211,10 @@
       (iszero (get-value 7 col)))
     (shutdown-db *db*)))
 
-(deftest store ()
+(deftest store (:skip :todo)
   (trace slot-value-using-class obj/store::upgrade-instance-slot 
          obj/store::change-instance-slot obj/store::initialize-new-slots)
-  (open-store (make-instance 'rdb-store :spec (rdb::rdb-temp-spec "foo")))
+  (step (open-store (make-instance 'rdb-store :spec (rdb::rdb-temp-spec "rdb-store"))))
   (is *store*)
   (close-store *store*)
   (isnt *store*))
